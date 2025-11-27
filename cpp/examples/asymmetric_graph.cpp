@@ -24,6 +24,7 @@
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/metapopulation_mobility_asymmetric.h"
 #include "memilio/mobility/graph.h"
+#include "memilio/mobility/graph_builder.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
 #include "memilio/timer/auto_timer.h"
@@ -77,9 +78,9 @@ int main(int /*argc*/, char** /*argv*/)
     adoption_rates.push_back({ICS, R, home, 0.4, {}});
     adoption_rates.push_back({INS, R, home, 0.5, {}});
 
-    mio::Graph<mio::LocationNode<ScalarType, mio::smm::Simulation<ScalarType, 1, InfectionState>>,
-               mio::MobilityEdgeDirected<ScalarType>>
-        graph;
+    mio::GraphBuilder<mio::LocationNode<ScalarType, mio::smm::Simulation<ScalarType, 1, InfectionState>>,
+                      mio::MobilityEdgeDirected<ScalarType>>
+        builder;
     mio::log_info("Starting Graph generation");
     {
         mio::timing::AutoTimer<"Graph Nodes Generation"> timer;
@@ -97,7 +98,7 @@ int main(int /*argc*/, char** /*argv*/)
             curr_model.populations[{home, InfectionState::R}]                                = 0;
             curr_model.populations[{home, InfectionState::D}]                                = 0;
             curr_model.parameters.get<mio::smm::AdoptionRates<ScalarType, InfectionState>>() = adoption_rates;
-            graph.add_node(farm_id, longitude, latitude, curr_model, t0);
+            builder.add_node(farm_id, longitude, latitude, curr_model, t0);
         }
     }
     mio::log_info("Nodes added to Graph");
@@ -105,18 +106,13 @@ int main(int /*argc*/, char** /*argv*/)
 
     std::vector<std::vector<size_t>> interesting_indices;
     interesting_indices.push_back({Model().populations.get_flat_index({home, InfectionState::I})});
-    graph.reserve_edges(200000);
-    {
-        mio::timing::AutoTimer<"Graph Edges Generation"> timer;
-        io::CSVReader<2> edges("../../edges200000.csv");
-        edges.read_header(io::ignore_extra_column, "from", "to");
-        size_t from, to;
-        while (edges.read_row(from, to)) {
-            graph.lazy_add_edge(from, to, interesting_indices);
-        }
-        graph.sort_edges();
-        graph.make_edges_unique();
+    io::CSVReader<2> edges("../../edges200000.csv");
+    edges.read_header(io::ignore_extra_column, "from", "to");
+    size_t from, to;
+    while (edges.read_row(from, to)) {
+        builder.add_edge(from, to, interesting_indices);
     }
+    auto graph = std::move(builder).build();
     // // mio::log_info("Graph generated");
 
     auto nodes = graph.nodes() | std::views::transform([](const auto& node) {
@@ -138,7 +134,6 @@ int main(int /*argc*/, char** /*argv*/)
     exchanges.read_header(io::ignore_extra_column, "date", "num_animals", "from", "to");
 
     int date, num_animals;
-    size_t from, to;
     while (exchanges.read_row(date, num_animals, from, to)) {
         sim.add_exchange(date, num_animals, from, to);
     }

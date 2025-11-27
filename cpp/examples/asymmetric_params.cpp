@@ -25,6 +25,7 @@
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/metapopulation_mobility_asymmetric.h"
 #include "memilio/mobility/graph.h"
+#include "memilio/mobility/graph_builder.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/logging.h"
@@ -140,9 +141,9 @@ int main(int /*argc*/, char** /*argv*/)
     adoption_rates.push_back({ICS, R, home, 0.4, {}});
     adoption_rates.push_back({INS, R, home, 0.5, {}});
 
-    mio::Graph<mio::LocationNode<ScalarType, mio::smm::Simulation<ScalarType, 1, InfectionState>>,
-               mio::MobilityEdgeDirected<ScalarType>>
-        graph;
+    mio::GraphBuilder<mio::LocationNode<ScalarType, mio::smm::Simulation<ScalarType, 1, InfectionState>>,
+                      mio::MobilityEdgeDirected<ScalarType>>
+        builder;
 
     // usage:
     // if (rank==0) v = {1,2,3,4};
@@ -209,7 +210,7 @@ int main(int /*argc*/, char** /*argv*/)
         curr_model.populations[{home, InfectionState::R}]                                = 0;
         curr_model.populations[{home, InfectionState::D}]                                = 0;
         curr_model.parameters.get<mio::smm::AdoptionRates<ScalarType, InfectionState>>() = adoption_rates;
-        graph.add_node(farm_ids[i], longitudes[i], latitudes[i], curr_model, t0);
+        builder.add_node(farm_ids[i], longitudes[i], latitudes[i], curr_model, t0);
     }
     auto rng = mio::RandomNumberGenerator();
 
@@ -217,10 +218,9 @@ int main(int /*argc*/, char** /*argv*/)
     interesting_indices.push_back({Model().populations.get_flat_index({home, InfectionState::I})});
     graph.reserve_edges(froms.size());
     for (size_t i = 0; i < froms.size(); ++i) {
-        graph.lazy_add_edge(froms[i], tos[i], interesting_indices);
+        builder.add_edge(froms[i], tos[i], interesting_indices);
     }
-    graph.sort_edges();
-    graph.make_edges_unique();
+    auto graph = std::move(builder).build();
     auto nodes = graph.nodes() | std::views::transform([](const auto& node) {
                      return &node.property;
                  });
