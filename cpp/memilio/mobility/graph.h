@@ -203,6 +203,9 @@ public:
 
     Graph() = default;
 
+    /**
+     * @brief Construct graph containing the given nodes and edges.
+     */
     Graph(std::vector<Node<NodePropertyT>>&& nodes, std::vector<Edge<EdgePropertyT>>&& edges)
         : m_nodes(std::move(nodes))
         , m_edges(std::move(edges))
