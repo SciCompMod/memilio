@@ -349,7 +349,8 @@ public:
      * @tparam OtherType The type to convert into.
      * @return New CustomIndexArray of OtherType with copy of internal data.
      */
-    template <class OtherType> requires std::convertible_to<Type, OtherType>    
+    template <class OtherType>
+        requires std::convertible_to<Type, OtherType>
     CustomIndexArray<OtherType, Tags...> convert() const
     {
         CustomIndexArray<OtherType, Tags...> other;

@@ -27,9 +27,11 @@
 #include "memilio/utils/parameter_distributions.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/geography/regions.h"
-#include <iostream>
+#include <algorithm>
 #include <functional>
+#include <iostream>
 #include <concepts>
+#include <ranges>
 
 #include "boost/filesystem.hpp"
 
@@ -169,7 +171,8 @@ public:
         }
     }
 
-    template <class... Args> requires std::constructible_from<NodePropertyT, Args...>
+    template <class... Args>
+        requires std::constructible_from<NodePropertyT, Args...>
     Graph(const std::vector<int>& node_ids, Args&&... node_args)
     {
         for (int id : node_ids) {
@@ -177,7 +180,8 @@ public:
         }
     }
 
-    template <class... Args> requires std::constructible_from<NodePropertyT, Args...>
+    template <class... Args>
+        requires std::constructible_from<NodePropertyT, Args...>
     Graph(const int number_of_nodes, Args&&... args)
     {
         for (int id = 0; id < number_of_nodes; ++id) {
@@ -188,29 +192,93 @@ public:
     Graph() = default;
 
     /**
-     * @brief add a node to the graph. property of the node is constructed from arguments.
+     * @brief Construct graph without edges from pairs of node_ids and node_properties.
      */
-    template <class... Args> requires std::constructible_from<NodePropertyT, Args...>
-    Node<NodePropertyT>& add_node(int id, Args&&... args)
+    Graph(const std::vector<int>& node_ids, const std::vector<NodePropertyT>& node_properties)
     {
-        m_nodes.emplace_back(id, std::forward<Args>(args)...);
-        return m_nodes.back();
+        assert(node_ids.size() == node_properties.size());
+
+        for (auto i = size_t(0); i < node_ids.size(); ++i) {
+            add_node(node_ids[i], node_properties[i]);
+        }
     }
 
     /**
-     * @brief add an edge to the graph. property of the edge is constructed from arguments.
+     * @brief Construct graph without edges from node_properties with default node ids [0, 1, ...].
      */
-    template <class... Args> requires std::constructible_from<EdgePropertyT, Args...>
-    Edge<EdgePropertyT>& add_edge(size_t start_node_idx, size_t end_node_idx, Args&&... args)
+    Graph(std::vector<NodePropertyT>& node_properties)
+    {
+        for (auto i = size_t(0); i < node_properties.size(); ++i) {
+            add_node(i, node_properties[i]);
+        }
+    }
+
+    /**
+     * @brief Construct graph without edges, creating a node for each id in node_ids from the same node_args.
+     */
+    template <class... Args>
+        requires std::constructible_from<NodePropertyT, Args...>
+    Graph(const std::vector<int>& node_ids, Args&&... node_args)
+    {
+        for (int id : node_ids) {
+            add_node(id, std::forward<Args>(node_args)...);
+        }
+    }
+
+    /**
+     * @brief Construct graph without edges, creating each node from the same node_args with default node ids [0, 1, ...].
+     */
+    template <class... Args>
+        requires std::constructible_from<NodePropertyT, Args...>
+    Graph(const int number_of_nodes, Args&&... args)
+    {
+        for (int id = 0; id < number_of_nodes; ++id) {
+            add_node(id, std::forward<Args>(args)...);
+        }
+    }
+
+    Graph() = default;
+
+    /**
+     * @brief Construct graph containing the given nodes and edges.
+     */
+    Graph(std::vector<Node<NodePropertyT>>&& nodes, std::vector<Edge<EdgePropertyT>>&& edges)
+        : m_nodes(std::move(nodes))
+        , m_edges(std::move(edges))
+    {
+    }
+
+    /**
+     * @brief add a node to the graph. The property of the node is constructed from arguments.
+     *
+     * @param id id for the node
+     * @tparam args additional arguments for node construction
+     */
+    template <class... Args>
+        requires std::constructible_from<NodePropertyT, Args...>
+    void add_node(int id, Args&&... args)
+    {
+        m_nodes.emplace_back(id, std::forward<Args>(args)...);
+    }
+
+    /**
+     * @brief add an edge to the graph. The property of the edge is constructed from arguments.
+     * @param start_node_idx id of start node
+     * @param end_node_idx id of end node
+     * @tparam args additional arguments for edge construction
+     *
+     * If an edge with the same start and end node indices already exists, it is replaced by the newly constructed edge.
+     */
+    template <class... Args>
+        requires std::constructible_from<EdgePropertyT, Args...>
+    void add_edge(size_t start_node_idx, size_t end_node_idx, Args&&... args)
     {
         assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
-        return *insert_sorted_replace(m_edges,
-                                      Edge<EdgePropertyT>(start_node_idx, end_node_idx, std::forward<Args>(args)...),
-                                      [](auto&& e1, auto&& e2) {
-                                          return e1.start_node_idx == e2.start_node_idx
-                                                     ? e1.end_node_idx < e2.end_node_idx
-                                                     : e1.start_node_idx < e2.start_node_idx;
-                                      });
+        insert_sorted_replace(m_edges, Edge<EdgePropertyT>(start_node_idx, end_node_idx, std::forward<Args>(args)...),
+                              [](auto&& e1, auto&& e2) {
+                                  return e1.start_node_idx == e2.start_node_idx ? e1.end_node_idx < e2.end_node_idx
+                                                                                : e1.start_node_idx < e2.start_node_idx;
+                              });
     }
 
     /**
@@ -304,19 +372,20 @@ void set_test_and_trace_capacity(const mio::VectorRange<Node<Model>>& nodes, Sca
  * @param[in] end_date Date at the end of the simulation.
  */
 template <class FP, class Model, class ContactPattern>
-void set_german_holidays(const mio::VectorRange<Node<Model>>& nodes, const mio::Date& start_date, const mio::Date& end_date)
+void set_german_holidays(const mio::VectorRange<Node<Model>>& nodes, const mio::Date& start_date,
+                         const mio::Date& end_date)
 {
     for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
         auto state_id        = regions::de::get_state_id(nodes[node_idx].id);
         auto holiday_periods = regions::de::get_holidays(state_id, start_date, end_date);
 
-        auto& contacts       = nodes[node_idx].property.parameters.template get<ContactPattern>();
+        auto& contacts = nodes[node_idx].property.parameters.template get<ContactPattern>();
         contacts.get_school_holidays() =
             std::vector<std::pair<mio::SimulationTime<FP>, mio::SimulationTime<FP>>>(holiday_periods.size());
         std::transform(
             holiday_periods.begin(), holiday_periods.end(), contacts.get_school_holidays().begin(), [=](auto& period) {
                 return std::make_pair(mio::SimulationTime<FP>(mio::get_offset_in_days(period.first, start_date)),
-                                        mio::SimulationTime<FP>(mio::get_offset_in_days(period.second, start_date)));
+                                      mio::SimulationTime<FP>(mio::get_offset_in_days(period.second, start_date)));
             });
     }
 }
@@ -333,15 +402,13 @@ void set_uncertainty_on_population(const mio::VectorRange<Node<Model>>& nodes)
         for (auto i = mio::AgeGroup(0); i < nodes[0].property.parameters.get_num_groups(); i++) {
             for (auto j = Index<typename Model::Compartments>(0); j < Model::Compartments::Count; ++j) {
                 auto& compartment_value = nodes[node_idx].property.populations[{i, j}];
-                compartment_value =
-                    UncertainValue<ScalarType>(compartment_value.value());
+                compartment_value       = UncertainValue<ScalarType>(compartment_value.value());
                 compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * compartment_value.value(),
-                                                                                    1.1 * compartment_value.value()));
+                                                                                     1.1 * compartment_value.value()));
             }
         }
     }
 }
-
 
 /**
  * @brief Sets the graph edges.

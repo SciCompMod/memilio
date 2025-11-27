@@ -45,6 +45,8 @@ template <typename FP = ScalarType>
 class UncertainValue
 {
 public:
+    using Type = FP;
+
     UncertainValue(FP v, const ParameterDistribution& dist)
         : m_value(v)
         , m_dist(dist.clone())

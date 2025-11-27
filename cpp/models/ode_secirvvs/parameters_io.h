@@ -346,40 +346,6 @@ IOResult<void> read_input_data(const mio::VectorRange<Node<Model<ScalarType>>>& 
                                int num_days, const mio::regions::de::EpidataFilenames& epidata_filenames,
                                bool set_death = false);
 
-/**
- * @brief Converts input data from one range of models to another with different type.
- * 
- * @tparam FP Floating point type (default: double).
- * @param[in] model_from VectorRange of Node%s each containing a Model with the input data.
- * @param[in,out] model_to VectorRange of Node%s each containing a Model to be initialized with data.
- * @param[in] date Date for which the data should be read.
- * @param[in] num_days Number of days to simulate.
- * @param[in] epidata_filenames Object containing the input data file paths.
- *
- * @return An IOResult indicating success or failure.
- */
-template <class FP>
-IOResult<void> convert_input_data_type(const mio::VectorRange<Node<Model<ScalarType>>>& model_from,
-                                       const mio::VectorRange<Node<Model<FP>>>& model_to, Date date, int num_days,
-                                       const mio::regions::de::EpidataFilenames& epidata_filenames)
-{
-    assert(model_from.size() == model_to.size());
-    assert((size_t)model_from[0].property.parameters.get_num_groups() ==
-           (size_t)model_to[0].property.parameters.get_num_groups());
-    // Todo: add conversion of ParameterSet and then re-use code from all model parameters io
-    // For now call set_vacination_data with FP to set correct parameters
-    BOOST_OUTCOME_TRY(
-        details::set_vaccination_data<FP>(model_to, epidata_filenames.vaccination_data_path, date, num_days));
-
-    for (size_t region_idx = 0; region_idx < model_from.size(); ++region_idx) {
-        // convert populations to mio::UncertainValue<FP>
-        // needs 2 converts as mio::UncertainValue<ScalarType> -> mio::UncertainValue<FP> does not work
-        model_to[region_idx].property.populations = model_from[region_idx]
-                                                        .property.populations.template convert<FP>();
-    }
-    return success();
-}
-
 #ifdef MEMILIO_HAS_HDF5
 
 /**
@@ -411,6 +377,41 @@ IOResult<void> export_input_data_county_timeseries(const mio::VectorRange<Node<M
                                                    const mio::regions::de::EpidataFilenames&);
 
 #endif //MEMILIO_HAS_HDF5
+
+/**
+ * @brief Converts input data from one range of models to another with different type.
+ * 
+ * @tparam FP Floating point type.
+ * @param[in,out] model VectorRange of Node%s each containing a Model to be initialized with data.
+ * @param[in] date Date for which the data should be read.
+ * @param[in] scaling_factor_inf Vector of scaling factors for confirmed cases.
+ * @param[in] scaling_factor_icu Scaling factor for ICU cases.
+ * @param[in] num_days Number of days to simulate.
+ * @param[in] epidata_filenames Object containing the input data file paths.
+ * @param[in] set_death If true, set the number of deaths.
+ * 
+ * @return An IOResult indicating success or failure.
+ */
+template <class FP>
+IOResult<void> convert_input_data_type(const mio::VectorRange<Node<Model<ScalarType>>>& model_from,
+                                       const mio::VectorRange<Node<Model<FP>>>& model_to, Date date, int num_days,
+                                       const mio::regions::de::EpidataFilenames& epidata_filenames)
+{
+    assert(model_from.size() == model_to.size());
+    assert((size_t)model_from[0].property.parameters.get_num_groups() ==
+           (size_t)model_to[0].property.parameters.get_num_groups());
+    // Todo: add conversion of ParameterSet and then re-use code from all model parameters io
+    // For now call set_vacination_data with FP to set correct parameters
+    BOOST_OUTCOME_TRY(
+        details::set_vaccination_data<FP>(model_to, epidata_filenames.vaccination_data_path, date, num_days));
+
+    for (size_t region_idx = 0; region_idx < model_from.size(); ++region_idx) {
+        // convert populations to mio::UncertainValue<FP>
+        // needs 2 converts as mio::UncertainValue<ScalarType> -> mio::UncertainValue<FP> does not work
+        model_to[region_idx].property.populations = model_from[region_idx].property.populations.template convert<FP>();
+    }
+    return success();
+}
 
 } // namespace osecirvvs
 
