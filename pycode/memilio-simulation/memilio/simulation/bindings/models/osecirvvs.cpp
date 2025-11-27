@@ -205,28 +205,6 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
         },
         py::arg("model"));
 
-    // These functions are in general not secirvvs dependent, only with the current config
-    m.def(
-        "set_nodes",
-        [](const mio::osecirvvs::Parameters<double>& params, mio::Date start_date, mio::Date end_date,
-           const std::string& data_dir, const std::string& population_data_path, bool is_node_for_county,
-           mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>& params_graph,
-           const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, double tnt_capacity_factor,
-           int num_days = 0, bool export_time_series = false) {
-            auto result =
-                mio::set_nodes<double, // FP
-                               mio::osecirvvs::TestAndTraceCapacity<double>, mio::osecirvvs::ContactPatterns<double>,
-                               mio::osecirvvs::Model<double>, mio::MobilityParameters<double>,
-                               mio::osecirvvs::Parameters<double>,
-                               decltype(mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model<ScalarType>>),
-                               decltype(mio::get_node_ids)>(
-                    params, start_date, end_date, data_dir, population_data_path, is_node_for_county, params_graph,
-                    mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model<double>>, mio::get_node_ids,
-                    scaling_factor_inf, scaling_factor_icu, tnt_capacity_factor, num_days, export_time_series);
-            return pymio::check_and_throw(result);
-        },
-        py::return_value_policy::move);
-
     m.def(
         "set_edges",
         [](const std::string& mobility_data_file,
@@ -263,14 +241,44 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
     pymio::bind_write_graph<mio::osecirvvs::Model<double>>(m);
     pymio::bind_read_graph<mio::osecirvvs::Model<double>>(m);
     m.def(
-        "read_input_data_county",
-        [](std::vector<mio::osecirvvs::Model<double>>& model, mio::Date date, const std::vector<int>& county,
-           const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, const std::string& dir,
-           int num_days = 0, bool export_time_series = false) {
-            auto result = mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model<double>>(
-                model, date, county, scaling_factor_inf, scaling_factor_icu, dir, num_days, export_time_series);
+        "read_input_data_german_county",
+        [](mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>& params_graph, 
+           mio::Date start_date, const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, 
+           int num_days, std::string& pydata_path) {
+
+            auto result = mio::osecirvvs::read_input_data(params_graph.nodes(), start_date, scaling_factor_inf, scaling_factor_icu, 
+                            num_days, mio::regions::de::EpidataFilenames::county(pydata_path));
             return pymio::check_and_throw(result);
         },
+        "Reads compartments for german counties at a specified date from data files.",
+        py::arg("params_graph"), py::arg("start_date"), py::arg("scaling_factor_inf"), py::arg("scaling_factor_icu"),
+        py::arg("num_days"), py::arg("pydata_path"), py::return_value_policy::move);
+
+    m.def(
+        "create_graph_german_county",
+        [](const mio::osecirvvs::Parameters<double>& params, mio::Date start_date, mio::Date end_date,
+           const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, int num_days, 
+           std::string& pydata_path, double tnt_capacity_factor) {
+
+            auto result_node_id = mio::get_node_ids(mio::path_join(pydata_path, "county_current_population.json"), true);
+            auto node_ids = pymio::check_and_throw(result_node_id);
+
+            mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> params_graph(node_ids, 
+                mio::osecirvvs::Model<double>::Populations({params.get_num_groups(), mio::osecirvvs::InfectionState::Count}), params);
+            auto result_read_input_data = mio::osecirvvs::read_input_data(params_graph.nodes(), start_date, 
+                                            scaling_factor_inf, scaling_factor_icu, num_days,
+                                            mio::regions::de::EpidataFilenames::county(pydata_path));
+            pymio::check_and_throw(result_read_input_data);
+            
+            mio::set_test_and_trace_capacity<mio::osecirvvs::Model<double>, mio::osecirvvs::TestAndTraceCapacity<double>>(params_graph.nodes(), tnt_capacity_factor);
+            mio::set_german_holidays<double, mio::osecirvvs::Model<double>, mio::osecirvvs::ContactPatterns<double>>(params_graph.nodes(), start_date, end_date);
+            mio::set_uncertainty_on_population<mio::osecirvvs::Model<double>>(params_graph.nodes());
+            
+            return params_graph;
+        },
+        "Creates graph of germany with compartments for geographic units at a specified date from data files.",
+        py::arg("params"), py::arg("start_date"), py::arg("end_date"), py::arg("scaling_factor_inf"), 
+        py::arg("scaling_factor_icu"), py::arg("num_days"), py::arg("pydata_path"), py::arg("tnt_capacity_factor"),
         py::return_value_policy::move);
 #endif // MEMILIO_HAS_JSONCPP
 
