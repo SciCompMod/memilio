@@ -32,7 +32,7 @@ elseif(UNIX)
 endif()
 
 # Use a static spdlog so the wheel stays self-contained.
-set(MEMILIO_PREFER_STATIC_SPDLOG ON CACHE BOOL "" FORCE)
+set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "" FORCE)
 
 if(MEMILIO_USE_BUNDLED_PYBIND11)
     # Fetch pybind11
