@@ -55,6 +55,10 @@ endif()
 # add in C++ library
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../cpp ${CMAKE_CURRENT_BINARY_DIR}/cpp EXCLUDE_FROM_ALL)
 
+# a list of all "LINKED_LIBRARIES" that are given to add_pymio_module. will contain duplicates
+# used for wheel installation
+set(PYMIO_MEMILIO_LIBS_LIST)
+
 # Function to add a pybind11 module
 function(add_pymio_module target_name)
     set(options)
@@ -66,7 +70,11 @@ function(add_pymio_module target_name)
     target_link_libraries(${target_name} PRIVATE ${PYBIND11_MODULE_LINKED_LIBRARIES})
     target_include_directories(${target_name} PRIVATE memilio/simulation/bindings)
 
-    # Set RPATH so extension can find the C++ libraries in lib
+    # Collect linked libraries for later installation
+    list(APPEND PYMIO_MEMILIO_LIBS_LIST "${PYBIND11_MODULE_LINKED_LIBRARIES}")
+    set(PYMIO_MEMILIO_LIBS_LIST ${PYMIO_MEMILIO_LIBS_LIST} PARENT_SCOPE)
+
+    # Set RPATH so extension can find the C++ libraries in lib subdirectory
     set_target_properties(${target_name} PROPERTIES
         INSTALL_RPATH "$ORIGIN/lib"
     )
@@ -138,20 +146,11 @@ add_pymio_module(_simulation_omseirs4
     SOURCES memilio/simulation/bindings/models/omseirs4.cpp
 )
 
-set(MEMILIO_SIMULATION_LIBS
-    memilio
-    abm
-    ode_sir
-    ode_seir
-    ode_secir
-    ode_seirdb
-    ode_secirvvs
-    sde_sir
-    sde_sirs
-    ode_mseirs4
-)
+# install all shared memilio libraries, which were given as "LINKED_LIBRARIES" to add_pymio_module
+list(REMOVE_DUPLICATES PYMIO_MEMILIO_LIBS_LIST)
 
-foreach(target_name IN LISTS MEMILIO_SIMULATION_LIBS)
+# Set RPATH for all C++ libraries so they can find each other
+foreach(target_name IN LISTS PYMIO_MEMILIO_LIBS_LIST)
     if(TARGET ${target_name})
         set_target_properties(${target_name} PROPERTIES
             INSTALL_RPATH "$ORIGIN;$ORIGIN/lib"
@@ -159,7 +158,7 @@ foreach(target_name IN LISTS MEMILIO_SIMULATION_LIBS)
     endif()
 endforeach()
 
-install(TARGETS ${MEMILIO_SIMULATION_LIBS}
+install(TARGETS ${PYMIO_MEMILIO_LIBS_LIST}
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
     RUNTIME DESTINATION lib
