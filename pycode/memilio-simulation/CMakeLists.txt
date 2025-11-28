@@ -173,3 +173,19 @@ if(TARGET jsoncpp_lib)
         DESTINATION lib
     )
 endif()
+
+if(TARGET spdlog)
+    get_target_property(_SPDLOG_LIB_TYPE spdlog TYPE)
+
+    if(_SPDLOG_LIB_TYPE STREQUAL "SHARED_LIBRARY")
+        set_target_properties(spdlog PROPERTIES
+            INSTALL_RPATH "$ORIGIN"
+        )
+        install(FILES
+            $<TARGET_FILE:spdlog>
+            $<TARGET_SONAME_FILE:spdlog>
+            $<TARGET_LINKER_FILE:spdlog>
+            DESTINATION lib
+        )
+    endif()
+endif()
