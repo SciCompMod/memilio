@@ -85,7 +85,7 @@ When you start creating a new script:
 
 When you add a new script
 
-- Add an executable to the setup.py in "pycode/memilio-epidata".
+- Add a console script entry to the ``pycode/memilio-epidata/pyproject.toml`` file.
 - Add it to the cli_dict in getDataIntoPandasDataFrame.py.
     - Add a meaningful key for the new script.
     - for the dict value add a list in the form [comment to print when script is started, list of used parser arguments (optional)].

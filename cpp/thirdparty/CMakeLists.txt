@@ -37,6 +37,15 @@ if(MEMILIO_USE_BUNDLED_SPDLOG)
 
     if(NOT spdlog_POPULATED)
         FetchContent_Populate(spdlog)
+
+        # Use spdlogs own shared/static switch (SPDLOG_BUILD_SHARED). Default to
+        # the project setting unless we explicitly want a static lib (e.g. wheels).
+        if(MEMILIO_PREFER_STATIC_SPDLOG)
+            set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "Build spdlog as a shared library" FORCE)
+        elseif(NOT DEFINED SPDLOG_BUILD_SHARED)
+            set(SPDLOG_BUILD_SHARED ${BUILD_SHARED_LIBS} CACHE BOOL "Build spdlog as a shared library" FORCE)
+        endif()
+
         add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR} EXCLUDE_FROM_ALL)
     endif()
 
@@ -198,6 +207,7 @@ else()
 endif()
 
 find_package(sbml ${MEMILIO_SBML_VERSION} CONFIG)
+
 if(sbml_FOUND)
     set(MEMILIO_HAS_SBML ON)
     message(STATUS "Found libSBML: ${libsbml_INCLUDE_DIRS}")
