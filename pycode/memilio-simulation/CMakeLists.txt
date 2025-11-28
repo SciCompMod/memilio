@@ -19,17 +19,18 @@ if(APPLE)
     set(CMAKE_INSTALL_RPATH
         "@loader_path"
         "@loader_path/lib"
-        "${CMAKE_BINARY_DIR}/lib"
-        "${CMAKE_BINARY_DIR}/bin"
     )
 elseif(UNIX)
     set(CMAKE_INSTALL_RPATH
         "$ORIGIN"
         "$ORIGIN/lib"
-        "${CMAKE_BINARY_DIR}/lib"
-        "${CMAKE_BINARY_DIR}/bin"
     )
 endif()
+
+# keep build RPATH separate and avoid putting build paths into installed wheels
+set(CMAKE_SKIP_BUILD_RPATH FALSE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
 
 # Use a static spdlog so the wheel stays self-contained.
 set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "" FORCE)
@@ -64,6 +65,11 @@ function(add_pymio_module target_name)
     pybind11_add_module(${target_name} MODULE ${PYBIND11_MODULE_SOURCES})
     target_link_libraries(${target_name} PRIVATE ${PYBIND11_MODULE_LINKED_LIBRARIES})
     target_include_directories(${target_name} PRIVATE memilio/simulation/bindings)
+
+    # Set RPATH so extension can find the C++ libraries in lib
+    set_target_properties(${target_name} PROPERTIES
+        INSTALL_RPATH "$ORIGIN/lib"
+    )
 
     # Make sure to install shared and static libraries (LIBRARY and ARCHIVE) and the executables (RUNTIME).
     # Destination "." refers to the value of wheel.install-dir in the pyproject.toml.
