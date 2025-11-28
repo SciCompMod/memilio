@@ -65,7 +65,8 @@ function(add_pymio_module target_name)
     target_link_libraries(${target_name} PRIVATE ${PYBIND11_MODULE_LINKED_LIBRARIES})
     target_include_directories(${target_name} PRIVATE memilio/simulation/bindings)
 
-    # Make sure to install shared and static libraries (LIBRARY and ARCHIVE) and the executables (RUNTIME)
+    # Make sure to install shared and static libraries (LIBRARY and ARCHIVE) and the executables (RUNTIME).
+    # Destination "." refers to the value of wheel.install-dir in the pyproject.toml.
     install(TARGETS ${target_name}
         LIBRARY DESTINATION .
         ARCHIVE DESTINATION .
