@@ -117,3 +117,4 @@ List of models
     :titlesonly:
     
     models/lsecir
+    models/lsecir2d
