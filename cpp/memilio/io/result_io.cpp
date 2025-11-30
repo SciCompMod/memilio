@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, Martin J. Kuehn
@@ -31,8 +31,8 @@
 
 namespace mio
 {
-IOResult<void> save_result(const std::vector<TimeSeries<double>>& results, const std::vector<int>& ids, int num_groups,
-                           const std::string& filename)
+IOResult<void> save_result(const std::vector<TimeSeries<ScalarType>>& results, const std::vector<int>& ids,
+                           int num_groups, const std::string& filename)
 {
     int region_idx = 0;
     H5File file{H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)};
@@ -52,16 +52,16 @@ IOResult<void> save_result(const std::vector<TimeSeries<double>>& results, const
         H5DataSet dset_t{H5Dcreate(region_h5group.id, "Time", H5T_NATIVE_DOUBLE, dspace_t.id, H5P_DEFAULT, H5P_DEFAULT,
                                    H5P_DEFAULT)};
         MEMILIO_H5_CHECK(dset_t.id, StatusCode::UnknownError, "Time DataSet could not be created (Time).");
-        auto values_t = std::vector<double>(result.get_times().begin(), result.get_times().end());
+        auto values_t = std::vector<ScalarType>(result.get_times().begin(), result.get_times().end());
         MEMILIO_H5_CHECK(H5Dwrite(dset_t.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, values_t.data()),
                          StatusCode::UnknownError, "Time data could not be written.");
 
-        auto total = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(num_timepoints,
-                                                                                                  num_infectionstates)
+        auto total = Eigen::Matrix<ScalarType, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(
+                         num_timepoints, num_infectionstates)
                          .eval();
 
         for (int group_idx = 0; group_idx <= num_groups; ++group_idx) {
-            auto group = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(
+            auto group = Eigen::Matrix<ScalarType, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(
                              num_timepoints, num_infectionstates)
                              .eval();
             if (group_idx < num_groups) {
@@ -140,7 +140,7 @@ IOResult<std::vector<SimulationResult>> read_result(const std::string& filename)
         H5Sget_simple_extent_dims(dataspace_t.id, dims_t, NULL);
 
         auto num_timepoints = Eigen::Index(dims_t[0]);
-        auto time           = std::vector<double>(num_timepoints);
+        auto time           = std::vector<ScalarType>(num_timepoints);
         MEMILIO_H5_CHECK(H5Dread(dataset_t.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, time.data()),
                          StatusCode::UnknownError, "Time data could not be read.");
 
@@ -159,19 +159,19 @@ IOResult<std::vector<SimulationResult>> read_result(const std::string& filename)
         }
         auto num_infectionstates = Eigen::Index(dims_total[1]);
 
-        auto total_values =
-            Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(num_timepoints, num_infectionstates);
+        auto total_values = Eigen::Matrix<ScalarType, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
+            num_timepoints, num_infectionstates);
         MEMILIO_H5_CHECK(
             H5Dread(dataset_total.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, total_values.data()),
             StatusCode::UnknownError, "Totals data could not be read");
 
-        auto totals = TimeSeries<double>(num_infectionstates);
+        auto totals = TimeSeries<ScalarType>(num_infectionstates);
         totals.reserve(num_timepoints);
         for (auto t_idx = 0; t_idx < num_timepoints; ++t_idx) {
             totals.add_time_point(time[t_idx], slice(total_values, {t_idx, 1}, {0, num_infectionstates}).transpose());
         }
 
-        auto groups = TimeSeries<double>(num_infectionstates * num_groups);
+        auto groups = TimeSeries<ScalarType>(num_infectionstates * num_groups);
         groups.reserve(num_timepoints);
         for (Eigen::Index t_idx = 0; t_idx < num_timepoints; ++t_idx) {
             groups.add_time_point(time[t_idx]);
@@ -203,7 +203,7 @@ IOResult<std::vector<SimulationResult>> read_result(const std::string& filename)
                 return failure(StatusCode::InvalidFileFormat, "Number of infection states does not match.");
             }
 
-            auto group_values = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
+            auto group_values = Eigen::Matrix<ScalarType, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
                 num_timepoints, num_infectionstates);
             MEMILIO_H5_CHECK(
                 H5Dread(dataset_values.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, group_values.data()),

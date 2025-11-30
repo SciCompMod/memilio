@@ -34,13 +34,22 @@ namespace abm
 
 ScalarType daily_transmissions_by_contacts(const ContactExposureRates& rates, const CellIndex cell_index,
                                            const VirusVariant virus, const AgeGroup age_receiver,
-                                           const LocalInfectionParameters& params)
+                                           size_t age_receiver_group_size, const LocalInfectionParameters& params)
 {
     assert(age_receiver < rates.size<AgeGroup>());
     ScalarType prob = 0;
     for (AgeGroup age_transmitter(0); age_transmitter < rates.size<AgeGroup>(); ++age_transmitter) {
-        prob +=
-            rates[{cell_index, virus, age_transmitter}] * params.get<ContactRates>()[{age_receiver, age_transmitter}];
+        if (age_receiver == age_transmitter &&
+            age_receiver_group_size > 1) // adjust for the person not meeting themself
+        {
+            prob += rates[{cell_index, virus, age_transmitter}] *
+                    params.get<ContactRates>()[{age_receiver, age_transmitter}] * age_receiver_group_size /
+                    (age_receiver_group_size - 1);
+        }
+        else {
+            prob += rates[{cell_index, virus, age_transmitter}] *
+                    params.get<ContactRates>()[{age_receiver, age_transmitter}];
+        }
     }
     return prob;
 }
@@ -52,8 +61,9 @@ ScalarType daily_transmissions_by_air(const AirExposureRates& rates, const CellI
 }
 
 void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const Location& location,
-              const AirExposureRates& local_air_exposure, const ContactExposureRates& local_contact_exposure,
-              const TimePoint t, const TimeSpan dt, const Parameters& global_parameters)
+              const PopulationByAge& local_population_by_age, const AirExposureRates& local_air_exposure,
+              const ContactExposureRates& local_contact_exposure, const TimePoint t, const TimeSpan dt,
+              const Parameters& global_parameters)
 {
     // make sure all dimensions are set correctly and all indices are valid
     assert(location.get_cells().size() == local_air_exposure.size<CellIndex>().get());
@@ -72,13 +82,14 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
         auto age_receiver          = person.get_age();
         ScalarType mask_protection = person.get_mask_protective_factor(global_parameters);
         assert(person.get_cells().size() && "Person is in multiple cells. Interact logic is incorrect at the moment.");
-        for (auto cell_index : person.get_cells()) {
+        for (CellIndex cell_index : person.get_cells()) {
             std::pair<VirusVariant, ScalarType> local_indiv_trans_prob[static_cast<uint32_t>(VirusVariant::Count)];
             for (uint32_t v = 0; v != static_cast<uint32_t>(VirusVariant::Count); ++v) {
-                VirusVariant virus = static_cast<VirusVariant>(v);
+                VirusVariant virus                      = static_cast<VirusVariant>(v);
+                size_t local_population_by_age_receiver = local_population_by_age[{cell_index, age_receiver}];
                 ScalarType local_indiv_trans_prob_v =
                     (daily_transmissions_by_contacts(local_contact_exposure, cell_index, virus, age_receiver,
-                                                     local_parameters) +
+                                                     local_population_by_age_receiver, local_parameters) +
                      daily_transmissions_by_air(local_air_exposure, cell_index, virus, global_parameters)) *
                     (1 - mask_protection) * (1 - person.get_protection_factor(t, virus, global_parameters));
 
@@ -125,6 +136,23 @@ void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExpo
 
             local_air_exposure[{cell, virus}] += air_contribution;
             local_contact_exposure[{cell, virus, age}] += contact_contribution;
+        }
+    }
+}
+
+void normalize_exposure_contribution(ContactExposureRates& local_contact_exposure,
+                                     const PopulationByAge& local_population_by_age)
+{
+    // make sure all dimensions are set correctly and all indices are valid
+    assert(local_population_by_age.size<AgeGroup>() == local_contact_exposure.size<AgeGroup>());
+    assert(local_population_by_age.size<CellIndex>() == local_contact_exposure.size<CellIndex>());
+    assert(local_contact_exposure.size<VirusVariant>() == VirusVariant::Count);
+
+    for (auto index : make_index_range(local_contact_exposure.size())) {
+        auto age_index = reduce_index<Index<CellIndex, AgeGroup>>(index);
+        if (local_population_by_age[age_index] > 0) {
+            // this instruction is not and does not need to be atomic
+            local_contact_exposure[index] = local_contact_exposure[index] / local_population_by_age[age_index];
         }
     }
 }

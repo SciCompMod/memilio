@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
@@ -34,24 +34,24 @@ int main(int /*argc*/, char** /*argv*/)
     const auto dt   = 0.1; //initial time step
 
     //total compartment sizes
-    double num_total = 10000, num_exp = 200, num_ins = 50, num_is = 50, num_isev = 10, num_icri = 5, num_rec = 0,
-           num_dead = 0;
+    ScalarType num_total = 10000, num_exp = 200, num_ins = 50, num_is = 50, num_isev = 10, num_icri = 5, num_rec = 0,
+               num_dead = 0;
 
     //model with 3 age groups
-    mio::osecir::Model<double> model(3);
+    mio::osecir::Model<ScalarType> model(3);
 
     auto& params = model.parameters;
 
     auto num_age_groups = params.get_num_groups();
-    double fact         = 1.0 / (double)(size_t)num_age_groups;
+    ScalarType fact     = 1.0 / (ScalarType)(size_t)num_age_groups;
 
     //set initialization and model parameters
     for (auto i = mio::AgeGroup(0); i < num_age_groups; i++) {
-        params.get<mio::osecir::TimeExposed<double>>()[i]            = 3.2;
-        params.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[i] = 2.;
-        params.get<mio::osecir::TimeInfectedSymptoms<double>>()[i]   = 6.;
-        params.get<mio::osecir::TimeInfectedSevere<double>>()[i]     = 12.;
-        params.get<mio::osecir::TimeInfectedCritical<double>>()[i]   = 8.;
+        params.get<mio::osecir::TimeExposed<ScalarType>>()[i]            = 3.2;
+        params.get<mio::osecir::TimeInfectedNoSymptoms<ScalarType>>()[i] = 2.;
+        params.get<mio::osecir::TimeInfectedSymptoms<ScalarType>>()[i]   = 6.;
+        params.get<mio::osecir::TimeInfectedSevere<ScalarType>>()[i]     = 12.;
+        params.get<mio::osecir::TimeInfectedCritical<ScalarType>>()[i]   = 8.;
 
         //initial populations is equally distributed among age groups
         model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * num_exp;
@@ -64,22 +64,24 @@ int main(int /*argc*/, char** /*argv*/)
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
                                                                          fact * num_total);
 
-        params.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[i] = 0.05;
-        params.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[i]   = 0.67;
-        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[i]   = 0.09;
-        params.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()[i]   = 0.25;
-        params.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[i]        = 0.2;
-        params.get<mio::osecir::CriticalPerSevere<double>>()[i]                = 0.25;
-        params.get<mio::osecir::DeathsPerCritical<double>>()[i]                = 0.3;
+        params.get<mio::osecir::TransmissionProbabilityOnContact<ScalarType>>()[i] = 0.05;
+        params.get<mio::osecir::RelativeTransmissionNoSymptoms<ScalarType>>()[i]   = 0.67;
+        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[i]   = 0.09;
+        params.get<mio::osecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[i]   = 0.25;
+        params.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[i]        = 0.2;
+        params.get<mio::osecir::CriticalPerSevere<ScalarType>>()[i]                = 0.25;
+        params.get<mio::osecir::DeathsPerCritical<ScalarType>>()[i]                = 0.3;
     }
 
     //add contact pattern and contact damping
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
-    contact_matrix[0] =
-        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_age_groups, (size_t)num_age_groups, fact * 10));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)num_age_groups, (size_t)num_age_groups, 0.6),
-                               mio::SimulationTime(5.));
-
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix = params.get<mio::osecir::ContactPatterns<ScalarType>>();
+    contact_matrix[0]                                   = mio::ContactMatrix<ScalarType>(
+        Eigen::MatrixX<ScalarType>::Constant((size_t)num_age_groups, (size_t)num_age_groups, fact * 10));
+    contact_matrix.add_damping(
+        Eigen::MatrixX<ScalarType>::Constant((size_t)num_age_groups, (size_t)num_age_groups, 0.6),
+        mio::SimulationTime<ScalarType>(5.));
+    // The function apply_constraints() ensures that all parameters are within their defined bounds.
+    // Note that negative values are set to zero instead of stopping the simulation.
     model.apply_constraints();
 
     //modify model for second node
@@ -94,12 +96,13 @@ int main(int /*argc*/, char** /*argv*/)
                                                                           fact * num_total);
     }
 
-    mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::osecir::Model<double>>>, mio::MobilityEdgeStochastic>
+    mio::Graph<mio::SimulationNode<ScalarType, mio::Simulation<ScalarType, mio::osecir::Model<ScalarType>>>,
+               mio::MobilityEdgeStochastic<ScalarType>>
         graph;
     graph.add_node(1001, model, t0);
     graph.add_node(1002, model2, t0);
 
-    auto transition_rates = mio::MobilityCoefficients(model.populations.numel());
+    auto transition_rates = mio::MobilityCoefficients<ScalarType>(model.populations.numel());
     ScalarType kappa      = 0.01;
 
     for (auto age = mio::AgeGroup(0); age < num_age_groups; age++) {
@@ -134,7 +137,7 @@ int main(int /*argc*/, char** /*argv*/)
     graph.add_edge(0, 1, std::move(transition_rates));
     graph.add_edge(1, 0, std::move(transition_rates));
 
-    auto sim = mio::make_mobility_sim(t0, dt, std::move(graph));
+    auto sim = mio::make_mobility_sim<ScalarType>(t0, dt, std::move(graph));
 
     sim.advance(tmax);
 

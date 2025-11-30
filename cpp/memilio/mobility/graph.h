@@ -20,7 +20,6 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
-#include <functional>
 #include "memilio/utils/stl_util.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/date.h"
@@ -28,7 +27,11 @@
 #include "memilio/utils/parameter_distributions.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/geography/regions.h"
+#include <algorithm>
+#include <functional>
 #include <iostream>
+#include <concepts>
+#include <ranges>
 
 #include "boost/filesystem.hpp"
 
@@ -153,29 +156,93 @@ public:
     using EdgeProperty = EdgePropertyT;
 
     /**
-     * @brief add a node to the graph. property of the node is constructed from arguments.
+     * @brief Construct graph without edges from pairs of node_ids and node_properties.
      */
-    template <class... Args>
-    Node<NodePropertyT>& add_node(int id, Args&&... args)
+    Graph(const std::vector<int>& node_ids, const std::vector<NodePropertyT>& node_properties)
     {
-        m_nodes.emplace_back(id, std::forward<Args>(args)...);
-        return m_nodes.back();
+        assert(node_ids.size() == node_properties.size());
+
+        for (auto i = size_t(0); i < node_ids.size(); ++i) {
+            add_node(node_ids[i], node_properties[i]);
+        }
     }
 
     /**
-     * @brief add an edge to the graph. property of the edge is constructed from arguments.
+     * @brief Construct graph without edges from node_properties with default node ids [0, 1, ...].
+     */
+    Graph(std::vector<NodePropertyT>& node_properties)
+    {
+        for (auto i = size_t(0); i < node_properties.size(); ++i) {
+            add_node(i, node_properties[i]);
+        }
+    }
+
+    /**
+     * @brief Construct graph without edges, creating a node for each id in node_ids from the same node_args.
      */
     template <class... Args>
-    Edge<EdgePropertyT>& add_edge(size_t start_node_idx, size_t end_node_idx, Args&&... args)
+        requires std::constructible_from<NodePropertyT, Args...>
+    Graph(const std::vector<int>& node_ids, Args&&... node_args)
+    {
+        for (int id : node_ids) {
+            add_node(id, std::forward<Args>(node_args)...);
+        }
+    }
+
+    /**
+     * @brief Construct graph without edges, creating each node from the same node_args with default node ids [0, 1, ...].
+     */
+    template <class... Args>
+        requires std::constructible_from<NodePropertyT, Args...>
+    Graph(const int number_of_nodes, Args&&... args)
+    {
+        for (int id = 0; id < number_of_nodes; ++id) {
+            add_node(id, std::forward<Args>(args)...);
+        }
+    }
+
+    Graph() = default;
+
+    /**
+     * @brief Construct graph containing the given nodes and edges.
+     */
+    Graph(std::vector<Node<NodePropertyT>>&& nodes, std::vector<Edge<EdgePropertyT>>&& edges)
+        : m_nodes(std::move(nodes))
+        , m_edges(std::move(edges))
+    {
+    }
+
+    /**
+     * @brief add a node to the graph. The property of the node is constructed from arguments.
+     *
+     * @param id id for the node
+     * @tparam args additional arguments for node construction
+     */
+    template <class... Args>
+        requires std::constructible_from<NodePropertyT, Args...>
+    void add_node(int id, Args&&... args)
+    {
+        m_nodes.emplace_back(id, std::forward<Args>(args)...);
+    }
+
+    /**
+     * @brief add an edge to the graph. The property of the edge is constructed from arguments.
+     * @param start_node_idx id of start node
+     * @param end_node_idx id of end node
+     * @tparam args additional arguments for edge construction
+     *
+     * If an edge with the same start and end node indices already exists, it is replaced by the newly constructed edge.
+     */
+    template <class... Args>
+        requires std::constructible_from<EdgePropertyT, Args...>
+    void add_edge(size_t start_node_idx, size_t end_node_idx, Args&&... args)
     {
         assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
-        return *insert_sorted_replace(m_edges,
-                                      Edge<EdgePropertyT>(start_node_idx, end_node_idx, std::forward<Args>(args)...),
-                                      [](auto&& e1, auto&& e2) {
-                                          return e1.start_node_idx == e2.start_node_idx
-                                                     ? e1.end_node_idx < e2.end_node_idx
-                                                     : e1.start_node_idx < e2.start_node_idx;
-                                      });
+        insert_sorted_replace(m_edges, Edge<EdgePropertyT>(start_node_idx, end_node_idx, std::forward<Args>(args)...),
+                              [](auto&& e1, auto&& e2) {
+                                  return e1.start_node_idx == e2.start_node_idx ? e1.end_node_idx < e2.end_node_idx
+                                                                                : e1.start_node_idx < e2.start_node_idx;
+                              });
     }
 
     /**
@@ -260,14 +327,14 @@ private:
  * @param[in] export_time_series If true, reads data for each day of simulation and writes it in the same directory as the input files.
  * @param[in] rki_age_groups Specifies whether rki-age_groups should be used.
  */
-template <class TestAndTrace, class ContactPattern, class Model, class MobilityParams, class Parameters,
-          class ReadFunction, class NodeIdFunction, typename FP = double>
+template <typename FP, class TestAndTrace, class ContactPattern, class Model, class MobilityParams, class Parameters,
+          class ReadFunction, class NodeIdFunction>
 IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
                          const std::string& population_data_path, bool is_node_for_county,
                          Graph<Model, MobilityParams>& params_graph, ReadFunction&& read_func,
-                         NodeIdFunction&& node_func, const std::vector<double>& scaling_factor_inf,
-                         double scaling_factor_icu, double tnt_capacity_factor, int num_days = 0,
-                         bool export_time_series = false, bool rki_age_groups = true)
+                         NodeIdFunction&& node_func, const std::vector<FP>& scaling_factor_inf, FP scaling_factor_icu,
+                         FP tnt_capacity_factor, int num_days = 0, bool export_time_series = false,
+                         bool rki_age_groups = true)
 
 {
     BOOST_OUTCOME_TRY(auto&& node_ids, node_func(population_data_path, is_node_for_county, rki_age_groups));
@@ -299,11 +366,11 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
         auto holiday_periods = regions::get_holidays(regions::get_state_id(id), start_date, end_date);
         auto& contacts       = nodes[node_idx].parameters.template get<ContactPattern>();
         contacts.get_school_holidays() =
-            std::vector<std::pair<mio::SimulationTime, mio::SimulationTime>>(holiday_periods.size());
+            std::vector<std::pair<mio::SimulationTime<FP>, mio::SimulationTime<FP>>>(holiday_periods.size());
         std::transform(
             holiday_periods.begin(), holiday_periods.end(), contacts.get_school_holidays().begin(), [=](auto& period) {
-                return std::make_pair(mio::SimulationTime(mio::get_offset_in_days(period.first, start_date)),
-                                      mio::SimulationTime(mio::get_offset_in_days(period.second, start_date)));
+                return std::make_pair(mio::SimulationTime<FP>(mio::get_offset_in_days(period.first, start_date)),
+                                      mio::SimulationTime<FP>(mio::get_offset_in_days(period.second, start_date)));
             });
 
         //uncertainty in populations
@@ -311,9 +378,9 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
             for (auto j = Index<typename Model::Compartments>(0); j < Model::Compartments::Count; ++j) {
                 auto& compartment_value = nodes[node_idx].populations[{i, j}];
                 compartment_value =
-                    UncertainValue<FP>(0.5 * (1.1 * double(compartment_value) + 0.9 * double(compartment_value)));
-                compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * double(compartment_value),
-                                                                                     1.1 * double(compartment_value)));
+                    UncertainValue<FP>(0.5 * (1.1 * compartment_value.value() + 0.9 * compartment_value.value()));
+                compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * compartment_value.value(),
+                                                                                     1.1 * compartment_value.value()));
             }
         }
 
@@ -333,11 +400,11 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
  * @param[in] commuting_weights Vector with a commuting weight for every AgeGroup.
  * @param[in] indices_of_saved_edges Vector of vectors with indices of the compartments that should be saved on the edges.
  */
-template <class ContactLocation, class Model, class MobilityParams, class MobilityCoefficientGroup,
+template <typename FP, class ContactLocation, class Model, class MobilityParams, class MobilityCoefficientGroup,
           class InfectionState, class ReadFunction>
 IOResult<void> set_edges(const fs::path& mobility_data_file, Graph<Model, MobilityParams>& params_graph,
                          std::initializer_list<InfectionState>& mobile_compartments, size_t contact_locations_size,
-                         ReadFunction&& read_func, std::vector<ScalarType> commuting_weights,
+                         ReadFunction&& read_func, std::vector<FP> commuting_weights,
                          std::vector<std::vector<size_t>> indices_of_saved_edges = {})
 {
     // mobility between nodes
@@ -357,7 +424,7 @@ IOResult<void> set_edges(const fs::path& mobility_data_file, Graph<Model, Mobili
             auto mobility_coeffs = MobilityCoefficientGroup(contact_locations_size, populations.numel());
             auto num_age_groups  = (size_t)params_graph.nodes()[county_idx_i].property.parameters.get_num_groups();
             commuting_weights =
-                (commuting_weights.size() == 0 ? std::vector<ScalarType>(num_age_groups, 1.0) : commuting_weights);
+                (commuting_weights.size() == 0 ? std::vector<FP>(num_age_groups, 1.0) : commuting_weights);
             //commuters
             auto working_population = 0.0;
             for (auto age = AgeGroup(0); age < populations.template size<mio::AgeGroup>(); ++age) {
@@ -381,24 +448,6 @@ IOResult<void> set_edges(const fs::path& mobility_data_file, Graph<Model, Mobili
     }
 
     return success();
-}
-
-/**
- * Create an unconnected graph.
- * Can be used to save space on disk when writing parameters if the edges are not required.
- * @param node_properties Vector of node properties of all nodes, e.g., parameters in each model node.
- * @param node_ids Indices for the nodes.
- * @return Graph with nodes only having no edges.
- */
-template <class NodePropertyT, class EdgePropertyT>
-auto create_graph_without_edges(const std::vector<NodePropertyT>& node_properties, const std::vector<int>& node_ids)
-{
-    // create a graph without edges for writing to file
-    auto graph = mio::Graph<NodePropertyT, EdgePropertyT>();
-    for (auto i = size_t(0); i < node_ids.size(); ++i) {
-        graph.add_node(node_ids[i], node_properties[i]);
-    }
-    return graph;
 }
 
 template <class T>

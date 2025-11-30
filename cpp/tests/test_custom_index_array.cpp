@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Khoa Nguyen
@@ -382,16 +382,14 @@ TEST(CustomIndexArray, resize_one_dimension)
 }
 
 // Additional test for checking the set_multiple functionality
-TEST(CustomIndexArray, setMultiple_validIndices) {
+TEST(CustomIndexArray, setMultiple_validIndices)
+{
     using ArrayType = mio::CustomIndexArray<int, Dim1, Dim2>;
     // Initialize with zeros
     ArrayType array({mio::Index<Dim1>(3), Dim2::Count}, 0);
 
     // Define indices to set
-    std::vector<ArrayType::Index> indices = {
-        {mio::Index<Dim1>(0), Dim2::Male},
-        {mio::Index<Dim1>(2), Dim2::Female}
-    };
+    std::vector<ArrayType::Index> indices = {{mio::Index<Dim1>(0), Dim2::Male}, {mio::Index<Dim1>(2), Dim2::Female}};
 
     // Set these indices to 42
     array.set_multiple(indices, 42);
@@ -407,7 +405,8 @@ TEST(CustomIndexArray, setMultiple_validIndices) {
     EXPECT_EQ((array[{mio::Index<Dim1>(2), Dim2::Male}]), 0);
 }
 
-TEST(CustomIndexArray, setMultiple_emptyIndices) {
+TEST(CustomIndexArray, setMultiple_emptyIndices)
+{
     using ArrayType = mio::CustomIndexArray<int, Dim1, Dim2>;
     // Initialize with fives
     ArrayType array({mio::Index<Dim1>(2), Dim2::Count}, 5);
@@ -423,5 +422,27 @@ TEST(CustomIndexArray, setMultiple_emptyIndices) {
         for (int gender = 0; gender < static_cast<int>(Dim2::Count); ++gender) {
             EXPECT_EQ((array[{mio::Index<Dim1>(age), static_cast<Dim2>(gender)}]), 5);
         }
+    }
+}
+
+TEST(CustomIndexArray, convert_floating_point)
+{
+    // case: float arrays with mixed precision; expect same result after conversion through double precision
+    float value_float = 0.10005f;
+    auto size_dim1    = mio::Index<Dim1>(3);
+    mio::CustomIndexArray<float, Dim1> array_float({size_dim1}, value_float);
+    mio::CustomIndexArray<float, Dim1> array_float2 = array_float.convert<double>().convert<float>();
+    for (auto i = mio::Index<Dim1>(0); i < size_dim1; ++i) {
+        EXPECT_FLOAT_EQ(array_float2[i], value_float);
+    }
+
+    // case: double arrays with mixed precision; expect the value to be truncated during conversion to float
+    double value_double = 1.0 + 5e-16;
+    mio::CustomIndexArray<double, Dim1> array_double({size_dim1}, value_double);
+    array_float = array_double.convert<float>();
+    for (auto i = mio::Index<Dim1>(0); i < size_dim1; ++i) {
+        // Check if array_double is unchanged
+        EXPECT_DOUBLE_EQ(array_double[i], value_double);
+        EXPECT_FLOAT_EQ(array_float[i], 1.f);
     }
 }

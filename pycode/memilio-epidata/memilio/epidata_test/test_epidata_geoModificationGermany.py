@@ -107,7 +107,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         '083', '084', '091', '092', '093', '094', '095', '096', '097', '100',
         '110', '120', '130', '145', '146', '147', '150', '160']
     county_table_test_headers = [
-        'ID_County', 'type', 'County', 'NUTS3', 'Area', 'Population',
+        'ID_County', 'County', 'NUTS3', 'Area', 'Population',
         'population_male', 'population_female', 'population_per_km2']
     test_list_regions1 = list(range(32))+[33]
     test_list_regions2 = [str(i).zfill(2) for i in range(32)]+['33']

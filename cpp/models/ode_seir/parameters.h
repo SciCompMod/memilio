@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
@@ -39,7 +39,7 @@ namespace oseir
 /**
  * @brief probability of getting infected from a contact
  */
-template <typename FP = double>
+template <typename FP>
 struct TransmissionProbabilityOnContact {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -55,7 +55,7 @@ struct TransmissionProbabilityOnContact {
 /**
  * @brief the latent time in day unit
  */
-template <typename FP = double>
+template <typename FP>
 struct TimeExposed {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -71,7 +71,7 @@ struct TimeExposed {
 /**
  * @brief the infectious time in day unit
  */
-template <typename FP = double>
+template <typename FP>
 struct TimeInfected {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -87,7 +87,7 @@ struct TimeInfected {
 /**
  * @brief the contact patterns within the society are modelled using a ContactMatrix
  */
-template <class FP = ScalarType>
+template <class FP>
 struct ContactPatterns {
     using Type = UncertainContactMatrix<FP>;
     static Type get_default(AgeGroup size)
@@ -100,14 +100,14 @@ struct ContactPatterns {
     }
 };
 
-template <typename FP = double>
+template <typename FP>
 using ParametersBase =
     ParameterSet<TransmissionProbabilityOnContact<FP>, TimeExposed<FP>, TimeInfected<FP>, ContactPatterns<FP>>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
  */
-template <typename FP = double>
+template <typename FP>
 class Parameters : public ParametersBase<FP>
 {
 public:
@@ -124,7 +124,7 @@ public:
 
     /**
      * @brief Checks whether all Parameters satisfy their corresponding constraints and applies them, if they do not.
-     * Time spans cannot be negative and probabilities can only take values between [0,1]. 
+     * Time spans cannot be negative and probabilities can only take values between [0,1].
      *
      * Attention: This function should be used with care. It is necessary for some test problems to run through quickly,
      *            but in a manual execution of an example, check_constraints() may be preferred. Note that the apply_constraints()
@@ -133,18 +133,18 @@ public:
      *            (like 0 or 1 for probabilities or small positive values for time spans) values are set here and a manual adaptation
      *            may often be necessary to have set meaningful values.
      *
-     * @return Returns true if one ore more constraint were corrected, false otherwise.  
+     * @return Returns true if one ore more constraint were corrected, false otherwise.
      */
     bool apply_constraints()
     {
-        const double tol_times = 1e-1;
+        const FP tol_times = 1e-1;
 
         int corrected = false;
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
             if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
                 log_warning(
-                    "Constraint check: Parameter TimeExposed changed from {:.4f} to {:.4f}. Please note that "
+                    "Constraint check: Parameter TimeExposed changed from {} to {}. Please note that "
                     "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                     "and reset parameters.",
                     this->template get<TimeExposed<FP>>()[i], tol_times);
@@ -153,7 +153,7 @@ public:
             }
             if (this->template get<TimeInfected<FP>>()[i] < tol_times) {
                 log_warning(
-                    "Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
+                    "Constraint check: Parameter TimeInfected changed from {} to {}. Please note that "
                     "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                     "and reset parameters.",
                     this->template get<TimeInfected<FP>>()[i], tol_times);
@@ -163,7 +163,7 @@ public:
             if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
                 this->template get<TransmissionProbabilityOnContact<FP>>()[i] > 1.0) {
                 log_warning(
-                    "Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
+                    "Constraint check: Parameter TransmissionProbabilityOnContact changed from {} to {} ",
                     this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0);
                 this->template get<TransmissionProbabilityOnContact<FP>>()[i] = 0.0;
                 corrected                                                     = true;
@@ -173,35 +173,35 @@ public:
     }
 
     /**
-     * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error 
+     * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error
      * if constraints are not satisfied.
-     * @return Returns true if one constraint is not satisfied, otherwise false.   
+     * @return Returns true if one constraint is not satisfied, otherwise false.
      */
     bool check_constraints() const
     {
-        const double tol_times = 1e-1;
+        const FP tol_times = 1e-1;
 
         for (auto i = AgeGroup(0); i < m_num_groups; i++) {
             if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
-                log_error(
-                    "Constraint check: Parameter TimeExposed {:.4f} smaller or equal {:.4f}. Please note that "
+                log_warning(
+                    "Constraint check: Parameter TimeExposed {} smaller or equal {}. Please note that "
                     "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                     "and reset parameters.",
-                    this->template get<TimeExposed<FP>>()[i], 0.0);
+                    this->template get<TimeExposed<FP>>()[i], tol_times);
                 return true;
             }
             if (this->template get<TimeInfected<FP>>()[i] < tol_times) {
-                log_error(
-                    "Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
+                log_warning(
+                    "Constraint check: Parameter TimeInfected {} smaller or equal {}. Please note that "
                     "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                     "and reset parameters.",
-                    this->template get<TimeInfected<FP>>()[i], 0.0);
+                    this->template get<TimeInfected<FP>>()[i], tol_times);
                 return true;
             }
             if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
                 this->template get<TransmissionProbabilityOnContact<FP>>()[i] > 1.0) {
-                log_error("Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or "
-                          "greater {:.4f}",
+                log_error("Constraint check: Parameter TransmissionProbabilityOnContact {} smaller {} or "
+                          "greater {}",
                           this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0, 1.0);
                 return true;
             }

@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors:  Lena Ploetzke, Anna Wendler
@@ -54,41 +54,51 @@ std::string setup(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
-    // This is a simple example to demonstrate how to set initial data for the IDE-SECIR model using real data.
+    // This is a simple example to demonstrate how to set initial data for the IDE-SECIR model using reported data.
     // A default initialization is used if no filename is provided in the command line.
     // Have a look at the documentation of the set_initial_flows() function in models/ide_secir/parameters_io.h for a
     // description of how to download suitable data.
-    // A valid filename could be for example "../../data/pydata/Germany/cases_all_germany_ma7.json" if the functionality to download real data is used.
-    // The default parameters of the IDE-SECIR model are used, so that the simulation results are not realistic and are for demonstration purpose only.
+    // A valid filename could be for example "../../data/pydata/Germany/cases_all_germany_ma7.json" if the functionality
+    // to download reported data is used.
+    // The default parameters of the IDE-SECIR model are used, so note that the simulation results are not realistic
+    // and are for demonstration purpose only.
+
+    // Define simulation parameters.
+    ScalarType t0   = 0.;
+    ScalarType tmax = 2.;
+    ScalarType dt   = 0.01;
 
     // Initialize model.
     size_t num_agegroups = 1;
-    mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_population =
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_population_init =
         mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 80 * 1e6);
-    mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths = mio::CustomIndexArray<ScalarType, mio::AgeGroup>(
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths_init = mio::CustomIndexArray<ScalarType, mio::AgeGroup>(
         mio::AgeGroup(num_agegroups),
-        0.); // The number of deaths will be overwritten if real data is used for initialization.
-    ScalarType dt = 0.5;
-    mio::isecir::Model model(mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionTransition::Count),
-                             total_population, deaths, num_agegroups);
+        0.); // The number of deaths will be overwritten if reported data is used for initialization.
+
+    mio::isecir::Model model(mio::TimeSeries<ScalarType>((size_t)mio::isecir::InfectionTransition::Count),
+                             total_population_init, deaths_init, num_agegroups);
 
     // Check provided parameters.
     std::string filename = setup(argc, argv);
     if (filename.empty()) {
         std::cout << "You did not provide a valid filename. A default initialization is used." << std::endl;
 
-        using Vec = mio::TimeSeries<ScalarType>::Vector;
-        mio::TimeSeries<ScalarType> init(num_agegroups * (size_t)mio::isecir::InfectionTransition::Count);
-        init.add_time_point<Eigen::VectorXd>(-7.,
-                                             Vec::Constant((size_t)mio::isecir::InfectionTransition::Count, 1. * dt));
-        while (init.get_last_time() < -dt / 2.) {
-            init.add_time_point(init.get_last_time() + dt,
-                                Vec::Constant((int)mio::isecir::InfectionTransition::Count, 1. * dt));
+        // Create TimeSeries with num_transitions * num_agegroups elements where initial transitions needed for simulation
+        // will be stored. We require values for the transitions for a sufficient number of time points before the start of
+        // the simulation to initialize our model.
+        using Vec = Eigen::VectorX<ScalarType>;
+        mio::TimeSeries<ScalarType> transitions_init((size_t)mio::isecir::InfectionTransition::Count * num_agegroups);
+        transitions_init.add_time_point<Eigen::VectorX<ScalarType>>(
+            -7., Vec::Constant((size_t)mio::isecir::InfectionTransition::Count, 1. * dt));
+        while (transitions_init.get_last_time() < t0 - dt / 2.) {
+            transitions_init.add_time_point(transitions_init.get_last_time() + dt,
+                                            Vec::Constant((size_t)mio::isecir::InfectionTransition::Count, 1. * dt));
         }
-        model.transitions = init;
+        model.transitions = transitions_init;
     }
     else {
-        // Use the real data for initialization.
+        // Use reported data for initialization.
         // Here we assume that the file contains data without age resolution, hence we use read_confirmed_cases_noage()
         // for reading the data and mio::ConfirmedCasesNoAgeEntry as EntryType in set_initial_flows().
 
@@ -112,7 +122,7 @@ int main(int argc, char** argv)
 
     // Carry out simulation.
     mio::isecir::Simulation sim(model, dt);
-    sim.advance(2.);
+    sim.advance(tmax);
 
     // Print results.
     sim.get_transitions().print_table({"S->E", "E->C", "C->I", "C->R", "I->H", "I->R", "H->U", "H->R", "U->D", "U->R"},

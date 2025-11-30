@@ -29,6 +29,7 @@
 #include "memilio/io/epi_data.h"
 #include "memilio/io/parameters_io.h"
 #include "memilio/io/result_io.h"
+#include "memilio/math/math_utils.h"
 
 namespace mio
 {
@@ -69,7 +70,7 @@ IOResult<void> read_confirmed_cases_data(
  * @param[in] date Date at which the data is read.
  * @param[in] scaling_factor_inf Factors by which to scale the confirmed cases of rki data.
  */
-template <typename FP = double>
+template <typename FP>
 IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, std::vector<ConfirmedCasesDataEntry>& case_data,
                                         const std::vector<int>& region, Date date,
                                         const std::vector<double>& scaling_factor_inf)
@@ -139,7 +140,11 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, std::vect
                                                 t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf_full));
 
     for (size_t node = 0; node < model.size(); node++) {
-        if (std::accumulate(num_InfectedSymptoms[node].begin(), num_InfectedSymptoms[node].end(), 0.0) > 0) {
+
+        if (std::accumulate(num_InfectedSymptoms[node].begin(), num_InfectedSymptoms[node].end(), FP(0.0),
+                            [](const FP& a, const FP& b) {
+                                return evaluate_intermediate<FP>(a + b);
+                            }) > 0.0) {
             size_t num_groups = (size_t)model[node].parameters.get_num_groups();
             if (num_groups == num_age_groups) {
                 for (size_t i = 0; i < num_groups; i++) {
@@ -161,8 +166,10 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, std::vect
                 }
             }
             else {
-                const auto sum_vec = [](const std::vector<double>& v) {
-                    return std::accumulate(v.begin(), v.end(), 0.0);
+                const auto sum_vec = [](const std::vector<FP>& v) {
+                    return std::accumulate(v.begin(), v.end(), FP(0.0), [](const FP& a, const FP& b) {
+                        return evaluate_intermediate<FP>(a + b);
+                    });
                 };
                 const size_t i0                                                  = 0;
                 model[node].populations[{AgeGroup(i0), InfectionState::Exposed}] = sum_vec(num_Exposed[node]);
@@ -199,7 +206,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, std::vect
  * @param[in] date Date at which the data is read.
  * @param[in] scaling_factor_inf Factors by which to scale the confirmed cases of rki data.
  */
-template <typename FP = double>
+template <typename FP>
 IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std::string& path,
                                         std::vector<int> const& region, Date date,
                                         const std::vector<double>& scaling_factor_inf)
@@ -218,7 +225,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std
      * @param[in] date Date for which the arrays are initialized.
      * @param[in] scaling_factor_icu factor by which to scale the icu cases of divi data.
      */
-template <typename FP = double>
+template <typename FP>
 IOResult<void> set_divi_data(std::vector<Model<FP>>& model, const std::string& path, const std::vector<int>& vregion,
                              Date date, double scaling_factor_icu)
 {
@@ -261,9 +268,8 @@ IOResult<void> set_divi_data(std::vector<Model<FP>>& model, const std::string& p
 * @param[in] num_population Vector of population data. The size should be the same as vregion and model.
 * @param[in] vregion Vector of keys of the regions of interest.
 */
-template <typename FP = double>
-IOResult<void> set_population_data(std::vector<Model<FP>>& model,
-                                   const std::vector<std::vector<double>>& num_population,
+template <typename FP>
+IOResult<void> set_population_data(std::vector<Model<FP>>& model, const std::vector<std::vector<FP>>& num_population,
                                    const std::vector<int>& vregion)
 {
     assert(num_population.size() == vregion.size());
@@ -280,7 +286,10 @@ IOResult<void> set_population_data(std::vector<Model<FP>>& model,
             }
         }
         else if (model_groups == 1 && data_groups >= 1) {
-            const double total = std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0);
+            const FP total = std::accumulate(num_population[region].begin(), num_population[region].end(), FP(0.0),
+                                             [](const FP& a, const FP& b) {
+                                                 return evaluate_intermediate<FP>(a + b);
+                                             });
             model[region].populations.template set_difference_from_group_total<AgeGroup>(
                 {AgeGroup(0), InfectionState::Susceptible}, total);
         }
@@ -295,7 +304,7 @@ IOResult<void> set_population_data(std::vector<Model<FP>>& model,
 * @param[in] path Path to RKI file containing population data.
 * @param[in] vregion Vector of keys of the regions of interest.
 */
-template <typename FP = double>
+template <typename FP>
 IOResult<void> set_population_data(std::vector<Model<FP>>& model, const std::string& path,
                                    const std::vector<int>& vregion)
 {

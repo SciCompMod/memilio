@@ -32,7 +32,7 @@ using FeedbackSim = mio::FeedbackSimulation<double, mio::Simulation<double, mio:
 // helper function to initialize the model with population and parameters
 void initialize_model(mio::osecir::Model<double>& model, double cont_freq)
 {
-    model.parameters.set<mio::osecir::StartDay>(60);
+    model.parameters.set<mio::osecir::StartDay<double>>(60);
     model.parameters.set<mio::osecir::Seasonality<double>>(0.2);
 
     // Mean stay times per compartment
@@ -54,8 +54,8 @@ void initialize_model(mio::osecir::Model<double>& model, double cont_freq)
     model.parameters.get<mio::osecir::DeathsPerCritical<double>>()                 = 0.3;
 
     // contact matrix
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<double>>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    mio::ContactMatrixGroup<double>& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<double>>();
+    contact_matrix[0] = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, cont_freq));
 }
 
 // helper function to initialize the feedback mechanism parameters for a simulation
@@ -82,11 +82,11 @@ void initialize_feedback(FeedbackSim& feedback_simulation)
 }
 
 // helper function to create the graph with nodes and edges
-mio::Graph<mio::SimulationNode<FeedbackSim>, mio::MobilityEdge<double>>
+mio::Graph<mio::SimulationNode<double, FeedbackSim>, mio::MobilityEdge<double>>
 create_graph(int num_nodes, int total_population, double cont_freq)
 {
     // Create a graph for the metapopulation simulation
-    mio::Graph<mio::SimulationNode<FeedbackSim>, mio::MobilityEdge<double>> g;
+    mio::Graph<mio::SimulationNode<double, FeedbackSim>, mio::MobilityEdge<double>> g;
 
     // Create models and add nodes to the graph
     for (int i = 0; i < num_nodes; ++i) {
@@ -111,6 +111,8 @@ create_graph(int num_nodes, int total_population, double cont_freq)
         else {
             model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}] = total_population;
         }
+        // The function apply_constraints() ensures that all parameters are within their defined bounds.
+        // Note that negative values are set to zero instead of stopping the simulation.        
         model.apply_constraints();
 
         // Determine the index for the ICU state (InfectedCritical) for the feedback mechanism

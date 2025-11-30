@@ -30,7 +30,7 @@ namespace abm
  */
 const constexpr int MAX_NUM_AGE_GROUPS = 64;
 
-}
+} // namespace abm
 } // namespace mio
 
 #endif

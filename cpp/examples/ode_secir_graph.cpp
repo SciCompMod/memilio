@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Henrik Zunker
@@ -34,9 +34,9 @@ int main()
     const auto dt   = 0.5; //time step of Mobility, daily Mobility every second step
 
     const size_t num_groups = 1;
-    mio::osecir::Model model(num_groups);
+    mio::osecir::Model<ScalarType> model(num_groups);
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}] = 10000;
-    model.parameters.set<mio::osecir::StartDay>(0);
+    model.parameters.set<mio::osecir::StartDay<ScalarType>>(0);
     model.parameters.set<mio::osecir::Seasonality<ScalarType>>(0.2);
 
     model.parameters.get<mio::osecir::TimeExposed<ScalarType>>()            = 3.2;
@@ -55,16 +55,17 @@ int main()
     model.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()                 = 0.25;
     model.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()                 = 0.3;
 
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
+    contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, 10));
 
     //two mostly identical groups
     auto model_group1 = model;
     auto model_group2 = model;
     //some contact restrictions in model_group1
-    mio::ContactMatrixGroup& contact_matrix_m1 =
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix_m1 =
         model_group1.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
-    contact_matrix_m1[0].add_damping(0.7, mio::SimulationTime(15.));
+    contact_matrix_m1[0].add_damping(0.7, mio::SimulationTime<ScalarType>(15.0));
 
     //infection starts in group 1
     model_group1.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}] = 9990;
@@ -91,13 +92,15 @@ int main()
             model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}));
     }
 
-    mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MobilityEdge<ScalarType>> g;
+    mio::Graph<mio::SimulationNode<ScalarType, mio::osecir::Simulation<ScalarType>>, mio::MobilityEdge<ScalarType>> g;
     g.add_node(1001, model_group1, t0);
     g.add_node(1002, model_group2, t0);
-    g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1), indices_save_edges);
-    g.add_edge(1, 0, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1), indices_save_edges);
+    g.add_edge(0, 1, Eigen::VectorX<ScalarType>::Constant((size_t)mio::osecir::InfectionState::Count, 0.1),
+               indices_save_edges);
+    g.add_edge(1, 0, Eigen::VectorX<ScalarType>::Constant((size_t)mio::osecir::InfectionState::Count, 0.1),
+               indices_save_edges);
 
-    auto sim = mio::make_mobility_sim(t0, dt, std::move(g));
+    auto sim = mio::make_mobility_sim<ScalarType>(t0, dt, std::move(g));
 
     sim.advance(tmax);
 

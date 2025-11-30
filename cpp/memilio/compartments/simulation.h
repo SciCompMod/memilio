@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Jan Kleinert, Daniel Abele
@@ -39,7 +39,7 @@ using DefaultIntegratorCore = mio::ControlledStepperWrapper<FP, boost::numeric::
  * @tparam FP A floating point type, e.g. double.
  * @tparam M An implementation of a CompartmentalModel.
  */
-template <typename FP, class M>
+template <typename FP, IsCompartmentalModel<FP> M>
 class Simulation : public details::SimulationBase<FP, M, OdeIntegrator<FP>>
 {
 public:
@@ -85,8 +85,8 @@ template <typename FP, class Sim>
 using advance_expr_t = decltype(std::declval<Sim>().advance(std::declval<FP>()));
 
 /**
- * Template meta function to check if a type is a compartment model simulation. 
- * Defines a static constant of name `value`. 
+ * Template meta function to check if a type is a compartment model simulation.
+ * Defines a static constant of name `value`.
  * The constant `value` will be equal to true if Sim is a valid compartment simulation type.
  * Otherwise, `value` will be equal to false.
  * @tparam FP floating point type, e.g., double
@@ -95,7 +95,7 @@ using advance_expr_t = decltype(std::declval<Sim>().advance(std::declval<FP>()))
 template <typename FP, class Sim>
 using is_compartment_model_simulation =
     std::integral_constant<bool, (is_expression_valid<advance_expr_t, FP, Sim>::value &&
-                                  is_compartment_model<FP, typename Sim::Model>::value)>;
+                                  IsCompartmentalModel<typename Sim::Model, FP>)>;
 
 /**
  * @brief Run a Simulation of a CompartmentalModel.

@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert
@@ -258,4 +258,27 @@ TEST(TestPopulations, populations_constraints)
 
     // Reactive log output.
     mio::set_log_level(mio::LogLevel::warn);
+}
+
+TEST(TestPopulations, convert_floating_point)
+{
+    // similar test to CustomIndexArray.convert_floating_point
+    // case: float arrays with mixed precision; expect same result after conversion through double precision
+    float value_float = 0.10005f;
+    auto size_dim1    = mio::Index<TestAgeGroup>(7);
+    mio::Populations<float, TestAgeGroup> pop_float({size_dim1}, value_float);
+    mio::Populations<float, TestAgeGroup> pop_float2 = pop_float.convert<double>().convert<float>();
+    for (auto i = mio::Index<TestAgeGroup>(0); i < size_dim1; ++i) {
+        ASSERT_FLOAT_EQ(pop_float2[i], value_float);
+    }
+
+    // case: double arrays with mixed precision; expect the value to be truncated during conversion to float
+    double value_double = 1.0 + 5e-16;
+    mio::Populations<float, TestAgeGroup> pop_double({size_dim1}, value_double);
+    pop_float = pop_double.convert<float>();
+    for (auto i = mio::Index<TestAgeGroup>(0); i < size_dim1; ++i) {
+        // Check if pop_double is unchanged
+        ASSERT_DOUBLE_EQ(pop_double[i], value_double);
+        ASSERT_FLOAT_EQ(pop_float[i], 1.f);
+    }
 }

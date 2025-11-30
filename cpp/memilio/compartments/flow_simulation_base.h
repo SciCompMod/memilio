@@ -37,10 +37,9 @@ namespace details
  * @tparam M An implementation of FlowModel.
  * @tparam Integrands One or more function types used for defining the right hand side of a system of equations.
  */
-template <typename FP, class M, class... Integrands>
+template <typename FP, IsFlowModel<FP> M, class... Integrands>
 class FlowSimulationBase : public SimulationBase<FP, M, Integrands...>
 {
-    static_assert(is_flow_model<FP, M>::value, "Template parameter must be a flow model.");
 
 public:
     using Base  = SimulationBase<FP, M, Integrands...>;

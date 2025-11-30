@@ -108,16 +108,16 @@ class StatusCodeCategory : public std::error_category
 {
 public:
     /**
-         * name of the status
-         */
+     * name of the status
+     */
     virtual const char* name() const noexcept override final
     {
         return "StatusCode";
     }
 
     /**
-         * convert enum to string message.
-         */
+     * convert enum to string message.
+     */
     virtual std::string message(int c) const override final
     {
         switch (static_cast<StatusCode>(c)) {
@@ -141,8 +141,8 @@ public:
     }
 
     /**
-         * convert to standard error code to make it comparable.
-         */
+     * convert to standard error code to make it comparable.
+     */
     virtual std::error_condition default_error_condition(int c) const noexcept override final
     {
         switch (static_cast<StatusCode>(c)) {
