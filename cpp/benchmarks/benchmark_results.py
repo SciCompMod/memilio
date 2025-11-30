@@ -46,14 +46,14 @@ class rawData:
 
         # Runtime memilio single thread (normalized per time step)
         self.memilio_times_single_core = np.array(
-            [32947, 67147, 137760, 274461, 549385, 1119135, 2193598, 7112954, 17757387]) * (1/120.0) * (1/1000)
+            [31023, 62863, 124198, 248658, 498499, 1003958, 1992911, 6342611, 15568413]) * (1/120.0) * (1/1000)
 
         # Runtime memilio four threads (normalized per time step)
         self.memilio_times_four_cores = np.array(
-            [13812, 27802, 56257, 113088, 223888, 454182, 928952, 1944267, 4877925]) * (1/120.0)*(1/1000)
+            [14744, 30224, 60749, 119645, 240825, 496879, 1031504, 2561311, 5752128]) * (1/120.0)*(1/1000)
 
         self.memilio_times_sixteen_cores = np.array(
-            [11571, 23337, 46865, 92908, 184811, 369252, 752734, 1609745, 3396075]) * (1/120.0)*(1/1000)
+            [11818, 23459, 47549, 94222, 187279, 378181, 776280, 1656997, 3477961]) * (1/120.0)*(1/1000)
 
         # covasim single thread (normalized per time step)
         self.covasim = np.array(
@@ -68,19 +68,19 @@ class rawData:
 
         # Runtime with 250.000 agents per core
         self.memilio_weak_scaling_250k = np.array(
-            [8406, 10466, 15257, 25711, 46061, 97237]) * (1/120.0)*(1/1000)
+            [7625, 10058, 14891, 25895, 46850, 124340]) * (1/120.0)*(1/1000)
 
         # Runtime with 500.000 agents per core
         self.memilio_weak_scaling_500k = np.array(
-            [16674, 21146, 30163, 52217, 91833, 239517]) * (1/120.0)*(1/1000)
+            [15343, 20838, 30058, 52553, 93834, 237016]) * (1/120.0)*(1/1000)
 
         # Runtime with 1.000.000 agents per core
         self.memilio_weak_scaling_1m = np.array(
-            [33568, 42239, 61171, 103338, 184308, 484596]) * (1/120.0)*(1/1000)
+            [31135, 41238, 60003, 103803, 188685, 483887]) * (1/120.0)*(1/1000)
 
         # Runtime with 2.000.000 agents per core
         self.memilio_weak_scaling_2m = np.array(
-            [66931, 85021, 124221, 205287, 367955, 764577]) * (1/120.0)*(1/1000)
+            [61156, 82754, 119354, 208809, 377700, 891970]) * (1/120.0)*(1/1000)
 
         # now data for strong scaling
 
@@ -95,7 +95,7 @@ class rawData:
             [2.646570e+04, 2.068018e+04,  1.078597e+04, 5.317400e+03, 2.740988e+03, 1.440401e+03, 8.953795e+02, 5.889476e+02])
         self.memilio_strong_scaling_128_runs_multiple_nodes = np.array(
             # only last data point available
-            [7.543782e+04, 3.803566e+04, 1.878124e+04, 9.376841e+03, 4.762327e+03, 2.363056e+03, 1.186088e+03, 6.005680e+02])
+            [7.413365e+04, 3.721441e+04, 1.865978e+04, 9.374108e+03, 4.684981e+03, 2.357355e+03, 1.187477e+03, 6.005680e+02])
 
 
 class BenchmarkAnalyzer:
