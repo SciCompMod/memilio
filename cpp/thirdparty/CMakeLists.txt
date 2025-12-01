@@ -38,12 +38,6 @@ if(MEMILIO_USE_BUNDLED_SPDLOG)
     if(NOT spdlog_POPULATED)
         FetchContent_Populate(spdlog)
 
-        # Use spdlogs own shared/static switch (SPDLOG_BUILD_SHARED). Default to
-        # the project setting if not already defined.
-        if(NOT DEFINED SPDLOG_BUILD_SHARED)
-            set(SPDLOG_BUILD_SHARED ${BUILD_SHARED_LIBS} CACHE BOOL "Build spdlog as a shared library" FORCE)
-        endif()
-
         add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR} EXCLUDE_FROM_ALL)
     endif()
 
