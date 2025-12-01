@@ -82,7 +82,7 @@ public:
         const auto& params     = this->parameters;
         const auto& population = this->populations;
         const Eigen::MatrixXd commuting_strengths =
-            params.template get<CommutingStrengths<>>().get_cont_freq_mat().get_matrix_at(t);
+            params.template get<CommutingStrengths<>>().get_cont_freq_mat().get_matrix_at(SimulationTime<FP>(t));
         const size_t n_age_groups = (size_t)params.get_num_agegroups();
         const size_t n_regions    = (size_t)params.get_num_regions();
 
