@@ -255,7 +255,8 @@ TEST(TestOdeMetapop, compareSEIR)
     model.parameters.set<mio::oseirmetapop::TimeExposed<ScalarType>>(5.2);
     model.parameters.set<mio::oseirmetapop::TimeInfected<ScalarType>>(6);
     model.parameters.set<mio::oseirmetapop::TransmissionProbabilityOnContact<ScalarType>>(0.1);
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseirmetapop::ContactPatterns<ScalarType>>();
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.get<mio::oseirmetapop::ContactPatterns<ScalarType>>();
     contact_matrix[0].get_baseline().setConstant(2.7);
     contact_matrix[0].add_damping(0.6, mio::SimulationTime<ScalarType>(12.5));
 
