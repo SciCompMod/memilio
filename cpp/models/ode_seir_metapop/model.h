@@ -152,8 +152,9 @@ public:
         constexpr size_t num_infected_compartments = 2;
         const size_t total_infected_compartments   = num_infected_compartments * num_age_groups * num_regions;
 
-        ContactMatrixGroup const& contact_matrix      = params.template get<ContactPatterns<ScalarType>>();
-        ContactMatrixGroup const& commuting_strengths = params.template get<CommutingStrengths<ScalarType>>();
+        ContactMatrixGroup<ScalarType> const& contact_matrix = params.template get<ContactPatterns<ScalarType>>();
+        ContactMatrixGroup<ScalarType> const& commuting_strengths =
+            params.template get<CommutingStrengths<ScalarType>>();
         Populations const& population_after_commuting = params.template get<PopulationAfterCommuting<ScalarType>>();
 
         Eigen::MatrixXd F = Eigen::MatrixXd::Zero(total_infected_compartments, total_infected_compartments);
