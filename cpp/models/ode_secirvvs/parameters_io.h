@@ -187,7 +187,7 @@ IOResult<void> set_vaccination_data(Model<FP>& model, const std::vector<Vaccinat
     auto days_until_effective2 = static_cast<int>(
         floor(static_cast<FP>(model.parameters.template get<DaysUntilEffectiveImprovedImmunity<FP>>()[AgeGroup(0)])));
     auto vaccination_distance =
-        floor(static_cast<int>(static_cast<FP>(model.parameters.template get<VaccinationGap<FP>>()[AgeGroup(0)])));
+        static_cast<int>(floor(static_cast<FP>(model.parameters.template get<VaccinationGap<FP>>()[AgeGroup(0)])));
 
     for (auto&& vacc_data_entry : vacc_data) {
         auto date_df = vacc_data_entry.date;
