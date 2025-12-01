@@ -110,10 +110,10 @@ public:
                     const size_t Sjn = population.get_flat_index({Region(region_n), AgeGroup(age_j), Susceptible});
 
                     const double Nj_inv = 1.0 / (pop[Sjn] + pop[Ejn] + pop[Ijn] + pop[Rjn]);
-                    double coeffStoE =
-                        0.5 *
-                        params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t)(age_i, age_j) *
-                        params.template get<TransmissionProbabilityOnContact<FP>>()[AgeGroup(age_i)];
+                    double coeffStoE    = 0.5 *
+                                       params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(
+                                           SimulationTime<FP>(t))(age_i, age_j) *
+                                       params.template get<TransmissionProbabilityOnContact<FP>>()[AgeGroup(age_i)];
 
                     flows[Base::template get_flat_flow_index<Susceptible, Exposed>(
                         {Region(region_n), AgeGroup(age_i)})] +=
@@ -155,7 +155,7 @@ public:
         ContactMatrixGroup<ScalarType> const& contact_matrix = params.template get<ContactPatterns<ScalarType>>();
         ContactMatrixGroup<ScalarType> const& commuting_strengths =
             params.template get<CommutingStrengths<ScalarType>>();
-        Populations const& population_after_commuting = params.template get<PopulationAfterCommuting<ScalarType>>();
+        auto const& population_after_commuting = params.template get<PopulationAfterCommuting<ScalarType>>();
 
         Eigen::MatrixXd F = Eigen::MatrixXd::Zero(total_infected_compartments, total_infected_compartments);
         Eigen::MatrixXd V = Eigen::MatrixXd::Zero(total_infected_compartments, total_infected_compartments);
@@ -169,8 +169,10 @@ public:
                         auto const population_region_age = population_region.template slice<AgeGroup>({j.get(), 1});
                         auto Njm = std::accumulate(population_region_age.begin(), population_region_age.end(), 0.);
 
-                        double coeffStoE = 0.5 * contact_matrix.get_matrix_at(y.get_time(t_idx))(i.get(), j.get()) *
-                                           params.template get<TransmissionProbabilityOnContact<ScalarType>>()[i];
+                        double coeffStoE =
+                            0.5 *
+                            contact_matrix.get_matrix_at(SimulationTime<FP>(static_cast<FP>(t_idx)))(i.get(), j.get()) *
+                            params.template get<TransmissionProbabilityOnContact<ScalarType>>()[i];
                         if (n == m) {
                             F(i.get() * num_regions + n.get(), num_age_groups * num_regions + j.get() * num_regions +
                                                                    m.get()) += coeffStoE * y.get_value(t_idx)[Si] / Njm;
@@ -179,8 +181,10 @@ public:
                             F(i.get() * num_regions + n.get(),
                               num_age_groups * num_regions + j.get() * num_regions + m.get()) +=
                                 coeffStoE * y.get_value(t_idx)[Si] *
-                                commuting_strengths.get_matrix_at(y.get_time(t_idx))(n.get(), k.get()) *
-                                commuting_strengths.get_matrix_at(y.get_time(t_idx))(m.get(), k.get()) /
+                                commuting_strengths.get_matrix_at(SimulationTime<FP>(static_cast<FP>(t_idx)))(n.get(),
+                                                                                                              k.get()) *
+                                commuting_strengths.get_matrix_at(SimulationTime<FP>(static_cast<FP>(t_idx)))(m.get(),
+                                                                                                              k.get()) /
                                 population_after_commuting[{k, j}];
                         }
                     }
