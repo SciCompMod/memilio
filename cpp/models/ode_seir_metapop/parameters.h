@@ -225,7 +225,7 @@ public:
         }
         if ((this->template get<CommutingStrengths<FP>>()
                  .get_cont_freq_mat()
-                 .get_matrix_at(SimulationTime(0))
+                 .get_matrix_at(SimulationTime<FP>(0))
                  .rowwise()
                  .sum() -
              Eigen::VectorXd::Ones((size_t)this->get_num_regions()))
@@ -233,11 +233,11 @@ public:
                     .maxCoeff() > 1e-10 ||
             this->template get<CommutingStrengths<FP>>()
                     .get_cont_freq_mat()
-                    .get_matrix_at(SimulationTime(0))
+                    .get_matrix_at(SimulationTime<FP>(0))
                     .minCoeff() < 0.0 ||
             this->template get<CommutingStrengths<FP>>()
                     .get_cont_freq_mat()
-                    .get_matrix_at(SimulationTime(0))
+                    .get_matrix_at(SimulationTime<FP>(0))
                     .maxCoeff() > 1.0) {
             log_warning("Constraint check: Parameter CommutingStrengths does not ensure that the number of people "
                         "staying equals the complement of those leaving. Running without commuting.");
@@ -290,7 +290,7 @@ public:
         }
         if ((this->template get<CommutingStrengths<FP>>()
                  .get_cont_freq_mat()
-                 .get_matrix_at(SimulationTime(0))
+                 .get_matrix_at(SimulationTime<FP>(0))
                  .rowwise()
                  .sum() -
              Eigen::VectorXd::Ones((size_t)this->get_num_regions()))
@@ -298,11 +298,11 @@ public:
                     .maxCoeff() > 1e-10 ||
             this->template get<CommutingStrengths<FP>>()
                     .get_cont_freq_mat()
-                    .get_matrix_at(SimulationTime(0))
+                    .get_matrix_at(SimulationTime<FP>(0))
                     .minCoeff() < 0.0 ||
             this->template get<CommutingStrengths<FP>>()
                     .get_cont_freq_mat()
-                    .get_matrix_at(SimulationTime(0))
+                    .get_matrix_at(SimulationTime<FP>(0))
                     .maxCoeff() > 1.0) {
             log_error("Constraint check: Parameter CommutingStrengths does not ensure that the number of people "
                       "staying equals the complement of those leaving.");
