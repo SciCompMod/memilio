@@ -44,7 +44,7 @@ def plot_model_comparison_all_compartments(result_dir,  percentiles, num_age_gro
             # Start with index 1 as first age group is already contained in values
             for age in range(1, num_age_groups):
                 values += df.iloc[:, 1 + i + age * len(secir_dict)]
-            axs[int(i/2), i % 2].plot(df["Time"], values, label=labels[3],
+            axs[int(i/2), i % 2].plot(df["Time"], values,
                                       color=model_colors[3], linestyle=linestyles[3], linewidth=linewidth)
     while len(percentiles) > 0:
         if len(percentiles) == 1:
@@ -56,7 +56,7 @@ def plot_model_comparison_all_compartments(result_dir,  percentiles, num_age_gro
                     values += df.iloc[:, 1 +
                                       i + age * len(secir_dict)]
                 axs[int(i/2), i % 2].plot(df["Time"] +
-                                          start_time, values, label=labels[3], color=model_colors[3], linestyle=linestyles[3], linewidth=linewidth)
+                                          start_time, values, label=f"{percentiles[0]}% percentile of ABM", color=model_colors[3], linestyle=linestyles[3], linewidth=linewidth)
             del percentiles[0]
         else:
             df_low = pd.read_csv(result_dir + f"ABM_p{percentiles[0]}.csv")
@@ -75,13 +75,14 @@ def plot_model_comparison_all_compartments(result_dir,  percentiles, num_age_gro
                 axs[int(i/2), i % 2].plot(df_high["Time"] + start_time,
                                           values_high, color=colors['Teal'], alpha=0.3)
                 axs[int(i/2), i % 2].fill_between(df_low["Time"] + start_time, values_low,
-                                                  values_high, alpha=0.3, color=model_colors[3])
+                                                  values_high, alpha=0.3, color=model_colors[3], label=f"{int(percentiles[-1])-int(percentiles[0])}% percentile of ABM")
             del percentiles[0]
             del percentiles[-1]
 
     # Add results to plot for IDE, LCT and ODE.
     files = ["ode", "lct", "ide"]  # , "lct", "ide"
     files = [file + file_suffix for file in files]
+    dates = []
     for file in range(len(files)):
 
         # Load data.
@@ -119,15 +120,30 @@ def plot_model_comparison_all_compartments(result_dir,  percentiles, num_age_gro
     # Define some characteristics of the plot
     for i in range(num_plots):
         axs[int(i/2), i % 2].set_title(secir_dict[i], fontsize=8)
-        axs[int(i/2), i % 2].set_xlim(left=0, right=35)
-        # axs[int(i/2), i % 2].set_ylim(bottom=0, top=1500)
+        axs[int(i/2), i % 2].set_xlim(left=0, right=dates[-1])
+        # axs[int(i/2), i % 2].set_ylim(bottom=np.min(total[:, i]*0.7),
+        #                               top=np.max(total[:, i])*1.5)
         axs[int(i/2), i % 2].grid(True, linestyle='--', alpha=0.3)
         axs[int(i/2), i % 2].ticklabel_format(axis='y',
                                               style='sci', scilimits=(0, 0))
         axs[int(i/2), i % 2].tick_params(labelsize=8)
 
-    fig.legend(labels, loc="lower right",
-               fancybox=False, shadow=False, ncol=2, fontsize=10)  # bbox_to_anchor=(0.1, -0.73, 0.8, 0.8),
+    # Create legend with all unique labels from subplots
+    # Use dummy handle so that legend is sorted in a nicer way.
+    dummy_handle = plt.Line2D([], [], color='none')
+    all_handles = [dummy_handle]
+    all_labels = [""]
+    for ax in axs.flat:
+        handles, labels_temp = ax.get_legend_handles_labels()
+        for handle, label in zip(handles, labels_temp):
+            if label not in all_labels:
+                all_handles.append(handle)
+                all_labels.append(label)
+
+    fig.legend(all_handles, all_labels, loc="lower right",
+               fancybox=False, shadow=False, ncol=2, fontsize=10)
+    # fig.legend(labels, loc="lower right",
+    #            fancybox=False, shadow=False, ncol=2, fontsize=10)  # bbox_to_anchor=(0.1, -0.73, 0.8, 0.8),
 
     fig.supxlabel('Simulation time [days]', fontsize=12)
     fig.supylabel('Number of individuals', fontsize=12)

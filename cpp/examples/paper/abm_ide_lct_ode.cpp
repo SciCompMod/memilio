@@ -1042,7 +1042,7 @@ mio::IOResult<mio::abm::Model> initialize_abm(bool exponential_scenario, std::st
             deathsPerCritical[group];
         // Todo
         model.parameters.get<mio::abm::VirusShedFactor>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(group)}] =
-            mio::ParameterDistributionUniform(0., 0.2);
+            mio::ParameterDistributionUniform(0., 0.5);
     }
 
     // We only consider transmission by contacts, therefore aerosol transmission rates are set to 0
@@ -1757,7 +1757,7 @@ int main()
     rng.seed(seeds);
 
     // Simulation for initialization is init_tmax=14 days
-    auto init_result = simulate_abm(exponential_scenario, params::t0 + params::init_tmax, contact_data_dir,
+    auto init_result = simulate_abm(exponential_scenario, params::t0 + params::tmax, contact_data_dir,
                                     infection_distribution, true, save_dir, false, rng, params::t0, one_location);
 
     // Simulate ABM ensemble run.
@@ -1771,7 +1771,12 @@ int main()
     auto init_compartments_ide = std::get<0>(init_result.value())[0].get_value(0);
     auto init_compartments     = std::get<0>(init_result.value())[0].get_last_value();
     // TimeSeries of flows.
-    auto init_flows = std::get<0>(init_result.value())[1];
+    auto init_flows_abm = std::get<0>(init_result.value())[1];
+    auto init_flows     = TimeSeries<double>(params::t0, init_flows_abm.get_value(0));
+    while (init_flows.get_last_time() < params::init_tmax) {
+        init_flows.add_time_point(init_flows.get_last_time() + params::dt,
+                                  init_flows_abm.get_value(init_flows.get_num_time_points()));
+    }
     // Infectivity rates.
     std::vector<std::vector<double>> infectivity_rates = std::get<1>(init_result.value());
     // Transmission rates.
