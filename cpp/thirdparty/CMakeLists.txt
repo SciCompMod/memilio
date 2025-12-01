@@ -39,10 +39,8 @@ if(MEMILIO_USE_BUNDLED_SPDLOG)
         FetchContent_Populate(spdlog)
 
         # Use spdlogs own shared/static switch (SPDLOG_BUILD_SHARED). Default to
-        # the project setting unless we explicitly want a static lib (e.g. wheels).
-        if(MEMILIO_PREFER_STATIC_SPDLOG)
-            set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "Build spdlog as a shared library" FORCE)
-        elseif(NOT DEFINED SPDLOG_BUILD_SHARED)
+        # the project setting if not already defined.
+        if(NOT DEFINED SPDLOG_BUILD_SHARED)
             set(SPDLOG_BUILD_SHARED ${BUILD_SHARED_LIBS} CACHE BOOL "Build spdlog as a shared library" FORCE)
         endif()
 
