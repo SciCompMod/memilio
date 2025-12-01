@@ -116,6 +116,12 @@ TEST_F(ModelTestOdeMetapop, compareWithPreviousRun)
 
 TEST_F(ModelTestOdeMetapop, check_constraints_parameters)
 {
+    model.parameters.set<mio::oseirmetapop::TimeExposed<ScalarType>>(5.2);
+    model.parameters.set<mio::oseirmetapop::TimeInfected<ScalarType>>(6);
+    model.parameters.set<mio::oseirmetapop::TransmissionProbabilityOnContact<ScalarType>>(0.04);
+    model.parameters.get<mio::oseirmetapop::ContactPatterns<ScalarType>>().get_cont_freq_mat()[0].get_baseline()(0, 0) =
+        10;
+
     Eigen::MatrixXd mobility_data_commuter((size_t)model.parameters.get_num_regions(),
                                            (size_t)model.parameters.get_num_regions());
     mobility_data_commuter << 0., 0., 0., 1., 0.2, 0., 0.6, 0.2, 0., 0.5, 0.5, 0., 0., 0., 0., 1.;
@@ -127,6 +133,18 @@ TEST_F(ModelTestOdeMetapop, check_constraints_parameters)
 
     mio::set_log_level(mio::LogLevel::off);
 
+    model.parameters.set<mio::oseirmetapop::TimeExposed<ScalarType>>(-5.2);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::oseirmetapop::TimeExposed<ScalarType>>(5.2);
+    model.parameters.set<mio::oseirmetapop::TimeInfected<ScalarType>>(0);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::oseirmetapop::TimeInfected<ScalarType>>(6);
+    model.parameters.set<mio::oseirmetapop::TransmissionProbabilityOnContact<ScalarType>>(10.);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::oseirmetapop::TransmissionProbabilityOnContact<ScalarType>>(0.04);
     mobility_data_commuter(0, 1) += 0.5;
     model.set_commuting_strengths(mobility_data_commuter);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
@@ -164,10 +182,34 @@ TEST_F(ModelTestOdeMetapop, check_constraints_parameters)
 TEST_F(ModelTestOdeMetapop, apply_constraints_parameters)
 {
     const ScalarType tol_times = 1e-1;
+    model.parameters.set<mio::oseirmetapop::TimeExposed<ScalarType>>(5.2);
+    model.parameters.set<mio::oseirmetapop::TimeInfected<ScalarType>>(2);
+    model.parameters.set<mio::oseirmetapop::TransmissionProbabilityOnContact<ScalarType>>(0.04);
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.get<mio::oseirmetapop::ContactPatterns<ScalarType>>().get_cont_freq_mat();
+    contact_matrix[0].get_baseline().setConstant(10);
+
     Eigen::MatrixXd mobility_data_commuter((size_t)model.parameters.get_num_regions(),
                                            (size_t)model.parameters.get_num_regions());
     mobility_data_commuter << 0., 0., 0., 1., 0.2, 0., 0.6, 0.2, 0., 0.5, 0.5, 0., 0., 0., 0., 1.;
     model.set_commuting_strengths(mobility_data_commuter);
+
+    mio::set_log_level(mio::LogLevel::off);
+    model.parameters.set<mio::oseirmetapop::TimeExposed<ScalarType>>(-5.2);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::oseirmetapop::TimeExposed<ScalarType>>()[(mio::AgeGroup)0], tol_times);
+
+    model.parameters.set<mio::oseirmetapop::TimeInfected<ScalarType>>(1e-5);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::oseirmetapop::TimeInfected<ScalarType>>()[(mio::AgeGroup)0], tol_times);
+
+    model.parameters.set<mio::oseirmetapop::TransmissionProbabilityOnContact<ScalarType>>(10.);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_NEAR(
+        model.parameters.get<mio::oseirmetapop::TransmissionProbabilityOnContact<ScalarType>>()[(mio::AgeGroup)0], 0.0,
+        1e-14);
+
+    model.parameters.set<mio::oseirmetapop::TransmissionProbabilityOnContact<ScalarType>>(0.04);
 
     EXPECT_EQ(model.parameters.apply_constraints(), 0);
 
