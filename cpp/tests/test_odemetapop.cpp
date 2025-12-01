@@ -72,9 +72,10 @@ TEST_F(ModelTestOdeMetapop, compareWithPreviousRun)
     model.parameters.set<mio::oseirmetapop::TimeExposed<ScalarType>>(5.2);
     model.parameters.set<mio::oseirmetapop::TimeInfected<ScalarType>>(6);
     model.parameters.set<mio::oseirmetapop::TransmissionProbabilityOnContact<ScalarType>>(0.1);
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseirmetapop::ContactPatterns<ScalarType>>();
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.get<mio::oseirmetapop::ContactPatterns<ScalarType>>();
     contact_matrix[0].get_baseline().setConstant(2.7);
-    contact_matrix[0].add_damping(0.6, mio::SimulationTime(12.5));
+    contact_matrix[0].add_damping(0.6, mio::SimulationTime<ScalarType>(12.5));
 
     Eigen::MatrixXd mobility_data_commuter((size_t)model.parameters.get_num_regions(),
                                            (size_t)model.parameters.get_num_regions());
@@ -256,16 +257,14 @@ TEST(TestOdeMetapop, compareSEIR)
     model.parameters.set<mio::oseirmetapop::TransmissionProbabilityOnContact<ScalarType>>(0.1);
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseirmetapop::ContactPatterns<ScalarType>>();
     contact_matrix[0].get_baseline().setConstant(2.7);
-    contact_matrix[0].add_damping(0.6, mio::SimulationTime(12.5));
+    contact_matrix[0].add_damping(0.6, mio::SimulationTime<ScalarType>(12.5));
 
     model.set_commuting_strengths();
 
     model.check_constraints();
 
     // Use the Euler integrator as adaptive methods make different time steps in this model due to restructured equations.
-    std::shared_ptr<mio::IntegratorCore<ScalarType>> integrator = std::make_shared<mio::EulerIntegratorCore<>>();
-
-    auto result                                  = simulate(t0, tmax, dt, model, integrator);
+    auto result = simulate<ScalarType>(t0, tmax, dt, model, std::make_unique<mio::EulerIntegratorCore<ScalarType>>());
     std::vector<std::vector<ScalarType>> refData = load_test_data_csv<ScalarType>("ode-seir-compare-euler.csv");
 
     ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
