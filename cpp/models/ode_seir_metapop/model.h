@@ -43,7 +43,7 @@ using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Exposed
                        Flow<InfectionState::Infected, InfectionState::Recovered>>;
 
 /**
- * @brief The Model holds the Parameters and the initial Populations and defines the ordinary differential equations.
+ * @brief The Model holds the Parameters and the initial Populations for every region and defines the ordinary differential equations.
  */
 template <typename FP = ScalarType>
 class Model : public FlowModel<FP, InfectionState, mio::Populations<FP, mio::regions::Region, AgeGroup, InfectionState>,
@@ -58,7 +58,7 @@ public:
     using typename Base::Populations;
 
     /**
-     * @brief Create a Model with the given number of Region%s and AgeGroups.
+     * @brief Create a Model with the given number of Region%s and AgeGroup%s.
      * @param[in] num_regions The number of Region%s.
      * @param[in] num_agegroups The number of AgeGroup%s.
      */
@@ -104,14 +104,10 @@ public:
         for (size_t age_i = 0; age_i < n_age_groups; age_i++) {
             for (size_t age_j = 0; age_j < n_age_groups; age_j++) {
                 for (size_t region_n = 0; region_n < n_regions; region_n++) {
-                    const size_t Ejn =
-                        population.get_flat_index({Region(region_n), AgeGroup(age_j), Exposed});
-                    const size_t Ijn =
-                        population.get_flat_index({Region(region_n), AgeGroup(age_j), Infected});
-                    const size_t Rjn =
-                        population.get_flat_index({Region(region_n), AgeGroup(age_j), Recovered});
-                    const size_t Sjn =
-                        population.get_flat_index({Region(region_n), AgeGroup(age_j), Susceptible});
+                    const size_t Ejn = population.get_flat_index({Region(region_n), AgeGroup(age_j), Exposed});
+                    const size_t Ijn = population.get_flat_index({Region(region_n), AgeGroup(age_j), Infected});
+                    const size_t Rjn = population.get_flat_index({Region(region_n), AgeGroup(age_j), Recovered});
+                    const size_t Sjn = population.get_flat_index({Region(region_n), AgeGroup(age_j), Susceptible});
 
                     const double Nj_inv = 1.0 / (pop[Sjn] + pop[Ejn] + pop[Ijn] + pop[Rjn]);
                     double coeffStoE =
@@ -126,12 +122,10 @@ public:
                 }
             }
             for (size_t region = 0; region < n_regions; region++) {
-                flows[Base::template get_flat_flow_index<Exposed, Infected>(
-                    {Region(region), AgeGroup(age_i)})] =
+                flows[Base::template get_flat_flow_index<Exposed, Infected>({Region(region), AgeGroup(age_i)})] =
                     y[population.get_flat_index({Region(region), AgeGroup(age_i), Exposed})] /
                     params.template get<TimeExposed<FP>>()[AgeGroup(age_i)];
-                flows[Base::template get_flat_flow_index<Infected, Recovered>(
-                    {Region(region), AgeGroup(age_i)})] =
+                flows[Base::template get_flat_flow_index<Infected, Recovered>({Region(region), AgeGroup(age_i)})] =
                     y[population.get_flat_index({Region(region), AgeGroup(age_i), Infected})] /
                     params.template get<TimeInfected<FP>>()[AgeGroup(age_i)];
             }
@@ -256,8 +250,7 @@ public:
             for (size_t age = 0; age < number_age_groups; ++age) {
                 double population_n = 0;
                 for (size_t state = 0; state < (size_t)InfectionState::Count; state++) {
-                    population_n += population[{Region(region_n), mio::AgeGroup(age),
-                                                InfectionState(state)}];
+                    population_n += population[{Region(region_n), mio::AgeGroup(age), InfectionState(state)}];
                 }
                 population_after_commuting[{Region(region_n), mio::AgeGroup(age)}] += population_n;
                 for (size_t region_m = 0; region_m < number_regions; ++region_m) {

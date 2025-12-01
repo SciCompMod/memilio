@@ -33,24 +33,21 @@ protected:
         total_population_per_region = 1061000;
 
         for (size_t i = 0; i < (size_t)model.parameters.get_num_regions(); i++) {
-            model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseir::InfectionState>(
-                mio::regions::Region(i), mio::AgeGroup(0), mio::oseir::InfectionState::Exposed)}]   = 10000;
-            model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseir::InfectionState>(
-                mio::regions::Region(i), mio::AgeGroup(0), mio::oseir::InfectionState::Infected)}]  = 1000;
-            model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseir::InfectionState>(
-                mio::regions::Region(i), mio::AgeGroup(0), mio::oseir::InfectionState::Recovered)}] = 1000;
-            model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseir::InfectionState>(
-                mio::regions::Region(i), mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible)}] =
+            model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseirmetapop::InfectionState>(
+                mio::regions::Region(i), mio::AgeGroup(0), mio::oseirmetapop::InfectionState::Exposed)}]   = 10000;
+            model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseirmetapop::InfectionState>(
+                mio::regions::Region(i), mio::AgeGroup(0), mio::oseirmetapop::InfectionState::Infected)}]  = 1000;
+            model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseirmetapop::InfectionState>(
+                mio::regions::Region(i), mio::AgeGroup(0), mio::oseirmetapop::InfectionState::Recovered)}] = 1000;
+            model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseirmetapop::InfectionState>(
+                mio::regions::Region(i), mio::AgeGroup(0), mio::oseirmetapop::InfectionState::Susceptible)}] =
                 total_population_per_region -
-                model.populations[{
-                    mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseir::InfectionState>(
-                        mio::regions::Region(i), mio::AgeGroup(0), mio::oseir::InfectionState::Exposed)}] -
-                model.populations[{
-                    mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseir::InfectionState>(
-                        mio::regions::Region(i), mio::AgeGroup(0), mio::oseir::InfectionState::Infected)}] -
-                model.populations[{
-                    mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseir::InfectionState>(
-                        mio::regions::Region(i), mio::AgeGroup(0), mio::oseir::InfectionState::Recovered)}];
+                model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseirmetapop::InfectionState>(
+                    mio::regions::Region(i), mio::AgeGroup(0), mio::oseirmetapop::InfectionState::Exposed)}] -
+                model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseirmetapop::InfectionState>(
+                    mio::regions::Region(i), mio::AgeGroup(0), mio::oseirmetapop::InfectionState::Infected)}] -
+                model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseirmetapop::InfectionState>(
+                    mio::regions::Region(i), mio::AgeGroup(0), mio::oseirmetapop::InfectionState::Recovered)}];
         }
         model.set_commuting_strengths();
     }
@@ -72,16 +69,12 @@ TEST_F(ModelTestOdeMetapop, checkPopulationConservation)
 
 TEST_F(ModelTestOdeMetapop, compareWithPreviousRun)
 {
-    mio::oseir::Parameters<ScalarType> local_params(1);
-
-    local_params.set<mio::oseir::TimeExposed<ScalarType>>(5.2);
-    local_params.set<mio::oseir::TimeInfected<ScalarType>>(6);
-    local_params.set<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>(0.1);
-    mio::ContactMatrixGroup& contact_matrix = local_params.get<mio::oseir::ContactPatterns<ScalarType>>();
+    model.parameters.set<mio::oseirmetapop::TimeExposed<ScalarType>>(5.2);
+    model.parameters.set<mio::oseirmetapop::TimeInfected<ScalarType>>(6);
+    model.parameters.set<mio::oseirmetapop::TransmissionProbabilityOnContact<ScalarType>>(0.1);
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseirmetapop::ContactPatterns<ScalarType>>();
     contact_matrix[0].get_baseline().setConstant(2.7);
     contact_matrix[0].add_damping(0.6, mio::SimulationTime(12.5));
-
-    model.set_local_parameters(local_params);
 
     Eigen::MatrixXd mobility_data_commuter((size_t)model.parameters.get_num_regions(),
                                            (size_t)model.parameters.get_num_regions());
@@ -155,8 +148,8 @@ TEST_F(ModelTestOdeMetapop, check_constraints_parameters)
     mobility_data_commuter(0, 3) = 1.;
     model.set_commuting_strengths(mobility_data_commuter);
     model.parameters.set<mio::oseirmetapop::PopulationAfterCommuting<ScalarType>>(
-        mio::Populations<ScalarType, mio::regions::Region, mio::AgeGroup>(
-            {mio::regions::Region(4), mio::AgeGroup(1)}, 0.));
+        mio::Populations<ScalarType, mio::regions::Region, mio::AgeGroup>({mio::regions::Region(4), mio::AgeGroup(1)},
+                                                                          0.));
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
     // Nobody commutes to region 2 but everybody originating fron there commutes to other regions.
@@ -214,8 +207,8 @@ TEST_F(ModelTestOdeMetapop, apply_constraints_parameters)
     mobility_data_commuter(0, 3) = 1.;
     model.set_commuting_strengths(mobility_data_commuter);
     model.parameters.set<mio::oseirmetapop::PopulationAfterCommuting<ScalarType>>(
-        mio::Populations<ScalarType, mio::regions::Region, mio::AgeGroup>(
-            {mio::regions::Region(4), mio::AgeGroup(1)}, 0.));
+        mio::Populations<ScalarType, mio::regions::Region, mio::AgeGroup>({mio::regions::Region(4), mio::AgeGroup(1)},
+                                                                          0.));
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_NEAR((model.parameters.get<mio::oseirmetapop::PopulationAfterCommuting<ScalarType>>()[{
                     mio::regions::Region(3), mio::AgeGroup(0)}]),
@@ -242,32 +235,28 @@ TEST(TestOdeMetapop, compareSEIR)
 
     mio::oseirmetapop::Model<ScalarType> model(1, 1);
 
-    model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseir::InfectionState>(
-        mio::regions::Region(0), mio::AgeGroup(0), mio::oseir::InfectionState::Exposed)}]   = 10000;
-    model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseir::InfectionState>(
-        mio::regions::Region(0), mio::AgeGroup(0), mio::oseir::InfectionState::Infected)}]  = 1000;
-    model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseir::InfectionState>(
-        mio::regions::Region(0), mio::AgeGroup(0), mio::oseir::InfectionState::Recovered)}] = 1000;
-    model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseir::InfectionState>(
-        mio::regions::Region(0), mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible)}] =
+    model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseirmetapop::InfectionState>(
+        mio::regions::Region(0), mio::AgeGroup(0), mio::oseirmetapop::InfectionState::Exposed)}]   = 10000;
+    model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseirmetapop::InfectionState>(
+        mio::regions::Region(0), mio::AgeGroup(0), mio::oseirmetapop::InfectionState::Infected)}]  = 1000;
+    model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseirmetapop::InfectionState>(
+        mio::regions::Region(0), mio::AgeGroup(0), mio::oseirmetapop::InfectionState::Recovered)}] = 1000;
+    model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseirmetapop::InfectionState>(
+        mio::regions::Region(0), mio::AgeGroup(0), mio::oseirmetapop::InfectionState::Susceptible)}] =
         total_population -
-        model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseir::InfectionState>(
-            mio::regions::Region(0), mio::AgeGroup(0), mio::oseir::InfectionState::Exposed)}] -
-        model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseir::InfectionState>(
-            mio::regions::Region(0), mio::AgeGroup(0), mio::oseir::InfectionState::Infected)}] -
-        model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseir::InfectionState>(
-            mio::regions::Region(0), mio::AgeGroup(0), mio::oseir::InfectionState::Recovered)}];
+        model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseirmetapop::InfectionState>(
+            mio::regions::Region(0), mio::AgeGroup(0), mio::oseirmetapop::InfectionState::Exposed)}] -
+        model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseirmetapop::InfectionState>(
+            mio::regions::Region(0), mio::AgeGroup(0), mio::oseirmetapop::InfectionState::Infected)}] -
+        model.populations[{mio::Index<mio::regions::Region, mio::AgeGroup, mio::oseirmetapop::InfectionState>(
+            mio::regions::Region(0), mio::AgeGroup(0), mio::oseirmetapop::InfectionState::Recovered)}];
 
-    mio::oseir::Parameters<ScalarType> local_params(1);
-
-    local_params.set<mio::oseir::TimeExposed<ScalarType>>(5.2);
-    local_params.set<mio::oseir::TimeInfected<ScalarType>>(6);
-    local_params.set<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>(0.1);
-    mio::ContactMatrixGroup& contact_matrix = local_params.get<mio::oseir::ContactPatterns<ScalarType>>();
+    model.parameters.set<mio::oseirmetapop::TimeExposed<ScalarType>>(5.2);
+    model.parameters.set<mio::oseirmetapop::TimeInfected<ScalarType>>(6);
+    model.parameters.set<mio::oseirmetapop::TransmissionProbabilityOnContact<ScalarType>>(0.1);
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseirmetapop::ContactPatterns<ScalarType>>();
     contact_matrix[0].get_baseline().setConstant(2.7);
     contact_matrix[0].add_damping(0.6, mio::SimulationTime(12.5));
-
-    model.set_local_parameters(local_params);
 
     model.set_commuting_strengths();
 
