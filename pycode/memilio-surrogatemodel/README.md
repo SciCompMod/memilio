@@ -35,8 +35,15 @@ The package currently provides the following modules:
 - `tests`: this file contains all tests 
 
 ## Testing 
-The package provides a test suite in `memilio/surrogatemodel_test`. To run the tests, simply run the following command.
+The package provides a test suite in `memilio/surrogatemodel_test`. To run the tests make sure the package is installed in editable mode (`pip install -e .`) and run
 
 ```bash
 python -m unittest
+```
+
+Alternatively, if the package is installed normally (`pip install .`), you have to run the tests from outside the source directory to avoid import errors:
+
+```bash
+cd /path/to/another/directory
+python -m unittest discover -s /path/to/memilio/pycode/memilio-surrogatemodel/memilio/surrogatemodel_test
 ```

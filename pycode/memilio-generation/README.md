@@ -35,10 +35,17 @@ You can print the AST of your model into a file (Usefull for development/debuggi
 
 ## Testing
 
-The package provides a test suite in `memilio/generation_test`. To run the tests, simply run the following command:
+The package provides a test suite in `memilio/generation_test`. To run the tests make sure the package is installed in editable mode (`pip install -e .`) and run
 
 ```bash
 python -m unittest
+```
+
+Alternatively, if the package is installed normally (`pip install .`), you have to run the tests from outside the source directory to avoid import errors:
+
+```bash
+cd /path/to/another/directory
+python -m unittest discover -s /path/to/memilio/pycode/memilio-generation/memilio/generation_test
 ```
 
 ## Development

@@ -73,10 +73,17 @@ Detailed documentation under construction. See the scripts in the [examples](../
 
 ## Testing
 
-The package provides a test suite in `memilio/simulation_test`. To run the tests, simply run the following command
+The package provides a test suite in `memilio/simulation_test`. To run the tests make sure the package is installed in editable mode (`pip install -e .`) and run
 
 ```bash
 python -m unittest
+```
+
+Alternatively, if the package is installed normally (`pip install .`), you have to run the tests from outside the source directory to avoid import errors:
+
+```bash
+cd /path/to/another/directory
+python -m unittest discover -s /path/to/memilio/pycode/memilio-simulation/memilio/simulation_test
 ```
 
 Note that these tests do not cover every case of the C++ library, they are only intended to test the binding code. To verify correctness of the C++ library itself, build and run the [C++ unit tests](../../cpp/README.md).
