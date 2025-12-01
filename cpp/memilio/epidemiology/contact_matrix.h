@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Martin J. Kuehn, Daniel Abele
@@ -21,7 +21,10 @@
 #define EPI_ODE_CONTACT_FREQUENCY_MATRIX_H
 
 #include "memilio/epidemiology/damping.h"
+#include "memilio/math/matrix_shape.h"
+#include "memilio/math/math_utils.h"
 #include "memilio/utils/stl_util.h"
+#include "memilio/utils/logging.h"
 
 #include <numeric>
 #include <ostream>
@@ -37,9 +40,10 @@ namespace mio
  * Coefficient wise expression, so B, D, M matrices must have the same shape.
  * @see Damping
  * @see ContactMatrix
+ * @tparam FP floating point, e.g. double
  * @tparam D instance of Dampings or compatible type
  */
-template <class D>
+template <typename FP, class D>
 class DampingMatrixExpression
 {
 public:
@@ -49,7 +53,7 @@ public:
 
     /**
      * construct with baseline and minimum contacts and zero dampings.
-     * @param baseline matrix expression 
+     * @param baseline matrix expression
      * @param minimum matrix expression, must be same size as baseline
      * @tparam M, K matrix expressions compatible with Matrix type
      */
@@ -64,7 +68,7 @@ public:
 
     /**
      * construct with only baseline, minimum and dampings is zero.
-     * @param baseline matrix expression 
+     * @param baseline matrix expression
      * @tparam M matrix expressions compatible with Matrix type
      */
     template <class M>
@@ -184,13 +188,10 @@ public:
      * @param t time in the simulation
      * @return matrix expression (num_groups x num_groups)
      */
-    auto get_matrix_at(SimulationTime t) const
+    auto get_matrix_at(SimulationTime<FP> t) const
     {
+        assert(Shape::get_shape_of(m_dampings.get_matrix_at(t)) == Shape::get_shape_of(m_baseline));
         return m_baseline - (m_dampings.get_matrix_at(t).array() * (m_baseline - m_minimum).array()).matrix();
-    }
-    auto get_matrix_at(double t) const
-    {
-        return get_matrix_at(SimulationTime(t));
     }
 
     /**
@@ -204,7 +205,7 @@ public:
     }
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>
@@ -264,9 +265,10 @@ private:
 
 /**
  * represents a collection of DampingMatrixExpressions that are summed up.
+ * @param FP floating point, e.g. double
  * @tparam E some instance of DampingMatrixExpression or compatible type.
  */
-template <class E>
+template <typename FP, class E>
 class DampingMatrixExpressionGroup
 {
 public:
@@ -329,14 +331,14 @@ public:
     }
 
     /**
-     * get the number of groups.
+     * Get the dimensions of the matrices.
      */
     Shape get_shape() const
     {
         return m_matrices[0].get_shape();
     }
 
-    /** 
+    /**
      * equality operators.
      */
     bool operator==(const DampingMatrixExpressionGroup& other) const
@@ -387,13 +389,12 @@ public:
      * @param t point in time
      * @return matrix expression of size num_groups x num_groups
      */
-    template <class T>
-    auto get_matrix_at(T t) const
+    auto get_matrix_at(SimulationTime<FP> t) const
     {
-        return Eigen::MatrixXd::NullaryExpr(
+        return Eigen::Matrix<FP, Eigen::Dynamic, Eigen::Dynamic>::NullaryExpr(
             get_shape().rows(), get_shape().cols(), [t, this](Eigen::Index i, Eigen::Index j) {
-                return std::accumulate(m_matrices.begin(), m_matrices.end(), 0.0, [t, i, j](double s, auto& m) {
-                    return s + m.get_matrix_at(t)(i, j);
+                return std::accumulate(m_matrices.begin(), m_matrices.end(), FP(0.0), [t, i, j](FP s, auto& m) {
+                    return evaluate_intermediate<FP>(s + m.get_matrix_at(t)(i, j));
                 });
             });
     }
@@ -430,7 +431,7 @@ public:
     }
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>
@@ -493,16 +494,17 @@ private:
  * The effective contacts are B - D * (B - M), where B is the baseline, D are
  * combined dampings and M is the minimum.
  * The minimum is not necessarily smaller than the baseline in every entry,
- * but it reflects the state at maximum lockdown. In places where the 
+ * but it reflects the state at maximum lockdown. In places where the
  * minimum is greater than the baseline, a positive damping increases
  * instead of reduces contacts.
  * All these members are matrix valued, e.g. B_ij are the normal contacts
  * that one person in group i has with persons in group j.
  */
-class ContactMatrix : public DampingMatrixExpression<SquareDampings>
+template <typename FP>
+class ContactMatrix : public DampingMatrixExpression<FP, SquareDampings<FP>>
 {
 public:
-    using Base = DampingMatrixExpression<SquareDampings>;
+    using Base = DampingMatrixExpression<FP, SquareDampings<FP>>;
     using Base::Base;
 
     /**
@@ -527,12 +529,13 @@ public:
 /**
  * represents a collection of contact frequency matrices that whose sum is the total
  * number of contacts.
- * can separate matrices of contacts in different contexts, e.g. work, leisure, etc. 
+ * can separate matrices of contacts in different contexts, e.g. work, leisure, etc.
  */
-class ContactMatrixGroup : public DampingMatrixExpressionGroup<ContactMatrix>
+template <typename FP>
+class ContactMatrixGroup : public DampingMatrixExpressionGroup<FP, ContactMatrix<FP>>
 {
 public:
-    using Base = DampingMatrixExpressionGroup<ContactMatrix>;
+    using Base = DampingMatrixExpressionGroup<FP, ContactMatrix<FP>>;
     using Base::Base;
 
     /**

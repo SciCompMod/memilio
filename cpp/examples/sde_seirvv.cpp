@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Nils Wassmuth, Rene Schmieding, Martin J. Kuehn
@@ -17,10 +17,10 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "memilio/compartments/stochastic_simulation.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/uncertain_value.h"
 #include "sde_seirvv/model.h"
-#include "sde_seirvv/simulation.h"
 
 #include <vector>
 
@@ -35,7 +35,7 @@ int main()
 
     mio::log_info("Simulating SEIRVV; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    mio::sseirvv::Model model;
+    mio::sseirvv::Model<ScalarType> model;
 
     ScalarType total_population = 180000;
 
@@ -62,24 +62,24 @@ int main()
     // It is assumed that both variants have the same transmission probability
     // on contact and the same time exposed. The time infected is scaled by
     // 1.35 for the second variant.
-    model.parameters.get<mio::sseirvv::ContactPatterns>().get_baseline()(0, 0) = 1;
-    model.parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV1>(0.076);
-    model.parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV2>(0.076);
-    model.parameters.set<mio::sseirvv::TimeExposedV1>(5.33);
-    model.parameters.set<mio::sseirvv::TimeExposedV2>(5.33);
-    model.parameters.set<mio::sseirvv::TimeInfectedV1>(17.2);
-    model.parameters.set<mio::sseirvv::TimeInfectedV2>(17.2 * 1.35);
+    model.parameters.get<mio::sseirvv::ContactPatterns<ScalarType>>().get_baseline()(0, 0) = 1;
+    model.parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV1<ScalarType>>(0.076);
+    model.parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV2<ScalarType>>(0.076);
+    model.parameters.set<mio::sseirvv::TimeExposedV1<ScalarType>>(5.33);
+    model.parameters.set<mio::sseirvv::TimeExposedV2<ScalarType>>(5.33);
+    model.parameters.set<mio::sseirvv::TimeInfectedV1<ScalarType>>(17.2);
+    model.parameters.set<mio::sseirvv::TimeInfectedV2<ScalarType>>(17.2 * 1.35);
 
     model.check_constraints();
 
     // Simulate the model up until tmid, with only the first variant.
-    auto sseirv = mio::sseirvv::simulate(t0, tmid, dt, model);
+    auto sseirv = mio::simulate_stochastic<ScalarType>(t0, tmid, dt, model);
     // Set the model population to the simulation result, so it is used as initial value for the second simulation.
     model.populations.array() = sseirv.get_last_value().cast<mio::UncertainValue<ScalarType>>();
     // The second variant enters with 100 individuals. This increases the model population to total_population + 100.
     model.populations[{mio::sseirvv::InfectionState::InfectedV2}] = 100;
     // Simulate the model from tmid to tmax, now with both variants.
-    auto sseirv2 = mio::sseirvv::simulate(tmid, tmax, dt, model);
+    auto sseirv2 = mio::simulate_stochastic<ScalarType>(tmid, tmax, dt, model);
     sseirv.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2",
                         "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
     sseirv2.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2",

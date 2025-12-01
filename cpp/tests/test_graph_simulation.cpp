@@ -23,6 +23,7 @@
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/mobility/metapopulation_mobility_stochastic.h"
 #include "memilio/compartments/simulation.h"
+#include "memilio/compartments/feedback_simulation.h"
 #include "ode_seir/model.h"
 #include "gtest/gtest.h"
 #include "load_test_data.h"
@@ -92,7 +93,7 @@ TEST(TestGraphSimulation, simulate)
     EXPECT_CALL(edge_func, invoke(3, 1, Eq(1), Eq(1), Eq(2))).Times(1).After(node_func_calls);
     EXPECT_CALL(edge_func, invoke(3, 1, Eq(3), Eq(3), Eq(0))).Times(1).After(node_func_calls);
 
-    auto sim = mio::make_graph_sim(
+    auto sim = mio::make_graph_sim<double>(
         t0, dt, g,
         [&node_func](auto&& t, auto&& dt_, auto&& n) {
             node_func(t, dt_, n);
@@ -120,8 +121,8 @@ TEST(TestGraphSimulation, stopsAtTmax)
     const auto tmax = 3.123;
     const auto dt   = 0.076;
 
-    auto sim =
-        mio::make_graph_sim(t0, dt, g, [](auto&&, auto&&, auto&&) {}, [](auto&&, auto&&, auto&&, auto&&, auto&&) {});
+    auto sim = mio::make_graph_sim<double>(
+        t0, dt, g, [](auto&&, auto&&, auto&&) {}, [](auto&&, auto&&, auto&&, auto&&, auto&&) {});
 
     sim.advance(tmax);
 
@@ -142,7 +143,9 @@ TEST(TestGraphSimulation, stopsAtTmaxStochastic)
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]     = 0.1;
     model.populations.set_total(1000);
 
-    mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::oseir::Model<double>>>, mio::MobilityEdgeStochastic> g;
+    mio::Graph<mio::SimulationNode<double, mio::Simulation<double, mio::oseir::Model<double>>>,
+               mio::MobilityEdgeStochastic<double>>
+        g;
     g.add_node(0, model, t0);
     g.add_node(1, model, t0);
     g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0.001));
@@ -174,7 +177,7 @@ TEST(TestGraphSimulation, persistentChangesDuringSimulation)
 
     auto t0       = 0;
     auto dt       = 1;
-    auto sim      = mio::make_graph_sim(t0, dt, g, node_func, edge_func);
+    auto sim      = mio::make_graph_sim<double>(t0, dt, g, node_func, edge_func);
     int num_steps = 2;
     sim.advance(t0 + num_steps * dt);
 
@@ -198,7 +201,9 @@ TEST(TestGraphSimulation, consistencyStochasticMobility)
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]     = 0.3;
     model.populations.set_total(1000);
 
-    mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::oseir::Model<double>>>, mio::MobilityEdgeStochastic> g;
+    mio::Graph<mio::SimulationNode<double, mio::Simulation<double, mio::oseir::Model<double>>>,
+               mio::MobilityEdgeStochastic<double>>
+        g;
     g.add_node(0, model, t0);
     g.add_node(1, model, t0);
     g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0.001));
@@ -249,8 +254,8 @@ TEST(TestGraphSimulation, consistencyStochasticMobility)
 }
 
 template <typename Graph>
-mio::GraphSimulation<Graph> create_simulation(Graph&& g, mio::oseir::Model<double>& model, double t0, double tmax,
-                                              double dt)
+mio::GraphSimulation<double, Graph, double, double> create_simulation(Graph&& g, mio::oseir::Model<double>& model,
+                                                                      double t0, double tmax, double dt)
 {
     g.add_node(0, model, t0);
     g.add_node(1, model, t0);
@@ -263,7 +268,7 @@ mio::GraphSimulation<Graph> create_simulation(Graph&& g, mio::oseir::Model<doubl
         }
     }
 
-    auto sim = mio::make_mobility_sim(t0, dt, std::move(g));
+    auto sim = mio::make_mobility_sim<double>(t0, dt, std::move(g));
 
     sim.advance(tmax);
 
@@ -288,21 +293,21 @@ TEST(TestGraphSimulation, consistencyFlowMobility)
     model.parameters.set<mio::oseir::TimeExposed<double>>(5.2);
     model.parameters.set<mio::oseir::TimeInfected<double>>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<double>>(0.04);
-    mio::ContactMatrixGroup& contact_matrix =
+    mio::ContactMatrixGroup<double>& contact_matrix =
         model.parameters.get<mio::oseir::ContactPatterns<double>>().get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(10);
 
     model.check_constraints();
 
     auto sim_no_flows =
-        create_simulation(mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::oseir::Model<double>>>,
+        create_simulation(mio::Graph<mio::SimulationNode<double, mio::Simulation<double, mio::oseir::Model<double>>>,
                                      mio::MobilityEdge<double>>(),
                           model, t0, tmax, dt);
 
-    auto sim_flows =
-        create_simulation(mio::Graph<mio::SimulationNode<mio::FlowSimulation<double, mio::oseir::Model<double>>>,
-                                     mio::MobilityEdge<double>>(),
-                          model, t0, tmax, dt);
+    auto sim_flows = create_simulation(
+        mio::Graph<mio::SimulationNode<double, mio::FlowSimulation<double, mio::oseir::Model<double>>>,
+                   mio::MobilityEdge<double>>(),
+        model, t0, tmax, dt);
 
     //test if all results of both simulations are equal for all nodes
     for (size_t node_id = 0; node_id < sim_no_flows.get_graph().nodes().size(); ++node_id) {
@@ -333,6 +338,73 @@ TEST(TestGraphSimulation, consistencyFlowMobility)
     }
 }
 
+TEST(TestGraphSimulation, feedbackSimulation)
+{
+    using Model         = mio::oseir::Model<double>;
+    using Simulation    = mio::Simulation<double, Model>;
+    using FeedbackSim   = mio::FeedbackSimulation<double, Simulation, mio::oseir::ContactPatterns<double>>;
+    using Node          = mio::SimulationNode<double, FeedbackSim>;
+    using Edge          = mio::MobilityEdge<double>;
+    using Graph         = mio::Graph<Node, Edge>;
+    using GraphFeedback = mio::FeedbackGraphSimulation<double, Graph>;
+
+    double t0   = 0;
+    double tmax = 5.0;
+    double dt   = 1.0;
+
+    Model model(1);
+    model.populations.set_total(1000);
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] = 900;
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]     = 100;
+
+    std::vector<size_t> icu_indices = {(size_t)mio::oseir::InfectionState::Infected};
+
+    Graph g;
+
+    const auto num_nodes = 2;
+    for (int i = 0; i < num_nodes; ++i) {
+
+        auto feedback_sim = FeedbackSim(Simulation(model, t0), icu_indices);
+
+        // set feedback parameters
+        feedback_sim.get_parameters().get<mio::NominalICUCapacity<double>>() = 10;
+        auto& icu_occupancy     = feedback_sim.get_parameters().get<mio::ICUOccupancyHistory<double>>();
+        Eigen::VectorXd icu_day = Eigen::VectorXd::Constant(1, 1);
+        const auto cutoff       = static_cast<int>(feedback_sim.get_parameters().get<mio::GammaCutOff>());
+        for (int t = -cutoff; t <= 0; ++t) {
+            icu_occupancy.add_time_point(t, icu_day);
+        }
+
+        // bounds for contact reduction measures
+        feedback_sim.get_parameters().get<mio::ContactReductionMin<double>>() = {0.1};
+        feedback_sim.get_parameters().get<mio::ContactReductionMax<double>>() = {0.8};
+
+        // Set blending factors. The global blending factor is implicitly defined as 1 - local - regional.
+        feedback_sim.get_parameters().get<mio::BlendingFactorLocal<double>>()    = 0.5;
+        feedback_sim.get_parameters().get<mio::BlendingFactorRegional<double>>() = 0.3;
+
+        g.add_node(i, std::move(feedback_sim));
+    }
+    g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0.01));
+
+    double total_pop_before = 0;
+    for (auto& node : g.nodes()) {
+        total_pop_before += node.property.get_simulation().get_model().populations.get_total();
+    }
+
+    GraphFeedback sim(std::move(g), t0, dt);
+
+    sim.advance(tmax);
+
+    double total_pop_after = 0;
+    for (auto& node : sim.get_graph().nodes()) {
+        total_pop_after += node.property.get_simulation().get_model().populations.get_total();
+    }
+
+    EXPECT_NEAR(total_pop_before, total_pop_after, 1e-10);
+    EXPECT_NEAR(sim.get_graph().nodes()[0].property.get_simulation().get_result().get_last_time(), tmax, 1e-10);
+}
+
 namespace
 {
 
@@ -344,7 +416,7 @@ struct MoveOnly {
     MoveOnly& operator=(MoveOnly&&)      = default;
 };
 using MoveOnlyGraph    = mio::Graph<MoveOnly, MoveOnly>;
-using MoveOnlyGraphSim = mio::GraphSimulation<MoveOnlyGraph>;
+using MoveOnlyGraphSim = mio::GraphSimulation<double, MoveOnlyGraph, double, double>;
 
 } // namespace
 

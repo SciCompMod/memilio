@@ -17,10 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EULER_H
-#define EULER_H
+#ifndef MIO_MATH_EULER_H
+#define MIO_MATH_EULER_H
 
-#include "memilio/config.h"
 #include "memilio/math/integrator.h"
 
 namespace mio
@@ -30,13 +29,18 @@ namespace mio
  * @brief Simple explicit euler integration y(t+1) = y(t) + h*f(t,y) for ODE y'(t) = f(t,y)
  * @tparam FP A floating point type, e.g., ScalarType.
  */
-template <typename FP = ScalarType>
-class EulerIntegratorCore : public IntegratorCore<FP>
+template <typename FP>
+class EulerIntegratorCore : public OdeIntegratorCore<FP>
 {
 public:
     EulerIntegratorCore()
-        : IntegratorCore<FP>(FP{}, FP{})
+        : OdeIntegratorCore<FP>(FP{}, FP{})
     {
+    }
+
+    std::unique_ptr<OdeIntegratorCore<FP>> clone() const override 
+    {
+        return std::make_unique<EulerIntegratorCore>(*this);
     }
 
     /**
@@ -60,4 +64,4 @@ public:
 
 } // namespace mio
 
-#endif // EULER_H
+#endif // MIO_MATH_EULER_H

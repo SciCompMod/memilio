@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
@@ -22,8 +22,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
-#include <iostream>
 #include <cmath>
+#include <numbers>
 
 void init_vectors(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>& sol, size_t n)
 {
@@ -46,7 +46,7 @@ void integration_test(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::Vector
     for (size_t i = 0; i < n - 1; i++) {
         sol[i + 1][0] = std::sin((i + 1) * dt);
 
-        mio::EulerIntegratorCore().step(f, y[i], t, dt, y[i + 1]);
+        mio::EulerIntegratorCore<double>().step(f, y[i], t, dt, y[i + 1]);
 
         printf("\n %.8f\t %.8f", y[i + 1][0], sol[i + 1][0]);
         // printf("\n approx: %.4e, sol: %.4e, error %.4e", y[i+1][0], sol[i+1][0], err);
@@ -60,7 +60,7 @@ int main()
     std::vector<Eigen::VectorXd> y;
     std::vector<Eigen::VectorXd> sol;
 
-    const double pi = std::acos(-1);
+    const double pi = std::numbers::pi_v<double>;
 
     size_t n    = 10;
     double t0   = 0;

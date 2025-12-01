@@ -33,14 +33,32 @@ The main directory structure in the ``cpp`` directory includes:
 
 - **benchmarks/**: Analyzing runtime performance
 
+Model Structure
+-----------------
+
+The MEmilio library uses a modular organization of models, where generic implementations are inherited by specific implementations:
+
+.. image:: http://martinkuehn.eu/research/images/overview.png
+   :alt: Model Hierarchy
+   :width: 100%
+
+**CompartmentalModel**: The base class for all compartment-based models in MEmilio. It defines the fundamental structure for epidemiological models with compartments (e.g., SEIR, SECIR) and provides methods like ``eval_right_hand_side`` and ``get_initial_values`` required for ODE solvers.
+
+**FlowModel**: Inherits from CompartmentalModel and extends it with the concept of flows between compartments. Instead of directly defining derivatives, it specifies the flows between compartments.
+
+**Specific Model Implementations**:
+
+- **ODE Model** (Ordinary Differential Equations): Deterministic models for continuous populations described by ordinary differential equations.
+  
+- **IDE Model** (Integro-Differential Equations): Extends the ODE model integration terms.
+  
+- **SDE Model** (Stochastic Differential Equations): Adds stochastic components to model uncertainties and random effects.
+
+**Individual-based Model**: Stands separate from the compartmental hierarchy and models each individual explicitly with its own properties and interactions. This enables more detailed simulations.
+
+
 Build System
 -------------
 
-The project uses CMake as a build system with various configuration options such as:
-
-- ``MEMILIO_BUILD_TESTS``: Enables building unit tests
-- ``MEMILIO_BUILD_EXAMPLES``: Enables building example applications
-- ``MEMILIO_BUILD_MODELS``: Enables building model libraries
-- ``MEMILIO_ENABLE_OPENMP``: Enables multithreading with OpenMP
-
-For more details on the build system, refer to TBD
+The project uses CMake as a build system with various configuration options. 
+For an explanation, refer to :doc:`installation`.

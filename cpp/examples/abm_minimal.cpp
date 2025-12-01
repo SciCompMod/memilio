@@ -21,7 +21,6 @@
 #include "abm/lockdown_rules.h"
 #include "abm/model.h"
 #include "abm/common_abm_loggers.h"
-#include "memilio/utils/abstract_parameter_distribution.h"
 
 #include <fstream>
 
@@ -113,12 +112,12 @@ int main()
     auto test_parameters       = model.parameters.get<mio::abm::TestData>()[test_type];
     auto testing_criteria_work = mio::abm::TestingCriteria();
     auto testing_scheme_work   = mio::abm::TestingScheme(testing_criteria_work, validity_period, start_date, end_date,
-                                                       test_parameters, probability);
-    model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
+                                                         test_parameters, probability);
+    model.get_testing_strategy().add_scheme(mio::abm::LocationType::Work, testing_scheme_work);
 
     // Assign infection state to each person.
     // The infection states are chosen randomly with the following distribution
-    std::vector<double> infection_distribution{0.5, 0.3, 0.05, 0.05, 0.05, 0.05, 0.0, 0.0};
+    std::vector<ScalarType> infection_distribution{0.5, 0.3, 0.05, 0.05, 0.05, 0.05, 0.0, 0.0};
     for (auto& person : model.get_persons()) {
         mio::abm::InfectionState infection_state = mio::abm::InfectionState(
             mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(), infection_distribution));

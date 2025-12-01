@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Martin J. Kuehn
@@ -85,7 +85,7 @@ int main()
     auto& contact_matrix = contacts.get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(0.5);
     contact_matrix[0].get_baseline().diagonal().setConstant(5.0);
-    contact_matrix[0].add_damping(0.3, mio::SimulationTime(5.0));
+    contact_matrix[0].add_damping(0.3, mio::SimulationTime<double>(5.0));
 
     //times
     model.parameters.get<mio::osecirvvs::TimeExposed<double>>()[mio::AgeGroup(0)]            = 3.33;
@@ -117,16 +117,17 @@ int main()
     model.parameters.get<mio::osecirvvs::ReducTimeInfectedMild<double>>()[mio::AgeGroup(0)] = 0.9;
 
     model.parameters.get<mio::osecirvvs::Seasonality<double>>() = 0.2;
-
+    // The function apply_constraints() ensures that all parameters are within their defined bounds.
+    // Note that negative values are set to zero instead of stopping the simulation.
     model.apply_constraints();
 
     // use adaptive Runge-Kutta-Fehlberg45 scheme as integrator
-    // auto integrator = std::make_shared<mio::RKIntegratorCore>();
+    // auto integrator = std::make_unique<mio::RKIntegratorCore>();
     // integrator->set_dt_min(0.3);
     // integrator->set_dt_max(1.0);
     // integrator->set_rel_tolerance(1e-4);
     // integrator->set_abs_tolerance(1e-1);
-    // mio::TimeSeries<double> result = mio::osecirvvs::simulate(t0, tmax, dt, model, integrator);
+    // mio::TimeSeries<double> result = mio::osecirvvs::simulate<double>(t0, tmax, dt, model, std::move(integrator));
 
     // use default Cash-Karp adaptive integrator
     mio::TimeSeries<double> result = mio::osecirvvs::simulate<double>(t0, tmax, dt, model);

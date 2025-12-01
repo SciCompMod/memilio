@@ -17,11 +17,13 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "utils.h"
 #include "abm/location.h"
 #include "abm/location_type.h"
 #include "abm/parameters.h"
 #include "abm/person.h"
 #include "abm/model.h"
+#include "abm/model_functions.h"
 #include "abm/virus_variant.h"
 #include "abm_helpers.h"
 #include "memilio/epidemiology/age_group.h"
@@ -104,6 +106,44 @@ TEST_F(TestModel, addPerson)
 }
 
 /**
+ * @brief Test the get_number_persons and get_number_persons_age methods in the Model class.
+ */
+TEST_F(TestModel, getNumberPersons)
+{
+    // replace spdlog::default_logger
+    mio::RedirectLogger logger(mio::LogLevel::debug); // Set log level to debug to capture log messages.
+    logger.capture();
+
+    auto model    = mio::abm::Model(num_age_groups);
+    auto location = model.add_location(mio::abm::LocationType::School);
+
+    // Add persons to the model.
+    model.add_person(location, age_group_15_to_34);
+    model.add_person(location, age_group_35_to_59);
+
+    EXPECT_TRUE(logger.read().empty());
+
+    // Verify the total number of persons in the model.
+    EXPECT_EQ(model.get_number_persons(location), 2); // This get also does the first build of the cache.
+#ifndef NDEBUG
+    EXPECT_THAT(logger.read(), ::testing::HasSubstr("Building local population cache for ABM."));
+#endif
+
+    // Verify the number of persons in the model for each age group.
+    EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_15_to_34), 1);
+    EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_35_to_59), 1);
+    // Verify the number of persons in the model for an age group that has no persons.
+    EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_0_to_4), 0);
+    EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_5_to_14), 0);
+    EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_60_to_79), 0);
+    EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_80_plus), 0);
+
+    EXPECT_TRUE(logger.read().empty());
+
+    logger.release();
+}
+
+/**
  * @brief Test combined subpopulation count by location type in the Model class.
  */
 TEST_F(TestModel, getSubpopulationCombined)
@@ -165,6 +205,26 @@ TEST_F(TestModel, findLocation)
     EXPECT_EQ(model_test.find_location(mio::abm::LocationType::Work, person_id), work_id);
     EXPECT_EQ(model_test.find_location(mio::abm::LocationType::School, person_id), school_id);
     EXPECT_EQ(model_test.find_location(mio::abm::LocationType::Home, person_id), home_id);
+}
+
+/**
+ * @brief Test the exposure contribution normalization in the Model class.
+ */
+TEST_F(TestModel, exposureContributionNormalization)
+{
+    mio::abm::ContactExposureRates contact_exposure_rates;
+    contact_exposure_rates.resize({mio::abm::CellIndex{1}, mio::abm::VirusVariant{1}, mio::AgeGroup{1}});
+    contact_exposure_rates[{mio::abm::CellIndex{0}, mio::abm::VirusVariant::Wildtype, mio::AgeGroup{0}}] = 10.0;
+
+    mio::abm::PopulationByAge local_population_by_age;
+    local_population_by_age.resize({mio::abm::CellIndex{1}, mio::AgeGroup{1}});
+    local_population_by_age[{mio::abm::CellIndex{0}, mio::AgeGroup{0}}] =
+        2; // Set population for cell 0 and age group 0 to 2
+
+    mio::abm::normalize_exposure_contribution(contact_exposure_rates, local_population_by_age);
+
+    auto& rate = contact_exposure_rates[{mio::abm::CellIndex{0}, mio::abm::VirusVariant::Wildtype, mio::AgeGroup{0}}];
+    EXPECT_EQ(rate, 5.0);
 }
 
 /**
@@ -350,18 +410,14 @@ TEST_F(TestModel, evolveMobilityTrips)
 
     // Set trips for persons between assigned locations.
     mio::abm::TripList& data = model.get_trip_list();
-    mio::abm::Trip trip1(p1.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), work_id, home_id,
-                         mio::abm::LocationType::Work);
-    mio::abm::Trip trip2(p2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id, home_id,
-                         mio::abm::LocationType::SocialEvent);
-    mio::abm::Trip trip3(p5.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id, home_id,
-                         mio::abm::LocationType::SocialEvent);
-    data.add_trip(trip1);
-    data.add_trip(trip2);
-    data.add_trip(trip3);
+    mio::abm::Trip trip1(p1.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), work_id);
+    mio::abm::Trip trip2(p2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id);
+    mio::abm::Trip trip3(p5.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id);
 
-    // Set trips to use weekday trips on weekends.
-    data.use_weekday_trips_on_weekend();
+    auto trips_part1 = std::vector<mio::abm::Trip>{trip2, trip3};
+    auto trips_part2 = std::vector<mio::abm::Trip>{trip1};
+    data.add_trips(trips_part1);
+    data.add_trips(trips_part2); //to see if merge works
 
     // Mock the random distribution to control random behavior.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist2;
@@ -405,54 +461,6 @@ TEST_F(TestModel, evolveMobilityTrips)
     EXPECT_EQ(model.get_number_persons(work_id), 1);
     EXPECT_EQ(model.get_number_persons(home_id), 1);
     EXPECT_EQ(model.get_number_persons(hospital_id), 1);
-
-    // Move all persons back to their home location to prepare for weekend trips.
-    model.change_location(p1.get_id(), home_id);
-    model.change_location(p3.get_id(), home_id);
-    model.change_location(p2.get_id(), home_id);
-    model.change_location(p5.get_id(), home_id);
-
-    // Update the time to the weekend and reset the trip index.
-    t = mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(8);
-    model.get_trip_list().reset_index();
-
-    // Evolve the model again to verify the weekend behavior.
-    model.evolve(t, dt);
-
-    EXPECT_EQ(p1.get_location(), work_id);
-    EXPECT_EQ(p2.get_location(), event_id);
-    EXPECT_EQ(p3.get_location(), home_id);
-    EXPECT_EQ(p4.get_location(), home_id);
-    EXPECT_EQ(p5.get_location(), event_id);
-    EXPECT_EQ(model.get_number_persons(event_id), 2);
-    EXPECT_EQ(model.get_number_persons(work_id), 1);
-    EXPECT_EQ(model.get_number_persons(home_id), 2);
-
-    // Add additional weekend trips for further verification.
-    bool weekend = true;
-    mio::abm::Trip tripweekend1(p1.get_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), event_id,
-                                work_id, mio::abm::LocationType::SocialEvent);
-    mio::abm::Trip tripweekend2(p2.get_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), home_id,
-                                event_id, mio::abm::LocationType::Home);
-    mio::abm::Trip tripweekend3(p5.get_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), work_id,
-                                event_id, mio::abm::LocationType::Work);
-    data.add_trip(tripweekend1, weekend);
-    data.add_trip(tripweekend2, weekend);
-    data.add_trip(tripweekend3, weekend);
-
-    // Advance time and evolve the model to check location transitions during the weekend.
-    t += mio::abm::hours(1);
-
-    model.evolve(t, dt);
-
-    EXPECT_EQ(p1.get_location(), event_id);
-    EXPECT_EQ(p2.get_location(), home_id);
-    EXPECT_EQ(p3.get_location(), home_id);
-    EXPECT_EQ(p4.get_location(), home_id);
-    EXPECT_EQ(p5.get_location(), work_id);
-    EXPECT_EQ(model.get_number_persons(event_id), 1);
-    EXPECT_EQ(model.get_number_persons(work_id), 1);
-    EXPECT_EQ(model.get_number_persons(home_id), 3);
 }
 
 #ifndef MEMILIO_ENABLE_OPENMP // TODO: Test can fail with parallel execution of mobility, as the capacity is not taken into account correctly at the moment (c. f. issue #640)
@@ -558,15 +566,10 @@ TEST_F(TestModel, checkMobilityOfDeadPerson)
 
     // Add trip to see if a dead person can change location outside of cemetery by scheduled trips
     mio::abm::TripList& trip_list = model.get_trip_list();
-    mio::abm::Trip trip1(p_dead.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(2), work_id, home_id,
-                         mio::abm::LocationType::Work);
-    mio::abm::Trip trip2(p_dead.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id,
-                         mio::abm::LocationType::Home);
-    mio::abm::Trip trip3(p_severe.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id,
-                         mio::abm::LocationType::Home);
-    trip_list.add_trip(trip1);
-    trip_list.add_trip(trip2);
-    trip_list.add_trip(trip3);
+    mio::abm::Trip trip1(p_dead.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(2), home_id);
+    mio::abm::Trip trip2(p_dead.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), icu_id);
+    mio::abm::Trip trip3(p_severe.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), icu_id);
+    trip_list.add_trips({trip1, trip2, trip3});
 
     // Check the dead person got burried and the severely infected person starts in Hospital
     model.evolve(t, dt);
@@ -612,41 +615,29 @@ TEST_F(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     person.set_assigned_location(mio::abm::LocationType::Work, work_id, model.get_id());
 
     auto validity_period       = mio::abm::days(1);
-    const auto start_date      = mio::abm::TimePoint(20);
-    const auto end_date        = mio::abm::TimePoint(60 * 60 * 24 * 3);
+    const auto start_date      = mio::abm::TimePoint(0) + mio::abm::days(1);
+    const auto end_date        = mio::abm::TimePoint(0) + mio::abm::days(3);
     const auto probability     = 1.0;
     const auto test_params_pcr = mio::abm::TestParameters{0.9, 0.99, test_time, mio::abm::TestType::Generic};
 
-    auto testing_criteria = mio::abm::TestingCriteria();
-    testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
-    testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedNoSymptoms);
+    auto testing_criteria = mio::abm::TestingCriteria(
+        {}, {mio::abm::InfectionState::InfectedSymptoms, mio::abm::InfectionState::InfectedNoSymptoms});
 
     auto testing_scheme =
         mio::abm::TestingScheme(testing_criteria, validity_period, start_date, end_date, test_params_pcr, probability);
 
-    model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
-    EXPECT_EQ(model.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
+    model.get_testing_strategy().add_scheme(mio::abm::LocationType::Work, testing_scheme);
+    EXPECT_EQ(model.get_testing_strategy().run_and_check(rng_person, person, work, current_time),
               true); // no active testing scheme -> person can enter
-    current_time = mio::abm::TimePoint(30);
-    model.get_testing_strategy().update_activity_status(current_time);
+    current_time = mio::abm::TimePoint(0) + mio::abm::days(2);
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(5))
-        .WillOnce(testing::Return(0.7)) // Person complies with testing
+        .Times(testing::Exactly(3))
         .WillOnce(testing::Return(0.5)) // Probability for testing (is performed)
         .WillOnce(testing::Return(0.4)) // Test result is positive
-        .WillOnce(testing::Return(0.0)) // Draw for isolation compliance (doesn't matter in this test)
-        .WillOnce(
-            testing::Return(0.7)); // Person complies with testing (even though there is not testing strategy left)
-    EXPECT_EQ(model.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
-              false); // Testing scheme active and restricts entry
-
-    // Try to re-add the same testing scheme and confirm it doesn't duplicate, then remove it.
-    model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work,
-                                                    testing_scheme); //doesn't get added because of == operator
-    model.get_testing_strategy().remove_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
-    EXPECT_EQ(model.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
-              true); // no more testing_schemes
+        .WillOnce(testing::Return(0.0)); // Draw for isolation compliance (doesn't matter in this test)
+    EXPECT_EQ(model.get_testing_strategy().run_and_check(rng_person, person, work, current_time),
+              false); // Testing scheme active but person complies with testing
 }
 
 /**
@@ -691,6 +682,8 @@ TEST_F(TestModel, checkParameterConstraints)
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Community] = 0.5;
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2]      = 0.6;
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical]  = 0.7;
+    params.get<mio::abm::QuarantineEffectiveness>()                       = 0.5;
+    params.get<mio::abm::QuarantineDuration>()                            = mio::abm::days(14);
     params.get<mio::abm::LockdownDate>()                                  = mio::abm::TimePoint(0);
     ASSERT_EQ(params.check_constraints(), false);
 
@@ -789,6 +782,12 @@ TEST_F(TestModel, checkParameterConstraints)
     EXPECT_TRUE(params.check_constraints());
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical] = 0.7;
 
+    params.get<mio::abm::QuarantineEffectiveness>() = -0.1;
+    EXPECT_TRUE(params.check_constraints());
+    params.get<mio::abm::QuarantineEffectiveness>() = 1.5;
+    EXPECT_TRUE(params.check_constraints());
+    params.get<mio::abm::QuarantineEffectiveness>() = 0.8;
+
     params.get<mio::abm::LockdownDate>() = mio::abm::TimePoint(-2);
     EXPECT_TRUE(params.check_constraints());
     mio::set_log_level(mio::LogLevel::warn);
@@ -879,7 +878,7 @@ TEST_F(TestModel, mobilityRulesWithAppliedNPIs)
 
     auto testing_scheme =
         mio::abm::TestingScheme(testing_criteria, testing_frequency, start_date, end_date, test_params, probability);
-    model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
+    model.get_testing_strategy().add_scheme(mio::abm::LocationType::Work, testing_scheme);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
@@ -995,7 +994,7 @@ TEST_F(TestModel, mobilityTripWithAppliedNPIs)
 
     auto testing_scheme =
         mio::abm::TestingScheme(testing_criteria, testing_frequency, start_date, end_date, test_params, probability);
-    model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
+    model.get_testing_strategy().add_scheme(mio::abm::LocationType::Work, testing_scheme);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
@@ -1008,16 +1007,12 @@ TEST_F(TestModel, mobilityTripWithAppliedNPIs)
 
     // Using trip list
     mio::abm::TripList& trip_list = model.get_trip_list();
-    mio::abm::Trip trip1(p_compliant_go_to_work.get_id(), t, work_id, home_id, mio::abm::LocationType::Work);
-    mio::abm::Trip trip2(p_compliant_go_to_school.get_id(), t, school_id, home_id, mio::abm::LocationType::School);
-    mio::abm::Trip trip3(p_no_mask.get_id(), t, work_id, home_id, mio::abm::LocationType::Work);
-    mio::abm::Trip trip4(p_no_test.get_id(), t, work_id, home_id, mio::abm::LocationType::Work);
-    mio::abm::Trip trip5(p_no_isolation.get_id(), t, work_id, home_id, mio::abm::LocationType::Work);
-    trip_list.add_trip(trip1);
-    trip_list.add_trip(trip2);
-    trip_list.add_trip(trip3);
-    trip_list.add_trip(trip4);
-    trip_list.add_trip(trip5);
+    mio::abm::Trip trip1(p_compliant_go_to_work.get_id(), t, work_id);
+    mio::abm::Trip trip2(p_compliant_go_to_school.get_id(), t, school_id);
+    mio::abm::Trip trip3(p_no_mask.get_id(), t, work_id);
+    mio::abm::Trip trip4(p_no_test.get_id(), t, work_id);
+    mio::abm::Trip trip5(p_no_isolation.get_id(), t, work_id);
+    trip_list.add_trips({trip1, trip2, trip3, trip4, trip5});
     model.use_mobility_rules(false);
     model.evolve(t, dt);
 

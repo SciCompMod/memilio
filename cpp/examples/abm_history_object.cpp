@@ -137,7 +137,7 @@ int main()
     auto testing_criteria_work = mio::abm::TestingCriteria();
     auto testing_scheme_work   = mio::abm::TestingScheme(testing_criteria_work, validity_period, start_date, end_date,
                                                          test_parameters, probability);
-    model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
+    model.get_testing_strategy().add_scheme(mio::abm::LocationType::Work, testing_scheme_work);
 
     // Assign infection state to each person.
     // The infection states are chosen randomly.
@@ -178,7 +178,7 @@ int main()
     auto sim  = mio::abm::Simulation(t0, std::move(model));
 
     struct LogTimePoint : mio::LogAlways {
-        using Type = double;
+        using Type = ScalarType;
         static Type log(const mio::abm::Simulation<>& sim)
         {
             return sim.get_time().hours();

@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Jan Kleinert, Daniel Abele
@@ -17,51 +17,32 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_COMPARTMENTALMODEL_H
-#define MIO_COMPARTMENTALMODEL_H
+#ifndef MIO_COMPARTMENTS_COMPARTMENTAL_MODEL_H
+#define MIO_COMPARTMENTS_COMPARTMENTAL_MODEL_H
 
 #include "memilio/config.h"
 #include "memilio/math/eigen.h"
-#include "memilio/utils/custom_index_array.h"
-#include "memilio/utils/metaprogramming.h"
-#include <cstddef>
-#include <type_traits>
-#include <vector>
-#include <functional>
+#include <concepts>
 
 namespace mio
 {
 
-namespace details
-{
-//helpers for check_constraint
+/// @brief Check that the given type has a check_constraints member function.
 template <class T>
-using check_constraints_expr_t = decltype(std::declval<T>().check_constraints());
+concept HasCheckConstraints = requires(T t) {
+    { t.check_constraints() } -> std::same_as<bool>;
+};
 
-//helpers for apply_constraints
+/// @brief Check that the given type has an apply_constraints member function.
 template <class T>
-using apply_constraints_expr_t = decltype(std::declval<T>().apply_constraints());
-
-} //namespace details
-
-/**
- * @brief Check whether a check_constraints function exists.
- * @tparam The type to check for the existence of the member function.
- */
-template <class T>
-using has_check_constraints_member_function = is_expression_valid<details::check_constraints_expr_t, T>;
-
-/**
- * @brief Check whether a apply_constraints function exists.
- * @tparam The type to check for the existence of the member function.
- */
-template <class T>
-using has_apply_constraints_member_function = is_expression_valid<details::apply_constraints_expr_t, T>;
+concept HasApplyConstraints = requires(T t) {
+    { t.apply_constraints() } -> std::same_as<bool>;
+};
 
 /**
  * @brief CompartmentalModel is a template for a compartmental model for an
  * array of initial populations and a parameter set.
- * @tparam FP floating point type, e.g., double.
+ * @tparam FP A floating point type, e.g., double.
  *
  * The Populations must be a concrete class derived from the Populations template,
  * i.e. a multi-dimensional array of compartment populations where each dimension
@@ -95,8 +76,9 @@ public:
     virtual ~CompartmentalModel()                            = default;
 
     // REMARK: Not pure virtual for easier java/python bindings.
-    virtual void get_derivatives(Eigen::Ref<const Eigen::VectorX<FP>> /*pop*/, Eigen::Ref<const Eigen::VectorX<FP>> /*y*/,
-                                 FP /*t*/, Eigen::Ref<Eigen::VectorX<FP>> /*dydt*/) const {};
+    virtual void get_derivatives(Eigen::Ref<const Eigen::VectorX<FP>> /*pop*/,
+                                 Eigen::Ref<const Eigen::VectorX<FP>> /*y*/, FP /*t*/,
+                                 Eigen::Ref<Eigen::VectorX<FP>> /*dydt*/) const {};
 
     /**
      * @brief This function evaluates the right-hand-side f of the ODE dydt = f(y, t).
@@ -138,16 +120,16 @@ public:
     /**
      * @brief Checks whether the model satisfies all constraints. If not, it changes values to suffice their constraints.
      *
-     * Attention: This function should be used with care. It can not and will not set model parameters and 
+     * Attention: This function should be used with care. It can not and will not set model parameters and
      *            compartments to meaningful values. In most cases it is preferable to use check_constraints,
      *            and correct values manually before proceeding with the simulation.
      *            The main usage for apply_constraints is in automated tests using random values for initialization.
      *
-     * @return Returns true if one or more constraints were corrected, false otherwise. 
+     * @return Returns true if one or more constraints were corrected, false otherwise.
      */
     bool apply_constraints()
     {
-        if constexpr (has_apply_constraints_member_function<ParameterSet>::value) {
+        if constexpr (HasApplyConstraints<ParameterSet>) {
             // use bitwise instead of logical or, so that both apply_constraint functions are called
             return ((int)parameters.apply_constraints() | (int)populations.apply_constraints());
         }
@@ -162,7 +144,7 @@ public:
      */
     bool check_constraints() const
     {
-        if constexpr (has_check_constraints_member_function<ParameterSet>::value) {
+        if constexpr (HasCheckConstraints<ParameterSet>) {
             return (parameters.check_constraints() || populations.check_constraints());
         }
         else {
@@ -175,43 +157,18 @@ public:
 };
 
 /**
- * Detect the eval_right_hand_side member function of a compartment model.
- * If the eval_right_hand_side member function exists in the type M, this template when instatiated
- * will be equal to the return type of the function.
- * Otherwise the template is invalid.
- * @tparam FP, floating point type, e.g., double.
- * @tparam M a type that has a eval_right_hand_side member function, e.g. a compartment model type.
+ * @brief Concept to check if a type is a valid compartment model.
+ * Note that Model must be the first template argument 
+ * @tparam Model A type that may or may not be a compartment model.
+ * @tparam FP A floating point type, e.g. double.
  */
-template <typename FP, class M>
-using eval_right_hand_side_expr_t = decltype(std::declval<const M&>().eval_right_hand_side(
-    std::declval<Eigen::Ref<const Eigen::VectorX<FP>>>(), std::declval<Eigen::Ref<const Eigen::VectorX<FP>>>(),
-    std::declval<FP>(), std::declval<Eigen::Ref<Eigen::VectorX<FP>>>()));
-
-/**
- * Detect the get_initial_values member function of a compartment model.
- * If the detect_initial_values member function exists in the type M, this template when instatiated
- * will be equal to the return type of the function.
- * Otherwise the template is invalid.
- * @tparam FP, floating point type, e.g., double.
- * @tparam M a type that has a get_initial_values member function, e.g. a compartment model type.
- */
-template <typename FP, class M>
-using get_initial_values_expr_t =
-    decltype(std::declval<Eigen::VectorX<FP>&>() = std::declval<const M&>().get_initial_values());
-
-/**
- * Template meta function to check if a type is a valid compartment model. 
- * Defines a static constant of name `value`. 
- * The constant `value` will be equal to true if M is a valid compartment model type.
- * Otherwise, `value` will be equal to false.
- * @tparam FP, floating point type, e.g., double.
- * @tparam M a type that may or may not be a compartment model.
- */
-template <typename FP, class M>
-using is_compartment_model =
-    std::integral_constant<bool, (is_expression_valid<eval_right_hand_side_expr_t, FP, M>::value &&
-                                  is_expression_valid<get_initial_values_expr_t, FP, M>::value)>;
+template <class Model, typename FP>
+concept IsCompartmentalModel =
+    requires(Model m, Eigen::Ref<const Eigen::VectorX<FP>> pop_y, Eigen::Ref<Eigen::VectorX<FP>> dydt, FP t) {
+        { m.get_initial_values() } -> std::convertible_to<Eigen::VectorX<FP>>;
+        m.eval_right_hand_side(pop_y, pop_y, t, dydt);
+    };
 
 } // namespace mio
 
-#endif // MIO_COMPARTMENTALMODEL_H
+#endif // MIO_COMPARTMENTS_COMPARTMENTAL_MODEL_H

@@ -1,3 +1,5 @@
+.. include:: ../literature.rst
+
 Diffusive agent-based model
 ===========================
 
@@ -9,6 +11,9 @@ The features of an agent are its position and its infection state. The evolution
 with :math:`X` the vector of all agents' positions and :math:`Z` the vector of all agents' infection states. The operator :math:`G` defines the infection state adoptions and only acts on :math:`Z`, while :math:`L` defines movement, i.e. location changes, only acting on :math:`X`. Infection state adoptions are modeled with independent Poisson processes given by adoption rate functions. Movement is modeled with independent diffusion processes. A temporal Gillespie algorithm (a direct method without rejection sampling) is used for simulation. Therefore, :math:`G` and :math:`L` are not implemented explicitly, instead their effects are sampled via the `move` and `adoption_rate` functions, respectively.
 
 The Model class needs an Implementation class as template argument which provides the domain agents move and interact in. A quadwell potential and a singlewell potential given in the classes **QuadWell** and **SingleWell** respectively are implemented, but any other suitable potential can be used as implementation. 
+
+In the following, we present more details of the diffusive agent-based model, including code examples. 
+An overview of nonstandard but often used data types can be found under :doc:`data_types`.
 
 Infection states
 ----------------
@@ -35,7 +40,7 @@ Using the infection states Susceptible (S), Exposed (E), Carrier (C), Infected (
 Infection state transitions
 ---------------------------
 
-The infection state transitions are explicitly given by the adoption rates and are therefore subject to user input. Adoption rates always depend on their source infection state. If an adoption event requires interaction of agents (e.g. disease transmission), the corresponding rate depends not only on the source infection state, but also on other infection states, the **Influence**s. An adoption rate that only depends on the source infection state, e.g. recovery or worsening of disease symptoms, is called `first-order` adoption rate and an adoption rate that has influences is called `second-order` adoption rate. Adoption rates are region-dependent; therefore it is possible to have different rates in two regions for the same state transition which can be useful when having e.g. region-dependent interventions or contact behavior.
+The infection state transitions are explicitly given by the adoption rates and are therefore subject to user input. Adoption rates always depend on their source infection state. If an adoption event requires interaction of agents (e.g. disease transmission), the corresponding rate depends not only on the source infection state, but also on other infection states, the **Influence**\s. An adoption rate that only depends on the source infection state, e.g. recovery or worsening of disease symptoms, is called `first-order` adoption rate and an adoption rate that has influences is called `second-order` adoption rate. Adoption rates are region-dependent; therefore it is possible to have different rates in two regions for the same state transition which can be useful when having e.g. region-dependent interventions or contact behavior.
 
 Using the infection states from above and only one region, there are five first-order and one second-order adoption rate that can be set via: 
 
@@ -122,7 +127,7 @@ There are no non-pharmaceutical interventions (NPIs) explicitly implemented in t
 .. code-block:: cpp
 
     //Reduce the transmission risk by 10%
-    model.get_adoption_rates().at({mio::mpm::Region(0), Status::S, Status::E}).factor *= 0.9;
+    model.get_adoption_rates().at({mio::regions::Region(0), Status::S, Status::E}).factor *= 0.9;
 
 Simulation
 -----------
@@ -145,7 +150,7 @@ To simulate the model from `t0` to `tmax` with given step size `dt`, a **Simulat
 
 For a detailed description and application of the model, see:
 
-- Bicker J, Schmieding R, et al. (2025) Hybrid metapopulation agent-based epidemiological models for efficient insight on the individual scale: A contribution to green computing. Infectious Disease Modelling, Volume 10, Issue 2. https://doi.org/10.1016/j.idm.2024.12.015
+- |Hybrid_metapopulation_agent-based|
 
 Output
 ------

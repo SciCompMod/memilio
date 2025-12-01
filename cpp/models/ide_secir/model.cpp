@@ -29,6 +29,7 @@
 #include "vector"
 #include <algorithm>
 #include <cstddef>
+#include <numbers>
 
 namespace mio
 {
@@ -179,6 +180,14 @@ ScalarType Model::get_global_support_max(ScalarType dt) const
     }
     return global_support_max;
 }
+
+/* Disclaimer: The following discrete formulas are derived and explained in 
+Wendler A, Plötzke L, Tritzschak H, Kühn MJ: A nonstandard numerical scheme for a novel SECIR integro differential 
+equation-based model with nonexponentially distributed stay times. DOI:10.1016/j.amc.2025.129636.
+Note that throughout this implementation, we assume that the initial values for the transitions contain information 
+about the number of individuals transitioning within a time interval (in contrast to at a time point), cf. Section 3.4 in 
+the paper. The formulas from the paper are adapted accordingly by scaling with the time step size dt.
+ */
 
 // ---- Functionality to calculate the sizes of the compartments for time t0. ----
 void Model::compute_compartment_from_flows(ScalarType dt, Eigen::Index idx_InfectionState, AgeGroup group,
@@ -589,9 +598,9 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
         }
         //We compute the Season Value.
         ScalarType season_val =
-            1 +
-            parameters.get<Seasonality>() *
-                sin(3.141592653589793 * (std::fmod((parameters.get<StartDay>() + current_time), 365.0) / 182.5 + 0.5));
+            1 + parameters.get<Seasonality>() *
+                    sin(std::numbers::pi_v<ScalarType> *
+                        (std::fmod((parameters.get<StartDay>() + current_time), 365.0) / 182.5 + 0.5));
         // To include contacts between all age groups we sum over all age groups.
         for (AgeGroup j = AgeGroup(0); j < AgeGroup(m_num_agegroups); ++j) {
             // Determine the relevant calculation area = union of the supports of the relevant transition distributions.
@@ -630,8 +639,8 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
                 Eigen::Index state_age_index = num_time_points - 1 - l;
                 ScalarType state_age         = state_age_index * dt;
                 sum += season_val * parameters.get<TransmissionProbabilityOnContact>()[i].eval(state_age) *
-                       parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(
-                           static_cast<Eigen::Index>((size_t)i), static_cast<Eigen::Index>((size_t)j)) *
+                       parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(SimulationTime<ScalarType>(
+                           current_time))(static_cast<Eigen::Index>((size_t)i), static_cast<Eigen::Index>((size_t)j)) *
                        (m_transitiondistributions_in_forceofinfection[j][0][num_time_points - l - 1] *
                             transitions[l + 1][EtINSj] *
                             parameters.get<RelativeTransmissionNoSymptoms>()[j].eval(state_age) +
@@ -639,7 +648,7 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
                             transitions[l + 1][INStISyj] *
                             parameters.get<RiskOfInfectionFromSymptomatic>()[j].eval(state_age));
             }
-            const double divNj =
+            const ScalarType divNj =
                 (m_N[j] - deaths_j < Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / (m_N[j] - deaths_j);
             m_forceofinfection[i] += divNj * sum;
         }

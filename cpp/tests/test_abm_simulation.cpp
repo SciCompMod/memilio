@@ -18,10 +18,14 @@
 * limitations under the License.
 */
 #include "abm/location_type.h"
+#include "abm/simulation.h"
+#include "abm/result_simulation.h"
+#include "abm/time.h"
 #include "abm_helpers.h"
 #include "abm/common_abm_loggers.h"
 #include "matchers.h"
 #include "memilio/io/history.h"
+#include <cstddef>
 #include <cstdint>
 
 TEST(TestSimulation, advance_random)
@@ -100,28 +104,18 @@ TEST(TestSimulation, advanceWithCommonHistory)
     mio::abm::TripList& trip_list = model.get_trip_list();
 
     // We add trips for person two to test the history and if it is working correctly
-    mio::abm::Trip trip1(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(2), work_id,
-                         home_id, mio::abm::LocationType::Work);
-    mio::abm::Trip trip2(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(3), icu_id,
-                         home_id, mio::abm::LocationType::ICU);
-    mio::abm::Trip trip3(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(4), hospital_id,
-                         home_id, mio::abm::LocationType::Hospital);
-    mio::abm::Trip trip4(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(5), social_id,
-                         home_id, mio::abm::LocationType::SocialEvent);
-    mio::abm::Trip trip5(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(6), basics_id,
-                         home_id, mio::abm::LocationType::BasicsShop);
-    mio::abm::Trip trip6(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(7), public_id,
-                         home_id, mio::abm::LocationType::PublicTransport);
-    mio::abm::Trip trip7(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(8), home_id,
-                         home_id, mio::abm::LocationType::Home);
+    mio::abm::Trip trip1(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(2), home_id);
+    mio::abm::Trip trip2(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id);
+    mio::abm::Trip trip3(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(4), home_id);
+    mio::abm::Trip trip4(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(5), home_id);
+    mio::abm::Trip trip5(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(6), home_id);
+    mio::abm::Trip trip6(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(7), home_id);
+    mio::abm::Trip trip7(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(8), home_id);
 
-    trip_list.add_trip(trip1);
-    trip_list.add_trip(trip2);
-    trip_list.add_trip(trip3);
-    trip_list.add_trip(trip4);
-    trip_list.add_trip(trip5);
-    trip_list.add_trip(trip6);
-    trip_list.add_trip(trip7);
+    // Add to one vector
+    auto trips = std::vector<mio::abm::Trip>{trip1, trip2, trip3, trip4, trip5, trip6, trip7};
+
+    trip_list.add_trips(trips);
 
     mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation, mio::abm::LogPersonInformation,
                  mio::abm::LogDataForMobility>
@@ -152,4 +146,29 @@ TEST(TestSimulation, advanceWithCommonHistory)
     EXPECT_EQ(logMobilityInfoDelta[0].size(),
               3); // Check if all persons are in the delta-logger Mobility helper entry 0, 3 persons
     EXPECT_EQ(logMobilityInfoDelta[1].size(), 3); // Check if all persons are in the delta-log first entry, 3 persons
+}
+
+TEST(TestSimulation, ResultSimulation)
+{
+    // run a ResultSimulation on a minimal setup
+    auto model    = mio::abm::Model(num_age_groups);
+    auto location = model.add_location(mio::abm::LocationType::Home);
+    auto person   = model.add_person(location, age_group_15_to_34);
+
+    model.assign_location(person, location);
+
+    const auto t0   = mio::abm::TimePoint(0) + mio::abm::hours(100);
+    const auto tmax = t0 + mio::abm::hours(50);
+    auto sim        = mio::abm::ResultSimulation(std::move(model), t0);
+
+    // run simulation. expect one timepoint per day, but nothing to change in the results
+    sim.advance(tmax);
+    const size_t N = (size_t)(tmax - t0).hours() + 1;
+    ASSERT_EQ(sim.get_result().get_num_time_points(), N);
+    EXPECT_THAT(sim.get_result().get_times(), ElementsAreLinspace(t0.days(), tmax.days(), N));
+    for (const auto& tp : sim.get_result()) {
+        EXPECT_EQ(tp.sum(), 1.0);
+    }
+    EXPECT_EQ(sim.get_result().get_value(0)[(Eigen::Index)mio::abm::InfectionState::Susceptible], 1.0);
+    EXPECT_EQ(sim.get_result().get_value(N - 1)[(Eigen::Index)mio::abm::InfectionState::Susceptible], 1.0);
 }

@@ -27,6 +27,7 @@ import tensorflow as tf
 
 from memilio.simulation.osecir import InfectionState
 import memilio.surrogatemodel.ode_secir_simple.network_architectures as architectures
+from memilio.surrogatemodel.utils.helper_functions import (calc_split_index)
 
 
 def initialize_model(parameters):
@@ -126,22 +127,17 @@ def split_data(inputs, labels, split_train=0.7,
         'valid_labels', 'test_inputs', 'test_labels'}
     """
 
-    if split_train + split_valid + split_test > 1 + 1e-10:
-        raise ValueError(
-            "Summed data set shares are greater than 1. Please adjust the values.")
-    elif inputs.shape[0] != labels.shape[0] or inputs.shape[2] != labels.shape[2]:
+    if inputs.shape[0] != labels.shape[0] or inputs.shape[2] != labels.shape[2]:
         raise ValueError(
             "Number of batches or features different for input and labels")
 
     n = inputs.shape[0]
-    n_train = int(n * split_train)
-    n_valid = int(n * split_valid)
-    n_test = n - n_train - n_valid
+    splitting = calc_split_index(n, split_train, split_valid, split_test)
 
     inputs_train, inputs_valid, inputs_test = tf.split(
-        inputs, [n_train, n_valid, n_test], 0)
+        inputs, splitting, 0)
     labels_train, labels_valid, labels_test = tf.split(
-        labels, [n_train, n_valid, n_test], 0)
+        labels, splitting, 0)
 
     data = {
         'train_inputs': inputs_train,

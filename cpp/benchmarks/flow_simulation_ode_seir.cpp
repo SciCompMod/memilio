@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Rene Schmieding, Daniel Abele, Martin J. Kuehn
@@ -52,8 +52,9 @@ public:
     {
     }
 
-    void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                         Eigen::Ref<Eigen::VectorXd> dydt) const override
+    void get_derivatives(Eigen::Ref<const Eigen::VectorX<ScalarType>> pop,
+                         Eigen::Ref<const Eigen::VectorX<ScalarType>> y, ScalarType t,
+                         Eigen::Ref<Eigen::VectorX<ScalarType>> dydt) const override
     {
         auto& params                     = this->parameters;
         const Index<AgeGroup> age_groups = reduce_index<Index<AgeGroup>>(this->populations.size());
@@ -71,10 +72,10 @@ public:
                 size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
                 size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
-                const double Nj_inv = 1.0 / (pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj]);
-                const double coeffStoE =
-                    params.template get<ContactPatterns<ScalarType>>().get_cont_freq_mat().get_matrix_at(t)(i.get(),
-                                                                                                            j.get()) *
+                const ScalarType Nj_inv = 1.0 / (pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj]);
+                const ScalarType coeffStoE =
+                    params.template get<ContactPatterns<ScalarType>>().get_cont_freq_mat().get_matrix_at(
+                        SimulationTime<ScalarType>(t))(i.get(), j.get()) *
                     params.template get<TransmissionProbabilityOnContact<ScalarType>>()[i] * Nj_inv;
 
                 dydt[Si] -= y[Si] * pop[Ij] * coeffStoE;
@@ -91,8 +92,8 @@ public:
 template <class Model>
 void setup_model(Model& model)
 {
-    const double total_population = 10000.0;
-    const auto num_groups         = model.parameters.get_num_groups();
+    const ScalarType total_population = 10000.0;
+    const auto num_groups             = model.parameters.get_num_groups();
     for (AgeGroup i = 0; i < num_groups; i++) {
         model.populations[{i, oseir::InfectionState::Exposed}]   = 100.0 / static_cast<size_t>(num_groups);
         model.populations[{i, oseir::InfectionState::Infected}]  = 100.0 / static_cast<size_t>(num_groups);
@@ -106,8 +107,9 @@ void setup_model(Model& model)
     model.parameters.template set<mio::oseir::TimeExposed<ScalarType>>(5.2);
     model.parameters.template set<mio::oseir::TimeInfected<ScalarType>>(6);
     model.parameters.template set<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>(0.04);
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.template get<mio::oseir::ContactPatterns<ScalarType>>();
-    contact_matrix[0].get_baseline().setConstant(10.);
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.template get<mio::oseir::ContactPatterns<ScalarType>>();
+    contact_matrix[0].get_baseline().setConstant(10.0);
 }
 
 } // namespace benchmark
@@ -124,15 +126,18 @@ void flowless_sim(::benchmark::State& state)
     // create model
     Model model(cfg.num_agegroups);
     mio::benchmark::setup_model(model);
-    // create simulation
-    std::shared_ptr<mio::IntegratorCore<ScalarType>> I =
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
-            cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
     mio::TimeSeries<ScalarType> results(static_cast<size_t>(Model::Compartments::Count));
     // run benchmark
     for (auto _ : state) {
+        // create simulation
+        // exclude integrator creation from benchmark
+        state.PauseTiming();
+        std::unique_ptr<mio::OdeIntegratorCore<ScalarType>> I =
+            std::make_unique<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
+                cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
+        state.ResumeTiming();
         // This code gets timed
-        results = mio::simulate(cfg.t0, cfg.t_max, cfg.dt, model, I);
+        results = mio::simulate(cfg.t0, cfg.t_max, cfg.dt, model, std::move(I));
     }
 }
 
@@ -147,15 +152,17 @@ void flow_sim_comp_only(::benchmark::State& state)
     // create model
     Model model(cfg.num_agegroups);
     mio::benchmark::setup_model(model);
-    // create simulation
-    std::shared_ptr<mio::IntegratorCore<ScalarType>> I =
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
-            cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
     mio::TimeSeries<ScalarType> results(static_cast<size_t>(Model::Compartments::Count));
     // run benchmark
     for (auto _ : state) {
+        // create simulation
+        state.PauseTiming();
+        std::unique_ptr<mio::OdeIntegratorCore<ScalarType>> I =
+            std::make_unique<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
+                cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
+        state.ResumeTiming();
         // This code gets timed
-        results = mio::simulate(cfg.t0, cfg.t_max, cfg.dt, model, I);
+        results = mio::simulate(cfg.t0, cfg.t_max, cfg.dt, model, std::move(I));
     }
 }
 
@@ -170,15 +177,17 @@ void flow_sim(::benchmark::State& state)
     // create model
     Model model(cfg.num_agegroups);
     mio::benchmark::setup_model(model);
-    // create simulation
-    std::shared_ptr<mio::IntegratorCore<ScalarType>> I =
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
-            cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
     mio::TimeSeries<ScalarType> results(static_cast<size_t>(Model::Compartments::Count));
     // run benchmark
     for (auto _ : state) {
+        // create simulation
+        state.PauseTiming();
+        std::unique_ptr<mio::OdeIntegratorCore<ScalarType>> I =
+            std::make_unique<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
+                cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
+        state.ResumeTiming();
         // This code gets timed
-        results = mio::simulate_flows(cfg.t0, cfg.t_max, cfg.dt, model, I)[0];
+        results = mio::simulate_flows(cfg.t0, cfg.t_max, cfg.dt, model, std::move(I))[0];
     }
 }
 

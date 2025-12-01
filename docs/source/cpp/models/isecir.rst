@@ -1,11 +1,15 @@
+.. include:: ../../literature.rst
+
 IDE-based SECIR-type model
 ==========================
 
 The IDE-SECIR module models and simulates an epidemic using integro-differential equations allowing for 
 arbitrary stay time distributions in the compartments. The model is particularly suited for pathogens with pre- or 
 asymptomatic infection states and when severe or critical states are possible. The model assumes perfect immunity after 
-recovery and is thus only suited for epidemic use cases.
-In the following, we present the model in detail.
+recovery. It is thus only suited for epidemic use cases and, mostly, early epidemic phases. 
+
+*   A generalization of the model in the application sense that includes three immunity layers and vaccination is the :doc:`ODE-SECIRVVS model <osecirvvs>`. However, this model does not allow for arbitrary stay time distributions.
+*   A generalization of the model in the application sense that includes three immunity layers, vaccination, and waning immunity is the :doc:`ODE-SECIRTS model <osecirts>`. However, this model does not allow for arbitrary stay time distributions.
 
 Below is a visualization of the infection states and transitions. The variables :math:`\sigma_{z_1}^{z_2}` refer to a transition from a compartment :math:`z_1` to a compartment :math:`z_2`.
 
@@ -17,10 +21,7 @@ The simulation runs in discrete time steps using a non-standard numerical scheme
 Messina E, Pezzella M. (2022). *A non-standard numerical scheme for an age-of-infection epidemic model*. Journal of Computational Dynamics.
 `https://doi.org/10.3934/jcd.2021029 <https://doi.org/10.3934/jcd.2021029>`_
 
-A detailed investiation of the IDE-SECIR model and numerical experiments can be found in
-Wendler AC, Plötzke L, Tritzschak H, Kühn MJ. (2024). *A nonstandard numerical scheme for a novel SECIR integro 
-differential equation-based model with nonexponentially distributed stay times*. Submitted for publication. `arXiv:2408.12228 <https://arxiv.org/abs/2408.12228>`_
-
+A detailed investigation of the IDE-SECIR model and numerical experiments can be found in |A_nonstandard_numerical_scheme|
 
 Infection States
 ----------------
@@ -54,7 +55,7 @@ The possible transitions between the **InfectionState**\s are:
     `InfectedSevereToInfectedCritical`
     `InfectedSevereToRecovered`
     `InfectedCriticalToDead`
-    `InfectedCriticalToRecovered  
+    `InfectedCriticalToRecovered`
 
 
 Sociodemographic Stratification
@@ -231,7 +232,7 @@ For age-resolved models, you can apply different dampings to different groups:
                              mio::SimulationTime(30.));
 
 
-For more complex scenarios, such as real-world lockdown modeling, you can implement detailed NPIs with location-specific dampings. The SECIR model supports contact matrices for different locations (e.g., home, school, work, other) and can apply different dampings to each location.
+For more complex scenarios, such as real-world venue closures or lockdown modeling, you can implement detailed NPIs with location-specific dampings. The IDE-SECIR model supports contact matrices for different locations (e.g., home, school, work, other) and can apply different dampings to each location.
 
 Example for defining different contact locations:
 
@@ -355,7 +356,7 @@ Additionally, you can export the results to a CSV file:
 Visualization
 -------------
 
-To visualize the results of a simulation, you can use the Python package :doc:`memilio_plot <../../python/memilio_plot>`
+To visualize the results of a simulation, you can use the Python package :doc:`m-plot <../../python/m-plot>`
 and its documentation.
 
 You can export your simulation results to CSV format as described above.

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Julia Bicker, René Schmieding
 *
@@ -24,6 +24,9 @@
 #include <algorithm>
 #include <functional>
 #include <type_traits>
+
+#include "memilio/config.h"
+
 namespace mio
 {
 namespace hybrid
@@ -54,8 +57,8 @@ class TemporalHybridSimulation
 
 public:
     //Functions returning the result/current state of both models
-    using result1_function = std::function<ResultType1(const Model1&, double t)>;
-    using result2_function = std::function<ResultType2(const Model2&, double t)>;
+    using result1_function = std::function<ResultType1(const Model1&, ScalarType t)>;
+    using result2_function = std::function<ResultType2(const Model2&, ScalarType t)>;
 
     //Should return true when the simulation should be continued with the model that is not used currently i.e. a switch needs to be applied
     using switching_condition =
@@ -72,7 +75,8 @@ public:
      * @param[in] dt Timestep with which the switching is checked.
      */
     TemporalHybridSimulation(Model1&& model1, Model2&& model2, const result1_function& result1,
-                             const result2_function& result2, bool initially_use_model1, double t0 = 0, double dt = 0.1)
+                             const result2_function& result2, bool initially_use_model1, ScalarType t0 = 0,
+                             ScalarType dt = 0.1)
         : m_model1(std::move(model1))
         , m_model2(std::move(model2))
         , m_result1(result1)
@@ -88,7 +92,7 @@ public:
      * @param[in] tmax End time point of the simulation
      * @param[in] switch_model Switching condition that is checked every m_dt step.
      */
-    void advance(double tmax, const switching_condition& switch_model)
+    void advance(ScalarType tmax, const switching_condition& switch_model)
     {
         while (m_t < tmax) {
             bool condition = switch_model(get_result_model1(), get_result_model2(), m_using_model1);
@@ -104,7 +108,7 @@ public:
                 m_using_model1 = true;
             }
             //else{Switching condition is not fulfilled and currently used model is just advanced}
-            double next_step = std::min(m_dt, tmax - m_t);
+            ScalarType next_step = std::min(m_dt, tmax - m_t);
             if (m_using_model1) {
                 m_model1.advance(m_t + next_step);
             }
@@ -175,8 +179,8 @@ private:
     result1_function m_result1; ///< Result function of first model.
     result2_function m_result2; ///< Result function of second model.
     bool m_using_model1; ///< Boolean specifying whether model 1 is currently used for simulation.
-    double m_t; ///< Current time step.
-    double m_dt; ///< Step size with which the switching condition is checked.
+    ScalarType m_t; ///< Current time step.
+    ScalarType m_dt; ///< Step size with which the switching condition is checked.
 };
 
 } //namespace hybrid

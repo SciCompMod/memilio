@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn, Martin Siggel, Henrik Zunker
@@ -36,7 +36,7 @@ TEST(TestOdeSir, simulateDefault)
     double dt   = 0.1;
 
     mio::osir::Model<double> model(1);
-    mio::TimeSeries<double> result = simulate(t0, tmax, dt, model);
+    mio::TimeSeries<double> result = mio::simulate<double>(t0, tmax, dt, model);
 
     EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
 }
@@ -68,11 +68,10 @@ TEST(TestOdeSir, compareWithPreviousRun)
 
     model.parameters.get<mio::osir::ContactPatterns<double>>().get_cont_freq_mat()[0].get_baseline().setConstant(2.7);
     model.parameters.get<mio::osir::ContactPatterns<double>>().get_cont_freq_mat()[0].add_damping(
-        0.6, mio::SimulationTime(12.5));
+        0.6, mio::SimulationTime<double>(12.5));
 
-    std::vector<std::vector<double>> refData                = load_test_data_csv<double>("ode-sir-compare.csv");
-    std::shared_ptr<mio::IntegratorCore<double>> integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
-    auto result                                             = mio::simulate(t0, tmax, dt, model, integrator);
+    std::vector<std::vector<double>> refData = load_test_data_csv<double>("ode-sir-compare.csv");
+    auto result = mio::simulate<double>(t0, tmax, dt, model, std::make_unique<mio::EulerIntegratorCore<double>>());
 
     ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
 
@@ -129,7 +128,7 @@ TEST(TestOdeSir, checkPopulationConservation)
 
     model.parameters.get<mio::osir::ContactPatterns<double>>().get_cont_freq_mat()[0].get_baseline().setConstant(2.7);
     model.parameters.get<mio::osir::ContactPatterns<double>>().get_cont_freq_mat()[0].add_damping(
-        0.6, mio::SimulationTime(12.5));
+        0.6, mio::SimulationTime<double>(12.5));
     auto result        = mio::simulate<double, mio::osir::Model<double>>(t0, tmax, dt, model);
     double num_persons = 0.0;
     for (auto i = 0; i < result.get_last_value().size(); i++) {
@@ -196,7 +195,7 @@ TEST(Testsir, get_derivatives)
 
     model.parameters.set<mio::osir::TimeInfected<double>>(4);
     model.parameters.set<mio::osir::TransmissionProbabilityOnContact<double>>(1);
-    mio::ContactMatrixGroup& contact_matrix =
+    mio::ContactMatrixGroup<double>& contact_matrix =
         model.parameters.get<mio::osir::ContactPatterns<double>>().get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(1);
     model.check_constraints();
@@ -236,7 +235,7 @@ TEST(Testsir, Simulation)
     double tmax = 1;
     double dt   = 1;
 
-    mio::osir::Model model(1);
+    mio::osir::Model<double> model(1);
 
     constexpr auto total_population                                             = 400;
     model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Infected}]  = 100;
@@ -247,13 +246,12 @@ TEST(Testsir, Simulation)
 
     model.parameters.set<mio::osir::TimeInfected<double>>(4);
     model.parameters.set<mio::osir::TransmissionProbabilityOnContact<double>>(1);
-    mio::ContactMatrixGroup& contact_matrix =
+    mio::ContactMatrixGroup<double>& contact_matrix =
         model.parameters.get<mio::osir::ContactPatterns<double>>().get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(1);
     model.check_constraints();
 
-    std::shared_ptr<mio::IntegratorCore<double>> integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
-    auto sim                                                = simulate(t0, tmax, dt, model, integrator);
+    auto sim = simulate<double>(t0, tmax, dt, model, std::make_unique<mio::EulerIntegratorCore<double>>());
 
     EXPECT_EQ(sim.get_num_time_points(), 2);
 

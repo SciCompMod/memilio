@@ -71,6 +71,10 @@ PersonId Model::add_person(Person&& person)
     auto& new_person = m_persons.back();
     if (m_is_local_population_cache_valid) {
         ++m_local_population_cache[new_person.get_location().get()];
+        for (CellIndex cell : new_person.get_cells()) {
+            auto& local_population_by_age = m_local_population_by_age_cache[new_person.get_location().get()];
+            ++local_population_by_age[{cell, new_person.get_age()}];
+        }
     }
     return new_person.get_id();
 }
@@ -123,10 +127,14 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
                         get_number_persons(target_location.get_id()) >= target_location.get_capacity().persons) {
                         return false;
                     }
-                    // the Person cannot move if the performed TestingStrategy is positive
-                    if (!m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
+                    // The person cannot move if he has a positive test result, except he want to go to a hospital, ICU or home.
+                    if (!m_testing_strategy.run_and_check(personal_rng, person, target_location, t) &&
+                        target_location.get_type() != LocationType::Hospital &&
+                        target_location.get_type() != LocationType::ICU &&
+                        target_location.get_type() != LocationType::Home) {
                         return false;
                     }
+
                     // update worn mask to target location's requirements
                     if (target_location.is_mask_required()) {
                         // if the current MaskProtection level is lower than required, the Person changes mask
@@ -171,13 +179,12 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
     }
 
     // check if a person makes a trip
-    bool weekend     = t.is_weekend();
-    size_t num_trips = m_trip_list.num_trips(weekend);
+    size_t num_trips = m_trip_list.num_trips();
 
     for (; m_trip_list.get_current_index() < num_trips &&
-           m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds();
+           m_trip_list.get_next_trip_time().seconds() < (t + dt).time_since_midnight().seconds();
          m_trip_list.increase_index()) {
-        auto& trip        = m_trip_list.get_next_trip(weekend);
+        auto& trip        = m_trip_list.get_next_trip();
         auto& person      = get_person(trip.person_id);
         auto personal_rng = PersonalRandomNumberGenerator(person);
         // skip the trip if the person is in quarantine or is dead
@@ -190,7 +197,9 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
             continue;
         }
         // skip the trip if the performed TestingStrategy is positive
-        if (!m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
+        if (!m_testing_strategy.run_and_check(personal_rng, person, target_location, t) &&
+            target_location.get_type() != LocationType::Hospital && target_location.get_type() != LocationType::ICU &&
+            target_location.get_type() != LocationType::Home) {
             continue;
         }
         // all requirements are met, move to target location
@@ -216,18 +225,33 @@ void Model::build_compute_local_population_cache() const
 {
     PRAGMA_OMP(single)
     {
+        log_debug("Building local population cache for ABM.");
         const size_t num_locations = m_locations.size();
         const size_t num_persons   = m_persons.size();
         m_local_population_cache.resize(num_locations);
+        m_local_population_by_age_cache.resize(num_locations);
+
         PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_locations; i++) {
             m_local_population_cache[i] = 0;
+            m_local_population_by_age_cache[i].resize(
+                {CellIndex(m_locations[i].get_cells().size()), AgeGroup(parameters.get_num_groups())});
+            for (CellIndex cell = 0; cell < CellIndex(m_locations[i].get_cells().size()); ++cell) {
+                for (AgeGroup group = AgeGroup(0); group < AgeGroup(parameters.get_num_groups()); ++group) {
+                    auto& local_population_by_age          = m_local_population_by_age_cache[i];
+                    local_population_by_age[{cell, group}] = 0;
+                }
+            }
         } // implicit taskloop barrier
         PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_persons; i++) {
             if (m_activeness_statuses[i]) {
                 assert(m_persons[i].get_location_model_id() == m_id && "Person is not in this model but still active.");
                 ++m_local_population_cache[m_persons[i].get_location().get()];
+                for (CellIndex cell : m_persons[i].get_cells()) {
+                    auto& local_population_by_age = m_local_population_by_age_cache[m_persons[i].get_location().get()];
+                    ++local_population_by_age[{cell, m_persons[i].get_age()}];
+                }
             }
         } // implicit taskloop barrier
     } // implicit single barrier
@@ -237,6 +261,7 @@ void Model::build_exposure_caches()
 {
     PRAGMA_OMP(single)
     {
+        mio::log_debug("Building exposure caches for ABM.");
         const size_t num_locations = m_locations.size();
         m_air_exposure_rates_cache.resize(num_locations);
         m_contact_exposure_rates_cache.resize(num_locations);
@@ -289,16 +314,28 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
                 assert(m_persons[i].get_location_model_id() == m_id && "Person is not in this model but still active.");
                 mio::abm::add_exposure_contribution(m_air_exposure_rates_cache[location],
                                                     m_contact_exposure_rates_cache[location], person,
-                                                    get_location(person.get_location()), t, dt);
+                                                    get_location(person.get_location()), parameters, t, dt);
             }
         } // implicit taskloop barrier
+
+        // 3) normalize contributions for each location
+
+        // make sure that the caches are computed
+        if (!m_is_local_population_cache_valid) {
+            build_compute_local_population_cache();
+            m_is_local_population_cache_valid = true;
+        }
+        PRAGMA_OMP(taskloop)
+        for (size_t location = 0; location < num_locations; ++location) {
+            mio::abm::normalize_exposure_contribution(m_contact_exposure_rates_cache[location],
+                                                      m_local_population_by_age_cache[location]);
+        } // implicit taskloop barrier
+
     } // implicit single barrier
 }
 
 void Model::begin_step(TimePoint t, TimeSpan dt)
 {
-    m_testing_strategy.update_activity_status(t);
-
     if (!m_is_local_population_cache_valid) {
         build_compute_local_population_cache();
         m_is_local_population_cache_valid = true;

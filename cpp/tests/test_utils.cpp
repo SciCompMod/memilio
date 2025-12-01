@@ -1,7 +1,7 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
-* Authors: Rene Schmieding 
+* Authors: Rene Schmieding
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,11 +17,18 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "memilio/utils/base_dir.h"
 #include "memilio/utils/index.h"
 #include "memilio/utils/index_range.h"
+#include "memilio/utils/logging.h"
 #include "memilio/utils/mioomp.h"
+#include "utils.h"
 
+#include "gmock/gmock.h"
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
+
+#include <boost/filesystem.hpp>
 
 template <size_t Tag>
 struct CategoryTag : public mio::Index<CategoryTag<Tag>> {
@@ -132,4 +139,37 @@ TEST(TestUtils, OpenMP)
     // check that all thread ids are uniqueliy present via summation over 0,...,get_max_threads()
     // (this check is mathematically not sufficient, but should be good enough pragmatically)
     EXPECT_EQ(sum, (get_max_threads() * (get_max_threads() - 1)) / 2);
+}
+
+TEST(TestUtils, RedirectLogger)
+{
+    // test basic functionality of this testing utility
+    // in particular, verify that it can capture log calls, that view() does not erase the log, and that read() does
+    mio::RedirectLogger logger;
+    logger.capture();
+    // log should start out empty
+    EXPECT_TRUE(logger.view().empty());
+    EXPECT_TRUE(logger.read().empty());
+    // write a message, and copy the log output
+    const std::string msg = "Test Message";
+    mio::log_warning(msg);
+    const std::string log{logger.view()};
+
+    EXPECT_FALSE(logger.view().empty()); // check that view() did not clear the log
+    EXPECT_THAT(log, testing::HasSubstr("[redirect] [warning] " +
+                                        msg)); // check the message. ignore the time stamp at the start
+    EXPECT_EQ(logger.read(), log); // check that view() did not modify the buffer
+    EXPECT_TRUE(logger.view().empty()); // check that read() cleared the buffer
+
+    logger.release();
+}
+
+TEST(TestUtils, base_dir)
+{
+    auto base_dir = boost::filesystem::path(mio::base_dir());
+    // check that the path exists
+    EXPECT_TRUE(boost::filesystem::exists(base_dir));
+    // check that the path is correct, by sampling some fixed paths from project files
+    EXPECT_TRUE(boost::filesystem::exists(base_dir / "cpp" / "memilio"));
+    EXPECT_TRUE(boost::filesystem::exists(base_dir / "pycode" / "memilio-epidata"));
 }

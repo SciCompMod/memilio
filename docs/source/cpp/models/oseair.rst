@@ -1,8 +1,8 @@
 
-ODE SEAIR Compartment Model
+ODE-based SEAIR-type model
 ===========================
 
-This model is an extended ODE type model. The six compartments
+This model is an extended ODE-type model. The six compartments
 
 - **Susceptible** (:math:`S`): may become Exposed at any time.
 - **Exposed** (:math:`E`): becomes Asymptomatic after some time.

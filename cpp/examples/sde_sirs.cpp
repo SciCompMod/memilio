@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Nils Wassmuth, Rene Schmieding, Martin J. Kuehn
@@ -17,24 +17,24 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "memilio/compartments/stochastic_simulation.h"
 #include "memilio/data/analyze_result.h"
 #include "memilio/utils/logging.h"
 #include "sde_sirs/model.h"
-#include "sde_sirs/simulation.h"
 
 int main()
 {
     mio::set_log_level(mio::LogLevel::debug);
 
-    double t0   = 0.;
-    double tmax = 5.;
-    double dt   = 0.001;
+    ScalarType t0   = 0.;
+    ScalarType tmax = 5.;
+    ScalarType dt   = 0.001;
 
-    double total_population = 10000;
+    ScalarType total_population = 10000;
 
     mio::log_info("Simulating SIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    mio::ssirs::Model model;
+    mio::ssirs::Model<ScalarType> model;
 
     model.populations[{mio::Index<mio::ssirs::InfectionState>(mio::ssirs::InfectionState::Infected)}]  = 100;
     model.populations[{mio::Index<mio::ssirs::InfectionState>(mio::ssirs::InfectionState::Recovered)}] = 1000;
@@ -42,15 +42,17 @@ int main()
         total_population -
         model.populations[{mio::Index<mio::ssirs::InfectionState>(mio::ssirs::InfectionState::Infected)}] -
         model.populations[{mio::Index<mio::ssirs::InfectionState>(mio::ssirs::InfectionState::Recovered)}];
-    model.parameters.set<mio::ssirs::TimeInfected>(10);
-    model.parameters.set<mio::ssirs::TimeImmune>(100);
-    model.parameters.set<mio::ssirs::TransmissionProbabilityOnContact>(1);
-    model.parameters.get<mio::ssirs::ContactPatterns>().get_baseline()(0, 0) = 20.7;
-    model.parameters.get<mio::ssirs::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
-
+    model.parameters.set<mio::ssirs::TimeInfected<ScalarType>>(10);
+    model.parameters.set<mio::ssirs::TimeImmune<ScalarType>>(100);
+    model.parameters.set<mio::ssirs::TransmissionProbabilityOnContact<ScalarType>>(1);
+    model.parameters.get<mio::ssirs::ContactPatterns<ScalarType>>().get_baseline()(0, 0) = 20.7;
+    model.parameters.get<mio::ssirs::ContactPatterns<ScalarType>>().add_damping(0.6,
+                                                                                mio::SimulationTime<ScalarType>(12.5));
+    model.parameters.set<mio::ssirs::StartDay<ScalarType>>(60);
+    model.parameters.set<mio::ssirs::Seasonality<ScalarType>>(0.2);
     model.check_constraints();
 
-    auto ssirs = mio::ssirs::simulate(t0, tmax, dt, model);
+    auto ssirs = mio::simulate_stochastic(t0, tmax, dt, model);
 
     // interpolate results
     auto interpolated_results = mio::interpolate_simulation_result(ssirs);

@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Henrik Zunker
@@ -17,9 +17,10 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef FEEDBACK_SIMULATION_H
-#define FEEDBACK_SIMULATION_H
+#ifndef MIO_COMPARTMENTS_FEEDBACK_SIMULATION_H
+#define MIO_COMPARTMENTS_FEEDBACK_SIMULATION_H
 
+#include <cassert>
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/parameter_set.h"
@@ -31,7 +32,7 @@ namespace mio
 {
 /**
  * @brief Daily local ICU occupancy per age group.
- * 
+ *
  * This parameter stores all historic (local) ICU occupancy values normalized per 100,000 inhabitants.
  * The values are extracted from the simulation results based on the provided ICU compartment indices
  * and are updated at each feedback step.
@@ -88,7 +89,7 @@ struct GammaCutOff {
     using Type = size_t;
     static Type get_default(AgeGroup)
     {
-        return 45;
+        return Type(45);
     }
     static std::string name()
     {
@@ -136,7 +137,7 @@ struct SoftPlusCurvatureParameter {
     using Type = FP;
     static Type get_default(AgeGroup)
     {
-        return FP(0.1);
+        return Type(0.1);
     }
     static std::string name()
     {
@@ -152,7 +153,7 @@ struct NominalICUCapacity {
     using Type = FP;
     static Type get_default(AgeGroup)
     {
-        return FP(9.0);
+        return Type(9.0);
     }
     static std::string name()
     {
@@ -160,11 +161,44 @@ struct NominalICUCapacity {
     }
 };
 
+/**
+ * @brief Blending factor for local ICU occupancy. 
+ * If we only have a local simulation, this factor is set to 1.0 per default.
+ */
+template <typename FP>
+struct BlendingFactorLocal {
+    using Type = FP;
+    static Type get_default(AgeGroup)
+    {
+        return FP(1.0);
+    }
+    static std::string name()
+    {
+        return "BlendingFactorLocal";
+    }
+};
+
+/**
+ * @brief Blending factor for regional ICU occupancy.
+ */
+template <typename FP>
+struct BlendingFactorRegional {
+    using Type = FP;
+    static Type get_default(AgeGroup)
+    {
+        return FP(0.0);
+    }
+    static std::string name()
+    {
+        return "BlendingFactorRegional";
+    }
+};
+
 template <typename FP>
 using FeedbackSimulationParameters =
     ParameterSet<ICUOccupancyHistory<FP>, GammaShapeParameter<FP>, GammaScaleParameter<FP>, GammaCutOff,
                  ContactReductionMax<FP>, ContactReductionMin<FP>, SoftPlusCurvatureParameter<FP>,
-                 NominalICUCapacity<FP>>;
+                 NominalICUCapacity<FP>, BlendingFactorLocal<FP>, BlendingFactorRegional<FP>>;
 
 /**
  * @brief A generic feedback simulation extending existing simulations with a feedback mechanism.
@@ -181,6 +215,8 @@ template <typename FP, typename Sim, typename ContactPatterns>
 class FeedbackSimulation
 {
 public:
+    using Model = typename Sim::Model;
+
     /**
      * @brief Constructs the FeedbackSimulation by taking ownership of an existing simulation instance.
      *
@@ -191,7 +227,10 @@ public:
         : m_simulation(std::move(sim))
         , m_icu_indices(icu_indices)
         , m_feedback_parameters(m_simulation.get_model().parameters.get_num_groups())
-        , m_perceived_risk(static_cast<size_t>(m_simulation.get_model().parameters.get_num_groups()))
+        , m_perceived_risk(static_cast<Eigen::Index>(m_simulation.get_model().parameters.get_num_groups().get()))
+        , m_regional_icu_occupancy(
+              static_cast<Eigen::Index>(m_simulation.get_model().parameters.get_num_groups().get()))
+        , m_global_icu_occupancy(static_cast<Eigen::Index>(m_simulation.get_model().parameters.get_num_groups().get()))
     {
     }
 
@@ -200,7 +239,7 @@ public:
      *
      * The simulation is advanced in steps of dt_feedback. At each step, feedback
      * is applied, then the simulation is advanced, and afterwards the current ICU occupancy is stored.
-     * 
+     *
      * Note that the simulation may make additional substeps depending on its own
      * timestep dt. When using fixed-step integrators, dt_feedback should be an integer multiple of
      * the simulation timestep dt.
@@ -211,9 +250,10 @@ public:
      */
     auto advance(const FP tmax, const FP dt_feedback = 1.0)
     {
+        using std::min;
         FP t = m_simulation.get_result().get_last_time();
         while (t < tmax) {
-            FP dt_eff = std::min(dt_feedback, tmax - t);
+            FP dt_eff = min<FP>(dt_feedback, tmax - t);
             apply_feedback(t + dt_eff);
             m_simulation.advance(t + dt_eff);
             add_icu_occupancy(t + dt_eff);
@@ -234,6 +274,11 @@ public:
      * @brief Returns the model used in the simulation.
      */
     auto& get_model()
+    {
+        return m_simulation.get_model();
+    }
+
+    const auto& get_model() const
     {
         return m_simulation.get_model();
     }
@@ -268,17 +313,40 @@ public:
      */
     FP calc_risk_perceived()
     {
-        const auto& icu_occ    = m_feedback_parameters.template get<ICUOccupancyHistory<FP>>();
-        size_t num_time_points = icu_occ.get_num_time_points();
+        const auto& local_icu_occ = m_feedback_parameters.template get<ICUOccupancyHistory<FP>>();
+        size_t num_time_points    = local_icu_occ.get_num_time_points();
         size_t n = std::min(static_cast<size_t>(num_time_points), m_feedback_parameters.template get<GammaCutOff>());
         FP perceived_risk = 0.0;
         const auto& a     = m_feedback_parameters.template get<GammaShapeParameter<FP>>();
         const auto& b     = m_feedback_parameters.template get<GammaScaleParameter<FP>>();
+
+        const auto& blending_local    = m_feedback_parameters.template get<BlendingFactorLocal<FP>>();
+        const auto& blending_regional = m_feedback_parameters.template get<BlendingFactorRegional<FP>>();
+        const auto& blending_global   = 1 - blending_local - blending_regional;
+
+        // assert that that each blending factor is positive
+        assert(blending_local >= 0 && blending_regional >= 0 && blending_global >= 0 &&
+               "Blending factors must be non-negative.");
+
         for (size_t i = num_time_points - n; i < num_time_points; ++i) {
             size_t day   = i - (num_time_points - n);
             FP gamma     = std::pow(b, a) * std::pow(day, a - 1) * std::exp(-b * day) / std::tgamma(a);
-            FP perc_risk = icu_occ.get_value(i).sum() / m_feedback_parameters.template get<NominalICUCapacity<FP>>();
-            perc_risk    = std::min(perc_risk, 1.0);
+            FP perc_risk = 0.0;
+
+            if (blending_local > 0) {
+                perc_risk += blending_local * local_icu_occ.get_value(i).sum() /
+                             m_feedback_parameters.template get<NominalICUCapacity<FP>>();
+            }
+            if (blending_regional > 0 && m_regional_icu_occupancy.get_num_time_points() > 0) {
+                perc_risk += blending_regional * m_regional_icu_occupancy.get_value(i).sum() /
+                             m_feedback_parameters.template get<NominalICUCapacity<FP>>();
+            }
+            if (blending_global > 0 && m_global_icu_occupancy.get_num_time_points() > 0) {
+                perc_risk += blending_global * m_global_icu_occupancy.get_value(i).sum() /
+                             m_feedback_parameters.template get<NominalICUCapacity<FP>>();
+            }
+
+            perc_risk = std::min(perc_risk, 1.0);
             perceived_risk += perc_risk * gamma;
         }
         return perceived_risk;
@@ -298,13 +366,34 @@ public:
         auto& model             = m_simulation.get_model();
         size_t num_groups       = static_cast<size_t>(model.parameters.get_num_groups());
         const auto& last_values = m_simulation.get_result().get_last_value();
-        Eigen::VectorXd icu_occ(num_groups);
+        Eigen::VectorX<FP> icu_occ(num_groups);
         for (size_t i = 0; i < m_icu_indices.size(); ++i) {
             icu_occ[i] = last_values[m_icu_indices[i]];
         }
         // normalize by total population and scale to 100,000 inhabitants
         icu_occ = icu_occ / model.populations.get_total() * 100000;
         m_feedback_parameters.template get<ICUOccupancyHistory<FP>>().add_time_point(t, icu_occ);
+    }
+
+    /**
+     * @brief Sets the regional ICU occupancy time series. 
+     * This is used in the graph simulation to initialize and update the regional ICU occupancy.
+     * 
+     * @param icu_regional The regional ICU occupancy time series.
+     */
+    void set_regional_icu_occupancy(const mio::TimeSeries<FP>& icu_regional)
+    {
+        m_regional_icu_occupancy = icu_regional;
+    }
+
+    /**
+     * @brief Sets the global ICU occupancy time series.
+     * This is used in the graph simulation to initialize and update the global ICU occupancy.
+     * @param icu_global The global ICU occupancy time series.
+     */
+    void set_global_icu_occupancy(const mio::TimeSeries<FP>& icu_global)
+    {
+        m_global_icu_occupancy = icu_global;
     }
 
     /**
@@ -317,6 +406,10 @@ public:
      */
     void apply_feedback(FP t)
     {
+        using std::exp;
+        using std::log;
+        using std::min;
+
         // get model parameters
         auto& params          = m_simulation.get_model().parameters;
         const auto num_groups = (size_t)params.get_num_groups();
@@ -332,14 +425,14 @@ public:
         FP perceived_risk = calc_risk_perceived();
 
         // add the perceived risk to the time series
-        m_perceived_risk.add_time_point(t, Eigen::VectorXd::Constant(num_groups, perceived_risk));
+        m_perceived_risk.add_time_point(t, Eigen::VectorX<FP>::Constant(num_groups, perceived_risk));
 
-        auto group_weights_all = Eigen::VectorXd::Constant(num_groups, 1.0);
+        auto group_weights_all = Eigen::VectorX<FP>::Constant(num_groups, 1.0);
 
         // define a lambda function to create a damping sampling object given a reduction factor and location
         auto set_contact_reduction = [=](FP val, size_t location) {
-            auto v = mio::UncertainValue(val);
-            return mio::DampingSampling(v, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(t),
+            auto v = mio::UncertainValue<FP>(val);
+            return mio::DampingSampling(v, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime<FP>(t),
                                         std::vector<size_t>{location}, group_weights_all);
         };
 
@@ -349,12 +442,12 @@ public:
         for (size_t loc = 0; loc < num_locations; ++loc) {
 
             // compute the effective reduction factor using a softplus function.
-            ScalarType reduc_fac = (contactReductionMax[loc] - contactReductionMin[loc]) * epsilon *
-                                       std::log(std::exp(perceived_risk / epsilon) + 1.0) +
-                                   contactReductionMin[loc];
+            FP reduc_fac = (contactReductionMax[loc] - contactReductionMin[loc]) * epsilon *
+                               log(exp(perceived_risk / epsilon) + 1.0) +
+                           contactReductionMin[loc];
 
             // clamp the reduction factor to the maximum allowed value.
-            reduc_fac = std::min(reduc_fac, contactReductionMax[loc]);
+            reduc_fac = min<FP>(reduc_fac, contactReductionMax[loc]);
 
             // generate the damping for the current location.
             auto damping = set_contact_reduction(reduc_fac, loc);
@@ -370,9 +463,11 @@ private:
     Sim m_simulation; ///< The simulation instance.
     std::vector<size_t> m_icu_indices; ///< The ICU compartment indices from the model.
     FeedbackSimulationParameters<FP> m_feedback_parameters; ///< The feedback parameters.
-    mio::TimeSeries<ScalarType> m_perceived_risk; ///< The perceived risk time series.
+    mio::TimeSeries<FP> m_perceived_risk; ///< The perceived risk time series.
+    mio::TimeSeries<FP> m_regional_icu_occupancy; ///< The regional ICU occupancy time series.
+    mio::TimeSeries<FP> m_global_icu_occupancy; ///< The global ICU occupancy time series.
 };
 
 } // namespace mio
 
-#endif // FEEDBACK_SIMULATION_H
+#endif // MIO_COMPARTMENTS_FEEDBACK_SIMULATION_H

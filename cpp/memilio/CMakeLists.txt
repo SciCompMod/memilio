@@ -19,14 +19,21 @@ add_library(memilio
     epidemiology/lct_infection_state.h
     epidemiology/lct_populations.h
     epidemiology/adoption_rate.h
+    epidemiology/simulation_day.h
+    geography/distance.h
     geography/regions.h
     geography/regions.cpp
-    epidemiology/simulation_day.h
+    geography/geolocation.h
+    geography/rtree.h
     geography/holiday_data.ipp
     compartments/compartmental_model.h
     compartments/flow_model.h
-    compartments/simulation.h
+    compartments/flow_simulation_base.h
     compartments/flow_simulation.h
+    compartments/simulation_base.h
+    compartments/simulation.h
+    compartments/stochastic_simulation.h
+    compartments/stochastic_model.h
     compartments/parameter_studies.h
     io/default_serialize.h
     io/default_serialize.cpp
@@ -46,6 +53,7 @@ add_library(memilio
     io/result_io.cpp
     io/epi_data.h
     io/epi_data.cpp
+    io/cli.cpp
     io/cli.h
     math/euler.cpp
     math/euler.h
@@ -64,6 +72,7 @@ add_library(memilio
     math/interpolation.cpp
     math/time_series_functor.h
     math/time_series_functor.cpp
+    math/math_utils.h
     mobility/metapopulation_mobility_instant.h
     mobility/metapopulation_mobility_instant.cpp
     mobility/metapopulation_mobility_stochastic.h
@@ -72,6 +81,8 @@ add_library(memilio
     mobility/graph_simulation.cpp
     mobility/graph.h
     mobility/graph.cpp
+    mobility/graph_builder.h
+    mobility/graph_builder.cpp
     timer/auto_timer.h
     timer/basic_timer.cpp
     timer/basic_timer.h
@@ -110,6 +121,8 @@ add_library(memilio
     utils/string_literal.h
     utils/type_list.h
     utils/base_dir.h
+    utils/back_inserter_second_element.h
+    ad/ad.h
 )
 
 target_include_directories(memilio PUBLIC

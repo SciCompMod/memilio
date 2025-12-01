@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2024 German Aerospace Center (DLR-SC)
+/*
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Julia Bicker, René Schmieding
 *
@@ -56,7 +56,7 @@ int main()
     }
 
     //Set adoption rates
-    std::vector<mio::AdoptionRate<InfectionState>> adoption_rates;
+    std::vector<mio::AdoptionRate<ScalarType, InfectionState>> adoption_rates;
     for (size_t region = 0; region < 4; ++region) {
         adoption_rates.push_back({InfectionState::S,
                                   InfectionState::E,

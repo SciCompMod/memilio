@@ -1,16 +1,10 @@
 GLCT SECIR model
 ================
 
-The GLCT-SECIR module models and simulates an epidemic using an ODE-based approach while making use of the Generalized 
-Linear Chain Trick to provide the option of phase-type distributed stay times in the compartments through the use of 
-subcompartments. The model is particularly suited for pathogens with pre- or asymptomatic infection states and when 
-severe or critical states are possible. The model assumes perfect immunity after recovery and is thus only suited for 
-epidemic use cases. In the following, we present the model in detail.
+The GLCT-SECIR module models and simulates an epidemic using an ODE-based approach while making use of the Generalized Linear Chain Trick to provide the option of phase-type distributed stay times in the compartments through the use of subcompartments. The model is particularly suited for pathogens with pre- or asymptomatic infection states and when severe or critical states are possible. The model assumes perfect immunity after recovery and is thus only suited for epidemic use cases. In the following, we present the model in detail.
 
 The compartment structure with subcompartments is the same as in the LCT-SECIR model. An overview of the model 
-architecture can be found in the `LCT model <lsecir>`_. For the GLCT model, some additional transitions are possible and 
-we have more arrows in the model architecture. Below is an example for the Exposed compartment. Note that some indices 
-are omitted (e.g., :math:`n` instead of :math:`n_E`) to keep the picture simple.
+architecture can be found in the `LCT model <lsecir>`_. For the GLCT model, some additional transitions are possible and we have more arrows in the model architecture. Below is an example for the Exposed compartment. Note that some indices are omitted (e.g., :math:`n` instead of :math:`n_E`) to keep the picture simple.
 
 .. image:: https://github.com/user-attachments/assets/fc075b7a-6cd2-4e70-bdd0-a2f4b9f2cf53
    :alt: tikzGLCTSECIR
@@ -41,8 +35,7 @@ It is possible to include subcompartments for the five compartments `Exposed`, `
 Parameters
 ---------------
 
-Below is an overview of the model variables and the model equations are stated. For a simpler description let 
-:math:`\mathcal{Z}=\{E,I_{NS},I_{Sy},I_{Sev},I_{Cr}\}` be the set of the compartments that can be divided into subcompartments.
+Below is an overview of the model variables:
 
 .. list-table::
    :header-rows: 1
@@ -73,10 +66,12 @@ Below is an overview of the model variables and the model equations are stated. 
      - ``TransitionMatrix(...z)To(...*)``
      - Matrix describing the transitions in between the subcompartments of :math:`z \in \mathcal{Z}` that describes the transition to the compartment *.
 
+The model equations are given below. For a simpler description let :math:`\mathcal{Z}=\{E,I_{NS},I_{Sy},I_{Sev},I_{Cr}\}` be the set of the compartments that can be divided into subcompartments.
+
 .. image:: https://github.com/SciCompMod/memilio/assets/70579874/e1da5e1d-e719-4c16-9f14-45374be7c353
    :alt: equations
 
-Note that the bold notation :math:`\mathbf{z}(t)` for :math:`z \in \mathcal{Z}` stands for a vector. If several transitions are possible from a compartment, the vector is split in order to be able to select the stay times until the transitions in each case phase-type distributed. For example, the order
+Note that the bold notation :math:`\mathbf{z}(t)` for :math:`z \in \mathcal{Z}` stands for a vector. If several transitions are possible from a compartment, the vector is split in order to be able to select the stay times until the transitions individually. For example, the order
 
 .. math::
 
@@ -124,7 +119,7 @@ It is important that the sizes of the vectors and matrices match each other and 
 Initial conditions
 ------------------
 
-We start by defining the number of subcompartments and constructing the model. We can choose the number of subcompartments individually for the compartments Exposed, InfectedNoSymptoms, InfectedSymptoms, InfectedSevere and InfectedCritical.
+We start by defining the number of subcompartments and constructing the model with it. We can choose the number of subcompartments individually for the compartments Exposed, InfectedNoSymptoms, InfectedSymptoms, InfectedSevere and InfectedCritical.
 Note that in the GLCT model, we define two strains for the compartments `InfectedNoSymptoms`, `InfectedSymptoms`, `InfectedSevere` and `InfectedCritical` as individuals in these compartments can either transition to an infection state corresponding to a more severe disease state or recover. This is why we define the model with twice the number of subcompartments compared to the LCT-SECIR model for these infection states. 
 
 .. code-block:: cpp
@@ -152,19 +147,14 @@ We continue by defining some epidemiological parameters needed throughout the mo
     const ScalarType criticalPerSevere              = 0.25;
     const ScalarType deathsPerCritical              = 0.3;
 
-Now, we define the initial values with the distribution of the population into subcompartments. Note that this method 
-of defining the initial values using a vector of vectors is not necessary, but should remind you how the entries of the 
-initial value vector relate to the defined template parameters of the model or the number of subcompartments. It is 
-also possible to define the initial values directly.
+Now, we define the initial values with the distribution of the population into subcompartments. Note that this method of defining the initial values using a vector of vectors is not necessary, but should show how the entries of the initial value vector relate to the defined template parameters of the model or the number of subcompartments. It is also possible to define the initial values directly.
 
-In this example, we want to initialize the GLCT model so that it corresponds to the example given for the LCT model. 
-This is why we take the initial population from the LCT example and split it into two strains according to the 
-respective transition probabilities for the the compartments InfectedNoSymptoms, InfectedSymptoms, InfectedSevere and 
+In this example, we initialize the GLCT model so that it corresponds to the example given for the LCT model. 
+For that, we take the initial population from the LCT example and split it into two strains according to the 
+respective transition probabilities for the compartments InfectedNoSymptoms, InfectedSymptoms, InfectedSevere and 
 InfectedCritical.
-Note that in the case of InfectedNoSymptoms, the first three subcompartments correspond to the first strain, i.e. the 
-individuals that will transition to InfectedSymptoms afterwards, and the other three subcompartments correspond to the 
-second strain, i.e. the individuals that willl recover. For the other compartments for which we defined two strains in 
-the model, this is done analogously. 
+In the case of InfectedNoSymptoms, the first three subcompartments correspond to the first strain, i.e. the 
+individuals that will transition to InfectedSymptoms afterwards, and the other three subcompartments correspond to the second strain, i.e. the individuals that willl recover. For the other compartments for which we defined two strains in the model, this is done analogously. 
 
 We continue by defining some epidemiological parameters needed throughout the model definition and initialization.
 
@@ -184,7 +174,7 @@ We continue by defining some epidemiological parameters needed throughout the mo
         {20}, // Recovered
         {10}}; // Dead
 
-Here, we assert that ``initial_populations`` has the right shape.
+Below, we assert that ``initial_populations`` has the right shape.
 
 .. code-block:: cpp
 
@@ -221,9 +211,9 @@ Finally, we transfer the initial values in ``initial_populations`` to the model.
     }
 
 
-Since we want to recreate the LCT model as defined in the corresponding example, we want to set the parameters determining the transition distributions such that we obtain Erlang distributions. 
+Since we want to recreate the LCT model as defined in the corresponding example, we set the parameters determining the transition distributions such that we obtain Erlang distributions. 
 
-We will explain how to do this for the different compartments below. In general, we need to define a vector ``StartingProbabilities(...)`` and a matrix ``TransitionMatrix(...z)To(...*)`` for all compartments with subcompartments, i.e. `Exposed`, `InfectedNoSymptoms`, `InfectedSymptoms`, `InfectedSevere` and `InfectedCritical`.
+We will explain how to do this for the different compartments in the following. In general, we need to define a vector ``StartingProbabilities(...)`` and a matrix ``TransitionMatrix(...z)To(...*)`` for all compartments with subcompartments, i.e. `Exposed`, `InfectedNoSymptoms`, `InfectedSymptoms`, `InfectedSevere` and `InfectedCritical`.
 
 The size of the vector ``StartingProbabilities`` is the number of subcompartments and contains the initial probability of starting in any of the subcompartments of the respective compartment. The entries should sum up to 1.
 
@@ -262,7 +252,7 @@ The strains have a length of ``NumInfectedNoSymptoms/2`` each as we choose the s
     model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedNoSymptoms>() =
         StartingProbabilitiesInfectedNoSymptoms;
 
-Define equal transition matrices for the strains. They follow the same Erlang distribution such that we get the same result as with LCT model that can only consider one strain.
+Equal transition matrices for the strains have to be defined. They follow the same Erlang distribution such that we get the same result as with the LCT model that can only consider one strain.
 
 .. code-block:: cpp
 
@@ -326,7 +316,7 @@ We proceed analogously for the remaining compartments `InfectedSymptoms`, `Infec
 Nonpharmaceutical Interventions
 -------------------------------
 
-In the SECIR model, nonpharmaceutical interventions (NPIs) are implemented through dampings in the contact matrix. 
+In the GLCT-SECIR model, nonpharmaceutical interventions (NPIs) are implemented through dampings in the contact matrix. 
 These dampings reduce the contact rates between different groups to simulate interventions.
 
 Basic dampings can be added to the contact matrix as follows:
@@ -354,8 +344,7 @@ For age-resolved models, you can apply different dampings to different groups:
 
 
 
-For more complex scenarios, such as real-world lockdown modeling, you can implement detailed NPIs with location-specific 
-dampings. The SECIR model supports contact matrices for different locations (e.g., home, school, work, other) and can apply different dampings to each location.
+For more complex scenarios, such as real-world venue closures or lockdown modeling, you can implement detailed NPIs with location-specific dampings. The GLCT-SECIR model supports contact matrices for different locations (e.g., home, school, work, other) and can apply different dampings to each location.
 
 Example for defining different contact locations:
 
@@ -407,7 +396,7 @@ You can create intervention types that target specific locations with different 
 Simulation
 ----------
 
-We can simulate using the defined model from :math:`t_0` to :math:`t_{\max}` with initial step size :math:`dt_init` as follows:
+Simulating the model from :math:`t_0` to :math:`t_{\max}` with initial step size :math:`dt_init` id done as follows:
 
 .. code-block:: cpp
 
@@ -420,25 +409,24 @@ You can also specify a custom integrator:
 
 .. code-block:: cpp
 
-    auto integrator = std::make_shared<mio::RKIntegratorCore>();
+    auto integrator = std::make_unique<mio::RKIntegratorCore>();
     integrator->set_dt_min(0.3);
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
     
-    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(t0, tmax, dt, model, integrator);
+    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(t0, tmax, dt, model, std::move(integrator));
 
 Output
 ------
 
-The simulation result is divided by subcompartments. We can call the function ``calculate_compartments()`` to get a 
-result according to the `InfectionState`\s .
+The simulation result is divided by subcompartments. The function ``calculate_compartments()`` aggregates the subcompartments by `InfectionState`\s .
 
 .. code-block:: cpp
 
     mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_compartments(result);
 
-You can access the data in the `TimeSeries` object as follows:
+You can access the data in the `mio::TimeSeries` object as follows:
 
 .. code-block:: cpp
 
@@ -476,10 +464,7 @@ Additionally, you can export the results to a CSV file:
 Visualization
 -------------
 
-To visualize the results of a simulation, you can use the Python package :doc:`memilio_plot <../../python/memilio_plot>`
-and its documentation.
-
-You can export your simulation results to CSV format as described above.
+To visualize the results of a simulation, you can use the Python package :doc:`m-plot <../../python/m-plot>` and its documentation.
 
     
 Examples

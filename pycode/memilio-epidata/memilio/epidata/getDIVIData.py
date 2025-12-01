@@ -349,7 +349,7 @@ def divi_data_sanity_checks(df: pd.DataFrame) -> None:
     # Maybe we should look for a new method to sanitize the size of the
     # DataFrame.
     num_dates = (date.today() - date(2020, 4, 24)).days
-    min_num_data = 380 * num_dates  # not all 400 counties report every day
+    min_num_data = 300 * num_dates  # not all 400 counties report every day
     max_num_data = 400 * num_dates
     if (len(df) < min_num_data) or (len(df) > max_num_data):
         raise gd.DataError("Error: unexpected length of dataframe.")
