@@ -208,6 +208,7 @@ TEST(TestOdeMseirs4, Simulation)
 
 TEST(TestOdeMseirs4, normalized_transitions)
 {
+    // case: get derivative with isolated infection terms; expect derivative match computed values
     mio::omseirs4::Model<double> model;
     auto& params                                              = model.parameters;
     params.get<mio::omseirs4::BaseTransmissionRate<double>>() = 0.4;
