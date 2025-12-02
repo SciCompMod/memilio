@@ -84,7 +84,7 @@ The following packages are used by the tests:
 
 See Installation on how to install all these dependencies automatically.
 
- To run the tests, make sure the package is installed, and you are in the source directory, then run:
+To run the tests, make sure the package is installed, and you are in the source directory, then run:
 
 ```bash
     cd tests

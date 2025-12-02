@@ -35,17 +35,21 @@ You can print the AST of your model into a file (Usefull for development/debuggi
 
 ## Testing
 
-The package provides a test suite in `memilio/generation_test`. To run the tests make sure the package is installed in editable mode (`pip install -e .`) and run
+The package provides a test suite in the `tests` directory.
+To run the tests, make sure the package is installed, and you are in the source directory, then run:
 
 ```bash
+cd tests
 python -m unittest
 ```
 
-Alternatively, if the package is installed normally (`pip install .`), you have to run the tests from outside the source directory to avoid import errors:
+This works with both normal (`pip install .`) and editable (`pip install -e .`) installations.
+
+Alternatively, you can run the tests from outside the source directory:
 
 ```bash
 cd /path/to/another/directory
-python -m unittest discover -s /path/to/memilio/pycode/memilio-generation/memilio/generation_test
+python -m unittest discover -s /path/to/memilio/pycode/memilio-generation/tests
 ```
 
 ## Development
@@ -58,4 +62,4 @@ When implementing new model features you can follow these steps:
 - Adjust the substitution dictionaries in the [Generator class](./memilio/generation/generator.py).
 - Write new/Adjust script in the [tool folder](./memilio/tools/) for the model and try to run.
 - Add new strings in the [Default dict](/pycode/memilio-generation/memilio/generation/default_generation_dict.py)
-- Update [tests](./memilio/generation_test/).
+- Update [tests](./tests/).
