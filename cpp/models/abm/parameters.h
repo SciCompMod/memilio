@@ -212,7 +212,7 @@ struct SymptomsPerInfectedNoSymptoms {
     }
     static std::string name()
     {
-        return "SymptomaticPerInfectedNoSymptoms";
+        return "SymptomsPerInfectedNoSymptoms";
     }
 };
 

@@ -112,7 +112,7 @@ TimePoint Infection::get_start_date() const
     return m_viral_load.start_date;
 }
 
-std::vector<std::pair<TimePoint, InfectionState>> Infection::get_infection_course() const
+std::vector<std::pair<TimePoint, InfectionState>>& Infection::get_infection_course()
 {
     return m_infection_course;
 }
