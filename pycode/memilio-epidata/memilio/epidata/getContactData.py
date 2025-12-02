@@ -33,6 +33,7 @@ import os
 import zipfile
 from typing import Iterable, List, Optional
 
+import numpy as np
 import pandas as pd
 import requests
 
@@ -41,12 +42,6 @@ CONTACT_ZIP_URL = (
     "?id=10.1371/journal.pcbi.1005697.s002&type=supplementary"
 )
 CONTACT_WORKBOOK_NAME = "MUestimates_all_locations_1.xlsx"
-
-# Only kept for tests or explicit overrides; regular calls should pass
-# contact_path=None to trigger download.
-DEFAULT_CONTACT_PATH = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "..", "..", "..",
-                 CONTACT_WORKBOOK_NAME))
 
 AGE_GROUP_LABELS = [
     "0-4",
@@ -67,15 +62,24 @@ AGE_GROUP_LABELS = [
     "75+",
 ]
 
+AGE_GROUP_LABELS_RKI = [
+    "0-4",
+    "5-14",
+    "15-34",
+    "35-59",
+    "60-79",
+    "80-99",
+]
 
-def _normalize_country_name(country: str) -> str:
+
+def _normalize_country_name(country: str):
     """Return a case-insensitive key without whitespace or punctuation."""
     return "".join(ch for ch in country.casefold() if ch.isalnum())
 
 
 def _download_contact_workbook(
-        url: str = CONTACT_ZIP_URL, target_filename: str = CONTACT_WORKBOOK_NAME) -> bytes:
-    """Download the ZIP from the DOI and return the workbook bytes in memory."""
+        url: str = CONTACT_ZIP_URL, target_filename: str = CONTACT_WORKBOOK_NAME):
+    """Download the ZIP from the DOI and return the workbook."""
     response = requests.get(url, timeout=30)
     response.raise_for_status()
     with zipfile.ZipFile(io.BytesIO(response.content)) as zf:
@@ -83,7 +87,7 @@ def _download_contact_workbook(
                       if name.endswith(target_filename)]
         if not candidates:
             raise FileNotFoundError(
-                f"'{target_filename}' not found in downloaded archive.")
+                f"'{target_filename}' not found in downloaded workbook.")
         with zf.open(candidates[0]) as f:
             return f.read()
 
@@ -91,8 +95,8 @@ def _download_contact_workbook(
 def _load_workbook_bytes(
         contact_path: Optional[str],
         url: str = CONTACT_ZIP_URL,
-        target_filename: str = CONTACT_WORKBOOK_NAME) -> bytes:
-    """Return workbook bytes either from a user path or by downloading the ZIP."""
+        target_filename: str = CONTACT_WORKBOOK_NAME):
+    """Return workbook either from a user path or by downloading the ZIP."""
     if contact_path:
         if not os.path.exists(contact_path):
             raise FileNotFoundError(
@@ -103,14 +107,14 @@ def _load_workbook_bytes(
 
 
 def list_available_contact_countries(
-        contact_path: Optional[str] = None) -> List[str]:
+        contact_path: Optional[str] = None):
     """List all country names available in the contact matrix workbook."""
     xls_bytes = _load_workbook_bytes(contact_path)
     xls = pd.ExcelFile(io.BytesIO(xls_bytes))
     return xls.sheet_names
 
 
-def _select_sheet_name(country: str, sheet_names: Iterable[str]) -> str:
+def _select_sheet_name(country: str, sheet_names: Iterable[str]):
     lookup = {_normalize_country_name(name): name for name in sheet_names}
     key = _normalize_country_name(country)
     if key not in lookup:
@@ -122,14 +126,18 @@ def _select_sheet_name(country: str, sheet_names: Iterable[str]) -> str:
 
 
 def load_contact_matrix(
-        country: str, contact_path: Optional[str] = None) -> pd.DataFrame:
+        country: str,
+        contact_path: Optional[str] = None,
+        reduce_to_rki_groups: bool = True):
     """
     Load the all-locations contact matrix for the given country. If
     ``contact_path`` is not provided, the function downloads the
-    ``MUestimates_all_locations_1.xlsx`` workbook from the DOI ZIP.
+    ``MUestimates_all_locations_1.xlsx`` workbook from Prem et al., 2017.
 
     :param country: Country name as listed in the workbook (case-insensitive).
     :param contact_path: Optional path to ``MUestimates_all_locations_1.xlsx``.
+    :param reduce_to_rki_groups: If True, aggregate to the 6 RKI age groups 
+      (0-4, 5-14, 15-34, 35-59, 60-79, 80-99). Default True.
     :returns: DataFrame indexed by age group with floats.
     """
     xls_bytes = _load_workbook_bytes(contact_path)
@@ -152,4 +160,38 @@ def load_contact_matrix(
         raise ValueError(
             f"Contact matrix for '{country}' is not square: {matrix.shape}")
 
+    if reduce_to_rki_groups:
+        matrix = _aggregate_to_rki_age_groups(matrix)
+
     return matrix
+
+
+def _aggregate_to_rki_age_groups(matrix: pd.DataFrame):
+    """
+    Aggregate a 16x16 age contact matrix to the 6-group RKI scheme.
+
+    Assumes the original columns/rows follow AGE_GROUP_LABELS order.
+    Note: The source only provides a 75+ group; we map it entirely to 80-99.
+    """
+    if matrix.shape != (len(AGE_GROUP_LABELS), len(AGE_GROUP_LABELS)):
+        raise ValueError(
+            f"Expected a {len(AGE_GROUP_LABELS)}x{len(AGE_GROUP_LABELS)} matrix for aggregation.")
+
+    groups = [
+        [0],  # 0-4
+        [1, 2],  # 5-14
+        [3, 4, 5, 6],  # 15-34
+        [7, 8, 9, 10, 11],  # 35-59
+        [12, 13, 14],  # 60-79
+        [15],  # 80-99 (source has 75+ only)
+    ]
+
+    aggregated = pd.DataFrame(
+        index=AGE_GROUP_LABELS_RKI, columns=AGE_GROUP_LABELS_RKI, dtype=float)
+
+    for i, rows in enumerate(groups):
+        for j, cols in enumerate(groups):
+            block = matrix.values[np.ix_(rows, cols)]
+            aggregated.iat[i, j] = float(block.mean())
+
+    return aggregated
