@@ -72,11 +72,22 @@ The following packages are used by the tests:
 
 See Installation on how to install all these dependencies automatically.
 
-To run the tests make 
+To run the tests, make sure the package is installed, and you are in the source directory, then run:
 
-.. code:: sh
-
+```bash
+    cd tests
     python -m unittest
+```
+
+This works with both normal (``pip install .``) and editable (``pip install -e .``) installations.
+
+Alternatively, you can run the tests from outside the source directory:
+
+```bash
+    cd /path/to/another/directory
+    python -m unittest discover -s /path/to/memilio/pycode/memilio-plot/tests
+```
+
 
 To get the coverage report do
 
