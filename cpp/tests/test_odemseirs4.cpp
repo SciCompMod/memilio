@@ -209,7 +209,8 @@ TEST(TestOdeMseirs4, Simulation)
 TEST(TestOdeMseirs4, normalized_transitions)
 {
     mio::omseirs4::Model<double> model;
-    auto& params = model.parameters;
+    auto& params                                              = model.parameters;
+    params.get<mio::omseirs4::BaseTransmissionRate<double>>() = 0.4;
 
     // disable other flows to isolate infection terms
     params.get<mio::omseirs4::NaturalBirthDeathRate<double>>()    = 0.0;
@@ -218,7 +219,6 @@ TEST(TestOdeMseirs4, normalized_transitions)
     params.get<mio::omseirs4::RecoveryRate<double>>()             = 0.0;
     params.get<mio::omseirs4::ImmunityWaningRate<double>>()       = 0.0;
     params.get<mio::omseirs4::SeasonalAmplitude<double>>()        = 0.0;
-    params.get<mio::omseirs4::BaseTransmissionRate<double>>()     = 0.4;
 
     using IS                                    = mio::omseirs4::InfectionState;
     model.populations[{mio::Index<IS>(IS::S1)}] = 500.0;
