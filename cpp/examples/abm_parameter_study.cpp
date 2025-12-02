@@ -38,7 +38,7 @@
 constexpr size_t num_age_groups = 4;
 
 /// An ABM setup taken from abm_minimal.cpp.
-mio::abm::Model make_model(const mio::RandomNumberGenerator& rng)
+mio::abm::Model make_model()
 {
 
     const auto age_group_0_to_4   = mio::AgeGroup(0);
@@ -46,8 +46,7 @@ mio::abm::Model make_model(const mio::RandomNumberGenerator& rng)
     const auto age_group_15_to_34 = mio::AgeGroup(2);
     const auto age_group_35_to_59 = mio::AgeGroup(3);
     // Create the model with 4 age groups.
-    auto model      = mio::abm::Model(num_age_groups);
-    model.get_rng() = rng;
+    auto model = mio::abm::Model(num_age_groups);
 
     // Set same infection parameter for all age groups. For example, the incubation period is log normally distributed with parameters 4 and 1.
     model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() = mio::ParameterDistributionLogNormal(4., 1.);
@@ -133,7 +132,7 @@ mio::abm::Model make_model(const mio::RandomNumberGenerator& rng)
     for (auto& person : model.get_persons()) {
         mio::abm::InfectionState infection_state = mio::abm::InfectionState(
             mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(), infection_distribution));
-        auto person_rng = mio::abm::PersonalRandomNumberGenerator(person);
+        auto person_rng = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
             person.add_new_infection(mio::abm::Infection(person_rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          model.parameters, start_date, infection_state));
@@ -181,7 +180,7 @@ int main()
     // Note that the study for the ABM currently does not make use of the arguments "parameters" or "dt", as we create
     // a new model for each simulation. Hence we set both arguments to 0.
     // This is mostly due to https://github.com/SciCompMod/memilio/issues/1400
-    mio::ParameterStudy study(0, t0, tmax, mio::abm::TimeSpan(0), num_runs);
+    mio::ParameterStudy study(make_model(), t0, tmax, mio::abm::TimeSpan(0), num_runs);
 
     // Optional: set seeds to get reproducable results
     // study.get_rng().seed({12341234, 53456, 63451, 5232576, 84586, 52345});
@@ -193,8 +192,10 @@ int main()
     }
 
     auto ensemble_results = study.run(
-        [](auto, auto t0_, auto, size_t) {
-            return mio::abm::ResultSimulation(make_model(mio::thread_local_rng()), t0_);
+        [](auto&& model, auto t0_, auto, size_t) {
+            auto copy = model;
+            copy.reset_rng(mio::thread_local_rng().get_seeds());
+            return mio::abm::ResultSimulation(std::move(copy), t0_);
         },
         [result_dir](auto&& sim, auto&& run_idx) {
             auto interpolated_result = mio::interpolate_simulation_result(sim.get_result());

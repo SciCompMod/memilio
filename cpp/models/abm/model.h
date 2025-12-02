@@ -340,6 +340,25 @@ public:
     }
 
     /**
+     * @brief Sets the RNG counters of the model and all persons to 0.
+     * @param[in] seeds Optional parameter that can be used to overwrite the current seed.
+     * @{
+     */
+    void reset_rng()
+    {
+        m_rng.set_counter(Counter<uint64_t>(0));
+        for (Person& person : get_persons()) {
+            person.get_rng_counter() = Counter<uint32_t>(0);
+        }
+    }
+    void reset_rng(const std::vector<uint32_t>& seeds)
+    {
+        m_rng.seed(seeds);
+        reset_rng();
+    }
+    /** @} */
+
+    /**
      * Get the model id. Is only relevant for graph abm or hybrid model.
      * @return The model id
      */
@@ -609,7 +628,7 @@ protected:
             compute_exposure_caches(t, dt);
             m_are_exposure_caches_valid = true;
         }
-        auto personal_rng = PersonalRandomNumberGenerator(person);
+        auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
         auto location     = person.get_location();
         mio::abm::interact(personal_rng, person, get_location(location),
                            m_local_population_by_age_cache[location.get()], m_air_exposure_rates_cache[location.get()],

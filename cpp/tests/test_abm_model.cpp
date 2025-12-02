@@ -431,13 +431,13 @@ TEST_F(TestModel, evolveMobilityTrips)
         .WillOnce(testing::Return(0.8)) // draw random virus shed p4
         .RetiresOnSaturation();
 
-    auto rng_p1 = mio::abm::PersonalRandomNumberGenerator(p1);
+    auto rng_p1 = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), p1);
     p1.add_new_infection(mio::abm::Infection(rng_p1, static_cast<mio::abm::VirusVariant>(0), p1.get_age(),
                                              model.parameters, t, mio::abm::InfectionState::InfectedNoSymptoms));
-    auto rng_p3 = mio::abm::PersonalRandomNumberGenerator(p1);
+    auto rng_p3 = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), p3);
     p3.add_new_infection(mio::abm::Infection(rng_p3, static_cast<mio::abm::VirusVariant>(0), p3.get_age(),
                                              model.parameters, t, mio::abm::InfectionState::InfectedSevere));
-    auto rng_p4 = mio::abm::PersonalRandomNumberGenerator(p1);
+    auto rng_p4 = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), p4);
     p4.add_new_infection(mio::abm::Infection(rng_p4, static_cast<mio::abm::VirusVariant>(0), p4.get_age(),
                                              model.parameters, t, mio::abm::InfectionState::Recovered));
 
@@ -610,7 +610,7 @@ TEST_F(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     auto pid        = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms,
                                       current_time - test_time);
     auto& person    = model.get_person(pid);
-    auto rng_person = mio::abm::PersonalRandomNumberGenerator(person);
+    auto rng_person = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
     person.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
     person.set_assigned_location(mio::abm::LocationType::Work, work_id, model.get_id());
 

@@ -22,7 +22,6 @@
 #define MIO_ABM_PERSONAL_RNG_H
 
 #include "memilio/utils/random_number_generator.h"
-#include "models/abm/person_id.h"
 #include <cstdint>
 
 namespace mio
@@ -61,7 +60,7 @@ public:
      * Creates a RandomNumberGenerator for a person.
      * @param person Reference to the Person who's counter will be used.
      */
-    PersonalRandomNumberGenerator(Person& person);
+    PersonalRandomNumberGenerator(const RandomNumberGenerator& model_rng, Person& person);
 
     /**
      * @return Get the key.

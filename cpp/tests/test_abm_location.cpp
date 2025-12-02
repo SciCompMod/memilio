@@ -119,7 +119,7 @@ TEST_F(TestLocation, interact)
     auto susceptible =
         make_test_person(this->get_rng(), location, age, mio::abm::InfectionState::Susceptible, t, params);
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.5)); // Probability of no infection
-    auto person_rng = mio::abm::PersonalRandomNumberGenerator(susceptible);
+    auto person_rng = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), susceptible);
     interact_testing(person_rng, susceptible, location, local_population, t, dt, params);
     EXPECT_EQ(susceptible.get_infection_state(t + dt), mio::abm::InfectionState::Susceptible);
 
