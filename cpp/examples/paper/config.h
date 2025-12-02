@@ -85,8 +85,8 @@ const ScalarType scale_confirmed_cases          = 1.;
 
 // Define simulation parameters.
 const ScalarType t0        = 0.;
-const ScalarType init_tmax = 14.;
-const ScalarType tmax      = 35;
+const ScalarType init_tmax = 30.;
+const ScalarType tmax      = 150.;
 const ScalarType dt        = 1. / 24.; // corresponds to hours that are used as time step in ABM simulation
 
 } // namespace params
@@ -135,11 +135,20 @@ struct LogExposureRate : mio::LogAlways {
         if (rates.size() > 0) {
             size_t num_locs = 0;
             for (auto& loc : sim.get_model().get_locations()) {
-                num_locs += 1;
+                bool counted_loc = false;
                 for (size_t age = 0; age < params::num_age_groups; ++age) {
-                    cum_rate[age] += rates[loc.get_id().get()][{mio::abm::CellIndex(0),
-                                                                mio::abm::VirusVariant::Wildtype, mio::AgeGroup(age)}];
+                    auto& rate = rates[loc.get_id().get()]
+                                      [{mio::abm::CellIndex(0), mio::abm::VirusVariant::Wildtype, mio::AgeGroup(age)}];
+                    cum_rate[age] += rate;
+                    if (rate > 0 && !counted_loc) {
+                        num_locs += 1;
+                        counted_loc = true;
+                    }
                 }
+            }
+
+            if (num_locs < 1) {
+                num_locs = 1;
             }
             // Divide rate by number of locations
             std::transform(cum_rate.begin(), cum_rate.end(), cum_rate.begin(), [num_locs](double x) {

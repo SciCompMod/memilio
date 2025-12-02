@@ -1696,7 +1696,8 @@ simulate_abm(bool exponential_scenario, ScalarType tmax, std::string contact_dat
 
     std::vector simulation_results = {compartment_result, flow_result};
     std::pair<std::vector<TimeSeries<double>>, std::vector<std::vector<double>>> abm_results =
-        std::make_pair(simulation_results, infectivity_rates);
+        std::make_pair(simulation_results, std::vector<std::vector<double>>{transmission_rates});
+    //std::make_pair(simulation_results, infectivity_rates);
 
     return success(abm_results);
 }
@@ -1787,15 +1788,14 @@ int main()
     rng.seed(seeds);
 
     // Simulation for initialization is init_tmax=14 days
-    auto init_result =
-        simulate_abm(exponential_scenario, params::t0 + params::tmax, contact_data_dir, infection_distribution, true,
-                     save_dir, false, rng, params::t0, one_location, false);
+    auto init_result = simulate_abm(exponential_scenario, params::init_tmax, contact_data_dir, infection_distribution,
+                                    true, save_dir, false, rng, params::t0, one_location, false);
 
     // Simulate ABM ensemble run.
     size_t num_runs = 20;
-    auto result_abm = abm_ensemble_run(num_runs, exponential_scenario, params::t0 + params::tmax, contact_data_dir,
-                                       infection_distribution, save_dir, true, false, params::t0 + params::init_tmax,
-                                       one_location, use_infection_history);
+    auto result_abm = abm_ensemble_run(num_runs, exponential_scenario, params::t0 + params::tmax - params::init_tmax,
+                                       contact_data_dir, infection_distribution, save_dir, true, false,
+                                       params::t0 + params::init_tmax, one_location, use_infection_history);
 
     // Get results from initial ABM run.
     // Use compartments at time init_tmax from ABM simulation as initial values for other models to make results comparable.
