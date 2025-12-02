@@ -56,13 +56,13 @@ runs:
     - name: Run unit tests
       shell: bash
       run: |
-        cd pycode/memilio-${{inputs.package}}/memilio/${{inputs.package}}_test
+        cd pycode/memilio-${{inputs.package}}/tests
         if [[ "${{ inputs.coverage }}" == "ON" ]]; then
           python -W ignore::DeprecationWarning -m coverage run --include=**/site-packages/memilio/* -m unittest
           python -m coverage report
           python -m coverage xml -o coverage_python.xml
           python -m coverage html -d coverage_python
-          cp -r coverage_python ../../../../
+          cp -r coverage_python ../../../
         else
           python -m unittest
         fi
