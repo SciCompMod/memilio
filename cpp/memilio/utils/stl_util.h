@@ -62,10 +62,9 @@ inline std::ostream& set_ostream_format(std::ostream& out, size_t width, size_t 
  * @param item item to insert
  * @param pred binary comparator, pred(item, a) returns true if item should go before element a,
  *                                pred(a, item) returns true if element a should go before item
- * @return iterator to inserted or replaced item in vec
  */
 template <typename T, typename Pred>
-typename std::vector<T>::iterator insert_sorted_replace(std::vector<T>& vec, T const& item, Pred pred)
+void insert_sorted_replace(std::vector<T>& vec, T const& item, Pred pred)
 {
     auto bounds = std::equal_range(begin(vec), end(vec), item, pred);
     auto lb     = bounds.first;
@@ -73,15 +72,16 @@ typename std::vector<T>::iterator insert_sorted_replace(std::vector<T>& vec, T c
     assert(ub - lb <= 1); //input vector contains at most one item that is equal to the new item
     if (ub - lb == 1) {
         *lb = item;
-        return lb;
+        return;
     }
     else {
-        return vec.insert(lb, item);
+        vec.insert(lb, item);
+        return;
     }
 }
 
 template <typename T>
-typename std::vector<T>::iterator insert_sorted_replace(std::vector<T>& vec, T const& item)
+void insert_sorted_replace(std::vector<T>& vec, T const& item)
 {
     return insert_sorted_replace(vec, item, std::less<T>());
 }
@@ -314,6 +314,21 @@ constexpr std::array<T, size_t(T::Count)> enum_members()
     });
     return enum_members;
 }
+
+/**
+ * @brief Defines generic Range type for IterPair of a vector.
+ * When elements should be const, template argument accepts const type.
+ * As vector is not defined for const values, the const specifier is removed and
+ * the const_iterator is used. std::conditional tries to compile both cases, thus
+ * we also need std::remove_const for the case where T is not const.
+ */
+template <class T>
+using VectorRange =
+    std::conditional_t<std::is_const_v<T>,
+                       typename mio::Range<std::pair<typename std::vector<std::remove_const_t<T>>::const_iterator,
+                                                     typename std::vector<std::remove_const_t<T>>::const_iterator>>,
+                       typename mio::Range<std::pair<typename std::vector<std::remove_const_t<T>>::iterator,
+                                                     typename std::vector<std::remove_const_t<T>>::iterator>>>;
 
 } // namespace mio
 

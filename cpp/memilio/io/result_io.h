@@ -129,7 +129,7 @@ IOResult<void> save_result_with_params(const std::vector<TimeSeries<ScalarType>>
     BOOST_OUTCOME_TRY(create_directory(result_dir_run.string()));
     BOOST_OUTCOME_TRY(save_result(result, county_ids, (int)(size_t)params[0].parameters.get_num_groups(),
                                   (result_dir_run / "Result.h5").string()));
-    BOOST_OUTCOME_TRY(write_graph(create_graph_without_edges<Model, MobilityParameters<ScalarType>>(params, county_ids),
+    BOOST_OUTCOME_TRY(write_graph(Graph<Model, MobilityParameters<ScalarType>>(county_ids, params),
                                   result_dir_run.string(), IOF_OmitDistributions));
     return success();
 }
@@ -256,7 +256,7 @@ IOResult<void> save_results(const std::vector<std::vector<TimeSeries<ScalarType>
         //     auto ensemble_params_p95 = ensemble_params_percentile(ensemble_params, 0.95);
 
         //     auto make_graph = [&county_ids](auto&& params) {
-        //         return create_graph_without_edges<Model, MobilityParameters<ScalarType>>(params, county_ids);
+        //         return Graph<Model, MobilityParameters<ScalarType>>(county_ids, params);
         //     };
         //     BOOST_OUTCOME_TRY(
         //         write_graph(make_graph(ensemble_params_p05), result_dir_p05.string(), IOF_OmitDistributions));

@@ -25,6 +25,7 @@
 #ifdef MEMILIO_HAS_JSONCPP
 
 #include "ode_secirvvs/model.h"
+#include "memilio/mobility/graph.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/io/parameters_io.h"
 #include "memilio/io/io.h"
@@ -1597,6 +1598,34 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
     return success();
 }
 
+/** 
+ * @brief Converts input data from one range of models to another with different type.
+ * 
+ * @tparam FP Floating point type.
+ * @param[in] model_from VectorRange of Node%s each containing a Model with the input data.
+ * @param[in,out] model_to VectorRange of Node%s each containing a Model to be initialized with data.
+ * 
+ * @return An IOResult indicating success or failure.
+ */
+template <class FP>
+IOResult<void> convert_model_data_type(mio::VectorRange<Node<Model<ScalarType>>> model_from,
+                                       mio::VectorRange<Node<Model<FP>>> model_to)
+{
+    assert(model_from.size() == model_to.size());
+    assert((size_t)model_from[0].property.parameters.get_num_groups() ==
+           (size_t)model_to[0].property.parameters.get_num_groups());
+    // Todo: Add conversion of ParameterSet and then re-use code from all model parameters io
+    //       OR call set_vacination_data with FP to set correct parameters
+
+    for (size_t region_idx = 0; region_idx < model_from.size(); ++region_idx) {
+        // convert populations to mio::UncertainValue<FP>
+        // needs 2 converts as mio::UncertainValue<ScalarType> -> mio::UncertainValue<FP> does not work
+        model_to[region_idx].property.populations = model_from[region_idx].property.populations.template convert<FP>();
+    }
+
+    return mio::success();
+}
+
 /**
  * @brief Sets initial values of model based on LHA data, if available, for specified counties, and based on RKI data 
  * for remaining counties.
@@ -1688,7 +1717,7 @@ IOResult<void> set_lha_data(const Parameters<FP>& params, mio::Graph<Model<FP>, 
     //           << graph_model.nodes()[9]
     //                  .property.populations[{(AgeGroup)2, mio::osecirvvs::InfectionState::InfectedSymptomsNaive}]
     //           << std::endl;
-
+    
     return mio::success();
 }
 

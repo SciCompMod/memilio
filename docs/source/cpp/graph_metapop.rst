@@ -177,6 +177,38 @@ The following steps detail how to configure and execute a graph simulation:
         graph.add_edge(0, 1, std::move(transition_rates));
         graph.add_edge(1, 0, std::move(transition_rates));
 
+.. dropdown:: :fa:`gears` Working with large graphs
+
+    When working with very large graphs, i.e. starting from ten thousand edges, it will be faster to not use the standard ``add_edge`` function.
+    For this case, we provide a ``GraphBuilder``. There you can add all edges without checking for uniqueness and sorting, thus improving the speed.
+    The edges will be sorted when the graph is generated:
+
+    .. code-block:: cpp
+
+        mio::GraphBuilder<mio::SimulationNode<mio::Simulation<double, mio::osecir::Model<double>>>, mio::MobilityEdgeStochastic> builder;
+        builder.add_node(1001, model_group1, t0);
+        builder.add_node(1002, model_group2, t0);
+        builder.add_edge(0, 1, std::move(transition_rates));
+        builder.add_edge(1, 0, std::move(transition_rates));
+        auto graph = builder.build();
+
+
+    Usually, there should be no duplicate edges in your input. If this is not certain, the ``GraphBuilder`` can also remove duplicates.
+    Here, duplicate means that the start and end node are the same. The parameters in the edge will not be compared. 
+    When duplicates are found, only the **last** inserted edge is kept, all previous edges are discarded: 
+
+    .. code-block:: cpp
+
+        mio::GraphBuilder<Int, Int> builder;
+        builder.add_node(1001, 100);
+        builder.add_node(1002, 100);
+        builder.add_edge(0, 1, 100);
+        builder.add_edge(1, 0, 100);
+        builder.add_edge(0, 1, 200);
+        auto graph = builder.build(true);
+        // graph contains the edges (0, 1, 100) and (1, 0, 100)
+
+
 5. **Initialize and Advance the Mobility Simulation:**
 
    With the graph constructed, initialize the simulation with the starting time and time step. Then, advance the simulation until the final time :math:`t_{max}`.
