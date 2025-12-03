@@ -150,7 +150,7 @@ def simulate_country_seir(
         interpolate: bool = True):
     """
     Load contact matrix, fetch population, build the ODE SEIR model, and run
-    a simulation. Returns (result, contacts_df, population_int).
+    a simulation.
     """
     contacts = load_contact_matrix(country)
     population = get_population_total(country)
@@ -189,5 +189,5 @@ def run_demo(country: str,
 
 
 if __name__ == "__main__":
-    country = "China"
+    country = "Germany"
     run_demo(country=country)
