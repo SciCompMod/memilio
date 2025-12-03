@@ -27,12 +27,12 @@ dependencies = [
   "geopandas",
   "h5py",
   "imageio",
-  "datetime"
+  "datetime",
+  "pyfakefs>=4.6"
 ]
 
 [project.optional-dependencies]
 dev = [
-  "pyfakefs>=4.6",
   "coverage>=7.0.1",
   "pylint>=2.13.0,<2.16",
   "pylint_json2html==0.4.0"

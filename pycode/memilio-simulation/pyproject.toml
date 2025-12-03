@@ -17,13 +17,13 @@ authors = [{ name = "MEmilio Team" }]
 maintainers = [
   { email = "martin.kuehn@dlr.de" }
 ]
-dependencies = []
-
-[project.optional-dependencies]
-dev = [
+dependencies = [
   "numpy>=1.22,<1.25",
   "pandas>=2.0.0"
 ]
+
+[project.optional-dependencies]
+dev = []
 
 [project.urls]
 Homepage = "https://github.com/SciCompMod/memilio"
