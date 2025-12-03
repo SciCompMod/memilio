@@ -232,10 +232,10 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvv
     //TODO: io error handling
     auto contact_matrices = mio::ContactMatrixGroup<double>(contact_locations.size(), size_t(params.get_num_groups()));
     for (auto&& contact_location : contact_locations) {
-        BOOST_OUTCOME_TRY(auto&& baseline,
-                          mio::read_mobility_plain(
-                              (data_dir / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
-
+        BOOST_OUTCOME_TRY(
+            auto&& baseline,
+            mio::read_mobility_plain(
+                (data_dir / "Germany/contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
         contact_matrices[size_t(contact_location.first)].get_baseline() = baseline;
         contact_matrices[size_t(contact_location.first)].get_minimum()  = Eigen::MatrixXd::Zero(6, 6);
     }
@@ -256,7 +256,6 @@ mio::IOResult<mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<
 generate_extrapolated_data(mio::Date start_date, const int num_days, const fs::path& data_dir,
                            bool save_non_aggregated_results)
 {
-
     // global parameters
     const int num_groups = 6;
     const bool long_time = true;
@@ -298,16 +297,18 @@ generate_extrapolated_data(mio::Date start_date, const int num_days, const fs::p
                        mio::MobilityCoefficientGroup<double>, mio::osecirvvs::InfectionState,
                        decltype(read_function_edges)>;
     BOOST_OUTCOME_TRY(
-        set_node_function(params, start_date, end_date, data_dir,
-                          mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json"),
+        set_node_function(params, start_date, end_date, mio::path_join((data_dir / "Germany" / "pydata").string()),
+                          mio::path_join((data_dir / "Germany" / "pydata").string(), "county_current_population.json"),
                           true, params_graph, read_function_nodes, node_id_function, scaling_factor_infected,
                           scaling_factor_icu, tnt_capacity_factor, num_days, false, true));
-    BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, mobile_compartments, contact_locations.size(),
-                                        read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.},
-                                        std::vector<std::vector<size_t>>{}));
+
+    BOOST_OUTCOME_TRY(
+        set_edge_function(mio::path_join((data_dir / "Germany" / "mobility").string(), "commuter_mobility_2022.txt"),
+                          params_graph, mobile_compartments, contact_locations.size(), read_function_edges,
+                          std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}, std::vector<std::vector<size_t>>{}));
 
     auto population_data_path =
-        mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json");
+        mio::path_join((data_dir / "Germany" / "pydata").string(), "county_current_population.json");
 
     BOOST_OUTCOME_TRY(auto&& node_ids, mio::get_node_ids(population_data_path, true));
     std::vector<mio::osecirvvs::Model<double>> nodes(node_ids.size(), mio::osecirvvs::Model<double>(num_groups));
@@ -316,14 +317,14 @@ generate_extrapolated_data(mio::Date start_date, const int num_days, const fs::p
     }
 
     BOOST_OUTCOME_TRY(mio::osecirvvs::details::set_vaccination_data(
-        nodes, mio::path_join(data_dir.string(), "pydata/Germany", "vacc_county_ageinf_ma7.json"), start_date, node_ids,
+        nodes, mio::path_join(data_dir.string(), "Germany/pydata", "vacc_county_ageinf_ma7.json"), start_date, node_ids,
         num_days));
 
     BOOST_OUTCOME_TRY(mio::osecirvvs::export_input_data_county_timeseries(
         nodes, data_dir.string(), node_ids, start_date, scaling_factor_infected, scaling_factor_icu, num_days,
-        mio::path_join(data_dir.string(), "pydata/Germany", "county_divi_ma7.json"),
-        mio::path_join(data_dir.string(), "pydata/Germany", "cases_all_county_age_ma7.json"),
-        mio::path_join(data_dir.string(), "pydata/Germany", "county_current_population.json"), "",
+        mio::path_join(data_dir.string(), "Germany/pydata", "county_divi_ma7.json"),
+        mio::path_join(data_dir.string(), "Germany/pydata", "cases_all_county_age_ma7.json"),
+        mio::path_join(data_dir.string(), "Germany/pydata", "county_current_population.json"), "",
         save_non_aggregated_results));
 
     return mio::success(params_graph);
