@@ -92,7 +92,7 @@ class rawData:
 
         # Runtime Strong scaling
         self.memilio_strong_scaling_128_runs_one_node = np.array(
-            [2.646570e+04, 2.068018e+04,  1.078597e+04, 5.317400e+03, 2.740988e+03, 1.440401e+03, 8.953795e+02, 5.889476e+02])
+            [2.512869e+04, 1.911620e+04,  9.766570e+03, 4.919744e+03,  2.492793e+03, 1.299748e+03,  8.281876e+02,  5.801488e+02])
         self.memilio_strong_scaling_128_runs_multiple_nodes = np.array(
             # only last data point available
             [7.413365e+04, 3.721441e+04, 1.865978e+04, 9.374108e+03, 4.684981e+03, 2.357355e+03, 1.187477e+03, 6.005680e+02])
