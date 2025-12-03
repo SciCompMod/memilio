@@ -28,7 +28,7 @@ runs:
       run: |
         for pkg in `ls pycode/wheelhouse/*cp311*.whl`; do python -m pip install $pkg; done # packages that contain native extensions are version specific
         for pkg in `ls pycode/wheelhouse/*py3*.whl`; do python -m pip install $pkg; done # pure python packages are not version specific
-        pip install "memilio-${{ inputs.package }}[dev]"
+        python -m pip install "memilio-${{ inputs.package }}[dev]"
     - name: Run pylint
       shell: bash
       run: |
