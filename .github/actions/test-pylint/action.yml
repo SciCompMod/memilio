@@ -23,6 +23,7 @@ runs:
       uses: actions/download-artifact@v4
       with:
         name: python-wheels-${{ inputs.package }}
+        path: pycode/wheelhouse
     - name: Install Python Wheels
       shell: bash
       run: |
