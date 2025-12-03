@@ -37,6 +37,7 @@ if(MEMILIO_USE_BUNDLED_SPDLOG)
 
     if(NOT spdlog_POPULATED)
         FetchContent_Populate(spdlog)
+
         add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR} EXCLUDE_FROM_ALL)
     endif()
 
@@ -198,6 +199,7 @@ else()
 endif()
 
 find_package(sbml ${MEMILIO_SBML_VERSION} CONFIG)
+
 if(sbml_FOUND)
     set(MEMILIO_HAS_SBML ON)
     message(STATUS "Found libSBML: ${libsbml_INCLUDE_DIRS}")
