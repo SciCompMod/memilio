@@ -20,6 +20,7 @@ dependencies = [
   "tensorflow",
   "matplotlib",
   "scikit-learn",
+  # first support of python 3.11
   "pyfakefs>=4.6"
 ]
 
