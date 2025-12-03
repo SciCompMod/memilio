@@ -19,12 +19,13 @@ dependencies = [
   "numpy>=1.22,<1.25",
   "tensorflow",
   "matplotlib",
-  "scikit-learn"
+  "scikit-learn",
+  # first support of python 3.11
+  "pyfakefs>=4.6"
 ]
 
 [project.optional-dependencies]
 dev = [
-  "pyfakefs>=4.6",
   "coverage>=7.0.1"
 ]
 

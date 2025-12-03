@@ -84,18 +84,21 @@ The following packages are used by the tests:
 
 See Installation on how to install all these dependencies automatically.
 
-To run the tests make sure the package is installed in editable mode (``pip install -e .``) and run
+To run the tests, make sure the package is installed, and you are in the source directory, then run:
 
-.. code:: sh
-
+```bash
+    cd tests
     python -m unittest
+```
 
-Alternatively, if the package is installed normally (``pip install .``), you have to run the tests from outside the source directory to avoid import errors:
+This works with both normal (`pip install .`) and editable (`pip install -e .`) installations.
 
-.. code:: sh
+Alternatively, you can run the tests from outside the source directory:
 
-    cd /path/to/another/directory
-    python -m unittest discover -s /path/to/memilio/pycode/memilio-epidata/memilio/epidata_test
+```bash
+cd /path/to/another/directory
+python -m unittest discover -s /path/to/memilio/pycode/memilio-epidata/tests
+```
 
 To get the coverage report do
 
