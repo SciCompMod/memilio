@@ -27,7 +27,6 @@ runs:
     - name: Install Python Wheels
       shell: bash
       run: |
-        mkdir -p pycode/wheelhouse
         for pkg in `ls pycode/wheelhouse/*cp311*.whl`; do python -m pip install $pkg; done # packages that contain native extensions are version specific
         for pkg in `ls pycode/wheelhouse/*py3*.whl`; do python -m pip install $pkg; done # pure python packages are not version specific
         python -m pip install --upgrade-strategy only-if-needed "./pycode/memilio-${{ inputs.package }}[dev]"
