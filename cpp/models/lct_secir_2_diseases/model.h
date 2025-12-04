@@ -586,17 +586,17 @@ private:
                       "The template parameters Group1 & Group2 should be valid.");
         using LctStateGroup1           = type_at_index_t<Group1, LctStates...>;
         using LctStateGroup2           = type_at_index_t<Group2, LctStates...>;
-        FP InfectedNoSymptoms_group2_a = 0;
-        FP InfectedSymptoms_group2_a   = 0;
-        FP InfectedNoSymptoms_group2_b = 0;
-        FP InfectedSymptoms_group2_b   = 0;
+        FP infectedNoSymptoms_group2_a = 0;
+        FP infectedSymptoms_group2_a   = 0;
+        FP infectedNoSymptoms_group2_b = 0;
+        FP infectedSymptoms_group2_b   = 0;
         const auto& params             = this->parameters;
 
         size_t first_index_group1 = this->populations.template get_first_index_of_group<Group1>();
         size_t first_index_group2 = this->populations.template get_first_index_of_group<Group2>();
 
         // Calculate sum of all subcompartments for InfectedNoSymptoms for disease a of Group2.
-        InfectedNoSymptoms_group2_a =
+        infectedNoSymptoms_group2_a =
             pop.segment(first_index_group2 +
                             LctStateGroup2::template get_first_index<InfectionState::InfectedNoSymptoms_1a>(),
                         LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedNoSymptoms_1a>())
@@ -606,7 +606,7 @@ private:
                         LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedNoSymptoms_2a>())
                 .sum();
         // Calculate sum of all subcompartments for InfectedSymptoms for disease a of Group2.
-        InfectedSymptoms_group2_a =
+        infectedSymptoms_group2_a =
             pop.segment(first_index_group2 +
                             LctStateGroup2::template get_first_index<InfectionState::InfectedSymptoms_1a>(),
                         LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedSymptoms_1a>())
@@ -616,7 +616,7 @@ private:
                         LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedSymptoms_2a>())
                 .sum();
         // Calculate sum of all subcompartments for InfectedNoSymptoms for disease b of Group2.
-        InfectedNoSymptoms_group2_b =
+        infectedNoSymptoms_group2_b =
             pop.segment(first_index_group2 +
                             LctStateGroup2::template get_first_index<InfectionState::InfectedNoSymptoms_1b>(),
                         LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedNoSymptoms_1b>())
@@ -626,7 +626,7 @@ private:
                         LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedNoSymptoms_2b>())
                 .sum();
         // Calculate sum of all subcompartments for InfectedSymptoms for disease b of Group2.
-        InfectedSymptoms_group2_b =
+        infectedSymptoms_group2_b =
             pop.segment(first_index_group2 +
                             LctStateGroup2::template get_first_index<InfectionState::InfectedSymptoms_1b>(),
                         LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedSymptoms_1b>())
@@ -648,12 +648,12 @@ private:
             SimulationTime<FP>(t))(static_cast<Eigen::Index>(Group1), static_cast<Eigen::Index>(Group2));
         FP infection_a_per_person =
             params.template get<TransmissionProbabilityOnContact_a<FP>>()[Group1] *
-            (params.template get<RelativeTransmissionNoSymptoms_a<FP>>()[Group2] * InfectedNoSymptoms_group2_a +
-             params.template get<RiskOfInfectionFromSymptomatic_a<FP>>()[Group2] * InfectedSymptoms_group2_a);
+            (params.template get<RelativeTransmissionNoSymptoms_a<FP>>()[Group2] * infectedNoSymptoms_group2_a +
+             params.template get<RiskOfInfectionFromSymptomatic_a<FP>>()[Group2] * infectedSymptoms_group2_a);
         FP infection_b_per_person =
             params.template get<TransmissionProbabilityOnContact_b<FP>>()[Group1] *
-            (params.template get<RelativeTransmissionNoSymptoms_b<FP>>()[Group2] * InfectedNoSymptoms_group2_b +
-             params.template get<RiskOfInfectionFromSymptomatic_b<FP>>()[Group2] * InfectedSymptoms_group2_b);
+            (params.template get<RelativeTransmissionNoSymptoms_b<FP>>()[Group2] * infectedNoSymptoms_group2_b +
+             params.template get<RiskOfInfectionFromSymptomatic_b<FP>>()[Group2] * infectedSymptoms_group2_b);
 
         if (relevant_disease == 0) { // Disease a.
             // Get index for compartment Recovered_1b and calculate outflow driven by disease a.
