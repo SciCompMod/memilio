@@ -30,7 +30,7 @@ For a successful build, the development libraries for Python need to be installe
 .. warning::
     Generation currently requires specifically version ``18.1.1`` of `libclang.so`, since the function ``create_ast`` in `ast.py <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-generation/memilio/generation/ast.py>`_ generates the abstract syntax tree using `clang-18`. Different versions may lead to unsupported abstractions.
 
-    If you want to try a different version, set your `libclang` version under ``install_requires`` in the `setup.py <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-generation/setup.py>`_ and change the clang command in ``create_ast`` in `ast.py <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-generation/memilio/generation/ast.py>`_.
+    If you want to try a different version, set your `libclang` version under ``dependencies`` in the `pyproject.toml <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-generation/pyproject.toml>`_ and change the clang command in ``create_ast`` in `ast.py <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-generation/memilio/generation/ast.py>`_.
 
 Usage
 -----
