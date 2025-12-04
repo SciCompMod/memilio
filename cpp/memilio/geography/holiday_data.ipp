@@ -299,4 +299,4 @@ static const std::vector<std::pair<mio::Date, mio::Date>> holidays_16_th = {
 
 } // namespace de
 
-} //namespace holidays
+} // namespace holidays
