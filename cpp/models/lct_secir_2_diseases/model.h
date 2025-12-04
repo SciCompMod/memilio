@@ -586,17 +586,17 @@ private:
                       "The template parameters Group1 & Group2 should be valid.");
         using LctStateGroup1           = type_at_index_t<Group1, LctStates...>;
         using LctStateGroup2           = type_at_index_t<Group2, LctStates...>;
-        FP InfectedNoSymptoms_Group2_a = 0;
-        FP InfectedSymptoms_Group2_a   = 0;
-        FP InfectedNoSymptoms_Group2_b = 0;
-        FP InfectedSymptoms_Group2_b   = 0;
+        FP InfectedNoSymptoms_group2_a = 0;
+        FP InfectedSymptoms_group2_a   = 0;
+        FP InfectedNoSymptoms_group2_b = 0;
+        FP InfectedSymptoms_group2_b   = 0;
         const auto& params             = this->parameters;
 
         size_t first_index_group1 = this->populations.template get_first_index_of_group<Group1>();
         size_t first_index_group2 = this->populations.template get_first_index_of_group<Group2>();
 
         // Calculate sum of all subcompartments for InfectedNoSymptoms for disease a of Group2.
-        InfectedNoSymptoms_Group2_a =
+        InfectedNoSymptoms_group2_a =
             pop.segment(first_index_group2 +
                             LctStateGroup2::template get_first_index<InfectionState::InfectedNoSymptoms_1a>(),
                         LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedNoSymptoms_1a>())
@@ -606,7 +606,7 @@ private:
                         LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedNoSymptoms_2a>())
                 .sum();
         // Calculate sum of all subcompartments for InfectedSymptoms for disease a of Group2.
-        InfectedSymptoms_Group2_a =
+        InfectedSymptoms_group2_a =
             pop.segment(first_index_group2 +
                             LctStateGroup2::template get_first_index<InfectionState::InfectedSymptoms_1a>(),
                         LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedSymptoms_1a>())
@@ -616,7 +616,7 @@ private:
                         LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedSymptoms_2a>())
                 .sum();
         // Calculate sum of all subcompartments for InfectedNoSymptoms for disease b of Group2.
-        InfectedNoSymptoms_Group2_b =
+        InfectedNoSymptoms_group2_b =
             pop.segment(first_index_group2 +
                             LctStateGroup2::template get_first_index<InfectionState::InfectedNoSymptoms_1b>(),
                         LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedNoSymptoms_1b>())
@@ -626,7 +626,7 @@ private:
                         LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedNoSymptoms_2b>())
                 .sum();
         // Calculate sum of all subcompartments for InfectedSymptoms for disease b of Group2.
-        InfectedSymptoms_Group2_b =
+        InfectedSymptoms_group2_b =
             pop.segment(first_index_group2 +
                             LctStateGroup2::template get_first_index<InfectionState::InfectedSymptoms_1b>(),
                         LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedSymptoms_1b>())
@@ -636,11 +636,11 @@ private:
                         LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedSymptoms_2b>())
                 .sum();
         // Size of the subpopulation Group2 without dead people.
-        FP N_Group2 = pop.segment(first_index_group2, LctStateGroup2::Count).sum(); // Sum over all compartments.
-        N_Group2 = N_Group2 - pop.segment(LctStateGroup2::template get_first_index<InfectionState::Dead_a>(), 1).sum() -
+        FP N_group2 = pop.segment(first_index_group2, LctStateGroup2::Count).sum(); // Sum over all compartments.
+        N_group2 = N_group2 - pop.segment(LctStateGroup2::template get_first_index<InfectionState::Dead_a>(), 1).sum() -
                    pop.segment(LctStateGroup2::template get_first_index<InfectionState::Dead_b>(), 1)
                        .sum(); // All people minus dead people.
-        const FP div_N_Group2 = (N_Group2 < Limits<FP>::zero_tolerance()) ? 0.0 : 1.0 / N_Group2;
+        const FP div_N_group2 = (N_group2 < Limits<FP>::zero_tolerance()) ? 0.0 : 1.0 / N_group2;
         FP season_val         = 1 + params.template get<Seasonality<FP>>() *
                                 sin(3.141592653589793 * ((params.template get<StartDay<FP>>() + t) / 182.5 + 0.5));
 
@@ -648,30 +648,30 @@ private:
             SimulationTime<FP>(t))(static_cast<Eigen::Index>(Group1), static_cast<Eigen::Index>(Group2));
         FP infection_a_per_person =
             params.template get<TransmissionProbabilityOnContact_a<FP>>()[Group1] *
-            (params.template get<RelativeTransmissionNoSymptoms_a<FP>>()[Group2] * InfectedNoSymptoms_Group2_a +
-             params.template get<RiskOfInfectionFromSymptomatic_a<FP>>()[Group2] * InfectedSymptoms_Group2_a);
+            (params.template get<RelativeTransmissionNoSymptoms_a<FP>>()[Group2] * InfectedNoSymptoms_group2_a +
+             params.template get<RiskOfInfectionFromSymptomatic_a<FP>>()[Group2] * InfectedSymptoms_group2_a);
         FP infection_b_per_person =
             params.template get<TransmissionProbabilityOnContact_b<FP>>()[Group1] *
-            (params.template get<RelativeTransmissionNoSymptoms_b<FP>>()[Group2] * InfectedNoSymptoms_Group2_b +
-             params.template get<RiskOfInfectionFromSymptomatic_b<FP>>()[Group2] * InfectedSymptoms_Group2_b);
+            (params.template get<RelativeTransmissionNoSymptoms_b<FP>>()[Group2] * InfectedNoSymptoms_group2_b +
+             params.template get<RiskOfInfectionFromSymptomatic_b<FP>>()[Group2] * InfectedSymptoms_group2_b);
 
         if (relevant_disease == 0) { // Disease a.
             // Get index for compartment Recovered_1b and calculate outflow driven by disease a.
             size_t compartment_index =
                 first_index_group1 + LctStateGroup1::template get_first_index<InfectionState::Recovered_1b>();
             dydt[compartment_index] +=
-                -y[compartment_index] * div_N_Group2 * season_val * contact_patterns * infection_a_per_person;
+                -y[compartment_index] * div_N_group2 * season_val * contact_patterns * infection_a_per_person;
         }
         else if (relevant_disease == 1) { // Disease b.
             // Get index for compartment Recovered_1a and calculate outflow driven by disease b.
             size_t compartment_index =
                 first_index_group1 + LctStateGroup1::template get_first_index<InfectionState::Recovered_1a>();
             dydt[compartment_index] +=
-                -y[compartment_index] * div_N_Group2 * season_val * contact_patterns * infection_b_per_person;
+                -y[compartment_index] * div_N_group2 * season_val * contact_patterns * infection_b_per_person;
         }
         else if (relevant_disease == 2) { // Both diseases drive outflow from the Susceptible compartment.
             size_t compartment_index = first_index_group1;
-            dydt[compartment_index] += -y[compartment_index] * div_N_Group2 * season_val * contact_patterns *
+            dydt[compartment_index] += -y[compartment_index] * div_N_group2 * season_val * contact_patterns *
                                        (infection_a_per_person + infection_b_per_person);
         }
         // To split the outflow from Susceptible between Exposed_1a and Exposed_1b we need
