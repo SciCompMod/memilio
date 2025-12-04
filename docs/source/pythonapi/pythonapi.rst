@@ -8,10 +8,13 @@ Python API
     :toctree: generated
     :recursive:
     
+    memilio.epidata
     memilio.plot
+    memilio.surrogatemodel
 
 .. toctree::
     :maxdepth: 1
     
-    memilio.simulation 
+    memilio.simulation
+    memilio.generation 
 
