@@ -115,6 +115,19 @@ autodoc_mock_imports = [
     "folium",
     "mapclassify",
     "imageio",
+    # Mock C++ extension modules that require compilation
+    "memilio.simulation",
+    "memilio.simulation._simulation",
+    "memilio.simulation._simulation_abm",
+    "memilio.simulation._simulation_omseirs4",
+    "memilio.simulation._simulation_osecir",
+    "memilio.simulation._simulation_osecirvvs",
+    "memilio.simulation._simulation_oseir",
+    "memilio.simulation._simulation_oseir_metapop",
+    "memilio.simulation._simulation_osir",
+    "memilio.simulation._simulation_ssir",
+    "memilio.simulation._simulation_ssirs",
+    "memilio.generation",
 ]
 
 # -- Options for EPUB output
