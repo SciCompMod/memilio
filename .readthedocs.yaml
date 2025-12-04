@@ -8,15 +8,10 @@ build:
     - ninja-build
   tools:
     python: "3.10"
-  environment:
-    CMAKE_ARGS: >-
-      -Wno-dev
-      -DCMAKE_POLICY_DEFAULT_CMP0169=OLD
-      -DMEMILIO_ENABLE_WARNINGS_AS_ERRORS=OFF
   jobs:
     install:
-      - pip install --exists-action=w --no-cache-dir -r docs/requirements-build.txt
-      - pip install --exists-action=w --no-cache-dir -r docs/requirements.txt
+      - CMAKE_ARGS="-Wno-dev -DCMAKE_POLICY_DEFAULT_CMP0169=OLD -DMEMILIO_ENABLE_WARNINGS_AS_ERRORS=OFF" pip install --exists-action=w --no-cache-dir -r docs/requirements-build.txt
+      - CMAKE_ARGS="-Wno-dev -DCMAKE_POLICY_DEFAULT_CMP0169=OLD -DMEMILIO_ENABLE_WARNINGS_AS_ERRORS=OFF" pip install --exists-action=w --no-cache-dir -r docs/requirements.txt
 
 sphinx:
   configuration: docs/source/conf.py
