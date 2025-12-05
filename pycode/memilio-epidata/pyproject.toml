@@ -18,7 +18,7 @@ dependencies = [
   "pyarrow",
   "matplotlib",
   "tables",
-  "numpy==1.25",
+  "numpy<=1.25",
   "openpyxl",
   "xlrd",
   "xlsxwriter",
