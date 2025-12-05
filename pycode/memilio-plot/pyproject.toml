@@ -16,7 +16,7 @@ maintainers = [
 dependencies = [
   "pandas>=1.2.2",
   "matplotlib",
-  "numpy<=1.25",
+  "numpy<=1.25.1",
   "openpyxl",
   "xlrd",
   "requests",

@@ -16,7 +16,7 @@ maintainers = [
 dependencies = [
   "pandas>=1.2.2",
   "progress",
-  "numpy<=1.25",
+  "numpy<=1.25.1",
   "tensorflow",
   "matplotlib",
   "scikit-learn",
