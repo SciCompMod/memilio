@@ -326,7 +326,7 @@ void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t tim
     // TODO: Explain better what the difference between the two Gregory sums is.
     size_t switch_weights_index = std::min(time_point_index, m_gregory_order);
 
-    ScalarType sum_infected = 0., sum_recovered = 0.;
+    ScalarType sum_infected = 0.;
 
     // Add first part of sum.
     for (size_t j = 0; j < switch_weights_index; j++) {
@@ -335,9 +335,6 @@ void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t tim
         // For each index, the corresponding summand is computed here.
         sum_infected += gregory_weight * m_transitiondistribution_vector[time_point_index - j] *
                         flows.get_value(j)[(Eigen::Index)InfectionTransition::SusceptibleToInfected];
-
-        sum_recovered += gregory_weight * (1. - m_transitiondistribution_vector[time_point_index - j]) *
-                         flows.get_value(j)[(Eigen::Index)InfectionTransition::SusceptibleToInfected];
     }
 
     // Add second part of sum.
@@ -347,9 +344,6 @@ void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t tim
         // For each index, the corresponding summand is computed here.
         sum_infected += gregory_weight * m_transitiondistribution_vector[time_point_index - j] *
                         flows.get_value(j)[(Eigen::Index)InfectionTransition::SusceptibleToInfected];
-
-        sum_recovered += gregory_weight * (1. - m_transitiondistribution_vector[time_point_index - j]) *
-                         flows.get_value(j)[(Eigen::Index)InfectionTransition::SusceptibleToInfected];
     }
 
     populations[time_point_index][(Eigen::Index)InfectionState::Infected] =
@@ -361,7 +355,8 @@ void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t tim
         populations.get_value(0)[(Eigen::Index)InfectionState::Recovered] +
         (1. - m_transitiondistribution_vector[time_point_index]) *
             populations.get_value(0)[(Eigen::Index)InfectionState::Infected] +
-        dt * sum_recovered;
+        populations[0][(Eigen::Index)InfectionState::Susceptible] -
+        populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] - dt * sum_infected;
 }
 
 void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt)
