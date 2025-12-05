@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "memilio-surrogatemodel"
+version = "1.0.0"
+description = "Part of MEmilio project, implementation of surrogate models for the existing models in MEmilio."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "Apache-2.0" }
+authors = [{ name = "MEmilio Team" }]
+maintainers = [
+  { email = "martin.kuehn@dlr.de" }
+]
+dependencies = [
+  "pandas>=1.2.2",
+  "progress",
+  "numpy>=1.22,<1.25",
+  "tensorflow",
+  "matplotlib",
+  "scikit-learn",
+  # first support of python 3.11
+  "pyfakefs>=4.6"
+]
+
+[project.optional-dependencies]
+dev = [
+  "coverage>=7.0.1"
+]
+
+[project.urls]
+Homepage = "https://github.com/SciCompMod/memilio"
+Team = "https://memilio.readthedocs.io/en/latest/team.html"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["memilio*"]
