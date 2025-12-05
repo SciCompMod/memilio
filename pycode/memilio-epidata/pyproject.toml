@@ -17,7 +17,7 @@ dependencies = [
   # first support of python 3.11 is 4.6
   # 5.3.4 has conflicts with openpyxl
   # 5.3.3 broken
-  "pyfakefs>=4.6,<5.3.3"
+  "pyfakefs>=4.6,<5.3.3",
   "pandas>=2.0.0",
   "pyarrow",
   "matplotlib",
@@ -34,7 +34,7 @@ dependencies = [
   "PyQt6",
   "python-calamine",
   "python-magic-bin; sys_platform == 'win32'",
-  "python-magic; sys_platform != 'win32'",
+  "python-magic; sys_platform != 'win32'"
 ]
 
 [project.optional-dependencies]
