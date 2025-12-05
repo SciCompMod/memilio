@@ -55,7 +55,6 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool backwa
     for (size_t i = 1; i < (size_t)m_model->populations.get_num_time_points(); i++) {
         m_model->flows.add_time_point(i * m_dt,
                                       TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, 0.));
-        // TODO: Adapt compute_S_deriv_central so that we can use it already here?
         m_model->compute_S_deriv(m_dt, i);
     }
 
@@ -133,6 +132,9 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool backwa
               << std::endl;
 
     std::cout << "Max number of iterations throughout simulation was " << m_max_number_iterations << std::endl;
+
+    auto file = m_model->populations.export_csv("populations_ide.csv");
+    std::cout << std::endl;
 }
 
 } // namespace isir

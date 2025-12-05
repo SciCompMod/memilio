@@ -336,7 +336,7 @@ void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t tim
         sum_infected += gregory_weight * m_transitiondistribution_vector[time_point_index - j] *
                         flows.get_value(j)[(Eigen::Index)InfectionTransition::SusceptibleToInfected];
 
-        sum_recovered += gregory_weight * (1 - m_transitiondistribution_vector[time_point_index - j]) *
+        sum_recovered += gregory_weight * (1. - m_transitiondistribution_vector[time_point_index - j]) *
                          flows.get_value(j)[(Eigen::Index)InfectionTransition::SusceptibleToInfected];
     }
 
@@ -348,7 +348,7 @@ void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t tim
         sum_infected += gregory_weight * m_transitiondistribution_vector[time_point_index - j] *
                         flows.get_value(j)[(Eigen::Index)InfectionTransition::SusceptibleToInfected];
 
-        sum_recovered += gregory_weight * (1 - m_transitiondistribution_vector[time_point_index - j]) *
+        sum_recovered += gregory_weight * (1. - m_transitiondistribution_vector[time_point_index - j]) *
                          flows.get_value(j)[(Eigen::Index)InfectionTransition::SusceptibleToInfected];
     }
 
@@ -359,7 +359,7 @@ void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t tim
 
     populations[time_point_index][(Eigen::Index)InfectionState::Recovered] =
         populations.get_value(0)[(Eigen::Index)InfectionState::Recovered] +
-        (1 - m_transitiondistribution_vector[time_point_index]) *
+        (1. - m_transitiondistribution_vector[time_point_index]) *
             populations.get_value(0)[(Eigen::Index)InfectionState::Infected] +
         dt * sum_recovered;
 }

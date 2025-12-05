@@ -292,6 +292,8 @@ def compute_errors_max(groundtruth, results, groundtruth_exponent, timesteps_ide
 
     errors = []
 
+    compartments = ["S", "I", "R"]
+
     # Compute error.
 
     for i in range(len(results)):
@@ -313,11 +315,57 @@ def compute_errors_max(groundtruth, results, groundtruth_exponent, timesteps_ide
 
             else:
                 print(
-                    f"Error is highest at index {np.argmax(difference)} out of {len(difference)-1}")
+                    f"Min abs error of {compartments[compartment]} is at index {np.argmin(np.abs(difference))} out of {len(difference)-1}")
+                print(
+                    f"Max abs error of {compartments[compartment]} is at index {np.argmax(np.abs(difference))} out of {len(difference)-1}")
+
                 errors[i].append(compute_max_norm(
                     difference))
 
     return np.array(errors)
+
+
+def plot_difference_per_timestep(groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, gregory_order,  save_dir=""):
+    num_errors = 3
+
+    errors = []
+
+    compartments = ["S", "I", "R"]
+
+    # Compute error.
+    difference = []
+
+    num_plots = 3
+    figsize_x = 12
+
+    for i, timestep in enumerate(timesteps_ide):
+        fig, axs = plt.subplots(1, num_plots, sharex=True,
+                                figsize=(figsize_x, 3))
+
+        errors.append([])
+        for compartment in range(num_errors):
+            scale_timesteps = timestep/pow(10, -groundtruth_exponent)
+
+            difference = groundtruth[0][int(
+                pow(10, groundtruth_exponent)*(t0_ide))::int(scale_timesteps)][:, compartment]-results[i][int(t0_ide/timestep)::][:, compartment]
+
+            indices = range(len(difference))
+
+            axs[compartment].scatter(indices[0:], difference[0:], s=1)
+            axs[compartment].set_title(f"{compartments[compartment]}")
+
+        plt.show()
+
+        if save_dir != "":
+            if not os.path.isdir(f"{save_dir}/differences"):
+                os.makedirs(f"{save_dir}/differences")
+
+            filename = f"{save_dir}/differences/gregoryorder={gregory_order}_timestep={timestep}"
+
+            plt.savefig(filename + ".png", format='png',
+                        dpi=500)
+
+        plt.close()
 
 
 def plot_convergence(errors_all_gregory_orders, timesteps_ide,
@@ -378,25 +426,26 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
 
         # Plot comparison line for linear convergence as well as second, third and fourth order.
         plotted_timesteps = timesteps_ide[:6]
-        comparison = [0.5*10*errors_all_gregory_orders[0]
+        first_timestep = timesteps_ide[0]
+        comparison = [0.5*1/first_timestep*errors_all_gregory_orders[0]
                       [0, i]*dt for dt in timesteps_ide]
         first = ax_obj.plot(plotted_timesteps, comparison,
                             '--', color='gray', linewidth=1.2, label=r"$\mathcal{O}(\Delta t)$")
 
         plotted_timesteps = timesteps_ide[:6]
-        comparison = [0.5*100*errors_all_gregory_orders[0]
+        comparison = [0.5*(1/first_timestep)**2*errors_all_gregory_orders[0]
                       [0, i]*dt**2 for dt in plotted_timesteps]
         second = ax_obj.plot(plotted_timesteps, comparison,
                              '--', color=colors[0], linewidth=1.2, alpha=0.5, label=r"$\mathcal{O}(\Delta t^2)$")
 
         plotted_timesteps = timesteps_ide[:6]
-        comparison = [0.5*1000*errors_all_gregory_orders[1]
+        comparison = [0.5*(1/first_timestep)**3*errors_all_gregory_orders[1]
                       [0, i]*dt**3 for dt in plotted_timesteps]
         third = ax_obj.plot(plotted_timesteps, comparison,
                             '--', color=colors[1], linewidth=1.2, alpha=0.5, label=r"$\mathcal{O}(\Delta t^3)$")
 
         plotted_timesteps = timesteps_ide[:6]
-        comparison = [0.5*10000*errors_all_gregory_orders[2]
+        comparison = [0.5*(1/first_timestep)**4*errors_all_gregory_orders[2]
                       [0, i]*dt**4 for dt in plotted_timesteps]
         fourth = ax_obj.plot(plotted_timesteps, comparison,
                              '--', color=colors[2], linewidth=1.2, alpha=0.5, label=r"$\mathcal{O}(\Delta t^4)$")
@@ -552,10 +601,11 @@ def get_t0_ide_from_dir_name(dir_name):
 def main():
 
     groundtruth_exponent = 6
-    groundtruth_ode = False
-    only_S = True
+    groundtruth_ode = True
+    only_S = False
 
-    main_dir = "2025-11-17/analytical_example"
+    # main_dir = "2025-11-11/s_groundtruth/init_all_comps"
+    main_dir = "2025-11-28/R0+I_t0_ide"
 
     ##############################################
 
@@ -564,6 +614,7 @@ def main():
     relevant_dir = os.path.join(root_dir, main_dir)
     print(relevant_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
+    # sub_dirs = [sub_dirs[2]]
 
     total_pop_reference = 0
     total_pop_all_fd_orders = []
@@ -600,7 +651,7 @@ def main():
 
         # Get exponents for which IDE simulations have been computed for considered subdirectory.
         # ide_exponents = get_ide_exponents(result_dir)
-        ide_exponents = [1, 2, 3, 4]
+        ide_exponents = [0, 1, 2, 3]
 
         # Calculate time steps resulting from ide_exponents.
         timesteps_ide = []
@@ -636,6 +687,9 @@ def main():
             errors_all_gregory_orders_max_rel.append(errors_max_rel)
             errors_all_gregory_orders_max_abs.append(errors_max_abs)
 
+            plot_difference_per_timestep(
+                groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, gregory_order_simulation, plot_dir)
+
             print()
             # print(f"Gregory order {gregory_order_simulation}")
             # print("Errors: ")
@@ -652,15 +706,16 @@ def main():
             # print(
             #     f"Total population at end for time step {timesteps_ide[-1]}: {results[-1][-1].sum()}")
 
-            total_pop_end = get_total_pop_end(results)
-            total_pop_end_all_gregory_orders.append(total_pop_end)
+            # total_pop_end = get_total_pop_end(results)
+            # total_pop_end_all_gregory_orders.append(total_pop_end)
 
-            total_pop_reference = results[-1][0].sum()
+            # total_pop_reference = results[-1][0].sum()
 
-        print("Max norm")
-        for i in range(len(errors_all_gregory_orders_max_abs)):
-            print(errors_all_gregory_orders_max_abs[i])
-        total_pop_all_fd_orders.append(total_pop_end_all_gregory_orders)
+        # total_pop_all_fd_orders.append(total_pop_end_all_gregory_orders)
+
+        # print("Max norm")
+        # for i in range(len(errors_all_gregory_orders_max_abs)):
+        #     print(errors_all_gregory_orders_max_abs[i])
 
         # Plot convergence of all compartments separately.
         fd_order = 1  # dummy right now
@@ -677,6 +732,7 @@ def main():
         for i in range(len(computed_errors)):
             if i == 0:
                 relative_error = True
+
             else:
                 relative_error = False
 

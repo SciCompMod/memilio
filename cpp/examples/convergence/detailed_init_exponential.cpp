@@ -48,7 +48,6 @@ ScalarType S0               = 999000.;
 ScalarType I0               = 1000.;
 ScalarType R0               = 0.;
 ScalarType total_population = S0 + I0 + R0;
-
 } // namespace params
 
 mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent, ScalarType t0_ode, ScalarType tmax,
@@ -84,6 +83,7 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent,
     if (!save_dir.empty()) {
         // Save compartments.
         mio::TimeSeries<ScalarType> compartments = sir;
+        auto result                              = compartments.export_csv("ode_result.csv");
         auto save_result_status_ode =
             mio::save_result({compartments}, {0}, num_agegroups,
                              save_dir + "result_ode_dt=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
@@ -205,7 +205,7 @@ int main()
 
     ScalarType t0_ode                     = 0.;
     std::vector<ScalarType> t0_ide_values = {50.};
-    ScalarType tmax                       = 100.;
+    ScalarType tmax                       = 55.;
 
     std::vector<size_t> num_days_vec = {10};
 
@@ -226,9 +226,9 @@ int main()
 
             for (size_t finite_difference_order : finite_difference_orders) {
 
-                std::string save_dir = fmt::format("../../simulation_results/2025-11-24/time_infected={}/"
+                std::string save_dir = fmt::format("../../simulation_results/2025-11-28/R0+I_t0_ide/"
                                                    "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
-                                                   time_infected, t0_ide, tmax, finite_difference_order);
+                                                   t0_ide, tmax, finite_difference_order);
 
                 // Make folder if not existent yet.
                 boost::filesystem::path dir(save_dir);
