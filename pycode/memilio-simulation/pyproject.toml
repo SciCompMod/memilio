@@ -19,7 +19,7 @@ maintainers = [
 ]
 dependencies = [
   # smaller numpy versions cause a security issue
-  "numpy>=1.22",
+  "numpy==1.25",
   # smaller pandas versions contain a bug that sometimes prevents reading
   "pandas>=2.0.0"
 ]
