@@ -131,12 +131,12 @@ class Simulation:
 
         node_ids = geoger.get_county_ids(True, True)
         path_vacc_data = os.path.join(
-            self.data_dir, "pydata", "Germany", "vacc_county_ageinf_ma7.json")
+            self.data_dir, "Germany", "pydata", "vacc_county_ageinf_ma7.json")
         path_case_data = os.path.join(
-            self.data_dir, "pydata", "Germany",
+            self.data_dir, "Germany", "pydata",
             "cases_all_county_age_ma7.json")
         path_population_data = os.path.join(
-            self.data_dir, "pydata", "Germany",
+            self.data_dir, "Germany", "pydata",
             "county_current_population.json")
         self.vacc_data = osecirvvs.read_vaccination_data(path_vacc_data)
         self.case_data = osecirvvs.read_confirmed_cases_data(path_case_data)
@@ -692,7 +692,7 @@ class Simulation:
         tnt_capacity_factor = 1.43 / 100000.
 
         path_population_data = os.path.join(
-            self.data_dir, "pydata", "Germany",
+            self.data_dir, "Germany", "pydata",
             "county_current_population.json")
 
         # get start date in mio.Date format
