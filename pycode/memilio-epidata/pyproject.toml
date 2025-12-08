@@ -26,7 +26,7 @@ dependencies = [
   "requests",
   "pyxlsb",
   "wget",
-  "twill==3.1",
+  "twill==3.3",
   "PyQt6-sip<13.9",
   "PyQt6",
   "python-calamine",
