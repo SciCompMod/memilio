@@ -10,6 +10,18 @@ log = logging.getLogger(__file__)
 
 # header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
 
+def read_scenario_description(path_to_scenario_description):
+    """! Zips scenario for put to backend.
+
+    @param[in] path_to_scenario_description Path where zips will be stored.
+    """
+    print(path_to_scenario_description)
+    log.info(path_to_scenario_description)
+
+    with open(os.path.join(path_to_scenario_description, "scenario_description.txt"), "r") as text_file:
+        description_string = text_file.read()
+    
+    return description_string
 
 def write_zip(path_to_saved_zips, zipped_name, percentiles=['p50'], case_data=False):
     """! Zips scenario for put to backend.
@@ -45,27 +57,41 @@ def write_zip(path_to_saved_zips, zipped_name, percentiles=['p50'], case_data=Fa
 
     return zipfile
 
-
-def put_scenario(scenario_id, zip_file, url, delay, service_realm, client_id, username, password, max_tries=3, delay_check=5):
+def put_scenario(scenario_id, zip_file, url, delay, service_realm, client_id, username, password, scenario_description, max_tries=3, delay_check=5):
     # https://stackoverflow.com/questions/18208109/python-requests-post-a-zip-file-with-multipart-form-data
     headers = define_headers(service_realm, client_id, username, password)
 
     try_iteration = 0
-    upload_successful = False
-    while (try_iteration < max_tries) and (not upload_successful):
+    upload_scenario_successful = False
+    upload_description_successful = False
+    if scenario_description is None:
+        upload_description_successful = True
+    while (try_iteration < max_tries) and (not upload_scenario_successful) and (not upload_description_successful):
         print(f'Waiting for {1+delay*try_iteration} seconds before putting scenario')
         time.sleep(1+try_iteration*delay)
         try_iteration += 1
 
+        if upload_scenario_successful is False:
+            with open(zip_file, 'rb') as fileobj:
+                put_response = requests.put(url + "scenarios/" + scenario_id, headers=headers,
+                                            files={"file": (zip_file, fileobj)})
+            print(
+                f'Put HTTP response code for scenario {scenario_id} was {put_response.status_code}, reason was {put_response.reason}.')
 
-        with open(zip_file, 'rb') as fileobj:
-            put_response = requests.put(url + "scenarios/" + scenario_id, headers=headers,
-                                        files={"file": (zip_file, fileobj)})
-        print(
-            f'Put HTTP response code for scenario {scenario_id} was {put_response.status_code}, reason was {put_response.reason}.')
+            if put_response.status_code != 200:
+                print(put_response.text)
+        
+        if upload_description_successful is False:
+            pass
+            # ToDo: Upload scenario description
+            # put_response = requests.put(url + "scenarios/" + scenario_id, headers=headers,
+            #                             data={"description": scenario_description})
 
-        if put_response.status_code != 200:
-            print(put_response.text)
+            # print(
+            #     f'Put HTTP response code for description of scenario {scenario_id} was {put_response.status_code}, reason was {put_response.reason}.')
+
+            # if put_response.status_code != 200:
+            #     print(put_response.text)
 
         time.sleep(delay_check)
         get_scenario_response = requests.get(
@@ -75,13 +101,26 @@ def put_scenario(scenario_id, zip_file, url, delay, service_realm, client_id, us
             continue
         else:
             get_scenario_response = get_scenario_response.json()
-        if get_scenario_response["timestampSimulated"] is not None:
+        
+        # Check upload of scenario
+        if (upload_scenario_successful is False) and (get_scenario_response["timestampSimulated"] is not None):
             print(
                 f'Upload of scenario {get_scenario_response["id"]} was successful, timestampSimulated is not None.')
-            upload_successful = True
+            upload_scenario_successful = True
         else:
             print(
                 f'Upload of scenario {get_scenario_response["id"]} was not successful, timestampSimulated is None.')
+            if try_iteration < max_tries:
+                print(f'Retrying Upload of scenario {get_scenario_response["id"]}.')
+
+        # Check upload of description
+        if (upload_description_successful is False) and (get_scenario_response["description"] == scenario_description):
+            print(
+                f'Upload of description of scenario {get_scenario_response["id"]} was successful, timestampSimulated is not None.')
+            upload_description_successful = True
+        else:
+            print(
+                f'Upload of description of scenario {get_scenario_response["id"]} was not successful.')
             if try_iteration < max_tries:
                 print(f'Retrying Upload of scenario {get_scenario_response["id"]}.')
 
@@ -105,6 +144,7 @@ def put_scenarios(path_to_scenario_results, url, delay, service_realm, client_id
     print(f'scenarios response was {scenarios.content}')
     scenarios = scenarios.json()
     for scenario in scenarios:
+        scenario_description = None
         if scenario["name"] == "casedata":
             # if not os.path.exists(os.path.join(path_to_scenario_results+"Results.h5")):
             #     log.error(
@@ -115,6 +155,21 @@ def put_scenarios(path_to_scenario_results, url, delay, service_realm, client_id
             zip_file = write_zip(path_to_saved_zips=path_to_scenario_results,
                                  zipped_name=f"{scenario['name']}_{scenario['id']}", percentiles=percentiles,
                                  case_data=True)
+            
+        # Scenario of optimal control
+        elif "OptimalControl" in scenario["name"]:
+            scenario_path = path_to_scenario_results + \
+                f"{scenario['name']}_{scenario['id']}/"
+            if not os.path.exists(scenario_path):
+                log.error(f'Path {scenario_path} does not exist')
+                continue
+
+            percentiles = ['p25', 'p50', 'p75']
+            zip_file = write_zip(path_to_saved_zips=path_to_scenario_results,
+                                 zipped_name=f"{scenario['name']}_{scenario['id']}", percentiles=percentiles,
+                                 case_data=False)
+
+            scenario_description = read_scenario_description(path_to_scenario_results)
 
         else:
             scenario_path = path_to_scenario_results + \
@@ -130,7 +185,7 @@ def put_scenarios(path_to_scenario_results, url, delay, service_realm, client_id
 
         print(f'Uploading {scenario["name"]} with id {scenario["id"]}')
         put_scenario(scenario['id'], zip_file=zip_file, url=url, delay=delay,
-                     service_realm=service_realm, client_id=client_id, username=username, password=password)
+                     service_realm=service_realm, client_id=client_id, username=username, password=password, scenario_description=scenario_description)
 
 
 def define_headers(service_realm, client_id, username, password):

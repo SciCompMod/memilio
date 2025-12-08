@@ -511,6 +511,27 @@ def post_to_db_scenarios(headers, start_date_scenarios, days_simulated_scenarios
             "percentiles": [25, 50, 75],
         })
 
+    # Define optimal control scenario
+    intervention_entry = []
+    for intervention in intervention_data_extended:
+        intervention_entry.append({
+            "interventionId": intervention["id"],
+            "startDate": f"{start_date_simulation}",
+            "endDate": f"{end_date_simulation}",
+            "coefficient": intervention["coefficient"]
+        })
+    scenario_data.append({
+        "name": f"Scenario1_OptimalControl",
+        "description": "",
+        "startDate": f"{start_date_simulation}",
+        "endDate": f"{end_date_simulation}",
+        "modelId": model_id[0],
+        "modelParameters": modelparameters_entry,
+        "nodeListId": nodelist_id[0],
+        "linkedInterventions": intervention_entry,
+        "percentiles": [25, 50, 75],
+    })
+
     if post:
         for scenario in scenario_data:
             post_response = requests.post(

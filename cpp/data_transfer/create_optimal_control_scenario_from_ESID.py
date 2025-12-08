@@ -1,37 +1,19 @@
-# TODO
-#
-# for each scenario we get one scenario.json:
-# - read in scenario.json
-# - read in model.json (sevirvvs.json)
-# - set parameters from scenario.json
-#      - from model.json: for each group, check if group is of category AgeGroup and accumulate to find out number of AgeGroups
-#      - for each parameterID check corresponding model parameter
-#      - then check groupID for corresponding model group
-#      - set value(s)
-# - set NPIs from scenario.json
-#      - for each interventionID check intervention name and description
-#      - apply intervention to the model with values
-# - create graph model
-# - initialize model as usual with data from RKI or other data
-# - run simulation
-# - post results to ESID backend with new API
-#
 import json
 import time
 import datetime
 import numpy as np
-import pandas as pd
 from enum import Enum
 import os
 import requests
-from itertools import combinations
+import pandas as pd
+import tempfile
 import concurrent.futures
+import subprocess
 
 
 import memilio.simulation as mio
 import memilio.simulation.osecirvvs as osecirvvs
 from memilio.epidata import geoModificationGermany as geoger
-
 
 class Location(Enum):
     Home = 0
@@ -56,136 +38,49 @@ class InterventionLevel(Enum):
     Holidays = 3
 
 
-def get_invervention_list(url, headers):
-
-    get_interventions = requests.get(
-        url + "interventions/templates/", headers=headers)
-
-    school_closure_id = [intervention["id"]
-                         for intervention in get_interventions.json()
-                         if intervention["name"] == "School closure"]
-    facemasks_school_id = [intervention["id"]
-                           for intervention in get_interventions.json()
-                           if intervention["name"]
-                           == "Face masks & social distancing School"]
-    facemasks_work_id = [intervention["id"]
-                         for intervention in get_interventions.json()
-                         if intervention["name"]
-                         == "Face masks & social distancing Work"]
-    facemasks_other_id = [intervention["id"]
-                          for intervention in get_interventions.json()
-                          if intervention["name"]
-                          == "Face masks & social distancing Other"]
-    remote_work_id = [intervention["id"]
-                      for intervention in get_interventions.json()
-                      if intervention["name"] == "Remote work"]
-
-    intervention_data_extended = [
-        {"id": school_closure_id[0],
-         "name": "School closure",
-         "description": "School closure intervention", "tags": [],
-         "coefficient": 0.},
-        {"id": facemasks_school_id[0],
-         "name": "Face masks & social distancing School",
-         "description":
-         "Face mask usage and social distancing measures applied at 1-25% in schools",
-         "tags": [],
-         "coefficient": 0.25},
-        {"id": facemasks_work_id[0],
-         "name": "Face masks & social distancing Work",
-         "description":
-         "Face mask usage and social distancing measures applied at 1-25% in workplaces",
-         "tags": [],
-         "coefficient": 0.25},
-        {"id": facemasks_other_id[0],
-         "name": "Face masks & social distancing Other",
-         "description":
-         "Face mask usage and social distancing measures applied at 1-25% in other settings",
-         "tags": [],
-         "coefficient": 0.25},
-        {"id": remote_work_id[0],
-         "name": "Remote work",
-         "description": "Implementation of remote work policies", "tags": [],
-         "coefficient": 0.35}]
-
-    # Get all possible combinations of interventions
-    all_combinations = []
-    for r in range(1, len(intervention_data_extended) + 1):
-        all_combinations.extend(combinations(intervention_data_extended, r))
-
-    return all_combinations
-
-
 class Simulation:
 
-    def __init__(self, data_dir, results_dir, run_data_url, headers):
+    def __init__(self, data_dir, results_dir, parameter_list, intervention_list, df_interventions):
         self.num_groups = 6
         self.data_dir = data_dir
         self.results_dir = results_dir
         self.intervention_list = []
         self.parameter_list = []
-        self.run_data_url = run_data_url
-        self.headers = headers
-        if not os.path.exists(self.results_dir):
-            os.makedirs(self.results_dir)
 
         node_ids = geoger.get_county_ids(True, True)
         path_vacc_data = os.path.join(
             self.data_dir, "Germany", "pydata", "vacc_county_ageinf_ma7.json")
         path_case_data = os.path.join(
-            self.data_dir, "Germany", "pydata",
-            "cases_all_county_age_ma7.json")
+            self.data_dir, "Germany", "pydata", "cases_all_county_age_ma7.json")
         path_population_data = os.path.join(
-            self.data_dir, "Germany", "pydata",
-            "county_current_population.json")
+            self.data_dir, "Germany", "pydata", "county_current_population.json")
         self.vacc_data = osecirvvs.read_vaccination_data(path_vacc_data)
         self.case_data = osecirvvs.read_confirmed_cases_data(path_case_data)
         self.population_data = osecirvvs.read_population_data(
             path_population_data, node_ids)
+        
+        self.parameter_list = parameter_list
+        self.intervention_list = intervention_list
+        self.df_interventions = df_interventions
 
-    def _process_scenario(self, scenario, num_runs):
-        scenario_data_run = None
-        print("Processing scenario: ", scenario['name'])
+    def _process_scenario(self, scenario_data_run, num_runs):
+        print("Processing scenario: ", scenario_data_run['name'])
         try:
             num_days_sim = (datetime.datetime.strptime(
-                scenario['endDate'],
-                "%Y-%m-%d") - datetime.datetime.strptime(
-                scenario['startDate'],
-                "%Y-%m-%d")).days
-
-            extrapolate = False
-            if scenario['name'] == 'casedata':
-                num_days_sim += 1
-                extrapolate = True
-
-            max_retries = 100
-            retry_delay = 2
-
-            for attempt in range(max_retries):
-                try:
-                    scenario_data_run = requests.get(
-                        self.run_data_url + "scenarios/" + scenario['id'],
-                        headers=self.headers).json()
-                    break
-                except requests.exceptions.RequestException as e:
-                    if attempt < max_retries - 1:
-                        print(
-                            f"Retry {attempt+1}/{max_retries} for scenario {scenario['name']}. Error: {e}")
-                        time.sleep(retry_delay * (2**attempt))
-                    else:
-                        raise
+                scenario_data_run['endDate'], "%Y-%m-%d") - datetime.datetime.strptime(scenario_data_run['startDate'], "%Y-%m-%d")).days
 
             # for testing
             # scenario_data_run['startDate'] = "2024-12-22"
             # scenario_data_run['endDate'] = "2024-01-01"
 
+            extrapolate = False
             graph = self.get_graph(extrapolate, scenario_data_run)
 
             if extrapolate:
-                return f"Processed casedata scenario {scenario['id']}"
+                return f"Processed casedata scenario {scenario_data_run['id']}"
 
             print(
-                f"Starting simulation for scenario: {scenario['id']} ({scenario['name']})")
+                f"Starting simulation for scenario: {scenario_data_run['id']} ({scenario_data_run['name']})")
             study = osecirvvs.ParameterStudy(
                 graph, 0., num_days_sim, 0.5, num_runs)
             ensemble = study.run(False)
@@ -212,27 +107,19 @@ class Simulation:
             # save edge results
             # self.save_results_edges(graph, ensemble_edges, num_days_sim)
 
-            res_dir_scenario = os.path.join(
-                self.results_dir,
-                f'{scenario["name"]}_{scenario["id"]}'
-            )
-
-            if not os.path.exists(res_dir_scenario):
-                os.makedirs(res_dir_scenario)
             osecirvvs.save_results(
-                ensemble_results, ensemble_params, node_ids, res_dir_scenario,
+                ensemble_results, ensemble_params, node_ids, self.results_dir,
                 save_single_runs, save_percentiles, num_days_sim, True)
-            return f"Successfully processed scenario {scenario['id']}"
+            return f"Successfully processed scenario {scenario_data_run['id']}"
 
         except Exception as e:
             print(
-                f"Error processing scenario {scenario.get('id', 'N/A')}: {e}")
-            return f"Failed to process scenario {scenario.get('id', 'N/A')}: {e}"
+                f"Error processing scenario {scenario_data_run.get('id', 'N/A')}: {e}")
+            return f"Failed to process scenario {scenario_data_run.get('id', 'N/A')}: {e}"
 
     def get_parameter_values(self, parameters, parameter_name):
         parameter = next(
-            (entry for entry in parameters if entry['name'] == parameter_name),
-            None)
+            (entry for entry in parameters if entry['name'] == parameter_name), None)
         if parameter:
             min_value = parameter['values'][0]['valueMin']
             max_value = parameter['values'][0]['valueMax']
@@ -325,12 +212,18 @@ class Simulation:
         variantFactor = 1.4
         transmissionProbabilityOnContactMin = parameter_values.get(
             "TransmissionProbabilityOnContactMin",
-            [0.02 * variantFactor, 0.05 * variantFactor, 0.05 * variantFactor,
-             0.05 * variantFactor, 0.08 * variantFactor, 0.1 * variantFactor])
+            [
+                0.02 * variantFactor, 0.05 * variantFactor, 0.05 * variantFactor,
+                0.05 * variantFactor, 0.08 * variantFactor, 0.1 * variantFactor
+            ]
+        )
         transmissionProbabilityOnContactMax = parameter_values.get(
             "TransmissionProbabilityOnContactMax",
-            [0.04 * variantFactor, 0.07 * variantFactor, 0.07 * variantFactor,
-             0.07 * variantFactor, 0.10 * variantFactor, 0.15 * variantFactor])
+            [
+                0.04 * variantFactor, 0.07 * variantFactor, 0.07 * variantFactor,
+                0.07 * variantFactor, 0.10 * variantFactor, 0.15 * variantFactor
+            ]
+        )
         relativeTransmissionNoSymptomsMin = parameter_values.get(
             "RelativeTransmissionNoSymptomsMin", 0.5
         )
@@ -405,13 +298,17 @@ class Simulation:
             "ReducedInfectedSymptomsImprovedImmunityMax", 0.293
         )
         reducInfectedSevereCriticalDeadPartialImmunityMin = parameter_values.get(
-            "ReducedInfectedSevereCriticalDeadPartialImmunityMin", 0.05)
+            "ReducedInfectedSevereCriticalDeadPartialImmunityMin", 0.05
+        )
         reducInfectedSevereCriticalDeadPartialImmunityMax = parameter_values.get(
-            "ReducedInfectedSevereCriticalDeadPartialImmunityMax", 0.15)
+            "ReducedInfectedSevereCriticalDeadPartialImmunityMax", 0.15
+        )
         reducInfectedSevereCriticalDeadImprovedImmunityMin = parameter_values.get(
-            "ReducedInfectedSevereCriticalDeadImprovedImmunityMin", 0.041)
+            "ReducedInfectedSevereCriticalDeadImprovedImmunityMin", 0.041
+        )
         reducInfectedSevereCriticalDeadImprovedImmunityMax = parameter_values.get(
-            "ReducedInfectedSevereCriticalDeadImprovedImmunityMax", 0.141)
+            "ReducedInfectedSevereCriticalDeadImprovedImmunityMax", 0.141
+        )
         reducTimeInfectedMild = parameter_values.get(
             "ReducedTimeInfectedMild", 1.0)
 
@@ -593,55 +490,43 @@ class Simulation:
 
         # read interventions given from the scenario
         interventions_scenario = scenario_data['linkedInterventions']
+        coefficients = {}
 
         for intervention in interventions_scenario:
             # search intervention in self.intervention_list
             intervention_data = next(
-                (entry for entry in self.intervention_list
-                 if entry['id'] == intervention['interventionId']),
-                None)
+                (entry for entry in self.intervention_list if entry['id'] == intervention['interventionId']), None)
 
             if not intervention_data:
                 print(
                     f"Intervention {intervention['interventionId']} not found in intervention list")
                 continue
+            
+            coefficients[intervention_data['name']] = intervention['coefficient']
+        
+        for row in self.df_interventions.rows:
 
-            start_date_day = 0
-
-            if intervention_data['name'] == 'School closure':
-                dampings.append(
-                    school_closure(
-                        start_date_day,
-                        intervention['coefficient'],
-                        intervention['coefficient']))
-            elif intervention_data['name'] == 'Remote work':
-                dampings.append(
-                    home_office(
-                        start_date_day,
-                        intervention['coefficient'],
-                        intervention['coefficient']))
-            elif intervention_data['name'] == "Face masks & social distancing School":
-                dampings.append(
-                    physical_distancing_school(
-                        start_date_day,
-                        intervention['coefficient'],
-                        intervention['coefficient']))
-            elif intervention_data['name'] == "Face masks & social distancing Work":
-                dampings.append(
-                    physical_distancing_work(
-                        start_date_day,
-                        intervention['coefficient'],
-                        intervention['coefficient']))
-            elif intervention_data['name'] == "Face masks & social distancing Other":
-                dampings.append(
-                    physical_distancing_other(
-                        start_date_day,
-                        intervention['coefficient'],
-                        intervention['coefficient']))
-            else:
-                print(
-                    f"Intervention {intervention_data['name']} not implemented yet!")
-
+            if 'SchoolClosure' in self.df_interventions.columns:
+                coefficient = row.get('SchoolClosure') * coefficients['School closure']
+                dampings.append(school_closure(
+                    row.get('Time'), coefficient, coefficient))
+            if 'HomeOffice' in self.df_interventions.columns:
+                coefficient = row.get('HomeOffice') * coefficients['Remote work']
+                dampings.append(home_office(
+                    row.get('Time'), coefficient, coefficient))
+            if 'PhysicalDistancingSchool' in self.df_interventions.columns:
+                coefficient = row.get('PhysicalDistancingSchool') * coefficients['Face masks & social distancing School']
+                dampings.append(physical_distancing_school(
+                    row.get('Time'), coefficient, coefficient))
+            if 'PhysicalDistancingWork' in self.df_interventions.columns:
+                coefficient = row.get('PhysicalDistancingWork') * coefficients['Face masks & social distancing Work']
+                dampings.append(physical_distancing_work(
+                    row.get('Time'), coefficient, coefficient))
+            if 'PhysicalDistancingOther' in self.df_interventions.columns:
+                coefficient = row.get('PhysicalDistancingOther') * coefficients['Face masks & social distancing Other']
+                dampings.append(physical_distancing_other(
+                    row.get('Time'), coefficient, coefficient))
+                
         params.ContactPatterns.dampings = dampings
 
     def get_edge_indices(self, graph):
@@ -669,11 +554,8 @@ class Simulation:
 
         for age_group in range(self.num_groups):
             for infection_state in infection_states_mild:
-                indicies_mild.append(
-                    pop_object.get_flat_index(
-                        osecirvvs.MultiIndex_PopulationsArray(
-                            mio.AgeGroup(age_group),
-                            infection_state)))
+                indicies_mild.append(pop_object.get_flat_index(osecirvvs.MultiIndex_PopulationsArray(
+                    mio.AgeGroup(age_group), infection_state)))
 
         edge_indices.append(indicies_mild)
 
@@ -772,6 +654,115 @@ class Simulation:
             df.to_csv(
                 f"{self.results_dir}/edges_day_{day}.csv", index=False)
 
+    def run(self, scenario_data_run, num_runs=10):
+        mio.set_log_level(mio.LogLevel.Warning)
+
+        # self.header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
+
+        self._process_scenario(scenario_data_run, num_runs)
+
+        print("Finished simulating results.")
+
+class OptimalControlSimulation:
+
+    def __init__(self, data_dir, results_dir, build_dir, run_data_url, headers):
+        self.data_dir = data_dir
+        self.results_dir = results_dir
+        self.build_dir = build_dir
+        self.run_data_url = run_data_url
+        self.headers = headers
+        if not os.path.exists(self.results_dir):
+            os.makedirs(self.results_dir)
+    
+    def _process_scenario(self, scenario, num_runs):
+        scenario_data_run = None
+        print("Processing scenario: ", scenario['name'])
+        try:
+            max_retries = 100
+            retry_delay = 2
+
+            for attempt in range(max_retries):
+                try:
+                    scenario_data_run = requests.get(
+                        self.run_data_url + "scenarios/" + scenario['id'], headers=self.headers).json()
+                    # Run with local data
+                    # with open(os.path.join(self.data_dir, "scenario_data_run.json"), "r") as file:
+                    #     scenario_data_run = json.load(file)
+                    break
+                except requests.exceptions.RequestException as e:
+                    if attempt < max_retries - 1:
+                        print(
+                            f"Retry {attempt+1}/{max_retries} for scenario {scenario['name']}. Error: {e}")
+                        time.sleep(retry_delay * (2**attempt))
+                    else:
+                        raise
+            
+            temp_dir = tempfile.TemporaryDirectory()
+
+            with open(os.path.join(temp_dir.name, "scenario_data_run.json"), "w") as outfile:
+                json.dump(scenario_data_run, outfile)
+            with open(os.path.join(temp_dir.name, "parameter_list.json"), "w") as outfile:
+                json.dump(self.parameter_list, outfile)
+            with open(os.path.join(temp_dir.name, "intervention_list.json"), "w") as outfile:
+                json.dump(self.intervention_list, outfile)
+
+            optimal_control_result_filename = "OptimalControl_output.txt"
+            # run optimal control in c++
+            run = subprocess.run(
+                [
+                    '{build_directory}/bin/simulate_optimal_control_scenario -DataDirectory \\"{temp_directory}\\" -OutputFileName \\"{filename}\\" -ConstraintInfectedCases {constraint:.0f}'.format(
+                        build_directory = self.build_dir,
+                        temp_directory = temp_dir.name, 
+                        filename = optimal_control_result_filename, 
+                        constraint = 1e5)
+                ],
+                shell=True,
+                check=True,
+                capture_output=False,
+                text=True,
+            )
+
+            df_interventions = pd.read_csv(os.path.join(temp_dir.name, optimal_control_result_filename))
+            
+            res_dir_scenario = os.path.join(
+                self.results_dir,
+                f'{scenario_data_run["name"]}_{scenario_data_run["id"]}'
+            )
+
+            if not os.path.exists(res_dir_scenario):
+                os.makedirs(res_dir_scenario)
+                
+            self.save_optimal_controls_description(res_dir_scenario, df_interventions)
+
+            sim = Simulation(
+                data_dir=self.data_dir,
+                results_dir=res_dir_scenario,
+                parameter_list=self.parameter_list, 
+                intervention_list=self.intervention_list, 
+                df_interventions=df_interventions)
+            sim.run(scenario_data_run, num_runs=num_runs)
+
+            temp_dir.cleanup()
+
+        except Exception as e:
+            print(
+                f"Error processing optimal conntrol scenario {scenario.get('id', 'N/A')}: {e}")
+            return f"Failed to process optimal conntrol scenario {scenario.get('id', 'N/A')}: {e}"
+
+    def save_optimal_controls_description(self, res_dir_scenario, df_interventions):
+        
+        description = "Optimal control values found at:"
+
+        for column_name, values in df_interventions.items():
+            column_str = ' ' + column_name + ': ['
+            column_str += ", ".join(str(x) for x in values)
+            column_str += "];"
+            description += column_str
+
+        with open(os.path.join(res_dir_scenario, "scenario_description.txt"), "w") as text_file:
+            text_file.write(description)
+
+
     def run(self, num_runs=10, max_workers=10):
         mio.set_log_level(mio.LogLevel.Warning)
 
@@ -781,8 +772,8 @@ class Simulation:
         scenarios = requests.get(
             self.run_data_url + "scenarios/", headers=self.headers).json()
         
-        # Only simulate scenarios that are not optimal control 
-        scenarios[:] = (scenario for i, scenario in enumerate(scenarios) if "OptimalControl" not in scenario["name"])
+        # Only use scenarios that are optimal control 
+        scenarios[:] = (scenario for i, scenario in enumerate(scenarios) if "OptimalControl" in scenario["name"])
 
         self.parameter_list = requests.get(
             self.run_data_url + "parameterdefinitions/", headers=self.headers).json()
@@ -790,14 +781,22 @@ class Simulation:
         # read intervention list
         self.intervention_list = requests.get(
             self.run_data_url + "interventions/templates/", headers=self.headers).json()
+        
+        # Run with local data
+        # with open(os.path.join(self.data_dir, "scenarios.json"), "rb") as file:
+        #     scenarios = json.load(file)
+        #     scenarios[:] = [scenarios[0]]
+        # with open(os.path.join(self.data_dir, "parameter_list.json"), "rb") as file:
+        #     self.parameter_list = json.load(file)
+        # with open(os.path.join(self.data_dir, "intervention_list.json"), "rb") as file:
+        #     self.intervention_list = json.load(file)
 
         print(
             f"Processing {len(scenarios)} scenarios with {max_workers} workers.")
-
+        
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = [
-                executor.submit(self._process_scenario, scenario, num_runs)
-                for scenario in scenarios]
+            futures = [executor.submit(self._process_scenario, scenario, num_runs)
+                       for scenario in scenarios]
 
             for future in concurrent.futures.as_completed(futures):
                 try:
@@ -806,7 +805,7 @@ class Simulation:
                 except Exception as exc:
                     print(f'Exception: {exc}')
 
-        print("Finished all scenarios.")
+        print("Finished optimization.")
 
 
 if __name__ == "__main__":
@@ -814,28 +813,31 @@ if __name__ == "__main__":
     run_data_url = "https://zam10063.zam.kfa-juelich.de/api-dev/"
 
     # Information needed for authentication.
-    service_realm = ""
-    client_id = ""
-    username = ""
-    password = ""
+    # service_realm = ""
+    # client_id = ""
+    # username = ""
+    # password = ""
 
-    # Request access token from idp.
-    req_auth = requests.post(
-        f'https://lokiam.de/realms/{service_realm}/protocol/openid-connect/token',
-        data={'client_id': client_id, 'grant_type': 'password',
-              'username': username, 'password': password,
-              'scope': 'loki-back-audience'})
+    # # Request access token from idp.
+    # req_auth = requests.post(f'https://lokiam.de/realms/{service_realm}/protocol/openid-connect/token', data={
+    #     'client_id': client_id, 'grant_type': 'password', 'username': username, 'password': password, 'scope': 'loki-back-audience'})
 
-    # Raise error if response not ok.
-    req_auth.raise_for_status()
+    # # Raise error if response not ok.
+    # req_auth.raise_for_status()
 
-    # Parse response and get access token.
-    res = req_auth.json()
-    token = res['access_token']
+    # # Parse response and get access token.
+    # res = req_auth.json()
+    # token = res['access_token']
 
-    # Set up headers with token.
-    headers = {'Authorization': f'Bearer {token}', 'X-Realm': service_realm}
+    # # Set up headers with token.
+    # headers = {'Authorization': f'Bearer {token}', 'X-Realm': service_realm}
+    headers = {"username": "MyVeryOwnHost"}
 
-    sim = Simulation(data_dir=os.path.join(cwd, "data"), results_dir=os.path.join(
-        cwd, "results_osecirvvs"), run_data_url=run_data_url, headers=headers)
-    sim.run(num_runs=3, max_workers=1)
+    run_data_url = "https://zam10063.zam.kfa-juelich.de/api-dev/"
+    optsim = OptimalControlSimulation(
+        data_dir=os.path.join(cwd, "data"),
+        results_dir=os.path.join(cwd, "results_osecirvvs_optimization"),
+        build_dir=os.path.join(cwd, "cpp/build"),
+        run_data_url=run_data_url,
+        headers=headers)  
+    optsim.run(3, 1)
