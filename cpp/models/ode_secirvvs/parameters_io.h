@@ -1511,10 +1511,10 @@ IOResult<void> read_input_data_county_cached(std::vector<Model>& model, Date dat
     }
     else {
         BOOST_OUTCOME_TRY(details::set_vaccination_data(
-            model, path_join(dir, "pydata/Germany", "vacc_county_ageinf_ma7.json"), date, county, num_days));
+            model, path_join(dir, "Germany/pydata", "vacc_county_ageinf_ma7.json"), date, county, num_days));
     }
 
-    BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(dir, "pydata/Germany", "county_divi_ma7.json"), county,
+    BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(dir, "Germany/pydata", "county_divi_ma7.json"), county,
                                              date, scaling_factor_icu));
 
     if (!case_data.empty()) {
@@ -1522,7 +1522,7 @@ IOResult<void> read_input_data_county_cached(std::vector<Model>& model, Date dat
     }
     else {
         BOOST_OUTCOME_TRY(
-            details::set_confirmed_cases_data(model, path_join(dir, "pydata/Germany", "cases_all_county_age_ma7.json"),
+            details::set_confirmed_cases_data(model, path_join(dir, "Germany/pydata", "cases_all_county_age_ma7.json"),
                                               county, date, scaling_factor_inf, true));
     }
 
@@ -1531,8 +1531,8 @@ IOResult<void> read_input_data_county_cached(std::vector<Model>& model, Date dat
     }
     else {
         BOOST_OUTCOME_TRY(details::set_population_data(
-            model, path_join(dir, "pydata/Germany", "county_current_population.json"),
-            path_join(dir, "pydata/Germany", "cases_all_county_age_ma7.json"), county, date));
+            model, path_join(dir, "Germany/pydata", "county_current_population.json"),
+            path_join(dir, "Germany/pydata", "cases_all_county_age_ma7.json"), county, date));
     }
 
     if (export_time_series) {
@@ -1541,10 +1541,10 @@ IOResult<void> read_input_data_county_cached(std::vector<Model>& model, Date dat
 
         BOOST_OUTCOME_TRY(
             export_input_data_county_timeseries(model, dir, county, date, scaling_factor_inf, scaling_factor_icu,
-                                                num_days, path_join(dir, "pydata/Germany", "county_divi_ma7.json"),
-                                                path_join(dir, "pydata/Germany", "cases_all_county_age_ma7.json"),
-                                                path_join(dir, "pydata/Germany", "county_current_population.json"),
-                                                path_join(dir, "pydata/Germany", "vacc_county_ageinf_ma7.json")));
+                                                num_days, path_join(dir, "Germany/pydata", "county_divi_ma7.json"),
+                                                path_join(dir, "Germany/pydata", "cases_all_county_age_ma7.json"),
+                                                path_join(dir, "Germany/pydata", "county_current_population.json"),
+                                                path_join(dir, "Germany/pydata", "vacc_county_ageinf_ma7.json")));
     }
 
     return success();
@@ -1717,7 +1717,7 @@ IOResult<void> set_lha_data(const Parameters<FP>& params, mio::Graph<Model<FP>, 
     //           << graph_model.nodes()[9]
     //                  .property.populations[{(AgeGroup)2, mio::osecirvvs::InfectionState::InfectedSymptomsNaive}]
     //           << std::endl;
-    
+
     return mio::success();
 }
 

@@ -524,7 +524,7 @@ class Simulation:
 
         for i, location in enumerate(locations):
             baseline_file = os.path.join(
-                self.data_dir, "contacts", "baseline_" + location + ".txt")
+                self.data_dir, "Germany", "contacts", "baseline_" + location + ".txt")
             contact_matrices[i] = mio.ContactMatrix(
                 mio.read_mobility_plain(baseline_file),
                 np.zeros((self.num_groups, self.num_groups))
@@ -780,9 +780,10 @@ class Simulation:
         # list all scenarios
         scenarios = requests.get(
             self.run_data_url + "scenarios/", headers=self.headers).json()
-        
-        # Only simulate scenarios that are not optimal control 
-        scenarios[:] = (scenario for i, scenario in enumerate(scenarios) if "OptimalControl" not in scenario["name"])
+
+        # Only simulate scenarios that are not optimal control
+        scenarios[:] = (scenario for i, scenario in enumerate(
+            scenarios) if "OptimalControl" not in scenario["name"])
 
         self.parameter_list = requests.get(
             self.run_data_url + "parameterdefinitions/", headers=self.headers).json()
