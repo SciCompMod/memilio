@@ -21,7 +21,6 @@
 #include "abm/lockdown_rules.h"
 #include "abm/model.h"
 #include "abm/common_abm_loggers.h"
-#include "memilio/utils/abstract_parameter_distribution.h"
 
 #include <fstream>
 

@@ -39,6 +39,9 @@ def __getattr__(attr):
     elif attr == "oseir":
         import memilio.simulation.oseir as oseir
         return oseir
+    elif attr == "oseirdb":
+        import memilio.simulation.oseirdb as oseirdb
+        return oseirdb
     elif attr == "osecir":
         import memilio.simulation.osecir as osecir
         return osecir

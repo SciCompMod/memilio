@@ -60,7 +60,7 @@ def run_sde_sirs_simulation():
     model.check_constraints()
 
     # Run Simulation
-    result = simulate_stochastic(0., days, dt, model)
+    result = simulate_stochastic(0., tmax, dt, model)
 
     # Interpolate results
     result = interpolate_simulation_result(result)

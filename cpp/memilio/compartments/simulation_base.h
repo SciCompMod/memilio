@@ -37,10 +37,9 @@ namespace details
  * @tparam M An implementation of CompartmentalModel.
  * @tparam Integrands One or more function types used for defining the right hand side of a system of equations.
  */
-template <typename FP, class M, class... Integrands>
+template <typename FP, IsCompartmentalModel<FP> M, class... Integrands>
 class SimulationBase
 {
-    static_assert(is_compartment_model<FP, M>::value, "Template parameter must be a compartment model.");
 
 public:
     using Model = M;
