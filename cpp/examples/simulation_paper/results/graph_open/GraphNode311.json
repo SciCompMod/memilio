@@ -1,0 +1,279 @@
+{
+	"Model" : 
+	{
+		"Parameters" : 
+		{
+			"ContactPatterns" : 
+			{
+				"ContactMatrix" : 
+				{
+					"Matrices" : 
+					[
+						{
+							"Baseline" : 
+							{
+								"Columns" : 1,
+								"Elements" : 
+								[
+									7.9500000000000002
+								],
+								"Rows" : 1
+							},
+							"Dampings" : 
+							[
+								{
+									"Coeffs" : 
+									{
+										"Columns" : 1,
+										"Elements" : 
+										[
+											0.0
+										],
+										"Rows" : 1
+									},
+									"Level" : 0,
+									"Time" : 0.0,
+									"Type" : 0
+								}
+							],
+							"Minimum" : 
+							{
+								"Columns" : 1,
+								"Elements" : 
+								[
+									0.0
+								],
+								"Rows" : 1
+							}
+						}
+					]
+				},
+				"Dampings" : [],
+				"SchoolHolidayDamping" : 
+				{
+					"GroupWeights" : 
+					{
+						"Columns" : 1,
+						"Elements" : 
+						[
+							0.0
+						],
+						"Rows" : 1
+					},
+					"Level" : 0,
+					"MatrixIndices" : [],
+					"Time" : 0.0,
+					"Type" : 0,
+					"Value" : 
+					{
+						"Value" : 0.0
+					}
+				},
+				"SchoolHolidays" : []
+			},
+			"CriticalPerSevere" : 
+			{
+				"Dimensions" : 1,
+				"Elements" : 
+				[
+					{
+						"Value" : 0.071470536291599274
+					}
+				]
+			},
+			"DeathsPerCritical" : 
+			{
+				"Dimensions" : 1,
+				"Elements" : 
+				[
+					{
+						"Value" : 0.15166029334068298
+					}
+				]
+			},
+			"DynamicNPIsImplementationDelay" : 
+			{
+				"Value" : 0.0
+			},
+			"DynamicNPIsInfectedSymptoms" : 
+			{
+				"BaseValue" : 1.0,
+				"Duration" : 14.0,
+				"Interval" : 3.0,
+				"Thresholds" : []
+			},
+			"ICUCapacity" : 
+			{
+				"Value" : 1.7976931348623157e+308
+			},
+			"MaxRiskOfInfectionFromSymptomatic" : 
+			{
+				"Dimensions" : 1,
+				"Elements" : 
+				[
+					{
+						"Value" : 0.0
+					}
+				]
+			},
+			"RecoveredPerInfectedNoSymptoms" : 
+			{
+				"Dimensions" : 1,
+				"Elements" : 
+				[
+					{
+						"Value" : 0.2200482189655304
+					}
+				]
+			},
+			"RelativeTransmissionNoSymptoms" : 
+			{
+				"Dimensions" : 1,
+				"Elements" : 
+				[
+					{
+						"Value" : 1.0
+					}
+				]
+			},
+			"RiskOfInfectionFromSymptomatic" : 
+			{
+				"Dimensions" : 1,
+				"Elements" : 
+				[
+					{
+						"Value" : 1.0
+					}
+				]
+			},
+			"Seasonality" : 
+			{
+				"Value" : 0.20000000000000001
+			},
+			"SeverePerInfectedSymptoms" : 
+			{
+				"Dimensions" : 1,
+				"Elements" : 
+				[
+					{
+						"Value" : 0.1298089325428009
+					}
+				]
+			},
+			"StartDay" : 0.0,
+			"TestAndTraceCapacity" : 
+			{
+				"Value" : 0.0
+			},
+			"TestAndTraceCapacityMaxRisk" : 
+			{
+				"Value" : 5.0
+			},
+			"TimeExposed" : 
+			{
+				"Dimensions" : 1,
+				"Elements" : 
+				[
+					{
+						"Value" : 5.1740083694458008
+					}
+				]
+			},
+			"TimeInfectedCritical" : 
+			{
+				"Dimensions" : 1,
+				"Elements" : 
+				[
+					{
+						"Value" : 12.341311454772949
+					}
+				]
+			},
+			"TimeInfectedNoSymptoms" : 
+			{
+				"Dimensions" : 1,
+				"Elements" : 
+				[
+					{
+						"Value" : 0.025991630554199396
+					}
+				]
+			},
+			"TimeInfectedSevere" : 
+			{
+				"Dimensions" : 1,
+				"Elements" : 
+				[
+					{
+						"Value" : 7.7780170440673828
+					}
+				]
+			},
+			"TimeInfectedSymptoms" : 
+			{
+				"Dimensions" : 1,
+				"Elements" : 
+				[
+					{
+						"Value" : 9.5359954833984375
+					}
+				]
+			},
+			"TransmissionProbabilityOnContact" : 
+			{
+				"Dimensions" : 1,
+				"Elements" : 
+				[
+					{
+						"Value" : 0.060406148433685303
+					}
+				]
+			}
+		},
+		"Populations" : 
+		{
+			"Dimensions" : 
+			{
+				"Indices" : 
+				{
+					"Element0" : 1,
+					"Element1" : 10
+				}
+			},
+			"Elements" : 
+			[
+				{
+					"Value" : 143095.21540795037
+				},
+				{
+					"Value" : 0.18579940403896159
+				},
+				{
+					"Value" : 0.045509325352701732
+				},
+				{
+					"Value" : 0.0
+				},
+				{
+					"Value" : 1.4509057154829084
+				},
+				{
+					"Value" : 0.0
+				},
+				{
+					"Value" : 0.20682213742748173
+				},
+				{
+					"Value" : 0.058728598840791554
+				},
+				{
+					"Value" : 1122.4567144287769
+				},
+				{
+					"Value" : 5.3801124402278511
+				}
+			]
+		}
+	},
+	"NodeId" : 9774
+}

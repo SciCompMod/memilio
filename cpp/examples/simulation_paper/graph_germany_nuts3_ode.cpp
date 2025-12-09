@@ -81,15 +81,14 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters<double>& params
 
     // //probabilities
     // params.get<mio::osecir::TransmissionProbabilityOnContact<double>>()  = 0.08;
-    params.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()    = 1;
+    params.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>() = 1;
 
     // params.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()    = 0.207;
     // params.get<mio::osecir::SeverePerInfectedSymptoms<double>>()         = 0.079;
     // params.get<mio::osecir::CriticalPerSevere<double>>()                 = 0.173;
     // params.get<mio::osecir::DeathsPerCritical<double>>()                 = 0.217;
 
-    params.get<mio::osecir::TestAndTraceCapacity<double>>()                 = 0.0;
-
+    params.get<mio::osecir::TestAndTraceCapacity<double>>() = 0.0;
 
     params.set<mio::osecir::StartDay<double>>(0);
     params.set<mio::osecir::Seasonality<double>>(0.2);
@@ -109,24 +108,22 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters<double>& params
  */
 mio::IOResult<void> set_contact_matrices(mio::osecir::Parameters<double>& params)
 {
-    size_t num_groups = size_t(params.get_num_groups());
+    size_t num_groups                               = size_t(params.get_num_groups());
     mio::ContactMatrixGroup<double>& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
-    contact_matrix[0] =
-        mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(num_groups, num_groups, 7.95),
-                           Eigen::MatrixXd::Zero(num_groups, num_groups));
+    contact_matrix[0] = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(num_groups, num_groups, 7.95),
+                                                   Eigen::MatrixXd::Zero(num_groups, num_groups));
 
     mio::unused(params);
     return mio::success();
 }
 
 // mio::IOResult<void> set_npis(mio::osecir::Parameters<double>& params, mio::Date start_date)
-// {   
+// {
 //     size_t num_groups = size_t(params.get_num_groups());
 //     // npi from inference
 //     auto start_damping = mio::Date(2020, 10, 8);
 //     mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
 //     contact_matrix[0].add_damping(Eigen::MatrixXd::Constant(num_groups, num_groups, 0.2), mio::SimulationTime(mio::get_offset_in_days(start_damping, start_date)));
-
 
 //     // change in npi at end of inference
 //     start_damping = mio::Date(2020, 11, 30);
@@ -148,7 +145,9 @@ mio::IOResult<void> set_contact_matrices(mio::osecir::Parameters<double>& params
 //     return mio::success();
 // }
 
-mio::IOResult<void> set_initial_compartments(mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>& params_graph, const fs::path& data_dir)
+mio::IOResult<void>
+set_initial_compartments(mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>& params_graph,
+                         const fs::path& data_dir)
 {
     // might be problematic if nodes in result are wrongly ordered
     BOOST_OUTCOME_TRY(auto&& simulation_results, mio::read_result((data_dir / "results_run0.h5").string()));
@@ -158,43 +157,47 @@ mio::IOResult<void> set_initial_compartments(mio::Graph<mio::osecir::Model<doubl
         // int id = node.id;
         auto pop_last_step = simulation_results[node_idx].get_groups().get_last_value();
         mio::unused(pop_last_step);
-        for ( int infection_state = 0; infection_state != (int)mio::osecir::InfectionState::Count; infection_state++ ) {
-            node.property.populations[{mio::AgeGroup(0), static_cast<mio::osecir::InfectionState>(infection_state)}] = double(pop_last_step[infection_state]);
+        for (int infection_state = 0; infection_state != (int)mio::osecir::InfectionState::Count; infection_state++) {
+            node.property.populations[{mio::AgeGroup(0), static_cast<mio::osecir::InfectionState>(infection_state)}] =
+                double(pop_last_step[infection_state]);
             // node.property.populations[{mio::AgeGroup(0), static_cast<mio::osecir::InfectionState>(infection_state)}] = 3000;
         }
     }
     return mio::success();
 }
 
-mio::IOResult<void> set_sampled_parameters(mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>& params_graph, const fs::path& data_dir, TestCase test_case)
+mio::IOResult<void>
+set_sampled_parameters(mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>& params_graph,
+                       const fs::path& data_dir, TestCase test_case)
 {
 
     BOOST_OUTCOME_TRY(auto&& parameter_list, mio::read_json((data_dir / "samples.json").string()));
 
     for (size_t node_idx = 0; node_idx < params_graph.nodes().size(); ++node_idx) {
-        auto& node = params_graph.nodes()[node_idx];
+        auto& node   = params_graph.nodes()[node_idx];
         auto& params = node.property.parameters;
 
         // set "t_E", "t_C", "t_ISy", "t_ISev", "t_Cr", "mu_CR", "mu_IH", "mu_HU", "mu_UD", "transmission_prob"
-        params.get<mio::osecir::TimeExposed<double>>()              = parameter_list["t_E"][0].asDouble();
-        params.get<mio::osecir::TimeInfectedNoSymptoms<double>>()   = 5.2 - parameter_list["t_E"][0].asDouble();
-        params.get<mio::osecir::TimeInfectedSymptoms<double>>()     = parameter_list["t_ISy"][0].asDouble();
-        params.get<mio::osecir::TimeInfectedSevere<double>>()       = parameter_list["t_ISev"][0].asDouble();
-        params.get<mio::osecir::TimeInfectedCritical<double>>()     = parameter_list["t_Cr"][0].asDouble();
-        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()   = parameter_list["mu_CR"][0].asDouble();
-        params.get<mio::osecir::SeverePerInfectedSymptoms<double>>()        = parameter_list["mu_IH"][0].asDouble();
-        params.get<mio::osecir::CriticalPerSevere<double>>()                = parameter_list["mu_HU"][0].asDouble();
-        params.get<mio::osecir::DeathsPerCritical<double>>()                = parameter_list["mu_UD"][0].asDouble();
-        params.get<mio::osecir::TransmissionProbabilityOnContact<double>>() = parameter_list["transmission_prob"][0].asDouble();
+        params.get<mio::osecir::TimeExposed<double>>()                    = parameter_list["t_E"][0].asDouble();
+        params.get<mio::osecir::TimeInfectedNoSymptoms<double>>()         = 5.2 - parameter_list["t_E"][0].asDouble();
+        params.get<mio::osecir::TimeInfectedSymptoms<double>>()           = parameter_list["t_ISy"][0].asDouble();
+        params.get<mio::osecir::TimeInfectedSevere<double>>()             = parameter_list["t_ISev"][0].asDouble();
+        params.get<mio::osecir::TimeInfectedCritical<double>>()           = parameter_list["t_Cr"][0].asDouble();
+        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>() = parameter_list["mu_CR"][0].asDouble();
+        params.get<mio::osecir::SeverePerInfectedSymptoms<double>>()      = parameter_list["mu_IH"][0].asDouble();
+        params.get<mio::osecir::CriticalPerSevere<double>>()              = parameter_list["mu_HU"][0].asDouble();
+        params.get<mio::osecir::DeathsPerCritical<double>>()              = parameter_list["mu_UD"][0].asDouble();
+        params.get<mio::osecir::TransmissionProbabilityOnContact<double>>() =
+            parameter_list["transmission_prob"][0].asDouble();
 
         int state = (int)mio::regions::get_state_id(node.id);
         // set "damping_values"
         // auto start_damping = mio::Date(2020, 10, 8);
         double damping_value;
-        if (test_case == TestCase::Open){
+        if (test_case == TestCase::Open) {
             damping_value = 0;
         }
-        else if (test_case == TestCase::KeepNPIFomInference){
+        else if (test_case == TestCase::KeepNPIFomInference) {
             // t = 15, 30, 45
             damping_value = parameter_list["damping_values"][state][2].asDouble();
         }
@@ -250,23 +253,23 @@ get_graph(mio::Date start_date, const int num_days, const fs::path& data_dir, Te
     // initialize model variables dependent on inference
     BOOST_OUTCOME_TRY(set_initial_compartments(params_graph, data_dir));
     BOOST_OUTCOME_TRY(set_sampled_parameters(params_graph, data_dir, test_case));
-    
+
     // set edges of the graph
     const auto& read_function_edges = mio::read_mobility_plain;
 
-    auto mobile_compartments     = {mio::osecir::InfectionState::Susceptible,
-                                    mio::osecir::InfectionState::Exposed,
-                                    mio::osecir::InfectionState::InfectedNoSymptoms,
-                                    mio::osecir::InfectionState::InfectedSymptoms,
-                                    mio::osecir::InfectionState::Recovered};
+    auto mobile_compartments = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
+                                mio::osecir::InfectionState::InfectedNoSymptoms,
+                                mio::osecir::InfectionState::InfectedSymptoms, mio::osecir::InfectionState::Recovered};
 
     const auto& set_edge_function =
         mio::set_edges<double, ContactLocation, mio::osecir::Model<double>, mio::MobilityParameters<double>,
-                       mio::MobilityCoefficientGroup<double>, mio::osecir::InfectionState, decltype(read_function_edges)>;
-    
-    BOOST_OUTCOME_TRY(set_edge_function(mio::path_join(data_dir.string(), "Germany", "mobility", "commuter_mobility_2022.txt"), params_graph, mobile_compartments, 1,
-                                        read_function_edges, std::vector<double>{1}, std::vector<std::vector<size_t>>{}));
-    
+                       mio::MobilityCoefficientGroup<double>, mio::osecir::InfectionState,
+                       decltype(read_function_edges)>;
+
+    BOOST_OUTCOME_TRY(set_edge_function(
+        mio::path_join(data_dir.string(), "Germany", "mobility", "commuter_mobility_2022.txt"), params_graph,
+        mobile_compartments, 1, read_function_edges, std::vector<double>{1}, std::vector<std::vector<size_t>>{}));
+
     mio::unused(end_date, test_case);
     return mio::success(params_graph);
 }
@@ -275,10 +278,10 @@ mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, const std:
                         const std::string& result_dir, RunMode mode, TestCase test_case)
 {
     std::string test_case_name;
-    if (test_case == TestCase::Open){
+    if (test_case == TestCase::Open) {
         test_case_name = "open";
     }
-    else if (test_case == TestCase::KeepNPIFomInference){
+    else if (test_case == TestCase::KeepNPIFomInference) {
         // t = 15, 30, 45
         test_case_name = "same";
     }
@@ -345,25 +348,26 @@ mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, const std:
 int main(int argc, char** argv)
 {
     mio::set_log_level(mio::LogLevel::err);
-    auto cli_parameters = mio::cli::ParameterSetBuilder()
-                          .add<"DataDirectory">(mio::path_join(mio::base_dir(), "data/"))
-                          .add<"ResultDirectory">(mio::path_join(mio::base_dir(), "cpp/examples/simulation_paper/results"))
-                          .add<"NumberSimulationDays">(60, {.alias = "n"})
-                          .add<"RunMode">(RunMode::Save)
-                          .add<"TestCase">(TestCase::Open)
-                          .add<"StartDateDay">(30, {.alias="day"})
-                          .add<"StartDateMonth">(11, {.alias="month"})
-                          .add<"StartDateYear">(2020, {.alias="year"})
-                          .build();
+    auto cli_parameters =
+        mio::cli::ParameterSetBuilder()
+            .add<"DataDirectory">(mio::path_join(mio::base_dir(), "data/"))
+            .add<"ResultDirectory">(mio::path_join(mio::base_dir(), "cpp/examples/simulation_paper/results"))
+            .add<"NumberSimulationDays">(60, {.alias = "n"})
+            .add<"RunMode">(RunMode::Save)
+            .add<"TestCase">(TestCase::Open)
+            .add<"StartDateDay">(30, {.alias = "day"})
+            .add<"StartDateMonth">(11, {.alias = "month"})
+            .add<"StartDateYear">(2020, {.alias = "year"})
+            .build();
 
     auto cli_result = mio::command_line_interface(argv[0], argc, argv, cli_parameters, {"DataDirectory"});
     if (!cli_result) {
-        std::cout << cli_result.error().message();  
-        return cli_result.error().code().value();  
+        std::cout << cli_result.error().message();
+        return cli_result.error().code().value();
     }
 
-
-    mio::Date start_date = mio::Date(cli_parameters.get<"StartDateYear">(), cli_parameters.get<"StartDateMonth">(), cli_parameters.get<"StartDateDay">());
+    mio::Date start_date = mio::Date(cli_parameters.get<"StartDateYear">(), cli_parameters.get<"StartDateMonth">(),
+                                     cli_parameters.get<"StartDateDay">());
 
     // std::string data_dir = "../../data";
     // std::string result_dir = "./results";
@@ -372,7 +376,7 @@ int main(int argc, char** argv)
     boost::filesystem::create_directories(res_dir);
 
     auto result =
-        run(cli_parameters.get<"NumberSimulationDays">(), start_date, cli_parameters.get<"DataDirectory">(), cli_parameters.get<"ResultDirectory">(), 
-            cli_parameters.get<"RunMode">(), cli_parameters.get<"TestCase">());
+        run(cli_parameters.get<"NumberSimulationDays">(), start_date, cli_parameters.get<"DataDirectory">(),
+            cli_parameters.get<"ResultDirectory">(), cli_parameters.get<"RunMode">(), cli_parameters.get<"TestCase">());
     return 0;
 }

@@ -1,0 +1,592 @@
+[
+	{
+		"EndNodeIndex" : 16,
+		"Parameters" : 
+		{
+			"Coefficients" : 
+			{
+				"Matrices" : 
+				[
+					{
+						"Baseline" : 
+						{
+							"Columns" : 1,
+							"Elements" : 
+							[
+								0.0013906733979781505,
+								0.0013906733979781505,
+								0.0013906733979781505,
+								0.0,
+								0.0013906733979781505,
+								0.0,
+								0.0,
+								0.0,
+								0.0013906733979781505,
+								0.0
+							],
+							"Rows" : 10
+						},
+						"Dampings" : [],
+						"Minimum" : 
+						{
+							"Columns" : 1,
+							"Elements" : 
+							[
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0
+							],
+							"Rows" : 10
+						}
+					}
+				]
+			},
+			"DynamicNPIs" : 
+			{
+				"BaseValue" : 1.0,
+				"Duration" : 14.0,
+				"Interval" : 3.0,
+				"Thresholds" : []
+			}
+		},
+		"StartNodeIndex" : 21
+	},
+	{
+		"EndNodeIndex" : 17,
+		"Parameters" : 
+		{
+			"Coefficients" : 
+			{
+				"Matrices" : 
+				[
+					{
+						"Baseline" : 
+						{
+							"Columns" : 1,
+							"Elements" : 
+							[
+								9.0359852005214461e-05,
+								9.0359852005214461e-05,
+								9.0359852005214461e-05,
+								0.0,
+								9.0359852005214461e-05,
+								0.0,
+								0.0,
+								0.0,
+								9.0359852005214461e-05,
+								0.0
+							],
+							"Rows" : 10
+						},
+						"Dampings" : [],
+						"Minimum" : 
+						{
+							"Columns" : 1,
+							"Elements" : 
+							[
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0
+							],
+							"Rows" : 10
+						}
+					}
+				]
+			},
+			"DynamicNPIs" : 
+			{
+				"BaseValue" : 1.0,
+				"Duration" : 14.0,
+				"Interval" : 3.0,
+				"Thresholds" : []
+			}
+		},
+		"StartNodeIndex" : 21
+	},
+	{
+		"EndNodeIndex" : 18,
+		"Parameters" : 
+		{
+			"Coefficients" : 
+			{
+				"Matrices" : 
+				[
+					{
+						"Baseline" : 
+						{
+							"Columns" : 1,
+							"Elements" : 
+							[
+								0.0034705780995396185,
+								0.0034705780995396185,
+								0.0034705780995396185,
+								0.0,
+								0.0034705780995396185,
+								0.0,
+								0.0,
+								0.0,
+								0.0034705780995396185,
+								0.0
+							],
+							"Rows" : 10
+						},
+						"Dampings" : [],
+						"Minimum" : 
+						{
+							"Columns" : 1,
+							"Elements" : 
+							[
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0
+							],
+							"Rows" : 10
+						}
+					}
+				]
+			},
+			"DynamicNPIs" : 
+			{
+				"BaseValue" : 1.0,
+				"Duration" : 14.0,
+				"Interval" : 3.0,
+				"Thresholds" : []
+			}
+		},
+		"StartNodeIndex" : 21
+	},
+	{
+		"EndNodeIndex" : 19,
+		"Parameters" : 
+		{
+			"Coefficients" : 
+			{
+				"Matrices" : 
+				[
+					{
+						"Baseline" : 
+						{
+							"Columns" : 1,
+							"Elements" : 
+							[
+								0.00023498988539494211,
+								0.00023498988539494211,
+								0.00023498988539494211,
+								0.0,
+								0.00023498988539494211,
+								0.0,
+								0.0,
+								0.0,
+								0.00023498988539494211,
+								0.0
+							],
+							"Rows" : 10
+						},
+						"Dampings" : [],
+						"Minimum" : 
+						{
+							"Columns" : 1,
+							"Elements" : 
+							[
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0
+							],
+							"Rows" : 10
+						}
+					}
+				]
+			},
+			"DynamicNPIs" : 
+			{
+				"BaseValue" : 1.0,
+				"Duration" : 14.0,
+				"Interval" : 3.0,
+				"Thresholds" : []
+			}
+		},
+		"StartNodeIndex" : 21
+	},
+	{
+		"EndNodeIndex" : 23,
+		"Parameters" : 
+		{
+			"Coefficients" : 
+			{
+				"Matrices" : 
+				[
+					{
+						"Baseline" : 
+						{
+							"Columns" : 1,
+							"Elements" : 
+							[
+								4.7486408711449042e-05,
+								4.7486408711449042e-05,
+								4.7486408711449042e-05,
+								0.0,
+								4.7486408711449042e-05,
+								0.0,
+								0.0,
+								0.0,
+								4.7486408711449042e-05,
+								0.0
+							],
+							"Rows" : 10
+						},
+						"Dampings" : [],
+						"Minimum" : 
+						{
+							"Columns" : 1,
+							"Elements" : 
+							[
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0
+							],
+							"Rows" : 10
+						}
+					}
+				]
+			},
+			"DynamicNPIs" : 
+			{
+				"BaseValue" : 1.0,
+				"Duration" : 14.0,
+				"Interval" : 3.0,
+				"Thresholds" : []
+			}
+		},
+		"StartNodeIndex" : 21
+	},
+	{
+		"EndNodeIndex" : 24,
+		"Parameters" : 
+		{
+			"Coefficients" : 
+			{
+				"Matrices" : 
+				[
+					{
+						"Baseline" : 
+						{
+							"Columns" : 1,
+							"Elements" : 
+							[
+								0.00030961138479864775,
+								0.00030961138479864775,
+								0.00030961138479864775,
+								0.0,
+								0.00030961138479864775,
+								0.0,
+								0.0,
+								0.0,
+								0.00030961138479864775,
+								0.0
+							],
+							"Rows" : 10
+						},
+						"Dampings" : [],
+						"Minimum" : 
+						{
+							"Columns" : 1,
+							"Elements" : 
+							[
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0
+							],
+							"Rows" : 10
+						}
+					}
+				]
+			},
+			"DynamicNPIs" : 
+			{
+				"BaseValue" : 1.0,
+				"Duration" : 14.0,
+				"Interval" : 3.0,
+				"Thresholds" : []
+			}
+		},
+		"StartNodeIndex" : 21
+	},
+	{
+		"EndNodeIndex" : 26,
+		"Parameters" : 
+		{
+			"Coefficients" : 
+			{
+				"Matrices" : 
+				[
+					{
+						"Baseline" : 
+						{
+							"Columns" : 1,
+							"Elements" : 
+							[
+								0.00018478996761426742,
+								0.00018478996761426742,
+								0.00018478996761426742,
+								0.0,
+								0.00018478996761426742,
+								0.0,
+								0.0,
+								0.0,
+								0.00018478996761426742,
+								0.0
+							],
+							"Rows" : 10
+						},
+						"Dampings" : [],
+						"Minimum" : 
+						{
+							"Columns" : 1,
+							"Elements" : 
+							[
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0
+							],
+							"Rows" : 10
+						}
+					}
+				]
+			},
+			"DynamicNPIs" : 
+			{
+				"BaseValue" : 1.0,
+				"Duration" : 14.0,
+				"Interval" : 3.0,
+				"Thresholds" : []
+			}
+		},
+		"StartNodeIndex" : 21
+	},
+	{
+		"EndNodeIndex" : 324,
+		"Parameters" : 
+		{
+			"Coefficients" : 
+			{
+				"Matrices" : 
+				[
+					{
+						"Baseline" : 
+						{
+							"Columns" : 1,
+							"Elements" : 
+							[
+								4.5858303269913645e-05,
+								4.5858303269913645e-05,
+								4.5858303269913645e-05,
+								0.0,
+								4.5858303269913645e-05,
+								0.0,
+								0.0,
+								0.0,
+								4.5858303269913645e-05,
+								0.0
+							],
+							"Rows" : 10
+						},
+						"Dampings" : [],
+						"Minimum" : 
+						{
+							"Columns" : 1,
+							"Elements" : 
+							[
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0
+							],
+							"Rows" : 10
+						}
+					}
+				]
+			},
+			"DynamicNPIs" : 
+			{
+				"BaseValue" : 1.0,
+				"Duration" : 14.0,
+				"Interval" : 3.0,
+				"Thresholds" : []
+			}
+		},
+		"StartNodeIndex" : 21
+	},
+	{
+		"EndNodeIndex" : 366,
+		"Parameters" : 
+		{
+			"Coefficients" : 
+			{
+				"Matrices" : 
+				[
+					{
+						"Baseline" : 
+						{
+							"Columns" : 1,
+							"Elements" : 
+							[
+								6.8923130358331758e-05,
+								6.8923130358331758e-05,
+								6.8923130358331758e-05,
+								0.0,
+								6.8923130358331758e-05,
+								0.0,
+								0.0,
+								0.0,
+								6.8923130358331758e-05,
+								0.0
+							],
+							"Rows" : 10
+						},
+						"Dampings" : [],
+						"Minimum" : 
+						{
+							"Columns" : 1,
+							"Elements" : 
+							[
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0
+							],
+							"Rows" : 10
+						}
+					}
+				]
+			},
+			"DynamicNPIs" : 
+			{
+				"BaseValue" : 1.0,
+				"Duration" : 14.0,
+				"Interval" : 3.0,
+				"Thresholds" : []
+			}
+		},
+		"StartNodeIndex" : 21
+	},
+	{
+		"EndNodeIndex" : 369,
+		"Parameters" : 
+		{
+			"Coefficients" : 
+			{
+				"Matrices" : 
+				[
+					{
+						"Baseline" : 
+						{
+							"Columns" : 1,
+							"Elements" : 
+							[
+								0.00025534120341413457,
+								0.00025534120341413457,
+								0.00025534120341413457,
+								0.0,
+								0.00025534120341413457,
+								0.0,
+								0.0,
+								0.0,
+								0.00025534120341413457,
+								0.0
+							],
+							"Rows" : 10
+						},
+						"Dampings" : [],
+						"Minimum" : 
+						{
+							"Columns" : 1,
+							"Elements" : 
+							[
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0,
+								0.0
+							],
+							"Rows" : 10
+						}
+					}
+				]
+			},
+			"DynamicNPIs" : 
+			{
+				"BaseValue" : 1.0,
+				"Duration" : 14.0,
+				"Interval" : 3.0,
+				"Thresholds" : []
+			}
+		},
+		"StartNodeIndex" : 21
+	}
+]
