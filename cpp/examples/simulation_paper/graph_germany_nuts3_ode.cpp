@@ -91,7 +91,7 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters<double>& params
     params.get<mio::osecir::TestAndTraceCapacity<double>>()                 = 0.0;
 
 
-    params.set<mio::osecir::StartDay<double>>(0);
+    params.set<mio::osecir::StartDay<double>>(305);
     params.set<mio::osecir::Seasonality<double>>(0.2);
 
     // params.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()    = 0.0;
@@ -264,7 +264,7 @@ get_graph(mio::Date start_date, const int num_days, const fs::path& data_dir, Te
         mio::set_edges<double, ContactLocation, mio::osecir::Model<double>, mio::MobilityParameters<double>,
                        mio::MobilityCoefficientGroup<double>, mio::osecir::InfectionState, decltype(read_function_edges)>;
     
-    BOOST_OUTCOME_TRY(set_edge_function(mio::path_join(data_dir.string(), "Germany", "mobility", "commuter_mobility_2022.txt"), params_graph, mobile_compartments, 1,
+    BOOST_OUTCOME_TRY(set_edge_function(mio::path_join(data_dir.string(), "Germany", "mobility", "commuter_mobility_2019.txt"), params_graph, mobile_compartments, 1,
                                         read_function_edges, std::vector<double>{1}, std::vector<std::vector<size_t>>{}));
     
     mio::unused(end_date, test_case);
@@ -323,8 +323,8 @@ mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, const std:
         node.property.get_simulation().set_integrator_core(std::make_unique<mio::EulerIntegratorCore<double>>());
     }
 
-    // auto sim = mio::make_mobility_sim<double>(0.0, 0.5, std::move(graph));
-    auto sim = mio::make_no_mobility_sim<double>(0.0, std::move(graph));
+    auto sim = mio::make_mobility_sim<double>(0.0, 0.5, std::move(graph));
+    // auto sim = mio::make_no_mobility_sim<double>(0.0, std::move(graph));
     sim.advance(num_days_sim);
 
     std::vector<mio::TimeSeries<double>> results;
