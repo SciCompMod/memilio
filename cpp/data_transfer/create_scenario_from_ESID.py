@@ -126,6 +126,8 @@ class Simulation:
         self.parameter_list = []
         self.run_data_url = run_data_url
         self.headers = headers
+        self.path_mobility_file = os.path.join(
+            self.data_dir, "Germany", "mobility", "commuter_mobility_2022.txt")
         if not os.path.exists(self.results_dir):
             os.makedirs(self.results_dir)
 
@@ -186,9 +188,9 @@ class Simulation:
 
             print(
                 f"Starting simulation for scenario: {scenario['id']} ({scenario['name']})")
-            study = osecirvvs.ParameterStudy(
+            study = osecirvvs.GraphParameterStudy(
                 graph, 0., num_days_sim, 0.5, num_runs)
-            ensemble = study.run(False)
+            ensemble = study.run()
 
             ensemble_results = []
             ensemble_params = []
@@ -221,7 +223,7 @@ class Simulation:
                 os.makedirs(res_dir_scenario)
             osecirvvs.save_results(
                 ensemble_results, ensemble_params, node_ids, res_dir_scenario,
-                save_single_runs, save_percentiles, num_days_sim, True)
+                save_single_runs, save_percentiles)
             return f"Successfully processed scenario {scenario['id']}"
 
         except Exception as e:
@@ -718,7 +720,7 @@ class Simulation:
         edge_indices = []
 
         osecirvvs.set_edges(
-            self.data_dir, graph, len(Location), edge_indices)
+            self.path_mobility_file, graph, len(Location), edge_indices)
 
         return graph
 
@@ -773,7 +775,7 @@ class Simulation:
                 f"{self.results_dir}/edges_day_{day}.csv", index=False)
 
     def run(self, num_runs=10, max_workers=10):
-        mio.set_log_level(mio.LogLevel.Warning)
+        mio.set_log_level(mio.LogLevel.Critical)
 
         # header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
 
