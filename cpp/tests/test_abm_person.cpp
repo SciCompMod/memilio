@@ -152,9 +152,9 @@ TEST_F(TestPerson, quarantine)
     auto dt        = mio::abm::hours(1);
     EXPECT_CALL(mock_logNorm_dist.get_mock(), invoke)
         .Times(testing::AtLeast(1))
-        .WillOnce(testing::Return(1.0)) // TimeInfectedNoSymptomsToSymptoms
-        .WillOnce(testing::Return(1.0)) //IncubationTime
         .WillOnce(testing::Return(0.5 * dt.days())) // TimeInfectedSymptomsToRecovered
+        .WillOnce(testing::Return(1.0)) // TimeInfectedNoSymptomsToSymptoms
+        .WillOnce(testing::Return(1.0)) // IncubationTime
         .WillRepeatedly(testing::Return(1.0));
 
     infection_parameters.get<mio::abm::AgeGroupGotoSchool>().set_multiple({age_group_5_to_14}, true);

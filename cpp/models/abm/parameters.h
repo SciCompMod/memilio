@@ -278,23 +278,6 @@ struct DeathsPerInfectedCritical {
 };
 
 /**
- * @brief Distributions of the time that people have been in their initial infection state at the beginning of the simulation.
- * This makes it possible to draw from a user-defined distribution instead of drawing from a uniform distribution.
- */
-struct InitialInfectionStateDistributions {
-    using Type = CustomIndexArray<AbstractParameterDistribution, VirusVariant, AgeGroup, InfectionState>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type({VirusVariant::Count, size, InfectionState::Count},
-                    AbstractParameterDistribution(ParameterDistributionUniform(0., 1.)));
-    }
-    static std::string name()
-    {
-        return "InitialInfectionStateDistributions";
-    }
-};
-
-/**
  * @brief Parameters for the ViralLoad course. Default values taken as constant values from the average from
  * https://github.com/VirologyCharite/SARS-CoV-2-VL-paper/tree/main
  * Section 3.3.1 or see also supplementary materials Fig. S5.
@@ -718,13 +701,12 @@ using ParametersBase =
                  TimeInfectedSymptomsToSevere, TimeInfectedSymptomsToRecovered, TimeInfectedSevereToCritical,
                  TimeInfectedSevereToRecovered, TimeInfectedSevereToDead, TimeInfectedCriticalToDead,
                  TimeInfectedCriticalToRecovered, SymptomsPerInfectedNoSymptoms, SeverePerInfectedSymptoms,
-                 CriticalPerInfectedSevere, DeathsPerInfectedSevere, DeathsPerInfectedCritical,
-                 InitialInfectionStateDistributions, ViralLoadDistributions, ViralShedParameters, ViralShedFactor,
-                 InfectionRateFromViralShed, MaskProtection, AerosolTransmissionRates, LockdownDate, QuarantineDuration,
-                 QuarantineEffectiveness, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio,
-                 GotoWorkTimeMinimum, GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum,
-                 AgeGroupGotoSchool, AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor,
-                 HighViralLoadProtectionFactor, TestData>;
+                 CriticalPerInfectedSevere, DeathsPerInfectedSevere, DeathsPerInfectedCritical, ViralLoadDistributions,
+                 ViralShedParameters, ViralShedFactor, InfectionRateFromViralShed, MaskProtection,
+                 AerosolTransmissionRates, LockdownDate, QuarantineDuration, QuarantineEffectiveness, SocialEventRate,
+                 BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum,
+                 GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork,
+                 InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor, TestData>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.

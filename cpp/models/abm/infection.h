@@ -67,6 +67,13 @@ struct ViralLoad {
     }
 };
 
+/**
+ * @brief Distributions of the relative time that people have been in their initial infection state at the beginning of the simulation.
+ * Values have to be within [0, 1].
+ * This makes it possible to draw from a user-defined distribution instead of drawing from a uniform distribution.
+ */
+using InitialInfectionStateDistribution = CustomIndexArray<AbstractParameterDistribution, VirusVariant, AgeGroup>;
+
 class Infection
 {
 public:
@@ -83,7 +90,23 @@ public:
      * @param[in] detected [Default: false] If the Infection is detected.     
      */
     Infection(PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age, const Parameters& params,
-              TimePoint start_date, InfectionState start_state = InfectionState::Susceptible,
+              TimePoint start_date, InfectionState start_state = InfectionState::Exposed,
+              ProtectionEvent latest_protection = {ProtectionType::NoProtection, TimePoint(0)}, bool detected = false);
+
+    /**
+     * @brief Create an Infection for a single Person with a time spent in the given initial state that is drawn from the given distribution.
+     * @param[inout] rng PersonalRandomNumberGenerator of the Person.
+     * @param[in] virus Virus type of the Infection.
+     * @param[in] age AgeGroup to determine the ViralLoad course.
+     * @param[in] params Parameters of the Model.
+     * @param[in] init_date Date of initializing the Infection.
+     * @param[in] init_state #InfectionState at time of initializing the Infection.
+     * @param[in] init_state_dist Distribution to draw the relative time spent in the initial state from. Values have to be within [0, 1].
+     * @param[in] latest_protection The pair value of last ProtectionType (previous Infection/Vaccination) and TimePoint of that protection.
+     * @param[in] detected If the Infection is detected.
+     */
+    Infection(PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age, const Parameters& params,
+              TimePoint init_date, InfectionState init_state, const InitialInfectionStateDistribution& init_state_dist,
               ProtectionEvent latest_protection = {ProtectionType::NoProtection, TimePoint(0)}, bool detected = false);
 
     /**
@@ -178,20 +201,16 @@ private:
      * InfectedCritical -> Recovered or InfectedCritical -> Dead,
      * until either Recoverd or Dead is reached.
      * The duration in each #InfectionState is taken from the respective parameter.
-     * The first transition has a random, uniformly distributed length from 0 to the respective parameter
-     * for persons that are initialized somewhere in the middle of the infection, i.e. not a newly infected
-     * person nor a Recovered/Dead person, to reflect uncertainty in the current state.
      * @param[inout] rng PersonalRandomNumberGenerator of the Person.
      * @param[in] age AgeGroup of the Person.
      * @param[in] params Parameters of the Model.
      * @param[in] init_date Date of initializing the Infection.
      * @param[in] init_state #InfectionState at time of initializing the Infection.
      * @param[in] latest_protection Latest protection against Infection, has an influence on transition probabilities.
-     * @return The starting date of the init_state.
      */
-    TimePoint draw_infection_course_forward(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
-                                            TimePoint init_date, InfectionState init_state,
-                                            ProtectionEvent latest_protection);
+    void draw_infection_course_forward(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
+                                       TimePoint init_date, InfectionState init_state,
+                                       ProtectionEvent latest_protection);
 
     /**
      * @brief Determine Infection course prior to the given #InfectionState start_state.
@@ -213,11 +232,10 @@ private:
      * @param[in] virus Virus type of the Infection.
      * @param[in] age AgeGroup of the Person.
      * @param[in] params Parameters of the Model.
-     * @param[in] init_date Date of initializing the Infection.
      * @param[in] latest_protection Latest protection against Infection.
      */
     void initialize_viral_load(PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age,
-                               const Parameters& params, TimePoint init_date, ProtectionEvent latest_protection);
+                               const Parameters& params, ProtectionEvent latest_protection);
 
     /**
      * @brief Initialize the viral shed parameters and individual factor for the infection.
@@ -228,6 +246,18 @@ private:
      */
     void initialize_viral_shed(PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age,
                                const Parameters& params);
+
+    /**
+    * @brief Adjust start date based on initial infection state distribution
+    * @param[in] init_state_dist Distribution to draw the time spent in the initial state from.
+    * @param[inout] rng PersonalRandomNumberGenerator of the Person.
+    * @param[in] virus Virus type of the Infection.
+    * @param[in] age AgeGroup of the Person.
+    * @param[in] init_date Date of initializing the Infection.
+    */
+    TimePoint shift_init_date(const InitialInfectionStateDistribution& init_state_dist,
+                              PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age,
+                              TimePoint init_date);
 
     /**
      * @brief Get the forward transition from a given infection state.

@@ -38,7 +38,6 @@ TEST_F(TestInfection, init)
     auto params             = mio::abm::Parameters(num_age_groups);
     auto virus_variant_test = mio::abm::VirusVariant::Wildtype;
     auto age_group_test     = age_group_15_to_34;
-    mio::abm::Location loc(mio::abm::LocationType::Hospital, 0);
 
     params.get<mio::abm::ViralShedFactor>()[{virus_variant_test, age_group_test}] =
         mio::ParameterDistributionUniform(0.1, 0.2);
@@ -116,6 +115,34 @@ TEST_F(TestInfection, init)
 }
 
 /**
+ * @brief Test infection initialization with variable initial state time.
+ */
+TEST_F(TestInfection, initWithVariableInitialStateTime)
+{
+    auto counter = mio::Counter<uint32_t>(0);
+    auto params  = mio::abm::Parameters(num_age_groups);
+    auto t       = mio::abm::TimePoint(0);
+    auto prng    = mio::abm::PersonalRandomNumberGenerator(this->get_rng().get_key(), 0, counter);
+
+    params.get<mio::abm::TimeExposedToNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+        mio::ParameterDistributionConstant(2.0); // 2 days until symptoms
+
+    // Random relative time in initial state before t
+    mio::abm::InitialInfectionStateDistribution init_state_dist(
+        {mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)},
+        mio::AbstractParameterDistribution(mio::ParameterDistributionUniform(0.0, 1.0)));
+
+    auto infection = mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, age_group_15_to_34, params, t,
+                                         mio::abm::InfectionState::Exposed, init_state_dist,
+                                         {mio::abm::ProtectionType::NoProtection, mio::abm::TimePoint(0)}, true);
+
+    EXPECT_GE(infection.get_start_date().seconds(), (t - mio::abm::days(2)).seconds());
+    EXPECT_LE(infection.get_start_date().seconds(), t.seconds());
+    EXPECT_EQ(infection.get_infection_state(t), mio::abm::InfectionState::Exposed);
+    EXPECT_EQ(infection.get_infection_state(t - mio::abm::days(2)), mio::abm::InfectionState::Susceptible);
+}
+
+/**
  * @brief Test getInfectionState function at different time points.
  */
 TEST_F(TestInfection, getInfectionState)
@@ -150,15 +177,20 @@ TEST_F(TestInfection, drawInfectionCourseForward)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::LogNormalDistribution<double>>>>
         mock_logNormal_dist;
     EXPECT_CALL(mock_logNormal_dist.get_mock(), invoke)
-        .Times(testing::Exactly(13)) // 5 draws for infection 1 and 4 for infection 2 and 4 draws for infection3
+        .Times(testing::Exactly(13)) // 5 draws for infection1 and 4 for infection2 and 4 draws for infection3
         .WillRepeatedly(testing::Return(1)); // All times will be 1 day
     // Mock viral load draws and infection paths
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::Exactly(
-            7)) // 6 viral load draws per infection and 1 infection path draw per infection (for infection1 and 2) and 2 infection paths draws for infection3
-        .WillRepeatedly(testing::Return(
-            0.55)); // is necessary for infection 1 to recover, infection 2 to die and infection 3 to turn severe
+            7)) // 1 draw for shed factor per infection, 1 infection path draw per infection (for infection1 and 2) and 2 infection paths draws for infection3
+        .WillOnce(testing::Return(0.55)) // Infection path draw for infection1 to recover
+        .WillOnce(testing::Return(0.55)) // Viral Shed Factor for infection1
+        .WillOnce(testing::Return(0.05)) // Infection path draw for infection2 to die
+        .WillOnce(testing::Return(0.55)) // Viral Shed Factor for infection2
+        .WillOnce(testing::Return(0.35)) // Infection path draw for infection3 to turn severe
+        .WillOnce(testing::Return(0.65)) // Infection path draw for infection3 to recover
+        .WillOnce(testing::Return(0.55)); // Viral Shed Factor for infection3
 
     auto infection1 = mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, age_group_15_to_34, params, t,
                                           mio::abm::InfectionState::InfectedCritical,
@@ -199,7 +231,7 @@ TEST_F(TestInfection, drawInfectionCourseBackward)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::LogNormalDistribution<double>>>>
         mock_logNormal_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::AtLeast(7))
+        .Times(testing::Exactly(8))
         // 1st infection
         .WillOnce(testing::Return(0.6)) // Transition to InfectedNoSymptoms
         .WillOnce(testing::Return(params.get<mio::abm::ViralShedFactor>()[{virus_variant_test, age_group_test}]
@@ -214,10 +246,11 @@ TEST_F(TestInfection, drawInfectionCourseBackward)
                                       .params()[0])) // Viral Shed Factor
         // 4th infection
         .WillOnce(testing::Return(0.05)) // Transition to InfectedCritical
-        .WillRepeatedly(testing::Return(1.0));
+        .WillOnce(testing::Return(params.get<mio::abm::ViralShedFactor>()[{virus_variant_test, age_group_test}]
+                                      .params()[0])); // Viral Shed Factor
 
     EXPECT_CALL(mock_logNormal_dist.get_mock(), invoke)
-        .Times(testing::AtLeast(10))
+        .Times(testing::Exactly(14))
         // 1st infection
         .WillOnce(testing::Return(1.0)) // TimeInfectedNoSymptomsToRecovered
         .WillOnce(testing::Return(1.0)) // TimeExposedToNoSymptoms
@@ -231,8 +264,11 @@ TEST_F(TestInfection, drawInfectionCourseBackward)
         .WillOnce(testing::Return(1.0)) // TimeInfectedNoSymptomsToSymptoms
         .WillOnce(testing::Return(1.0)) // TimeExposedToNoSymptoms
         // 4th infection
-        .WillOnce(testing::Return(1.0)) //TimeInfectedCriticalToRecovered
-        .WillRepeatedly(testing::Return(1.0));
+        .WillOnce(testing::Return(1.0)) // TimeInfectedCriticalToRecovered
+        .WillOnce(testing::Return(1.0)) // TimeInfectedSevereToCritical
+        .WillOnce(testing::Return(1.0)) // TimeInfectedSymptomsToSevere
+        .WillOnce(testing::Return(1.0)) // TimeInfectedNoSymptomsToSymptoms
+        .WillOnce(testing::Return(1.0)); // TimeExposedToNoSymptoms
 
     auto infection1 = mio::abm::Infection(prng, virus_variant_test, age_group_test, params, mio::abm::TimePoint(t + dt),
                                           mio::abm::InfectionState::Recovered,
@@ -264,7 +300,7 @@ TEST_F(TestInfection, getPersonalProtectiveFactor)
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0, num_age_groups);
     auto person   = mio::abm::Person(this->get_rng(), location.get_type(), location.get_id(), location.get_model_id(),
                                      age_group_15_to_34);
-    auto t0       = mio::abm::Timepoint(0);
+    auto t0       = mio::abm::TimePoint(0);
     person.add_new_vaccination(mio::abm::ProtectionType::GenericVaccine, t0);
     auto latest_protection = person.get_latest_protection(t0);
 
