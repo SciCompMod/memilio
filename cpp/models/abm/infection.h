@@ -248,18 +248,6 @@ private:
                                const Parameters& params);
 
     /**
-    * @brief Adjust start date based on initial infection state distribution
-    * @param[in] init_state_dist Distribution to draw the time spent in the initial state from.
-    * @param[inout] rng PersonalRandomNumberGenerator of the Person.
-    * @param[in] virus Virus type of the Infection.
-    * @param[in] age AgeGroup of the Person.
-    * @param[in] init_date Date of initializing the Infection.
-    */
-    TimePoint shift_init_date(const InitialInfectionStateDistribution& init_state_dist,
-                              PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age,
-                              TimePoint init_date);
-
-    /**
      * @brief Get the forward transition from a given infection state.
      * @param[inout] rng PersonalRandomNumberGenerator of the Person.
      * @param[in] age AgeGroup of the Person.

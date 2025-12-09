@@ -57,15 +57,6 @@ void Infection::initialize_viral_shed(PersonalRandomNumberGenerator& rng, VirusV
     m_individual_viral_shed_factor = shedfactor_param.get(rng);
 }
 
-TimePoint Infection::shift_init_date(const InitialInfectionStateDistribution& init_state_dist,
-                                     PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age,
-                                     TimePoint init_date)
-{
-    auto dist              = init_state_dist[{virus, age}];
-    TimeSpan time_in_state = days(dist.get(rng));
-    return init_date - time_in_state;
-}
-
 Infection::Infection(PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age, const Parameters& params,
                      TimePoint init_date, InfectionState init_state, ProtectionEvent latest_protection, bool detected)
     : m_virus_variant(virus)
