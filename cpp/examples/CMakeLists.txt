@@ -108,7 +108,7 @@ add_executable(ode_secir_graph_example ode_secir_graph.cpp)
 target_link_libraries(ode_secir_graph_example PRIVATE memilio ode_secir)
 target_compile_options(ode_secir_graph_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-add_executable(graph_germany_nuts3_ode graph_germany_nuts3_ode.cpp)
+add_executable(graph_germany_nuts3_ode simulation_paper/graph_germany_nuts3_ode.cpp)
 target_link_libraries(graph_germany_nuts3_ode PRIVATE memilio ode_secir)
 target_compile_options(graph_germany_nuts3_ode PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
