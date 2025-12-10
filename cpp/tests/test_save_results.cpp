@@ -247,7 +247,7 @@ TEST(TestSaveResult, save_result_order)
     ASSERT_TRUE(results_from_file);
 
     for(double i = 0; i < 3; i++){
-        EXPECT_DOUBLE_EQ(results_from_file.value()[(int)i].get_time(0)[0], i);
+        EXPECT_DOUBLE_EQ(results_from_file.value()[(int)i].get_groups().get_time(0)[0], i);
     }
 }
 
