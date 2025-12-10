@@ -231,11 +231,10 @@ TEST(TestSaveResult, save_result_order)
 {
     // case: check order of results, where lexical ordering would rearrange the results; 
     // expect: order follows the ids
-    std::vector<mio::TimeSeries<double>> results{3, mio::TimeSeries<double>(1)};
-    
-    for(double i = 0; i < 3; i++){
-        results[(int)i].add_time_point(0, Eigen::VectorX<double>::Constant(1, i));
-    }
+    std::vector<mio::TimeSeries<double>> results{
+        mio::TimeSeries<double>(0, Eigen::VectorX<double>::Constant(1, 0)), 
+        mio::TimeSeries<double>(0, Eigen::VectorX<double>::Constant(1, 1)), 
+        mio::TimeSeries<double>(0, Eigen::VectorX<double>::Constant(1, 2))};
     std::vector<int> ids                                  = {1, 2, 10};
 
     TempFileRegister file_register;
@@ -246,9 +245,9 @@ TEST(TestSaveResult, save_result_order)
     auto results_from_file = mio::read_result(results_file_path);
     ASSERT_TRUE(results_from_file);
 
-    for(double i = 0; i < 3; i++){
-        EXPECT_DOUBLE_EQ(results_from_file.value()[(int)i].get_groups()[Eigen::Index(0)][Eigen::Index(0)], i);
-    }
+    ASSERT_DOUBLE_EQ(results_from_file.value()[0].get_groups()[Eigen::Index(0)][Eigen::Index(0)], 0);
+    ASSERT_DOUBLE_EQ(results_from_file.value()[1].get_groups()[Eigen::Index(0)][Eigen::Index(0)], 1);
+    ASSERT_DOUBLE_EQ(results_from_file.value()[2].get_groups()[Eigen::Index(0)][Eigen::Index(0)], 2);
 }
 
 TEST(TestSaveResult, save_percentiles_and_sums)
