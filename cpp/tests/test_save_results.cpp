@@ -229,7 +229,8 @@ TEST(TestSaveResult, save_result_with_params)
 
 TEST(TestSaveResult, save_result_order)
 {
-    // case: check order of result; expect: order follows the ids
+    // case: check order of result, where lexical ordering would rearrange the results; 
+    // expect: order follows the ids
     std::vector<mio::TimeSeries<double>> results{3, mio::TimeSeries<double>(1)};
     
     for(double i = 0; i < 3; i++){
@@ -246,7 +247,7 @@ TEST(TestSaveResult, save_result_order)
     ASSERT_TRUE(results_from_file);
 
     for(double i = 0; i < 3; i++){
-        EXPECT_DOUBLE_EQ(results_from_file.value()[(int)i]get_time(0)[0], i);
+        EXPECT_DOUBLE_EQ(results_from_file.value()[(int)i].get_time(0)[0], i);
     }
 }
 
