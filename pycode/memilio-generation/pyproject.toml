@@ -35,6 +35,7 @@ Team = "https://memilio.readthedocs.io/en/latest/team.html"
 [tool.scikit-build]
 cmake.version = ">=3.13"
 wheel.packages = ["memilio"]
+build-dir = "../build/memilio-generation"
 
 [tool.setuptools]
 include-package-data = true
