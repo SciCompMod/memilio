@@ -227,6 +227,29 @@ TEST(TestSaveResult, save_result_with_params)
               params.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[mio::Index<mio::AgeGroup>(1)]);
 }
 
+TEST(TestSaveResult, save_result_order)
+{
+    // case: check order of result; expect: order follows the ids
+    std::vector<mio::TimeSeries<double>> results{3, mio::TimeSeries<double>(1)};
+    
+    for(double i = 0; i < 3; i++){
+        results[(int)i].add_time_point(0, Eigen::VectorX<double>::Constant(1, i));
+    }
+    std::vector<int> ids                                  = {1, 2, 10};
+
+    TempFileRegister file_register;
+    auto results_file_path  = file_register.get_unique_path("test_result-%%%%-%%%%.h5");
+    auto save_result_status = mio::save_result(results, ids, 1, results_file_path);
+    ASSERT_TRUE(save_result_status);
+
+    auto results_from_file = mio::read_result(results_file_path);
+    ASSERT_TRUE(results_from_file);
+
+    for(double i = 0; i < 3; i++){
+        EXPECT_DOUBLE_EQ(results_from_file.value()[(int)i]get_time(0)[0], i);
+    }
+}
+
 TEST(TestSaveResult, save_percentiles_and_sums)
 {
     // set up parameter study
