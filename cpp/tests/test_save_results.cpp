@@ -229,7 +229,7 @@ TEST(TestSaveResult, save_result_with_params)
 
 TEST(TestSaveResult, save_result_order)
 {
-    // case: check order of result, where lexical ordering would rearrange the results; 
+    // case: check order of results, where lexical ordering would rearrange the results; 
     // expect: order follows the ids
     std::vector<mio::TimeSeries<double>> results{3, mio::TimeSeries<double>(1)};
     
