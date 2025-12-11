@@ -110,7 +110,7 @@ IOResult<std::vector<SimulationResult>> read_result(const std::string& filename)
 
     std::sort(h5group_names.begin(), h5group_names.end(),
             [](const std::string &a, const std::string &b) {
-                return std::stof(a) < std::stof(b);
+                return std::stoi(a) < std::stoi(b);
             });
     
     for (auto& h5group_name : h5group_names) {
