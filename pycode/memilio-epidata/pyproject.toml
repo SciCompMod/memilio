@@ -42,7 +42,6 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "coverage>=7.0.1",
-  # pylint 2.16 creates problem with wrapt package version
   "pylint>=3.0",
   "pylint_json2html==0.5.0"
   ]
