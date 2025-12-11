@@ -60,6 +60,7 @@
 
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 #include "boost/filesystem.hpp"
+#include <Eigen/src/Core/Matrix.h>
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
@@ -177,7 +178,7 @@ std::vector<double> get_age_group_sizes_from_compartment_vector(Eigen::VectorX<d
 * results not being saved. 
 * @returns Any io errors that happen or the simulation results for the compartments.
 */
-IOResult<void> simulate_ide(TimeSeries<ScalarType> init_flows, Vector init_compartments, Vector init_compartments_ide,
+IOResult<void> simulate_ide(TimeSeries<ScalarType> init_flows, Vector init_compartments_t0,
                             std::vector<ScalarType> transmissionProbabilityOnContact, std::string contact_data_dir,
                             bool exponential_scenario = false, std::string filename = "", std::string save_dir = "")
 {
@@ -186,7 +187,7 @@ IOResult<void> simulate_ide(TimeSeries<ScalarType> init_flows, Vector init_compa
 
     // Initialize model.
     // Get size of age groups from init_compartments_ide.
-    std::vector<double> age_group_sizes = get_age_group_sizes_from_compartment_vector(init_compartments_ide);
+    std::vector<double> age_group_sizes = get_age_group_sizes_from_compartment_vector(init_compartments_t0);
     // Set total_population_init according to age_group_sizes.
     CustomIndexArray<ScalarType, AgeGroup> total_population_init =
         CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(num_age_groups), 0.);
@@ -200,11 +201,10 @@ IOResult<void> simulate_ide(TimeSeries<ScalarType> init_flows, Vector init_compa
     CustomIndexArray<ScalarType, AgeGroup> total_confirmed_cases_init =
         CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(num_age_groups), 0.);
 
-    // Initialize with empty series for flows as we will initialize based on RKI data later on.
     isecir::Model model_ide(std::move(init_flows), total_population_init, deaths_init, num_age_groups,
-                            total_confirmed_cases_init, init_compartments_ide);
+                            total_confirmed_cases_init, init_compartments_t0);
 
-    model_ide.populations.get_value(0) = init_compartments;
+    model_ide.populations.get_value(0) = init_compartments_t0;
 
     // Set working parameters.
     // If exponential_scenario is true, we set the transition distributions as exponentially distributed.
@@ -348,6 +348,7 @@ IOResult<void> simulate_ide(TimeSeries<ScalarType> init_flows, Vector init_compa
     model_ide.parameters.get<isecir::ContactPatterns>() = contact_matrix;
 
     model_ide.set_tol_for_support_max(1e-6);
+    std::cout << "Global max support: " << model_ide.get_global_support_max(dt) << std::endl;
 
     model_ide.check_constraints(dt);
 
@@ -379,9 +380,9 @@ IOResult<void> simulate_lct(Vector init_compartments, std::vector<ScalarType> tr
     using InfState = lsecir::InfectionState;
 
     using LctState0_4   = LctInfectionState<ScalarType, InfState, 1, n_subcomps_E[0], n_subcomps_INS[0],
-                                          n_subcomps_ISy[0], n_subcomps_ISev[0], n_subcomps_ICri[0], 1, 1>;
+                                            n_subcomps_ISy[0], n_subcomps_ISev[0], n_subcomps_ICri[0], 1, 1>;
     using LctState5_14  = LctInfectionState<ScalarType, InfState, 1, n_subcomps_E[1], n_subcomps_INS[1],
-                                           n_subcomps_ISy[1], n_subcomps_ISev[1], n_subcomps_ICri[1], 1, 1>;
+                                            n_subcomps_ISy[1], n_subcomps_ISev[1], n_subcomps_ICri[1], 1, 1>;
     using LctState15_34 = LctInfectionState<ScalarType, InfState, 1, n_subcomps_E[2], n_subcomps_INS[2],
                                             n_subcomps_ISy[2], n_subcomps_ISev[2], n_subcomps_ICri[2], 1, 1>;
     using LctState35_59 = LctInfectionState<ScalarType, InfState, 1, n_subcomps_E[3], n_subcomps_INS[3],
@@ -1746,20 +1747,103 @@ mio::IOResult<void> abm_ensemble_run(size_t num_runs, bool exponential_scenario,
     return mio::success();
 }
 
+/**
+ * @brief Reads csv into TimeSeries.
+ * @param[in] filename Path to csv that is read.
+*/
+mio::IOResult<TimeSeries<double>> csv_to_timeseries(std::string filename)
+{
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        return mio::failure(StatusCode::FileNotFound);
+    }
+
+    std::string line;
+
+    // --- Read header line (Time, C1, C2, ..., C48) ---
+    std::getline(file, line);
+
+    // --- Determine number of value columns ---
+    // vector_size = number of commas → one fewer than number of entries
+    size_t vector_size = std::count(line.begin(), line.end(), ',');
+
+    // Create TimeSeries:
+    mio::TimeSeries<double> ts(vector_size);
+
+    while (std::getline(file, line)) {
+
+        std::stringstream ss(line);
+        std::string cell;
+
+        // --- Read time ---
+        std::getline(ss, cell, ',');
+        double t = std::stod(cell);
+
+        // --- Read values into Eigen vector ---
+        Eigen::VectorX<double> vals(vector_size);
+        for (int i = 0; i < vals.size(); ++i) {
+            std::getline(ss, cell, ',');
+            vals[i] = std::stod(cell);
+        }
+
+        // Add time point
+        ts.add_time_point(t, vals);
+    }
+
+    file.close();
+
+    return mio::success(ts);
+}
+
+/**
+ * @brief Reads csv into std::vector.
+ * @param[in] filename Path to csv that is read.
+*/
+mio::IOResult<std::vector<double>> csv_to_vector(std::string filename)
+{
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        return mio::failure(StatusCode::FileNotFound);
+    }
+
+    std::string line;
+
+    // --- Read line ---
+    std::getline(file, line);
+
+    // --- Determine number of value columns ---
+    size_t vector_size = std::count(line.begin(), line.end(), ',');
+
+    std::vector<double> vector(vector_size);
+
+    std::stringstream ss(line);
+    std::string cell;
+
+    for (int i = 0; i < (int)vector.size(); ++i) {
+        std::getline(ss, cell, ',');
+        vector[i] = std::stod(cell);
+    }
+
+    file.close();
+
+    return mio::success(vector);
+}
+
 int main()
 {
     constexpr bool exponential_scenario = true;
     bool one_location                   = true;
     bool use_infection_history          = true;
+    mio::unused(use_infection_history);
     const std::vector<double> infection_distribution{0.99, 0.005, 0.005, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-    std::string save_dir = "";
+    std::string save_dir = "../../cpp/examples/paper/simulation_results/compare_abm_ide_lct_ode/";
 
     if (exponential_scenario) {
-        save_dir = "../../cpp/examples/paper/simulation_results/compare_abm_ide_lct_ode/exponential/";
+        save_dir = save_dir + "exponential/";
     }
     else {
-        save_dir = "../../cpp/examples/paper/simulation_results/compare_abm_ide_lct_ode/different_dists/";
+        save_dir = save_dir + "different_dists/";
     }
     if (one_location) {
         save_dir = save_dir + "one_location/";
@@ -1787,63 +1871,68 @@ int main()
     mio::RandomNumberGenerator rng;
     rng.seed(seeds);
 
-    // Simulation for initialization is init_tmax=14 days
-    auto init_result = simulate_abm(exponential_scenario, params::init_tmax, contact_data_dir, infection_distribution,
-                                    true, save_dir, false, rng, params::t0, one_location, false);
+    // Simulation for initialization is init_tmax
+    auto init_result_abm =
+        simulate_abm(exponential_scenario, params::t0 + params::init_tmax, contact_data_dir, infection_distribution,
+                     true, save_dir, false, rng, params::t0, one_location, false);
 
     // Simulate ABM ensemble run.
-    size_t num_runs = 20;
+    size_t num_runs = 1;
     auto result_abm = abm_ensemble_run(num_runs, exponential_scenario, params::t0 + params::tmax - params::init_tmax,
                                        contact_data_dir, infection_distribution, save_dir, true, false,
                                        params::t0 + params::init_tmax, one_location, use_infection_history);
 
     // Get results from initial ABM run.
-    // Use compartments at time init_tmax from ABM simulation as initial values for other models to make results comparable.
-    auto init_compartments_ide = std::get<0>(init_result.value())[0].get_value(0);
-    auto init_compartments     = std::get<0>(init_result.value())[0].get_last_value();
-    // TimeSeries of flows.
-    auto init_flows_abm = std::get<0>(init_result.value())[1];
-    auto init_flows     = TimeSeries<double>(params::t0, init_flows_abm.get_value(0));
-    while (init_flows.get_last_time() < params::init_tmax) {
-        init_flows.add_time_point(init_flows.get_last_time() + params::dt,
-                                  init_flows_abm.get_value(init_flows.get_num_time_points()));
+    // Get compartment values from initial ABM run.
+    TimeSeries<double> init_comps_abm = csv_to_timeseries(save_dir + "comps.csv").value();
+
+    // Use compartments at time t0 from ABM simulation for initialization of IDE model.
+    auto comps_t0 = init_comps_abm.get_value(0);
+
+    // Use compartments at time init_tmax from ABM simulation for initialization of LCT and ODE models.
+    auto comps_init_tmax = init_comps_abm.get_value(size_t(params::init_tmax / params::dt));
+
+    // Get flow values from initial ABM run. Time points arger than init_tmax may be contained.
+    TimeSeries<double> init_flows_abm = csv_to_timeseries(save_dir + "flows.csv").value();
+
+    // Get flow values until init_tmax so that IDE simulation starts at init_tmax.
+    auto init_flows_ide = TimeSeries<double>(params::t0, init_flows_abm.get_value(0));
+    while (init_flows_ide.get_last_time() < params::init_tmax - 1e-10) {
+        init_flows_ide.add_time_point(init_flows_ide.get_last_time() + params::dt,
+                                      init_flows_abm.get_value(init_flows_ide.get_num_time_points() - 1));
     }
+
+    std::cout << "Last time of init flows: " << init_flows_ide.get_last_time() << std::endl;
     // Infectivity rates.
-    std::vector<std::vector<double>> infectivity_rates = std::get<1>(init_result.value());
-    // Transmission rates.
-    // std::vector<double> transmissionProbabilityOnContact = std::get<1>(init_result.value());
-    // std::vector<double>::iterator max_transmission_prob =
-    //     std::max_element(transmissionProbabilityOnContact.begin(), transmissionProbabilityOnContact.end());
-    // ScalarType target_max_prob         = 0.3;
-    // ScalarType scale_transmission_prob = target_max_prob / *max_transmission_prob;
-    // std::cout << "Scale transmisssion prob: " << scale_transmission_prob << std::endl;
-    // for (size_t i = 0; i < transmissionProbabilityOnContact.size(); i++) {
-    //     transmissionProbabilityOnContact[i] *= scale_transmission_prob;
+    auto infectivity_rates = csv_to_vector(save_dir + "transmission_rates.csv").value();
+
+    // std::vector<std::string> infectivity_rates_str = {
+    //     "infectivity_rates_total",       "infectivity_rates_first_half", "infectivity_rates_second_half",
+    //     "infectivity_rates_first_third", "infectivity_rates_rest_third", "infectivity_rates_first_quarter",
+    //     "infectivity_rates_rest_quarter"};
+
+    // for (size_t infectivity_idx = 0; infectivity_idx < 1; infectivity_idx++) {
+
+    // std::string filename = "_" + infectivity_rates_str[infectivity_idx];
+    std::string filename = "";
+    std::vector<double> transmissionProbabilityOnContact(params::num_age_groups);
+    for (size_t i = 0; i < transmissionProbabilityOnContact.size(); i++) {
+        transmissionProbabilityOnContact[i] = infectivity_rates[i];
+    }
+
+    // Simulate IDE.
+    mio::set_log_level(LogLevel::info);
+    auto result_ide = simulate_ide(init_flows_ide, comps_t0, transmissionProbabilityOnContact, contact_data_dir,
+                                   exponential_scenario, filename, save_dir);
+
+    // Simulate LCT.
+    auto result_lct = simulate_lct<exponential_scenario>(comps_init_tmax, transmissionProbabilityOnContact,
+                                                         contact_data_dir, filename, save_dir);
+
+    // Simulate ODE.
+    auto result_ode =
+        simulate_ode(comps_init_tmax, transmissionProbabilityOnContact, contact_data_dir, filename, save_dir);
     // }
 
-    std::vector<std::string> infectivity_rates_str = {
-        "infectivity_rates_total",       "infectivity_rates_first_half", "infectivity_rates_second_half",
-        "infectivity_rates_first_third", "infectivity_rates_rest_third", "infectivity_rates_first_quarter",
-        "infectivity_rates_rest_quarter"};
-
-    for (size_t infectivity_idx = 0; infectivity_idx < 1; infectivity_idx++) {
-
-        std::string filename                                 = "_" + infectivity_rates_str[infectivity_idx];
-        std::vector<double> transmissionProbabilityOnContact = infectivity_rates[infectivity_idx];
-
-        // Simulate IDE.
-        mio::set_log_level(LogLevel::info);
-        auto result_ide =
-            simulate_ide(init_flows, init_compartments, init_compartments_ide, transmissionProbabilityOnContact,
-                         contact_data_dir, exponential_scenario, filename, save_dir);
-
-        // Simulate LCT.
-        auto result_lct = simulate_lct<exponential_scenario>(init_compartments, transmissionProbabilityOnContact,
-                                                             contact_data_dir, filename, save_dir);
-
-        // Simulate ODE.
-        auto result_ode =
-            simulate_ode(init_compartments, transmissionProbabilityOnContact, contact_data_dir, filename, save_dir);
-    }
     return 0;
 }
