@@ -26,7 +26,7 @@
 
 const mio::ssirs::Model<double>& ssirs_testing_model()
 {
-    static mio::ssirs::Model<double> model;
+    static mio::ssirs::Model<double> model(1);
     model.populations.array().setConstant(1);
     model.parameters.set<mio::ssirs::TimeImmune<double>>(4);
     {
@@ -85,7 +85,7 @@ TEST(TestSdeSirs, Simulation)
 TEST(TestSdeSirs, check_constraints_parameters)
 {
     // check parameters.check_constraints
-    mio::ssirs::Model<double>::ParameterSet parameters;
+    mio::ssirs::Model<double>::ParameterSet parameters(1);
     parameters.set<mio::ssirs::TimeInfected<double>>(6);
     parameters.set<mio::ssirs::TimeImmune<double>>(6);
     parameters.set<mio::ssirs::TransmissionProbabilityOnContact<double>>(0.04);
@@ -120,7 +120,8 @@ TEST(TestSdeSirs, apply_constraints_parameters)
 {
     // check parameters.apply_constraints
     const double tol_times = 1e-1;
-    mio::ssirs::Model<double>::ParameterSet parameters;
+    mio::unused(tol_times);
+    mio::ssirs::Model<double>::ParameterSet parameters(1);
     parameters.set<mio::ssirs::TimeInfected<double>>(6);
     parameters.set<mio::ssirs::TimeImmune<double>>(6);
     parameters.set<mio::ssirs::TransmissionProbabilityOnContact<double>>(0.04);
@@ -146,6 +147,6 @@ TEST(TestSdeSirs, apply_constraints_parameters)
 
     parameters.set<mio::ssirs::Seasonality<double>>(-2.);
     EXPECT_EQ(parameters.apply_constraints(), 1);
-    EXPECT_NEAR(parameters.get<mio::ssirs::Seasonality<double>>(), 0.0, 1e-14);
+    EXPECT_NEAR(parameters.get<mio::ssirs::Seasonality<double>>()[mio::Season(0)], 0.0, 1e-14);
     mio::set_log_level(mio::LogLevel::warn);
 }

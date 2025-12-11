@@ -21,6 +21,7 @@
 #include "memilio/data/analyze_result.h"
 #include "memilio/utils/logging.h"
 #include "sde_sirs/model.h"
+#include "sde_sirs/parameters.h"
 
 int main()
 {
@@ -34,7 +35,7 @@ int main()
 
     mio::log_info("Simulating SIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    mio::ssirs::Model<ScalarType> model;
+    mio::ssirs::Model<ScalarType> model(3);
 
     model.populations[{mio::Index<mio::ssirs::InfectionState>(mio::ssirs::InfectionState::Infected)}]  = 100;
     model.populations[{mio::Index<mio::ssirs::InfectionState>(mio::ssirs::InfectionState::Recovered)}] = 1000;
@@ -49,7 +50,10 @@ int main()
     model.parameters.get<mio::ssirs::ContactPatterns<ScalarType>>().add_damping(0.6,
                                                                                 mio::SimulationTime<ScalarType>(12.5));
     model.parameters.set<mio::ssirs::StartDay<ScalarType>>(60);
-    model.parameters.set<mio::ssirs::Seasonality<ScalarType>>(0.2);
+    model.parameters.set<mio::ssirs::SeasonalityPeak<ScalarType>>(10);
+    model.parameters.get<mio::ssirs::Seasonality<ScalarType>>()[mio::Season(0)] = 0.2;
+    model.parameters.get<mio::ssirs::Seasonality<ScalarType>>()[mio::Season(1)] = 0.5;
+    model.parameters.get<mio::ssirs::Seasonality<ScalarType>>()[mio::Season(2)] = 0.3;
     model.check_constraints();
 
     auto ssirs = mio::simulate_stochastic(t0, tmax, dt, model);

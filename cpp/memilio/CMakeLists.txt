@@ -5,6 +5,7 @@ add_library(memilio
     data/analyze_result.h
     data/analyze_result.cpp
     epidemiology/age_group.h
+    epidemiology/season.h
     epidemiology/populations.h
     epidemiology/damping.cpp
     epidemiology/damping.h

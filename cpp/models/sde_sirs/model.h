@@ -48,8 +48,8 @@ class Model
 public:
     using Base = mio::StochasticModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>, Flows>;
 
-    Model()
-        : Base(typename Base::Populations({InfectionState::Count}, 0.0), typename Base::ParameterSet())
+    Model(Season num_seasons)
+        : Base(typename Base::Populations({InfectionState::Count}, 0.0), typename Base::ParameterSet(num_seasons))
     {
     }
 
@@ -61,15 +61,18 @@ public:
         // FP season_val =
         //     (1 + params.template get<Seasonality<FP>>() *
         //              sin(std::numbers::pi_v<ScalarType> * ((params.template get<StartDay<FP>>() + t) / 182.5 + 0.5)));
+        Season season = Season(int(t / 365.));
         FP t_season =
             params.template get<SeasonalityPeak<FP>>() - params.template get<StartDay<FP>>() + int(t / 365.) * 365.;
         FP season_end = t_season + 182.5;
         if (t >= season_end) {
+            season   = Season(static_cast<size_t>(season) + 1);
             t_season = params.template get<SeasonalityPeak<FP>>() - params.template get<StartDay<FP>>() +
                        (int(t / 365.) + 1) * 365.;
         }
-        FP season_val = params.template get<Seasonality<FP>>() + (1 - params.template get<Seasonality<FP>>()) *
-                                                                     (gaussian(t - t_season) / gaussian(0.)) * zeta(t);
+        FP season_val = params.template get<Seasonality<FP>>()[season] +
+                        (1 - params.template get<Seasonality<FP>>()[season]) *
+                            (gaussian(t - t_season, season) / gaussian(0., season)) * zeta(t);
 
         FP coeffStoI = season_val *
                        params.template get<ContactPatterns<FP>>().get_matrix_at(SimulationTime<FP>(t))(0, 0) *
@@ -92,13 +95,13 @@ public:
         this->get_derivatives(flows, noise);
     }
 
-    double gaussian(FP t) const
+    double gaussian(FP t, Season season) const
     {
         auto& params = Base::parameters;
         return 1. /
-               (std::sqrt(2. * std::numbers::pi_v<ScalarType> * params.template get<SeasonalitySigma<FP>>() *
-                          params.template get<SeasonalitySigma<FP>>())) *
-               std::exp(-0.5 * std::pow(t / params.template get<SeasonalitySigma<FP>>(), 2));
+               (std::sqrt(2. * std::numbers::pi_v<ScalarType> * params.template get<SeasonalitySigma<FP>>()[season] *
+                          params.template get<SeasonalitySigma<FP>>()[season])) *
+               std::exp(-0.5 * std::pow(t / params.template get<SeasonalitySigma<FP>>()[season], 2));
     }
 
     double zeta(FP t) const

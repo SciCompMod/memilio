@@ -21,9 +21,14 @@
 #ifndef MIO_SDE_SIRS_PARAMETERS_H
 #define MIO_SDE_SIRS_PARAMETERS_H
 
+#include "memilio/epidemiology/season.h"
+#include "memilio/utils/custom_index_array.h"
+#include "memilio/utils/index.h"
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/utils/parameter_set.h"
+#include <cstddef>
+#include <vector>
 
 namespace mio
 {
@@ -40,7 +45,7 @@ namespace ssirs
 template <typename FP>
 struct TransmissionProbabilityOnContact {
     using Type = UncertainValue<FP>;
-    static Type get_default()
+    static Type get_default(Season)
     {
         return Type(1.0);
     }
@@ -56,7 +61,7 @@ struct TransmissionProbabilityOnContact {
 template <typename FP>
 struct TimeInfected {
     using Type = UncertainValue<FP>;
-    static Type get_default()
+    static Type get_default(Season)
     {
         return Type(6.0);
     }
@@ -72,7 +77,7 @@ struct TimeInfected {
 template <typename FP>
 struct TimeImmune {
     using Type = UncertainValue<FP>;
-    static Type get_default()
+    static Type get_default(Season)
     {
         return Type(6.0);
     }
@@ -88,7 +93,7 @@ struct TimeImmune {
 template <typename FP>
 struct ContactPatterns {
     using Type = ContactMatrix<FP>;
-    static Type get_default()
+    static Type get_default(Season)
     {
         return Type{1};
     }
@@ -107,7 +112,7 @@ struct ContactPatterns {
 template <typename FP>
 struct StartDay {
     using Type = FP;
-    static Type get_default()
+    static Type get_default(Season)
     {
         return Type(0.0);
     }
@@ -124,10 +129,10 @@ struct StartDay {
  */
 template <typename FP>
 struct Seasonality {
-    using Type = UncertainValue<FP>;
-    static Type get_default()
+    using Type = CustomIndexArray<UncertainValue<FP>, Season>;
+    static Type get_default(Season size)
     {
-        return Type(0.5);
+        return Type(size, 0.5);
     }
     static std::string name()
     {
@@ -143,7 +148,7 @@ struct Seasonality {
 template <typename FP>
 struct SeasonalityPeak {
     using Type = UncertainValue<FP>;
-    static Type get_default()
+    static Type get_default(Season)
     {
         return Type(0.);
     }
@@ -160,10 +165,10 @@ struct SeasonalityPeak {
  */
 template <typename FP>
 struct SeasonalitySigma {
-    using Type = UncertainValue<FP>;
-    static Type get_default()
+    using Type = CustomIndexArray<UncertainValue<FP>, Season>;
+    static Type get_default(Season size)
     {
-        return Type(100.);
+        return Type(size, 100.);
     }
     static std::string name()
     {
@@ -171,10 +176,26 @@ struct SeasonalitySigma {
     }
 };
 
+/**
+ * @brief The time points of each season start.
+ */
+template <typename FP>
+struct SeasonStarts {
+    using Type = CustomIndexArray<FP, Season>;
+    static Type get_default(Season size)
+    {
+        return Type(size, 0.);
+    }
+    static std::string name()
+    {
+        return "SeasonStarts";
+    }
+};
+
 template <typename FP>
 using ParametersBase =
     ParameterSet<TransmissionProbabilityOnContact<FP>, TimeInfected<FP>, ContactPatterns<FP>, TimeImmune<FP>,
-                 Seasonality<FP>, SeasonalityPeak<FP>, SeasonalitySigma<FP>, StartDay<FP>>;
+                 Seasonality<FP>, SeasonalityPeak<FP>, SeasonalitySigma<FP>, StartDay<FP>, SeasonStarts<FP>>;
 
 /**
  * @brief Parameters of SIR model.
@@ -183,9 +204,15 @@ template <typename FP>
 class Parameters : public ParametersBase<FP>
 {
 public:
-    Parameters()
-        : ParametersBase<FP>()
+    Parameters(Season num_seasons)
+        : ParametersBase<FP>(num_seasons)
+        , m_num_groups(num_seasons)
     {
+    }
+
+    Season get_num_groups() const
+    {
+        return m_num_groups;
     }
 
     /**
@@ -206,9 +233,10 @@ public:
         FP tol_times = 1e-1;
 
         int corrected = false;
-        if (this->template get<Seasonality<FP>>() < 0.0 || this->template get<Seasonality<FP>>() > 0.5) {
+        if (this->template get<Seasonality<FP>>()[Season(0)] < 0.0 ||
+            this->template get<Seasonality<FP>>()[Season(0)] > 0.5) {
             log_warning("Constraint check: Parameter Seasonality changed from {} to {}",
-                        this->template get<Seasonality<FP>>(), 0);
+                        this->template get<Seasonality<FP>>()[Season(0)], 0);
             this->template set<Seasonality<FP>>(0);
             corrected = true;
         }
@@ -247,7 +275,8 @@ public:
     {
         FP tol_times = 1e-1;
 
-        if (this->template get<Seasonality<FP>>() < 0.0 || this->template get<Seasonality<FP>>() > 0.5) {
+        if (this->template get<Seasonality<FP>>()[Season(0)] < 0.0 ||
+            this->template get<Seasonality<FP>>()[Season(0)] > 0.5) {
             log_error("Constraint check: Parameter Seasonality smaller {} or larger {:4f}", 0, 0.5);
             return true;
         }
@@ -291,6 +320,9 @@ public:
         BOOST_OUTCOME_TRY(auto&& base, ParametersBase<FP>::deserialize(io));
         return success(Parameters(std::move(base)));
     }
+
+private:
+    Season m_num_groups;
 };
 
 } // namespace ssirs
