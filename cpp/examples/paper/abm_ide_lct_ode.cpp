@@ -380,9 +380,9 @@ IOResult<void> simulate_lct(Vector init_compartments, std::vector<ScalarType> tr
     using InfState = lsecir::InfectionState;
 
     using LctState0_4   = LctInfectionState<ScalarType, InfState, 1, n_subcomps_E[0], n_subcomps_INS[0],
-                                            n_subcomps_ISy[0], n_subcomps_ISev[0], n_subcomps_ICri[0], 1, 1>;
+                                          n_subcomps_ISy[0], n_subcomps_ISev[0], n_subcomps_ICri[0], 1, 1>;
     using LctState5_14  = LctInfectionState<ScalarType, InfState, 1, n_subcomps_E[1], n_subcomps_INS[1],
-                                            n_subcomps_ISy[1], n_subcomps_ISev[1], n_subcomps_ICri[1], 1, 1>;
+                                           n_subcomps_ISy[1], n_subcomps_ISev[1], n_subcomps_ICri[1], 1, 1>;
     using LctState15_34 = LctInfectionState<ScalarType, InfState, 1, n_subcomps_E[2], n_subcomps_INS[2],
                                             n_subcomps_ISy[2], n_subcomps_ISev[2], n_subcomps_ICri[2], 1, 1>;
     using LctState35_59 = LctInfectionState<ScalarType, InfState, 1, n_subcomps_E[3], n_subcomps_INS[3],
@@ -1041,7 +1041,7 @@ mio::IOResult<mio::abm::Model> initialize_abm(bool exponential_scenario, std::st
             deathsPerCritical[group];
         // Todo
         model.parameters.get<mio::abm::VirusShedFactor>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(group)}] =
-            mio::ParameterDistributionUniform(0., 0.5);
+            mio::ParameterDistributionUniform(0., 0.4);
     }
 
     // We only consider transmission by contacts, therefore aerosol transmission rates are set to 0
@@ -1634,7 +1634,6 @@ simulate_abm(bool exponential_scenario, ScalarType tmax, std::string contact_dat
                     for (auto it = infection_course_new_person.begin(); it != infection_course_new_person.end();) {
                         if (it->second == infection_state) {
                             it = infection_course_new_person.erase(it);
-                            break;
                         }
                         else {
                             it = infection_course_new_person.erase(it);
@@ -1646,9 +1645,6 @@ simulate_abm(bool exponential_scenario, ScalarType tmax, std::string contact_dat
                     for (auto it = infection_course.begin(); it != infection_course.end(); ++it) {
                         infection_course_new_person.insert(infection_course_new_person.begin() + insert_counter, *it);
                         insert_counter += 1;
-                        if (it->second == infection_state) {
-                            break;
-                        }
                     }
                 }
             }
@@ -1697,7 +1693,8 @@ simulate_abm(bool exponential_scenario, ScalarType tmax, std::string contact_dat
 
     std::vector simulation_results = {compartment_result, flow_result};
     std::pair<std::vector<TimeSeries<double>>, std::vector<std::vector<double>>> abm_results =
-        std::make_pair(simulation_results, std::vector<std::vector<double>>{transmission_rates});
+        std::make_pair(simulation_results, infectivity_rates);
+    //std::make_pair(simulation_results, std::vector<std::vector<double>>{transmission_rates});
     //std::make_pair(simulation_results, infectivity_rates);
 
     return success(abm_results);
@@ -1837,7 +1834,7 @@ int main()
     mio::unused(use_infection_history);
     const std::vector<double> infection_distribution{0.99, 0.005, 0.005, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-    std::string save_dir = "../../cpp/examples/paper/simulation_results/compare_abm_ide_lct_ode/";
+    std::string save_dir = "../../cpp/examples/paper/simulation_results/compare_abm_ide_lct_ode/final/";
 
     if (exponential_scenario) {
         save_dir = save_dir + "exponential/";
@@ -1877,7 +1874,7 @@ int main()
                      true, save_dir, false, rng, params::t0, one_location, false);
 
     // Simulate ABM ensemble run.
-    size_t num_runs = 1;
+    size_t num_runs = 20;
     auto result_abm = abm_ensemble_run(num_runs, exponential_scenario, params::t0 + params::tmax - params::init_tmax,
                                        contact_data_dir, infection_distribution, save_dir, true, false,
                                        params::t0 + params::init_tmax, one_location, use_infection_history);
@@ -1913,12 +1910,12 @@ int main()
 
     // for (size_t infectivity_idx = 0; infectivity_idx < 1; infectivity_idx++) {
 
-    // std::string filename = "_" + infectivity_rates_str[infectivity_idx];
     std::string filename = "";
     std::vector<double> transmissionProbabilityOnContact(params::num_age_groups);
-    for (size_t i = 0; i < transmissionProbabilityOnContact.size(); i++) {
-        transmissionProbabilityOnContact[i] = infectivity_rates[i];
-    }
+    // for (size_t i = 0; i < transmissionProbabilityOnContact.size(); i++) {
+    //     transmissionProbabilityOnContact[i] = infectivity_rates[i];
+    // }
+    transmissionProbabilityOnContact = {0.0266432, 0.0225801, 0.0215401, 0.0219972, 0.0213169, 0.019616};
 
     // Simulate IDE.
     mio::set_log_level(LogLevel::info);
