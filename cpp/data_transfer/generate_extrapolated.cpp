@@ -333,16 +333,16 @@ generate_extrapolated_data(mio::Date start_date, const int num_days, const fs::p
 int main(int argc, char** argv)
 {
 
-    mio::set_log_level(mio::LogLevel::warn);
+    mio::set_log_level(mio::LogLevel::critical);
     mio::mpi::init();
 
     std::string data_dir;
     mio::Date start_date             = mio::Date(2023, 6, 1);
-    double num_days                  = 2.0;
+    int num_days                     = 2;
     bool save_non_aggregated_results = false;
 
     if (argc == 1) {
-        data_dir = "../../data";
+        data_dir = "../../../data";
     }
     else if (argc == 6) {
         data_dir   = argv[1];
@@ -374,6 +374,12 @@ int main(int argc, char** argv)
     //create or load graph
     auto create_extrapolated_data =
         generate_extrapolated_data(start_date, num_days, data_dir, save_non_aggregated_results);
+
+    if (!create_extrapolated_data) {
+        fprintf(stderr, "Error generating extrapolated data: %s\n", create_extrapolated_data.error().formatted_message().c_str());
+        mio::mpi::finalize();
+        return 1;
+    }
 
     mio::mpi::finalize();
     return 0;
