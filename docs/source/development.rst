@@ -286,6 +286,7 @@ General
 
 - If we release a new version of the software, we create a tag for the version on the main branch.
 - Please keep all issue-related communication within the issue or pull request.
+- When making breaking changes to an interface, consider adding a comment to the end of the doxygen documentation, starting with `CHANGENOTE:`, explaining the change and what actions can be taken for updates. These change notes will be removed after some time. 
 
 Software development in sprints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

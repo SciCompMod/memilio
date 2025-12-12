@@ -82,6 +82,8 @@ add_library(memilio
     mobility/graph_simulation.cpp
     mobility/graph.h
     mobility/graph.cpp
+    mobility/graph_builder.h
+    mobility/graph_builder.cpp
     timer/auto_timer.h
     timer/basic_timer.cpp
     timer/basic_timer.h

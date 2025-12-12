@@ -4,8 +4,8 @@ This package contains machine learning based surrogate models that make predicti
  
 ## Installation
 
-Use the provided `setup.py` script install the package. 
-To install the package, use the command (from the directory containing `setup.py`)
+Use the provided `pyproject.toml` file to install the package. 
+To install the package, use the command (from the directory containing `pyproject.toml`)
 
 ```bash
 pip install .
@@ -35,8 +35,18 @@ The package currently provides the following modules:
 - `tests`: this file contains all tests 
 
 ## Testing 
-The package provides a test suite in `memilio/surrogatemodel_test`. To run the tests, simply run the following command.
+The package provides a test suite in `tests/`. To run the tests, make sure the package is installed, and you are in the source directory, then run:
 
 ```bash
+cd tests
 python -m unittest
+```
+
+This works with both normal (`pip install .`) and editable (`pip install -e .`) installations.
+
+Alternatively, you can run the tests from outside the source directory:
+
+```bash
+cd /path/to/another/directory
+python -m unittest discover -s /path/to/memilio/pycode/memilio-surrogatemodel/tests
 ```

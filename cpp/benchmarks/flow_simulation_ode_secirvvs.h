@@ -719,7 +719,8 @@ void setup_model(Model& model)
     model.parameters.template get<osecirvvs::ReducTimeInfectedMild<ScalarType>>()[AgeGroup(0)]               = 0.9;
 
     model.parameters.template get<osecirvvs::Seasonality<ScalarType>>() = 0.2;
-
+    // The function apply_constraints() ensures that all parameters are within their defined bounds.
+    // Note that negative values are set to zero instead of stopping the simulation.
     model.apply_constraints();
 }
 

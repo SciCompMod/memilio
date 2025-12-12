@@ -42,9 +42,9 @@ Martin Kühn studied at University of Cologne, Germany, and Université de Montr
 .. dropdown:: Links
    :animate: fade-in-slide-down
 
-   * `Google Scholar Profile <https://scholar.google.de/citations?user=OyOv8EAAAAAJ&hl=de&oi=ao>`_
-   * `ORCID Profile: 0000-0002-0906-6984 <https://orcid.org/0000-0002-0906-6984>`_
-   * `SCOPUS Author Profile <https://www.scopus.com/authid/detail.uri?authorId=57191842081>`_
+   * `Google Scholar Profile <https://scholar.google.de/citations?user=OyOv8EAAAAAJ&hl=de&oi=ao>`__
+   * `ORCID Profile: 0000-0002-0906-6984 <https://orcid.org/0000-0002-0906-6984>`__
+   * `SCOPUS Author Profile <https://www.scopus.com/authid/detail.uri?authorId=57191842081>`__
 
 .. _developer_2:
 
@@ -71,8 +71,8 @@ Henrik Zunker is a PhD student at the Institute of Software Technology at the Ge
 .. dropdown:: Links
    :animate: fade-in-slide-down
 
-   * `Google Scholar Profile <https://scholar.google.com/citations?user=gEng86kAAAAJ&hl=en>`_
-   * `ORCID Profile: 0000-0002-9825-365X <https://orcid.org/0000-0002-9825-365X>`_
+   * `Google Scholar Profile <https://scholar.google.com/citations?user=gEng86kAAAAJ&hl=en>`__
+   * `ORCID Profile: 0000-0002-9825-365X <https://orcid.org/0000-0002-9825-365X>`__
 
 .. _developer_3:
 
@@ -100,9 +100,8 @@ His background is in numerical mathematics, where he studied at the University o
 .. dropdown:: Links
    :animate: fade-in-slide-down
 
-   * `ORCID Profile: 0000-0002-1431-3046 <https://orcid.org/0000-0002-1431-3046>`_
+   * `ORCID Profile: 0000-0002-1431-3046 <https://orcid.org/0000-0002-1431-3046>`__
 
-.. _developer_3:
 
 Julia Bicker
 ^^^^^^^^^^^^
@@ -126,8 +125,8 @@ Julia Bicker is a PhD student at the Institute of Software Technology at the Ger
 .. dropdown:: Links
    :animate: fade-in-slide-down
 
-   * `Google Scholar Profile <https://scholar.google.com/citations?user=W0NCJ7MAAAAJ&hl=de&oi=ao>`_
-   * `ORCID Profile: 0000-0001-9382-4209 <https://orcid.org/0000-0001-9382-4209>`_
+   * `Google Scholar Profile <https://scholar.google.com/citations?user=W0NCJ7MAAAAJ&hl=de&oi=ao>`__
+   * `ORCID Profile: 0000-0001-9382-4209 <https://orcid.org/0000-0001-9382-4209>`__
 
 Anna Wendler
 ^^^^^^^^^^^^
@@ -151,8 +150,8 @@ Anna Wendler is a PhD student at the Institute of Software Technology at the Ger
 .. dropdown:: Links
    :animate: fade-in-slide-down
 
-   * `Google Scholar Profile <https://scholar.google.com/citations?view_op=list_works&hl=de&user=NOvN9ucAAAAJ>`_
-   * `ORCID Profile: 0000-0001-9382-4209 <https://orcid.org/0000-0002-1816-8907>`_
+   * `Google Scholar Profile <https://scholar.google.com/citations?view_op=list_works&hl=de&user=NOvN9ucAAAAJ>`__
+   * `ORCID Profile: 0000-0001-9382-4209 <https://orcid.org/0000-0002-1816-8907>`__
 
 .. _developer_4:
 
@@ -177,7 +176,7 @@ Carlotta Gerstein completed her Bachelor's degree in Mathematics at the Universi
 .. dropdown:: Links
    :animate: fade-in-slide-down
 
-   * `ORCID Profile: 0009-0004-4410-0502 <https://orcid.org/0009-0004-4410-0502>`_
+   * `ORCID Profile: 0009-0004-4410-0502 <https://orcid.org/0009-0004-4410-0502>`__
 
 Kilian Volmer
 ^^^^^^^^^^^^^^^^^
@@ -238,7 +237,7 @@ equation-based models.
 .. dropdown:: Links
    :animate: fade-in-slide-down
 
-   * `ORCID Profile: 0000-0002-2769-0270 <https://orcid.org/0000-0002-2769-0270>`_
+   * `ORCID Profile: 0000-0002-2769-0270 <https://orcid.org/0000-0002-2769-0270>`__
 
 
 David Kerkmann
@@ -265,7 +264,7 @@ He is interested in the development of agent-based models for infectious disease
 .. dropdown:: Links
    :animate: fade-in-slide-down
 
-   * `ORCID Profile: 0009-0007-9109-096X <https://orcid.org/0009-0007-9109-096X>`_
+   * `ORCID Profile: 0009-0007-9109-096X <https://orcid.org/0009-0007-9109-096X>`__
 
 
 .. _former_core_developers:
@@ -288,7 +287,7 @@ Daniel Abele is a research software engineer at the Institute of Software Techno
 .. dropdown:: Links
    :animate: fade-in-slide-down
 
-   * `ORCID Profile: 0000-0001-7021-1573 <https://orcid.org/0000-0001-7021-1573>`_
+   * `ORCID Profile: 0000-0001-7021-1573 <https://orcid.org/0000-0001-7021-1573>`__
 
 
 Margrit Klitz
@@ -307,7 +306,7 @@ Margrit Klitz holds a PhD in mathematics from the University of Bonn. She worked
 .. dropdown:: Links
    :animate: fade-in-slide-down
 
-   * `ORCID Profile: 0000-0003-3657-4180 <https://orcid.org/0000-0003-3657-4180>`_
+   * `ORCID Profile: 0000-0003-3657-4180 <https://orcid.org/0000-0003-3657-4180>`__
 
 
 
@@ -332,7 +331,7 @@ Agatha Schmidt completed her Master's degree at the University of Cologne in col
 .. dropdown:: Links
    :animate: fade-in-slide-down
 
-   * `ORCID Profile: 0009-0006-5766-8804 <https://orcid.org/0009-0006-5766-8804>`_
+   * `ORCID Profile: 0009-0006-5766-8804 <https://orcid.org/0009-0006-5766-8804>`__
 
 
 .. _contributors:
@@ -348,7 +347,7 @@ Paul Johannssen
 Paul Johannssen studied mathematics at the University of Bonn. He worked on the MEmilio project from March 2023 to March 2024 as a working student. In this time, he manually derived and implemented formulas in closed form for the computation of reproduction numbers in the ODE-based SEIR, SECIR, and SECIRVVS models.
 
 
-We thank all contributors, who have contributed to MEmilio. For a complete list of contributors, please see our `GitHub Contributors page <https://github.com/SciCompMod/memilio/graphs/contributors>`_.
+We thank all contributors, who have contributed to MEmilio. For a complete list of contributors, please see our `GitHub Contributors page <https://github.com/SciCompMod/memilio/graphs/contributors>`__.
 
 .. _collaboration:
 
@@ -358,7 +357,7 @@ Contributing research groups and institutes
 MEmilio has been developed by and in collaboration with various research institutions:
 
 * **German Aerospace Center (DLR)** - Institute for Software Technology 
-* **University of Bonn** - Life and Medical Sciences Institute and `Bonn Center for Mathematical Life Sciences <https://www.bcml.uni-bonn.de/>`_
+* **University of Bonn** - Life and Medical Sciences Institute and `Bonn Center for Mathematical Life Sciences <https://www.bcml.uni-bonn.de/>`__
 * **Helmholtz Centre for Infection Research (HZI)** - Department of Systems Immunology
 * **Forschungszentrum Jülich (FZJ)** - Institute of Climate and Energy Systems (ICE-1) and Institute of Bio- und Geosciences: Biotechnology (IBG-1)
 

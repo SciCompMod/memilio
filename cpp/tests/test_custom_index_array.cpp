@@ -424,3 +424,25 @@ TEST(CustomIndexArray, setMultiple_emptyIndices)
         }
     }
 }
+
+TEST(CustomIndexArray, convert_floating_point)
+{
+    // case: float arrays with mixed precision; expect same result after conversion through double precision
+    float value_float = 0.10005f;
+    auto size_dim1    = mio::Index<Dim1>(3);
+    mio::CustomIndexArray<float, Dim1> array_float({size_dim1}, value_float);
+    mio::CustomIndexArray<float, Dim1> array_float2 = array_float.convert<double>().convert<float>();
+    for (auto i = mio::Index<Dim1>(0); i < size_dim1; ++i) {
+        EXPECT_FLOAT_EQ(array_float2[i], value_float);
+    }
+
+    // case: double arrays with mixed precision; expect the value to be truncated during conversion to float
+    double value_double = 1.0 + 5e-16;
+    mio::CustomIndexArray<double, Dim1> array_double({size_dim1}, value_double);
+    array_float = array_double.convert<float>();
+    for (auto i = mio::Index<Dim1>(0); i < size_dim1; ++i) {
+        // Check if array_double is unchanged
+        EXPECT_DOUBLE_EQ(array_double[i], value_double);
+        EXPECT_FLOAT_EQ(array_float[i], 1.f);
+    }
+}

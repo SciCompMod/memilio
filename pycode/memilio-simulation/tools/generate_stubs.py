@@ -17,23 +17,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
+import importlib.util
 import os
+import shutil
 import subprocess
 import sys
-import importlib.util
-import shutil
 
-setup_content_protected_module = f"""
-from setuptools import setup, find_packages
+pyproject_content_protected_module = """[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
 
-setup(
-    name='memilio-stubs',
-    version='0.1',
-    packages=['memilio-stubs'],
-    package_data={{
-        'memilio-stubs': ['simulation/*.pyi'],
-    }},
-)
+[project]
+name = "memilio-stubs"
+version = "0.1"
+description = "Stubs for the memilio.simulation package."
+requires-python = ">=3.8"
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["memilio-stubs"]
+
+[tool.setuptools.package-data]
+"memilio-stubs" = ["simulation/*.pyi"]
 """
 
 # Define if the generated stubs of mypy should be configured
@@ -71,7 +77,8 @@ if __name__ == "__main__":
     # memilio-stubs/simulation module needs same structure as memilio/simulation
     # test --include-docstrings, --doc-dir PATH for better docs
     subprocess.check_call(
-        ['stubgen', '--include-docstrings', '-o', package_dir, '-p', 'memilio.simulation'])
+        ['stubgen', '--include-docstrings', '-o', package_dir, '-p',
+         'memilio.simulation'])
 
     # TODO:
     #   - fix numpy.float64[m, 1] to
@@ -163,8 +170,8 @@ if __name__ == "__main__":
     shutil.move(os.path.join(package_dir, "memilio"),
                 os.path.join(package_dir, "memilio-stubs"))
 
-    # create setup.py and install package
-    with open(os.path.join(package_dir, "setup.py"), "w") as setup_file:
-        setup_file.write(setup_content_protected_module)
+    # create pyproject.toml and install package
+    with open(os.path.join(package_dir, "pyproject.toml"), "w", encoding="utf-8") as pyproject_file:
+        pyproject_file.write(pyproject_content_protected_module)
     subprocess.check_call(
         [python_interpreter, '-m', 'pip', 'install', package_dir])

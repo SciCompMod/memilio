@@ -117,7 +117,8 @@ int main()
     model.parameters.get<mio::osecirvvs::ReducTimeInfectedMild<double>>()[mio::AgeGroup(0)] = 0.9;
 
     model.parameters.get<mio::osecirvvs::Seasonality<double>>() = 0.2;
-
+    // The function apply_constraints() ensures that all parameters are within their defined bounds.
+    // Note that negative values are set to zero instead of stopping the simulation.
     model.apply_constraints();
 
     // use adaptive Runge-Kutta-Fehlberg45 scheme as integrator
