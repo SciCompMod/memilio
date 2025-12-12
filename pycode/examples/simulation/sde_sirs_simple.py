@@ -24,7 +24,7 @@ import numpy as np
 from memilio.simulation import AgeGroup, Damping
 from memilio.simulation.ssirs import InfectionState as State
 from memilio.simulation.ssirs import (
-    Model, simulate_stochastic, interpolate_simulation_result)
+    Model, simulate_stochastic, interpolate_simulation_result, Season)
 
 
 def run_sde_sirs_simulation():
@@ -34,7 +34,7 @@ def run_sde_sirs_simulation():
     dt = 0.001
 
     # Initialize Model
-    model = Model()
+    model = Model(Season(2))
 
     # Mean time in Infected compartment
     model.parameters.TimeInfected.value = 10.
@@ -55,6 +55,11 @@ def run_sde_sirs_simulation():
         (1, 1))
     model.parameters.ContactPatterns.add_damping(
         Damping(coeffs=np.r_[0.6], t=2, level=0, type=0))
+    model.parameters.SeasonalityPeak.value = 11
+    model.parameters.SeasonalitySigma[Season(0)].value = 2.5
+    model.parameters.Seasonality[Season(0)].value = 0.2
+    model.parameters.SeasonalitySigma[Season(1)].value = 3
+    model.parameters.Seasonality[Season(1)].value = 0.5
 
     # Check parameter constraints
     model.check_constraints()

@@ -176,43 +176,27 @@ struct SeasonalitySigma {
     }
 };
 
-/**
- * @brief The time points of each season start.
- */
-template <typename FP>
-struct SeasonStarts {
-    using Type = CustomIndexArray<FP, Season>;
-    static Type get_default(Season size)
-    {
-        return Type(size, 0.);
-    }
-    static std::string name()
-    {
-        return "SeasonStarts";
-    }
-};
-
 template <typename FP>
 using ParametersBase =
     ParameterSet<TransmissionProbabilityOnContact<FP>, TimeInfected<FP>, ContactPatterns<FP>, TimeImmune<FP>,
-                 Seasonality<FP>, SeasonalityPeak<FP>, SeasonalitySigma<FP>, StartDay<FP>, SeasonStarts<FP>>;
+                 Seasonality<FP>, SeasonalityPeak<FP>, SeasonalitySigma<FP>, StartDay<FP>>;
 
 /**
- * @brief Parameters of SIR model.
- */
+ * @brief Parameters of SIRS model.
+**/
 template <typename FP>
 class Parameters : public ParametersBase<FP>
 {
 public:
     Parameters(Season num_seasons)
         : ParametersBase<FP>(num_seasons)
-        , m_num_groups(num_seasons)
+        , m_num_seasons(num_seasons)
     {
     }
 
-    Season get_num_groups() const
+    Season get_num_seasons() const
     {
-        return m_num_groups;
+        return m_num_seasons;
     }
 
     /**
@@ -306,6 +290,7 @@ public:
 private:
     Parameters(ParametersBase<FP>&& base)
         : ParametersBase<FP>(std::move(base))
+        , m_num_seasons(base.template get<Seasonality<FP>>().size().get())
     {
     }
 
@@ -322,7 +307,7 @@ public:
     }
 
 private:
-    Season m_num_groups;
+    Season m_num_seasons;
 };
 
 } // namespace ssirs
