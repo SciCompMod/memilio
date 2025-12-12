@@ -507,7 +507,7 @@ class Simulation:
             dynamic_npis.base_value = 100000
             dynamic_npis.set_threshold(200.0, local_npis)
 
-            # school holidays(holiday periods are set per node, see set_nodes)
+            # school holidays(holiday periods are set per node)
             contacts.school_holiday_damping = damping_helper(
                 0, 1.0, 1.0, lvl_holidays, typ_school, [loc_school])
             contacts.dampings = dampings
@@ -534,17 +534,12 @@ class Simulation:
             data_dir_Germany, "mobility", "commuter_mobility_2022.txt")
         pydata_dir = os.path.join(data_dir_Germany, "pydata")
 
-        path_population_data = os.path.join(pydata_dir,
-                                            "county_current_population.json")
-
-        mio.osecir.set_nodes(
+        graph = mio.osecir.create_graph_german_county(
             model.parameters,
             mio.Date(self.start_date.year,
                      self.start_date.month, self.start_date.day),
-            mio.Date(end_date.year,
-                     end_date.month, end_date.day), pydata_dir,
-            path_population_data, True, graph, scaling_factor_infected,
-            scaling_factor_icu, tnt_capacity_factor, 0, False)
+            mio.Date(end_date.year, end_date.month, end_date.day),
+            scaling_factor_infected, scaling_factor_icu, pydata_dir, tnt_capacity_factor)
 
         mio.osecir.set_edges(
             mobility_data_file, graph, len(Location))

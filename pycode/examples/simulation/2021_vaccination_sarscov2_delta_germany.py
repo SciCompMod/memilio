@@ -594,7 +594,7 @@ class Simulation:
 
         params.DynamicNPIsInfectedSymptoms = dynamic_npis
 
-        # school holidays (holiday periods are set per node, see set_nodes)
+        # school holidays (holiday periods are set per node)
         school_holiday_value = mio.UncertainValue(0.5 * (1.0 + 1.0))
         school_holiday_value.set_distribution(
             mio.ParameterDistributionUniform(1.0, 1.0))
@@ -624,15 +624,9 @@ class Simulation:
             data_dir_Germany, "mobility", "commuter_mobility_2022.txt")
         pydata_dir = os.path.join(data_dir_Germany, "pydata")
 
-        path_population_data = os.path.join(pydata_dir,
-                                            "county_current_population.json")
-
-        osecirvvs.set_nodes(
-            model.parameters,
-            self.start_date,
-            end_date, pydata_dir,
-            path_population_data, True, graph, scaling_factor_infected,
-            scaling_factor_icu, tnt_capacity_factor, end_date - self.start_date, False)
+        graph = mio.osecir.create_graph_german_county(
+            model.parameters, self.start_date, end_date,
+            scaling_factor_infected, scaling_factor_icu, pydata_dir, tnt_capacity_factor)
 
         osecirvvs.set_edges(
             mobility_data_file, graph, len(Location))

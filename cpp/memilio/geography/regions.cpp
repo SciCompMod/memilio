@@ -30,6 +30,7 @@ namespace regions
 
 StateId get_state_id(int county)
 {
+    // integer division
     return StateId(county / 1000);
 }
 

@@ -32,8 +32,11 @@
 #include "memilio/geography/regions.h"
 
 #include <numbers>
+#include <vector>
 
 #include <gtest/gtest.h>
+
+using ModelT = mio::osecir::Model<double>;
 
 TEST(TestOdeSecir, compareWithPreviousRun)
 {
@@ -50,7 +53,7 @@ TEST(TestOdeSecir, compareWithPreviousRun)
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    mio::osecir::Model<double> model(1);
+    ModelT model(1);
 
     model.parameters.set<mio::osecir::StartDay<double>>(60);
     model.parameters.set<mio::osecir::Seasonality<double>>(0.2);
@@ -95,8 +98,7 @@ TEST(TestOdeSecir, compareWithPreviousRun)
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-3);
     integrator->set_abs_tolerance(1e-1);
-    mio::TimeSeries<double> secihurd =
-        mio::simulate<double, mio::osecir::Model<double>>(t0, tmax, dt, model, std::move(integrator));
+    mio::TimeSeries<double> secihurd = mio::simulate<double, ModelT>(t0, tmax, dt, model, std::move(integrator));
 
     auto compare = load_test_data_csv<double>("secihurd-compare.csv");
 
@@ -116,7 +118,7 @@ TEST(TestOdeSecir, simulateDefault)
     double tmax = 1;
     double dt   = 0.1;
 
-    mio::osecir::Model<double> model(1);
+    ModelT model(1);
     mio::TimeSeries<double> result = mio::simulate<double>(t0, tmax, dt, model);
 
     EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
@@ -132,7 +134,7 @@ TEST(TestOdeSecir, checkPopulationConservation)
 
     double nb_total_t0 = 10000;
 
-    mio::osecir::Model<double> model(1);
+    ModelT model(1);
 
     model.parameters.get<mio::osecir::TestAndTraceCapacity<double>>() = 35;
 
@@ -190,7 +192,7 @@ TEST(TestOdeSecir, testParamConstructors)
     double icu_cap   = 4444;
     double start_day = 30, seasonality = 0.3;
 
-    mio::osecir::Model<double> model(1);
+    ModelT model(1);
 
     model.parameters.set<mio::osecir::ICUCapacity<double>>(icu_cap);
 
@@ -226,7 +228,7 @@ TEST(TestOdeSecir, testParamConstructors)
     contact_matrix[0] = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     contact_matrix[0].add_damping(0.7, mio::SimulationTime<double>(30.));
 
-    mio::osecir::Model<double> model2{model}; // copy constructor
+    ModelT model2{model}; // copy constructor
 
     EXPECT_EQ(model.parameters.get<mio::osecir::ICUCapacity<double>>(),
               model2.parameters.get<mio::osecir::ICUCapacity<double>>());
@@ -283,7 +285,7 @@ TEST(TestOdeSecir, testParamConstructors)
     EXPECT_EQ(model.parameters.get<mio::osecir::ContactPatterns<double>>().get_cont_freq_mat(),
               model2.parameters.get<mio::osecir::ContactPatterns<double>>().get_cont_freq_mat());
 
-    mio::osecir::Model<double> model3 = std::move(model2); // move constructor
+    ModelT model3 = std::move(model2); // move constructor
 
     EXPECT_EQ(model.parameters.get<mio::osecir::ICUCapacity<double>>(),
               model3.parameters.get<mio::osecir::ICUCapacity<double>>());
@@ -339,7 +341,7 @@ TEST(TestOdeSecir, testParamConstructors)
     EXPECT_EQ(model.parameters.get<mio::osecir::ContactPatterns<double>>().get_cont_freq_mat(),
               model3.parameters.get<mio::osecir::ContactPatterns<double>>().get_cont_freq_mat());
 
-    mio::osecir::Model<double> model4 = model3; // copy assignment constructor
+    ModelT model4 = model3; // copy assignment constructor
 
     EXPECT_EQ(model4.parameters.get<mio::osecir::ICUCapacity<double>>(),
               model3.parameters.get<mio::osecir::ICUCapacity<double>>());
@@ -395,7 +397,7 @@ TEST(TestOdeSecir, testParamConstructors)
     EXPECT_EQ(model4.parameters.get<mio::osecir::ContactPatterns<double>>().get_cont_freq_mat(),
               model3.parameters.get<mio::osecir::ContactPatterns<double>>().get_cont_freq_mat());
 
-    mio::osecir::Model<double> model5 = std::move(model4); // move assignment constructor
+    ModelT model5 = std::move(model4); // move assignment constructor
 
     EXPECT_EQ(model5.parameters.get<mio::osecir::ICUCapacity<double>>(),
               model3.parameters.get<mio::osecir::ICUCapacity<double>>());
@@ -462,7 +464,7 @@ TEST(TestOdeSecir, testSettersAndGetters)
         vec.push_back(val);
     }
 
-    mio::osecir::Model<double> model(1);
+    ModelT model(1);
     EXPECT_EQ(model.parameters.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0].get_distribution().get(),
               nullptr);
 
@@ -585,7 +587,7 @@ TEST(TestOdeSecir, testSettersAndGetters)
 TEST(TestOdeSecir, population_zero_no_nan)
 {
     // initialize simple model with total population 0
-    mio::osecir::Model<double> model(1);
+    ModelT model(1);
     model.populations.set_total(0.0);
 
     // call the get_flows function
@@ -616,7 +618,7 @@ TEST(TestOdeSecir, testDamping)
     double nb_total_t0 = 1000, nb_inf_t0 = 10;
 
     // default model run to be compared against
-    mio::osecir::Model<double> model_a(1);
+    ModelT model_a(1);
     model_a.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = nb_inf_t0;
     model_a.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
                                                   nb_total_t0);
@@ -630,7 +632,7 @@ TEST(TestOdeSecir, testDamping)
                                                     std::make_unique<mio::EulerIntegratorCore<ScalarType>>());
 
     // reduced transmission
-    mio::osecir::Model<double> model_b{model_a};
+    ModelT model_b{model_a};
     model_b.populations.set_total(nb_total_t0);
     model_b.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = nb_inf_t0;
     model_b.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
@@ -644,7 +646,7 @@ TEST(TestOdeSecir, testDamping)
     EXPECT_EQ(2 * result_b[1].get_last_value()[0], result_a[1].get_last_value()[0]);
 
     // no transmission
-    mio::osecir::Model<double> model_c{model_a};
+    ModelT model_c{model_a};
     model_c.populations.set_total(nb_total_t0);
     model_c.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = nb_inf_t0;
     model_c.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
@@ -658,7 +660,7 @@ TEST(TestOdeSecir, testDamping)
     EXPECT_EQ(result_c[1].get_last_value()[0], 0.0);
 
     // increased transmission to a factor of two (by +1)
-    mio::osecir::Model<double> model_d{model_a};
+    ModelT model_d{model_a};
     model_d.populations.set_total(nb_total_t0);
     model_d.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = nb_inf_t0;
     model_d.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
@@ -685,7 +687,7 @@ TEST(TestOdeSecir, testModelConstraints)
     double nb_total_t0 = 1000000, nb_exp_t0 = 10000, nb_inf_t0 = 5000, nb_car_t0 = 500, nb_hosp_t0 = 20, nb_icu_t0 = 0,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    mio::osecir::Model<double> model(1);
+    ModelT model(1);
 
     model.parameters.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0]            = 2.6;
     model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)0] = 2.6;
@@ -771,7 +773,7 @@ TEST(TestOdeSecir, testAndTraceCapacity)
 
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50;
 
-    mio::osecir::Model<double> model(1);
+    ModelT model(1);
     auto& params = model.parameters;
 
     params.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0]            = 3.2;
@@ -818,7 +820,7 @@ TEST(TestOdeSecir, testAndTraceCapacity)
 TEST(TestOdeSecir, getInfectionsRelative)
 {
     size_t num_groups = 3;
-    mio::osecir::Model<double> model((int)num_groups);
+    ModelT model((int)num_groups);
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = 100.0;
     model.populations.set_difference_from_group_total<mio::AgeGroup>(
         {mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, 10'000.0);
@@ -837,7 +839,7 @@ TEST(TestOdeSecir, getInfectionsRelative)
 TEST(TestOdeSecir, get_reproduction_number)
 {
     const size_t num_groups = 3;
-    mio::osecir::Model<double> model((int)num_groups);
+    ModelT model((int)num_groups);
 
     mio::ContactMatrixGroup<double>& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0]                               = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(3, 3, 10));
@@ -1004,13 +1006,13 @@ TEST(TestOdeSecir, get_reproduction_number)
 
 TEST(Secir, get_mobility_factors)
 {
-    auto beta                                                                           = 0.25;
-    auto max_beta                                                                       = 0.5;
-    auto model                                                                          = mio::osecir::Model<double>(1);
-    model.parameters.get<mio::osecir::TimeExposed<double>>().array()                    = 3.;
-    model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>().array()         = 2.;
-    model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>().array() = 0.1;
-    model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>().array() = beta;
+    auto beta                                                                              = 0.25;
+    auto max_beta                                                                          = 0.5;
+    auto model                                                                             = ModelT(1);
+    model.parameters.get<mio::osecir::TimeExposed<double>>().array()                       = 3.;
+    model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>().array()            = 2.;
+    model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>().array()    = 0.1;
+    model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>().array()    = beta;
     model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>().array() = max_beta;
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}] = 100;
     mio::osecir::Simulation<double> sim(model, 0.0);
@@ -1038,7 +1040,7 @@ TEST(Secir, get_mobility_factors)
 
 TEST(TestOdeSecir, test_commuters)
 {
-    auto model                                      = mio::osecir::Model<double>(2);
+    auto model                                      = ModelT(2);
     auto mobility_factor                            = 0.1;
     auto non_detection_factor                       = 0.4;
     model.parameters.get_start_commuter_detection() = 0.0;
@@ -1072,7 +1074,7 @@ TEST(TestOdeSecir, test_commuters)
 
 TEST(TestOdeSecir, check_constraints_parameters)
 {
-    auto model = mio::osecir::Model<double>(1);
+    auto model = ModelT(1);
     EXPECT_EQ(model.parameters.check_constraints(), 0);
 
     mio::set_log_level(mio::LogLevel::off);
@@ -1150,7 +1152,7 @@ TEST(TestOdeSecir, check_constraints_parameters)
 
 TEST(TestOdeSecir, apply_constraints_parameters)
 {
-    auto model             = mio::osecir::Model<double>(1);
+    auto model             = ModelT(1);
     auto indx_agegroup     = mio::AgeGroup(0);
     const double tol_times = 1e-1;
 
@@ -1242,7 +1244,7 @@ public:
         , num_age_groups(6)
     {
     }
-    mio::osecir::Model<double> model;
+    ModelT model;
     size_t num_age_groups;
 
 protected:
@@ -1274,24 +1276,20 @@ protected:
 // Initialize model with data frrom external reported data. Check if the model is initialized correctly.
 TEST_F(ModelTestOdeSecir, read_input_data)
 {
-    auto model1 = std::vector<mio::osecir::Model<double>>{model};
-    auto model2 = std::vector<mio::osecir::Model<double>>{model};
-    auto model3 = std::vector<mio::osecir::Model<double>>{model};
+    auto model1 = std::vector<mio::Node<ModelT>>{mio::Node<ModelT>(1002, model)};
+    auto model2 = std::vector<mio::Node<ModelT>>{mio::Node<ModelT>(1002, model)};
 
-    auto read_result1 = mio::osecir::read_input_data_county(model1, {2020, 12, 01}, {1002},
-                                                            std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                            TEST_GERMANY_PYDATA_DIR, 10);
+    auto pydata_germany_path = std::string(TEST_GERMANY_PYDATA_DIR);
+    auto read_result1 = mio::osecir::read_input_data(mio::make_range(model1.begin(), model1.end()), {2020, 12, 01},
+                                                     std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+                                                     mio::regions::de::EpidataFilenames::county(pydata_germany_path));
 
-    auto read_result2 =
-        mio::osecir::read_input_data(model2, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0),
-                                     1.0, TEST_GERMANY_PYDATA_DIR, 10);
-
-    auto read_result_district =
-        mio::osecir::read_input_data(model3, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0),
-                                     1.0, mio::path_join(TEST_DATA_DIR, "District", "pydata"), 10);
+    auto pydata_district_path = mio::path_join(TEST_DATA_DIR, "District", "pydata");
+    auto read_result_district = mio::osecir::read_input_data(
+        mio::make_range(model2.begin(), model2.end()), {2020, 12, 01}, std::vector<double>(size_t(num_age_groups), 1.0),
+        1.0, mio::regions::de::EpidataFilenames::county(pydata_district_path));
 
     EXPECT_THAT(read_result1, IsSuccess());
-    EXPECT_THAT(read_result2, IsSuccess());
     EXPECT_THAT(read_result_district, IsSuccess());
 
     // values were generated by the tested function; can only check stability of the implementation, not correctness
@@ -1303,11 +1301,9 @@ TEST_F(ModelTestOdeSecir, read_input_data)
          10.5181, 3.2967, 0, 3.28571, 0, 0.657143, 1.33333, 38.3, 7.57143)
             .finished();
 
-    EXPECT_THAT(print_wrap(model1[0].populations.array().cast<double>()),
+    EXPECT_THAT(print_wrap(model1[0].property.populations.array().cast<double>()),
                 MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
-    EXPECT_THAT(print_wrap(model2[0].populations.array().cast<double>()),
-                MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
-    EXPECT_THAT(print_wrap(model3[0].populations.array().cast<double>()),
+    EXPECT_THAT(print_wrap(model2[0].property.populations.array().cast<double>()),
                 MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
 }
 
@@ -1317,16 +1313,15 @@ TEST_F(ModelTestOdeSecir, export_time_series_init)
     TempFileRegister temp_file_register;
     auto tmp_results_dir = temp_file_register.get_unique_path();
     EXPECT_THAT(mio::create_directory(tmp_results_dir), IsSuccess());
-    const auto pydata_dir_Germany = mio::path_join(TEST_DATA_DIR, "Germany", "pydata");
+    auto pydata_dir_Germany = mio::path_join(TEST_DATA_DIR, "Germany", "pydata");
 
     // Test exporting time series
-    std::vector<mio::osecir::Model<double>> models{model};
-    EXPECT_THAT(mio::osecir::export_input_data_county_timeseries(
-                    models, tmp_results_dir, {1002}, {2020, 12, 01}, std::vector<double>(size_t(num_age_groups), 1.0),
-                    1.0, 2, mio::path_join(pydata_dir_Germany, "county_divi_ma7.json"),
-                    mio::path_join(pydata_dir_Germany, "cases_all_county_age_ma7.json"),
-                    mio::path_join(pydata_dir_Germany, "county_current_population.json")),
-                IsSuccess());
+    std::vector<mio::Node<ModelT>> models{mio::Node<ModelT>(1002, model)};
+    EXPECT_THAT(
+        mio::osecir::export_input_data_timeseries(mio::make_range(models.begin(), models.end()), tmp_results_dir,
+                                                  {2020, 12, 01}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+                                                  2, mio::regions::de::EpidataFilenames::county(pydata_dir_Germany)),
+        IsSuccess());
 
     auto data_extrapolated = mio::read_result(mio::path_join(tmp_results_dir, "Results_rki.h5"));
     EXPECT_THAT(data_extrapolated, IsSuccess());
@@ -1347,16 +1342,15 @@ TEST_F(ModelTestOdeSecir, export_time_series_init_old_date)
     TempFileRegister temp_file_register;
     auto tmp_results_dir = temp_file_register.get_unique_path();
     EXPECT_THAT(mio::create_directory(tmp_results_dir), IsSuccess());
-    const auto pydata_dir_Germany = mio::path_join(TEST_DATA_DIR, "Germany", "pydata");
+    auto pydata_dir_Germany = mio::path_join(TEST_DATA_DIR, "Germany", "pydata");
 
     // Test exporting time series
-    std::vector<mio::osecir::Model<double>> models{model};
-    EXPECT_THAT(mio::osecir::export_input_data_county_timeseries(
-                    models, tmp_results_dir, {1002}, {1000, 12, 01}, std::vector<double>(size_t(num_age_groups), 1.0),
-                    1.0, 0, mio::path_join(pydata_dir_Germany, "county_divi_ma7.json"),
-                    mio::path_join(pydata_dir_Germany, "cases_all_county_age_ma7.json"),
-                    mio::path_join(pydata_dir_Germany, "county_current_population.json")),
-                IsSuccess());
+    std::vector<mio::Node<ModelT>> models{mio::Node<ModelT>(1002, model)};
+    EXPECT_THAT(
+        mio::osecir::export_input_data_timeseries(mio::make_range(models.begin(), models.end()), tmp_results_dir,
+                                                  {1000, 12, 01}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+                                                  2, mio::regions::de::EpidataFilenames::county(pydata_dir_Germany)),
+        IsSuccess());
 
     auto data_extrapolated = mio::read_result(mio::path_join(tmp_results_dir, "Results_rki.h5"));
     EXPECT_THAT(data_extrapolated, IsSuccess());
@@ -1382,12 +1376,12 @@ TEST_F(ModelTestOdeSecir, export_time_series_init_old_date)
 TEST_F(ModelTestOdeSecir, model_initialization)
 {
     // Vector assignment necessary as read_input_data_county changes model
-    auto model_vector             = std::vector<mio::osecir::Model<double>>{model};
-    const auto pydata_dir_Germany = mio::path_join(TEST_DATA_DIR, "Germany", "pydata");
+    auto model_vector       = std::vector<mio::Node<ModelT>>{mio::Node<ModelT>(1002, model)};
+    auto pydata_dir_Germany = mio::path_join(TEST_DATA_DIR, "Germany", "pydata");
 
-    EXPECT_THAT(mio::osecir::read_input_data_county(model_vector, {2020, 12, 01}, {1002},
-                                                    std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                    pydata_dir_Germany, 2, false),
+    EXPECT_THAT(mio::osecir::read_input_data(mio::make_range(model_vector.begin(), model_vector.end()), {2020, 12, 01},
+                                             std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+                                             mio::regions::de::EpidataFilenames::county(pydata_dir_Germany)),
                 IsSuccess());
 
     // Values from data/export_time_series_init_osecir.h5, for reading in comparison
@@ -1400,7 +1394,7 @@ TEST_F(ModelTestOdeSecir, model_initialization)
          10.5181, 3.2967, 0, 3.28571, 0, 0.657143, 1.33333, 38.3, 7.57143)
             .finished();
 
-    EXPECT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
+    EXPECT_THAT(print_wrap(model_vector[0].property.populations.array().cast<double>()),
                 MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
 }
 
@@ -1409,12 +1403,12 @@ TEST_F(ModelTestOdeSecir, model_initialization_old_date)
 {
     mio::set_log_level(mio::LogLevel::off);
     // Vector assignment necessary as read_input_data_county changes model
-    auto model_vector             = std::vector<mio::osecir::Model<double>>{model};
-    const auto pydata_dir_Germany = mio::path_join(TEST_DATA_DIR, "Germany", "pydata");
+    auto model_vector       = std::vector<mio::Node<ModelT>>{mio::Node<ModelT>(1002, model)};
+    auto pydata_dir_Germany = mio::path_join(TEST_DATA_DIR, "Germany", "pydata");
 
-    EXPECT_THAT(mio::osecir::read_input_data_county(model_vector, {1000, 12, 01}, {1002},
-                                                    std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                    pydata_dir_Germany, 0, false),
+    EXPECT_THAT(mio::osecir::read_input_data(mio::make_range(model_vector.begin(), model_vector.end()), {1000, 12, 01},
+                                             std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+                                             mio::regions::de::EpidataFilenames::county(pydata_dir_Germany)),
                 IsSuccess());
 
     // if we enter an old date, the model only should be initialized with the population data.
@@ -1431,7 +1425,7 @@ TEST_F(ModelTestOdeSecir, model_initialization_old_date)
          population_data[0][5], 0, 0, 0, 0, 0, 0, 0, 0, 0)
             .finished();
 
-    auto results_extrapolated = model_vector[0].populations.array().cast<double>();
+    auto results_extrapolated = model_vector[0].property.populations.array().cast<double>();
 
     for (size_t i = 0; i < num_age_groups; i++) {
         EXPECT_EQ(results_extrapolated(i * Eigen::Index(mio::osecir::InfectionState::Count)), population_data[0][i]);
@@ -1444,14 +1438,17 @@ TEST_F(ModelTestOdeSecir, model_initialization_old_date)
 TEST(TestOdeSecir, set_divi_data_invalid_dates)
 {
     mio::set_log_level(mio::LogLevel::off);
-    auto model = mio::osecir::Model<double>(1);
+    auto model = ModelT(1);
     model.populations.array().setConstant(1);
-    auto model_vector = std::vector<mio::osecir::Model<double>>{model};
+    auto model_vector = std::vector<mio::Node<ModelT>>{mio::Node<ModelT>(1001, model)};
 
     // Test with date before DIVI dataset was available.
-    EXPECT_THAT(mio::osecir::details::set_divi_data(model_vector, "", {1001}, {2019, 12, 01}, 1.0), IsSuccess());
+    EXPECT_THAT(mio::osecir::details::set_divi_data(mio::make_range(model_vector.begin(), model_vector.end()), "",
+                                                    {2019, 12, 01}, 1.0),
+                IsSuccess());
+
     // Assure that populations is the same as before.
-    EXPECT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
+    EXPECT_THAT(print_wrap(model_vector[0].property.populations.array().cast<double>()),
                 MatrixNear(print_wrap(model.populations.array().cast<double>()), 1e-10, 1e-10));
 
     mio::set_log_level(mio::LogLevel::warn);
@@ -1462,10 +1459,9 @@ TEST(TestOdeSecir, set_divi_data_empty_data)
     // Create an empty DIVI data vector
     std::vector<mio::DiviEntry> empty_data;
     std::vector<int> regions = {0, 1};
-    std::vector<double> num_icu(regions.size(), 0.0);
     mio::Date date(2020, 4, 1);
 
-    auto result = mio::compute_divi_data(empty_data, regions, date, num_icu);
+    auto result = mio::compute_divi_data(empty_data, regions, date);
 
     // Expect failure due to empty DIVI data
     EXPECT_FALSE(result);
@@ -1475,13 +1471,16 @@ TEST(TestOdeSecir, set_divi_data_empty_data)
 
 TEST_F(ModelTestOdeSecir, set_confirmed_cases_data_with_ICU)
 {
+    auto model_test = ModelT{model};
+    model_test.populations.array().setConstant(1);
+
     // set params
     for (auto age_group = mio::AgeGroup(0); age_group < (mio::AgeGroup)num_age_groups; age_group++) {
-        model.parameters.get<mio::osecir::CriticalPerSevere<double>>()[age_group]         = 1.0;
-        model.parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[age_group] = 1.0;
-        model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[age_group]      = 1.0;
-        model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[age_group]        = 1.0;
-        model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[age_group]      = 1.0;
+        model_test.parameters.get<mio::osecir::CriticalPerSevere<double>>()[age_group]         = 1.0;
+        model_test.parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[age_group] = 1.0;
+        model_test.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[age_group]      = 1.0;
+        model_test.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[age_group]        = 1.0;
+        model_test.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[age_group]      = 1.0;
     }
 
     // read case data
@@ -1502,10 +1501,9 @@ TEST_F(ModelTestOdeSecir, set_confirmed_cases_data_with_ICU)
     auto mid_day = case_data[(size_t)case_data.size() / 2].date;
 
     // calculate ICU values using set_confirmed_cases_data
-    auto model_vector       = std::vector<mio::osecir::Model<double>>{model};
-    auto scaling_factor_inf = std::vector<double>(size_t(model.parameters.get_num_groups()), 1.0);
+    auto scaling_factor_inf = std::vector<double>(size_t(model_test.parameters.get_num_groups()), 1.0);
     EXPECT_THAT(
-        mio::osecir::details::set_confirmed_cases_data(model_vector, case_data, {1002}, mid_day, scaling_factor_inf),
+        mio::osecir::details::set_confirmed_cases_data(model_test, case_data, 1002, mid_day, scaling_factor_inf),
         IsSuccess());
 
     // Since, TimeInfectedCritical is 1, the number of ICU cases is the difference of confirmed cases between two days, which is 1.
@@ -1513,7 +1511,7 @@ TEST_F(ModelTestOdeSecir, set_confirmed_cases_data_with_ICU)
     for (size_t i = 0; i < num_age_groups; ++i) {
         const auto expected_value = (i == 2) ? 1.0 : 0.0;
         const auto actual_value =
-            model_vector[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::InfectedCritical}].value();
+            model_test.populations[{mio::AgeGroup(i), mio::osecir::InfectionState::InfectedCritical}].value();
         EXPECT_NEAR(actual_value, expected_value, 1e-10);
     }
 }
@@ -1536,35 +1534,36 @@ TEST(TestOdeSecirIO, read_input_data_county_aggregates_one_group)
 {
     // Set up two models with different number of age groups.
     const size_t num_age_groups = 6;
-    std::vector<mio::osecir::Model<double>> models6{mio::osecir::Model<double>((int)num_age_groups)};
-    std::vector<mio::osecir::Model<double>> models1{mio::osecir::Model<double>(1)};
+    std::vector<mio::Node<ModelT>> models6{mio::Node<ModelT>(1002, (int)num_age_groups)};
+    std::vector<mio::Node<ModelT>> models1{mio::Node<ModelT>(1002, 1)};
 
     // Relevant parameters for model with 6 age groups
     for (auto i = mio::AgeGroup(0); i < (mio::AgeGroup)num_age_groups; ++i) {
-        models6[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[i] = 0.2;
-        models6[0].parameters.get<mio::osecir::CriticalPerSevere<double>>()[i]         = 0.25;
+        models6[0].property.parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[i] = 0.2;
+        models6[0].property.parameters.get<mio::osecir::CriticalPerSevere<double>>()[i]         = 0.25;
     }
 
     // Relevant parameters for model with 1 age group
-    models1[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[mio::AgeGroup(0)] = 0.2;
-    models1[0].parameters.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(0)]         = 0.25;
+    models1[0].property.parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[mio::AgeGroup(0)] = 0.2;
+    models1[0].property.parameters.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(0)]         = 0.25;
 
-    const auto pydata_dir_Germany = mio::path_join(TEST_DATA_DIR, "Germany", "pydata");
-    const std::vector<int> counties{1002};
-    const auto date = mio::Date(2020, 12, 1);
+    auto pydata_dir_Germany = mio::path_join(TEST_DATA_DIR, "Germany", "pydata");
+    const auto date         = mio::Date(2020, 12, 1);
 
     std::vector<double> scale6(num_age_groups, 1.0);
     std::vector<double> scale1{1.0};
 
     // Initialize both models
-    ASSERT_THAT(mio::osecir::read_input_data_county(models6, date, counties, scale6, 1.0, pydata_dir_Germany),
+    ASSERT_THAT(mio::osecir::read_input_data(mio::make_range(models6.begin(), models6.end()), date, scale6, 1.0,
+                                             mio::regions::de::EpidataFilenames::county(pydata_dir_Germany)),
                 IsSuccess());
-    ASSERT_THAT(mio::osecir::read_input_data_county(models1, date, counties, scale1, 1.0, pydata_dir_Germany),
+    ASSERT_THAT(mio::osecir::read_input_data(mio::make_range(models1.begin(), models1.end()), date, scale1, 1.0,
+                                             mio::regions::de::EpidataFilenames::county(pydata_dir_Germany)),
                 IsSuccess());
 
     // Aggreagate the results from the model with 6 age groups and compare with the model with 1 age group
-    const auto& m6   = models6[0];
-    const auto& m1   = models1[0];
+    const auto& m6   = models6[0].property;
+    const auto& m1   = models1[0].property;
     const double tol = 1e-10;
     for (int s = 0; s < (int)mio::osecir::InfectionState::Count; ++s) {
         double sum6 = 0.0;
@@ -1584,32 +1583,32 @@ TEST(TestOdeSecirIO, set_population_data_single_age_group)
     const size_t num_age_groups = 6;
 
     // Create two models: one with 6 age groups, one with 1 age group
-    std::vector<mio::osecir::Model<double>> models6{mio::osecir::Model<double>((int)num_age_groups)};
-    std::vector<mio::osecir::Model<double>> models1{mio::osecir::Model<double>(1)};
+    ModelT models6{(int)num_age_groups};
+    ModelT models1{1};
 
     // Test population data with 6 different values for age groups
-    std::vector<std::vector<double>> population_data6 = {{10000.0, 20000.0, 30000.0, 25000.0, 15000.0, 8000.0}};
-    std::vector<std::vector<double>> population_data1 = {{108000.0}}; // sum of all age groups
-    std::vector<int> regions                          = {1002};
+    std::vector<double> population_data6 = {10000.0, 20000.0, 30000.0, 25000.0, 15000.0, 8000.0};
+    std::vector<double> population_data1 = {108000.0}; // sum of all age groups
+    const int region                     = 1002;
 
     // Set population data for both models
-    EXPECT_THAT(mio::osecir::details::set_population_data(models6, population_data6, regions), IsSuccess());
-    EXPECT_THAT(mio::osecir::details::set_population_data(models1, population_data1, regions), IsSuccess());
+    EXPECT_THAT(mio::osecir::details::set_population_data(models6, population_data6, region), IsSuccess());
+    EXPECT_THAT(mio::osecir::details::set_population_data(models1, population_data1, region), IsSuccess());
 
     // Sum all compartments across age groups in 6-group model and compare 1-group model
     const double tol = 1e-10;
     for (int s = 0; s < (int)mio::osecir::InfectionState::Count; ++s) {
         double sum6 = 0.0;
         for (size_t ag = 0; ag < num_age_groups; ++ag) {
-            sum6 += models6[0].populations[{mio::AgeGroup(ag), (mio::osecir::InfectionState)s}].value();
+            sum6 += models6.populations[{mio::AgeGroup(ag), (mio::osecir::InfectionState)s}].value();
         }
-        double val1 = models1[0].populations[{mio::AgeGroup(0), (mio::osecir::InfectionState)s}].value();
+        double val1 = models1.populations[{mio::AgeGroup(0), (mio::osecir::InfectionState)s}].value();
 
         EXPECT_NEAR(sum6, val1, tol);
     }
 
     // Total population should also match
-    EXPECT_NEAR(models6[0].populations.get_total(), models1[0].populations.get_total(), tol);
+    EXPECT_NEAR(models6.populations.get_total(), models1.populations.get_total(), tol);
 }
 
 TEST(TestOdeSecirIO, set_confirmed_cases_data_single_age_group)
@@ -1617,8 +1616,8 @@ TEST(TestOdeSecirIO, set_confirmed_cases_data_single_age_group)
     const size_t num_age_groups = 6;
 
     // Create two models: one with 6 age groups, one with 1 age group
-    std::vector<mio::osecir::Model<double>> models6{mio::osecir::Model<double>((int)num_age_groups)};
-    std::vector<mio::osecir::Model<double>> models1{mio::osecir::Model<double>(1)};
+    ModelT models6{(int)num_age_groups};
+    ModelT models1{1};
 
     // Create case data for all 6 age groups over multiple days (current day + 6 days back)
     std::vector<mio::ConfirmedCasesDataEntry> case_data;
@@ -1626,7 +1625,7 @@ TEST(TestOdeSecirIO, set_confirmed_cases_data_single_age_group)
     for (int day_offset = -6; day_offset <= 0; ++day_offset) {
         mio::Date current_date = mio::offset_date_by_days(mio::Date(2020, 12, 1), day_offset);
 
-        for (int age_group = 0; age_group < 6; ++age_group) {
+        for (int age_group = 0; age_group < (int)num_age_groups; ++age_group) {
             double base_confirmed = 80.0 + age_group * 8.0 + (day_offset + 6) * 5.0;
             double base_recovered = 40.0 + age_group * 4.0 + (day_offset + 6) * 3.0;
             double base_deaths    = 3.0 + age_group * 0.5 + (day_offset + 6) * 0.5;
@@ -1643,14 +1642,14 @@ TEST(TestOdeSecirIO, set_confirmed_cases_data_single_age_group)
         }
     }
 
-    std::vector<int> regions            = {1002};
+    const int region                    = 1002;
     std::vector<double> scaling_factors = {1.0};
 
     // Set confirmed cases data for both models
-    EXPECT_THAT(mio::osecir::details::set_confirmed_cases_data(models6, case_data, regions, mio::Date(2020, 12, 1),
+    EXPECT_THAT(mio::osecir::details::set_confirmed_cases_data(models6, case_data, region, mio::Date(2020, 12, 1),
                                                                scaling_factors),
                 IsSuccess());
-    EXPECT_THAT(mio::osecir::details::set_confirmed_cases_data(models1, case_data, regions, mio::Date(2020, 12, 1),
+    EXPECT_THAT(mio::osecir::details::set_confirmed_cases_data(models1, case_data, region, mio::Date(2020, 12, 1),
                                                                scaling_factors),
                 IsSuccess());
 
@@ -1658,43 +1657,46 @@ TEST(TestOdeSecirIO, set_confirmed_cases_data_single_age_group)
     for (int s = 0; s < (int)mio::osecir::InfectionState::Count; ++s) {
         double sum6 = 0.0;
         for (size_t ag = 0; ag < num_age_groups; ++ag) {
-            sum6 += models6[0].populations[{mio::AgeGroup(ag), (mio::osecir::InfectionState)s}].value();
+            sum6 += models6.populations[{mio::AgeGroup(ag), (mio::osecir::InfectionState)s}].value();
         }
 
-        double val1 = models1[0].populations[{mio::AgeGroup(0), (mio::osecir::InfectionState)s}].value();
+        double val1 = models1.populations[{mio::AgeGroup(0), (mio::osecir::InfectionState)s}].value();
 
         EXPECT_NEAR(sum6, val1, 1e-10);
     }
 
     // Total population
-    EXPECT_NEAR(models6[0].populations.get_total(), models1[0].populations.get_total(), 1e-10);
+    EXPECT_NEAR(models6.populations.get_total(), models1.populations.get_total(), 1e-10);
 }
 
 TEST(TestOdeSecirIO, set_divi_data_single_age_group)
 {
+    const size_t num_age_groups = 6;
+
     // Create models with 6 age groups and 1 age group
-    std::vector<mio::osecir::Model<double>> models_6_groups{mio::osecir::Model<double>(6)};
-    std::vector<mio::osecir::Model<double>> models_1_group{mio::osecir::Model<double>(1)};
+    ModelT models6{(int)num_age_groups};
+    ModelT models1{1};
 
     // Set relevant parameters for all age groups
-    for (int i = 0; i < 6; i++) {
-        models_6_groups[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[mio::AgeGroup(i)] = 0.2;
-        models_6_groups[0].parameters.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(i)]         = 0.25;
+    for (int i = 0; i < (int)num_age_groups; i++) {
+        models6.parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[mio::AgeGroup(i)] = 0.2;
+        models6.parameters.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(i)]         = 0.25;
     }
 
     // Set relevant parameters for 1 age group model
-    models_1_group[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[mio::AgeGroup(0)] = 0.2;
-    models_1_group[0].parameters.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(0)]         = 0.25;
+    models1.parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[mio::AgeGroup(0)] = 0.2;
+    models1.parameters.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(0)]         = 0.25;
 
     // Apply DIVI data to both models
-    std::vector<int> regions  = {1002};
+    const int region          = 1002;
     double scaling_factor_icu = 1.0;
     mio::Date date(2020, 12, 1);
     std::string divi_data_path = mio::path_join(TEST_DATA_DIR, "Germany", "pydata", "county_divi_ma7.json");
-    auto result_6_groups =
-        mio::osecir::details::set_divi_data(models_6_groups, divi_data_path, regions, date, scaling_factor_icu);
-    auto result_1_group =
-        mio::osecir::details::set_divi_data(models_1_group, divi_data_path, regions, date, scaling_factor_icu);
+
+    auto num_icu = read_divi_data(divi_data_path, {region}, date).value();
+
+    auto result_6_groups = mio::osecir::details::set_divi_data(models6, num_icu[0], scaling_factor_icu);
+    auto result_1_group  = mio::osecir::details::set_divi_data(models1, num_icu[0], scaling_factor_icu);
 
     EXPECT_THAT(result_6_groups, IsSuccess());
     EXPECT_THAT(result_1_group, IsSuccess());
@@ -1703,10 +1705,10 @@ TEST(TestOdeSecirIO, set_divi_data_single_age_group)
     double total_icu_6_groups_after = 0.0;
     for (int i = 0; i < 6; i++) {
         total_icu_6_groups_after +=
-            models_6_groups[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::InfectedCritical}].value();
+            models6.populations[{mio::AgeGroup(i), mio::osecir::InfectionState::InfectedCritical}].value();
     }
     double icu_1_group_after =
-        models_1_group[0].populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical}].value();
+        models1.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical}].value();
 
     EXPECT_NEAR(total_icu_6_groups_after, icu_1_group_after, 1e-10);
 }
