@@ -22,6 +22,7 @@
 #include "pybind_util.h"
 #include "utils/index.h"
 #include "compartments/compartmental_model.h"
+#include "epidemiology/season.h"
 #include "utils/custom_index_array.h"
 #include "utils/parameter_set.h"
 #include "epidemiology/populations.h"
@@ -52,6 +53,10 @@ inline std::string pretty_name<mio::ssirs::InfectionState>()
 
 PYBIND11_MODULE(_simulation_ssirs, m)
 {
+    pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::Season>(m, "SeasonArray");
+    pymio::bind_class<mio::Season, pymio::EnablePickling::Required, mio::Index<mio::Season>>(m, "Season")
+        .def(py::init<size_t>());
+
     m.def("interpolate_simulation_result",
           static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
               &mio::interpolate_simulation_result),
@@ -73,7 +78,7 @@ PYBIND11_MODULE(_simulation_ssirs, m)
 
     pymio::bind_class<mio::ssirs::Parameters<double>, pymio::EnablePickling::Required,
                       mio::ssirs::ParametersBase<double>>(m, "Parameters")
-        .def(py::init<>())
+        .def(py::init<mio::Season>(), py::arg("num_seasons"))
         .def("check_constraints", &mio::ssirs::Parameters<double>::check_constraints)
         .def("apply_constraints", &mio::ssirs::Parameters<double>::apply_constraints);
 
@@ -85,7 +90,7 @@ PYBIND11_MODULE(_simulation_ssirs, m)
         mio::ssirs::Model<double>, pymio::EnablePickling::Never,
         mio::CompartmentalModel<double, mio::ssirs::InfectionState, Populations, mio::ssirs::Parameters<double>>>(
         m, "Model")
-        .def(py::init<>());
+        .def(py::init<mio::Season>(), py::arg("num_seasons"));
 
     m.def(
         "simulate_stochastic",
