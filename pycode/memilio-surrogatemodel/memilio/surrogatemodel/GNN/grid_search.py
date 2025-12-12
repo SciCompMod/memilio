@@ -51,8 +51,8 @@ DEFAULT_LAYER_TYPES = [
 ]
 
 DEFAULT_NUM_LAYERS = [2, 3, 4, 5, 6, 7]
-DEFAULT_NUM_CHANNELS = [2, 3, 4, 5, 6, 7]
-DEFAULT_ACTIVATION_FUNCTIONS = ["elu", "relu", "tanh", "sigmoid"]
+DEFAULT_NUM_CHANNELS = [32, 128, 512, 1024, 2048]
+DEFAULT_ACTIVATION_FUNCTIONS = ["relu"]
 
 # Default training configuration
 DEFAULT_BATCH_SIZE = 32
@@ -127,8 +127,7 @@ def perform_grid_search(
             "Parameter grid must contain at least one configuration.")
 
     # Convert save_dir to Path if it's a string
-    save_dir = Path(save_dir) / "saves"
-
+    save_dir = Path(save_dir)
     # Determine output dimension from data
     output_dim = data[0].y.shape[-1]
 

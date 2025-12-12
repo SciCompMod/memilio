@@ -23,8 +23,18 @@ Training and evaluation module for GNN-based surrogate models.
 This module loads GNN training data, trains/evaluates surrogate models, and saves weights plus metrics.
 """
 
+from spektral.utils.convolution import normalized_laplacian, rescale_laplacian
+from spektral.layers import ARMAConv
+from spektral.data import MixedLoader
+from memilio.surrogatemodel.utils.helper_functions import (calc_split_index)
+import memilio.surrogatemodel.GNN.network_architectures as network_architectures
+import tensorflow as tf
+import tensorflow.keras.initializers as initializers
+from tensorflow.keras.losses import MeanAbsolutePercentageError
+from tensorflow.keras.optimizers import Adam
 import pickle
 import time
+import warnings
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Tuple
@@ -33,18 +43,10 @@ import numpy as np
 import pandas as pd
 import spektral
 
-
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.losses import MeanAbsolutePercentageError
-import tensorflow.keras.initializers as initializers
-
-import tensorflow as tf
-import memilio.surrogatemodel.GNN.network_architectures as network_architectures
-from memilio.surrogatemodel.utils.helper_functions import (calc_split_index)
-
-from spektral.data import MixedLoader
-from spektral.layers import ARMAConv
-from spektral.utils.convolution import normalized_laplacian, rescale_laplacian
+# Suppress Spektral shuffle warning for StaticGraphDataset
+warnings.filterwarnings(
+    'ignore', message='.*shuffling a.*StaticGraphDataset.*',
+    category=UserWarning)
 
 
 def _iterate_batches(loader):
@@ -159,19 +161,44 @@ def load_gnn_dataset(
             f"Expected 4D arrays for inputs/labels, got {inputs.ndim} and {labels.ndim}."
         )
 
-    # Flatten temporal dimensions into feature vectors per node.
-    num_samples, input_width, num_nodes, num_features = inputs.shape
-    _, label_width, label_nodes, label_features = labels.shape
+    # Support different formats for input data
+    # New format: (samples, time, nodes, features)
+    # Old format: (samples, time, features, nodes)
+    if inputs.shape[2] == number_of_nodes:
+        # New format: (samples, time, nodes, features)
+        num_samples, input_width, num_nodes, num_features = inputs.shape
+        _, label_width, label_nodes, label_features = labels.shape
 
-    if num_nodes != number_of_nodes or label_nodes != number_of_nodes:
+        if num_nodes != number_of_nodes or label_nodes != number_of_nodes:
+            raise ValueError(
+                f"Number of nodes in dataset ({num_nodes}) does not match expected "
+                f"value ({number_of_nodes}).")
+
+        node_features = inputs.transpose(0, 2, 1, 3).reshape(
+            num_samples, number_of_nodes, input_width * num_features)
+        node_labels = labels.transpose(0, 2, 1, 3).reshape(
+            num_samples, number_of_nodes, label_width * label_features)
+
+    elif inputs.shape[3] == number_of_nodes:
+        # Old format: (samples, time, features, nodes)
+        num_samples, input_width, num_features, num_nodes = inputs.shape
+        _, label_width, label_features, label_nodes = labels.shape
+
+        if num_nodes != number_of_nodes or label_nodes != number_of_nodes:
+            raise ValueError(
+                f"Number of nodes in dataset ({num_nodes}) does not match expected "
+                f"value ({number_of_nodes}).")
+
+        node_features = inputs.transpose(0, 3, 1, 2).reshape(
+            num_samples, number_of_nodes, input_width * num_features)
+        node_labels = labels.transpose(0, 3, 1, 2).reshape(
+            num_samples, number_of_nodes, label_width * label_features)
+
+    else:
         raise ValueError(
-            f"Number of nodes in dataset ({num_nodes}) does not match expected "
-            f"value ({number_of_nodes}).")
-
-    node_features = inputs.transpose(0, 2, 1, 3).reshape(
-        num_samples, number_of_nodes, input_width * num_features)
-    node_labels = labels.transpose(0, 2, 1, 3).reshape(
-        num_samples, number_of_nodes, label_width * label_features)
+            f"Cannot determine data format. Expected number of nodes ({number_of_nodes}) "
+            f"at dimension 2 or 3, but got shapes: inputs={inputs.shape}, labels={labels.shape}"
+        )
 
     commuter_data = pd.read_csv(mobility_path, sep=" ", header=None)
     adjacency_matrix = commuter_data.iloc[

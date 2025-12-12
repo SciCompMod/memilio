@@ -469,10 +469,6 @@ def generate_data(num_runs, data_dir, output_path, input_width, label_width,
     if not os.path.exists(mobility_path):
         raise FileNotFoundError(f"Mobility file not found: {mobility_path}")
 
-    # Create base graph. A new copy will be used per run to avoid cumulative dampings.
-    base_graph = get_graph(num_groups, data_dir,
-                           mobility_path, start_date, end_date)
-
     print(f"\nGenerating {num_runs} simulation runs...")
     bar = Bar(
         'Progress', max=num_runs,
@@ -495,8 +491,10 @@ def generate_data(num_runs, data_dir, output_path, input_width, label_width,
             damping_factors = []
 
         # Run simulation
-        # Use a fresh graph copy per run to prevent damping accumulation across runs.
-        graph = copy.deepcopy(base_graph)
+        # Create a new graph for each run to prevent damping accumulation across runs.
+        # Cannot use deepcopy as ModelGraph objects are not picklable for now.
+        graph = get_graph(num_groups, data_dir,
+                          mobility_path, start_date, end_date)
 
         simulation_result, damped_mats, damping_coeffs, runtime = run_secir_groups_simulation(
             total_days, damping_days, damping_factors, graph,
@@ -579,7 +577,7 @@ def main():
 
     # Simulation parameters
     input_width = 5  # Days of history used as input
-    num_runs = 1  # Number of simulation runs
+    num_runs = 1000  # Number of simulation runs
     max_dampings = 0  # Number of NPI dampings per simulation
 
     # Prediction horizons to generate data for
