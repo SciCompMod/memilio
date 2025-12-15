@@ -2,6 +2,36 @@
 file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../data" MEMILIO_DATA_DIR)
 configure_file(data_dir.h.in data_dir.h)
 
+add_executable(graph_germany_nuts3_ode simulation_paper/graph_germany_nuts3_ode.cpp)
+target_link_libraries(graph_germany_nuts3_ode PRIVATE memilio ode_secir)
+target_compile_options(graph_germany_nuts3_ode PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(ode_runtime simulation_paper_ode/ode_runtime.cpp)
+target_link_libraries(ode_runtime PRIVATE memilio ode_secir)
+target_compile_options(ode_runtime PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(lct_runtime simulation_paper_lct/lct_runtime.cpp)
+target_link_libraries(lct_runtime PRIVATE memilio lct_secir)
+target_compile_options(lct_runtime PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(ide_runtime simulation_paper_ide/ide_runtime.cpp)
+target_link_libraries(ide_runtime PRIVATE memilio ide_secir)
+target_compile_options(ide_runtime PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+if(MEMILIO_ENABLE_MPI AND MEMILIO_ENABLE_OPENMP)
+    add_executable(ode_ensemble_runs simulation_paper_ode/ode_ensemble_runs.cpp)
+    target_link_libraries(ode_ensemble_runs PRIVATE memilio ode_secir OpenMP::OpenMP_CXX MPI::MPI_CXX)
+    target_compile_options(ode_ensemble_runs PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+    add_executable(lct_ensemble_runs simulation_paper_lct/lct_ensemble_runs.cpp)
+    target_link_libraries(lct_ensemble_runs PRIVATE memilio lct_secir OpenMP::OpenMP_CXX MPI::MPI_CXX)
+    target_compile_options(lct_ensemble_runs PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+    add_executable(ide_ensemble_runs simulation_paper_ide/ide_ensemble_runs.cpp)
+    target_link_libraries(ide_ensemble_runs PRIVATE memilio ide_secir OpenMP::OpenMP_CXX MPI::MPI_CXX)
+    target_compile_options(ide_ensemble_runs PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+endif()
+
 add_executable(euler_example euler_test.cpp)
 target_link_libraries(euler_example PRIVATE memilio)
 target_compile_options(euler_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
@@ -107,10 +137,6 @@ target_compile_options(ode_secir_ageres_example PRIVATE ${MEMILIO_CXX_FLAGS_ENAB
 add_executable(ode_secir_graph_example ode_secir_graph.cpp)
 target_link_libraries(ode_secir_graph_example PRIVATE memilio ode_secir)
 target_compile_options(ode_secir_graph_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
-
-add_executable(graph_germany_nuts3_ode simulation_paper/graph_germany_nuts3_ode.cpp)
-target_link_libraries(graph_germany_nuts3_ode PRIVATE memilio ode_secir)
-target_compile_options(graph_germany_nuts3_ode PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(graph_stochastic_mobility_example graph_stochastic_mobility.cpp)
 target_link_libraries(graph_stochastic_mobility_example PRIVATE memilio ode_secir)

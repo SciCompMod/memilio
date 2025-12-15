@@ -91,7 +91,7 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters<double>& params
     params.get<mio::osecir::TestAndTraceCapacity<double>>()                 = 0.0;
 
 
-    params.set<mio::osecir::StartDay<double>>(305);
+    params.set<mio::osecir::StartDay<double>>(334);
     params.set<mio::osecir::Seasonality<double>>(0.2);
 
     // params.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()    = 0.0;
@@ -196,13 +196,34 @@ mio::IOResult<void> set_sampled_parameters(mio::Graph<mio::osecir::Model<double>
         }
         else if (test_case == TestCase::KeepNPIFomInference){
             // t = 15, 30, 45
-            damping_value = parameter_list["damping_values"][state][2].asDouble();
+            damping_value = parameter_list["damping_values"][state - 1][2].asDouble();
         }
         else if (test_case == TestCase::Lockdown) {
-            damping_value = 1;
+            damping_value = parameter_list["damping_values"][state - 1][2].asDouble() * 1.4;
         }
         else if (test_case == TestCase::Dynamic) {
             damping_value = 0;
+
+            params.get<mio::osecir::DynamicNPIsImplementationDelay<double>>() = 5;
+
+            auto dynamic_npi_dampings1 = std::vector<mio::DampingSampling<double>>();
+            dynamic_npi_dampings1.push_back(mio::DampingSampling<double>(0.3, mio::DampingLevel(0),
+                                                    mio::DampingType(0), mio::SimulationTime<double>(0),
+                                                    {0},  Eigen::VectorXd::Constant(size_t(params.get_num_groups()), 1.0)));
+
+            auto dynamic_npi_dampings2 = std::vector<mio::DampingSampling<double>>();
+            dynamic_npi_dampings2.push_back(mio::DampingSampling<double>(0.9, mio::DampingLevel(0),
+                                                    mio::DampingType(0), mio::SimulationTime<double>(0),
+                                                    {0},  Eigen::VectorXd::Constant(size_t(params.get_num_groups()), 1.0)));
+
+
+            auto& dynamic_npis        = params.get<mio::osecir::DynamicNPIsInfectedSymptoms<double>>();
+
+            dynamic_npis.set_interval(mio::SimulationTime<double>(1.0));
+            dynamic_npis.set_duration(mio::SimulationTime<double>(14.0));
+            dynamic_npis.set_base_value(100'000);
+            dynamic_npis.set_threshold(50.0, dynamic_npi_dampings1);
+            dynamic_npis.set_threshold(250.0, dynamic_npi_dampings2);
         }
 
         mio::ContactMatrixGroup<double>& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
@@ -327,14 +348,14 @@ mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, const std:
     // auto sim = mio::make_no_mobility_sim<double>(0.0, std::move(graph));
     sim.advance(num_days_sim);
 
-    std::vector<mio::TimeSeries<double>> results;
-    results.reserve(sim.get_graph().nodes().size());
-    std::transform(sim.get_graph().nodes().begin(), sim.get_graph().nodes().end(), std::back_inserter(results),
-                   [](auto& n) {
-                       return n.property.get_result();
-                   });
+    // std::vector<mio::TimeSeries<double>> results;
+    // results.reserve(sim.get_graph().nodes().size());
+    // std::transform(sim.get_graph().nodes().begin(), sim.get_graph().nodes().end(), std::back_inserter(results),
+    //                [](auto& n) {
+    //                    return n.property.get_result();
+    //                });
 
-    // std::vector<mio::TimeSeries<double>> results = mio::interpolate_simulation_result(sim.get_graph());
+    std::vector<mio::TimeSeries<double>> results = mio::interpolate_simulation_result(sim.get_graph());
     // BOOST_OUTCOME_TRY(auto&& json_node, mio::serialize_json(sim.get_graph().nodes()[0].property.get_simulation().get_model()));
     // BOOST_OUTCOME_TRY(mio::write_json(mio::path_join(result_dir, "node0_" + test_case_name + ".json"), json_node));
     auto res = mio::save_result(results, county_ids, 1, mio::path_join(result_dir, "result_" + test_case_name + ".h5"));
@@ -364,9 +385,6 @@ int main(int argc, char** argv)
 
 
     mio::Date start_date = mio::Date(cli_parameters.get<"StartDateYear">(), cli_parameters.get<"StartDateMonth">(), cli_parameters.get<"StartDateDay">());
-
-    // std::string data_dir = "../../data";
-    // std::string result_dir = "./results";
 
     boost::filesystem::path res_dir(cli_parameters.get<"ResultDirectory">());
     boost::filesystem::create_directories(res_dir);
