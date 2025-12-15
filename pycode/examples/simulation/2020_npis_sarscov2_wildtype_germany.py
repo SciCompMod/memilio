@@ -571,7 +571,7 @@ class Simulation:
                 os.makedirs(path_graph)
             osecir.write_graph(graph, path_graph)
 
-        study = osecir.ParameterStudy(
+        study = osecir.GraphParameterStudy(
             graph, 0., num_days_sim, 0.5, num_runs)
         ensemble = study.run()
 

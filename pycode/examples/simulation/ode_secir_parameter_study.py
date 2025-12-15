@@ -113,7 +113,8 @@ def run_ode_secir_parameter_study():
     graph.add_edge(0, 1, mobility_coefficients)
     graph.add_edge(1, 0, mobility_coefficients)
 
-    study = osecir.ParameterStudy(graph, t0=0, tmax=10, dt=0.5, num_runs=3)
+    study = osecir.GraphParameterStudy(
+        graph, t0=0, tmax=10, dt=0.5, num_runs=3)
     study.run(handle_result)
 
 
