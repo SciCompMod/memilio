@@ -931,7 +931,7 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
 
     std::vector<std::string> unique_ids = {};
 
-    // Define vectors that will contain numberts of individuals in respective compartments.
+    // Define vectors that will contain numbers of individuals in respective compartments.
     size_t num_age_groups      = 6;
     size_t num_immunity_levels = 3;
 
@@ -1641,7 +1641,7 @@ IOResult<void> convert_model_data_type(mio::VectorRange<Node<Model<ScalarType>>>
  * @param[in] lha_ids IDs of counties for which LHA data is available. 
  */
 template <typename FP>
-IOResult<void> set_lha_data(const Parameters<FP>& params, mio::Graph<Model<FP>, MobilityParameters<FP>> graph_model,
+IOResult<void> set_lha_data(const Parameters<FP>& params, mio::Graph<Model<FP>, MobilityParameters<FP>>& graph_model,
                             const std::string data_dir, const Date current_date, std::vector<int> lha_ids)
 {
     using Model       = Model<FP>;
@@ -1672,7 +1672,7 @@ IOResult<void> set_lha_data(const Parameters<FP>& params, mio::Graph<Model<FP>, 
         auto it = std::find(node_ids.begin(), node_ids.end(), lha_ids[lha_counter]);
         if (it == node_ids.end()) {
             mio::log_warning(
-                "Given lha_id {} is not in vector node_ids. All counties are initialized based on RKI data.",
+                "Given lha_id {} is not in vector node_ids. The corresponding county is initialized based on RKI data.",
                 lha_ids[lha_counter]);
         }
         else {

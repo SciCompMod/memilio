@@ -703,7 +703,7 @@ public:
             }
             BaseT::advance(t + dt_eff);
             if (t + 0.5 + dt_eff - floor(t + 0.5) >= 1) {
-                this->apply_vaccination(t + 0.5 + dt_eff);
+                // this->apply_vaccination(t + 0.5 + dt_eff);
                 this->apply_variant(t, base_infectiousness);
             }
 
