@@ -287,6 +287,13 @@ public:
     }
 };
 
+/**
+ * @brief Population template specialization for Index types.
+ * 
+ * @tparam FP Floating point type
+ * @tparam Categories Index categories
+ */
+
 template <typename FP, class... Categories>
 class Populations<FP, Index<Categories...>> : public Populations<FP, Categories...>
 {

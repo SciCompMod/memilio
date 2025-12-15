@@ -43,7 +43,7 @@ struct Influence {
  * In the d_abm and smm simulations, "from" is implicitly an influence, scaled by "factor". This is multiplied by
  * the sum over all "influences", which scale their "status" with the respective "factor".
  * @tparam Status An infection state enum.
- * @tparam Groups Additional grouping indices.
+ * @tparam Region An (multi)-index.
  */
 template <typename FP, class Status, class Region = mio::regions::Region>
 struct AdoptionRate {

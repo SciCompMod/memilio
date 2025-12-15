@@ -44,6 +44,7 @@ using PopulationIndex = decltype(merge_indices(std::declval<Region>(), std::decl
  * @brief Stochastic Metapopulation Model.
  * @tparam regions Number of regions.
  * @tparam Status An infection state enum.
+ * @tparam Region An (multi)-index, default is @ref mio::regions::Region.
  */
 template <typename FP, class Comp, class StatusT = Comp, class RegionT = mio::regions::Region>
 class Model : public mio::CompartmentalModel<FP, Comp, mio::Populations<FP, PopulationIndex<StatusT, RegionT>>,
