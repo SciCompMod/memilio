@@ -148,8 +148,8 @@ Below, ``mio::abm::LogInfectionState`` is used as logger.
     graph.add_edge(model1.get_id(), model2.get_id());
     graph.add_edge(model2.get_id(), model1.get_id());
 
-To simulate the model from `start_date` to `end_date` with given graph step size `exchange_time_span`, a GraphSimulation has to be created. 
-The step size is used to regularly exchange agents via the graph edges. Advancing the simulation until `end_date` is done as follows:
+To simulate the model from ``start_date`` to ``end_date`` with given graph step size ``exchange_time_span``, a GraphSimulation has to be created. 
+The step size is used to regularly exchange agents via the graph edges. Advancing the simulation until ``end_date`` is done as follows:
 
 .. code-block:: cpp
 
