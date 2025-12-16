@@ -35,7 +35,6 @@
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/parameter_distributions.h"
 #include "memilio/utils/parameter_set.h"
-#include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/uncertain_value.h"
 #include "ode_secirts/infection_state.h"
 #include "ode_secirts/model.h"
@@ -48,7 +47,6 @@
 #include "gmock/gmock-matchers.h"
 #include <algorithm>
 #include <iterator>
-#include <limits>
 
 const mio::osecirts::Model<double>& osecirts_testing_model()
 {
@@ -141,7 +139,7 @@ TEST(TestOdeSECIRTS, get_flows)
 
 TEST(TestOdeSECIRTS, Simulation)
 {
-    auto sim        = mio::osecirts::Simulation<double>(osecirts_testing_model(), 0, 1);
+    auto sim = mio::osecirts::Simulation<double>(osecirts_testing_model(), 0, 1);
     sim.set_integrator_core(std::make_unique<mio::EulerIntegratorCore<double>>());
     sim.advance(1);
 
@@ -258,7 +256,8 @@ TEST(TestOdeSECIRTS, overflow_vaccinations)
     }
 
     // simulate one step with explicit Euler
-    auto result     = mio::simulate_flows<double, mio::osecirts::Model<double>>(t0, tmax, dt, model, std::make_unique<mio::EulerIntegratorCore<double>>());
+    auto result = mio::simulate_flows<double, mio::osecirts::Model<double>>(
+        t0, tmax, dt, model, std::make_unique<mio::EulerIntegratorCore<double>>());
 
     // get the flow indices for each type of vaccination and also the indices of the susceptible compartments
     auto flow_indx_partial_vaccination =
@@ -602,8 +601,6 @@ mio::osecirts::Model<double> make_model(int num_age_groups, bool set_invalid_ini
 
 TEST(TestOdeSECIRTS, draw_sample_graph)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     mio::Graph<mio::osecirts::Model<double>, mio::MobilityParameters<double>> graph;
 
     auto num_age_groups = 6;
@@ -663,8 +660,6 @@ TEST(TestOdeSECIRTS, draw_sample_graph)
 
 TEST(TestOdeSECIRTS, draw_sample_model)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     auto num_age_groups = 6;
     auto model          = make_model(num_age_groups, /*set_invalid_initial_value*/ true);
     mio::osecirts::draw_sample(model);
@@ -1159,8 +1154,6 @@ TEST(TestOdeSECIRTS, set_vaccination_data_min_date_not_avail)
 
 TEST(TestOdeSECIRTS, parameter_percentiles)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     //build small graph
     auto model = make_model(5);
     auto graph = mio::Graph<mio::osecirts::Model<double>, mio::MobilityParameters<double>>();

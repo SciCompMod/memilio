@@ -429,8 +429,6 @@ mio::osecirvvs::Model<double> make_model(int num_age_groups, bool set_invalid_in
 
 TEST(TestOdeSECIRVVS, draw_sample)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> graph;
 
     auto num_age_groups = 6;
@@ -1169,8 +1167,6 @@ TEST(TestOdeSECIRVVS, set_vaccination_data_min_date_not_avail)
 
 TEST(TestOdeSECIRVVS, parameter_percentiles)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     //build small graph
     auto model = make_model(5);
     auto graph = mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>();

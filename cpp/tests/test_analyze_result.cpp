@@ -26,6 +26,7 @@
 #include "memilio/utils/time_series.h"
 #include "ode_secir/analyze_result.h"
 #include "ode_secir/model.h"
+#include "utils.h"
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -679,6 +680,9 @@ TEST(TestMergeTimeSeries, joint_tp_add)
 
 TEST(TestMergeTimeSeries, joint_tp)
 {
+    mio::RedirectLogger logger;
+    logger.capture();
+
     mio::TimeSeries<double> ts1(2);
     mio::TimeSeries<double> ts2(2);
     ts1.add_time_point(0., mio::TimeSeries<double>::Vector::Constant(2, 1.));
@@ -686,8 +690,9 @@ TEST(TestMergeTimeSeries, joint_tp)
 
     //Check for both TimeSeries having only one time point
     auto merged_ts_status = mio::merge_time_series(ts1, ts2, false);
-    auto merged_ts        = merged_ts_status.value();
+    EXPECT_THAT(logger.read(), testing::HasSubstr("Both TimeSeries have values for t=0"));
     ASSERT_TRUE(merged_ts_status);
+    auto merged_ts = merged_ts_status.value();
     ASSERT_EQ(merged_ts.get_num_time_points(), 1);
     EXPECT_NEAR(merged_ts.get_time(0), 0., 1e-12);
     EXPECT_NEAR(merged_ts.get_value(0)[0], 1., 1e-12);
@@ -698,8 +703,10 @@ TEST(TestMergeTimeSeries, joint_tp)
     ts2.add_time_point(1., mio::TimeSeries<double>::Vector::Constant(2, 3.));
 
     merged_ts_status = mio::merge_time_series(ts1, ts2, false);
-    merged_ts        = merged_ts_status.value();
+    EXPECT_THAT(logger.read(), testing::AllOf(testing::HasSubstr("Both TimeSeries have values for t=0"),
+                                              testing::HasSubstr("Both TimeSeries have values for t=1")));
     ASSERT_TRUE(merged_ts_status);
+    merged_ts = merged_ts_status.value();
     ASSERT_EQ(merged_ts.get_num_time_points(), 2);
     EXPECT_NEAR(merged_ts.get_time(0), 0., 1e-12);
     EXPECT_NEAR(merged_ts.get_value(0)[0], 1., 1e-12);
@@ -707,4 +714,5 @@ TEST(TestMergeTimeSeries, joint_tp)
     EXPECT_NEAR(merged_ts.get_time(1), 1., 1e-12);
     EXPECT_NEAR(merged_ts.get_value(1)[0], 2., 1e-12);
     EXPECT_NEAR(merged_ts.get_value(1)[1], 2., 1e-12);
+    logger.release();
 }

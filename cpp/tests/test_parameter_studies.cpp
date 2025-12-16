@@ -18,13 +18,13 @@
 * limitations under the License.
 */
 #include "memilio/config.h"
-#include "memilio/utils/miompi.h"
 #include "memilio/utils/parameter_distributions.h"
 #include "ode_secir/model.h"
 #include "ode_secir/parameter_space.h"
 #include "memilio/compartments/parameter_studies.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/random_number_generator.h"
+#include "utils.h"
 #include <cstddef>
 #include <gtest/gtest.h>
 #include <numeric>
@@ -32,8 +32,6 @@
 
 TEST(ParameterStudies, sample_from_secir_params)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     double t0   = 0;
     double tmax = 100;
 
@@ -84,7 +82,10 @@ TEST(ParameterStudies, sample_from_secir_params)
 
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
 
-    draw_sample(model);
+    {
+        mio::LogLevelOverride llo(mio::LogLevel::off); // suppress draw sample warnings
+        draw_sample(model);
+    }
 
     for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
         ASSERT_EQ(params.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(0)].value(),
@@ -162,8 +163,9 @@ TEST(ParameterStudies, sample_graph)
     graph.add_edge(0, 1, mio::MobilityParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
 
     mio::ParameterStudy study(graph, 0.0, 0.0, 0.5, 1);
-    mio::log_rng_seeds(study.get_rng(), mio::LogLevel::warn);
+
     auto ensemble_results = study.run_serial([](auto&& g, auto t0_, auto dt_, auto) {
+        mio::LogLevelOverride llo(mio::LogLevel::off); // suppress draw sample warnings
         auto copy = g;
         return mio::make_sampled_graph_simulation<double, mio::osecir::Simulation<ScalarType>>(draw_sample(copy), t0_,
                                                                                                dt_, dt_);
@@ -183,8 +185,6 @@ TEST(ParameterStudies, sample_graph)
 
 TEST(ParameterStudies, test_normal_distribution)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     mio::ParameterDistributionNormal parameter_dist_normal_1;
 
     // check if standard deviation is reduced if between too narrow interval [min,max] has to be sampled.
@@ -231,8 +231,6 @@ TEST(ParameterStudies, test_normal_distribution)
 
 TEST(ParameterStudies, test_uniform_distribution)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     // check if full argument constructor works correctly
     mio::ParameterDistributionUniform parameter_dist_unif(1.0, 10.0);
 
@@ -249,8 +247,6 @@ TEST(ParameterStudies, test_uniform_distribution)
 
 TEST(ParameterStudies, test_lognormal_distribution)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     // check if full argument constructor works correctly
     mio::ParameterDistributionLogNormal parameter_dist_lognorm(0.0, 0.25);
 
@@ -260,8 +256,6 @@ TEST(ParameterStudies, test_lognormal_distribution)
 
 TEST(ParameterStudies, test_exponential_distribution)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     // check if full argument constructor works correctly
     mio::ParameterDistributionExponential parameter_dist_exponential(1.);
 
@@ -270,8 +264,6 @@ TEST(ParameterStudies, test_exponential_distribution)
 
 TEST(ParameterStudies, test_constant_distribution)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     // check if full argument constructor works correctly
     mio::ParameterDistributionConstant parameter_dist_constant(2.);
 
@@ -326,8 +318,6 @@ TEST(ParameterStudies, test_predefined_samples)
 
 TEST(ParameterStudies, check_ensemble_run_result)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     double t0   = 0;
     double tmax = 50;
 
