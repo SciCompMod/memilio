@@ -206,7 +206,9 @@ def plot_results(result, country: str):
     results_arr = result.as_ndarray()
     times = results_arr[0, :]
 
-    num_groups = result.get_num_elements() // 4  # 4 compartments to aggregate
+    num_compartments = 4  # S, E, I, R
+    # get_num_elements includes all compartments and age groups. Divide to get age groups.
+    num_groups = result.get_num_elements() // num_compartments
 
     susceptible = np.zeros(len(times))
     exposed = np.zeros(len(times))
