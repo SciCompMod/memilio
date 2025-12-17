@@ -169,11 +169,23 @@ private:
         }
     }
 
+    /// @brief Gather timers from all ranks, using external_timers as temporary timer storage for gathered_register.
     void gather_timers(mpi::Comm comm, std::list<BasicTimer>& external_timers,
                        std::list<TimerRegistration>& gathered_register) const
     {
+        if (mpi::is_root()) {
+            std::ranges::transform(m_register, std::back_inserter(gathered_register), [](const TimerRegistration& r) {
+                return TimerRegistration{r.name, r.scope, r.timer, r.thread_id, 0};
+            });
+        }
+        if (comm == nullptr) {
+            if (mpi::is_root()) {
+                log_error("Got nullptr as MPI Comm. Only timers on root rank are gathered.");
+            }
+            return;
+        }
 #ifndef MEMILIO_ENABLE_MPI
-        mio::unused(comm, external_timers, gathered_register);
+        mio::unused(comm, external_timers);
 #else
         // name, scope, timer, thread_id
         using GatherableRegistration = std::tuple<std::string, std::string, BasicTimer, int>;
@@ -181,9 +193,6 @@ private:
         MPI_Comm_size(comm, &comm_size);
 
         if (mpi::is_root()) {
-            std::ranges::transform(m_register, std::back_inserter(gathered_register), [](const TimerRegistration& r) {
-                return TimerRegistration{r.name, r.scope, r.timer, r.thread_id, 0};
-            });
             for (int snd_rank = 1; snd_rank < comm_size; snd_rank++) { // skip root rank!
                 int bytes_size;
                 MPI_Recv(&bytes_size, 1, MPI_INT, snd_rank, 0, comm, MPI_STATUS_IGNORE);
