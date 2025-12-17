@@ -25,12 +25,13 @@ model, and runs a simulation.
 
 import io
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import requests
 
 from memilio.epidata.getContactData import (load_contact_matrix)
-from memilio.simulation import AgeGroup, ContactMatrix
+from memilio.simulation import AgeGroup, ContactMatrix, Damping
 from memilio.simulation.oseir import InfectionState as State
 from memilio.simulation.oseir import (Model, interpolate_simulation_result,
                                       simulate)
@@ -43,7 +44,7 @@ POPULATION_URL = (
 
 def get_population_by_age(country_name: str):
     """
-    Loads population data for a specific country from a GitHub source (based on UN data).
+    Loads population data for a specific country from a POPULATION_URL.
     Returns the population in 5-year steps (Unit: number of people).
 
     Source: https://github.com/kieshaprem/synthetic-contact-matrices
@@ -123,6 +124,10 @@ def build_country_seir_model(
     contacts.minimum = np.zeros_like(contact_matrix)
     model.parameters.ContactPatterns.cont_freq_mat[0] = contacts
 
+    # 60% contact reduction at t=30
+    model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(
+        coeffs=np.ones((num_groups, num_groups)) * 0.6, t=30.0, level=0, type=0))
+
     # Use actual population distribution
     # transform dict to numpy array
     group_pop = np.array(list(population_by_age.values())).flatten()
@@ -162,7 +167,7 @@ def simulate_country_seir(
         country: str,
         days: float = 120.0,
         dt: float = 0.25,
-        transmission_probability: float = 0.06,
+        transmission_probability: float = 0.15,
         exposed_share: float = 1e-5,
         infected_share: float = 5e-6,
         interpolate: bool = True):
@@ -186,12 +191,50 @@ def simulate_country_seir(
     return result
 
 
+def plot_results(result, country: str):
+    """
+    Plot aggregated SEIR compartments over time.
+    """
+    results_arr = result.as_ndarray()
+    times = results_arr[0, :]
+
+    num_groups = result.get_num_elements() // 4  # 4 compartments to aggregate
+
+    susceptible = np.zeros(len(times))
+    exposed = np.zeros(len(times))
+    infected = np.zeros(len(times))
+    recovered = np.zeros(len(times))
+
+    for age_group in range(num_groups):
+        susceptible += results_arr[1 + age_group * 4, :]
+        exposed += results_arr[2 + age_group * 4, :]
+        infected += results_arr[3 + age_group * 4, :]
+        recovered += results_arr[4 + age_group * 4, :]
+
+    # Create plot
+    plt.figure(figsize=(10, 6))
+    plt.plot(times, susceptible, label='Susceptible', linewidth=2)
+    plt.plot(times, exposed, label='Exposed', linewidth=2)
+    plt.plot(times, infected, label='Infected', linewidth=2)
+    plt.plot(times, recovered, label='Recovered', linewidth=2)
+
+    plt.xlabel('Time (days)', fontsize=12)
+    plt.ylabel('Population', fontsize=12)
+    plt.title(f'SEIR Model Simulation - {country}',
+              fontsize=14, fontweight='bold')
+    plt.legend(fontsize=11)
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+
 def run_demo(country: str,
              days: float = 120.0,
              dt: float = 0.25,
-             transmission_probability: float = 0.06,
+             transmission_probability: float = 0.15,
              exposed_share: float = 1e-5,
-             infected_share: float = 5e-6):
+             infected_share: float = 5e-6,
+             plot: bool = True):
     """
     Run the SEIR simulation demo for a user defined country and parameters.
     """
@@ -205,7 +248,12 @@ def run_demo(country: str,
     )
     print(result.get_last_value())
 
+    if plot:
+        plot_results(result, country)
+
+    return result
+
 
 if __name__ == "__main__":
-    country = "India"
+    country = "Germany"
     run_demo(country=country)
