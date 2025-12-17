@@ -51,12 +51,14 @@ def get_population_by_age(country_name: str):
     """
 
     try:
-        # download the file and save only in variable
+        # Download without saving to disk
         response = requests.get(POPULATION_URL, timeout=10)
         response.raise_for_status()
+
+        # Read into Pandas
         df = pd.read_csv(io.StringIO(response.text))
 
-        # clean column names
+        # Clean column names
         df.columns = df.columns.str.strip()
 
         # Filter by country (case-insensitive)
@@ -66,16 +68,17 @@ def get_population_by_age(country_name: str):
         if row.empty:
             raise ValueError(f"Country '{country_name}' not found in data.")
 
-        # Extract relevant columns
+        # Extract relevant columns (age0, age5, ..., age100)
         age_cols = [c for c in df.columns if c.startswith('age')]
+
+        # Extract data
         pop_data = row.iloc[0][age_cols].astype(float)
 
         # Convert from thousands to absolute numbers
         pop_data = pop_data * 1000
 
-        # --- Aggregation for Memilio / Prem Matrices (usually up to 75+) ---
-        # Prem matrices in memilio often end at 75+.
-        # The CSV goes up to 100. We sum everything from 75 upwards.
+        # Contact matrices end at 75+.
+        # The CSV goes up to 100. So, we sum everything from 75 upwards.
 
         # Columns up to 70 (0-4, ..., 70-74)
         cols_up_to_70 = [f'age{i}' for i in range(0, 75, 5)]
@@ -85,15 +88,17 @@ def get_population_by_age(country_name: str):
             f'age{i}' for i in range(75, 105, 5)
             if f'age{i}' in pop_data.index]
 
-        final_pop = []
+        # Define labels for the output dict
+        labels = [
+            "0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39",
+            "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74",
+            "75+"]
 
-        # 1. Keep groups up to 70-74
-        for col in cols_up_to_70:
-            final_pop.append(pop_data[col])
-
-        # 2. Sum groups from 75+
+        final_pop = {}
+        for i, col in enumerate(cols_up_to_70):
+            final_pop[labels[i]] = pop_data[col]
         sum_75_plus = pop_data[cols_75_plus].sum()
-        final_pop.append(sum_75_plus)
+        final_pop["75+"] = sum_75_plus
 
         return final_pop
 
@@ -119,12 +124,13 @@ def build_country_seir_model(
     model.parameters.ContactPatterns.cont_freq_mat[0] = contacts
 
     # Use actual population distribution
-    group_pop = np.array(population_by_age)
+    # transform dict to numpy array
+    group_pop = np.array(list(population_by_age.values())).flatten()
 
     if len(group_pop) != num_groups:
         # If dimensions mismatch (e.g. contact matrix has different age groups),
         # we might need to adjust. For now, we assume they match (16 groups for Prem 75+).
-        # If not, we fallback to uniform distribution of total sum (not ideal but safe).
+        # If not, we fallback to uniform distribution of total sum.
         print(
             f"Warning: Population groups ({len(group_pop)}) do not match contact matrix groups ({num_groups}). Using uniform distribution.")
         total_pop = np.sum(group_pop)
@@ -161,7 +167,7 @@ def simulate_country_seir(
         infected_share: float = 5e-6,
         interpolate: bool = True):
     """
-    Load contact matrix, fetch population, build the ODE SEIR model, and run
+    Load contact matrix, population data, build the ODE SEIR model, and run
     a simulation.
     """
     contacts = load_contact_matrix(country, reduce_to_rki_groups=False)
@@ -201,5 +207,5 @@ def run_demo(country: str,
 
 
 if __name__ == "__main__":
-    country = "Germany"
+    country = "India"
     run_demo(country=country)
