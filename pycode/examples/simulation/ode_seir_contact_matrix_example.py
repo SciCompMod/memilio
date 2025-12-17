@@ -30,7 +30,8 @@ import numpy as np
 import pandas as pd
 import requests
 
-from memilio.epidata.getContactData import (load_contact_matrix)
+from memilio.epidata.getContactData import (get_available_countries,
+                                            load_contact_matrix)
 from memilio.simulation import AgeGroup, ContactMatrix, Damping
 from memilio.simulation.oseir import InfectionState as State
 from memilio.simulation.oseir import (Model, interpolate_simulation_result,
@@ -175,6 +176,13 @@ def simulate_country_seir(
     Load contact matrix, population data, build the ODE SEIR model, and run
     a simulation.
     """
+    # Validate country
+    available = get_available_countries()
+    if country not in available:
+        raise ValueError(
+            f"Country '{country}' not available. "
+            f"Use get_available_countries() to see all {len(available)} supported countries.")
+
     contacts = load_contact_matrix(country, reduce_to_rki_groups=False)
     population = get_population_by_age(country)
     model = build_country_seir_model(

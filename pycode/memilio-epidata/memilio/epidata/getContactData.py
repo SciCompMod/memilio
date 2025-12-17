@@ -114,6 +114,11 @@ def list_available_contact_countries(
     return xls.sheet_names
 
 
+def get_available_countries(contact_path: Optional[str] = None):
+    """Get list of all available countries."""
+    return list_available_contact_countries(contact_path)
+
+
 def _select_sheet_name(country: str, sheet_names: Iterable[str]):
     lookup = {_normalize_country_name(name): name for name in sheet_names}
     key = _normalize_country_name(country)
