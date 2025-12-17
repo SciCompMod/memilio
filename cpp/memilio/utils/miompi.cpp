@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "memilio/utils/miompi.h"
+#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
 
 #ifdef MEMILIO_ENABLE_MPI
@@ -62,6 +63,30 @@ bool is_root()
     return rank == 0;
 #endif
     return true;
+}
+
+int rank(Comm comm)
+{
+#ifndef MEMILIO_ENABLE_MPI
+    mio::unused(comm);
+    return 0;
+#else
+    int rank;
+    MPI_Comm_rank(comm, &rank);
+    return rank;
+#endif
+}
+
+int size(Comm comm)
+{
+#ifndef MEMILIO_ENABLE_MPI
+    mio::unused(comm);
+    return 1;
+#else
+    int size;
+    MPI_Comm_size(comm, &size);
+    return size;
+#endif
 }
 
 } // namespace mpi

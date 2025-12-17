@@ -20,14 +20,19 @@
 #ifndef MIO_TIMER_TIMER_REGISTRAR_H
 #define MIO_TIMER_TIMER_REGISTRAR_H
 
+#include "memilio/io/binary_serializer.h"
+#include "memilio/io/default_serialize.h"
+#include "memilio/timer/basic_timer.h"
 #include "memilio/timer/registration.h"
 #include "memilio/timer/table_printer.h"
+#include "memilio/utils/compiler_diagnostics.h"
+#include "memilio/utils/miompi.h"
 
+#include <cassert>
 #include <iostream>
 #include <list>
 #include <memory>
 #include <mutex>
-#include <ostream>
 
 namespace mio
 {
@@ -88,14 +93,35 @@ public:
     {
         PRAGMA_OMP(single nowait)
         {
-            get_instance().m_printer->print(m_register, out);
+            m_printer->print(m_register, out);
+        }
+    }
+
+    /**
+     * @brief Print all timers gathered on the given MPI Comm using a Printer.
+     * 
+     * By default, uses TablePrinter to write to stdout. The printer can be changed using the set_printer member.
+     *
+     * @param comm An MPI communicator. Make sure this method is called by all ranks on comm!
+     * @param out Any output stream, defaults to std::cout.
+     */
+    void print_gathered_timers(mpi::Comm comm, std::ostream& out = std::cout)
+    {
+        PRAGMA_OMP(single nowait)
+        {
+            std::list<BasicTimer> external_timers; // temporary storage for gathered registrations
+            std::list<TimerRegistration> gathered_register; // combined registrations of all ranks
+            gather_timers(comm, external_timers, gathered_register);
+            if (mpi::is_root()) {
+                m_printer->print(gathered_register, out);
+            }
         }
     }
 
     /// @brief Prevent the TimerRegistrar from calling print_timers on exit from main.
-    void disable_final_timer_summary() const
+    void disable_final_timer_summary()
     {
-        get_instance().m_print_on_death = false;
+        m_print_on_death = false;
     }
 
     /**
@@ -141,6 +167,52 @@ private:
                 print_timers();
             }
         }
+    }
+
+    void gather_timers(mpi::Comm comm, std::list<BasicTimer>& external_timers,
+                       std::list<TimerRegistration>& gathered_register) const
+    {
+#ifndef MEMILIO_ENABLE_MPI
+        mio::unused(comm, external_timers, gathered_register);
+#else
+        // name, scope, timer, thread_id
+        using GatherableRegistration = std::tuple<std::string, std::string, BasicTimer, int>;
+        int comm_size;
+        MPI_Comm_size(comm, &comm_size);
+
+        if (mpi::is_root()) {
+            std::ranges::transform(m_register, std::back_inserter(gathered_register), [](const TimerRegistration& r) {
+                return TimerRegistration{r.name, r.scope, r.timer, r.thread_id, 0};
+            });
+            for (int snd_rank = 1; snd_rank < comm_size; snd_rank++) { // skip root rank!
+                int bytes_size;
+                MPI_Recv(&bytes_size, 1, MPI_INT, snd_rank, 0, comm, MPI_STATUS_IGNORE);
+                ByteStream bytes(bytes_size);
+                MPI_Recv(bytes.data(), bytes.data_size(), MPI_BYTE, snd_rank, 0, mpi::get_world(), MPI_STATUS_IGNORE);
+
+                auto rec_register = deserialize_binary(bytes, Tag<std::vector<GatherableRegistration>>{});
+                if (!rec_register) {
+                    log_error("Error receiving ensemble results from rank {}.", snd_rank);
+                }
+                std::ranges::transform(
+                    rec_register.value(), std::back_inserter(gathered_register), [&](const GatherableRegistration& r) {
+                        const auto& [name, scope, timer, thread_id] = r;
+                        external_timers.push_back(timer);
+                        return TimerRegistration{name, scope, external_timers.back(), thread_id, snd_rank};
+                    });
+            }
+        }
+        else {
+            std::vector<GatherableRegistration> snd_register;
+            std::ranges::transform(m_register, std::back_inserter(snd_register), [](const TimerRegistration& r) {
+                return GatherableRegistration{r.name, r.scope, r.timer, r.thread_id};
+            });
+            ByteStream bytes = serialize_binary(snd_register);
+            int bytes_size   = int(bytes.data_size());
+            MPI_Send(&bytes_size, 1, MPI_INT, 0, 0, comm);
+            MPI_Send(bytes.data(), bytes.data_size(), MPI_BYTE, 0, 0, comm);
+        }
+#endif
     }
 
     std::unique_ptr<Printer> m_printer = std::make_unique<TablePrinter>(); ///< A printer to visualize all timers.

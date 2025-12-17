@@ -60,6 +60,10 @@ void finalize();
 */
 bool is_root();
 
+int rank(Comm comm);
+
+int size(Comm comm);
+
 } // namespace mpi
 } // namespace mio
 

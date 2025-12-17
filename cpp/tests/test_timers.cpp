@@ -42,11 +42,11 @@ private:
 public:
     static std::list<mio::timing::TimerRegistration> printable_timers()
     {
-        return {{"A", "A", m_timer, 0},
-                {"B", "", m_timer, 0},
-                {"B", "", m_timer, 1},
-                {"C has a fairly long name", "C", m_timer, 0},
-                {"D", "D", m_timer, 2}};
+        return {{"A", "A", m_timer, 0, 0},
+                {"B", "", m_timer, 0, 0},
+                {"B", "", m_timer, 1, 0},
+                {"C has a fairly long name", "C", m_timer, 0, 1},
+                {"D", "D", m_timer, 2, 2}};
     }
 
     // something to make sure the timers do not measure 0
@@ -152,7 +152,7 @@ TEST_F(TimingTest, TimerRegistrar)
     PRAGMA_OMP(parallel num_threads(mio::omp::get_max_threads()))
     {
         const auto i = mio::omp::get_thread_id();
-        reg.add_timer({"name", "", bts[i], i}); // reusing names is bad. but the registrar does not care
+        reg.add_timer({"name", "", bts[i], i, 0}); // reusing names is bad. but the registrar does not care
     }
     // -> verify by register size
     const int new_num_timers = old_num_timers + mio::omp::get_max_threads();
@@ -192,11 +192,11 @@ TEST_F(TimingTest, ListPrinter)
     // manually verify the new behaviour, and update the reference_output.
 
     const std::string reference_output = "All Timers: 5\n"
-                                         "  A::A: 0.000000e+00 (0)\n"
-                                         "  B: 0.000000e+00 (0)\n"
-                                         "  B: 0.000000e+00 (1)\n"
-                                         "  C::C has a fairly long name: 0.000000e+00 (0)\n"
-                                         "  D::D: 0.000000e+00 (2)\n"
+                                         "  A::A: 0.000000e+00 (0, 0)\n"
+                                         "  B: 0.000000e+00 (0, 0)\n"
+                                         "  B: 0.000000e+00 (0, 1)\n"
+                                         "  C::C has a fairly long name: 0.000000e+00 (1, 0)\n"
+                                         "  D::D: 0.000000e+00 (2, 2)\n"
                                          "Unique Timers (accumulated): 4\n"
                                          "  A::A: 0.000000e+00\n"
                                          "  B: 0.000000e+00\n"
