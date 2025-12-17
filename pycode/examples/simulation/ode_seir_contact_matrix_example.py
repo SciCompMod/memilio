@@ -35,73 +35,75 @@ from memilio.simulation.oseir import InfectionState as State
 from memilio.simulation.oseir import (Model, interpolate_simulation_result,
                                       simulate)
 
-OWID_POPULATION_URL = (
-    "https://raw.githubusercontent.com/owid/covid-19-data/master/"
-    "scripts/input/un/population_latest.csv"
+POPULATION_URL = (
+    "https://raw.githubusercontent.com/kieshaprem/synthetic-contact-matrices/"
+    "master/generate_synthetic_matrices/input/pop/popage_total2020.csv"
 )
 
 
-def _normalize_country_name(country: str):
-    """Return a case-insensitive key without whitespace or punctuation."""
-    return "".join(ch for ch in country.casefold() if ch.isalnum())
-
-
-def _download_population_table(url: str = OWID_POPULATION_URL):
-    response = requests.get(url, timeout=10)
-    response.raise_for_status()
-    return pd.read_csv(io.StringIO(response.text))
-
-
-def _pick_population_from_table(df: pd.DataFrame,
-                                country: str):
-    # Identify candidate population columns provided by the OWID/UN table.
-    pop_cols = [c
-                for c
-                in ["population", "Population", "pop", "PopTotal", "Value"]
-                if c in df.columns]
-    if not pop_cols:
-        return None
-
-    # Try multiple possible country-name columns to find the first match.
-    country_cols = [
-        c
-        for c
-        in
-        ["entity", "Entity", "location", "Location", "country", "Country",
-         "country_name", "Country Name"] if c in df.columns]
-    key = _normalize_country_name(country)
-    for c_col in country_cols:
-        normalized = df[c_col].astype(str).map(_normalize_country_name)
-        matches = df.loc[normalized == key]
-        if matches.empty:
-            continue
-        # If multiple years are present, prefer the latest year.
-        matches = matches.sort_values("year", ascending=False)
-        pop = matches.iloc[0][pop_cols[0]]
-        if pd.notna(pop):
-            return int(pop)
-    return None
-
-
-def get_population_total(country: str):
+def get_population_by_age(country_name: str):
     """
-    get a countrys total population using online data.
+    Loads population data for a specific country from a GitHub source (based on UN data).
+    Returns the population in 5-year steps (Unit: number of people).
+
+    Source: https://github.com/kieshaprem/synthetic-contact-matrices
+    Note: Data is originally in thousands, converted here to absolute numbers.
     """
+
     try:
-        df_pop = _download_population_table()
-        pop_online = _pick_population_from_table(
-            df_pop, country)
-        if pop_online:
-            return pop_online
-    except Exception:
-        pass
-    raise RuntimeError(
-        "No population found. Provide population_override or extend population_fallback.")
+        # download the file and save only in variable
+        response = requests.get(POPULATION_URL, timeout=10)
+        response.raise_for_status()
+        df = pd.read_csv(io.StringIO(response.text))
+
+        # clean column names
+        df.columns = df.columns.str.strip()
+
+        # Filter by country (case-insensitive)
+        country_col = "Region, subregion, country or area *"
+        row = df[df[country_col].str.lower() == country_name.lower()]
+
+        if row.empty:
+            raise ValueError(f"Country '{country_name}' not found in data.")
+
+        # Extract relevant columns
+        age_cols = [c for c in df.columns if c.startswith('age')]
+        pop_data = row.iloc[0][age_cols].astype(float)
+
+        # Convert from thousands to absolute numbers
+        pop_data = pop_data * 1000
+
+        # --- Aggregation for Memilio / Prem Matrices (usually up to 75+) ---
+        # Prem matrices in memilio often end at 75+.
+        # The CSV goes up to 100. We sum everything from 75 upwards.
+
+        # Columns up to 70 (0-4, ..., 70-74)
+        cols_up_to_70 = [f'age{i}' for i in range(0, 75, 5)]
+
+        # Columns from 75 (75-79, ..., 100+)
+        cols_75_plus = [
+            f'age{i}' for i in range(75, 105, 5)
+            if f'age{i}' in pop_data.index]
+
+        final_pop = []
+
+        # 1. Keep groups up to 70-74
+        for col in cols_up_to_70:
+            final_pop.append(pop_data[col])
+
+        # 2. Sum groups from 75+
+        sum_75_plus = pop_data[cols_75_plus].sum()
+        final_pop.append(sum_75_plus)
+
+        return final_pop
+
+    except Exception as e:
+        raise RuntimeError(f"Error loading population data: {e}")
 
 
 def build_country_seir_model(
         contact_matrix: np.ndarray,
-        population_total: int,
+        population_by_age: list,
         transmission_probability: float = 0.06,
         exposed_share: float = 1e-5,
         infected_share: float = 5e-6):
@@ -116,9 +118,19 @@ def build_country_seir_model(
     contacts.minimum = np.zeros_like(contact_matrix)
     model.parameters.ContactPatterns.cont_freq_mat[0] = contacts
 
-    # Distribute population and initial exposed/infected uniformly across age groups.
-    group_weights = np.full(num_groups, 1.0 / num_groups)
-    group_pop = group_weights * population_total
+    # Use actual population distribution
+    group_pop = np.array(population_by_age)
+
+    if len(group_pop) != num_groups:
+        # If dimensions mismatch (e.g. contact matrix has different age groups),
+        # we might need to adjust. For now, we assume they match (16 groups for Prem 75+).
+        # If not, we fallback to uniform distribution of total sum (not ideal but safe).
+        print(
+            f"Warning: Population groups ({len(group_pop)}) do not match contact matrix groups ({num_groups}). Using uniform distribution.")
+        total_pop = np.sum(group_pop)
+        group_weights = np.full(num_groups, 1.0 / num_groups)
+        group_pop = group_weights * total_pop
+
     exposed_init = np.maximum(1.0, group_pop * exposed_share)
     infected_init = np.maximum(1.0, group_pop * infected_share)
 
@@ -152,11 +164,11 @@ def simulate_country_seir(
     Load contact matrix, fetch population, build the ODE SEIR model, and run
     a simulation.
     """
-    contacts = load_contact_matrix(country)
-    population = get_population_total(country)
+    contacts = load_contact_matrix(country, reduce_to_rki_groups=False)
+    population = get_population_by_age(country)
     model = build_country_seir_model(
         contacts.values,
-        population_total=population,
+        population_by_age=population,
         transmission_probability=transmission_probability,
         exposed_share=exposed_share,
         infected_share=infected_share)
