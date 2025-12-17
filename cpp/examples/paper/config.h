@@ -49,15 +49,15 @@ const ScalarType deathsPerCritical[]                     = {0.05, 0.05, 0.14, 0.
 
 // Define lognormal parameters. For each transition, we need shape and scale.
 // These are given in this order below. The transition distributions are the same for all age groups.
-const ScalarType lognorm_EtINS[]     = {0.32459285, 4.26907484};
-const ScalarType lognorm_INStISy[]   = {0.7158751, 0.85135303};
-const ScalarType lognorm_INStR[]     = {0.24622068, 7.76114};
-const ScalarType lognorm_ISytISev[]  = {0.66258947, 5.29920733};
-const ScalarType lognorm_ISytR[]     = {0.24622068, 7.76114};
-const ScalarType lognorm_ISevtICri[] = {1.01076765, 0.9};
-const ScalarType lognorm_ISevtR[]    = {0.33816427, 17.09411753};
-const ScalarType lognorm_ICritD[]    = {0.42819924, 9.76267505};
-const ScalarType lognorm_ICritR[]    = {0.33816427, 17.09411753};
+const ScalarType lognorm_EtINS[]     = {1.45139714, 0.32459285}; //{0.32459285, 4.26907484};
+const ScalarType lognorm_INStISy[]   = {-0.1609284, 0.7158751}; //{0.7158751, 0.85135303};
+const ScalarType lognorm_INStR[]     = {2.04912923, 0.24622068}; //{0.24622068, 7.76114};
+const ScalarType lognorm_ISytISev[]  = {1.66755725, 0.66258947}; //{0.66258947, 5.29920733};
+const ScalarType lognorm_ISytR[]     = {2.04912923, 0.24622068}; //{0.24622068, 7.76114};
+const ScalarType lognorm_ISevtICri[] = {-0.10536052, 1.01076765}; //{1.01076765, 0.9};
+const ScalarType lognorm_ISevtR[]    = {2.8387344, 0.33816427}; //{0.33816427, 17.09411753};
+const ScalarType lognorm_ICritD[]    = {2.27856645, 0.42819924}; //{0.42819924, 9.76267505};
+const ScalarType lognorm_ICritR[]    = {2.8387344, 0.33816427}; //{0.33816427, 17.09411753};
 
 // Define mean stay times per age group. Note that these are different per age group as the transition probabilities
 // differ between age groups.
@@ -86,7 +86,7 @@ const ScalarType scale_confirmed_cases          = 1.;
 // Define simulation parameters.
 const ScalarType t0        = 0.;
 const ScalarType init_tmax = 30.;
-const ScalarType tmax      = 150.;
+const ScalarType tmax      = 200.;
 const ScalarType dt        = 1. / 24.; // corresponds to hours that are used as time step in ABM simulation
 
 } // namespace params

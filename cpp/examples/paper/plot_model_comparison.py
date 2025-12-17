@@ -56,7 +56,7 @@ def plot_model_comparison_all_compartments(result_dir,  percentiles, num_age_gro
                     values += df.iloc[:, 1 +
                                       i + age * len(secir_dict)]
                 axs[int(i/2), i % 2].plot(df["Time"] +
-                                          start_time, values, label=f"{percentiles[0]}% percentile of ABM", color=model_colors[3], linestyle=linestyles[3], linewidth=linewidth)
+                                          start_time, values, label=f"p{percentiles[0]} ABM", color=model_colors[3], linestyle=linestyles[3], linewidth=linewidth)
             del percentiles[0]
         else:
             df_low = pd.read_csv(result_dir + f"ABM_p{percentiles[0]}.csv")
@@ -75,12 +75,12 @@ def plot_model_comparison_all_compartments(result_dir,  percentiles, num_age_gro
                 axs[int(i/2), i % 2].plot(df_high["Time"] + start_time,
                                           values_high, color=colors['Teal'], alpha=0.3)
                 axs[int(i/2), i % 2].fill_between(df_low["Time"] + start_time, values_low,
-                                                  values_high, alpha=0.3, color=model_colors[3], label=f"{int(percentiles[-1])-int(percentiles[0])}% percentile of ABM")
+                                                  values_high, alpha=0.3, color=model_colors[3], label=f"{int(percentiles[-1])-int(percentiles[0])}% quantile ABM")
             del percentiles[0]
             del percentiles[-1]
 
     # Add results to plot for IDE, LCT and ODE.
-    files = ["ode", "lct", "ide"]  # , "lct", "ide"
+    files = ["ode", "lct"]  # , "lct", "ide"
     files = [file + file_suffix for file in files]
     dates = []
     for file in range(len(files)):
@@ -162,7 +162,7 @@ def plot_model_comparison_all_compartments(result_dir,  percentiles, num_age_gro
     plt.clf()
 
 
-def plot_model_comparison_one_compartment(files, compartment_index, exponential_scenario=False, save_dir=""):
+def plot_model_comparison_one_compartment(files, compartment_index, exponential_scenario=False, save_dir="", percentiles=["05", "50", "95"], plot_init=True):
     """
     Plots the result of the simulation.
 
@@ -178,13 +178,44 @@ def plot_model_comparison_one_compartment(files, compartment_index, exponential_
                   5: 'ICU', 6: 'Recovered', 7: 'Dead'}
 
     # Define plot.
-    fig, axs = plt.subplots(1, 1, sharex='all', figsize=(5, 4))
-    num_plots = 1
+    fig, axs = plt.subplots(1, 1, sharex='all', figsize=(4, 3))
     linewidth = 3
-    labels = ['ODE', 'LCT', 'IDE', 'ABM']
+    labels = ['ODE', 'LCT', 'ABM'] #, 'IDE'
+    linestyles = ['-', '--', ':', '-']
+    
+    start_time = 0
+    if (plot_init):
+        df = pd.read_csv(files[-1] + f"comps.csv")
+        values = df.iloc[:, 1 + compartment_index]
+        for age in range(1, num_age_groups):
+            values += df.iloc[:, 1 + compartment_index + age * len(secir_dict)]
+        axs.plot(df["Time"], values,
+                                      color="grey", linestyle=linestyles[3], linewidth=linewidth)
+    while len(percentiles) > 0:
+        if len(percentiles) == 1:
+            df = pd.read_csv(files[-1] + f"ABM_p{percentiles[0]}.csv")
+            values = df.iloc[:, 1 + compartment_index]
+            for age in range(1, num_age_groups):
+                values += df.iloc[:, 1 + compartment_index + age * len(secir_dict)]
+            axs.plot(df["Time"] + start_time, values, label=f"p{percentiles[0]} ABM", color=model_colors[3], linestyle=linestyles[3], linewidth=linewidth)
+            del percentiles[0]
+        else:
+            df_low = pd.read_csv(files[-1] + f"ABM_p{percentiles[0]}.csv")
+            df_high = pd.read_csv(files[-1] + f"ABM_p{percentiles[-1]}.csv")
+            values_low = df_low.iloc[:, 1 + compartment_index]
+            values_high = df_high.iloc[:, 1 + compartment_index]
+            for age in range(1, num_age_groups):
+                values_low += df_low.iloc[:, 1 +
+                                          compartment_index + age * len(secir_dict)]
+                values_high += df_high.iloc[:, 1 +
+                                            compartment_index + age * len(secir_dict)]
+            axs.plot(df_low["Time"] + start_time, values_low, color=colors['Teal'], alpha=0.3)
+            axs.plot(df_high["Time"] + start_time, values_high, color=colors['Teal'], alpha=0.3)
+            axs.fill_between(df_low["Time"] + start_time, values_low, values_high, alpha=0.3, color=model_colors[3], label=f"{int(percentiles[-1])-int(percentiles[0])}% quantile ABM")
+            del percentiles[0]
+            del percentiles[-1]
 
     # colors = ["C0", "limegreen"]
-    linestyles = ['-', '--', ':', '-']
     # Add results to plot for IDE, LCT and ODE.
     for file in range(len(files)-1):
         # Load data.
@@ -215,6 +246,9 @@ def plot_model_comparison_one_compartment(files, compartment_index, exponential_
 
         # LCT and IDE
         elif file == 1 or file == 2:
+            if(file == 2):
+                print("Compartment ", compartment_index)
+                print(total[-50:, compartment_index])
             axs.plot(dates,
                      total[:, compartment_index], label=labels[file],  color=model_colors[file], linestyle=linestyles[file], linewidth=linewidth)
 
@@ -223,24 +257,27 @@ def plot_model_comparison_one_compartment(files, compartment_index, exponential_
     # TODO
 
     # Define some characteristics of the plot
-    if exponential_scenario:
-        axs.set_title("Scenario 1")
-    else:
-        axs.set_title("Scenario 2")
+    # if exponential_scenario:
+    #     axs.set_title("S1, one location")
+    # else:
+    #     axs.set_title("S2")
 
-    axs.set_xlim(left=dates[0], right=dates[-1])
+    #axs.set_xlim(left=dates[0], right=dates[-1])
     # axs.grid(True, linestyle='--', alpha=0.5)
     axs.ticklabel_format(axis='y',
                          style='sci', scilimits=(0, 0))
 
     axs.set_xlabel('Simulation time [days]', labelpad=10)
-    if compartment_index == 3:
-        axs.set_ylabel('Mildly symptomatic individuals', labelpad=10)
-    if compartment_index == 5:
-        axs.set_ylabel('Individuals on ICU', labelpad=10)
+    axs.set_ylabel(f'{secir_dict[compartment_index]} [#]')
+    # if compartment_index == 3:
+    #     axs.set_ylabel('Mildly symptomatic individuals', labelpad=10)
+    # if compartment_index == 5:
+    #     axs.set_ylabel('Individuals on ICU', labelpad=10)
 
-    fig.legend(labels, bbox_to_anchor=(0.55, 0.85),
-               fancybox=False, shadow=False, ncol=2)
+    # fig.legend(labels, bbox_to_anchor=(0.55, 0.85),
+    #            fancybox=False, shadow=False, ncol=2)
+    
+    #axs.legend()
 
     # plt.subplots_adjust(left=0.5, bottom=None, right=0.7,
     #                     top=None, wspace=None, hspace=None)
@@ -248,12 +285,26 @@ def plot_model_comparison_one_compartment(files, compartment_index, exponential_
     set_fontsize()
 
     plt.tight_layout()
+    
+    # Save legend in seperate figure
+    handles, labels = axs.get_legend_handles_labels()
+    fig_leg = plt.figure(figsize=(5, 4))
+    fig_leg.legend(
+        handles,
+        labels,
+        loc="center",
+        ncol=4,
+        frameon=False
+    )
+    fig_leg.patch.set_visible(False)
 
     # Save result.
     if save_dir != "":
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir)
-        plt.savefig(save_dir + f"model_comparison_{secir_dict[compartment_index]}.png",
+        fig.savefig(save_dir + f"model_comparison_{secir_dict[compartment_index]}.png",
+                    bbox_inches='tight', dpi=dpi)
+        fig_leg.savefig(save_dir + f"model_comparison_legend.png",
                     bbox_inches='tight', dpi=dpi)
 
     plt.clf()
@@ -272,7 +323,7 @@ def plot_ABM_results_one_compartments(file, compartment_index, percentiles, num_
         values = df.iloc[:, 1 + compartment_index]
         for age in range(1, num_age_groups):
             values += df.iloc[:, 1 + compartment_index + age * num_comps]
-        ax.plot(df["Time"], values)
+        ax.plot(df["Time"], values, color="grey")
     while len(percentiles) > 0:
         if len(percentiles) == 1:
             df = pd.read_csv(file + f"ABM_p{percentiles[0]}.csv")
@@ -323,26 +374,28 @@ def plot_single_ABM_run(file, seeds, num_age_groups, num_comps, save_dir=""):
 
 if __name__ == '__main__':
 
-    exponential_scenario = True
-    # set_fontsize()
+    exponential_scenario = False
+    set_fontsize()
 
     # max_value = 0.3
 
     if exponential_scenario:
         # Path where simulation results are stored.
         result_dir = os.path.join(os.path.dirname(
-            __file__),  f"simulation_results/compare_abm_ide_lct_ode/exponential/one_location/Seed1/")
+            __file__),  f"simulation_results/compare_abm_ide_lct_ode/final2/exponential/multiple_locations/Seed1/")
         # Path where plots will be stored.
         plot_dir = os.path.join(os.path.dirname(
-            __file__),  f"plots/compare_abm_ide_lct_ode/exponential/one_location/Seed1/")
+            __file__),  f"plots/compare_abm_ide_lct_ode/final2/exponential/multiple_locations/Seed1/")
+        os.makedirs(plot_dir, exist_ok=True)
 
     else:
         # Path where simulation results are stored.
         result_dir = os.path.join(os.path.dirname(
-            __file__), "simulation_results/compare_abm_ide_lct_ode/different_dists/")
+            __file__), "simulation_results/compare_abm_ide_lct_ode/final2/different_dists/multiple_locations/Seed1/")
         # Path where plots will be stored.
         plot_dir = os.path.join(os.path.dirname(
-            __file__),  "plots/compare_abm_ide_lct_ode/different_dists/")
+            __file__),  "plots/compare_abm_ide_lct_ode/final2/different_dists/multiple_locations/Seed1/")
+        os.makedirs(plot_dir, exist_ok=True)
 
     infectivity_rates_str = ["infectivity_rates_total",       "infectivity_rates_first_half", "infectivity_rates_second_half",
                              "infectivity_rates_first_third", "infectivity_rates_rest_third", "infectivity_rates_first_quarter",
@@ -351,31 +404,35 @@ if __name__ == '__main__':
     num_age_groups = 6
     plot_init = True
 
+    percentiles = ["05", "50", "95"]
     for i in range(len(infectivity_rates_str[:1])):
-        file_suffix = "_" + infectivity_rates_str[i]
+        file_suffix = ""#"_" + infectivity_rates_str[i]
 
-        percentiles = ["05", "50", "95"]
 
         plot_model_comparison_all_compartments(
             result_dir, percentiles, num_age_groups, file_suffix, plot_init, save_dir=plot_dir)
 
-    # plot_model_comparison_one_compartment([os.path.join(result_dir, f"ode"),
-    #                                        os.path.join(result_dir, f"lct"),
-    #                                        os.path.join(result_dir, f"ide"),
-    #                                        os.path.join(result_dir, f"ide")],  # last file needs to be changed to ABM later on
-    #                                       5,
-    #                                       exponential_scenario,
-    #                                       save_dir=plot_dir)
+    for i in range(8):
+        plot_model_comparison_one_compartment([os.path.join(result_dir, f"ode"),
+                                            os.path.join(result_dir, f"lct"), # os.path.join(result_dir, f"ide"),
+                                            os.path.join(result_dir, f"")],  # last file needs to be changed to ABM later on
+                                            i,
+                                            exponential_scenario,
+                                            save_dir=plot_dir, percentiles=["05", "50", "95"])
+        plt.close()
 
-    # plot_ABM_results_one_compartments(
-    #     result_dir, 0, ["05", "50", "95"], 6, 8, plot_dir)
-    # plot_ABM_results_one_compartments(
-    #     result_dir, 1, ["05", "50", "95"], 6, 8, plot_dir)
-    # plot_ABM_results_one_compartments(result_dir, 1, [], 6, 8, plot_dir)
-    # plot_ABM_results_one_compartments(
-    #     result_dir, 3, ["05", "50", "95"], 6, 8, plot_dir)
-    # plot_ABM_results_one_compartments(
-    #     result_dir, 5, ["05", "50", "95"], 6, 8, plot_dir)
+    plot_ABM_results_one_compartments(
+        result_dir, 0, ["05", "50", "95"], 6, 8, plot_dir)
+    plot_ABM_results_one_compartments(
+        result_dir, 1, ["05", "50", "95"], 6, 8, plot_dir)
+    plot_ABM_results_one_compartments(
+        result_dir, 3, ["05", "50", "95"], 6, 8, plot_dir)
+    plot_ABM_results_one_compartments(
+        result_dir, 5, ["05", "50", "95"], 6, 8, plot_dir)
+    plot_ABM_results_one_compartments(
+        result_dir, 6, ["05", "50", "95"], 6, 8, plot_dir)
+    plot_ABM_results_one_compartments(
+        result_dir, 7, ["05", "50", "95"], 6, 8, plot_dir)
 
     # plot_single_ABM_run(
     #     result_dir, "518254265_179139074_1937166324_3882038653_1776323086_1261445406", 6, 8)

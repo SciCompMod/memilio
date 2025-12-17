@@ -1041,7 +1041,7 @@ mio::IOResult<mio::abm::Model> initialize_abm(bool exponential_scenario, std::st
             deathsPerCritical[group];
         // Todo
         model.parameters.get<mio::abm::VirusShedFactor>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(group)}] =
-            mio::ParameterDistributionUniform(0., 0.4);
+            mio::ParameterDistributionUniform(0., 0.6);
     }
 
     // We only consider transmission by contacts, therefore aerosol transmission rates are set to 0
@@ -1564,12 +1564,11 @@ std::vector<std::vector<double>> save_infectivity_rates(mio::abm::Model& model, 
  * @param[in] rng RNG used for model simulation.
  * @param[in] start_time Start time of the simulation in days.
  * @param[in] one_location If true, all agents there is only one location for each type.
- * @param[in] use_infection_history If true and model is read in, the infection history of the infected persons at simulation start is copied to the new model.
  */
 IOResult<std::pair<std::vector<mio::TimeSeries<double>>, std::vector<std::vector<double>>>>
 simulate_abm(bool exponential_scenario, ScalarType tmax, std::string contact_data_dir,
              std::vector<double> initial_infection_state_dist, bool save_results, std::string save_dir, bool read_model,
-             mio::RandomNumberGenerator& rng, double start_time, bool one_location, bool use_infection_history)
+             mio::RandomNumberGenerator& rng, double start_time, bool one_location)
 {
     mio::set_log_level(mio::LogLevel::warn);
     mio::abm::TimePoint start_tp = mio::abm::TimePoint(mio::abm::days(int(start_time)).seconds());
@@ -1579,77 +1578,12 @@ simulate_abm(bool exponential_scenario, ScalarType tmax, std::string contact_dat
         std::cout << "Reading in and initializing model...\n";
         BOOST_OUTCOME_TRY(auto&& model_for_initialization,
                           mio::read_json(save_dir + "model.json", mio::Tag<mio::abm::Model>()));
-        // Set model rng
+        model           = mio::abm::Model(model_for_initialization);
         model.get_rng() = rng;
-        // Set parameters
-        model.parameters = model_for_initialization.parameters;
-        // Copy locations
-        for (auto&& location : model_for_initialization.get_locations()) {
-            if (location.get_type() != mio::abm::LocationType::Cemetery) {
-                auto new_loc_id = model.add_location(location.get_type());
-                auto& new_loc   = model.get_location(new_loc_id);
-                // Copy contact rates
-                new_loc.get_infection_parameters().get<mio::abm::ContactRates>() =
-                    location.get_infection_parameters().get<mio::abm::ContactRates>();
-            }
+        for (auto& person : model.get_persons()) {
+            person.get_rng_counter() = Counter<uint32_t>(0);
+            person.get_rng_key()     = rng.get_key();
         }
-        // Add persons with assigned locations and infection states
-        for (auto&& person : model_for_initialization.get_persons()) {
-            auto home_id         = person.get_assigned_location(mio::abm::LocationType::Home);
-            auto infection_state = person.get_infection_state(start_tp);
-            auto& new_person     = model.get_person(model.add_person(home_id, person.get_age()));
-            // Set assigned locations
-            new_person.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
-            new_person.set_assigned_location(mio::abm::LocationType::Hospital,
-                                             person.get_assigned_location(mio::abm::LocationType::Hospital),
-                                             model.get_id());
-            new_person.set_assigned_location(mio::abm::LocationType::ICU,
-                                             person.get_assigned_location(mio::abm::LocationType::ICU), model.get_id());
-            new_person.set_assigned_location(mio::abm::LocationType::SocialEvent,
-                                             person.get_assigned_location(mio::abm::LocationType::SocialEvent),
-                                             model.get_id());
-            new_person.set_assigned_location(mio::abm::LocationType::BasicsShop,
-                                             person.get_assigned_location(mio::abm::LocationType::BasicsShop),
-                                             model.get_id());
-            if (person.get_age() == mio::AgeGroup(2) || person.get_age() == mio::AgeGroup(3)) {
-                new_person.set_assigned_location(mio::abm::LocationType::Work,
-                                                 person.get_assigned_location(mio::abm::LocationType::Work),
-                                                 model.get_id());
-            }
-            else if (person.get_age() == mio::AgeGroup(1)) {
-                new_person.set_assigned_location(mio::abm::LocationType::School,
-                                                 person.get_assigned_location(mio::abm::LocationType::School),
-                                                 model.get_id());
-            }
-
-            // Set infection state
-            if (infection_state != mio::abm::InfectionState::Susceptible) {
-                auto p_rng = mio::abm::PersonalRandomNumberGenerator(new_person);
-                new_person.add_new_infection(mio::abm::Infection(p_rng, mio::abm::VirusVariant::Wildtype,
-                                                                 new_person.get_age(), model.parameters, start_tp,
-                                                                 infection_state));
-                if (use_infection_history) {
-                    // Delete infection course up to (and including current state)
-                    auto& infection_course_new_person = new_person.get_infection().get_infection_course();
-                    for (auto it = infection_course_new_person.begin(); it != infection_course_new_person.end();) {
-                        if (it->second == infection_state) {
-                            it = infection_course_new_person.erase(it);
-                        }
-                        else {
-                            it = infection_course_new_person.erase(it);
-                        }
-                    }
-                    size_t insert_counter = 0;
-                    // Insert infection history up to current state
-                    auto& infection_course = person.get_infection().get_infection_course();
-                    for (auto it = infection_course.begin(); it != infection_course.end(); ++it) {
-                        infection_course_new_person.insert(infection_course_new_person.begin() + insert_counter, *it);
-                        insert_counter += 1;
-                    }
-                }
-            }
-        }
-
         std::cout << "Reading in and initializing model finished!\n";
     }
     else {
@@ -1712,12 +1646,11 @@ simulate_abm(bool exponential_scenario, ScalarType tmax, std::string contact_dat
  * @param[in] save_single_results Specifies whether all individual simulation results should be saved.
  * @param[in] start_time Start time of the simulation in days.
  * @param[in] one_location If true, there is only one location of each location type.
- * @param[in] use_infection_history If true and model is read in, the infection history of the infected persons at simulation start is copied to the new model.
  */
 mio::IOResult<void> abm_ensemble_run(size_t num_runs, bool exponential_scenario, ScalarType tmax,
                                      std::string contact_data_dir, std::vector<double> initial_infection_state_dist,
                                      std::string save_dir, bool read_model, bool save_single_results, double start_time,
-                                     bool one_location, bool use_infection_history)
+                                     bool one_location)
 {
     std::vector<std::vector<mio::TimeSeries<double>>> ensemble_result(
         num_runs, std::vector<mio::TimeSeries<ScalarType>>(
@@ -1729,8 +1662,7 @@ mio::IOResult<void> abm_ensemble_run(size_t num_runs, bool exponential_scenario,
         //Run ABM simulation
         BOOST_OUTCOME_TRY(auto result_vector,
                           simulate_abm(exponential_scenario, tmax, contact_data_dir, initial_infection_state_dist,
-                                       save_single_results, save_dir, read_model, rng, start_time, one_location,
-                                       use_infection_history));
+                                       save_single_results, save_dir, read_model, rng, start_time, one_location));
         auto compartment_result = std::get<0>(result_vector)[0];
 
         ensemble_result[run][0] = compartment_result;
@@ -1828,13 +1760,11 @@ mio::IOResult<std::vector<double>> csv_to_vector(std::string filename)
 
 int main()
 {
-    constexpr bool exponential_scenario = true;
-    bool one_location                   = true;
-    bool use_infection_history          = true;
-    mio::unused(use_infection_history);
+    constexpr bool exponential_scenario = false;
+    bool one_location                   = false;
     const std::vector<double> infection_distribution{0.99, 0.005, 0.005, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-    std::string save_dir = "../../cpp/examples/paper/simulation_results/compare_abm_ide_lct_ode/final/";
+    std::string save_dir = "../../cpp/examples/paper/simulation_results/compare_abm_ide_lct_ode/final2/";
 
     if (exponential_scenario) {
         save_dir = save_dir + "exponential/";
@@ -1871,13 +1801,13 @@ int main()
     // Simulation for initialization is init_tmax
     auto init_result_abm =
         simulate_abm(exponential_scenario, params::t0 + params::init_tmax, contact_data_dir, infection_distribution,
-                     true, save_dir, false, rng, params::t0, one_location, false);
+                     true, save_dir, false, rng, params::t0, one_location);
 
     // Simulate ABM ensemble run.
     size_t num_runs = 20;
     auto result_abm = abm_ensemble_run(num_runs, exponential_scenario, params::t0 + params::tmax - params::init_tmax,
                                        contact_data_dir, infection_distribution, save_dir, true, false,
-                                       params::t0 + params::init_tmax, one_location, use_infection_history);
+                                       params::t0 + params::init_tmax, one_location);
 
     // Get results from initial ABM run.
     // Get compartment values from initial ABM run.
@@ -1885,6 +1815,7 @@ int main()
 
     // Use compartments at time t0 from ABM simulation for initialization of IDE model.
     auto comps_t0 = init_comps_abm.get_value(0);
+    mio::unused(comps_t0);
 
     // Use compartments at time init_tmax from ABM simulation for initialization of LCT and ODE models.
     auto comps_init_tmax = init_comps_abm.get_value(size_t(params::init_tmax / params::dt));
@@ -1901,7 +1832,7 @@ int main()
 
     std::cout << "Last time of init flows: " << init_flows_ide.get_last_time() << std::endl;
     // Infectivity rates.
-    auto infectivity_rates = csv_to_vector(save_dir + "transmission_rates.csv").value();
+    auto infectivity_rates = csv_to_vector(save_dir + "infectivity_rates_total.csv").value();
 
     // std::vector<std::string> infectivity_rates_str = {
     //     "infectivity_rates_total",       "infectivity_rates_first_half", "infectivity_rates_second_half",
@@ -1913,14 +1844,22 @@ int main()
     std::string filename = "";
     std::vector<double> transmissionProbabilityOnContact(params::num_age_groups);
     // for (size_t i = 0; i < transmissionProbabilityOnContact.size(); i++) {
-    //     transmissionProbabilityOnContact[i] = infectivity_rates[i];
+    //     transmissionProbabilityOnContact[i] = 0.47 * infectivity_rates[i];
+    //     std::cout << transmissionProbabilityOnContact[i] << ", ";
     // }
-    transmissionProbabilityOnContact = {0.0266432, 0.0225801, 0.0215401, 0.0219972, 0.0213169, 0.019616};
+    // std::cout << std::endl;
+
+    //final
+    //transmissionProbabilityOnContact = {0.0266432, 0.0225801, 0.0215401, 0.0219972, 0.0213169, 0.019616};
+    //final2
+    transmissionProbabilityOnContact = {0.0409163, 0.0351982, 0.0337711, 0.0333412, 0.0328736, 0.0300238};
+    //final3
+    //transmissionProbabilityOnContact = {0.0694143, 0.0635391, 0.0611494, 0.0601362, 0.0601732, 0.0546945};
 
     // Simulate IDE.
     mio::set_log_level(LogLevel::info);
-    auto result_ide = simulate_ide(init_flows_ide, comps_t0, transmissionProbabilityOnContact, contact_data_dir,
-                                   exponential_scenario, filename, save_dir);
+    // auto result_ide = simulate_ide(init_flows_ide, comps_t0, transmissionProbabilityOnContact, contact_data_dir,
+    //                                exponential_scenario, filename, save_dir);
 
     // Simulate LCT.
     auto result_lct = simulate_lct<exponential_scenario>(comps_init_tmax, transmissionProbabilityOnContact,
