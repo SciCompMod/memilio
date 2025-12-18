@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "memilio/utils/miompi.h"
 #include "utils.h"
 #include "memilio/timer/auto_timer.h"
 #include "memilio/timer/list_printer.h"
@@ -173,10 +174,24 @@ TEST_F(TimingTest, TimerRegistrar)
     reg.set_printer(std::move(p));
     // check print_timers by using the SizePrinter (defined above), which only writes reg.get_register().size()
     int size = -1;
-    std::stringstream out;
-    reg.print_timers(out);
-    out >> size;
+    {
+        std::stringstream out;
+        reg.print_timers(out);
+        out >> size;
+    }
     EXPECT_EQ(size, new_num_timers);
+    // check print_gathered_timers, expecting size * #timers (even when MPI is disabled; in that case, check for a log)
+    size = -1;
+    mio::RedirectLogger logger;
+    logger.capture();
+    {
+        std::stringstream out;
+        reg.print_gathered_timers(mio::mpi::get_world(), out);
+        out >> size;
+    }
+    EXPECT_EQ(logger.view().empty(), (mio::mpi::get_world() != nullptr)) << logger.read();
+    logger.release();
+    EXPECT_EQ(size, mio::mpi::size(mio::mpi::get_world()) * new_num_timers);
 }
 
 TEST_F(TimingTest, qualified_name)
