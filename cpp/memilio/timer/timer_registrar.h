@@ -173,6 +173,9 @@ private:
     void gather_timers(mpi::Comm comm, std::list<BasicTimer>& external_timers,
                        std::list<TimerRegistration>& gathered_register) const
     {
+#ifndef MEMILIO_ENABLE_MPI
+        mio::unused(comm, external_timers);
+#endif
         if (mpi::is_root()) {
             std::ranges::transform(m_register, std::back_inserter(gathered_register), [](const TimerRegistration& r) {
                 return TimerRegistration{r.name, r.scope, r.timer, r.thread_id, 0};
@@ -184,9 +187,7 @@ private:
             }
             return;
         }
-#ifndef MEMILIO_ENABLE_MPI
-        mio::unused(comm, external_timers);
-#else
+#ifdef MEMILIO_ENABLE_MPI
         // name, scope, timer, thread_id
         using GatherableRegistration = std::tuple<std::string, std::string, BasicTimer, int>;
         int comm_size;

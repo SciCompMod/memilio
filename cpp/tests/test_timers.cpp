@@ -189,7 +189,7 @@ TEST_F(TimingTest, TimerRegistrar)
         reg.print_gathered_timers(mio::mpi::get_world(), out);
         out >> size;
     }
-    EXPECT_EQ(logger.view().empty(), (mio::mpi::get_world() != nullptr)) << logger.read();
+    EXPECT_EQ(logger.view().empty(), (mio::mpi::get_world() != nullptr) && (mio::mpi::is_root())) << logger.read();
     logger.release();
     EXPECT_EQ(size, mio::mpi::size(mio::mpi::get_world()) * new_num_timers);
 }

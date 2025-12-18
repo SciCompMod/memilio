@@ -57,12 +57,7 @@ void finalize()
 
 bool is_root()
 {
-#ifdef MEMILIO_ENABLE_MPI
-    int rank;
-    MPI_Comm_rank(get_world(), &rank);
-    return rank == 0;
-#endif
-    return true;
+    return rank(get_world()) == 0;
 }
 
 int rank(Comm comm)
