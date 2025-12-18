@@ -141,8 +141,8 @@ def load_contact_matrix(
 
     :param country: Country name as listed in the workbook (case-insensitive).
     :param contact_path: Optional path to ``MUestimates_all_locations_1.xlsx``.
-    :param reduce_to_rki_groups: If True, aggregate to the 6 RKI age groups 
-      (0-4, 5-14, 15-34, 35-59, 60-79, 80-99). Default True.
+    :param reduce_to_rki_groups: If True, aggregate to the six RKI age groups 
+      (0-4, 5-14, 15-34, 35-59, 60-79, 80+ years). Default True.
     :returns: DataFrame indexed by age group with floats.
     """
     xls_bytes = _load_workbook_bytes(contact_path)
