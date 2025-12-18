@@ -211,7 +211,8 @@ def _aggregate_to_rki_age_groups(matrix: pd.DataFrame):
     Aggregate a 16x16 age contact matrix to the 6-group RKI scheme.
 
     Assumes the original columns/rows follow AGE_GROUP_LABELS order.
-    Note: The source only provides a 75+ group; we map it entirely to 80-99.
+    Note: The source only provides data up to 70-74 and a 75+ group.
+    We map 60-74 to the 60-79 RKI group and 75+ to the 80-99 RKI group.
 
     :param matrix: The 16x16 contact matrix to aggregate.
     :returns: Aggregated 6x6 contact matrix.
