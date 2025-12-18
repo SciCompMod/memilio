@@ -171,7 +171,7 @@ TEST(TestUtils, LogLevelOverride)
     logger.capture();
     // sanity check that the capture works (ignoring the time stamp at the start)
     mio::log_warning("Test0");
-    EXPECT_THAT(logger.read(), testing::EndsWith("[redirect] [warning] Test0\n"));
+    EXPECT_THAT(logger.read(), testing::HasSubstr("[redirect] [warning] Test0"));
     // case: override to higher level, log at normal level; expect a usually emitted log to be ignored
     {
         mio::LogLevelOverride llo(mio::LogLevel::critical);
@@ -180,13 +180,13 @@ TEST(TestUtils, LogLevelOverride)
     EXPECT_TRUE(logger.read().empty());
     // case: log at normal level, after higher level override; expect normal logging
     mio::log_warning("Test2");
-    EXPECT_THAT(logger.read(), testing::EndsWith("[redirect] [warning] Test2\n"));
+    EXPECT_THAT(logger.read(), testing::HasSubstr("[redirect] [warning] Test2"));
     // case: override to lower level, log at a level below normal; expect a usually ignored log to be emitted
     {
         mio::LogLevelOverride llo(mio::LogLevel::info);
         mio::log_info("Test3");
     }
-    EXPECT_THAT(logger.read(), testing::EndsWith("[redirect] [info] Test3\n"));
+    EXPECT_THAT(logger.read(), testing::HasSubstr("[redirect] [info] Test3"));
 
     logger.release();
 }

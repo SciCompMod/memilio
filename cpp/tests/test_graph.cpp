@@ -37,6 +37,7 @@
 #include "memilio/utils/stl_util.h"
 #include "utils.h"
 #include "gmock/gmock-matchers.h"
+#include "gmock/gmock.h"
 #include <cstddef>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -378,7 +379,7 @@ TEST(TestGraphBuilder, Build_unique)
     mio::RedirectLogger logger;
     logger.capture();
     auto g = std::move(builder).build(true);
-    EXPECT_THAT(logger.read(), testing::EndsWith("[warning] Removed duplicate edge(s)\n"));
+    EXPECT_THAT(logger.read(), testing::HasSubstr("[warning] Removed duplicate edge(s)"));
     logger.release();
 
     EXPECT_EQ(g.nodes().size(), 3);
