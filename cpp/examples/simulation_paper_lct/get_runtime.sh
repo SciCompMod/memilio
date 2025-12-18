@@ -5,7 +5,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=17
 #SBATCH --cpus-per-task=1
-#SBATCH -t 30
+#SBATCH -t 120
 #SBATCH --exclusive
 #SBATCH --exclude="be-cpu05, be-gpu01"
 

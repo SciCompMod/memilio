@@ -7,6 +7,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --exclusive
 #SBATCH --nodelist="be-cpu02, be-cpu03, be-cpu04"
+#SBATCH --time=1-0:00:00
 
 # Run this script from build folder with downloaded data in repository
 echo Running on node $SLURM_JOB_NODELIST.
@@ -19,7 +20,7 @@ num_runs=100
 num_warm_up_runs=10
 
 # Define parameters used as command line arguments.
-num_runs=16384 #1024
+num_runs=1280 #1024
 
 for num_mpi in 1 2 4 8 16 32 64 128 168
 do

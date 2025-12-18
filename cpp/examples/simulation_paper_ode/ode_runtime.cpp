@@ -67,11 +67,12 @@ const ScalarType timeInfectedCritical   = 16.;
 const ScalarType transmissionProbabilityOnContact = 0.5;
 
 // Mobility
+const int band_radius_mobility_matrix = 50;
 const ScalarType factorMobilePopulation = 0.1;
 
 // Simulation parameters
 ScalarType t0   = 0.;
-ScalarType tmax = 60;
+ScalarType tmax = 30;
 ScalarType dt   = 0.1;
 
 } // namespace params
@@ -130,17 +131,30 @@ mio::Graph<Model, mio::MobilityParameters<ScalarType>> get_graph(size_t num_regi
         params_graph.add_node((int)region, model);
     }
 
-    ScalarType num_nodes = params_graph.nodes().size();
-    for (size_t region_out = 0; region_out < num_regions; region_out++)
-    {   
-        ScalarType mobilityPerEdge = params::factorMobilePopulation / num_nodes;
-        for (size_t region_in = 0; region_in < num_regions; region_in++)
-        {
-            if (region_out != region_in)
+    // check for higher requested edges than number of nodes, then make it fully connected
+    if ((params::band_radius_mobility_matrix * 2) >= num_regions){
+        for (size_t region_out = 0; region_out < num_regions; region_out++)
+        {   
+            ScalarType mobilityPerEdge = params::factorMobilePopulation / (num_regions - 1);
+            for (size_t region_in = 0; region_in < num_regions; region_in++)
             {
-                params_graph.add_edge(region_out, region_in, Eigen::VectorX<ScalarType>::Constant((size_t)mio::osecir::InfectionState::Count, mobilityPerEdge));
+                if(region_out != region_in)
+                    params_graph.add_edge(region_out, region_in, Eigen::VectorX<ScalarType>::Constant((size_t)mio::osecir::InfectionState::Count, mobilityPerEdge));
             }
-            
+        }
+    }
+    else {
+        ScalarType mobilityPerEdge = params::factorMobilePopulation / (params::band_radius_mobility_matrix * 2);
+        for (size_t region_out = 0; region_out < num_regions; region_out++)
+        {   
+            for (size_t idx_in = 1; idx_in < params::band_radius_mobility_matrix + 1; idx_in++)
+            {
+                size_t left  = (region_out + (int)num_regions - idx_in) % (int)num_regions;
+                size_t right = (region_out + idx_in) % (int)num_regions;
+
+                params_graph.add_edge(region_out, left, Eigen::VectorX<ScalarType>::Constant((size_t)mio::osecir::InfectionState::Count, mobilityPerEdge));
+                params_graph.add_edge(region_out, right, Eigen::VectorX<ScalarType>::Constant((size_t)mio::osecir::InfectionState::Count, mobilityPerEdge));
+            }
         }
     }
     return params_graph;
@@ -233,7 +247,7 @@ int main(int argc, char** argv)
                           .add<"ResultDirectory">(mio::path_join(mio::base_dir(), "cpp/examples/simulation_paper_ode/results_runtime"))
                           .add<"NumberRuns">(100, {.alias = "nRun"})
                           .add<"NumberWarmupRuns">(10, {.alias = "nWURun"})
-                          .add<"NumberRegions">(10, {.alias = "nRegion"})
+                          .add<"NumberRegions">(1000, {.alias = "nRegion"})
                           .build();
 
     auto cli_result = mio::command_line_interface(argv[0], argc, argv, cli_parameters, {"ResultDirectory"});

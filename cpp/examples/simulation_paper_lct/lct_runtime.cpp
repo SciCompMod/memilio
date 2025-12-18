@@ -73,11 +73,12 @@ const ScalarType deathsPerCritical                = 0.21718;
 std::vector<ScalarType> init = {3966564.2110, 664.2367, 545.5523, 1050.3946, 5.6045, 0.5844, 307.4165, 0.};
 
 // Mobility
+const int band_radius_mobility_matrix = 55;
 const ScalarType factorMobilePopulation = 0.1;
 
 // Simulation parameters
 ScalarType t0   = 0.;
-ScalarType tmax = 60;
+ScalarType tmax = 30;
 ScalarType dt   = 0.1;
 
 } // namespace params
@@ -89,7 +90,7 @@ using Model    = mio::lsecir::Model<ScalarType, LctState>;
 
 Model initialize_lsecir()
 {
-    std::cout << "{ \"Subcompartments\": " << params::num_subcompartments << ", " << std::endl;
+    std::cout << "\"Subcompartments\": " << params::num_subcompartments << std::endl;
     // Initialize (non-age-resolved) LCT model.
     Model model;
 
@@ -138,17 +139,30 @@ mio::Graph<Model, mio::MobilityParameters<ScalarType>> get_graph(size_t num_regi
         params_graph.add_node((int)region, model);
     }
 
-    ScalarType num_nodes = params_graph.nodes().size();
-    for (size_t region_out = 0; region_out < num_regions; region_out++)
-    {   
-        ScalarType mobilityPerEdge = params::factorMobilePopulation / num_nodes;
-        for (size_t region_in = 0; region_in < num_regions; region_in++)
-        {
-            if (region_out != region_in)
+    // check for higher requested edges than number of nodes, then make it fully connected
+    if ((params::band_radius_mobility_matrix * 2) >= num_regions){
+        for (size_t region_out = 0; region_out < num_regions; region_out++)
+        {   
+            ScalarType mobilityPerEdge = params::factorMobilePopulation / (num_regions - 1);
+            for (size_t region_in = 0; region_in < num_regions; region_in++)
             {
-                params_graph.add_edge(region_out, region_in, Eigen::VectorX<ScalarType>::Constant((size_t)LctState::Count, mobilityPerEdge));
+                if(region_out != region_in)
+                    params_graph.add_edge(region_out, region_in, Eigen::VectorX<ScalarType>::Constant((size_t)LctState::Count, mobilityPerEdge));
             }
-            
+        }
+    }
+    else {
+        ScalarType mobilityPerEdge = params::factorMobilePopulation / (params::band_radius_mobility_matrix * 2);
+        for (size_t region_out = 0; region_out < num_regions; region_out++)
+        {   
+            for (size_t idx_in = 1; idx_in < params::band_radius_mobility_matrix + 1; idx_in++)
+            {
+                size_t left  = (region_out + (int)num_regions - idx_in) % (int)num_regions;
+                size_t right = (region_out + idx_in) % (int)num_regions;
+
+                params_graph.add_edge(region_out, left, Eigen::VectorX<ScalarType>::Constant((size_t)LctState::Count, mobilityPerEdge));
+                params_graph.add_edge(region_out, right, Eigen::VectorX<ScalarType>::Constant((size_t)LctState::Count, mobilityPerEdge));
+            }
         }
     }
     return params_graph;

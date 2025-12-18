@@ -18,7 +18,6 @@ module load PrgEnv/gcc13-openmpi
 num_runs=100
 num_warm_up_runs=10
 
-# cmake --build . --target ode_runtime lct_runtime ide_runtime ode_ensemble_runs lct_ensemble_runs ide_ensemble_runs
 # Define parameters used as command line arguments.
 num_runs=16384 #1024
 

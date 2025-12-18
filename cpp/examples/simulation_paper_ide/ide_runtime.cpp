@@ -47,7 +47,7 @@ const ScalarType factorMobilePopulation = 0.1;
 
 // Simulation parameters
 ScalarType t0   = 0.;
-ScalarType tmax = 60;
+ScalarType tmax = 30;
 ScalarType dt   = 0.1;
 
 }
@@ -107,20 +107,8 @@ mio::Graph<mio::SimulationNode<ScalarType, mio::isecir::Simulation>, mio::Mobili
         Model model = initialize_isecir();
         sim_graph.add_node((int)region, model, params::dt);
     }
-
-    // ScalarType num_nodes = sim_graph.nodes().size();
-    // for (size_t region_out = 0; region_out < num_regions; region_out++)
-    // {   
-    //     ScalarType mobilityPerEdge = params::factorMobilePopulation / num_nodes;
-    //     for (size_t region_in = 0; region_in < num_regions; region_in++)
-    //     {
-    //         if (region_out != region_in)
-    //         {
-    //             sim_graph.add_edge(region_out, region_in, Eigen::VectorX<ScalarType>::Constant((size_t)mio::osecir::InfectionState::Count, mobilityPerEdge));
-    //         }
-            
-    //     }
-    // }
+    
+    // no edges
     return sim_graph;
 }
 

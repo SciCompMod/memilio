@@ -20,6 +20,7 @@
 #include "models/ode_secir/infection_state.h"
 #include "models/ode_secir/model.h"
 #include "models/ode_secir/parameter_space.h"
+#include "models/ode_secir/parameters_io.h"
 
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/epidemiology/age_group.h"
@@ -51,7 +52,7 @@ mio::UncertainValue<ScalarType> uncertain(ScalarType v)
 namespace params
 {
     constexpr size_t num_groups       = 6;
-    size_t num_regions                = 100;
+    size_t num_regions                = 400;
     int num_processes = 1;
 
     mio::Date start_date(2021, 01, 01);
@@ -77,11 +78,12 @@ namespace params
     const ScalarType total_population         = 83155031.0;
 
     // Mobility
+    const int band_radius_mobility_matrix = 50;
     const ScalarType factorMobilePopulation = 0.1;
 
     // Simulation parameters
     ScalarType t0   = 0.;
-    ScalarType tmax = 60;
+    ScalarType tmax = 30;
     ScalarType dt   = 0.1;
 
     enum class ContactLocation
@@ -117,85 +119,86 @@ mio::IOResult<void> set_contact_matrices(std::string data_dir, mio::osecir::Para
 }
 
 
-Model initialize_osecir(std::string data_dir)
+mio::osecir::Parameters<ScalarType> initialize_osecir_params(std::string data_dir)
 {
-    Model model(params::num_groups);
+    mio::osecir::Parameters<ScalarType> parameters(params::num_groups);
 
     for (size_t group = 0; group < params::num_groups; group++) {
-        model.parameters.get<mio::osecir::TransmissionProbabilityOnContact<ScalarType>>()[mio::AgeGroup(group)] =
+        parameters.get<mio::osecir::TransmissionProbabilityOnContact<ScalarType>>()[mio::AgeGroup(group)] =
             uncertain(params::transmissionProbabilityOnContact[group]);
-        model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<ScalarType>>()[mio::AgeGroup(group)] =
+        parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<ScalarType>>()[mio::AgeGroup(group)] =
             uncertain(params::relativeTransmissionNoSymptoms);
-        model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[mio::AgeGroup(group)] =
+        parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[mio::AgeGroup(group)] =
             uncertain(params::riskOfInfectionFromSymptomatic);
 
         // Mean stay times
-        model.parameters.get<mio::osecir::TimeExposed<ScalarType>>()[mio::AgeGroup(group)] = uncertain(params::timeExposed[group]);
-        model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<ScalarType>>()[mio::AgeGroup(group)] =
+        parameters.get<mio::osecir::TimeExposed<ScalarType>>()[mio::AgeGroup(group)] = uncertain(params::timeExposed[group]);
+        parameters.get<mio::osecir::TimeInfectedNoSymptoms<ScalarType>>()[mio::AgeGroup(group)] =
             uncertain(params::timeInfectedNoSymptoms[group]);
-        model.parameters.get<mio::osecir::TimeInfectedSymptoms<ScalarType>>()[mio::AgeGroup(group)] =
+        parameters.get<mio::osecir::TimeInfectedSymptoms<ScalarType>>()[mio::AgeGroup(group)] =
             uncertain(params::timeInfectedSymptoms[group]);
-        model.parameters.get<mio::osecir::TimeInfectedSevere<ScalarType>>()[mio::AgeGroup(group)] = uncertain(params::timeInfectedSevere[group]);
-        model.parameters.get<mio::osecir::TimeInfectedCritical<ScalarType>>()[mio::AgeGroup(group)] =
+        parameters.get<mio::osecir::TimeInfectedSevere<ScalarType>>()[mio::AgeGroup(group)] = uncertain(params::timeInfectedSevere[group]);
+        parameters.get<mio::osecir::TimeInfectedCritical<ScalarType>>()[mio::AgeGroup(group)] =
             uncertain(params::timeInfectedCritical[group]);
 
         // Transition probabilities
-        model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[mio::AgeGroup(group)] =
+        parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[mio::AgeGroup(group)] =
             uncertain(params::recoveredPerInfectedNoSymptoms[group]);
-        model.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[mio::AgeGroup(group)] =
+        parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[mio::AgeGroup(group)] =
             uncertain(params::severePerInfectedSymptoms[group]);
-        model.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[mio::AgeGroup(group)] =
+        parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[mio::AgeGroup(group)] =
             uncertain(params::criticalPerSevere[group]);
-        model.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[mio::AgeGroup(group)] = uncertain(params::deathsPerCritical[group]);
-        
-        // scale by number nodes
-        ScalarType group_total = params::age_group_sizes[group] / params::num_regions;
-        model.populations[{mio::AgeGroup(group), mio::osecir::InfectionState::Exposed}]            = uncertain(0.01) * group_total;
-        model.populations[{mio::AgeGroup(group), mio::osecir::InfectionState::InfectedNoSymptoms}] = 0;
-        model.populations[{mio::AgeGroup(group), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
-        model.populations[{mio::AgeGroup(group), mio::osecir::InfectionState::InfectedSymptoms}]            = 0;
-        model.populations[{mio::AgeGroup(group), mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
-        model.populations[{mio::AgeGroup(group), mio::osecir::InfectionState::InfectedSevere}]              = 0;
-        model.populations[{mio::AgeGroup(group), mio::osecir::InfectionState::InfectedCritical}]            = 0;
-        model.populations[{mio::AgeGroup(group), mio::osecir::InfectionState::Recovered}]                   = 0;
-        model.populations[{mio::AgeGroup(group), mio::osecir::InfectionState::Dead}]                        = 0;
-        model.populations.set_difference_from_group_total<mio::AgeGroup>({mio::AgeGroup(group), mio::osecir::InfectionState::Susceptible},
-                                                    group_total);
+        parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[mio::AgeGroup(group)] = uncertain(params::deathsPerCritical[group]);
     }
     
-    model.parameters.get<mio::osecir::Seasonality<ScalarType>>() = params::seasonality;
-    model.parameters.get<mio::osecir::StartDay<ScalarType>>()    = mio::get_day_in_year(params::start_date);
+    parameters.get<mio::osecir::Seasonality<ScalarType>>() = params::seasonality;
+    parameters.get<mio::osecir::StartDay<ScalarType>>()    = mio::get_day_in_year(params::start_date);
 
-    auto result = set_contact_matrices(data_dir, model.parameters);
-    model.apply_constraints();
+    auto result = set_contact_matrices(data_dir, parameters);
     
-    return model;
+    return parameters;
 }
 
-mio::Graph<Model, mio::MobilityParameters<ScalarType>> get_graph(std::string data_dir)
+mio::IOResult<mio::Graph<Model, mio::MobilityParameters<ScalarType>>> get_graph(std::string data_dir)
 {
-    mio::Graph<Model, mio::MobilityParameters<ScalarType>> params_graph;
-    auto model = initialize_osecir(data_dir);
+    auto model_params = initialize_osecir_params(data_dir);
 
-    for (size_t region = 0; region < params::num_regions; region++)
-    {
-        params_graph.add_node((int)region, model);
-    }
+    mio::Graph<mio::osecir::Model<ScalarType>, mio::MobilityParameters<ScalarType>> params_graph;
+    const auto& read_function_nodes = mio::osecir::read_input_data_county<mio::osecir::Model<ScalarType>>;
+    const auto& read_function_edges = mio::read_mobility_plain;
+    const auto& node_id_function    = mio::get_node_ids;
 
-    ScalarType num_nodes = params_graph.nodes().size();
-    for (size_t region_out = 0; region_out < params::num_regions; region_out++)
-    {   
-        ScalarType mobilityPerEdge = params::factorMobilePopulation / num_nodes;
-        for (size_t region_in = 0; region_in < params::num_regions; region_in++)
-        {
-            if (region_out != region_in)
-            {
-                params_graph.add_edge(region_out, region_in, Eigen::VectorX<ScalarType>::Constant(params::num_groups * (size_t)mio::osecir::InfectionState::Count, mobilityPerEdge));
-            }
-            
-        }
-    }
-    return params_graph;
+    auto end_date        = mio::offset_date_by_days(params::start_date, params::tmax);
+    auto scaling_factor_infected = std::vector<ScalarType>(size_t(model_params.get_num_groups()), 1.0);
+    auto scaling_factor_icu      = 1.0;
+    auto mobile_compartments     = {mio::osecir::InfectionState::Susceptible,
+                                    mio::osecir::InfectionState::Exposed,
+                                    mio::osecir::InfectionState::InfectedNoSymptoms,
+                                    mio::osecir::InfectionState::InfectedSymptoms,
+                                    mio::osecir::InfectionState::Recovered};
+    auto tnt_capacity_factor     = 0.;
+
+    const auto& set_node_function =
+        mio::set_nodes<ScalarType, mio::osecir::TestAndTraceCapacity<ScalarType>, mio::osecir::ContactPatterns<ScalarType>,
+                       mio::osecir::Model<ScalarType>, mio::MobilityParameters<ScalarType>,
+                       mio::osecir::Parameters<ScalarType>, decltype(read_function_nodes), decltype(node_id_function)>;
+    const auto& set_edge_function =
+        mio::set_edges<ScalarType, params::ContactLocation, mio::osecir::Model<ScalarType>, mio::MobilityParameters<ScalarType>,
+                       mio::MobilityCoefficientGroup<ScalarType>, mio::osecir::InfectionState, decltype(read_function_edges)>;
+    
+    auto pydata_path =
+        mio::path_join(data_dir, "Germany", "pydata");
+    auto population_data_path =
+        mio::path_join(pydata_path, "county_current_population.json");
+
+    BOOST_OUTCOME_TRY(set_node_function(model_params, params::start_date, end_date, pydata_path, population_data_path, true,
+                                 params_graph, read_function_nodes, node_id_function, scaling_factor_infected,
+                                 scaling_factor_icu, tnt_capacity_factor, 0, false , true));
+    BOOST_OUTCOME_TRY(set_edge_function(mio::path_join(data_dir, "Germany", "mobility", "commuter_mobility_2019.txt"), params_graph, mobile_compartments, 
+                                        params::contact_locations.size(), read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.},
+                                        std::vector<std::vector<size_t>>{}));
+
+    return mio::success(params_graph);
 }
 
 mio::IOResult<void> simulate(std::string result_dir, std::string data_dir, size_t num_ensemble_runs)
@@ -203,7 +206,7 @@ mio::IOResult<void> simulate(std::string result_dir, std::string data_dir, size_
     if (mio::mpi::is_root()) {
         std::cout << "Realistic scenario." << std::endl;
     }
-    auto params_graph = get_graph(data_dir);
+    auto params_graph = get_graph(data_dir).value();
 
     mio::ParameterStudy parameter_study(params_graph, params::t0, params::tmax, params::dt, num_ensemble_runs);
     

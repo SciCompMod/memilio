@@ -1,0 +1,37 @@
+Ensemble parallel task = 32738 (calculated with calculate runtime)
+ide:
+-nRun 64 = 23.0772
+-> 32738 * (25 / 64) = 12788.28125 (3.552 stunden)
+
+lct:
+-nRun 64 = 3.34505
+-> 32738 * (4 / 64) = 2046.125 (34,1 Minuten)
+
+ode: 2558 (1280 task) (setup < 10 Minuten)
+-nRun 1 = 19.0204 ~ 20 sekunden (6 min mit setup) 
+-nRun 10 = 187.124 ~ 200 sekunden (9 min mit setup)
+-> 2558 * 20 = 92115 (14,21 stunden)
+
+
+
+Runtime 100 nodes
+ide:
+run + init = 1
+-> 110 * 1 = 110 sekunden
+-> 110 * 17 = 1870 sekunden
+setup -> 17 * 10 = 170 sekunden
+=> 1870 + 170 = 2040 sekunden = 34 Minuten ie 1 stunden
+
+lct:
+run + init = 3 
+-> 110 * 3 = 330 sekunden
+-> 330 * 17 = 5610 sekunden
+setup -> 17 * 10 = 170 sekunden
+=> 5610 + 170 = 5780 sekunden = 96,33333 Minuten ie 2 stunden
+
+ode: 
+run + init = 2 
+-> 110 * 2 = 220 sekunden
+-> 220 * 17 = 3740 sekunden
+setup -> 17 * 10 = 170 sekunden
+=> 3740 + 170 = 3910 sekunden = 65,16667 Minuten ie 1,5 stunden
