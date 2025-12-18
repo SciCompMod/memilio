@@ -202,28 +202,28 @@ mio::IOResult<void> set_sampled_parameters(mio::Graph<mio::osecir::Model<double>
             damping_value = parameter_list["damping_values"][state - 1][2].asDouble() * 1.4;
         }
         else if (test_case == TestCase::Dynamic) {
-            damping_value = 0;
+            damping_value = parameter_list["damping_values"][state - 1][2].asDouble();
 
             params.get<mio::osecir::DynamicNPIsImplementationDelay<double>>() = 5;
 
             auto dynamic_npi_dampings1 = std::vector<mio::DampingSampling<double>>();
-            dynamic_npi_dampings1.push_back(mio::DampingSampling<double>(0.3, mio::DampingLevel(0),
+            dynamic_npi_dampings1.push_back(mio::DampingSampling<double>(0.4, mio::DampingLevel(0),
                                                     mio::DampingType(0), mio::SimulationTime<double>(0),
                                                     {0},  Eigen::VectorXd::Constant(size_t(params.get_num_groups()), 1.0)));
 
             auto dynamic_npi_dampings2 = std::vector<mio::DampingSampling<double>>();
-            dynamic_npi_dampings2.push_back(mio::DampingSampling<double>(0.9, mio::DampingLevel(0),
+            dynamic_npi_dampings2.push_back(mio::DampingSampling<double>(0.8, mio::DampingLevel(0),
                                                     mio::DampingType(0), mio::SimulationTime<double>(0),
                                                     {0},  Eigen::VectorXd::Constant(size_t(params.get_num_groups()), 1.0)));
 
 
             auto& dynamic_npis        = params.get<mio::osecir::DynamicNPIsInfectedSymptoms<double>>();
 
-            dynamic_npis.set_interval(mio::SimulationTime<double>(1.0));
-            dynamic_npis.set_duration(mio::SimulationTime<double>(14.0));
+            dynamic_npis.set_interval(mio::SimulationTime<double>(3.0));
+            dynamic_npis.set_duration(mio::SimulationTime<double>(7.0));
             dynamic_npis.set_base_value(100'000);
-            dynamic_npis.set_threshold(50.0, dynamic_npi_dampings1);
-            dynamic_npis.set_threshold(250.0, dynamic_npi_dampings2);
+            dynamic_npis.set_threshold(250.0, dynamic_npi_dampings1);
+            dynamic_npis.set_threshold(500.0, dynamic_npi_dampings2);
         }
 
         mio::ContactMatrixGroup<double>& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
