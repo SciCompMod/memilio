@@ -27,6 +27,7 @@
 #include "memilio/utils/time_series.h"
 #include "ode_secir/parameter_space.h"
 #include "ode_secir/parameters_io.h"
+#include "utils.h"
 #include <gtest/gtest.h>
 #include <string>
 
@@ -229,12 +230,11 @@ TEST(TestSaveResult, save_result_with_params)
 
 TEST(TestSaveResult, save_result_order)
 {
-    std::vector<mio::TimeSeries<double>> results{
-        mio::TimeSeries<double>(0, Eigen::VectorX<double>::Constant(1, 0)), 
-        mio::TimeSeries<double>(0, Eigen::VectorX<double>::Constant(1, 1)), 
-        mio::TimeSeries<double>(0, Eigen::VectorX<double>::Constant(1, 2))};
+    std::vector<mio::TimeSeries<double>> results{mio::TimeSeries<double>(0, Eigen::VectorX<double>::Constant(1, 0)),
+                                                 mio::TimeSeries<double>(0, Eigen::VectorX<double>::Constant(1, 1)),
+                                                 mio::TimeSeries<double>(0, Eigen::VectorX<double>::Constant(1, 2))};
 
-    // case: check order of results, where lexical ordering would rearrange the results; 
+    // case: check order of results, where lexical ordering would rearrange the results;
     // expect: order follows the ids
     std::vector<int> ids = {1, 2, 10};
 
@@ -250,7 +250,7 @@ TEST(TestSaveResult, save_result_order)
     ASSERT_DOUBLE_EQ(results_from_file.value()[1].get_groups()[Eigen::Index(0)][Eigen::Index(0)], 1);
     ASSERT_DOUBLE_EQ(results_from_file.value()[2].get_groups()[Eigen::Index(0)][Eigen::Index(0)], 2);
 
-    // case: check order of results; 
+    // case: check order of results;
     // expect: order is changed due to ids not increasing
     ids = {1, 10, 2};
 
@@ -346,7 +346,6 @@ TEST(TestSaveResult, save_percentiles_and_sums)
 
     auto num_runs = 3;
     mio::ParameterStudy parameter_study(graph, 0.0, 2.0, 0.5, num_runs);
-    mio::log_rng_seeds(parameter_study.get_rng(), mio::LogLevel::warn);
 
     TempFileRegister tmp_file_register;
     std::string tmp_results_dir = tmp_file_register.get_unique_path();
@@ -360,6 +359,7 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     ensemble_edges.reserve(size_t(num_runs));
     parameter_study.run(
         [](auto&& g, auto t0_, auto dt_, auto) {
+            mio::LogLevelOverride llo(mio::LogLevel::off);
             auto copy = g;
             return mio::make_sampled_graph_simulation<double, mio::osecir::Simulation<double>>(draw_sample(copy), t0_,
                                                                                                dt_, dt_);

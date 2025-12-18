@@ -25,6 +25,7 @@
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/random_number_generator.h"
 #include "utils.h"
+#include "gmock/gmock.h"
 #include <cstddef>
 #include <gtest/gtest.h>
 #include <numeric>
@@ -185,16 +186,20 @@ TEST(ParameterStudies, sample_graph)
 
 TEST(ParameterStudies, test_normal_distribution)
 {
+    mio::RedirectLogger logger;
+
     mio::ParameterDistributionNormal parameter_dist_normal_1;
 
     // check if standard deviation is reduced if between too narrow interval [min,max] has to be sampled.
     parameter_dist_normal_1.set_upper_bound(1);
     parameter_dist_normal_1.set_lower_bound(-1);
-    parameter_dist_normal_1.log_stddev_changes(false); // only avoid warning output in tests
 
     double std_dev_demanded = parameter_dist_normal_1.get_standard_dev();
+    logger.capture();
     parameter_dist_normal_1.get_sample(mio::thread_local_rng());
 
+    EXPECT_THAT(logger.read(), testing::HasSubstr("Standard deviation reduced to fit 99% of the distribution"));
+    logger.release();
     EXPECT_GE(std_dev_demanded, parameter_dist_normal_1.get_standard_dev());
 
     // check if full argument constructor works correctly
@@ -211,7 +216,6 @@ TEST(ParameterStudies, test_normal_distribution)
     parameter_dist_normal_2.set_standard_dev(1.5);
     parameter_dist_normal_2.set_lower_bound(1);
     parameter_dist_normal_2.set_upper_bound(10);
-    parameter_dist_normal_2.log_stddev_changes(false); // only avoid warning output in tests
     std_dev_demanded = parameter_dist_normal_2.get_standard_dev();
 
     parameter_dist_normal_2.check_quantiles();
@@ -226,7 +230,10 @@ TEST(ParameterStudies, test_normal_distribution)
 
     //degenerate case: ub == lb //For MSVC the normal distribution cannot have a value of 0.0 for sigma
     mio::ParameterDistributionNormal dist3(0.999999999 * 3.0, 1.000000001 * 3.0, 3.0, 0.00000001);
+    logger.capture();
     EXPECT_NEAR(dist3.get_sample(mio::thread_local_rng()), 3.0, 1e-07);
+    EXPECT_THAT(logger.read(), testing::HasSubstr("Not successfully sampled within [min,max]."));
+    logger.release();
 }
 
 TEST(ParameterStudies, test_uniform_distribution)
@@ -368,10 +375,10 @@ TEST(ParameterStudies, check_ensemble_run_result)
 
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
     mio::ParameterStudy parameter_study(model, t0, tmax, 0.1, 1);
-    mio::log_rng_seeds(parameter_study.get_rng(), mio::LogLevel::warn);
 
     // Run parameter study
     auto ensemble_results = parameter_study.run_serial([](auto&& model_, auto t0_, auto dt_, auto) {
+        mio::LogLevelOverride llo(mio::LogLevel::off);
         auto copy = model_;
         draw_sample(copy);
         return mio::osecir::Simulation<double>(copy, t0_, dt_);

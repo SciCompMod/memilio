@@ -19,6 +19,7 @@
 */
 
 #include "matchers.h"
+#include "memilio/utils/logging.h"
 #include "temp_file_register.h"
 #include "test_data_dir.h"
 #include "memilio/data/analyze_result.h"
@@ -42,6 +43,7 @@
 #include "ode_secirts/parameters.h"
 #include "ode_secirts/parameters_io.h"
 #include "ode_secirts/analyze_result.h"
+#include "utils.h"
 
 #include "gtest/gtest.h"
 #include "gmock/gmock-matchers.h"
@@ -594,6 +596,7 @@ mio::osecirts::Model<double> make_model(int num_age_groups, bool set_invalid_ini
     set_synthetic_population_data(model.populations, set_invalid_initial_value);
     set_demographic_parameters(model.parameters, set_invalid_initial_value);
     set_contact_parameters(model.parameters, set_invalid_initial_value);
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     model.parameters.apply_constraints();
     return model;
 }
@@ -1037,12 +1040,13 @@ TEST(TestOdeSECIRTS, model_initialization)
     const std::vector<std::vector<double>> immunity_population = {{0.04, 0.04, 0.075, 0.08, 0.035, 0.01},
                                                                   {0.61, 0.61, 0.62, 0.62, 0.58, 0.41},
                                                                   {0.35, 0.35, 0.305, 0.3, 0.385, 0.58}};
-
-    ASSERT_THAT(mio::osecirts::read_input_data_county(model_vector, {2020, 12, 01}, {0},
-                                                      std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                      TEST_DATA_DIR, 2, immunity_population, false),
-                IsSuccess());
-
+    {
+        mio::LogLevelOverride llo(mio::LogLevel::off);
+        ASSERT_THAT(mio::osecirts::read_input_data_county(model_vector, {2020, 12, 01}, {0},
+                                                          std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+                                                          TEST_DATA_DIR, 2, immunity_population, false),
+                    IsSuccess());
+    }
     // Values from data/export_time_series_init_osecirts.h5, for reading in comparison
     // operator for return of mio::read_result and model population needed.
     auto expected_values =
