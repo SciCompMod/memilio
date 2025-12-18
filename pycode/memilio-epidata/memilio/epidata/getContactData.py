@@ -73,13 +73,24 @@ AGE_GROUP_LABELS_RKI = [
 
 
 def _normalize_country_name(country: str):
-    """Return a case-insensitive key without whitespace or punctuation."""
+    """
+    Return a case-insensitive key without whitespace or punctuation.
+
+    :param country: The country name to normalize.
+    :returns: Normalized country name.
+    """
     return "".join(ch for ch in country.casefold() if ch.isalnum())
 
 
 def _download_contact_workbook(
         url: str = CONTACT_ZIP_URL, target_filename: str = CONTACT_WORKBOOK_NAME):
-    """Download the ZIP from the DOI and return the workbook."""
+    """
+    Download the ZIP from the url and return the workbook.
+
+    :param url: URL to download the ZIP from.
+    :param target_filename: Name of the workbook file within the ZIP.
+    :returns: Content of the workbook.
+    """
     response = requests.get(url, timeout=30)
     response.raise_for_status()
     with zipfile.ZipFile(io.BytesIO(response.content)) as zf:
@@ -96,7 +107,14 @@ def _load_workbook_bytes(
         contact_path: Optional[str],
         url: str = CONTACT_ZIP_URL,
         target_filename: str = CONTACT_WORKBOOK_NAME):
-    """Return workbook either from a user path or by downloading the ZIP."""
+    """
+    Return workbook either from a user path or by downloading the ZIP.
+
+    :param contact_path: Optional local path to the workbook.
+    :param url: Url to download the ZIP from if no path is provided.
+    :param target_filename: Name of the workbook file within the ZIP.
+    :returns: Content of the workbook.
+    """
     if contact_path:
         if not os.path.exists(contact_path):
             raise FileNotFoundError(
@@ -108,18 +126,35 @@ def _load_workbook_bytes(
 
 def list_available_contact_countries(
         contact_path: Optional[str] = None):
-    """List all country names available in the contact matrix workbook."""
+    """
+    List all country names available in the contact matrix workbook.
+
+    :param contact_path: Optional local path to the workbook.
+    :returns: List of all country names.
+    """
     xls_bytes = _load_workbook_bytes(contact_path)
     xls = pd.ExcelFile(io.BytesIO(xls_bytes))
     return xls.sheet_names
 
 
 def get_available_countries(contact_path: Optional[str] = None):
-    """Get list of all available countries."""
+    """
+    Get list of all available countries.
+
+    :param contact_path: Optional local path to the workbook.
+    :returns: List of all available countries.
+    """
     return list_available_contact_countries(contact_path)
 
 
 def _select_sheet_name(country: str, sheet_names: Iterable[str]):
+    """
+    Select the appropriate sheet name from the workbook for a given country.
+
+    :param country: Country name as listed in the workbook (case-insensitive).
+    :param sheet_names: Iterable of available sheet names.
+    :returns: The exact sheet name as found in the workbook.
+    """
     lookup = {_normalize_country_name(name): name for name in sheet_names}
     key = _normalize_country_name(country)
     if key not in lookup:
@@ -177,6 +212,9 @@ def _aggregate_to_rki_age_groups(matrix: pd.DataFrame):
 
     Assumes the original columns/rows follow AGE_GROUP_LABELS order.
     Note: The source only provides a 75+ group; we map it entirely to 80-99.
+
+    :param matrix: The 16x16 contact matrix to aggregate.
+    :returns: Aggregated 6x6 contact matrix.
     """
     if matrix.shape != (len(AGE_GROUP_LABELS), len(AGE_GROUP_LABELS)):
         raise ValueError(
