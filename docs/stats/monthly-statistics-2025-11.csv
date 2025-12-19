@@ -1,0 +1,13 @@
+Month,Total Commits,Active Contributors,Lines Added,Lines Deleted,Total Lines Changed,Files Changed,PRs Merged,PRs Opened,PRs Closed,Issues Opened,Issues Closed,Releases,Pre-Releases,Latest Release,Contributors
+Dec 2024,5,6,26179,18690,44869,63,5,9,0,7,4,0,0,N/A,lenaploetzke; hatrit; reneSchm; HenrZu; annawendler; Martin J. Kühn
+Jan 2025,12,9,3273,1904,5177,395,12,13,1,19,14,0,0,N/A,khoanguyen-dev; HenrZu; annawendler; kilianvolmer; lenaploetzke; mknaranja; MaxBetzDLR; reneSchm; DavidKerkmann
+Feb 2025,4,3,2126,78,2204,44,4,3,0,6,4,0,0,N/A,HenrZu; jubicker; reneSchm
+Mar 2025,8,11,9177,3347,12524,285,9,10,3,16,13,0,0,N/A,HenrZu; DavidKerkmann; kilianvolmer; jubicker; reneSchm; Sascha Korf; Martin Joachim Kühn; Anna Wendler; MaxBetzDLR; xsaschako; Kilian Volmer
+Apr 2025,11,11,3377,1941,5318,98,12,15,3,17,11,1,0,v2.0.0,charlie0614; dr2001dlr; mknaranja; HenrZu; kilianvolmer; jubicker; annawendler; reneSchm; Martin J. Kühn; Sascha Korf; DavidKerkmann
+May 2025,4,6,2199,78,2277,43,4,10,3,13,18,0,0,N/A,HenrZu; xsaschako; reneSchm; kilianvolmer; annawendler; Henrik Zunker
+Jun 2025,7,7,4030,1105,5135,45,7,6,0,7,9,0,0,N/A,kilianvolmer; HenrZu; xsaschako; reneSchm; mhheger; Henrik Zunker; jubicker
+Jul 2025,11,9,5779,2335,8114,148,11,11,2,14,15,0,0,N/A,xsaschako; HenrZu; reneSchm; charlie0614; mhheger; jubicker; Henrik Zunker; Maximilian Betz; Kilian Volmer
+Aug 2025,10,8,754,5094,5848,78,11,18,1,14,8,0,0,N/A,MaxBetzDLR; HenrZu; reneSchm; jubicker; Carlotta Gerstein; Martin Kühn; Sascha; MaxBetz
+Sep 2025,5,8,8065,5628,13693,324,5,11,4,10,8,0,0,N/A,HenrZu; reneSchm; julianlitz; MaxBetz; Kilian Volmer; annawendler; jubicker; Henrik Zunker
+Oct 2025,10,15,3639,931,4570,118,10,9,2,10,15,0,0,N/A,"kilianvolmer; HenrZu; DavidKerkmann; MaxBetzDLR; julianlitz; reneSchm; jubicker; Carlotta Gerstein; Martin J. Kühn; Henrik Zunker; Martin Kühn; AgathaSchmidt; Abele, Daniel; MaxBetz; Anna Wendler"
+Nov 2025,11,13,5290,1487,6777,152,11,11,0,20,13,1,0,v2.2.0,MaxBetzDLR; kilianvolmer; HenrZu; reneSchm; mknaranja; annawendler; Henrik Zunker; MaxBetz; Kilian Volmer; Carlotta Gerstein; Kühn; Sascha Korf; jubicker
