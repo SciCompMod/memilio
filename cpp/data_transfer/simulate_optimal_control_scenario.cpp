@@ -481,23 +481,26 @@ void Secirvvs_NLP::eval_objective_constraints(const std::vector<FP>& x, std::vec
     // mio::osecirvvs::Simulation<FP> sim(model, t0, dt);
     mio::Simulation<FP, mio::osecirvvs::Model<FP>> sim(model, t0, dt);
     // sim.set_integrator(std::make_unique<mio::ExplicitStepperWrapper<FP, boost::numeric::odeint::runge_kutta_fehlberg78>>());
-    auto out = set_control_values<FP>(sim.get_model(), t0, tmax, xx, numControlIntervals_);
+    auto out = set_control_values<FP>(sim.get_model(), t0, tmax, xx, numControlIntervals_, control_names_);
     
     int gridindex = 0;
     objective     = 0.0;
     for (int controlIndex = 0; controlIndex < numControlIntervals_; ++controlIndex) {
 
+        FP obj_value = 0;
         // the objective is the weighted integral of the controls, since we use a piecewise constant dicretization
         // we just can add the values
-        FP obj_value = (xx[controlIndex] + xx[controlIndex + numControlIntervals_] + xx[controlIndex + 2 * numControlIntervals_] + xx[controlIndex + 3 * numControlIntervals_] + xx[controlIndex + 4 * numControlIntervals_]);
+        for (int controlVariableIndex = 0; controlVariableIndex < numControls_; controlVariableIndex++) {
+            obj_value += xx[controlIndex + controlVariableIndex * numControlIntervals_];
+        }
         objective += pcresolution_ * obj_value;
         
         for (int i = 0; i < pcresolution_; ++i, ++gridindex) {
             
             sim.advance(grid[gridindex + 1]);
             auto result = sim.get_result().get_last_value();
+            
             FP current_constraint = 0;
-
             for (int agegroup = 0; agegroup < num_age_groups; agegroup++)
             {
                 auto age_group_offset = agegroup * (int)mio::osecirvvs::InfectionState::Count;
@@ -543,7 +546,7 @@ void Secirvvs_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n,
     for (int controlIndex = 0; controlIndex < numControlIntervals_; ++controlIndex) {
 
         for (int controlVariableIndex = 0; controlVariableIndex < numControls_; controlVariableIndex++) {
-            currentControlVariables[controlVariableIndex] = round_to_decimal(xx[controlIndex + controlVariableIndex * numControlIntervals_], 6);
+            currentControlVariables[controlVariableIndex] = std::abs(round_to_decimal(xx[controlIndex + controlVariableIndex * numControlIntervals_], 6));
         }
         resultControlVariables.add_time_point(grid[gridindex], currentControlVariables);
 
@@ -569,6 +572,59 @@ bool Secirvvs_NLP::intermediate_callback(Ipopt::AlgorithmMode mode, Ipopt::Index
     return true;
 }
 
+// Changes name to the currently used ones in optimal control. 
+// Maybe should be same as the ones in Esid in the future.
+std::string normalize_control_name(const std::string& name)
+{
+    if (name == "School closure")
+        return "SchoolClosure";
+    if (name == "Remote work")
+        return "RemoteWork";
+    if (name == "Face masks & social distancing School")
+        return "PhysicalDistancingSchool";
+    if (name == "Face masks & social distancing Work")
+        return "PhysicalDistancingWork";
+    if (name == "Face masks & social distancing Other")
+        return "PhysicalDistancingOther";
+
+    return name; // fallback
+}
+
+std::vector<std::string> get_linked_intervention_names(std::string scenario_data_run_file, std::string intervention_list_file)
+{
+    // Extract control names
+    auto scenario_data_run = mio::read_json(scenario_data_run_file).value();
+    auto intervention_list = mio::read_json(intervention_list_file).value();
+    // Extract linked interventions
+    auto linked_interventions = scenario_data_run["linkedInterventions"];
+
+    std::vector<std::string> control_names;
+
+    for (auto linked_intervention : scenario_data_run["linkedInterventions"])
+    {
+        std::string intervention_id = linked_intervention["interventionId"].asString();
+        bool found = false;
+
+        for (auto entry : intervention_list)
+        {
+            if (entry["id"].asString() == intervention_id)
+            {
+                control_names.push_back(
+                    normalize_control_name(entry["name"].asString()));
+                found = true;
+                break;
+            }
+        }
+
+        if (!found)
+        {
+            std::cerr << "Intervention " << intervention_id << " not found in intervention list\n";
+        }
+    }
+
+    return control_names;
+}
+
 int main(int argc, char** argv)
 {
     //switch of logging for mio
@@ -587,8 +643,11 @@ int main(int argc, char** argv)
         return cli_result.error().code().value();  
     }
 
-    // Extract control names
-    std::vector<std::string> control_names = {"SchoolClosure", "HomeOffice", "PhysicalDistancingSchool", "PhysicalDistancingWork", "PhysicalDistancingOther"};
+    // Extract linked interventions to use as controls
+    std::vector<std::string> control_names = 
+            get_linked_intervention_names(mio::path_join(cli_parameters.get<"TempDirectory">(), "scenario_data_run.json"), 
+                                          mio::path_join(cli_parameters.get<"TempDirectory">(), "intervention_list.json"));;
+    // std::vector<std::string> control_names = {"SchoolClosure", "RemoteWork", "PhysicalDistancingSchool", "PhysicalDistancingWork", "PhysicalDistancingOther"};
 
     // Create a new instance of your nlp
     std::cout << "*** Initialize Model!" << std::endl;

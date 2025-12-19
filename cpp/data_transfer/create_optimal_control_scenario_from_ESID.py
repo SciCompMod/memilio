@@ -515,8 +515,8 @@ class Simulation:
                 coefficient = row.get('SchoolClosure') * coefficients['School closure']
                 dampings.append(school_closure(
                     row.get('Time'), coefficient, coefficient))
-            if 'HomeOffice' in self.df_interventions.columns and 'Remote work' in coefficients:
-                coefficient = row.get('HomeOffice') * coefficients['Remote work']
+            if 'RemoteWork' in self.df_interventions.columns and 'Remote work' in coefficients:
+                coefficient = row.get('RemoteWork') * coefficients['Remote work']
                 dampings.append(home_office(
                     row.get('Time'), coefficient, coefficient))
             if 'PhysicalDistancingSchool' in self.df_interventions.columns and 'Face masks & social distancing School' in coefficients:
@@ -712,6 +712,7 @@ class OptimalControlSimulation:
                 json.dump(self.intervention_list, outfile)
 
             optimal_control_result_filename = "OptimalControl_output.txt"
+            infected_constraint = 1e5
             # run optimal control in c++
             run = subprocess.run(
                 [
@@ -720,7 +721,7 @@ class OptimalControlSimulation:
                         data_directory = self.data_dir,
                         temp_directory = temp_dir.name, 
                         filename = optimal_control_result_filename, 
-                        constraint = 1e5)
+                        constraint = infected_constraint)
                 ],
                 shell=True,
                 check=True,
@@ -738,7 +739,7 @@ class OptimalControlSimulation:
             if not os.path.exists(res_dir_scenario):
                 os.makedirs(res_dir_scenario)
                 
-            self.save_optimal_controls_description(res_dir_scenario, df_interventions)
+            self.save_optimal_controls_description(res_dir_scenario, df_interventions, infected_constraint)
 
             sim = Simulation(
                 data_dir=self.data_dir,
@@ -755,9 +756,9 @@ class OptimalControlSimulation:
                 f"Error processing optimal conntrol scenario {scenario.get('id', 'N/A')}: {e}")
             return f"Failed to process optimal conntrol scenario {scenario.get('id', 'N/A')}: {e}"
 
-    def save_optimal_controls_description(self, res_dir_scenario, df_interventions):
+    def save_optimal_controls_description(self, res_dir_scenario, df_interventions, infected_constraint):
         
-        description = "Optimal control values found at:"
+        description = f"Optimal control values for infection upper bound at {infected_constraint}:"
 
         for column_name, values in df_interventions.items():
             column_str = ' ' + column_name + ': ['
