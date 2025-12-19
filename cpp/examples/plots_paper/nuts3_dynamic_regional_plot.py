@@ -3,6 +3,7 @@ from memilio.simulation.osecir import InfectionState
 
 import h5py
 import numpy as np
+from matplotlib.colors import LinearSegmentedColormap, to_rgba
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
@@ -18,31 +19,8 @@ regions_to_plot = [
 "11000",
 "6437",
 "5766",
-# "5770",
-# "5774",
-# "3251",
-# "3352",
-# "3356",
-# "3357",
-# "3361",
-# "3401",
-# "3402",
-# "3403",
-# "3405",
-# "3451",
-# "3452",
-# "3453",
-# "3455",
-"3457",
-"3458",
-"3461",
-# "3462",
 # "4011",
-# "4012",
-# "9464",
-# "9475",
 # "14511",
-"7313"
 ]
 highlighted_region_to_plot = "3457"
 
@@ -98,7 +76,8 @@ df_dynamic["Incidence"] = (
 )
 
 set_fontsize()
-fig, ax = plt.subplots(figsize=(10, 6))
+figsize = (10, 6)
+fig, ax = plt.subplots(figsize=figsize)
 
 for region in regions_to_plot:
     # --- First phase: df_inference (days 0–60)
@@ -112,7 +91,7 @@ for region in regions_to_plot:
         linestyle="--",
         color=colors["Grey"],
         alpha = 1,
-        linewidth=0.5,
+        linewidth=1,
         label='_nolegend_',
     )
 
@@ -130,7 +109,7 @@ for region in regions_to_plot:
         linestyle="-",
         color=colors["Dark grey"],
         alpha = 1,
-        linewidth=0.5,
+        linewidth=1,
         label='_nolegend_'   
     )
 
@@ -150,7 +129,7 @@ for region in regions_to_plot:
         linestyle="-",      # different style
         color=colors["Grey"],
         alpha = 1,
-        linewidth=0.5,
+        linewidth=1,
         label='_nolegend_',
     )
 
@@ -209,10 +188,44 @@ threshold1 = 250
 threshold2 = 500
 plt.axhline(y=threshold2, color=colors["Red"], linestyle='-', lw=1, alpha = 0.8, label=f"Threshold High = {threshold2}")
 plt.axhline(y=threshold1, color=colors["Red"], linestyle='-', lw=1, alpha = 0.5, label=f"Threshold Low = {threshold1}")
+ymin, ymax = ax.get_ylim()
 
+# Make fade
+fade = np.linspace(0, 1, 256).reshape(256, 1)
+
+base_red = to_rgba(colors["Red"])
+
+custom_red_cmap = LinearSegmentedColormap.from_list(
+    "custom_red_fade",
+    [
+        (*base_red[:3], 0.0),   # fully transparent
+        (*base_red[:3], 1.0),   # fully opaque
+    ],
+)
+
+ax.imshow(
+    fade,
+    extent=[0, 120, threshold2 + 3, threshold2 + 200],
+    origin="upper",
+    aspect="auto",
+    cmap=custom_red_cmap,
+    alpha=0.5,
+    zorder=100
+)
+ax.imshow(
+    fade,
+    extent=[0, 120, threshold1 + 3, threshold1 + 100],
+    origin="upper",
+    aspect="auto",
+    cmap=custom_red_cmap,
+    alpha=0.3,
+    zorder=100
+)
+
+ax.set_ylim(0, ymax)
 ax.set_xlim(0, 120)
 plt.xlabel("Time [days]")
 plt.ylabel("Infected per 100,000 [#]")
-plt.legend()
+# plt.legend() # no legend, as we plot it seperatly
 
 plt.savefig(os.path.join(save_dir, 'nuts3_dynamic_regional.png'), dpi=dpi)

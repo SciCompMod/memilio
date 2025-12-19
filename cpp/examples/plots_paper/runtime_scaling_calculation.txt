@@ -1,7 +1,7 @@
 Ensemble parallel task = 32738 (calculated with calculate runtime)
 ide:
 -nRun 64 = 23.0772
--> 32738 * (25 / 64) = 12788.28125 (3.552 stunden)
+-> 32738 * (25 / 64) = 12788.28125 (3,552 stunden)
 
 lct:
 -nRun 64 = 3.34505

@@ -80,6 +80,13 @@ df_inference = preprocess_data(os.path.join(plotting_dir, "../../../data/results
 
 df = preprocess_data(os.path.join(results_dir, "result_open.h5"))
 plot_curve(df_inference, df)
+# sum = 0
+# for i in range(60):
+#     sum += df["Susceptible"][i] - df["Susceptible"][i + 1]
+
+# print(sum)
+# print(df["Recovered"][60])
+# exit()
 
 plt.savefig(os.path.join(save_dir, 'germany_nuts3_open.png'), dpi=dpi)
 

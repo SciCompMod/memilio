@@ -58,8 +58,8 @@ df_lockdown = preprocess_data(os.path.join(results_dir, "result_lockdown.h5"))
 df_dynamic = preprocess_data(os.path.join(results_dir, "result_dynamic.h5"))
 
 set_fontsize()        
-figsize = (5, 3.5)
-panel = (0.17, 0.18, 0.79, 0.76)
+figsize = (10, 7)
+panel = (0.08, 0.1, 0.89, 0.86)
 fig = plt.figure(figsize=figsize)
 ax = fig.add_axes(panel)
 
@@ -67,10 +67,10 @@ ax = fig.add_axes(panel)
 df_inference[state].plot(ax=ax, lw=2, alpha=0.6, color=color_infected_line, linestyle="--", label='_nolegend_')
 
 # Plot the rest normally
-ax.plot(df_open[state].index + change_day, df_open[state].values, color=colors["Green"], alpha=1.0, label='No NPIs')
-ax.plot(df_same[state].index + change_day, df_same[state].values, color=color_infected_line, alpha=1.0, label='Static NPIs')
-ax.plot(df_lockdown[state].index + change_day, df_lockdown[state].values, color=colors["Red"], alpha=1.0, label='Strict NPIs')
-ax.plot(df_dynamic[state].index + change_day, df_dynamic[state].values, color=colors["Orange"], alpha=1.0, label='Dynamic NPIs')
+ax.plot(df_open[state].index + change_day, df_open[state].values, color=colors["Green"], linewidth=2.5, alpha=1.0, label='No NPIs')
+ax.plot(df_same[state].index + change_day, df_same[state].values, color=color_infected_line, linewidth=2.5, alpha=1.0, label='Static NPIs')
+ax.plot(df_lockdown[state].index + change_day, df_lockdown[state].values, color=colors["Red"], linewidth=2.5, alpha=1.0, label='Strict NPIs')
+ax.plot(df_dynamic[state].index + change_day, df_dynamic[state].values, color=colors["Orange"], linewidth=2.5, alpha=1.0, label='Dynamic NPIs')
 
 # Optional: style
 plt.xlabel("Time [days]")
@@ -79,5 +79,5 @@ plt.grid(False)
 
 ax.set_xlim(0, 120)
 # ax.set_ylim(bottom=None, top=df[state].max()*1.05)
-plt.legend()
+# plt.legend() # no legend, as we plot it seperatly
 plt.savefig(os.path.join(save_dir, 'nuts3_triple_plot_simple.png'), dpi=dpi)

@@ -344,6 +344,7 @@ mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, const std:
         node.property.get_simulation().set_integrator_core(std::make_unique<mio::EulerIntegratorCore<double>>());
     }
 
+    std::cout << "Time ContactFrequency NewlyInfected Population NewlyInfectedSevere NewlyInfectedCritical NewlyDead NewlyRecovered\n"; 
     auto sim = mio::make_mobility_sim<double>(0.0, 0.5, std::move(graph));
     // auto sim = mio::make_no_mobility_sim<double>(0.0, std::move(graph));
     sim.advance(num_days_sim);
