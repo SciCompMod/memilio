@@ -1,0 +1,23 @@
+<svg width="600" height="200" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" style="stop-color:#ef4444;stop-opacity:0.3" />
+        <stop offset="100%" style="stop-color:#ef4444;stop-opacity:0.1" />
+      </linearGradient>
+    </defs>
+    
+    <rect width="600" height="200" fill="#ffffff"/>
+    
+    <line x1="40" y1="40" x2="560" y2="40" stroke="#e5e7eb" stroke-width="1"/><line x1="40" y1="65" x2="560" y2="65" stroke="#e5e7eb" stroke-width="1"/><line x1="40" y1="90" x2="560" y2="90" stroke="#e5e7eb" stroke-width="1"/><line x1="40" y1="115" x2="560" y2="115" stroke="#e5e7eb" stroke-width="1"/><line x1="40" y1="140" x2="560" y2="140" stroke="#e5e7eb" stroke-width="1"/>
+    
+    <path d="M40,140 L40,128.60759493670886 L87.27272727272728,65.31645569620254 L134.54545454545456,128.60759493670886 L181.8181818181818,71.64556962025317 L229.0909090909091,84.30379746835443 L276.3636363636364,40 L323.6363636363636,96.96202531645571 L370.9090909090909,58.98734177215189 L418.1818181818182,103.29113924050634 L465.4545454545455,103.29113924050634 L512.7272727272727,58.98734177215189 L560,71.64556962025317 L560,140 Z" fill="url(#gradient)"/>
+    <path d="M40,128.60759493670886 L87.27272727272728,65.31645569620254 L134.54545454545456,128.60759493670886 L181.8181818181818,71.64556962025317 L229.0909090909091,84.30379746835443 L276.3636363636364,40 L323.6363636363636,96.96202531645571 L370.9090909090909,58.98734177215189 L418.1818181818182,103.29113924050634 L465.4545454545455,103.29113924050634 L512.7272727272727,58.98734177215189 L560,71.64556962025317" stroke="#ef4444" stroke-width="2" fill="none"/>
+    
+    <circle cx="40" cy="128.60759493670886" r="3" fill="#ef4444"/><circle cx="87.27272727272728" cy="65.31645569620254" r="3" fill="#ef4444"/><circle cx="134.54545454545456" cy="128.60759493670886" r="3" fill="#ef4444"/><circle cx="181.8181818181818" cy="71.64556962025317" r="3" fill="#ef4444"/><circle cx="229.0909090909091" cy="84.30379746835443" r="3" fill="#ef4444"/><circle cx="276.3636363636364" cy="40" r="3" fill="#ef4444"/><circle cx="323.6363636363636" cy="96.96202531645571" r="3" fill="#ef4444"/><circle cx="370.9090909090909" cy="58.98734177215189" r="3" fill="#ef4444"/><circle cx="418.1818181818182" cy="103.29113924050634" r="3" fill="#ef4444"/><circle cx="465.4545454545455" cy="103.29113924050634" r="3" fill="#ef4444"/><circle cx="512.7272727272727" cy="58.98734177215189" r="3" fill="#ef4444"/><circle cx="560" cy="71.64556962025317" r="3" fill="#ef4444"/>
+    
+    <text x="40" y="155" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">Dec 2024</text><text x="181.8181818181818" y="155" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">Mar 2025</text><text x="323.6363636363636" y="155" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">Jun 2025</text><text x="465.4545454545455" y="155" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">Sep 2025</text>
+    
+    <text x="300" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#374151">Issues Closed</text>
+    <text x="15" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">18</text>
+    <text x="15" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">2.2</text>
+  </svg>
