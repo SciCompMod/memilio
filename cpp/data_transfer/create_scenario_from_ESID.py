@@ -783,9 +783,9 @@ class Simulation:
         scenarios = requests.get(
             self.run_data_url + "scenarios/", headers=self.headers).json()
 
-        # Only simulate scenarios that are not optimal control
+        # Only simulate scenarios that are not optimal control and not using LHA data
         scenarios[:] = (scenario for i, scenario in enumerate(
-            scenarios) if "OptimalControl" not in scenario["name"])
+            scenarios) if ("OptimalControl" not in scenario["name"] and "LHA" not in scenario["name"]))
 
         self.parameter_list = requests.get(
             self.run_data_url + "parameterdefinitions/", headers=self.headers).json()

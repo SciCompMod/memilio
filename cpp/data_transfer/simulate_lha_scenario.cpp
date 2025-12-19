@@ -128,9 +128,9 @@ void set_parameters(mio::osecirvvs::Parameters<FP>& params, double parameter_val
 
 template <typename FP>
 mio::IOResult<void> set_covid_parameters(mio::Date start_date, mio::osecirvvs::Parameters<FP>& params,
-                                         const fs::path& data_dir)
+                                         const fs::path& temp_dir)
 {
-    BOOST_OUTCOME_TRY(auto&& parameter_list, mio::read_json((data_dir / "parameter_list.json").string()));
+    BOOST_OUTCOME_TRY(auto&& parameter_list, mio::read_json((temp_dir / "parameter_list_lha.json").string()));
 
     std::map<std::string, std::string> id_to_name{};
     for (auto entry : parameter_list) {
@@ -138,7 +138,7 @@ mio::IOResult<void> set_covid_parameters(mio::Date start_date, mio::osecirvvs::P
     }
 
     // only uses group 0 for all parameters
-    BOOST_OUTCOME_TRY(auto&& scenario_data_run, mio::read_json((data_dir / "scenario_data_run.json").string()));
+    BOOST_OUTCOME_TRY(auto&& scenario_data_run, mio::read_json((temp_dir / "scenario_data_run_lha.json").string()));
     std::map<std::string, double> parameter_values{};
     for (auto parameter : scenario_data_run["modelParameters"]) {
         std::string parameter_name = id_to_name[parameter["parameterId"].asString()];
@@ -192,12 +192,12 @@ mio::IOResult<void> set_covid_parameters(mio::Date start_date, mio::osecirvvs::P
 }
 
 mio::IOResult<mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>>
-get_graph(mio::Date start_date, std::vector<int> lha_ids, const fs::path& data_dir)
+get_graph(mio::Date start_date, std::vector<int> lha_ids, const fs::path& data_dir, const fs::path& temp_dir)
 {
     // global parameters
     const int num_age_groups = 6;
     mio::osecirvvs::Parameters<double> params(num_age_groups);
-    BOOST_OUTCOME_TRY(set_covid_parameters(start_date, params, data_dir));
+    BOOST_OUTCOME_TRY(set_covid_parameters(start_date, params, temp_dir));
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
 
     // graph of counties with populations and local parameters
@@ -238,19 +238,19 @@ get_graph(mio::Date start_date, std::vector<int> lha_ids, const fs::path& data_d
 }
 
 mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, std::vector<int> lha_ids,
-                        const std::string& data_dir, const std::string& result_dir, bool save_single_runs,
-                        const int num_runs, bool save_non_aggregated_results = false)
+                        const std::string& data_dir, const std::string& result_dir, const std::string& temp_dir,
+                        bool save_single_runs, const int num_runs, bool save_non_aggregated_results = false)
 {
     //create or load graph
     mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> params_graph;
-    BOOST_OUTCOME_TRY(auto&& created, get_graph(start_date, lha_ids, data_dir));
+    BOOST_OUTCOME_TRY(auto&& created, get_graph(start_date, lha_ids, data_dir, temp_dir));
     params_graph = created;
 
     std::vector<int> county_ids(params_graph.nodes().size());
     std::transform(params_graph.nodes().begin(), params_graph.nodes().end(), county_ids.begin(), [](auto& n) {
         return n.id;
     });
-    //run parameter study
+    // run parameter study
     auto parameter_study =
         mio::ParameterStudy(params_graph, 0.0, static_cast<double>(num_days_sim), 0.5, static_cast<size_t>(num_runs));
 
@@ -316,21 +316,34 @@ mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, std::vecto
     return mio::success();
 }
 
-int main()
+int main(int argc, char** argv)
 {
+    // This example runs the simulation where one county provides LHA data and the others do not.
+    // For now, we assume that there are no active interventions during the simulation period.
 
     mio::set_log_level(mio::LogLevel::warn);
     mio::mpi::init();
 
-    std::string data_dir = "../../data";
+    std::string data_dir   = "../../data";
+    std::string result_dir = data_dir;
+    std::string temp_dir   = data_dir;
+    // County ID.
+    std::vector<int> lha_ids = {};
+    mio::Date start_date     = mio::Date(2021, 2, 1);
+    int num_days_sim         = 30;
+    int num_simulation_runs  = 5;
 
-    mio::Date start_date             = mio::Date(2021, 2, 1);
-    int num_days_sim                 = 30;
-    int num_simulation_runs          = 5;
+    if (argc == 10) {
+        data_dir   = argv[1];
+        result_dir = argv[2];
+        temp_dir   = argv[3];
+        lha_ids.push_back(std::atoi(argv[4]));
+        start_date          = mio::Date(std::atoi(argv[5]), std::atoi(argv[6]), std::atoi(argv[7]));
+        num_days_sim        = std::atoi(argv[8]);
+        num_simulation_runs = std::atoi(argv[9]);
+    }
+
     bool save_non_aggregated_results = false;
-
-    // County ID. Use Cologne for now.
-    std::vector<int> lha_ids = {5314};
 
     //mio::thread_local_rng().seed(
     //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
@@ -343,7 +356,6 @@ int main()
     //     printf("\n");
     // }
 
-    std::string result_dir = data_dir;
     boost::filesystem::path res_dir(result_dir);
     bool created_results = boost::filesystem::create_directories(res_dir);
     if (created_results) {
@@ -351,7 +363,7 @@ int main()
     }
     printf("Saving results to \"%s\".\n", result_dir.c_str());
 
-    auto result = run(num_days_sim, start_date, lha_ids, data_dir, result_dir, false, num_simulation_runs,
+    auto result = run(num_days_sim, start_date, lha_ids, data_dir, result_dir, temp_dir, false, num_simulation_runs,
                       save_non_aggregated_results);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());

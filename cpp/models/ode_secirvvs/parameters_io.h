@@ -900,9 +900,12 @@ size_t get_index_of_age_group(int age);
 template <typename FP>
 IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Model<FP>& model, int lha_id)
 {
-    // TODO: Filename needs to be adapted if we have data for more than one county.
     // Open file.
-    const fs::path lha_data_path = path_join(data_dir, "Germany/pydata", "lha_data.csv");
+    std::string filename =
+        fmt::format("lha_{}_observations_{}-{}-{}.csv", std::to_string(lha_id), std::to_string(current_date.year),
+                    std::to_string(current_date.month), std::to_string(current_date.day));
+    std::cout << filename << std::endl;
+    const fs::path lha_data_path = path_join(data_dir, "Germany/pydata", filename);
 
     if (!fs::exists(lha_data_path)) {
         mio::log_error("Cannot read in data. File does not exist.");
@@ -1109,7 +1112,7 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
         bool any_symptoms = false;
         size_t i          = 0;
         while (!any_symptoms && i < symptom_columns.size()) {
-            if (std::stoi(row[index[symptom_columns[i]]]) == 1) {
+            if (row[index[symptom_columns[i]]] == "True") {
                 any_symptoms = true;
             }
             i++;
@@ -1651,9 +1654,6 @@ IOResult<void> set_lha_data(const Parameters<FP>& params, mio::Graph<Model<FP>, 
     const fs::path path(data_dir);
     std::string population_data_path =
         mio::path_join((path / "Germany" / "pydata").string(), "county_current_population.json");
-    // std::string population_data_path = mio::path_join(
-    //     "/localdata1/wend_aa/memilio-repos/esid-scenarios/data/Germany/pydata/", "county_current_population.json");
-    // std::vector<int> node_ids = BOOST_OUTCOME_TRY(get_node_ids(population_data_path, true).value();
     BOOST_OUTCOME_TRY(std::vector<int> && node_ids, get_node_ids(population_data_path, true));
 
     std::vector<Model> nodes(node_ids.size(), Model(int(size_t(params.get_num_groups()))));

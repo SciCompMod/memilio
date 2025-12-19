@@ -532,6 +532,20 @@ def post_to_db_scenarios(headers, start_date_scenarios, days_simulated_scenarios
         "percentiles": [25, 50, 75],
     })
 
+    # Define LHA scenario without interventions.
+    # For now, we assume that scenarios created by LHAs have the tsring "LHA" in the name.
+    scenario_data.append({
+        "name": f"Scenario1_LHA",
+        "description": "",
+        "startDate": f"{start_date_simulation}",
+        "endDate": f"{end_date_simulation}",
+        "modelId": model_id[0],
+        "modelParameters": modelparameters_entry,
+        "nodeListId": nodelist_id[0],
+        "linkedInterventions": [],
+        "percentiles": [25, 50, 75],
+    })
+
     if post:
         for scenario in scenario_data:
             post_response = requests.post(
