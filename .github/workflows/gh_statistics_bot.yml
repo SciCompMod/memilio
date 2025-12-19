@@ -1,12 +1,10 @@
 name: Monthly Repository Statistics
 
 on:
-  push:
-
   workflow_dispatch:
 
 jobs:
-  generate-monthly-report:
+  generate-report:
     runs-on: ubuntu-latest
     permissions:
       contents: write
