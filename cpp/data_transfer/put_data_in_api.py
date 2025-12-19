@@ -66,7 +66,7 @@ def put_scenario(scenario_id, zip_file, url, delay, service_realm, client_id, us
     upload_description_successful = False
     if scenario_description is None:
         upload_description_successful = True
-    while (try_iteration < max_tries) and (not upload_scenario_successful) and (not upload_description_successful):
+    while (try_iteration < max_tries) and not (upload_scenario_successful and upload_description_successful):
         print(f'Waiting for {1+delay*try_iteration} seconds before putting scenario')
         time.sleep(1+try_iteration*delay)
         try_iteration += 1
@@ -82,16 +82,14 @@ def put_scenario(scenario_id, zip_file, url, delay, service_realm, client_id, us
                 print(put_response.text)
         
         if upload_description_successful is False:
-            pass
-            # ToDo: Upload scenario description
-            # put_response = requests.put(url + "scenarios/" + scenario_id, headers=headers,
-            #                             data={"description": scenario_description})
+            put_response = requests.put(url + "scenarios/" + scenario_id + "/description", headers=headers,
+                                        data={"description": scenario_description})
 
-            # print(
-            #     f'Put HTTP response code for description of scenario {scenario_id} was {put_response.status_code}, reason was {put_response.reason}.')
+            print(
+                f'Put HTTP response code for description of scenario {scenario_id} was {put_response.status_code}, reason was {put_response.reason}.')
 
-            # if put_response.status_code != 200:
-            #     print(put_response.text)
+            if put_response.status_code != 200:
+                print(put_response.text)
 
         time.sleep(delay_check)
         get_scenario_response = requests.get(

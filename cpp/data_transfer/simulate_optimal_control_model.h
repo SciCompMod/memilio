@@ -235,7 +235,8 @@ mio::IOResult<void> set_initial_values(EBModel<internal_type>& model_double, EBM
 }
 
 template <typename FP>
-mio::IOResult<void> set_npis(mio::osecirvvs::Parameters<FP>& params, FP t0, FP tmax, const std::vector<FP>& x, const int numControlIntervals)
+mio::IOResult<void> set_npis(mio::osecirvvs::Parameters<FP>& params, FP t0, FP tmax, const std::vector<FP>& x, 
+                             const int numControlIntervals, std::vector<std::string> control_names)
 {
     // mio::unused(t0, x, numControlIntervals);
     auto damping_helper = [=](mio::SimulationTime<FP> t, FP min, FP max, mio::DampingLevel damping_level, mio::DampingType damping_type, const std::vector<size_t> location,
@@ -281,11 +282,51 @@ mio::IOResult<void> set_npis(mio::osecirvvs::Parameters<FP>& params, FP t0, FP t
     for (int controlIndex = 0; controlIndex < numControlIntervals; ++controlIndex)
     {
         t = ad::value(t0) + controlIndex * step_size;
-        contact_dampings.push_back(school_closure(mio::SimulationTime<FP>(t), (1. * x.at(controlIndex))));
-        contact_dampings.push_back(home_office(mio::SimulationTime<FP>(t), (0.25 * x.at(controlIndex + numControlIntervals))));
-        contact_dampings.push_back(physical_distancing_school(mio::SimulationTime<FP>(t), (0.25 * x.at(controlIndex + 2 * numControlIntervals))));
-        contact_dampings.push_back(physical_distancing_work(mio::SimulationTime<FP>(t), (0.25 * x.at(controlIndex + 3 * numControlIntervals))));
-        contact_dampings.push_back(physical_distancing_other(mio::SimulationTime<FP>(t), (0.35 * x.at(controlIndex + 4 * numControlIntervals))));
+        for (size_t control = 0; control < control_names.size(); ++control)
+        {
+            const std::string& name = control_names[control];
+            const auto value = x.at(controlIndex + control * numControlIntervals);
+
+            if (name == "SchoolClosure")
+            {
+                contact_dampings.push_back(
+                    school_closure(
+                        mio::SimulationTime<FP>(t),
+                        1.0 * value));
+            }
+            else if (name == "RemoteWork")
+            {
+                contact_dampings.push_back(
+                    home_office(
+                        mio::SimulationTime<FP>(t),
+                        0.25 * value));
+            }
+            else if (name == "PhysicalDistancingSchool")
+            {
+                contact_dampings.push_back(
+                    physical_distancing_school(
+                        mio::SimulationTime<FP>(t),
+                        0.25 * value));
+            }
+            else if (name == "PhysicalDistancingWork")
+            {
+                contact_dampings.push_back(
+                    physical_distancing_work(
+                        mio::SimulationTime<FP>(t),
+                        0.25 * value));
+            }
+            else if (name == "PhysicalDistancingOther")
+            {
+                contact_dampings.push_back(
+                    physical_distancing_other(
+                        mio::SimulationTime<FP>(t),
+                        0.35 * value));
+            }
+            else
+            {
+                std::cerr << "Unknown control intervention: " << name << '\n';
+            }
+        }
     }
     contacts.make_matrix();
 
@@ -297,10 +338,11 @@ mio::IOResult<void> set_npis(mio::osecirvvs::Parameters<FP>& params, FP t0, FP t
  * @param model an instance of the pandemic model
  */
 template <typename FP>
-mio::IOResult<void> set_control_values(EBModel<FP>& model, FP t0, FP tmax, const std::vector<FP>& x, const int numControlIntervals)
+mio::IOResult<void> set_control_values(EBModel<FP>& model, FP t0, FP tmax, const std::vector<FP>& x, 
+                                       const int numControlIntervals, std::vector<std::string> control_names)
 {
     auto& params = model.parameters;
-    BOOST_OUTCOME_TRY(set_npis<FP>(params, t0, tmax, x, numControlIntervals));
+    BOOST_OUTCOME_TRY(set_npis<FP>(params, t0, tmax, x, numControlIntervals, control_names));
 
     return mio::success();
 }
