@@ -237,11 +237,15 @@ mio::IOResult<void> set_covid_parameters(mio::Date start_date, mio::osecirvvs::P
 }
 
 mio::IOResult<mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>>
-get_graph(mio::Date start_date, std::vector<int> lha_ids, const fs::path& data_dir, const fs::path& temp_dir)
+get_graph(mio::Date start_date, const int num_days_sim, std::vector<int> lha_ids, const fs::path& data_dir,
+          const fs::path& temp_dir)
 {
     // global parameters
     const int num_age_groups = 6;
     mio::osecirvvs::Parameters<double> params(num_age_groups);
+    // Resize DailyPartialVaccinations and DailyFullVaccinations according to length of simulation.
+    params.get<mio::osecirvvs::DailyPartialVaccinations<double>>().resize(mio::SimulationDay((size_t)num_days_sim + 1));
+    params.get<mio::osecirvvs::DailyFullVaccinations<double>>().resize(mio::SimulationDay((size_t)num_days_sim + 1));
     BOOST_OUTCOME_TRY(set_covid_parameters(start_date, params, temp_dir));
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
 
@@ -288,7 +292,7 @@ mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, std::vecto
 {
     //create or load graph
     mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> params_graph;
-    BOOST_OUTCOME_TRY(auto&& created, get_graph(start_date, lha_ids, data_dir, temp_dir));
+    BOOST_OUTCOME_TRY(auto&& created, get_graph(start_date, num_days_sim, lha_ids, data_dir, temp_dir));
     params_graph = created;
 
     std::vector<int> county_ids(params_graph.nodes().size());
