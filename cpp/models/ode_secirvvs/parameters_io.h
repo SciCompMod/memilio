@@ -1554,6 +1554,36 @@ IOResult<void> read_input_data_county_cached(std::vector<Model>& model, Date dat
 }
 
 /**
+ * @brief Reads population data from population files for the whole country.
+ * @param[in, out] model Vector of model in which the data is set.
+ * @param[in] date Date for which the data should be read.
+ * @param[in] scaling_factor_inf Factors by which to scale the confirmed cases of rki data.
+ * @param[in] scaling_factor_icu Factor by which to scale the icu cases of divi data.
+ * @param[in] pydata_dir Directory of files.
+ * @param[in] num_days Number of days to be simulated; required to load data for vaccinations during the simulation.
+ */
+template <class Model>
+IOResult<void> read_input_data_germany(std::vector<Model>& model, Date date,
+                                       const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
+                                       const std::string& pydata_dir, int num_days)
+{
+    BOOST_OUTCOME_TRY(
+        details::set_vaccination_data(model, path_join(pydata_dir, "vacc_germany_ageinf_ma7.json"), date, {0}, num_days));
+
+    // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.
+    // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
+    BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(pydata_dir, "germany_divi_ma7.json"), {0}, date,
+                                             scaling_factor_icu));
+
+    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(pydata_dir, "cases_all_age_ma7.json"), {0},
+                                                        date, scaling_factor_inf));
+    BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(pydata_dir, "county_current_population.json"),
+                                                   path_join(pydata_dir, "cases_all_age_ma7.json"), {0}, date));
+
+    return success();
+}
+
+/**
     * Reads compartments for German counties at a specified date from data files.
     * Estimates all compartments from available data using the model parameters, so the
     * model parameters must be set before calling this function.

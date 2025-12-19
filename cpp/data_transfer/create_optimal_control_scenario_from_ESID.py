@@ -51,9 +51,13 @@ class Simulation:
         path_vacc_data = os.path.join(
             self.data_dir, "Germany", "pydata", "vacc_county_ageinf_ma7.json")
         path_case_data = os.path.join(
-            self.data_dir, "Germany", "pydata", "cases_all_county_age_ma7.json")
+            self.data_dir, "Germany", "pydata",
+            "cases_all_county_age_ma7.json")
         path_population_data = os.path.join(
-            self.data_dir, "Germany", "pydata", "county_current_population.json")
+            self.data_dir, "Germany", "pydata",
+            "county_current_population.json")
+        self.path_mobility_file = os.path.join(
+            self.data_dir, "Germany", "mobility", "commuter_mobility_2022.txt")
         self.vacc_data = osecirvvs.read_vaccination_data(path_vacc_data)
         self.case_data = osecirvvs.read_confirmed_cases_data(path_case_data)
         self.population_data = osecirvvs.read_population_data(
@@ -81,9 +85,9 @@ class Simulation:
 
             print(
                 f"Starting simulation for scenario: {scenario_data_run['id']} ({scenario_data_run['name']})")
-            study = osecirvvs.ParameterStudy(
+            study = osecirvvs.GraphParameterStudy(
                 graph, 0., num_days_sim, 0.5, num_runs)
-            ensemble = study.run(False)
+            ensemble = study.run()
 
             ensemble_results = []
             ensemble_params = []
@@ -109,13 +113,13 @@ class Simulation:
 
             osecirvvs.save_results(
                 ensemble_results, ensemble_params, node_ids, self.results_dir,
-                save_single_runs, save_percentiles, num_days_sim, True)
+                save_single_runs, save_percentiles)
             return f"Successfully processed scenario {scenario_data_run['id']}"
 
         except Exception as e:
             print(
                 f"Error processing scenario {scenario_data_run.get('id', 'N/A')}: {e}")
-            return f"Failed to process scenario {scenario_data_run.get('id', 'N/A')}: {e}"
+            raise e
 
     def get_parameter_values(self, parameters, parameter_name):
         parameter = next(
@@ -421,7 +425,7 @@ class Simulation:
 
         for i, location in enumerate(locations):
             baseline_file = os.path.join(
-                self.data_dir, "contacts", "baseline_" + location + ".txt")
+                self.data_dir, "Germany", "contacts", "baseline_" + location + ".txt")
             contact_matrices[i] = mio.ContactMatrix(
                 mio.read_mobility_plain(baseline_file),
                 np.zeros((self.num_groups, self.num_groups))
@@ -504,25 +508,26 @@ class Simulation:
             
             coefficients[intervention_data['name']] = intervention['coefficient']
         
-        for row in self.df_interventions.rows:
+        for _, row in self.df_interventions.iterrows():
 
-            if 'SchoolClosure' in self.df_interventions.columns:
+            # Check if the keys are in df_interventions and coeffients from the scenario_data
+            if 'SchoolClosure' in self.df_interventions.columns and 'School closure' in coefficients:
                 coefficient = row.get('SchoolClosure') * coefficients['School closure']
                 dampings.append(school_closure(
                     row.get('Time'), coefficient, coefficient))
-            if 'HomeOffice' in self.df_interventions.columns:
+            if 'HomeOffice' in self.df_interventions.columns and 'Remote work' in coefficients:
                 coefficient = row.get('HomeOffice') * coefficients['Remote work']
                 dampings.append(home_office(
                     row.get('Time'), coefficient, coefficient))
-            if 'PhysicalDistancingSchool' in self.df_interventions.columns:
+            if 'PhysicalDistancingSchool' in self.df_interventions.columns and 'Face masks & social distancing School' in coefficients:
                 coefficient = row.get('PhysicalDistancingSchool') * coefficients['Face masks & social distancing School']
                 dampings.append(physical_distancing_school(
                     row.get('Time'), coefficient, coefficient))
-            if 'PhysicalDistancingWork' in self.df_interventions.columns:
+            if 'PhysicalDistancingWork' in self.df_interventions.columns and 'Face masks & social distancing Work' in coefficients:
                 coefficient = row.get('PhysicalDistancingWork') * coefficients['Face masks & social distancing Work']
                 dampings.append(physical_distancing_work(
                     row.get('Time'), coefficient, coefficient))
-            if 'PhysicalDistancingOther' in self.df_interventions.columns:
+            if 'PhysicalDistancingOther' in self.df_interventions.columns and 'Face masks & social distancing Other' in coefficients:
                 coefficient = row.get('PhysicalDistancingOther') * coefficients['Face masks & social distancing Other']
                 dampings.append(physical_distancing_other(
                     row.get('Time'), coefficient, coefficient))
@@ -600,7 +605,7 @@ class Simulation:
         edge_indices = []
 
         osecirvvs.set_edges(
-            self.data_dir, graph, len(Location), edge_indices)
+            self.path_mobility_file, graph, len(Location), edge_indices)
 
         return graph
 
@@ -655,7 +660,7 @@ class Simulation:
                 f"{self.results_dir}/edges_day_{day}.csv", index=False)
 
     def run(self, scenario_data_run, num_runs=10):
-        mio.set_log_level(mio.LogLevel.Warning)
+        mio.set_log_level(mio.LogLevel.Critical)
 
         # self.header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
 
@@ -710,8 +715,9 @@ class OptimalControlSimulation:
             # run optimal control in c++
             run = subprocess.run(
                 [
-                    '{build_directory}/bin/simulate_optimal_control_scenario -DataDirectory \\"{temp_directory}\\" -OutputFileName \\"{filename}\\" -ConstraintInfectedCases {constraint:.0f}'.format(
+                    '{build_directory}/bin/simulate_optimal_control_scenario -DataDirectory \\"{data_directory}\\" -TempDirectory \\"{temp_directory}\\" -OutputFileName \\"{filename}\\" -ConstraintInfectedCases {constraint:.0f}'.format(
                         build_directory = self.build_dir,
+                        data_directory = self.data_dir,
                         temp_directory = temp_dir.name, 
                         filename = optimal_control_result_filename, 
                         constraint = 1e5)
@@ -722,7 +728,7 @@ class OptimalControlSimulation:
                 text=True,
             )
 
-            df_interventions = pd.read_csv(os.path.join(temp_dir.name, optimal_control_result_filename))
+            df_interventions = pd.read_csv(os.path.join(temp_dir.name, optimal_control_result_filename), sep=' ')
             
             res_dir_scenario = os.path.join(
                 self.results_dir,
@@ -764,7 +770,7 @@ class OptimalControlSimulation:
 
 
     def run(self, num_runs=10, max_workers=10):
-        mio.set_log_level(mio.LogLevel.Warning)
+        mio.set_log_level(mio.LogLevel.Critical)
 
         # header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
 
