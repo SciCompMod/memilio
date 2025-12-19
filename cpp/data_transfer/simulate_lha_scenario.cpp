@@ -19,7 +19,6 @@
 */
 
 #include "memilio/compartments/parameter_studies.h"
-#include "memilio/io/epi_data.h"
 #include "memilio/io/io.h"
 #include "ode_secirvvs/parameter_space.h"
 #include "ode_secirvvs/parameters_io.h"
@@ -81,38 +80,38 @@ void assign_uniform_distribution(mio::UncertainValue<double>& p, double min, dou
     p.set_distribution(mio::ParameterDistributionUniform(min, max));
 }
 
-/**
- * Set a value and distribution of an array of UncertainValues.
- * Assigns average of min[i] and max[i] as a value and UNIFORM(min[i], max[i]) as a distribution for
- * each element i of the array.
- * @param array array of UncertainValues to set.
- * @param min minimum of distribution for each element of array.
- * @param max minimum of distribution for each element of array.
- */
-template <size_t N>
-void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>& array,
-                                       const double (&min)[N], const double (&max)[N])
-{
-    assert(N == array.numel());
-    for (auto i = mio::AgeGroup(0); i < mio::AgeGroup(N); ++i) {
-        assign_uniform_distribution(array[i], min[size_t(i)], max[size_t(i)]);
-    }
-}
+// /**
+//  * Set a value and distribution of an array of UncertainValues.
+//  * Assigns average of min[i] and max[i] as a value and UNIFORM(min[i], max[i]) as a distribution for
+//  * each element i of the array.
+//  * @param array array of UncertainValues to set.
+//  * @param min minimum of distribution for each element of array.
+//  * @param max minimum of distribution for each element of array.
+//  */
+// template <size_t N>
+// void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>& array,
+//                                        const double (&min)[N], const double (&max)[N])
+// {
+//     assert(N == array.numel());
+//     for (auto i = mio::AgeGroup(0); i < mio::AgeGroup(N); ++i) {
+//         assign_uniform_distribution(array[i], min[size_t(i)], max[size_t(i)]);
+//     }
+// }
 
-/**
- * Set a value and distribution of an array of UncertainValues.
- * Assigns average of min and max as a value and UNIFORM(min, max) as a distribution to every element of the array.
- * @param array array of UncertainValues to set.
- * @param min minimum of distribution.
- * @param max minimum of distribution.
- */
-void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>& array,
-                                       double min, double max)
-{
-    for (auto i = mio::AgeGroup(0); i < array.size<mio::AgeGroup>(); ++i) {
-        assign_uniform_distribution(array[i], min, max);
-    }
-}
+// /**
+//  * Set a value and distribution of an array of UncertainValues.
+//  * Assigns average of min and max as a value and UNIFORM(min, max) as a distribution to every element of the array.
+//  * @param array array of UncertainValues to set.
+//  * @param min minimum of distribution.
+//  * @param max minimum of distribution.
+//  */
+// void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>& array,
+//                                        double min, double max)
+// {
+//     for (auto i = mio::AgeGroup(0); i < array.size<mio::AgeGroup>(); ++i) {
+//         assign_uniform_distribution(array[i], min, max);
+//     }
+// }
 
 template <typename FP, class Tag>
 void set_parameters(mio::osecirvvs::Parameters<FP>& params, const std::vector<FP>& parameter_values)
@@ -131,62 +130,108 @@ mio::IOResult<void> set_covid_parameters(mio::Date start_date, mio::osecirvvs::P
                                          const fs::path& temp_dir)
 {
     BOOST_OUTCOME_TRY(auto&& parameter_list, mio::read_json((temp_dir / "parameter_list_lha.json").string()));
-
     std::map<std::string, std::string> id_to_name{};
     for (auto entry : parameter_list) {
         id_to_name[entry["id"].asString()] = entry["name"].asString();
     }
 
-    // only uses group 0 for all parameters
+    // Set parameters per group
     BOOST_OUTCOME_TRY(auto&& scenario_data_run, mio::read_json((temp_dir / "scenario_data_run_lha.json").string()));
-    std::map<std::string, double> parameter_values{};
-    for (auto parameter : scenario_data_run["modelParameters"]) {
-        std::string parameter_name = id_to_name[parameter["parameterId"].asString()];
-        parameter_values[parameter_name] =
-            0.5 * (parameter["values"][0]["valueMin"].asDouble() + parameter["values"][0]["valueMax"].asDouble());
+
+    for (int group = 0; group < int(size_t(params.get_num_groups())); group++) {
+        std::map<std::string, double> parameter_values_min{};
+        std::map<std::string, double> parameter_values_max{};
+
+        for (auto parameter : scenario_data_run["modelParameters"]) {
+            std::string parameter_name           = id_to_name[parameter["parameterId"].asString()];
+            parameter_values_min[parameter_name] = parameter["values"][group]["valueMin"].asDouble();
+            parameter_values_max[parameter_name] = parameter["values"][group]["valueMax"].asDouble();
+        }
+
+        //times
+        assign_uniform_distribution(params.template get<mio::osecirvvs::TimeExposed<FP>>()[mio::AgeGroup(group)],
+                                    parameter_values_min["TimeExposed"], parameter_values_max["TimeExposed"]);
+        assign_uniform_distribution(
+            params.template get<mio::osecirvvs::TimeInfectedNoSymptoms<FP>>()[mio::AgeGroup(group)],
+            parameter_values_min["TimeInfectedNoSymptoms"], parameter_values_max["TimeInfectedNoSymptoms"]);
+        assign_uniform_distribution(
+            params.template get<mio::osecirvvs::TimeInfectedSymptoms<FP>>()[mio::AgeGroup(group)],
+            parameter_values_min["TimeInfectedSymptoms"], parameter_values_max["TimeInfectedSymptoms"]);
+        assign_uniform_distribution(params.template get<mio::osecirvvs::TimeInfectedSevere<FP>>()[mio::AgeGroup(group)],
+                                    parameter_values_min["TimeInfectedSevere"],
+                                    parameter_values_max["TimeInfectedSevere"]);
+        assign_uniform_distribution(
+            params.template get<mio::osecirvvs::TimeInfectedCritical<FP>>()[mio::AgeGroup(group)],
+            parameter_values_min["TimeInfectedCritical"], parameter_values_max["TimeInfectedCritical"]);
+
+        //probabilities
+        assign_uniform_distribution(
+            params.template get<mio::osecirvvs::TransmissionProbabilityOnContact<FP>>()[mio::AgeGroup(group)],
+            parameter_values_min["TransmissionProbabilityOnContact"],
+            parameter_values_max["TransmissionProbabilityOnContact"]);
+        assign_uniform_distribution(
+            params.template get<mio::osecirvvs::RelativeTransmissionNoSymptoms<FP>>()[mio::AgeGroup(group)],
+            parameter_values_min["RelativeTransmissionNoSymptoms"],
+            parameter_values_max["RelativeTransmissionNoSymptoms"]);
+
+        // The precise value between Risk* (situation under control) and MaxRisk* (situation not under control)
+        // depends on incidence and test and trace capacity
+        assign_uniform_distribution(
+            params.template get<mio::osecirvvs::RiskOfInfectionFromSymptomatic<FP>>()[mio::AgeGroup(group)],
+            parameter_values_min["RiskOfInfectionFromSymptomatic"],
+            parameter_values_max["RiskOfInfectionFromSymptomatic"]);
+        assign_uniform_distribution(
+            params.template get<mio::osecirvvs::MaxRiskOfInfectionFromSymptomatic<FP>>()[mio::AgeGroup(group)],
+            parameter_values_min["MaxRiskOfInfectionFromSymptomatic"],
+            parameter_values_max["MaxRiskOfInfectionFromSymptomatic"]);
+        assign_uniform_distribution(
+            params.template get<mio::osecirvvs::RecoveredPerInfectedNoSymptoms<FP>>()[mio::AgeGroup(group)],
+            parameter_values_min["RecoveredPerInfectedNoSymptoms"],
+            parameter_values_max["RecoveredPerInfectedNoSymptoms"]);
+        assign_uniform_distribution(
+            params.template get<mio::osecirvvs::SeverePerInfectedSymptoms<FP>>()[mio::AgeGroup(group)],
+            parameter_values_min["SeverePerInfectedSymptoms"], parameter_values_max["SeverePerInfectedSymptoms"]);
+        assign_uniform_distribution(params.template get<mio::osecirvvs::CriticalPerSevere<FP>>()[mio::AgeGroup(group)],
+                                    parameter_values_min["CriticalPerSevere"],
+                                    parameter_values_max["CriticalPerSevere"]);
+        assign_uniform_distribution(params.template get<mio::osecirvvs::DeathsPerCritical<FP>>()[mio::AgeGroup(group)],
+                                    parameter_values_min["DeathsPerCritical"],
+                                    parameter_values_max["DeathsPerCritical"]);
+
+        // Reduction factors
+        assign_uniform_distribution(
+            params.template get<mio::osecirvvs::ReducExposedPartialImmunity<FP>>()[mio::AgeGroup(group)],
+            parameter_values_min["ReducExposedPartialImmunity"], parameter_values_max["ReducExposedPartialImmunity"]);
+        assign_uniform_distribution(
+            params.template get<mio::osecirvvs::ReducExposedImprovedImmunity<FP>>()[mio::AgeGroup(group)],
+            parameter_values_min["ReducedExposedImprovedImmunity"],
+            parameter_values_max["ReducedExposedImprovedImmunity"]);
+        assign_uniform_distribution(
+            params.template get<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity<FP>>()[mio::AgeGroup(group)],
+            parameter_values_min["ReducedInfectedSymptomsPartialImmunity"],
+            parameter_values_max["ReducedInfectedSymptomsPartialImmunity"]);
+        assign_uniform_distribution(
+            params.template get<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity<FP>>()[mio::AgeGroup(group)],
+            parameter_values_min["ReducedInfectedSymptomsImprovedImmunity"],
+            parameter_values_max["ReducedInfectedSymptomsImprovedImmunity"]);
+        assign_uniform_distribution(
+            params.template get<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity<FP>>()[mio::AgeGroup(
+                group)],
+            parameter_values_min["ReducedInfectedSevereCriticalDeadPartialImmunity"],
+            parameter_values_max["ReducedInfectedSevereCriticalDeadPartialImmunity"]);
+        assign_uniform_distribution(
+            params.template get<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity<FP>>()[mio::AgeGroup(
+                group)],
+            parameter_values_min["ReducedInfectedSevereCriticalDeadImprovedImmunity"],
+            parameter_values_max["ReducedInfectedSevereCriticalDeadImprovedImmunity"]);
+        assign_uniform_distribution(
+            params.template get<mio::osecirvvs::ReducTimeInfectedMild<FP>>()[mio::AgeGroup(group)],
+            parameter_values_min["ReducedTimeInfectedMild"], parameter_values_max["ReducedTimeInfectedMild"]);
+
+        params.template get<mio::osecirvvs::StartDay<FP>>() = mio::get_day_in_year(start_date);
+        assign_uniform_distribution(params.template get<mio::osecirvvs::Seasonality<FP>>(),
+                                    parameter_values_min["Seasonality"], parameter_values_max["Seasonality"]);
     }
-
-    //times
-    set_parameters<FP, mio::osecirvvs::TimeExposed<FP>>(params, parameter_values["TimeExposed"]);
-    set_parameters<FP, mio::osecirvvs::TimeInfectedNoSymptoms<FP>>(params, parameter_values["TimeInfectedNoSymptoms"]);
-    set_parameters<FP, mio::osecirvvs::TimeInfectedSymptoms<FP>>(params, parameter_values["TimeInfectedSymptoms"]);
-    set_parameters<FP, mio::osecirvvs::TimeInfectedSevere<FP>>(params, parameter_values["TimeInfectedSevere"]);
-    set_parameters<FP, mio::osecirvvs::TimeInfectedCritical<FP>>(params, parameter_values["TimeInfectedCritical"]);
-
-    //probabilities
-    set_parameters<FP, mio::osecirvvs::TransmissionProbabilityOnContact<FP>>(
-        params, parameter_values["TransmissionProbabilityOnContact"]);
-    set_parameters<FP, mio::osecirvvs::RelativeTransmissionNoSymptoms<FP>>(
-        params, parameter_values["RelativeTransmissionNoSymptoms"]);
-    // The precise value between Risk* (situation under control) and MaxRisk* (situation not under control)
-    // depends on incidence and test and trace capacity
-    set_parameters<FP, mio::osecirvvs::RiskOfInfectionFromSymptomatic<FP>>(
-        params, parameter_values["RiskOfInfectionFromSymptomatic"]);
-    set_parameters<FP, mio::osecirvvs::MaxRiskOfInfectionFromSymptomatic<FP>>(
-        params, parameter_values["MaxRiskOfInfectionFromSymptomatic"]);
-    set_parameters<FP, mio::osecirvvs::RecoveredPerInfectedNoSymptoms<FP>>(
-        params, parameter_values["RecoveredPerInfectedNoSymptoms"]);
-    set_parameters<FP, mio::osecirvvs::SeverePerInfectedSymptoms<FP>>(params,
-                                                                      parameter_values["SeverePerInfectedSymptoms"]);
-    set_parameters<FP, mio::osecirvvs::CriticalPerSevere<FP>>(params, parameter_values["CriticalPerSevere"]);
-    set_parameters<FP, mio::osecirvvs::DeathsPerCritical<FP>>(params, parameter_values["DeathsPerCritical"]);
-
-    set_parameters<FP, mio::osecirvvs::ReducExposedPartialImmunity<FP>>(
-        params, parameter_values["ReducedExposedPartialImmunity"]);
-    set_parameters<FP, mio::osecirvvs::ReducExposedImprovedImmunity<FP>>(
-        params, parameter_values["ReducedExposedImprovedImmunity"]);
-    set_parameters<FP, mio::osecirvvs::ReducInfectedSymptomsPartialImmunity<FP>>(
-        params, parameter_values["ReducedInfectedSymptomsPartialImmunity"]);
-    set_parameters<FP, mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity<FP>>(
-        params, parameter_values["ReducedInfectedSymptomsImprovedImmunity"]);
-    set_parameters<FP, mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity<FP>>(
-        params, parameter_values["ReducedInfectedSevereCriticalDeadPartialImmunity"]);
-    set_parameters<FP, mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity<FP>>(
-        params, parameter_values["ReducedInfectedSevereCriticalDeadImprovedImmunity"]);
-    set_parameters<FP, mio::osecirvvs::ReducTimeInfectedMild<FP>>(params, parameter_values["ReducedTimeInfectedMild"]);
-
-    params.template get<mio::osecirvvs::StartDay<FP>>() = mio::get_day_in_year(start_date);
-    set_parameters<FP, mio::osecirvvs::Seasonality<FP>>(params, parameter_values["Seasonality"]);
 
     return mio::success();
 }
@@ -331,7 +376,7 @@ int main(int argc, char** argv)
     std::vector<int> lha_ids = {};
     mio::Date start_date     = mio::Date(2021, 2, 1);
     int num_days_sim         = 30;
-    int num_simulation_runs  = 5;
+    int num_simulation_runs  = 3;
 
     if (argc == 10) {
         data_dir   = argv[1];
