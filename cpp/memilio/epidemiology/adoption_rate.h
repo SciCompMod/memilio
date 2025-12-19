@@ -29,7 +29,7 @@ namespace mio
 /**
  * @brief Struct defining an influence for a second-order adoption.
  * The population having "status" is multiplied with "factor."
- * @tparam Status An infection state enum.
+ * @tparam Status An infection state enum or MultiIndex.
  */
 template <typename FP, class Status>
 struct Influence {
@@ -42,8 +42,8 @@ struct Influence {
  * The AdoptionRate is considered to be of second-order if there are any "influences".
  * In the d_abm and smm simulations, "from" is implicitly an influence, scaled by "factor". This is multiplied by
  * the sum over all "influences", which scale their "status" with the respective "factor".
- * @tparam Status An infection state enum.
- * @tparam Region An (multi)-index.
+ * @tparam Status An infection state enum or MultiIndex.
+ * @tparam Region A MultiIndex.
  */
 template <typename FP, class Status, class Region = mio::regions::Region>
 struct AdoptionRate {
