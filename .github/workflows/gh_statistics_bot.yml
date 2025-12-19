@@ -1,6 +1,8 @@
 name: Monthly Repository Statistics
 
 on:
+  push:
+
   workflow_dispatch:
 
 jobs:
