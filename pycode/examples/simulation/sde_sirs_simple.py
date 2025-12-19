@@ -55,14 +55,18 @@ def run_sde_sirs_simulation():
         (1, 1))
     model.parameters.ContactPatterns.add_damping(
         Damping(coeffs=np.r_[0.6], t=2, level=0, type=0))
-    model.parameters.SeasonalityPeak.value = 11
     model.parameters.SeasonalitySigma[Season(0)].value = 2.5
     model.parameters.Seasonality[Season(0)].value = 0.2
+    model.parameters.SeasonalityPeak[Season(0)].value = 20
     model.parameters.SeasonalitySigma[Season(1)].value = 3
     model.parameters.Seasonality[Season(1)].value = 0.5
+    model.parameters.SeasonalityPeak[Season(1)].value = 11
 
     # Check parameter constraints
     model.check_constraints()
+
+    # Intialize season ends
+    model.initialize_season_ends()
 
     # Run Simulation
     result = simulate_stochastic(0., tmax, dt, model)

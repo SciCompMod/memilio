@@ -24,9 +24,11 @@
 #include "memilio/compartments/flow_model.h"
 #include "memilio/compartments/stochastic_model.h"
 #include "memilio/epidemiology/populations.h"
+#include "memilio/epidemiology/season.h"
 #include "sde_sirs/infection_state.h"
 #include "sde_sirs/parameters.h"
 #include <cmath>
+#include <map>
 
 namespace mio
 {
@@ -62,17 +64,17 @@ public:
         //     (1 + params.template get<Seasonality<FP>>() *
         //              sin(std::numbers::pi_v<ScalarType> * ((params.template get<StartDay<FP>>() + t) / 182.5 + 0.5)));
         Season season = Season(int(t / 365.));
-        FP t_season =
-            params.template get<SeasonalityPeak<FP>>() - params.template get<StartDay<FP>>() + int(t / 365.) * 365.;
-        FP season_end = t_season + 182.5;
+        FP t_season   = params.template get<SeasonalityPeak<FP>>()[season] - params.template get<StartDay<FP>>() +
+                      int(t / 365.) * 365.;
+        FP season_end = m_season_ends.at(season);
         if (t >= season_end) {
             season   = Season(static_cast<size_t>(season) + 1);
-            t_season = params.template get<SeasonalityPeak<FP>>() - params.template get<StartDay<FP>>() +
+            t_season = params.template get<SeasonalityPeak<FP>>()[season] - params.template get<StartDay<FP>>() +
                        (int(t / 365.) + 1) * 365.;
         }
         FP season_val = params.template get<Seasonality<FP>>()[season] +
                         (1 - params.template get<Seasonality<FP>>()[season]) *
-                            (gaussian(t - t_season, season) / gaussian(0., season)) * zeta(t);
+                            (gaussian(t - t_season, season) / gaussian(0., season)) * zeta(t, season);
 
         FP coeffStoI = season_val *
                        params.template get<ContactPatterns<FP>>().get_matrix_at(SimulationTime<FP>(t))(0, 0) *
@@ -104,14 +106,15 @@ public:
                std::exp(-0.5 * std::pow(t / params.template get<SeasonalitySigma<FP>>()[season], 2));
     }
 
-    double zeta(FP t) const
+    double zeta(FP t, Season season) const
     {
         auto& params     = Base::parameters;
-        double tau_minus = params.template get<SeasonalityPeak<FP>>() - params.template get<StartDay<FP>>() +
+        double tau_minus = params.template get<SeasonalityPeak<FP>>()[season] - params.template get<StartDay<FP>>() +
                            365. * int(t / 365.) - 182.5;
-        double tau_plus = params.template get<SeasonalityPeak<FP>>() - params.template get<StartDay<FP>>() +
+        double tau_plus = params.template get<SeasonalityPeak<FP>>()[season] - params.template get<StartDay<FP>>() +
                           365. * int(t / 365.) - 182.5;
-        if (t <= params.template get<SeasonalityPeak<FP>>() - params.template get<StartDay<FP>>() - 182.5 + 30) {
+        if (t <=
+            params.template get<SeasonalityPeak<FP>>()[season] - params.template get<StartDay<FP>>() - 182.5 + 30) {
             return (t - tau_minus + 30) / 60.;
         }
         else if ((tau_plus - 30 <= t) && (t <= tau_plus)) {
@@ -124,6 +127,28 @@ public:
             return 1.;
         }
     }
+
+    void initialize_season_ends()
+    {
+        auto& params       = Base::parameters;
+        Season num_seasons = Season(params.template get<Seasonality<FP>>().size().get());
+        for (size_t s = 0; s < static_cast<size_t>(num_seasons); ++s) {
+            Season season = Season(s);
+            FP season_end;
+            if (s == 0) {
+                FP t_season = params.template get<SeasonalityPeak<FP>>()[season] - params.template get<StartDay<FP>>();
+                season_end  = t_season + 182.5;
+            }
+            else {
+                Season prev_season = Season(s - 1);
+                season_end         = m_season_ends[prev_season] + 365.;
+            }
+            m_season_ends[season] = season_end;
+        }
+    }
+
+private:
+    std::map<Season, FP> m_season_ends;
 };
 
 } // namespace ssirs

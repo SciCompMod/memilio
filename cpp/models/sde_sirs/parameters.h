@@ -147,10 +147,10 @@ struct Seasonality {
  */
 template <typename FP>
 struct SeasonalityPeak {
-    using Type = UncertainValue<FP>;
-    static Type get_default(Season)
+    using Type = CustomIndexArray<UncertainValue<FP>, Season>;
+    static Type get_default(Season size)
     {
-        return Type(0.);
+        return Type(size, 0.);
     }
     static std::string name()
     {

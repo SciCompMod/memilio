@@ -90,7 +90,8 @@ PYBIND11_MODULE(_simulation_ssirs, m)
         mio::ssirs::Model<double>, pymio::EnablePickling::Never,
         mio::CompartmentalModel<double, mio::ssirs::InfectionState, Populations, mio::ssirs::Parameters<double>>>(
         m, "Model")
-        .def(py::init<mio::Season>(), py::arg("num_seasons"));
+        .def(py::init<mio::Season>(), py::arg("num_seasons"))
+        .def("initialize_season_ends", &mio::ssirs::Model<double>::initialize_season_ends);
 
     m.def(
         "simulate_stochastic",

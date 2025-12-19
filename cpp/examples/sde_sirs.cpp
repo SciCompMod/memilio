@@ -28,7 +28,7 @@ int main()
     mio::set_log_level(mio::LogLevel::debug);
 
     ScalarType t0   = 0.;
-    ScalarType tmax = 5.;
+    ScalarType tmax = 600.;
     ScalarType dt   = 0.001;
 
     ScalarType total_population = 10000;
@@ -51,9 +51,13 @@ int main()
                                                                                 mio::SimulationTime<ScalarType>(12.5));
     model.parameters.set<mio::ssirs::StartDay<ScalarType>>(60);
     model.parameters.set<mio::ssirs::SeasonalityPeak<ScalarType>>(10);
-    model.parameters.get<mio::ssirs::Seasonality<ScalarType>>()[mio::Season(0)] = 0.2;
-    model.parameters.get<mio::ssirs::Seasonality<ScalarType>>()[mio::Season(1)] = 0.5;
-    model.parameters.get<mio::ssirs::Seasonality<ScalarType>>()[mio::Season(2)] = 0.3;
+    model.parameters.get<mio::ssirs::Seasonality<ScalarType>>()[mio::Season(0)]     = 0.2;
+    model.parameters.get<mio::ssirs::Seasonality<ScalarType>>()[mio::Season(1)]     = 0.5;
+    model.parameters.get<mio::ssirs::Seasonality<ScalarType>>()[mio::Season(2)]     = 0.3;
+    model.parameters.get<mio::ssirs::SeasonalityPeak<ScalarType>>()[mio::Season(0)] = 11;
+    model.parameters.get<mio::ssirs::SeasonalityPeak<ScalarType>>()[mio::Season(1)] = 50;
+    model.parameters.get<mio::ssirs::SeasonalityPeak<ScalarType>>()[mio::Season(2)] = 10;
+    model.initialize_season_ends();
     model.check_constraints();
 
     auto ssirs = mio::simulate_stochastic(t0, tmax, dt, model);
