@@ -136,8 +136,7 @@ public:
             Season season = Season(s);
             FP season_end;
             if (s == 0) {
-                FP t_season = params.template get<SeasonalityPeak<FP>>()[season] - params.template get<StartDay<FP>>();
-                season_end  = t_season + 182.5;
+                season_end = params.template get<SeasonStart<FP>>() - params.template get<StartDay<FP>>() + 365.;
             }
             else {
                 Season prev_season = Season(s - 1);

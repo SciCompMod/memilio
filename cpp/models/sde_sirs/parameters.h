@@ -159,6 +159,24 @@ struct SeasonalityPeak {
 };
 
 /**
+ * @brief The seasonality peak time point in the SIRS model.
+ * The seasonality is given by a Gaussian function , see https://doi.org/10.1016/j.epidem.2011.04.002.
+ * This parameter corresponds to phi from eq. 2 in the paper.
+ */
+template <typename FP>
+struct SeasonStart {
+    using Type = UncertainValue<FP>;
+    static Type get_default(Season)
+    {
+        return Type(0.);
+    }
+    static std::string name()
+    {
+        return "SeasonStart";
+    }
+};
+
+/**
  * @brief The seasonality width in the SIRS model.
  * The seasonality is given by a Gaussian function , see https://doi.org/10.1016/j.epidem.2011.04.002.
  * This parameter corresponds to sigma from eq. 2 in the paper.
@@ -179,7 +197,7 @@ struct SeasonalitySigma {
 template <typename FP>
 using ParametersBase =
     ParameterSet<TransmissionProbabilityOnContact<FP>, TimeInfected<FP>, ContactPatterns<FP>, TimeImmune<FP>,
-                 Seasonality<FP>, SeasonalityPeak<FP>, SeasonalitySigma<FP>, StartDay<FP>>;
+                 Seasonality<FP>, SeasonalityPeak<FP>, SeasonalitySigma<FP>, StartDay<FP>, SeasonStart<FP>>;
 
 /**
  * @brief Parameters of SIRS model.
