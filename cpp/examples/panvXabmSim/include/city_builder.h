@@ -6,7 +6,7 @@
 #include "abm/world.h"
 #include "abm/location.h"
 #include "abm/person.h"
-#include "city_parameters.h"
+#include "city_parameters_us.h"
 #include "defaults.h"
 
 // Configuration for representative German city simulation

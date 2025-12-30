@@ -25,7 +25,7 @@ namespace CityParameters
  * @brief French age distribution based on 2024 data
  * Age groups: 0-4, 5-14, 15-34, 35-59, 60-79, 80+
  */
-const std::vector<double> FRENCH_AGE_DISTRIBUTION = {
+const std::vector<double> AGE_DISTRIBUTION = {
     0.058, // 0-4 years: 5.8%
     0.116, // 5-14 years: 11.6%
     0.233, // 15-34 years: 23.3%
@@ -129,9 +129,9 @@ struct CityInfrastructure {
     std::pair<int, int> calc_num_workplaces_and_worker(int population) const
     {
         // Calculate number of workplaces based on employment rate and average employees per workplace
-        std::vector<int> age_vector(FRENCH_AGE_DISTRIBUTION.size());
-        for (size_t i = 0; i < CityParameters::FRENCH_AGE_DISTRIBUTION.size(); ++i) {
-            int age_group_population = static_cast<int>(population * CityParameters::FRENCH_AGE_DISTRIBUTION[i]);
+        std::vector<int> age_vector(AGE_DISTRIBUTION.size());
+        for (size_t i = 0; i < CityParameters::AGE_DISTRIBUTION.size(); ++i) {
+            int age_group_population = static_cast<int>(population * CityParameters::AGE_DISTRIBUTION[i]);
             age_vector.at(i)         = age_group_population;
         }
 

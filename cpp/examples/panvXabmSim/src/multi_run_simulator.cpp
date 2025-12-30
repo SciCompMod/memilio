@@ -668,19 +668,19 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
 
     // Short sanity check if detailed infections final infection count is the same as the amount of infected agent counted otherwise
     // Just print the run number and an x vs y print
-    for (size_t run_idx = 0; run_idx < ensemble_detailed_infection.size(); ++run_idx) {
-        size_t amount_infected = 0;
-        for (size_t t = 0; t < ensemble_detailed_infection[run_idx].size(); ++t) {
-            amount_infected += ensemble_detailed_infection[run_idx][t].size();
-        }
-        std::cout << "Run " << run_idx + 1 << ": " << amount_infected
-                  << " infected agents from detailed infection data\n";
-        const size_t amount_infected_non_detailed =
-            static_cast<size_t>(ensemble_amount_of_infections[run_idx][0].get_value(
-                ensemble_amount_of_infections[run_idx][0].get_num_time_points() - 1)(0));
-        std::cout << "Run " << run_idx + 1 << ": " << amount_infected_non_detailed
-                  << " infected agents from non-detailed infection data\n";
-    }
+    // for (size_t run_idx = 0; run_idx < ensemble_detailed_infection.size(); ++run_idx) {
+    //     size_t amount_infected = 0;
+    //     for (size_t t = 0; t < ensemble_detailed_infection[run_idx].size(); ++t) {
+    //         amount_infected += ensemble_detailed_infection[run_idx][t].size();
+    //     }
+    //     std::cout << "Run " << run_idx + 1 << ": " << amount_infected
+    //               << " infected agents from detailed infection data\n";
+    //     const size_t amount_infected_non_detailed =
+    //         static_cast<size_t>(ensemble_amount_of_infections[run_idx][0].get_value(
+    //             ensemble_amount_of_infections[run_idx][0].get_num_time_points() - 1)(0));
+    //     std::cout << "Run " << run_idx + 1 << ": " << amount_infected_non_detailed
+    //               << " infected agents from non-detailed infection data\n";
+    // }
 
     return mio::success();
 }

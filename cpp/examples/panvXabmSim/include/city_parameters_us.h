@@ -12,14 +12,14 @@
  * Sources:
  * - U.S. Census Bureau: Annual Estimates of the Resident Population 2024
  *   https://www.census.gov/data/tables/time-series/demo/popest/2020s-national-detail.html
- * - U.S. Census Bureau: American Community Survey (ACS) 2023
- *   https://www.census.gov/programs-surveys/acs
+ * - U.S. Census Bureau: Household Size and Type 
+ *   https://data.census.gov/table?q=Household+Size+and+Type
  * - Bureau of Labor Statistics: Employment Situation 2024
- *   https://www.bls.gov/news.release/empsit.toc.htm
+ *   https://www.destatis.de/DE/Themen/Laender-Regionen/Internationales/Laenderprofile/vereinigte-staaten.pdf?__blob=publicationFile
  * - National Center for Education Statistics (NCES): Public Elementary and Secondary School Statistics 2023
- *   https://nces.ed.gov/programs/digest/
- * - U.S. Census Bureau: Annual Retail Trade Survey 2022
- *   https://www.census.gov/retail/index.html
+ *  https://www.census.gov/data/tables/2022/demo/school-enrollment/2022-cps.html
+ * - U.S. Bureau of labor statistics: Industries at a Glance
+ *  https://www.bls.gov/iag/tgs/iag44-45.htm  
  */
 
 namespace CityParameters
@@ -29,13 +29,13 @@ namespace CityParameters
  * @brief US age distribution based on 2024 data
  * Age groups: 0-4, 5-14, 15-34, 35-59, 60-79, 80+
  */
-const std::vector<double> US_AGE_DISTRIBUTION = {
-    0.061, // 0-4 years: 6.1%
-    0.128, // 5-14 years: 12.8%
-    0.267, // 15-34 years: 26.7%
-    0.317, // 35-59 years: 31.7%
-    0.181, // 60-79 years: 18.1%
-    0.046 // 80+ years: 4.6%
+const std::vector<double> AGE_DISTRIBUTION = {
+    0.057, // 0-4 years: 5.7%
+    0.126, // 5-14 years: 12.6%
+    0.276, // 15-34 years: 27.6%
+    0.318, // 35-59 years: 31.8%
+    0.191, // 60-79 years: 19.1%
+    0.032 // 80+ years: 3.2%
 };
 
 /**
@@ -43,11 +43,11 @@ const std::vector<double> US_AGE_DISTRIBUTION = {
  * Source: U.S. Census Bureau - American Community Survey (ACS) 2023
  */
 const std::vector<double> HOUSEHOLD_SIZE_DISTRIBUTION = {
-    0.283, // 1-person households: 28.3%
-    0.349, // 2-person households: 34.9%
-    0.150, // 3-person households: 15.0%
-    0.127, // 4-person households: 12.7%
-    0.091 // 5+ person households: 9.1%
+    0.288, // 1-person households: 28.8%
+    0.341, // 2-person households: 34.1%
+    0.152, // 3-person households: 15.2%
+    0.164, // 4-person households: 16.4%
+    0.055 // 5+ person households: 5.5% (Assume 3:1 split for 4 to 5+ persons)
 };
 
 /**
@@ -57,19 +57,20 @@ const std::vector<double> HOUSEHOLD_SIZE_DISTRIBUTION = {
 struct InfrastructureRatios {
     // Employment and workplaces
     // Source: Bureau of Labor Statistics - Employment Situation 2024
-    static constexpr double EMPLOYMENT_RATE      = 0.738; // 73.8% for ages 16-64
-    static constexpr double PEOPLE_PER_WORKPLACE = 12.5; // Average employees per workplace (larger than Europe)
+    static constexpr double EMPLOYMENT_RATE      = 0.594; // 59.4% for ages 16-64
+    static constexpr double PEOPLE_PER_WORKPLACE = 10.0; // Average employees per workplace (larger than Europe)
 
     // Education
     // Source: National Center for Education Statistics (NCES) 2023
-    static constexpr double SCHOOL_RATE                          = 0.155; // 15.5% of population (ages 5-17)
-    static constexpr double MAX_STUDENTS_PER_ELEMENTARY_SCHOOL   = 470; // Primary schools (K-5)
-    static constexpr double MAX_STUDENTS_PER_SECONDARY_SCHOOL    = 850; // Secondary schools (middle + high schools)
+    static constexpr double SCHOOL_RATE =
+        0.128; //https://www.census.gov/data/tables/2022/demo/school-enrollment/2022-cps.html
+    static constexpr double MAX_STUDENTS_PER_ELEMENTARY_SCHOOL   = 200; // Primary schools (K-5)
+    static constexpr double MAX_STUDENTS_PER_SECONDARY_SCHOOL    = 300; // Secondary schools (middle + high schools)
     static constexpr double RATIO_ELEMENTARY_TO_SECONDARY_SCHOOL = 1.65; // Ratio of elementary to secondary students
 
     // Retail and services
     // Source: U.S. Census Bureau - Annual Retail Trade Survey 2022
-    static constexpr double amount_of_retail_stores_per_1000_people = 3.5;
+    static constexpr double amount_of_retail_stores_per_1000_people = 3.3;
 
     // Social and event locations
     static constexpr double PEOPLE_PER_EVENT = 15.0;
@@ -133,9 +134,9 @@ struct CityInfrastructure {
     std::pair<int, int> calc_num_workplaces_and_worker(int population) const
     {
         // Calculate number of workplaces based on employment rate and average employees per workplace
-        std::vector<int> age_vector(US_AGE_DISTRIBUTION.size());
-        for (size_t i = 0; i < CityParameters::US_AGE_DISTRIBUTION.size(); ++i) {
-            int age_group_population = static_cast<int>(population * CityParameters::US_AGE_DISTRIBUTION[i]);
+        std::vector<int> age_vector(AGE_DISTRIBUTION.size());
+        for (size_t i = 0; i < CityParameters::AGE_DISTRIBUTION.size(); ++i) {
+            int age_group_population = static_cast<int>(population * CityParameters::AGE_DISTRIBUTION[i]);
             age_vector.at(i)         = age_group_population;
         }
 
