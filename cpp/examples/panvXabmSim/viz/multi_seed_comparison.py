@@ -440,11 +440,11 @@ def main():
                                           args.event_type, args.num_seeds)
 
         # Variation analysis
-        create_seed_variation_analysis(grouped_results, args.output_dir)
+        # create_seed_variation_analysis(grouped_results, args.output_dir)
 
-        # Summary statistics
-        create_summary_statistics(grouped_results, args.output_dir,
-                                  args.event_type, args.num_seeds)
+        # # Summary statistics
+        # create_summary_statistics(grouped_results, args.output_dir,
+        #                           args.event_type, args.num_seeds)
 
         print("✓ All visualizations completed successfully!")
         return 0

@@ -648,23 +648,23 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
         ensemble_infection_history.push_back(run.history_infected_status);
     }
 
-    BOOST_OUTCOME_TRY(save_results(ensembl_inf_per_loc_type, ensemble_params, {0},
-                                   base_dir + "/infection_per_location_type_per_age_group", false, true));
-    BOOST_OUTCOME_TRY(save_results(ensembl_inf_per_age_group, ensemble_params, {0},
-                                   base_dir + "/infection_state_per_age_group", false, true));
+    // BOOST_OUTCOME_TRY(save_results(ensembl_inf_per_loc_type, ensemble_params, {0},
+    //                                base_dir + "/infection_per_location_type_per_age_group", false, true));
+    // BOOST_OUTCOME_TRY(save_results(ensembl_inf_per_age_group, ensemble_params, {0},
+    //                                base_dir + "/infection_state_per_age_group", false, true));
 
     BOOST_OUTCOME_TRY(save_results(ensemble_amount_of_infections, ensemble_params_no_agegroups, {0},
                                    base_dir + "/amount_of_infections", false, true));
 
-    BOOST_OUTCOME_TRY(save_contact_intenseness(ensemble_contact_hours, base_dir));
+    // BOOST_OUTCOME_TRY(save_contact_intenseness(ensemble_contact_hours, base_dir));
 
-    BOOST_OUTCOME_TRY(save_amount_infected_per_id(ensemble_detailed_infection, base_dir));
+    // BOOST_OUTCOME_TRY(save_amount_infected_per_id(ensemble_detailed_infection, base_dir));
 
-    BOOST_OUTCOME_TRY(save_detailed_infection_for_all_runs(ensemble_detailed_infection, base_dir));
+    // BOOST_OUTCOME_TRY(save_detailed_infection_for_all_runs(ensemble_detailed_infection, base_dir));
 
-    BOOST_OUTCOME_TRY(save_detailed_infection_and_contact_for_best_run(
-        ensemble_detailed_infection, base_dir + "/amount_of_infections/p50", ensemble_amount_of_infections,
-        ensemble_contact_hours, results.event_type, ensemble_infection_history));
+    // BOOST_OUTCOME_TRY(save_detailed_infection_and_contact_for_best_run(
+    //     ensemble_detailed_infection, base_dir + "/amount_of_infections/p50", ensemble_amount_of_infections,
+    //     ensemble_contact_hours, results.event_type, ensemble_infection_history));
 
     // Short sanity check if detailed infections final infection count is the same as the amount of infected agent counted otherwise
     // Just print the run number and an x vs y print

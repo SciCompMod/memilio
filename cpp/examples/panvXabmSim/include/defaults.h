@@ -10,7 +10,7 @@ constexpr int MIN_DAYS = 1;
 constexpr int MAX_DAYS = 30;
 
 constexpr int MIN_POPULATION = 1000;
-constexpr int MAX_POPULATION = 2000000;
+constexpr int MAX_POPULATION = 10000000;
 
 constexpr double MIN_INFECTION_K = 0.01;
 constexpr double MAX_INFECTION_K = 100.0;
