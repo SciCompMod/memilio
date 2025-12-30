@@ -1,7 +1,7 @@
 #include "../include/city_builder.h"
 #include "../include/constants.h"
 #include "../include/parameter_setter.h"
-#include "../include/city_parameters_us.h"
+#include "../include/city_parameters.h"
 #include <random>
 #include <algorithm>
 #include <cmath>
