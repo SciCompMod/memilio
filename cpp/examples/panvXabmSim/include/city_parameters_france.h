@@ -11,11 +11,12 @@
  * 
  * Sources:
  * - INSEE (Institut national de la statistique et des études économiques) 2024: Population par âge
- *   https://www.insee.fr/fr/statistiques/2381474
+ *   https://www.insee.fr/en/statistiques/6040016
  * - INSEE: Composition des ménages 2020
  *   https://www.insee.fr/fr/statistiques/2381486
  * - Ministère de l'Éducation nationale: Repères et références statistiques 2023
  * - FCD (Fédération du Commerce et de la Distribution) 2023
+ * - Employment rate https://www.insee.fr/en/outil-interactif/5543645/tableau/50_MTS/51_EPA
  */
 
 namespace CityParameters
@@ -26,12 +27,12 @@ namespace CityParameters
  * Age groups: 0-4, 5-14, 15-34, 35-59, 60-79, 80+
  */
 const std::vector<double> AGE_DISTRIBUTION = {
-    0.058, // 0-4 years: 5.8%
-    0.116, // 5-14 years: 11.6%
-    0.233, // 15-34 years: 23.3%
-    0.331, // 35-59 years: 33.1%
+    0.052, // 0-4 years: 5.2%
+    0.122, // 5-14 years: 12.2%
+    0.2345, // 15-34 years: 23.45%
+    0.339, // 35-59 years: 33.9%
     0.210, // 60-79 years: 21.0%
-    0.052 // 80+ years: 5.2%
+    0.060 // 80+ years: 6.0%
 };
 
 /**
@@ -39,11 +40,11 @@ const std::vector<double> AGE_DISTRIBUTION = {
  * Source: INSEE - Composition des ménages 2020
  */
 const std::vector<double> HOUSEHOLD_SIZE_DISTRIBUTION = {
-    0.374, // 1-person households: 37.4%
-    0.334, // 2-person households: 33.4%
-    0.136, // 3-person households: 13.6%
-    0.104, // 4-person households: 10.4%
-    0.052 // 5+ person households: 5.2%
+    0.384, // 1-person households: 38.4%
+    0.324, // 2-person households: 32.4%
+    0.130, // 3-person households: 13.0%
+    0.108, // 4-person households: 10.8%
+    0.054 // 5+ person households: 5.4%
 };
 
 /**
@@ -53,14 +54,15 @@ const std::vector<double> HOUSEHOLD_SIZE_DISTRIBUTION = {
 struct InfrastructureRatios {
     // Employment and workplaces
     // Source: INSEE - Taux d'emploi 2023
-    static constexpr double EMPLOYMENT_RATE      = 0.718; // 71.8% for ages 15-64
+    static constexpr double EMPLOYMENT_RATE =
+        0.744; // 74.4% for ages 15-64 https://www.insee.fr/en/outil-interactif/5543645/tableau/50_MTS/51_EPA
     static constexpr double PEOPLE_PER_WORKPLACE = 10.0; // Average employees per workplace
 
     // Education
-    // Source: Ministère de l'Éducation nationale - Repères et références statistiques 2023
-    static constexpr double SCHOOL_RATE                        = 0.125; // 12.5% of population
-    static constexpr double MAX_STUDENTS_PER_ELEMENTARY_SCHOOL = 180; // Primary schools (écoles élémentaires)
-    static constexpr double MAX_STUDENTS_PER_SECONDARY_SCHOOL = 520; // Secondary schools (collèges: ~500, lycées: ~540)
+    // https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://www.education.gouv.fr/media/159309/download&ved=2ahUKEwirla_lneaRAxXZR_EDHT4kFdIQFnoECBoQAQ&usg=AOvVaw3qgtpLr0ugXgQG_5NtfTWf
+    static constexpr double SCHOOL_RATE                        = 0.151; // 9.4% of population
+    static constexpr double MAX_STUDENTS_PER_ELEMENTARY_SCHOOL = 200; // Primary schools (écoles élémentaires)
+    static constexpr double MAX_STUDENTS_PER_SECONDARY_SCHOOL = 300; // Secondary schools (collèges: ~500, lycées: ~540)
     static constexpr double RATIO_ELEMENTARY_TO_SECONDARY_SCHOOL = 1.65; // Ratio of elementary to secondary students
 
     // Retail and services
