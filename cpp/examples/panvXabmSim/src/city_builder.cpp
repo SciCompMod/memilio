@@ -123,8 +123,8 @@ std::vector<int> CityBuilder::create_age_vector(int total_population)
     age_vector.resize(num_age_groups);
 
     // Use German age distribution from 2023 census data
-    for (size_t i = 0; i < CityParameters::GERMAN_AGE_DISTRIBUTION.size(); ++i) {
-        int age_group_population = static_cast<int>(total_population * CityParameters::GERMAN_AGE_DISTRIBUTION[i]);
+    for (size_t i = 0; i < CityParameters::AGE_DISTRIBUTION.size(); ++i) {
+        int age_group_population = static_cast<int>(total_population * CityParameters::AGE_DISTRIBUTION[i]);
         age_vector.at(i)         = age_group_population;
     }
 
@@ -483,19 +483,18 @@ void CityBuilder::print_city_summary(const CityConfig& config)
     std::cout << "Total Population: " << config.total_population << "\n";
     std::cout << "Expected Age Distribution (based on German 2023 census):\n";
     std::cout << "  • 0-4 years:   " << std::fixed << std::setprecision(1)
-              << (CityParameters::GERMAN_AGE_DISTRIBUTION[0] * 100) << "% ("
-              << static_cast<int>(config.total_population * CityParameters::GERMAN_AGE_DISTRIBUTION[0]) << " people)\n";
-    std::cout << "  • 5-14 years:  " << (CityParameters::GERMAN_AGE_DISTRIBUTION[1] * 100) << "% ("
-              << static_cast<int>(config.total_population * CityParameters::GERMAN_AGE_DISTRIBUTION[1]) << " people)\n";
-    std::cout << "  • 15-34 years: " << (CityParameters::GERMAN_AGE_DISTRIBUTION[2] * 100) << "% ("
-              << static_cast<int>(config.total_population * CityParameters::GERMAN_AGE_DISTRIBUTION[2]) << " people)\n";
-    std::cout << "  • 35-59 years: " << (CityParameters::GERMAN_AGE_DISTRIBUTION[3] * 100) << "% ("
-              << static_cast<int>(config.total_population * CityParameters::GERMAN_AGE_DISTRIBUTION[3]) << " people)\n";
-    std::cout << "  • 60-79 years: " << (CityParameters::GERMAN_AGE_DISTRIBUTION[4] * 100) << "% ("
-              << static_cast<int>(config.total_population * CityParameters::GERMAN_AGE_DISTRIBUTION[4]) << " people)\n";
-    std::cout << "  • 80+ years:   " << (CityParameters::GERMAN_AGE_DISTRIBUTION[5] * 100) << "% ("
-              << static_cast<int>(config.total_population * CityParameters::GERMAN_AGE_DISTRIBUTION[5])
-              << " people)\n\n";
+              << (CityParameters::AGE_DISTRIBUTION[0] * 100) << "% ("
+              << static_cast<int>(config.total_population * CityParameters::AGE_DISTRIBUTION[0]) << " people)\n";
+    std::cout << "  • 5-14 years:  " << (CityParameters::AGE_DISTRIBUTION[1] * 100) << "% ("
+              << static_cast<int>(config.total_population * CityParameters::AGE_DISTRIBUTION[1]) << " people)\n";
+    std::cout << "  • 15-34 years: " << (CityParameters::AGE_DISTRIBUTION[2] * 100) << "% ("
+              << static_cast<int>(config.total_population * CityParameters::AGE_DISTRIBUTION[2]) << " people)\n";
+    std::cout << "  • 35-59 years: " << (CityParameters::AGE_DISTRIBUTION[3] * 100) << "% ("
+              << static_cast<int>(config.total_population * CityParameters::AGE_DISTRIBUTION[3]) << " people)\n";
+    std::cout << "  • 60-79 years: " << (CityParameters::AGE_DISTRIBUTION[4] * 100) << "% ("
+              << static_cast<int>(config.total_population * CityParameters::AGE_DISTRIBUTION[4]) << " people)\n";
+    std::cout << "  • 80+ years:   " << (CityParameters::AGE_DISTRIBUTION[5] * 100) << "% ("
+              << static_cast<int>(config.total_population * CityParameters::AGE_DISTRIBUTION[5]) << " people)\n\n";
 
     // Housing
     std::cout << "🏠 HOUSING\n";
@@ -588,27 +587,27 @@ void CityBuilder::save_city_to_file(const CityConfig& config, const std::string&
     ofs << "total_population," << config.total_population << "\n";
 
     // Age group distribution
-    ofs << "age_group_0_to_4," << static_cast<int>(config.total_population * CityParameters::GERMAN_AGE_DISTRIBUTION[0])
+    ofs << "age_group_0_to_4," << static_cast<int>(config.total_population * CityParameters::AGE_DISTRIBUTION[0])
         << "\n";
-    ofs << "age_group_5_to_14,"
-        << static_cast<int>(config.total_population * CityParameters::GERMAN_AGE_DISTRIBUTION[1]) << "\n";
-    ofs << "age_group_15_to_34,"
-        << static_cast<int>(config.total_population * CityParameters::GERMAN_AGE_DISTRIBUTION[2]) << "\n";
-    ofs << "age_group_35_to_59,"
-        << static_cast<int>(config.total_population * CityParameters::GERMAN_AGE_DISTRIBUTION[3]) << "\n";
-    ofs << "age_group_60_to_79,"
-        << static_cast<int>(config.total_population * CityParameters::GERMAN_AGE_DISTRIBUTION[4]) << "\n";
-    ofs << "age_group_80_plus,"
-        << static_cast<int>(config.total_population * CityParameters::GERMAN_AGE_DISTRIBUTION[5]) << "\n";
+    ofs << "age_group_5_to_14," << static_cast<int>(config.total_population * CityParameters::AGE_DISTRIBUTION[1])
+        << "\n";
+    ofs << "age_group_15_to_34," << static_cast<int>(config.total_population * CityParameters::AGE_DISTRIBUTION[2])
+        << "\n";
+    ofs << "age_group_35_to_59," << static_cast<int>(config.total_population * CityParameters::AGE_DISTRIBUTION[3])
+        << "\n";
+    ofs << "age_group_60_to_79," << static_cast<int>(config.total_population * CityParameters::AGE_DISTRIBUTION[4])
+        << "\n";
+    ofs << "age_group_80_plus," << static_cast<int>(config.total_population * CityParameters::AGE_DISTRIBUTION[5])
+        << "\n";
 
     // Age percentages
-    ofs << "age_percentage_0_to_4," << std::fixed << std::setprecision(2)
-        << (CityParameters::GERMAN_AGE_DISTRIBUTION[0] * 100) << "\n";
-    ofs << "age_percentage_5_to_14," << (CityParameters::GERMAN_AGE_DISTRIBUTION[1] * 100) << "\n";
-    ofs << "age_percentage_15_to_34," << (CityParameters::GERMAN_AGE_DISTRIBUTION[2] * 100) << "\n";
-    ofs << "age_percentage_35_to_59," << (CityParameters::GERMAN_AGE_DISTRIBUTION[3] * 100) << "\n";
-    ofs << "age_percentage_60_to_79," << (CityParameters::GERMAN_AGE_DISTRIBUTION[4] * 100) << "\n";
-    ofs << "age_percentage_80_plus," << (CityParameters::GERMAN_AGE_DISTRIBUTION[5] * 100) << "\n\n";
+    ofs << "age_percentage_0_to_4," << std::fixed << std::setprecision(2) << (CityParameters::AGE_DISTRIBUTION[0] * 100)
+        << "\n";
+    ofs << "age_percentage_5_to_14," << (CityParameters::AGE_DISTRIBUTION[1] * 100) << "\n";
+    ofs << "age_percentage_15_to_34," << (CityParameters::AGE_DISTRIBUTION[2] * 100) << "\n";
+    ofs << "age_percentage_35_to_59," << (CityParameters::AGE_DISTRIBUTION[3] * 100) << "\n";
+    ofs << "age_percentage_60_to_79," << (CityParameters::AGE_DISTRIBUTION[4] * 100) << "\n";
+    ofs << "age_percentage_80_plus," << (CityParameters::AGE_DISTRIBUTION[5] * 100) << "\n\n";
 
     // Household Statistics
     ofs << "HOUSEHOLD STATISTICS\n";

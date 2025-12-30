@@ -21,7 +21,7 @@ namespace CityParameters
  * @brief German age distribution based on 2024 data
  * Age groups: 0-4, 5-14, 15-34, 35-59, 60-79, 80+
  */
-const std::vector<double> GERMAN_AGE_DISTRIBUTION = {
+const std::vector<double> AGE_DISTRIBUTION = {
     0.044, // 0-4 years: 4.4%
     0.094, // 5-14 years: 9.4%
     0.222, // 15-34 years: 22.2%
@@ -130,9 +130,9 @@ struct CityInfrastructure {
     std::pair<int, int> calc_num_workplaces_and_worker(int population) const
     {
         // Calculate number of workplaces based on employment rate and average employees per workplace
-        std::vector<int> age_vector(GERMAN_AGE_DISTRIBUTION.size());
-        for (size_t i = 0; i < CityParameters::GERMAN_AGE_DISTRIBUTION.size(); ++i) {
-            int age_group_population = static_cast<int>(population * CityParameters::GERMAN_AGE_DISTRIBUTION[i]);
+        std::vector<int> age_vector(AGE_DISTRIBUTION.size());
+        for (size_t i = 0; i < CityParameters::AGE_DISTRIBUTION.size(); ++i) {
+            int age_group_population = static_cast<int>(population * CityParameters::AGE_DISTRIBUTION[i]);
             age_vector.at(i)         = age_group_population;
         }
 

@@ -91,8 +91,8 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
         // std::cout << "Running " << config.num_runs << " simulations..." << std::endl;
         results.all_runs.reserve(config.num_runs);
 
-        auto single_result = run_single_simulation_with_infections(
-            base_world, initial_infections, config.infection_parameter_k, config.simulation_days);
+                auto single_result = run_single_simulation_with_infections(
+            std::move(base_world), initial_infections, config.infection_parameter_k, config.simulation_days);
 
         if (single_result.has_value()) {
             results.all_runs.push_back(single_result.value());
@@ -408,12 +408,12 @@ mio::IOResult<void> save_detailed_infection_and_contact_for_best_run(
         return mio::success();
     }
 
-    std::cout << "Data read successfully, checking values..." << std::endl;
-    std::cout << "First 1000 values: ";
-    for (size_t i = 0; i < std::min(size_t(1000), temp_data.size()); ++i) {
-        std::cout << temp_data[i] << " ";
-    }
-    std::cout << std::endl;
+    // std::cout << "Data read successfully, checking values..." << std::endl;
+    // std::cout << "First 1000 values: ";
+    // for (size_t i = 0; i < std::min(size_t(1000), temp_data.size()); ++i) {
+    //     std::cout << temp_data[i] << " ";
+    // }
+    // std::cout << std::endl;
 
     // Convert to ScalarType and handle different dimensions
     if (ndims == 1) {
@@ -710,19 +710,19 @@ void assign_infection_state(mio::abm::World& world, const std::vector<uint32_t>&
     // }
 
     // print initial infections / also print household and workplace id
-    std::cout << "Initial infections assigned to persons: \n";
-    for (const auto& person_id : initial_infections) {
-        std::cout << person_id << " ";
-        auto& person = world.get_person(person_id);
-        std::cout << "(Household ID: " << person.get_assigned_location_index(mio::abm::LocationType::Home)
-                  << ", Work ID: " << person.get_assigned_location_index(mio::abm::LocationType::Work) << ") ";
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
+    // std::cout << "Initial infections assigned to persons: \n";
+    // for (const auto& person_id : initial_infections) {
+    //     std::cout << person_id << " ";
+    //     auto& person = world.get_person(person_id);
+    //     std::cout << "(Household ID: " << person.get_assigned_location_index(mio::abm::LocationType::Home)
+    //               << ", Work ID: " << person.get_assigned_location_index(mio::abm::LocationType::Work) << ") ";
+    //     std::cout << std::endl;
+    // }
+    // std::cout << std::endl;
 }
 
 mio::IOResult<SimulationResults>
-MultiRunSimulator::run_single_simulation_with_infections(mio::abm::World& base_world,
+MultiRunSimulator::run_single_simulation_with_infections(mio::abm::World&& base_world,
                                                          const std::vector<uint32_t>& initial_infections,
                                                          double k_parameter, int simulation_days)
 {
