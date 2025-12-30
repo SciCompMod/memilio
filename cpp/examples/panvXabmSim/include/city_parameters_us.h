@@ -40,7 +40,7 @@ const std::vector<double> AGE_DISTRIBUTION = {
 
 /**
  * @brief US household size distribution
- * Source: U.S. Census Bureau - American Community Survey (ACS) 2023
+ * Source: https://data.census.gov/table?q=Household+Size+and+Type
  */
 const std::vector<double> HOUSEHOLD_SIZE_DISTRIBUTION = {
     0.288, // 1-person households: 28.8%

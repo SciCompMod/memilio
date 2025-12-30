@@ -60,7 +60,7 @@ struct InfrastructureRatios {
 
     // Education
     // https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://www.education.gouv.fr/media/159309/download&ved=2ahUKEwirla_lneaRAxXZR_EDHT4kFdIQFnoECBoQAQ&usg=AOvVaw3qgtpLr0ugXgQG_5NtfTWf
-    static constexpr double SCHOOL_RATE                        = 0.151; // 9.4% of population
+    static constexpr double SCHOOL_RATE                        = 0.151; //15.1% of population
     static constexpr double MAX_STUDENTS_PER_ELEMENTARY_SCHOOL = 200; // Primary schools (écoles élémentaires)
     static constexpr double MAX_STUDENTS_PER_SECONDARY_SCHOOL = 300; // Secondary schools (collèges: ~500, lycées: ~540)
     static constexpr double RATIO_ELEMENTARY_TO_SECONDARY_SCHOOL = 1.65; // Ratio of elementary to secondary students
