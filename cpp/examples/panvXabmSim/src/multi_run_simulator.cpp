@@ -596,19 +596,19 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
     }
 
     //Location id and person id
-    std::string location_type_and_id_file = base_dir + "/location_type_and_id.txt";
-    std::ofstream location_file(location_type_and_id_file);
-    if (location_file.is_open()) {
-        location_file << "Person ID, Location Type\n";
-        for (const auto& timestep : results.all_runs[0].infection_per_location_type_and_id) {
-            for (const auto& person_info : timestep) {
-                location_file << std::get<0>(person_info) << ", " << location_type_to_string(std::get<1>(person_info))
-                              << "\n";
-            }
-            location_file << "\n"; // Separate time steps with a newline
-        }
-        location_file.close();
-    }
+    // std::string location_type_and_id_file = base_dir + "/location_type_and_id.txt";
+    // std::ofstream location_file(location_type_and_id_file);
+    // if (location_file.is_open()) {
+    //     location_file << "Person ID, Location Type\n";
+    //     for (const auto& timestep : results.all_runs[0].infection_per_location_type_and_id) {
+    //         for (const auto& person_info : timestep) {
+    //             location_file << std::get<0>(person_info) << ", " << location_type_to_string(std::get<1>(person_info))
+    //                           << "\n";
+    //         }
+    //         location_file << "\n"; // Separate time steps with a newline
+    //     }
+    //     location_file.close();
+    // }
     // Save id to location_type
     auto loc_id_and_type_file = base_dir + "/location_id_and_type.csv";
     std::ofstream loc_id_and_type_stream(loc_id_and_type_file);
