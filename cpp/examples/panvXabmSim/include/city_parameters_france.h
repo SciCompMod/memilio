@@ -29,10 +29,10 @@ namespace CityParameters
 const std::vector<double> AGE_DISTRIBUTION = {
     0.052, // 0-4 years: 5.2%
     0.122, // 5-14 years: 12.2%
-    0.2345, // 15-34 years: 23.45%
-    0.339, // 35-59 years: 33.9%
-    0.210, // 60-79 years: 21.0%
-    0.060 // 80+ years: 6.0%
+    0.235, // 15-34 years: 23.4%
+    0.319, // 35-59 years: 31.9%
+    0.211, // 60-79 years: 21.0%
+    0.061 // 80+ years: 6.1%
 };
 
 /**
