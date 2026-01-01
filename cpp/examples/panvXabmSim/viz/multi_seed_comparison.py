@@ -49,7 +49,7 @@ def parse_label(label):
 
 def group_results_by_simulation_type(results_paths, labels):
     """Group results by simulation type and extract seed information."""
-    grouped_results = {'memilio': [], 'panvadere': []}
+    grouped_results = {'Uniform': [], 'Transmission-Informed': []}
 
     for path, label in zip(results_paths, labels):
         sim_type, seed = parse_label(label)
