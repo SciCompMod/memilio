@@ -15,6 +15,7 @@ RESULTS_BASE_DIR="$MAIN_PATH/examples/panvXabmSim/results"
 VIZ_OUTPUT_BASE_DIR="$MAIN_PATH/examples/panvXabmSim/results"
 PYTHON3_DIR="$MAIN_PATH/v_m/bin/python3"
 MULTI_SEED_VIZ_SCRIPT="$MAIN_PATH/examples/panvXabmSim/viz/multi_seed_comparison.py"
+COMBINED_SCENARIO_VIZ_SCRIPT="$MAIN_PATH/examples/panvXabmSim/viz/combined_scenario_comparison.py"
 
 # Get event label function
 get_event_label() {
@@ -46,9 +47,9 @@ EVENT_TYPES=(
 )
 
 # Simulation parameters
-NUM_DAYS=15
+NUM_DAYS=10
 NUM_PERSONS=1000
-RUNS=20  # Number of runs per seed (to get median)
+RUNS=1  # Number of runs per seed (to get median)
 INFECTION_K=22.6
 
 
@@ -58,54 +59,54 @@ SEEDS=(
     1402121
     35897932
     27182818
-    18284590
-    45235360
-    28747135
-    99887766
-    55443322
-    11223344
-    66778899
-    44556677
-    88990011
-    22334455
-    77889900
-    33445566
-    00112233
-    55667788
-    99001122
-    33447799
-    66880022
-    # 30 more seeds
-    12345678
-    87654321
-    33334444
-    77778888
-    10101010
-    20202020
-    30303030
-    40404040
-    70707070
-    90909090
-    23232323
-    45454545
-    56565656
-    86420975
-    11235813
-    24494897
-    70710678
-    31622776
-    50000000
-    60000000
-    80000000
-    90000000
-    14021219
-    35897932
-    18284590
-    13579228
-    24681432
-    27182821
-    31415227 
-    16180330 
+    # 18284590
+    # 45235360
+    # 28747135
+    # 99887766
+    # 55443322
+    # 11223344
+    # 66778899
+    # 44556677
+    # 88990011
+    # 22334455
+    # 77889900
+    # 33445566
+    # 00112233
+    # 55667788
+    # 99001122
+    # 33447799
+    # 66880022
+    # # 30 more seeds
+    # 12345678
+    # 87654321
+    # 33334444
+    # 77778888
+    # 10101010
+    # 20202020
+    # 30303030
+    # 40404040
+    # 70707070
+    # 90909090
+    # 23232323
+    # 45454545
+    # 56565656
+    # 86420975
+    # 11235813
+    # 24494897
+    # 70710678
+    # 31622776
+    # 50000000
+    # 60000000
+    # 80000000
+    # 90000000
+    # 14021219
+    # 35897932
+    # 18284590
+    # 13579228
+    # 24681432
+    # 27182821
+    # 31415227 
+    # 16180330 
 )
 
 
@@ -163,6 +164,10 @@ main() {
     echo "Days: $NUM_DAYS, Persons: $NUM_PERSONS, Runs per seed: $RUNS"
     echo ""
     
+    # Arrays to store scenario directories for combined visualization
+    local -a all_scenario_dirs=()
+    local -a all_scenario_labels=()
+    
     # Process each event type separately
     for event_type in "${EVENT_TYPES[@]}"; do
         local event_label=$(get_event_label "$event_type")
@@ -173,6 +178,10 @@ main() {
         local viz_output_dir=$(create_viz_output_dir "$event_label")
         echo "Visualization output directory: $viz_output_dir"
         echo ""
+        
+        # Store for combined visualization
+        all_scenario_dirs+=("$viz_output_dir")
+        all_scenario_labels+=("$event_label")
         
         # Results storage arrays for this event type
         local -a results_paths=()
@@ -246,8 +255,36 @@ main() {
             echo "WARNING: Multi-seed visualization may have encountered issues for $event_label."
         fi
         
-        echo ""
-        echo "=== COMPLETED ANALYSIS FOR $event_type (Label: $event_label) ==="
+        echo "STEP 3: Creating Combined Scenario Comparison ==="
+    echo "Combining all ${#all_scenario_labels[@]} scenarios into one visualization..."
+    
+    # Create combined output directory
+    local combined_output_dir="$RESULTS_BASE_DIR/combined_scenarios"
+    mkdir -p "$combined_output_dir"
+    
+    # Call Python script for combined scenario visualization
+    if [ ${#all_scenario_dirs[@]} -gt 0 ]; then
+        echo "Running combined scenario visualization script..."
+        $PYTHON3_DIR "$COMBINED_SCENARIO_VIZ_SCRIPT" \
+            --scenario-dirs "${all_scenario_dirs[@]}" \
+            --scenario-labels "${all_scenario_labels[@]}" \
+            --output-dir "$combined_output_dir"
+        
+        if [ $? -eq 0 ]; then
+            echo "✓ Combined scenario visualization completed successfully!"
+            echo "  Output: $combined_output_dir/combined_median_comparison_all_scenarios.png"
+        else
+            echo "WARNING: Combined scenario visualization encountered issues."
+        fi
+    else
+        echo "ERROR: No scenario directories available for combined visualization."
+    fi
+    
+    echo ""
+    echo "=== ALL MULTI-SEED ANALYSES COMPLETED ==="
+    echo "All event types processed: ${EVENT_TYPES[*]}"
+    echo "Individual scenario visualizations: ${all_scenario_dirs[*]}"
+    echo "Combined visualization: $combined_output_dirLabel: $event_label) ==="
         echo "Total simulations run: ${#results_paths[@]}"
         echo "Visualization output: $viz_output_dir"
         echo "=========================="
