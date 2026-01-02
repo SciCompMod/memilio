@@ -118,23 +118,32 @@ def create_combined_median_comparison(scenario_data_list, output_dir):
 
         # Calculate statistics for Memilio
         if grouped_results['memilio']:
+            print(f"  Memilio: {len(grouped_results['memilio'])} seeds")
             # Find minimum length to handle different array sizes
             min_len = min(len(result['cumulative']) for result in grouped_results['memilio'])
-            memilio_curves = np.array([result['cumulative'][:min_len]
+            memilio_curves = np.array([result['cumulative']
                                       for result in grouped_results['memilio']])
             memilio_median = np.median(memilio_curves, axis=0)
             memilio_q25 = np.percentile(memilio_curves, 25, axis=0)
             memilio_q75 = np.percentile(memilio_curves, 75, axis=0)
             time_axis = grouped_results['memilio'][0]['time'][:min_len]
+            
+            # Debug: check if confidence intervals have width
+            print(f"    Median range: {memilio_median[0]:.1f} - {memilio_median[-1]:.1f}")
+            print(f"    Q25 range: {memilio_q25[0]:.1f} - {memilio_q25[-1]:.1f}")
+            print(f"    Q75 range: {memilio_q75[0]:.1f} - {memilio_q75[-1]:.1f}")
+            print(f"    Max difference from median: {np.max(np.abs(memilio_q75 - memilio_median)):.2f}")
 
-            # Plot Memilio
+            # Plot median line
             ax.plot(time_axis, memilio_median, color='blue',
                    linewidth=3, label='Uniform (median)')
+            # Plot confidence interval
             ax.fill_between(time_axis, memilio_q25, memilio_q75,
                            color='blue', alpha=0.3, label='Uniform (25-75%)')
 
         # Calculate statistics for Panvadere
         if grouped_results['panvadere']:
+            print(f"  Panvadere: {len(grouped_results['panvadere'])} seeds")
             # Find minimum length to handle different array sizes
             min_len = min(len(result['cumulative']) for result in grouped_results['panvadere'])
             panvadere_curves = np.array([result['cumulative'][:min_len]
@@ -143,10 +152,17 @@ def create_combined_median_comparison(scenario_data_list, output_dir):
             panvadere_q25 = np.percentile(panvadere_curves, 25, axis=0)
             panvadere_q75 = np.percentile(panvadere_curves, 75, axis=0)
             time_axis = grouped_results['panvadere'][0]['time'][:min_len]
+            
+            # Debug: check if confidence intervals have width
+            print(f"    Median range: {panvadere_median[0]:.1f} - {panvadere_median[-1]:.1f}")
+            print(f"    Q25 range: {panvadere_q25[0]:.1f} - {panvadere_q25[-1]:.1f}")
+            print(f"    Q75 range: {panvadere_q75[0]:.1f} - {panvadere_q75[-1]:.1f}")
+            print(f"    Max difference from median: {np.max(np.abs(panvadere_q75 - panvadere_median)):.2f}")
 
-            # Plot Panvadere
+            # Plot median line
             ax.plot(time_axis, panvadere_median, color='red',
                    linewidth=3, label='Transmission-Informed (median)')
+            # Plot confidence interval
             ax.fill_between(time_axis, panvadere_q25, panvadere_q75,
                            color='red', alpha=0.3, label='Transmission-Informed (25-75%)')
 
@@ -175,18 +191,21 @@ def main():
     """Main function for CLI usage."""
     parser = argparse.ArgumentParser(
         description="Create combined median comparison across all scenarios")
-    parser.add_argument("--scenario-dirs", nargs='+', required=True,
-                        help="Directories containing results for each scenario")
+    parser.add_argument("--results-paths", nargs='+', required=True,
+                        help="Paths to all simulation results directories")
+    parser.add_argument("--labels", nargs='+', required=True,
+                        help="Labels for each result (format: simtype_seedN)")
     parser.add_argument("--scenario-labels", nargs='+', required=True,
-                        help="Labels for each scenario (e.g., R1, R2, W1, W2)")
+                        help="Scenario label for each result (e.g., R1, R2, W1, W2)")
     parser.add_argument("--output-dir", required=True,
                         help="Output directory for the combined visualization")
 
     args = parser.parse_args()
 
     # Validate inputs
-    if len(args.scenario_dirs) != len(args.scenario_labels):
-        print("Error: Number of scenario directories must match number of labels")
+    if len(args.results_paths) != len(args.labels) or len(args.results_paths) != len(args.scenario_labels):
+        print("Error: Number of results paths, labels, and scenario labels must all match")
+        print(f"  Got: {len(args.results_paths)} paths, {len(args.labels)} labels, {len(args.scenario_labels)} scenario labels")
         return 1
 
     # Create output directory
@@ -197,88 +216,35 @@ def main():
         print(f"Error creating output directory: {e}")
         return 1
 
-    print(f"Processing {len(args.scenario_dirs)} scenarios...")
+    print(f"Processing {len(args.results_paths)} total results across scenarios...")
 
-    # Load data for each scenario
-    scenario_data_list = []
+    # Group results by scenario
+    scenario_data = {}
+    for result_path, label, scenario_label in zip(args.results_paths, args.labels, args.scenario_labels):
+        if scenario_label not in scenario_data:
+            scenario_data[scenario_label] = {'paths': [], 'labels': []}
+        scenario_data[scenario_label]['paths'].append(result_path)
+        scenario_data[scenario_label]['labels'].append(label)
     
-    for scenario_dir, event_label in zip(args.scenario_dirs, args.scenario_labels):
-        print(f"\nLoading scenario {event_label} from {scenario_dir}")
+    print(f"Found {len(scenario_data)} unique scenarios")
+    
+    # Process each scenario
+    scenario_data_list = []
+    for scenario_label in sorted(scenario_data.keys()):
+        paths = scenario_data[scenario_label]['paths']
+        labels = scenario_data[scenario_label]['labels']
         
-        # The scenario_dir is the viz output dir (seeds_XX), but we need to look in the parent
-        # directory for the actual multiseed results
-        results_base = os.path.dirname(scenario_dir)
+        print(f"\nScenario {scenario_label}:")
+        print(f"  Processing {len(paths)} results")
         
-        if not os.path.exists(results_base):
-            print(f"Warning: Results directory not found: {results_base}")
-            continue
-            
-        # Look for subdirectories with results matching this event label
-        result_paths = []
-        result_labels = []
+        # Group results by simulation type (same as multi_seed_comparison)
+        grouped_results = group_results_by_simulation_type(paths, labels)
         
-        # Map event labels to their event type strings
-        event_type_map = {
-            'R1': 'restaurant_table_equals_household',
-            'R2': 'restaurant_table_equals_half_household',
-            'W1': 'work_meeting_baseline',
-            'W2': 'work_meeting_many'
-        }
-        event_type_str = event_type_map.get(event_label, '')
-        
-        # Collect all matching directories and extract their timestamps
-        # Format: multiseed_YYYYMMDD_HHMMSS_simtype_eventtype_seed
-        timestamp_dirs = {}
-        for item in os.listdir(results_base):
-            item_path = os.path.join(results_base, item)
-            if os.path.isdir(item_path) and 'multiseed' in item.lower() and event_type_str in item.lower():
-                # Extract timestamp (format: multiseed_20260102_002425_...)
-                parts = item.split('_')
-                if len(parts) >= 3:
-                    timestamp = f"{parts[1]}_{parts[2]}"  # YYYYMMDD_HHMMSS
-                    if timestamp not in timestamp_dirs:
-                        timestamp_dirs[timestamp] = []
-                    timestamp_dirs[timestamp].append(item)
-        
-        if not timestamp_dirs:
-            print(f"  No matching results found")
-            continue
-        
-        # Get the latest timestamp
-        latest_timestamp = max(timestamp_dirs.keys())
-        print(f"  Using results from latest run: {latest_timestamp}")
-        
-        # Use only results from the latest run
-        for item in timestamp_dirs[latest_timestamp]:
-            item_path = os.path.join(results_base, item)
-            # Extract simulation type and seed from directory name
-            if 'memilio' in item.lower():
-                sim_type = 'memilio'
-            elif 'panvadere' in item.lower():
-                sim_type = 'panvadere'
-            else:
-                continue
-            
-            # Extract seed
-            seed_part = [part for part in item.split('_') if 'seed' in part.lower()]
-            if seed_part:
-                seed = seed_part[0].replace('seed', '')
-                result_paths.append(item_path)
-                result_labels.append(f"{sim_type}_seed{seed}")
-        
-        if not result_paths:
-            print(f"Warning: No valid results found in {scenario_dir}")
-            continue
-        
-        print(f"  Found {len(result_paths)} result sets")
-        
-        # Group results
-        grouped_results = group_results_by_simulation_type(result_paths, result_labels)
         print(f"  Memilio results: {len(grouped_results['memilio'])}")
         print(f"  Panvadere results: {len(grouped_results['panvadere'])}")
         
         if grouped_results['memilio'] or grouped_results['panvadere']:
-            scenario_data_list.append((event_label, grouped_results))
+            scenario_data_list.append((scenario_label, grouped_results))
 
     if not scenario_data_list:
         print("Error: No valid scenario data found")

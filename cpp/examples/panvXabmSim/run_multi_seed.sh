@@ -45,11 +45,13 @@ EVENT_TYPES=(
     "work_meeting_many"
     "work_meeting_baseline"
 )
+# Both simulation types
+SIM_TYPES=("memilio" "panvadere")
 
 # Simulation parameters
-NUM_DAYS=10
+NUM_DAYS=30
 NUM_PERSONS=1000
-RUNS=1  # Number of runs per seed (to get median)
+RUNS=20  # Number of runs per seed (to get median)
 INFECTION_K=22.6
 
 
@@ -59,59 +61,58 @@ SEEDS=(
     1402121
     35897932
     27182818
-    # 18284590
-    # 45235360
-    # 28747135
-    # 99887766
-    # 55443322
-    # 11223344
-    # 66778899
-    # 44556677
-    # 88990011
-    # 22334455
-    # 77889900
-    # 33445566
-    # 00112233
-    # 55667788
-    # 99001122
-    # 33447799
-    # 66880022
-    # # 30 more seeds
-    # 12345678
-    # 87654321
-    # 33334444
-    # 77778888
-    # 10101010
-    # 20202020
-    # 30303030
-    # 40404040
-    # 70707070
-    # 90909090
-    # 23232323
-    # 45454545
-    # 56565656
-    # 86420975
-    # 11235813
-    # 24494897
-    # 70710678
-    # 31622776
-    # 50000000
-    # 60000000
-    # 80000000
-    # 90000000
-    # 14021219
-    # 35897932
-    # 18284590
-    # 13579228
-    # 24681432
-    # 27182821
-    # 31415227 
-    # 16180330 
+    18284590
+    45235360
+    28747135
+    99887766
+    55443322
+    11223344
+    66778899
+    44556677
+    88990011
+    22334455
+    77889900
+    33445566
+    00112233
+    55667788
+    99001122
+    33447799
+    66880022
+    # 30 more seeds
+    12345678
+    87654321
+    33334444
+    77778888
+    10101010
+    20202020
+    30303030
+    40404040
+    70707070
+    90909090
+    23232323
+    45454545
+    56565656
+    86420975
+    11235813
+    24494897
+    70710678
+    31622776
+    50000000
+    60000000
+    80000000
+    90000000
+    14021219
+    35897932
+    18284590
+    13579228
+    24681432
+    27182821
+    31415227 
+    16180330 
 )
 
 
-# Both simulation types
-SIM_TYPES=("memilio" "panvadere")
+
 
 # Functions
 create_results_dir() {
@@ -165,7 +166,8 @@ main() {
     echo ""
     
     # Arrays to store scenario directories for combined visualization
-    local -a all_scenario_dirs=()
+    local -a all_results_paths=()
+    local -a all_results_labels=()
     local -a all_scenario_labels=()
     
     # Process each event type separately
@@ -178,10 +180,6 @@ main() {
         local viz_output_dir=$(create_viz_output_dir "$event_label")
         echo "Visualization output directory: $viz_output_dir"
         echo ""
-        
-        # Store for combined visualization
-        all_scenario_dirs+=("$viz_output_dir")
-        all_scenario_labels+=("$event_label")
         
         # Results storage arrays for this event type
         local -a results_paths=()
@@ -223,6 +221,11 @@ main() {
                 results_paths+=("$results_dir")
                 results_labels+=("${sim_type}_seed${seed}")
                 
+                # Also store for combined scenario visualization
+                all_results_paths+=("$results_dir")
+                all_results_labels+=("${sim_type}_seed${seed}")
+                all_scenario_labels+=("$event_label")
+                
                 echo "    -> Added to visualization queue: ${sim_type}_seed${seed}"
             done
         done
@@ -255,18 +258,33 @@ main() {
             echo "WARNING: Multi-seed visualization may have encountered issues for $event_label."
         fi
         
-        echo "STEP 3: Creating Combined Scenario Comparison ==="
-    echo "Combining all ${#all_scenario_labels[@]} scenarios into one visualization..."
+        echo ""
+        echo "=========================="
+        echo "Completed analysis for event type: $event_type (Label: $event_label) ==="
+        echo "Total simulations run: ${#results_paths[@]}"
+        echo "Visualization output: $viz_output_dir"
+        echo "=========================="
+    done
+    
+    echo ""
+    echo "=== STEP 3: Creating Combined Scenario Comparison ==="
+    echo "Combining all ${#EVENT_TYPES[@]} scenarios into one visualization..."
+    echo "Total results collected: ${#all_results_paths[@]}"
     
     # Create combined output directory
     local combined_output_dir="$RESULTS_BASE_DIR/combined_scenarios"
     mkdir -p "$combined_output_dir"
     
     # Call Python script for combined scenario visualization
-    if [ ${#all_scenario_dirs[@]} -gt 0 ]; then
+    if [ ${#all_results_paths[@]} -gt 0 ]; then
         echo "Running combined scenario visualization script..."
+        echo "  Results paths: ${#all_results_paths[@]}"
+        echo "  Labels: ${#all_results_labels[@]}"
+        echo "  Scenario labels: ${#all_scenario_labels[@]}"
+        
         $PYTHON3_DIR "$COMBINED_SCENARIO_VIZ_SCRIPT" \
-            --scenario-dirs "${all_scenario_dirs[@]}" \
+            --results-paths "${all_results_paths[@]}" \
+            --labels "${all_results_labels[@]}" \
             --scenario-labels "${all_scenario_labels[@]}" \
             --output-dir "$combined_output_dir"
         
@@ -277,22 +295,13 @@ main() {
             echo "WARNING: Combined scenario visualization encountered issues."
         fi
     else
-        echo "ERROR: No scenario directories available for combined visualization."
+        echo "ERROR: No results available for combined visualization."
     fi
     
     echo ""
     echo "=== ALL MULTI-SEED ANALYSES COMPLETED ==="
     echo "All event types processed: ${EVENT_TYPES[*]}"
-    echo "Individual scenario visualizations: ${all_scenario_dirs[*]}"
-    echo "Combined visualization: $combined_output_dirLabel: $event_label) ==="
-        echo "Total simulations run: ${#results_paths[@]}"
-        echo "Visualization output: $viz_output_dir"
-        echo "=========================="
-    done
-    
-    echo ""
-    echo "=== ALL MULTI-SEED ANALYSES COMPLETED ==="
-    echo "All event types processed: ${EVENT_TYPES[*]}"
+    echo "Combined visualization: $combined_output_dir"
     echo "=========================="
 }
 

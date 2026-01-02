@@ -181,7 +181,7 @@ def create_multi_seed_comparison_plot(grouped_results, output_dir, event_type, n
     if memilio_finals and panvadere_finals:
         # Create box plot
         box_data = [memilio_finals, panvadere_finals]
-        box_labels = ['Memilio', 'Panvadere']
+        box_labels = ['Uniform', 'Transmission-Informed']
 
         bp = ax4.boxplot(box_data, tick_labels=box_labels, patch_artist=True)
         bp['boxes'][0].set_facecolor('lightblue')
