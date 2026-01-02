@@ -166,6 +166,29 @@ def create_combined_median_comparison(scenario_data_list, output_dir):
             ax.fill_between(time_axis, panvadere_q25, panvadere_q75,
                            color='red', alpha=0.3, label='Transmission-Informed (25-75%)')
 
+        # Add statistics box
+        if grouped_results['memilio'] and grouped_results['panvadere']:
+            # Extract final infection values
+            memilio_finals = [result['cumulative'][-1] for result in grouped_results['memilio']]
+            panvadere_finals = [result['cumulative'][-1] for result in grouped_results['panvadere']]
+            
+            # Calculate statistics
+            memilio_mean = np.mean(memilio_finals)
+            memilio_std = np.std(memilio_finals)
+            panvadere_mean = np.mean(panvadere_finals)
+            panvadere_std = np.std(panvadere_finals)
+            diff_abs = abs(memilio_mean - panvadere_mean)
+            diff_pct = diff_abs / min(memilio_mean, panvadere_mean) * 100
+            
+            # Create statistics text
+            stats_text = f"Uniform: μ={memilio_mean:.1f}, σ={memilio_std:.1f}\n"
+            stats_text += f"Transmission-Informed: μ={panvadere_mean:.1f}, σ={panvadere_std:.1f}\n"
+            stats_text += f"Difference in means: {diff_abs:.1f} (+{diff_pct:.1f}%)"
+            
+            # Add text box at middle-left
+            ax.text(0.02, 0.5, stats_text, transform=ax.transAxes, fontsize=12,
+                   verticalalignment='center', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.85))
+
         # Set consistent y-axis limits
         ax.set_ylim(0, global_y_max * 1.05)
         
