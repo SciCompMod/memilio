@@ -44,7 +44,7 @@ mio::abm::World CityBuilder::build_world(const CityConfig& config, const mio::Ra
                                           hospitals, icus, config.total_population, infra.num_households_hh_size,
                                           infra);
 
-    set_local_parameters(world);
+    set_local_parameters_ger(world);
     set_parameters(world.parameters);
 
     return world;
