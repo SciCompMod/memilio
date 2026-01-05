@@ -23,9 +23,9 @@ by other packages of the MEmilio software.
 Installation
 ------------
 
-Use the provided ``setup.py`` script to install the package and its dependencies.
+This project uses ``pyproject.toml`` to install the package and its dependencies.
 
-To install the package, use (from the directory that contains ``setup.py``)
+To install the package, use pip (from the directory that contains ``pyproject.toml``)
 
 .. code:: sh
 
@@ -72,11 +72,22 @@ The following packages are used by the tests:
 
 See Installation on how to install all these dependencies automatically.
 
-To run the tests make 
+To run the tests, make sure the package is installed, and you are in the source directory, then run:
 
-.. code:: sh
-
+```bash
+    cd tests
     python -m unittest
+```
+
+This works with both normal (``pip install .``) and editable (``pip install -e .``) installations.
+
+Alternatively, you can run the tests from outside the source directory:
+
+```bash
+    cd /path/to/another/directory
+    python -m unittest discover -s /path/to/memilio/pycode/memilio-plot/tests
+```
+
 
 To get the coverage report do
 
@@ -104,7 +115,7 @@ Run pylint with the commands
 
 .. code:: sh
 
-    python setup.py pylint
+    python ../run_pylint.py
     pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
 
 Pylint report for actual master:

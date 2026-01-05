@@ -16,7 +16,7 @@ Dependencies
 Required python packages:
 
 - pandas >= 1.2.2
-- numpy >= 1.22, < 1.25
+- numpy >= 1.22, !=1.25.*
 - tensorflow
 - matplotlib
 - scikit-learn

@@ -11,7 +11,7 @@ build:
   jobs:
     install:
       - pip install --exists-action=w --no-cache-dir -r docs/requirements-build.txt
-      - pip install --exists-action=w --no-cache-dir -r docs/requirements.txt --no-build-isolation
+      - pip install --exists-action=w --no-cache-dir -r docs/requirements.txt
 
 sphinx:
   configuration: docs/source/conf.py
