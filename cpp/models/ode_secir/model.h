@@ -68,6 +68,8 @@ public:
     using typename Base::ParameterSet;
     using typename Base::Populations;
 
+    FP commuter_tests_used = 0.0;
+
     Model(const Populations& pop, const ParameterSet& params)
         : Base(pop, params)
     {
@@ -709,6 +711,8 @@ auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Eigen::VectorX<FP>> mo
         sim.get_result().get_last_value()[INSCi] += mobile_population[INSi] * (1 - nondetection);
         sim.get_result().get_last_value()[ISyi] -= mobile_population[ISyi] * (1 - nondetection);
         sim.get_result().get_last_value()[ISyCi] += mobile_population[ISyi] * (1 - nondetection);
+
+        model.commuter_tests_used += (mobile_population[INSi] + mobile_population[ISyi]) * (1 - nondetection);
 
         //reduce the number of commuters
         mobile_population[ISyi] *= nondetection;

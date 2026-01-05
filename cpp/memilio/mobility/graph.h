@@ -441,7 +441,7 @@ IOResult<void> set_edges(const fs::path& mobility_data_file, Graph<Model, Mobili
             }
             //only add edges with mobility above thresholds for performance
             //thresholds are chosen empirically so that more than 99% of mobility is covered, approx. 1/3 of the edges
-            if (commuter_coeff_ij > 4e-5) {
+            if (commuter_coeff_ij > 1e-3) {
                 params_graph.add_edge(county_idx_i, county_idx_j, std::move(mobility_coeffs), indices_of_saved_edges);
             }
         }
