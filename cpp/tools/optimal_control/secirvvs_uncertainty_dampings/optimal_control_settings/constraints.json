@@ -1,0 +1,30 @@
+{
+  "path_constraints": [
+    {
+      "name": "Infected",
+      "min": 0.0,
+      "max": 100000,
+      "node_id": null
+    },
+    {
+      "name": "Severe",
+      "min": 0.0,
+      "max": 125000.0,
+      "node_id": null
+    },
+    {
+      "name": "Critical",
+      "min": 0.0,
+      "max": 200.0,
+      "node_id": null
+    }
+  ],
+  "terminal_constraints": [
+    {
+      "name": "Dead",
+      "min": 0.0,
+      "max": 400000.0,
+      "node_id": null
+    }
+  ]
+}

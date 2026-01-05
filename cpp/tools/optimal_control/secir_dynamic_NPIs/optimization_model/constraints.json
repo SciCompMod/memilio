@@ -1,0 +1,11 @@
+{
+  "path_constraints": [],
+  "terminal_constraints": [
+    {
+      "name": "InfectedSymptoms",
+      "min": 0.0,
+      "max": 50000,
+      "node_id": null
+    }
+  ]
+}
