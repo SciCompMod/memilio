@@ -336,7 +336,7 @@ IOResult<void> simulate_ide(TimeSeries<ScalarType> init_flows, Vector init_compa
         model_ide.parameters.get<isecir::TransmissionProbabilityOnContact>()[group] = StateAgeFunctionWrapperide;
 
         StateAgeFunctionWrapperide.set_distribution_parameter(relativeTransmissionNoSymptoms);
-        model_ide.parameters.get<isecir::RelativeTransmissionNoSymptoms>() = StateAgeFunctionWrapperide;
+        model_ide.parameters.get<isecir::RelativeTransmissionNoSymptoms>()[group] = StateAgeFunctionWrapperide;
 
         StateAgeFunctionWrapperide.set_distribution_parameter(riskOfInfectionFromSymptomatic);
         model_ide.parameters.get<isecir::RiskOfInfectionFromSymptomatic>()[group] = StateAgeFunctionWrapperide;
@@ -1831,11 +1831,11 @@ mio::IOResult<std::vector<double>> csv_to_vector(std::string filename)
 
 int main()
 {
-    constexpr bool exponential_scenario = true;
+    constexpr bool exponential_scenario = false;
     bool one_location                   = true;
     bool use_infection_history          = true;
     mio::unused(use_infection_history);
-    const std::vector<double> infection_distribution{0.99, 0.005, 0.005, 0.0, 0.0, 0.0, 0.0, 0.0};
+    const std::vector<double> infection_distribution{0.995, 0.005, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
     std::string save_dir = "../../cpp/examples/paper/simulation_results/compare_abm_ide_lct_ode/";
 

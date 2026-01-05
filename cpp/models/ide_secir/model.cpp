@@ -386,7 +386,7 @@ void Model::initial_compute_compartments(ScalarType dt)
             populations.add_time_point(
                 populations.get_last_time() + dt,
                 Eigen::VectorX<ScalarType>::Zero(((size_t)InfectionState::Count * m_num_agegroups)));
-            transitions_temp.add_time_point(i * dt + dt, init_transitions.get_value(i));
+            transitions_temp.add_time_point(init_transitions.get_time(i), init_transitions.get_value(i));
             // Set transitions to transitions_temp so that update_compartments() can access the necessary value of
             // the TimeSeries transitions.
             transitions = transitions_temp;
@@ -394,7 +394,7 @@ void Model::initial_compute_compartments(ScalarType dt)
             // Update compartments apart from S according to flows.
             update_compartments();
 
-            // Compute S by difference to total population.
+            // Compute S by difference to total population per group.
             for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
                 int Si    = get_state_flat_index(Eigen::Index(InfectionState::Susceptible), group);
                 int Ei    = get_state_flat_index(Eigen::Index(InfectionState::Exposed), group);
@@ -425,90 +425,144 @@ void Model::initial_compute_compartments(ScalarType dt)
         // - Finally, we add the values from init_transitions to the TimeSeries extended_init_flows at the respective
         //   time points.
 
-        // We start with defining how many tie points with value 0 we need to add according to global_support_max.
+        // We start with defining if and how many time points with value 0 we need to add according to global_support_max.
         ScalarType global_support_max = get_global_support_max(dt);
         ScalarType start              = transitions.get_last_time() - global_support_max;
-        int start_index               = std::ceil(start / dt);
+        int start_index               = std::floor(start / dt);
 
-        // We add time points with value zero.
         TimeSeries<ScalarType> extended_init_flows(init_transitions.get_num_elements());
-        for (int idx = start_index; idx < init_transitions.get_time(0); idx++) {
-            extended_init_flows.add_time_point(idx * dt,
+
+        if (start_index < 0) {
+            // We add time points with value zero.
+            for (int idx = start_index; idx < init_transitions.get_time(0); idx++) {
+                extended_init_flows.add_time_point(
+                    idx * dt, Eigen::VectorX<ScalarType>::Zero(init_transitions.get_num_elements()));
+
+                // Set flows to Z(t)/T_Z for transitions that are not given for compartment Z.
+                // for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
+                //     int Ei = get_state_flat_index(Eigen::Index(InfectionState::Exposed), group);
+                //     // int INSi  = get_state_flat_index(Eigen::Index(InfectionState::InfectedNoSymptoms), group);
+                //     // int ISyi  = get_state_flat_index(Eigen::Index(InfectionState::InfectedSymptoms), group);
+                //     // int ISevi = get_state_flat_index(Eigen::Index(InfectionState::InfectedSevere), group);
+                //     // int ICri  = get_state_flat_index(Eigen::Index(InfectionState::InfectedCritical), group);
+                //     // int Di    = get_state_flat_index(Eigen::Index(InfectionState::Dead), group);
+
+                //     int StEi =
+                //         get_transition_flat_index(Eigen::Index(InfectionTransition::SusceptibleToExposed), group);
+                //     // int EtINSi = get_transition_flat_index(
+                //     //     Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms), group);
+                //     // int INStISyi = get_transition_flat_index(
+                //     //     Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), group);
+                //     // // int INStRi = get_transition_flat_index(
+                //     // //     Eigen::Index(InfectionTransition::InfectedNoSymptomsToRecovered), group);
+                //     // int ISytISevi = get_transition_flat_index(
+                //     //     Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere), group);
+                //     // // int ISytRi = get_transition_flat_index(
+                //     // //     Eigen::Index(InfectionTransition::InfectedSymptomsToRecovered), group);
+                //     // int ISevtICri = get_transition_flat_index(
+                //     //     Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical), group);
+                //     // int ISevtRi = get_transition_flat_index(
+                //     //     Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical), group);
+                //     // int ICritDi =
+                //     //     get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedCriticalToDead), group);
+                //     // int ICritRi = get_transition_flat_index(
+                //     //     Eigen::Index(InfectionTransition::InfectedCriticalToRecovered), group);
+                //     // auto saf = parameters.get<TransitionDistributions>()[group][EtINSi];
+                //     // unused(saf);
+                //     ScalarType mean_E = 1.4;
+                //     // ScalarType mean_INS  = 1.2;
+                //     // ScalarType mean_ISy  = 0.3;
+                //     // ScalarType mean_ISev = 0.3;
+                //     // ScalarType mean_ICr  = 0.3;
+
+                //     extended_init_flows.get_last_value()[StEi] = m_compartments_init[Ei] / mean_E * dt;
+                //     // extended_init_flows.get_last_value()[EtINSi]   = m_compartments_init[INSi] / mean_INS;
+                //     // extended_init_flows.get_last_value()[INStISyi] = m_compartments_init[ISyi] / mean_ISy;
+                //     // // extended_init_flows.get_last_value()[INStRi]    = m_compartments_init[ISyi] / mean_EtC;
+                //     // extended_init_flows.get_last_value()[ISytISevi] = m_compartments_init[ISevi] / mean_ISev;
+                //     // // extended_init_flows.get_last_value()[ISytRi]    = m_compartments_init[Ei] / mean_EtC;
+                //     // extended_init_flows.get_last_value()[ISevtICri] = m_compartments_init[ICri] / mean_ICr;
+                //     // extended_init_flows.get_last_value()[ISevtRi]   = m_compartments_init[Ei] / mean_EtC;
+                // }
+            }
+
+            // We add the individuals of init_compartments to extended_init_flows at time point -dt.
+            // With this, we set the state age of the individuals in the respective compartments to 0.
+            // for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
+            //     int Ei    = get_state_flat_index(Eigen::Index(InfectionState::Exposed), group);
+            //     int INSi  = get_state_flat_index(Eigen::Index(InfectionState::InfectedNoSymptoms), group);
+            //     int ISyi  = get_state_flat_index(Eigen::Index(InfectionState::InfectedSymptoms), group);
+            //     int ISevi = get_state_flat_index(Eigen::Index(InfectionState::InfectedSevere), group);
+            //     int ICri  = get_state_flat_index(Eigen::Index(InfectionState::InfectedCritical), group);
+            //     int Di    = get_state_flat_index(Eigen::Index(InfectionState::Dead), group);
+
+            //     int StEi = get_transition_flat_index(Eigen::Index(InfectionTransition::SusceptibleToExposed), group);
+            //     int EtINSi =
+            //         get_transition_flat_index(Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms), group);
+            //     int INStISyi = get_transition_flat_index(
+            //         Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), group);
+            //     int INStRi =
+            //         get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedNoSymptomsToRecovered), group);
+            //     int ISytISevi = get_transition_flat_index(
+            //         Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere), group);
+            //     int ISytRi =
+            //         get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedSymptomsToRecovered), group);
+            //     int ISevtICri = get_transition_flat_index(
+            //         Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical), group);
+            //     int ISevtRi = get_transition_flat_index(
+            //         Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical), group);
+            //     int ICritDi =
+            //         get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedCriticalToDead), group);
+            //     int ICritRi =
+            //         get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedCriticalToRecovered), group);
+
+            //     extended_init_flows.get_last_value()[StEi] = m_compartments_init[Ei];
+
+            //     extended_init_flows.get_last_value()[EtINSi] += m_compartments_init[INSi] * dt;
+            //     extended_init_flows.get_last_value()[INStISyi] +=
+            //         parameters.get<TransitionProbabilities>()[group][(
+            //             Eigen::Index)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] *
+            //         m_compartments_init[ISyi] * dt;
+            //     extended_init_flows.get_last_value()[INStRi] +=
+            //         parameters.get<TransitionProbabilities>()[group][(
+            //             Eigen::Index)InfectionTransition::InfectedNoSymptomsToRecovered] *
+            //         m_compartments_init[ISyi] * dt;
+            //     extended_init_flows.get_last_value()[ISytISevi] +=
+            //         parameters.get<TransitionProbabilities>()[group][(
+            //             Eigen::Index)InfectionTransition::InfectedSymptomsToInfectedSevere] *
+            //         m_compartments_init[ISevi] * dt;
+            //     extended_init_flows.get_last_value()[ISytRi] +=
+            //         parameters.get<TransitionProbabilities>()[group][(
+            //             Eigen::Index)InfectionTransition::InfectedSymptomsToRecovered] *
+            //         m_compartments_init[ISevi] * dt;
+            //     extended_init_flows.get_last_value()[ISevtICri] +=
+            //         parameters.get<TransitionProbabilities>()[group][(
+            //             Eigen::Index)InfectionTransition::InfectedSevereToInfectedCritical] *
+            //         m_compartments_init[ICri] * dt;
+            //     extended_init_flows.get_last_value()[ISevtRi] +=
+            //         parameters.get<TransitionProbabilities>()[group][(
+            //             Eigen::Index)InfectionTransition::InfectedSevereToRecovered] *
+            //         m_compartments_init[ICri] * dt;
+            //     extended_init_flows.get_last_value()[ICritDi] +=
+            //         parameters.get<TransitionProbabilities>()[group][(
+            //             Eigen::Index)InfectionTransition::InfectedCriticalToDead] *
+            //         m_compartments_init[Di] * dt;
+            //     extended_init_flows.get_last_value()[ICritRi] +=
+            //         parameters.get<TransitionProbabilities>()[group][(
+            //             Eigen::Index)InfectionTransition::InfectedCriticalToRecovered] *
+            //         m_compartments_init[Di] * dt;
+            // }
+        }
+        else {
+            extended_init_flows.add_time_point(0.,
                                                Eigen::VectorX<ScalarType>::Zero(init_transitions.get_num_elements()));
         }
-
-        // We add the individuals of init_compartments to extended_init_flows.
-        for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
-            // int Si    = get_state_flat_index(Eigen::Index(InfectionState::Susceptible), group);
-            int Ei    = get_state_flat_index(Eigen::Index(InfectionState::Exposed), group);
-            int INSi  = get_state_flat_index(Eigen::Index(InfectionState::InfectedNoSymptoms), group);
-            int ISyi  = get_state_flat_index(Eigen::Index(InfectionState::InfectedSymptoms), group);
-            int ISevi = get_state_flat_index(Eigen::Index(InfectionState::InfectedSevere), group);
-            int ICri  = get_state_flat_index(Eigen::Index(InfectionState::InfectedCritical), group);
-            // int Ri    = get_state_flat_index(Eigen::Index(InfectionState::Recovered), group);
-            int Di = get_state_flat_index(Eigen::Index(InfectionState::Dead), group);
-
-            int StEi = get_transition_flat_index(Eigen::Index(InfectionTransition::SusceptibleToExposed), group);
-            int EtINSi =
-                get_transition_flat_index(Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms), group);
-            int INStISyi = get_transition_flat_index(
-                Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), group);
-            int INStRi =
-                get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedNoSymptomsToRecovered), group);
-            int ISytISevi =
-                get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere), group);
-            int ISytRi =
-                get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedSymptomsToRecovered), group);
-            int ISevtICri =
-                get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical), group);
-            int ISevtRi =
-                get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical), group);
-            int ICritDi = get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedCriticalToDead), group);
-            int ICritRi =
-                get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedCriticalToRecovered), group);
-
-            extended_init_flows.get_last_value()[StEi] += m_compartments_init[Ei];
-            extended_init_flows.get_last_value()[EtINSi] += m_compartments_init[INSi];
-            extended_init_flows.get_last_value()[INStISyi] +=
-                parameters.get<TransitionProbabilities>()[group][(
-                    Eigen::Index)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] *
-                m_compartments_init[ISyi];
-            extended_init_flows.get_last_value()[INStRi] +=
-                parameters.get<TransitionProbabilities>()[group][(
-                    Eigen::Index)InfectionTransition::InfectedNoSymptomsToRecovered] *
-                m_compartments_init[ISyi];
-            extended_init_flows.get_last_value()[ISytISevi] +=
-                parameters.get<TransitionProbabilities>()[group][(
-                    Eigen::Index)InfectionTransition::InfectedSymptomsToInfectedSevere] *
-                m_compartments_init[ISevi];
-            extended_init_flows.get_last_value()[ISytRi] +=
-                parameters.get<TransitionProbabilities>()[group][(
-                    Eigen::Index)InfectionTransition::InfectedSymptomsToRecovered] *
-                m_compartments_init[ISevi];
-            extended_init_flows.get_last_value()[ISevtICri] +=
-                parameters.get<TransitionProbabilities>()[group][(
-                    Eigen::Index)InfectionTransition::InfectedSevereToInfectedCritical] *
-                m_compartments_init[ICri];
-            extended_init_flows.get_last_value()[ISevtRi] +=
-                parameters.get<TransitionProbabilities>()[group][(
-                    Eigen::Index)InfectionTransition::InfectedSevereToRecovered] *
-                m_compartments_init[ICri];
-            extended_init_flows.get_last_value()[ICritDi] +=
-                parameters
-                    .get<TransitionProbabilities>()[group][(Eigen::Index)InfectionTransition::InfectedCriticalToDead] *
-                m_compartments_init[Di];
-            extended_init_flows.get_last_value()[ICritRi] +=
-                parameters.get<TransitionProbabilities>()[group][(
-                    Eigen::Index)InfectionTransition::InfectedCriticalToRecovered] *
-                m_compartments_init[Di];
-        }
-
         // We add the values of init_transitions to extended_init_flows.
         for (int idx = 0; idx < init_transitions.get_num_time_points(); idx++) {
             extended_init_flows.add_time_point(init_transitions.get_time(idx), init_transitions.get_value(idx));
         }
 
-        // We set transitions to extended_init_flows with which we can proceed the simulation.
+        // We set transitions to extended_init_flows with which we can proceed with the simulation.
         transitions = extended_init_flows;
     }
 
@@ -703,11 +757,12 @@ void Model::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx
     Eigen::Index calc_time_index =
         (Eigen::Index)std::ceil(m_transitiondistributions_support_max[group][idx_InfectionTransitions] / dt);
 
-    int transition_idx = get_transition_flat_index(idx_InfectionTransitions, size_t(group));
+    int transition_idx    = get_transition_flat_index(idx_InfectionTransitions, size_t(group));
+    int incoming_flow_idx = get_transition_flat_index(idx_IncomingFlow, group);
+
     for (Eigen::Index i = current_time_index - calc_time_index; i < current_time_index; i++) {
-        // (current_time_index - i)  is the index corresponding to time the individuals have already spent in this state.
         sum += m_transitiondistributions_derivative[group][idx_InfectionTransitions][current_time_index - i] *
-               transitions[i + 1][idx_IncomingFlow];
+               transitions[i + 1][incoming_flow_idx];
     }
 
     transitions.get_value(current_time_index)[transition_idx] =
