@@ -31,13 +31,13 @@ def get_lognormal_parameters(mean, std):
     @param[in] std Standard deviation of the distribution.
     @returns Shape and scale parameter of lognormal distribution.
     """
-    variance = std**2
+    variance = std*std
 
-    mean_tmp = np.log(mean**2/np.sqrt(mean**2+variance))
-    variance_tmp = np.log(variance/mean**2 + 1)
+    mean_tmp = np.log(mean*mean/np.sqrt(mean*mean+variance))
+    variance_tmp = np.log(variance/(mean*mean) + 1)
 
     shape = np.sqrt(variance_tmp)
-    scale = np.exp(mean_tmp)
+    scale = mean_tmp#np.exp(mean_tmp)
 
     # Test if mean and std are as expected for computed shape and scale parameters.
     mean_lognorm, variance_lognorm = lognorm.stats(
@@ -49,7 +49,7 @@ def get_lognormal_parameters(mean, std):
     if np.abs(np.sqrt(variance_lognorm)-std) > 1e-8:
         print('Distribution does not have expected standard deviation.')
 
-    return round(shape, 8), round(scale, 8)
+    return round(scale, 8), round(shape, 8)
 
 
 def compute_optimal_num_subcompartments(mean, std):

@@ -411,7 +411,7 @@ public:
      * @brief Get this Person's key that is used for the RandomNumberGenerator.
      * @see mio::abm::PersonalRandomNumberGenerator.
      */
-    mio::Key<uint64_t> get_rng_key()
+    mio::Key<uint64_t>& get_rng_key()
     {
         return m_rng_key;
     }
