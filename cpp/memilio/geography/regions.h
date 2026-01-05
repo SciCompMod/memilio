@@ -86,6 +86,12 @@ DECL_TYPESAFE(int, ProvinciaId);
 StateId get_state_id(int county);
 
 /**
+         * get the id of the comunidad that the specified provincia is in. 
+         * @param[in, out] provincia a provincia id.
+         */
+StateId get_comunidad_id(int provincia);
+
+/**
          * get the holidays in a german state.
          * @param[in] state id of the state.
          * @return range of pairs of start and end dates of holiday periods, sorted by start date.

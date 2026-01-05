@@ -47,6 +47,8 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::vecto
             return r == 0 ||
                    (county_entry.county_id &&
                     regions::StateId(r) == regions::get_state_id(int(*county_entry.county_id))) ||
+                   (county_entry.county_id &&
+                    regions::StateId(r) == regions::get_comunidad_id(int(*county_entry.county_id))) ||
                    (county_entry.county_id && regions::CountyId(r) == *county_entry.county_id) ||
                    (county_entry.district_id && regions::DistrictId(r) == *county_entry.district_id);
         });

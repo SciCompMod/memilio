@@ -203,7 +203,9 @@ PYBIND11_MODULE(_simulation_osecir, m)
         .def("apply_constraints", &mio::osecir::Parameters<double>::apply_constraints)
         .def_property(
             "end_commuter_detection",
-            [](const mio::osecir::Parameters<double>& self) -> auto { return self.get_end_commuter_detection(); },
+            [](const mio::osecir::Parameters<double>& self) -> auto {
+                return self.get_end_commuter_detection();
+            },
             [](mio::osecir::Parameters<double>& self, double p) {
                 self.get_end_commuter_detection() = p;
             });
@@ -306,25 +308,63 @@ PYBIND11_MODULE(_simulation_osecir, m)
             return pymio::check_and_throw(result);
         },
         py::return_value_policy::move);
-    
-        m.def(
-            "set_nodes_provincias",
-            [](const mio::osecir::Parameters<double>& params, mio::Date start_date, mio::Date end_date,
-               const std::string& data_dir, const std::string& population_data_path, bool is_node_for_county,
-               mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>& params_graph,
-               const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, double tnt_capacity_factor,
-               int num_days = 0, bool export_time_series = false) {
-                auto result = mio::set_nodes<mio::osecir::TestAndTraceCapacity<double>,
-                                             mio::osecir::ContactPatterns<double>, mio::osecir::Model<double>,
-                                             mio::MobilityParameters<double>, mio::osecir::Parameters<double>,
-                                             decltype(mio::osecir::read_input_data_provincias<mio::osecir::Model<double>>),
-                                             decltype(mio::get_provincia_ids)>(
-                    params, start_date, end_date, data_dir, population_data_path, is_node_for_county, params_graph,
-                    mio::osecir::read_input_data_provincias<mio::osecir::Model<double>>, mio::get_provincia_ids,
-                    scaling_factor_inf, scaling_factor_icu, tnt_capacity_factor, num_days, export_time_series);
-                return pymio::check_and_throw(result);
-            },
-            py::return_value_policy::move);
+
+    m.def(
+        "set_nodes_provincias",
+        [](const mio::osecir::Parameters<double>& params, mio::Date start_date, mio::Date end_date,
+           const std::string& data_dir, const std::string& population_data_path, bool is_node_for_county,
+           mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>& params_graph,
+           const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, double tnt_capacity_factor,
+           int num_days = 0, bool export_time_series = false) {
+            auto result = mio::set_nodes<mio::osecir::TestAndTraceCapacity<double>,
+                                         mio::osecir::ContactPatterns<double>, mio::osecir::Model<double>,
+                                         mio::MobilityParameters<double>, mio::osecir::Parameters<double>,
+                                         decltype(mio::osecir::read_input_data_provincias<mio::osecir::Model<double>>),
+                                         decltype(mio::get_node_ids)>(
+                params, start_date, end_date, data_dir, population_data_path, is_node_for_county, params_graph,
+                mio::osecir::read_input_data_provincias<mio::osecir::Model<double>>, mio::get_node_ids,
+                scaling_factor_inf, scaling_factor_icu, tnt_capacity_factor, num_days, export_time_series);
+            return pymio::check_and_throw(result);
+        },
+        py::return_value_policy::move);
+
+    m.def(
+        "set_nodes_comunidades",
+        [](const mio::osecir::Parameters<double>& params, mio::Date start_date, mio::Date end_date,
+           const std::string& data_dir, const std::string& population_data_path, bool is_node_for_county,
+           mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>& params_graph,
+           const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, double tnt_capacity_factor,
+           int num_days = 0, bool export_time_series = false) {
+            auto result = mio::set_nodes<mio::osecir::TestAndTraceCapacity<double>,
+                                         mio::osecir::ContactPatterns<double>, mio::osecir::Model<double>,
+                                         mio::MobilityParameters<double>, mio::osecir::Parameters<double>,
+                                         decltype(mio::osecir::read_input_data_comunidad<mio::osecir::Model<double>>),
+                                         decltype(mio::get_node_ids)>(
+                params, start_date, end_date, data_dir, population_data_path, is_node_for_county, params_graph,
+                mio::osecir::read_input_data_comunidad<mio::osecir::Model<double>>, mio::get_node_ids,
+                scaling_factor_inf, scaling_factor_icu, tnt_capacity_factor, num_days, export_time_series);
+            return pymio::check_and_throw(result);
+        },
+        py::return_value_policy::move);
+
+    m.def(
+        "set_node_spain",
+        [](const mio::osecir::Parameters<double>& params, mio::Date start_date, mio::Date end_date,
+           const std::string& data_dir, const std::string& population_data_path, bool is_node_for_county,
+           mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>& params_graph,
+           const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, double tnt_capacity_factor,
+           int num_days = 0, bool export_time_series = false) {
+            auto result = mio::set_nodes<mio::osecir::TestAndTraceCapacity<double>,
+                                         mio::osecir::ContactPatterns<double>, mio::osecir::Model<double>,
+                                         mio::MobilityParameters<double>, mio::osecir::Parameters<double>,
+                                         decltype(mio::osecir::read_input_data_spain<mio::osecir::Model<double>>),
+                                         decltype(mio::get_country_id)>(
+                params, start_date, end_date, data_dir, population_data_path, is_node_for_county, params_graph,
+                mio::osecir::read_input_data_spain<mio::osecir::Model<double>>, mio::get_country_id, scaling_factor_inf,
+                scaling_factor_icu, tnt_capacity_factor, num_days, export_time_series);
+            return pymio::check_and_throw(result);
+        },
+        py::return_value_policy::move);
 
     pymio::iterable_enum<ContactLocation>(m, "ContactLocation")
         .value("Home", ContactLocation::Home)
@@ -355,7 +395,6 @@ PYBIND11_MODULE(_simulation_osecir, m)
 
 #ifdef MEMILIO_HAS_JSONCPP
     pymio::bind_write_graph<mio::osecir::Model<double>>(m);
-    pymio::bind_read_graph<mio::osecir::Model<double>>(m);
     m.def(
         "read_input_data_county",
         [](std::vector<mio::osecir::Model<double>>& model, mio::Date date, const std::vector<int>& county,

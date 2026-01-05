@@ -488,8 +488,39 @@ IOResult<void> read_input_data_provincias(std::vector<Model>& model, Date date, 
 
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(pydata_dir, "cases_all_pronvincias.json"),
                                                         provincias, date, scaling_factor_inf));
-    BOOST_OUTCOME_TRY(details::set_population_data_provincias(
-        model, path_join(pydata_dir, "provincias_current_population.json"), provincias));
+    BOOST_OUTCOME_TRY(
+        details::set_population_data(model, path_join(pydata_dir, "provincias_current_population.json"), provincias));
+    return success();
+}
+
+template <class Model>
+IOResult<void> read_input_data_comunidad(std::vector<Model>& model, Date date, std::vector<int>& state,
+                                         const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
+                                         const std::string& pydata_dir, int /*num_days*/ = 0,
+                                         bool /*export_time_series*/ = false)
+{
+
+    BOOST_OUTCOME_TRY(
+        details::set_divi_data(model, path_join(pydata_dir, "comunidades_icu.json"), state, date, scaling_factor_icu));
+    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(pydata_dir, "cases_all_comunidades.json"),
+                                                        state, date, scaling_factor_inf));
+    BOOST_OUTCOME_TRY(
+        details::set_population_data(model, path_join(pydata_dir, "provincias_current_population.json"), state));
+    return success();
+}
+
+template <class Model>
+IOResult<void> read_input_data_spain(std::vector<Model>& model, Date date, std::vector<int>& /*state*/,
+                                     const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
+                                     const std::string& pydata_dir, int /*num_days*/ = 0,
+                                     bool /*export_time_series*/ = false)
+{
+    BOOST_OUTCOME_TRY(
+        details::set_divi_data(model, path_join(pydata_dir, "spain_icu.json"), {0}, date, scaling_factor_icu));
+    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(pydata_dir, "cases_all_spain.json"), {0}, date,
+                                                        scaling_factor_inf));
+    BOOST_OUTCOME_TRY(
+        details::set_population_data(model, path_join(pydata_dir, "provincias_current_population.json"), {0}));
     return success();
 }
 
