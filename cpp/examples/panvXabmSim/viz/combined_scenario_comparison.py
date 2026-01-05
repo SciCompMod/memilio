@@ -76,28 +76,28 @@ def get_scenario_full_name(event_label):
 
 def create_combined_median_comparison(scenario_data_list, output_dir):
     """
-    Create a 2x2 grid showing median comparisons for all four scenarios.
+    Create a vertical layout showing median comparisons for all four scenarios.
     
     Args:
         scenario_data_list: List of tuples (event_label, grouped_results)
         output_dir: Directory to save the output
     """
-    plt.style.use('default')
+    # plt.style.use('seaborn-v0_8-darkgrid')
     plt.rcParams.update({
-        'font.size': 14,
-        'axes.titlesize': 18,
-        'axes.labelsize': 16,
-        'xtick.labelsize': 14,
-        'ytick.labelsize': 14,
-        'legend.fontsize': 12
+        'font.size': 18,
+        'axes.titlesize': 22,
+        'axes.labelsize': 24,
+        'xtick.labelsize': 20,
+        'ytick.labelsize': 20,
+        'legend.fontsize': 16
     })
 
-    fig, axes = plt.subplots(2, 2, figsize=(20, 16))
+    fig, axes = plt.subplots(4, 1, figsize=(14, 24))
     fig.suptitle('Multi-Seed Median Comparison Across All Scenarios',
-                 fontsize=28, fontweight='bold', y=0.98)
+                 fontsize=32, fontweight='bold', y=0.995)
 
-    # Flatten axes for easier iteration
-    axes_flat = axes.flatten()
+    # axes is already a 1D array for single column
+    axes_flat = axes
 
     # Find global y-axis max for consistent scaling
     global_y_max = 0
@@ -114,7 +114,7 @@ def create_combined_median_comparison(scenario_data_list, output_dir):
         
         # Set subplot title (scenario name)
         scenario_name = get_scenario_full_name(event_label)
-        ax.set_title(scenario_name, fontsize=18, fontweight='bold', pad=10)
+        ax.set_title(scenario_name, fontsize=22, fontweight='bold', pad=15)
 
         # Calculate statistics for Memilio
         if grouped_results['memilio']:
@@ -135,11 +135,11 @@ def create_combined_median_comparison(scenario_data_list, output_dir):
             print(f"    Max difference from median: {np.max(np.abs(memilio_q75 - memilio_median)):.2f}")
 
             # Plot median line
-            ax.plot(time_axis, memilio_median, color='blue',
-                   linewidth=3, label='Uniform (median)')
+            ax.plot(time_axis, memilio_median, color='#1f77b4',
+                   linewidth=3.5, label='Uniform (median)', zorder=5)
             # Plot confidence interval
             ax.fill_between(time_axis, memilio_q25, memilio_q75,
-                           color='blue', alpha=0.3, label='Uniform (25-75%)')
+                           color='#1f77b4', alpha=0.25, label='Uniform (25-75%)', zorder=4)
 
         # Calculate statistics for Panvadere
         if grouped_results['panvadere']:
@@ -160,11 +160,11 @@ def create_combined_median_comparison(scenario_data_list, output_dir):
             print(f"    Max difference from median: {np.max(np.abs(panvadere_q75 - panvadere_median)):.2f}")
 
             # Plot median line
-            ax.plot(time_axis, panvadere_median, color='red',
-                   linewidth=3, label='Transmission-Informed (median)')
+            ax.plot(time_axis, panvadere_median, color='#d62728',
+                   linewidth=3.5, label='Transmission-Informed (median)', zorder=5)
             # Plot confidence interval
             ax.fill_between(time_axis, panvadere_q25, panvadere_q75,
-                           color='red', alpha=0.3, label='Transmission-Informed (25-75%)')
+                           color='#d62728', alpha=0.25, label='Transmission-Informed (25-75%)', zorder=4)
 
         # Add statistics box
         if grouped_results['memilio'] and grouped_results['panvadere']:
@@ -185,21 +185,38 @@ def create_combined_median_comparison(scenario_data_list, output_dir):
             stats_text += f"Transmission-Informed: μ={panvadere_mean:.1f}, σ={panvadere_std:.1f}\n"
             stats_text += f"Difference in means: {diff_abs:.1f} (+{diff_pct:.1f}%)"
             
-            # Add text box at middle-left
-            ax.text(0.02, 0.5, stats_text, transform=ax.transAxes, fontsize=12,
-                   verticalalignment='center', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.85))
+            # Add text box at middle-left with larger fontsize, moved down slightly
+            ax.text(0.02, 0.35, stats_text, transform=ax.transAxes, fontsize=18,
+                   verticalalignment='center', 
+                   bbox=dict(boxstyle='round,pad=0.5', facecolor="#fff9b5", 
+                            edgecolor='#333', linewidth=2.5, alpha=0.95))
 
         # Set consistent y-axis limits
         ax.set_ylim(0, global_y_max * 1.05)
         
         # Labels and grid
-        ax.set_xlabel('Days', fontsize=16)
-        ax.set_ylabel('Cumulative Infections', fontsize=16)
-        ax.grid(True, alpha=0.3)
-        ax.legend(fontsize=12, loc='upper left')
-        ax.tick_params(labelsize=14)
+        ax.set_xlabel('Days', fontsize=22)
+        ax.set_ylabel('Cumulative Infections', fontsize=22,)
+        ax.grid(True, alpha=0.4, linestyle='--', linewidth=0.8, zorder=0)
+        ax.legend(fontsize=17, loc='upper left', framealpha=0.98, fancybox=True, shadow=True,
+                 borderpad=0.5, labelspacing=0.8)
+        ax.tick_params(labelsize=20)
+        
+        # Add box around plot - make all spines visible and bold
+        ax.spines['top'].set_visible(True)
+        ax.spines['right'].set_visible(True)
+        ax.spines['left'].set_visible(True)
+        ax.spines['bottom'].set_visible(True)
+        ax.spines['top'].set_linewidth(2)
+        ax.spines['right'].set_linewidth(2)
+        ax.spines['left'].set_linewidth(2)
+        ax.spines['bottom'].set_linewidth(2)
+        ax.spines['top'].set_color('#333')
+        ax.spines['right'].set_color('#333')
+        ax.spines['left'].set_color('#333')
+        ax.spines['bottom'].set_color('#333')
 
-    plt.tight_layout()
+    plt.tight_layout(rect=[0, 0, 1, 0.99])
 
     # Save the plot
     output_file = os.path.join(output_dir, "combined_median_comparison_all_scenarios.png")
