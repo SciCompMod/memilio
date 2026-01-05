@@ -80,7 +80,7 @@ def plot_model_comparison_all_compartments(result_dir,  percentiles, num_age_gro
             del percentiles[-1]
 
     # Add results to plot for IDE, LCT and ODE.
-    files = ["ode", "lct", "ide"]  # , "lct", "ide"
+    files = ["ode", "lct", "ide"]
     files = [file + file_suffix for file in files]
     dates = []
     for file in range(len(files)):
@@ -130,9 +130,13 @@ def plot_model_comparison_all_compartments(result_dir,  percentiles, num_age_gro
 
     # Create legend with all unique labels from subplots
     # Use dummy handle so that legend is sorted in a nicer way.
-    dummy_handle = plt.Line2D([], [], color='none')
-    all_handles = [dummy_handle]
-    all_labels = [""]
+    if plot_init:
+        all_handles = []
+        all_labels = []
+    else:
+        dummy_handle = plt.Line2D([], [], color='none')
+        all_handles = [dummy_handle]
+        all_labels = [""]
     for ax in axs.flat:
         handles, labels_temp = ax.get_legend_handles_labels()
         for handle, label in zip(handles, labels_temp):
