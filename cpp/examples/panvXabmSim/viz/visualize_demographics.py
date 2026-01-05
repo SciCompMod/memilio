@@ -82,7 +82,7 @@ def plot_demographics(countries_data, output_path):
             # Ensure labels match data size
             current_age_labels = age_labels_template[:len(age_data)]
             ax_age.pie(age_data, labels=current_age_labels, autopct='%1.1f%%', startangle=90, counterclock=False,
-                       colors=age_colors)
+                       colors=age_colors, pctdistance=0.85)
             ax_age.set_title(f'{country_name} - Age Distribution', fontweight='bold')
         else:
             ax_age.text(0.5, 0.5, 'Age data not found', ha='center', va='center')

@@ -28,6 +28,7 @@ namespace CityParameters
 /**
  * @brief US age distribution based on 2024 data
  * Age groups: 0-4, 5-14, 15-34, 35-59, 60-79, 80+
+ * Source: https://www2.census.gov/programs-surveys/popest/tables/2020-2024/national/asrh/nc-est2024-agesex.xlsx
  */
 const std::vector<double> AGE_DISTRIBUTION = {
     0.057, // 0-4 years: 5.7%

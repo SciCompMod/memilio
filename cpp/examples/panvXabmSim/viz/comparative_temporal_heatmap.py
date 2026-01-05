@@ -540,8 +540,8 @@ def create_contact_based_household_layout(household_data, contact_data,
         household_positions[household_id] = (hx, hy)
 
         # Set uniform rectangular dimensions for all households
-        household_width = household_spacing * 0.6  # 60% of spacing for consistent size
-        household_height = household_spacing * 0.4  # Rectangular shape
+        household_width = household_spacing * 0.65  # 60% of spacing for consistent size
+        household_height = household_spacing * 0.45  # Rectangular shape
         household_dimensions[household_id] = (
             household_width, household_height)
 
@@ -762,9 +762,9 @@ def create_size_based_heatmap(ax, group_data, group_positions, group_dimensions,
             elif infection_rate < 0.2:  # 20-40%
                 saturation_percent = 10
             elif infection_rate < 0.6:  # 40-60%
-                saturation_percent = 20
-            elif infection_rate < 0.95:  # 60-80%
                 saturation_percent = 30
+            elif infection_rate < 0.95:  # 60-80%
+                saturation_percent = 50
             else:  # 80-100%
                 saturation_percent = 100
 
@@ -780,6 +780,11 @@ def create_size_based_heatmap(ax, group_data, group_positions, group_dimensions,
 
         # Draw groups with different visualization styles
         if viz_style == 'rectangles':
+            rect = plt.Rectangle((gx - group_width/2, gy - group_height/2),
+                                 group_width, group_height,
+                                 facecolor='#FFFFFF', alpha=0.5,
+                                 edgecolor=edge_color, linewidth=1.5)
+            ax.add_patch(rect)
             rect = plt.Rectangle((gx - group_width/2, gy - group_height/2),
                                  group_width, group_height,
                                  facecolor=base_color, alpha=base_saturation/100.0,
@@ -804,6 +809,10 @@ def create_size_based_heatmap(ax, group_data, group_positions, group_dimensions,
         elif viz_style == 'hexagons':
             from matplotlib.patches import RegularPolygon
             radius = min(group_width, group_height) * 0.35
+            hexagon = RegularPolygon((gx, gy), 6, radius=radius,
+                                     facecolor='#FFFFFF', alpha=0.5,
+                                     edgecolor=edge_color, linewidth=1.5)
+            ax.add_patch(hexagon)
             hexagon = RegularPolygon((gx, gy), 6, radius=radius,
                                      facecolor=base_color, alpha=base_saturation/100.0,
                                      edgecolor=edge_color, linewidth=1.5)
@@ -846,6 +855,7 @@ def create_size_based_heatmap(ax, group_data, group_positions, group_dimensions,
                  fontsize=12, fontweight='bold')
     ax.axis('equal')
     ax.axis('off')
+    
 
     return infected_count
 
@@ -1002,6 +1012,7 @@ def create_time_specific_heatmap(ax, group_data, group_positions, group_dimensio
                  fontsize=14, fontweight='bold', pad=12)
     ax.axis('equal')
     ax.axis('off')
+    ax.margins(0.02)  # Minimal margins to maximize grid space
 
     return infected_count
 
@@ -1145,7 +1156,7 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
 
     # Create group layout based on contact patterns (same for both methods)
     spacing_factor = 2.8  # Increased from 2.0 for maximum spacing
-    group_spacing = 250.0 * spacing_factor  # Increased base spacing
+    group_spacing = 280.0 * spacing_factor  # Increased base spacing
     person_spacing = 80.0 * spacing_factor  # Increased base spacing
 
     if use_workplaces:
@@ -1170,7 +1181,7 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
         fig = plt.figure(figsize=(4*len(time_points), 14)
                          )  # 4 rows with larger legend
     else:
-        fig = plt.figure(figsize=(4*len(time_points), 10))  # 3 rows
+        fig = plt.figure(figsize=(4*len(time_points), 12))  # 3 rows - taller for better spacing
 
     # Calculate group infection counts for comparison
     group_counts_m1 = []
@@ -1206,17 +1217,17 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
                                    left=0.05, right=0.95, wspace=0.15)
     else:
         # 3-row layout: Method1, Method2, Comparison
-        # Row 1: Top heatmaps (Method 1)
-        gs_top = fig.add_gridspec(1, len(time_points), top=0.90, bottom=0.68,
-                                  left=0.05, right=0.95, wspace=0.1)
+        # Row 1: Top heatmaps (Method 1) - with more spacing between rows
+        gs_top = fig.add_gridspec(1, len(time_points), top=0.91, bottom=0.61,
+                                  left=0.05, right=0.95, wspace=0.0)
 
-        # Row 2: Middle comparison - centered between heatmaps
-        gs_mid = fig.add_gridspec(1, 1, top=0.63, bottom=0.50,
+        # Row 2: Middle comparison - more spacing from top and bottom rows
+        gs_mid = fig.add_gridspec(1, 1, top=0.59, bottom=0.51,
                                   left=0.05, right=0.95)
 
-        # Row 3: Method 2 heatmaps
-        gs_method2 = fig.add_gridspec(1, len(time_points), top=0.43, bottom=0.19,
-                                      left=0.05, right=0.95, wspace=0.1)
+        # Row 3: Method 2 heatmaps - more spacing above legend
+        gs_method2 = fig.add_gridspec(1, len(time_points), top=0.46, bottom=0.18,
+                                      left=0.05, right=0.95, wspace=0.0)
 
     # Row 1: Method 1 (Transmission-informed)
     for i, timestep in enumerate(time_points):
@@ -1516,8 +1527,8 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
         original_legend_bbox = (0.5, 0.15)
 
     original_legend = fig.legend(handles=original_legend_elements, loc='center',
-                                 bbox_to_anchor=original_legend_bbox, ncol=10, fontsize=10,
-                                 title=original_legend_title, title_fontsize=11)
+                                 bbox_to_anchor=original_legend_bbox, ncol=10, fontsize=13,
+                                 title=original_legend_title, title_fontsize=15)
     original_legend.get_title().set_fontweight('bold')
 
     # Add difference legend only if differences are shown
@@ -1543,7 +1554,7 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
         base_title = f'Scenario {scenario_name}: {base_title}'
 
     fig.suptitle(f'{base_title}\nTransmission-Informed vs Uniform Initialization',
-                 fontsize=16, fontweight='bold', y=0.98)  # Moved higher for 4-row layout
+                 fontsize=16, fontweight='bold', y=0.985)  # Higher position for better spacing
 
     # Custom spacing is handled by the individual gridspec positioning above
 
