@@ -83,10 +83,13 @@ const ScalarType riskOfInfectionFromSymptomatic = 1.;
 const ScalarType seasonality                    = 0.; // this implies that we don't have any seasonal effects in EBMs
 const ScalarType scale_confirmed_cases          = 1.;
 
+// Define tolerance for computing the support max for IDE model and initialization of LCT model.
+const ScalarType tol_supp_max = 1e-6;
+
 // Define simulation parameters.
 const ScalarType t0        = 0.;
 const ScalarType init_tmax = 30.;
-const ScalarType tmax      = 200.;
+const ScalarType tmax      = 150.;
 const ScalarType dt        = 1. / 24.; // corresponds to hours that are used as time step in ABM simulation
 
 } // namespace params
