@@ -354,7 +354,7 @@ struct VirusShedFactor {
     static Type get_default(AgeGroup size)
     {
         Type default_val({VirusVariant::Count, size},
-                         AbstractParameterDistribution(ParameterDistributionUniform(0., 0.28)));
+                         AbstractParameterDistribution(ParameterDistributionUniform(0.28, 0.28)));
         return default_val;
     }
     static std::string name()
@@ -410,6 +410,18 @@ struct AerosolTransmissionRates {
     static std::string name()
     {
         return "AerosolTransmissionRates";
+    }
+};
+
+struct InfectionRateFromViralShed {
+    using Type = CustomIndexArray<ScalarType, VirusVariant>;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return Type({VirusVariant::Count}, 1.0);
+    }
+    static std::string name()
+    {
+        return "InfectionRateFromViralShed";
     }
 };
 
@@ -708,7 +720,7 @@ using ParametersBase =
                  LockdownDate, QuarantineDuration, QuarantineEffectiveness, SocialEventRate, BasicShoppingRate,
                  WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum, GotoSchoolTimeMinimum,
                  GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork, InfectionProtectionFactor,
-                 SeverityProtectionFactor, HighViralLoadProtectionFactor, TestData>;
+                 SeverityProtectionFactor, HighViralLoadProtectionFactor, TestData, InfectionRateFromViralShed>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.

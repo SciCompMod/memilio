@@ -74,6 +74,7 @@ public:
         while (m_t < tmax) {
             evolve_model(tmax);
             (history.log(*this), ...);
+            std::cout << "Simulation time: " << m_t.days() << " days\n";
         }
     }
 
