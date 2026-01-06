@@ -27,6 +27,7 @@
 #include "abm/simulation.h"
 #include "abm/time.h"
 #include "abm/virus_variant.h"
+#include "lct_secir/initializer_flows.h"
 #include "memilio/config.h"
 #include "memilio/data/analyze_result.h"
 #include "memilio/epidemiology/age_group.h"
@@ -159,10 +160,10 @@ IOResult<UncertainContactMatrix<ScalarType>> get_contact_matrix(std::string cont
 * @param[in] init_compartments Vector containing number of individuals at start of simulation. 
 * @returns Vector containing age group sizes. 
 */
-std::vector<double> get_age_group_sizes_from_compartment_vector(Eigen::VectorX<double> init_compartments)
+Eigen::VectorX<ScalarType> get_age_group_sizes_from_compartment_vector(Eigen::VectorX<double> init_compartments)
 {
     size_t num_comps = (size_t)mio::abm::InfectionState::Count;
-    std::vector<double> age_group_sizes(num_comps);
+    Eigen::VectorX<ScalarType> age_group_sizes(num_comps);
 
     for (size_t group = 0; group < params::num_age_groups; group++) {
         age_group_sizes[group] = std::accumulate(init_compartments.begin() + group * num_comps,
@@ -180,14 +181,14 @@ std::vector<double> get_age_group_sizes_from_compartment_vector(Eigen::VectorX<d
 */
 IOResult<void> simulate_ide(TimeSeries<ScalarType> init_flows, Vector init_compartments_t0,
                             std::vector<ScalarType> transmissionProbabilityOnContact, std::string contact_data_dir,
-                            bool exponential_scenario = false, std::string filename = "", std::string save_dir = "")
+                            bool exponential_scenario = false, std::string save_dir = "", std::string filename = "")
 {
     using namespace params;
     using InfTransition = isecir::InfectionTransition;
 
     // Initialize model.
-    // Get size of age groups from init_compartments_ide.
-    std::vector<double> age_group_sizes = get_age_group_sizes_from_compartment_vector(init_compartments_t0);
+    // Get size of age groups from init_compartments_t0.
+    Eigen::VectorX<ScalarType> age_group_sizes = get_age_group_sizes_from_compartment_vector(init_compartments_t0);
     // Set total_population_init according to age_group_sizes.
     CustomIndexArray<ScalarType, AgeGroup> total_population_init =
         CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(num_age_groups), 0.);
@@ -269,39 +270,39 @@ IOResult<void> simulate_ide(TimeSeries<ScalarType> init_flows, Vector init_compa
     else { // Set TransitionDistributions lognormally distributed.
 
         // ExposedToInfectedNoSymptoms
-        LognormSurvivalFunction survivalExposedToInfectedNoSymptoms(lognorm_EtINS[0], 0, lognorm_EtINS[1]);
+        LognormSurvivalFunction survivalExposedToInfectedNoSymptoms(lognorm_EtINS[1], lognorm_EtINS[0]);
         vec_transition_dist_group[(int)InfTransition::ExposedToInfectedNoSymptoms].set_state_age_function(
             survivalExposedToInfectedNoSymptoms);
         // InfectedNoSymptomsToInfectedSymptoms
-        LognormSurvivalFunction survivalInfectedNoSymptomsToInfectedSymptoms(lognorm_INStISy[0], 0, lognorm_INStISy[1]);
+        LognormSurvivalFunction survivalInfectedNoSymptomsToInfectedSymptoms(lognorm_INStISy[1], lognorm_INStISy[0]);
         vec_transition_dist_group[(int)InfTransition::InfectedNoSymptomsToInfectedSymptoms].set_state_age_function(
             survivalInfectedNoSymptomsToInfectedSymptoms);
         // InfectedNoSymptomsToRecovered
-        LognormSurvivalFunction survivalInfectedNoSymptomsToRecovered(lognorm_INStR[0], 0, lognorm_INStR[1]);
+        LognormSurvivalFunction survivalInfectedNoSymptomsToRecovered(lognorm_INStR[1], lognorm_INStR[0]);
         vec_transition_dist_group[(int)InfTransition::InfectedNoSymptomsToRecovered].set_state_age_function(
             survivalInfectedNoSymptomsToRecovered);
         // InfectedSymptomsToInfectedSevere
-        LognormSurvivalFunction survivalInfectedSymptomsToInfectedSevere(lognorm_ISytISev[0], 0, lognorm_ISytR[1]);
+        LognormSurvivalFunction survivalInfectedSymptomsToInfectedSevere(lognorm_ISytISev[1], lognorm_ISytR[0]);
         vec_transition_dist_group[(int)InfTransition::InfectedSymptomsToInfectedSevere].set_state_age_function(
             survivalInfectedSymptomsToInfectedSevere);
         // InfectedSymptomsToRecovered
-        LognormSurvivalFunction survivalInfectedSymptomsToRecovered(lognorm_ISytR[0], 0, lognorm_ISytR[1]);
+        LognormSurvivalFunction survivalInfectedSymptomsToRecovered(lognorm_ISytR[1], lognorm_ISytR[0]);
         vec_transition_dist_group[(int)InfTransition::InfectedSymptomsToRecovered].set_state_age_function(
             survivalInfectedSymptomsToRecovered);
         // InfectedSevereToInfectedCritical
-        LognormSurvivalFunction survivalInfectedSevereToInfectedCritical(lognorm_ISevtICri[0], 0, lognorm_ISevtICri[1]);
+        LognormSurvivalFunction survivalInfectedSevereToInfectedCritical(lognorm_ISevtICri[1], lognorm_ISevtICri[0]);
         vec_transition_dist_group[(int)InfTransition::InfectedSevereToInfectedCritical].set_state_age_function(
             survivalInfectedSevereToInfectedCritical);
         // InfectedSevereToRecovered
-        LognormSurvivalFunction survivalInfectedSevereToRecovered(lognorm_ISevtR[0], 0, lognorm_ISevtR[1]);
+        LognormSurvivalFunction survivalInfectedSevereToRecovered(lognorm_ISevtR[1], lognorm_ISevtR[0]);
         vec_transition_dist_group[(int)InfTransition::InfectedSevereToRecovered].set_state_age_function(
             survivalInfectedSevereToRecovered);
         // InfectedCriticalToDead
-        LognormSurvivalFunction survivalInfectedCriticalToDead(lognorm_ICritD[0], 0, lognorm_ICritR[1]);
+        LognormSurvivalFunction survivalInfectedCriticalToDead(lognorm_ICritD[1], lognorm_ICritR[0]);
         vec_transition_dist_group[(int)InfTransition::InfectedCriticalToDead].set_state_age_function(
             survivalInfectedCriticalToDead);
         // InfectedCriticalToRecovered
-        LognormSurvivalFunction survivalInfectedCriticalToRecovered(lognorm_ICritR[0], 0, lognorm_ICritR[1]);
+        LognormSurvivalFunction survivalInfectedCriticalToRecovered(lognorm_ICritR[1], lognorm_ICritR[0]);
         vec_transition_dist_group[(int)InfTransition::InfectedCriticalToRecovered].set_state_age_function(
             survivalInfectedCriticalToRecovered);
 
@@ -358,6 +359,8 @@ IOResult<void> simulate_ide(TimeSeries<ScalarType> init_flows, Vector init_compa
     std::cout << "init method: " << sim.get_model().get_initialization_method_compartments() << std::endl;
 
     if (!save_dir.empty()) {
+
+        BOOST_OUTCOME_TRY(sim.get_transitions().export_csv(save_dir + "ide_flows.csv"));
         std::string filename_ide = save_dir + "ide" + filename + ".h5";
 
         // Aggregate age-resolved result to non-age-resolved result.
@@ -372,7 +375,7 @@ IOResult<void> simulate_ide(TimeSeries<ScalarType> init_flows, Vector init_compa
 
 template <bool exponential_scenario>
 IOResult<void> simulate_lct(Vector init_compartments, std::vector<ScalarType> transmissionProbabilityOnContact,
-                            std::string contact_data_dir, std::string filename = "", std::string save_dir = "")
+                            std::string contact_data_dir, std::string save_dir = "", std::string filename = "")
 {
     using namespace params;
 
@@ -569,7 +572,7 @@ IOResult<void> simulate_lct(Vector init_compartments, std::vector<ScalarType> tr
 }
 
 IOResult<void> simulate_ode(Vector init_compartments, std::vector<ScalarType> transmissionProbabilityOnContact,
-                            std::string contact_data_dir, std::string filename = "", std::string save_dir = "")
+                            std::string contact_data_dir, std::string save_dir = "", std::string filename = "")
 {
     using namespace params;
     // Use ODE FlowModel.
@@ -1761,10 +1764,10 @@ mio::IOResult<std::vector<double>> csv_to_vector(std::string filename)
 int main()
 {
     constexpr bool exponential_scenario = false;
-    bool one_location                   = false;
+    bool one_location                   = true;
     const std::vector<double> infection_distribution{0.99, 0.005, 0.005, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-    std::string save_dir = "../../cpp/examples/paper/simulation_results/compare_abm_ide_lct_ode/final2/";
+    std::string save_dir = "../../cpp/examples/paper/simulation_results/compare_abm_ide_lct_ode/";
 
     if (exponential_scenario) {
         save_dir = save_dir + "exponential/";
@@ -1803,7 +1806,7 @@ int main()
                                         infection_distribution, true, save_dir, false, rng, params::t0, one_location);
 
     // Simulate ABM ensemble run.
-    size_t num_runs = 20;
+    size_t num_runs = 1;
     auto result_abm = abm_ensemble_run(num_runs, exponential_scenario, params::t0 + params::tmax - params::init_tmax,
                                        contact_data_dir, infection_distribution, save_dir, true, false,
                                        params::t0 + params::init_tmax, one_location);
@@ -1823,31 +1826,15 @@ int main()
     TimeSeries<double> init_flows_abm = csv_to_timeseries(save_dir + "flows.csv").value();
 
     // Get flow values until init_tmax so that IDE simulation starts at init_tmax.
-    auto init_flows_ide = TimeSeries<double>(params::t0, init_flows_abm.get_value(0));
+    auto init_flows_ide = TimeSeries<double>(init_flows_abm.get_time(0), init_flows_abm.get_value(0));
     while (init_flows_ide.get_last_time() < params::init_tmax - 1e-10) {
         init_flows_ide.add_time_point(init_flows_ide.get_last_time() + params::dt,
-                                      init_flows_abm.get_value(init_flows_ide.get_num_time_points() - 1));
+                                      init_flows_abm.get_value(init_flows_ide.get_num_time_points()));
     }
 
     std::cout << "Last time of init flows: " << init_flows_ide.get_last_time() << std::endl;
-    // Infectivity rates.
-    auto infectivity_rates = csv_to_vector(save_dir + "infectivity_rates_total.csv").value();
 
-    // std::vector<std::string> infectivity_rates_str = {
-    //     "infectivity_rates_total",       "infectivity_rates_first_half", "infectivity_rates_second_half",
-    //     "infectivity_rates_first_third", "infectivity_rates_rest_third", "infectivity_rates_first_quarter",
-    //     "infectivity_rates_rest_quarter"};
-
-    // for (size_t infectivity_idx = 0; infectivity_idx < 1; infectivity_idx++) {
-
-    std::string filename = "";
     std::vector<double> transmissionProbabilityOnContact(params::num_age_groups);
-    // for (size_t i = 0; i < transmissionProbabilityOnContact.size(); i++) {
-    //     transmissionProbabilityOnContact[i] = 0.47 * infectivity_rates[i];
-    //     std::cout << transmissionProbabilityOnContact[i] << ", ";
-    // }
-    // std::cout << std::endl;
-
     //final
     //transmissionProbabilityOnContact = {0.0266432, 0.0225801, 0.0215401, 0.0219972, 0.0213169, 0.019616};
     //final2
@@ -1857,17 +1844,15 @@ int main()
 
     // Simulate IDE.
     mio::set_log_level(LogLevel::info);
-    // auto result_ide = simulate_ide(init_flows_ide, comps_t0, transmissionProbabilityOnContact, contact_data_dir,
-    //                                exponential_scenario, filename, save_dir);
+    auto result_ide = simulate_ide(init_flows_ide, comps_t0, transmissionProbabilityOnContact, contact_data_dir,
+                                   exponential_scenario, save_dir);
 
     // Simulate LCT.
     auto result_lct = simulate_lct<exponential_scenario>(comps_init_tmax, transmissionProbabilityOnContact,
-                                                         contact_data_dir, filename, save_dir);
+                                                         contact_data_dir, save_dir);
 
     // Simulate ODE.
-    auto result_ode =
-        simulate_ode(comps_init_tmax, transmissionProbabilityOnContact, contact_data_dir, filename, save_dir);
-    // }
+    auto result_ode = simulate_ode(comps_init_tmax, transmissionProbabilityOnContact, contact_data_dir, save_dir);
 
     return 0;
 }
