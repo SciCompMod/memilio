@@ -272,6 +272,36 @@ public:
         auto number_regions = (size_t)this->parameters.get_num_regions();
         set_commuting_strengths(Eigen::MatrixXd::Identity(number_regions, number_regions));
     }
+
+    /**
+     * serialize this.
+     * @see mio::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("Model");
+        obj.add_element("Parameters", this->parameters);
+        obj.add_element("Populations", this->populations);
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<Model> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("Model");
+        auto par = obj.expect_element("Parameters", Tag<ParameterSet>{});
+        auto pop = obj.expect_element("Populations", Tag<Populations>{});
+        return apply(
+            io,
+            [](auto&& par_, auto&& pop_) {
+                return Model{pop_, par_};
+            },
+            par, pop);
+    }
 };
 
 } // namespace oseirmetapop
