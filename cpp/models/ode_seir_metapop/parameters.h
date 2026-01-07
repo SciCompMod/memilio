@@ -183,13 +183,13 @@ public:
      */
     bool apply_constraints()
     {
-        double tol_times = 1e-1;
-        int corrected    = false;
+        const FP tol_times = 1e-1;
+        bool corrected     = false;
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_agegroups); i++) {
             if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
                 log_warning(
-                    "Constraint check: Parameter TimeInfected changed from {} to {}. Please note that "
+                    "Constraint check: Parameter TimeExposed changed from {} to {}. Please note that "
                     "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                     "and reset parameters.",
                     this->template get<TimeExposed<FP>>()[i], tol_times);
@@ -340,4 +340,4 @@ private:
 } // namespace oseirmetapop
 } // namespace mio
 
-#endif // SEIR_PARAMETERS_H
+#endif // SEIRMETAPOP_PARAMETERS_H

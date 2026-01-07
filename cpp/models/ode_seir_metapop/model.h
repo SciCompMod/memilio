@@ -206,18 +206,11 @@ public:
         NextGenMatrix                 = F * V;
 
         //Compute the largest eigenvalue in absolute value
-        Eigen::ComplexEigenSolver<Eigen::MatrixXd> ces;
-
+        Eigen::ComplexEigenSolver<Eigen::MatrixX<ScalarType>> ces;
         ces.compute(NextGenMatrix);
-        const Eigen::VectorXcd eigen_vals = ces.eigenvalues();
+        FP rho = ces.eigenvalues().cwiseAbs().maxCoeff();
 
-        Eigen::VectorXd eigen_vals_abs;
-        eigen_vals_abs.resize(eigen_vals.size());
-
-        for (int i = 0; i < eigen_vals.size(); i++) {
-            eigen_vals_abs[i] = std::abs(eigen_vals[i]);
-        }
-        return mio::success(eigen_vals_abs.maxCoeff());
+        return mio::success(rho);
     }
 
     /**
@@ -284,4 +277,4 @@ public:
 } // namespace oseirmetapop
 } // namespace mio
 
-#endif // ODESEIRMOBILITY_MODEL_H
+#endif // SEIRMETAPOP_MODEL_H
