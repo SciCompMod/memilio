@@ -361,13 +361,23 @@ IOResult<void> simulate_ide(TimeSeries<ScalarType> init_flows, Vector init_compa
     if (!save_dir.empty()) {
 
         BOOST_OUTCOME_TRY(sim.get_transitions().export_csv(save_dir + "ide_flows.csv"));
-        std::string filename_ide = save_dir + "ide" + filename + ".h5";
+        std::string filename_ide         = save_dir + "ide" + filename + ".h5";
+        std::string filename_ide_no_init = save_dir + "ide" + filename + "_no_init.h5";
 
         // Aggregate age-resolved result to non-age-resolved result.
         TimeSeries<ScalarType> nonageresolved_result = sum_age_groups(sim.get_result());
+        // Create time series that doesn't contain values before simulation start for plotting.
+        TimeSeries<ScalarType> nonageresolved_result_no_init =
+            TimeSeries<ScalarType>(nonageresolved_result.get_num_elements());
+        for (size_t i = init_tmax / dt; i < (size_t)nonageresolved_result.get_num_time_points(); i++) {
+            nonageresolved_result_no_init.add_time_point(nonageresolved_result.get_time(i),
+                                                         nonageresolved_result.get_value(i));
+        }
 
         // Save non-age-resolved result.
         IOResult<void> save_result_status = save_result({nonageresolved_result}, {0}, 1, filename_ide);
+        IOResult<void> save_result_status_no_init =
+            save_result({nonageresolved_result_no_init}, {0}, 1, filename_ide_no_init);
     }
 
     return success();
@@ -435,31 +445,150 @@ IOResult<void> simulate_lct(Vector init_compartments, mio::TimeSeries<ScalarType
     model.parameters.template get<lsecir::ContactPatterns<ScalarType>>() = contact_matrix;
     model.parameters.template get<lsecir::Seasonality<ScalarType>>()     = seasonality;
 
-    // Use init_compartments as a basis to define appropriate initial values.
-    // Use Initializer class for this.
-    // Define vectors for total population per age group, total confirmed cases and deaths according to init_compartments.
-    Eigen::VectorX<ScalarType> total_population_per_age_group =
-        get_age_group_sizes_from_compartment_vector(init_compartments);
-    Eigen::VectorX<ScalarType> total_confirmed_cases = Eigen::VectorX<ScalarType>::Zero(num_age_groups);
-    Eigen::VectorX<ScalarType> deaths                = Eigen::VectorX<ScalarType>::Zero(num_age_groups);
-    for (size_t group = 0; group < num_age_groups; group++) {
-        // Use indices of IDE as init_compartments uses compartments as in IDE-SECIR model without any subcompartments.
-        size_t INSi =
-            group * (size_t)isecir::InfectionState::Count + (size_t)isecir::InfectionState::InfectedNoSymptoms;
-        size_t ISyi  = group * (size_t)isecir::InfectionState::Count + (size_t)isecir::InfectionState::InfectedSymptoms;
-        size_t ISevi = group * (size_t)isecir::InfectionState::Count + (size_t)isecir::InfectionState::InfectedSevere;
-        size_t ICri  = group * (size_t)isecir::InfectionState::Count + (size_t)isecir::InfectionState::InfectedCritical;
-        size_t Ri    = group * (size_t)isecir::InfectionState::Count + (size_t)isecir::InfectionState::Recovered;
-        size_t Di    = group * (size_t)isecir::InfectionState::Count + (size_t)isecir::InfectionState::Dead;
-        total_confirmed_cases[group] = init_compartments[INSi] + init_compartments[ISyi] + init_compartments[ISevi] +
-                                       init_compartments[ICri] + init_compartments[Ri] + init_compartments[Di];
-        deaths[group] = init_compartments[Di];
-    }
+    // // Use init_compartments as a basis to define appropriate initial values.
+    // // Use Initializer class for this.
+    // // Define vectors for total population per age group, total confirmed cases and deaths according to init_compartments.
+    // Eigen::VectorX<ScalarType> total_population_per_age_group =
+    //     get_age_group_sizes_from_compartment_vector(init_compartments);
+    // Eigen::VectorX<ScalarType> total_confirmed_cases = Eigen::VectorX<ScalarType>::Zero(num_age_groups);
+    // Eigen::VectorX<ScalarType> deaths                = Eigen::VectorX<ScalarType>::Zero(num_age_groups);
+    // for (size_t group = 0; group < num_age_groups; group++) {
+    //     // Use indices of IDE as init_compartments uses compartments as in IDE-SECIR model without any subcompartments.
+    //     size_t INSi =
+    //         group * (size_t)isecir::InfectionState::Count + (size_t)isecir::InfectionState::InfectedNoSymptoms;
+    //     size_t ISyi  = group * (size_t)isecir::InfectionState::Count + (size_t)isecir::InfectionState::InfectedSymptoms;
+    //     size_t ISevi = group * (size_t)isecir::InfectionState::Count + (size_t)isecir::InfectionState::InfectedSevere;
+    //     size_t ICri  = group * (size_t)isecir::InfectionState::Count + (size_t)isecir::InfectionState::InfectedCritical;
+    //     size_t Ri    = group * (size_t)isecir::InfectionState::Count + (size_t)isecir::InfectionState::Recovered;
+    //     size_t Di    = group * (size_t)isecir::InfectionState::Count + (size_t)isecir::InfectionState::Dead;
+    //     total_confirmed_cases[group] = init_compartments[INSi] + init_compartments[ISyi] + init_compartments[ISevi] +
+    //                                    init_compartments[ICri] + init_compartments[Ri] + init_compartments[Di];
+    //     deaths[group] = init_compartments[Di];
+    // }
 
-    // Compute initial populations for LCT model using Initializer class.
-    lsecir::Initializer<ScalarType, Model> initializer(std::move(init_flows), model);
-    initializer.set_tol_for_support_max(tol_supp_max);
-    initializer.compute_initialization_vector(total_population_per_age_group, deaths, total_confirmed_cases);
+    // // Compute initial populations for LCT model using Initializer class.
+    // lsecir::Initializer<ScalarType, Model> initializer(std::move(init_flows), model);
+    // initializer.set_tol_for_support_max(tol_supp_max);
+    // initializer.compute_initialization_vector(total_population_per_age_group, deaths, total_confirmed_cases);
+    unused(init_flows);
+
+    // Use init_compartments as a basis to define appropriate initial values.
+    // Compartment values are distributed uniformly to the subcompartments.
+    for (size_t group = 0; group < num_age_groups; group++) {
+        size_t total_num_subcomps_this_group      = 0;
+        size_t total_num_subcomps_previous_groups = 0;
+        std::vector<size_t> num_subcompartments;
+
+        if (exponential_scenario) {
+            total_num_subcomps_this_group      = LctStateExponential::Count;
+            total_num_subcomps_previous_groups = group * (size_t)LctStateExponential::Count;
+            num_subcompartments                = {1,
+                                                  LctStateExponential::get_num_subcompartments<InfState::Exposed>(),
+                                                  LctStateExponential::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
+                                                  LctStateExponential::get_num_subcompartments<InfState::InfectedSymptoms>(),
+                                                  LctStateExponential::get_num_subcompartments<InfState::InfectedSevere>(),
+                                                  LctStateExponential::get_num_subcompartments<InfState::InfectedCritical>(),
+                                                  1,
+                                                  1};
+        }
+
+        else {
+            switch (group) {
+            case 0:
+                total_num_subcomps_this_group = LctState0_4::Count;
+                num_subcompartments           = {1,
+                                                 LctState0_4::get_num_subcompartments<InfState::Exposed>(),
+                                                 LctState0_4::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
+                                                 LctState0_4::get_num_subcompartments<InfState::InfectedSymptoms>(),
+                                                 LctState0_4::get_num_subcompartments<InfState::InfectedSevere>(),
+                                                 LctState0_4::get_num_subcompartments<InfState::InfectedCritical>(),
+                                                 1,
+                                                 1};
+                break;
+            case 1:
+                total_num_subcomps_this_group      = LctState5_14::Count;
+                total_num_subcomps_previous_groups = LctState0_4::Count;
+                num_subcompartments                = {1,
+                                                      LctState5_14::get_num_subcompartments<InfState::Exposed>(),
+                                                      LctState5_14::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
+                                                      LctState5_14::get_num_subcompartments<InfState::InfectedSymptoms>(),
+                                                      LctState5_14::get_num_subcompartments<InfState::InfectedSevere>(),
+                                                      LctState5_14::get_num_subcompartments<InfState::InfectedCritical>(),
+                                                      1,
+                                                      1};
+                break;
+            case 2:
+                total_num_subcomps_this_group      = LctState15_34::Count;
+                total_num_subcomps_previous_groups = LctState0_4::Count + LctState5_14::Count;
+                num_subcompartments                = {1,
+                                                      LctState15_34::get_num_subcompartments<InfState::Exposed>(),
+                                                      LctState15_34::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
+                                                      LctState15_34::get_num_subcompartments<InfState::InfectedSymptoms>(),
+                                                      LctState15_34::get_num_subcompartments<InfState::InfectedSevere>(),
+                                                      LctState15_34::get_num_subcompartments<InfState::InfectedCritical>(),
+                                                      1,
+                                                      1};
+                break;
+            case 3:
+                total_num_subcomps_this_group      = LctState35_59::Count;
+                total_num_subcomps_previous_groups = LctState0_4::Count + LctState5_14::Count + LctState15_34::Count;
+                num_subcompartments                = {1,
+                                                      LctState35_59::get_num_subcompartments<InfState::Exposed>(),
+                                                      LctState35_59::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
+                                                      LctState35_59::get_num_subcompartments<InfState::InfectedSymptoms>(),
+                                                      LctState35_59::get_num_subcompartments<InfState::InfectedSevere>(),
+                                                      LctState35_59::get_num_subcompartments<InfState::InfectedCritical>(),
+                                                      1,
+                                                      1};
+                break;
+            case 4:
+                total_num_subcomps_this_group = LctState60_79::Count;
+                total_num_subcomps_previous_groups =
+                    LctState0_4::Count + LctState5_14::Count + LctState15_34::Count + LctState35_59::Count;
+                num_subcompartments = {1,
+                                       LctState60_79::get_num_subcompartments<InfState::Exposed>(),
+                                       LctState60_79::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
+                                       LctState60_79::get_num_subcompartments<InfState::InfectedSymptoms>(),
+                                       LctState60_79::get_num_subcompartments<InfState::InfectedSevere>(),
+                                       LctState60_79::get_num_subcompartments<InfState::InfectedCritical>(),
+                                       1,
+                                       1};
+                break;
+            case 5:
+                total_num_subcomps_this_group      = LctState80::Count;
+                total_num_subcomps_previous_groups = LctState0_4::Count + LctState5_14::Count + LctState15_34::Count +
+                                                     LctState35_59::Count + LctState60_79::Count;
+                num_subcompartments = {1,
+                                       LctState80::get_num_subcompartments<InfState::Exposed>(),
+                                       LctState80::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
+                                       LctState80::get_num_subcompartments<InfState::InfectedSymptoms>(),
+                                       LctState80::get_num_subcompartments<InfState::InfectedSevere>(),
+                                       LctState80::get_num_subcompartments<InfState::InfectedCritical>(),
+                                       1,
+                                       1};
+                break;
+            }
+        }
+
+        model.populations[total_num_subcomps_previous_groups + 0] =
+            init_compartments[group * (size_t)isecir::InfectionState::Count + 0]; // Susceptible
+        model.populations[total_num_subcomps_previous_groups + total_num_subcomps_this_group - 2] =
+            init_compartments[group * (size_t)isecir::InfectionState::Count + 6]; // Recovered
+        model.populations[total_num_subcomps_previous_groups + total_num_subcomps_this_group - 1] =
+            init_compartments[group * (size_t)isecir::InfectionState::Count + 7]; // Dead
+        for (size_t i = (size_t)InfState::Exposed; i < (size_t)InfState::Count - 2; i++) {
+
+            // Get the total number of subcomps before the considered InfectionState in this group.
+            size_t num_subcomps_previous_infstates =
+                std::accumulate(num_subcompartments.begin(), num_subcompartments.begin() + i, 0);
+
+            for (size_t subcomp = 0; subcomp < num_subcompartments[i]; subcomp++) {
+                model.populations[total_num_subcomps_previous_groups + num_subcomps_previous_infstates + subcomp] =
+                    init_compartments[group * (size_t)isecir::InfectionState::Count + i] /
+                    (ScalarType)num_subcompartments[i];
+            }
+        }
+    }
 
     // Set integrator.
     auto integrator =
@@ -1673,10 +1802,13 @@ mio::IOResult<std::vector<double>> csv_to_vector(std::string filename)
 int main()
 {
     constexpr bool exponential_scenario = false;
-    bool one_location                   = true;
+
+    // bool one_location                   = true;
     const std::vector<double> infection_distribution{0.99, 0.005, 0.005, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-    std::string save_dir = "../../cpp/examples/paper/simulation_results/compare_abm_ide_lct_ode/";
+    size_t num_runs = 20;
+    std::string save_dir =
+        fmt::format("../../cpp/examples/paper/simulation_results/compare_abm_ide_lct_ode/{}_runs/", num_runs);
 
     if (exponential_scenario) {
         save_dir = save_dir + "exponential/";
@@ -1715,7 +1847,6 @@ int main()
                                         infection_distribution, true, save_dir, false, rng, params::t0, one_location);
 
     // Simulate ABM ensemble run.
-    size_t num_runs = 1;
     auto result_abm = abm_ensemble_run(num_runs, exponential_scenario, params::t0 + params::tmax - params::init_tmax,
                                        contact_data_dir, infection_distribution, save_dir, true, false,
                                        params::t0 + params::init_tmax, one_location);

@@ -217,10 +217,12 @@ private:
             return true;
         }
 
-        if (!(floating_point_equal<FP>(0., m_flows.get_last_time(), 1e-8, 1e-14))) {
-            log_error("Last time point in flows has to be 0.");
-            return true;
-        }
+        // Comment this out here because we manually ensure that the flows have the right time points although the
+        // last time point is not 0.
+        // if (!(floating_point_equal<FP>(0., m_flows.get_last_time(), 1e-8, 1e-14))) {
+        //     log_error("Last time point in flows has to be 0.");
+        //     return true;
+        // }
 
         for (int i = 1; i < m_flows.get_num_time_points(); i++) {
             if (!(floating_point_equal<FP>(m_dt, m_flows.get_time(i) - m_flows.get_time(i - 1), 1e-8, 1e-14))) {

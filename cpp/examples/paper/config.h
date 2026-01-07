@@ -77,19 +77,18 @@ constexpr size_t n_subcomps_ISev[] = {8, 8, 8, 7, 6, 5};
 constexpr size_t n_subcomps_ICri[] = {8, 8, 8, 8, 7, 6};
 
 // Define epidemiological parameters.
-// std::vector<double> transmissionProbabilityOnContact = {0.03, 0.06, 0.06, 0.06, 0.09, 0.175};
 const ScalarType relativeTransmissionNoSymptoms = 1;
 const ScalarType riskOfInfectionFromSymptomatic = 1.;
 const ScalarType seasonality                    = 0.; // this implies that we don't have any seasonal effects in EBMs
 const ScalarType scale_confirmed_cases          = 1.;
 
 // Define tolerance for computing the support max for IDE model and initialization of LCT model.
-const ScalarType tol_supp_max = 1e-6;
+const ScalarType tol_supp_max = 1e-8;
 
 // Define simulation parameters.
 const ScalarType t0        = 0.;
-const ScalarType init_tmax = 30.;
-const ScalarType tmax      = 150.;
+const ScalarType init_tmax = 20.;
+const ScalarType tmax      = 120.;
 const ScalarType dt        = 1. / 24.; // corresponds to hours that are used as time step in ABM simulation
 
 } // namespace params
