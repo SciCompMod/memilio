@@ -573,19 +573,6 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
         summary << "Total Runs: " << results.all_runs.size() << "\n";
         summary.close();
     }
-    
-    // Save average household size of initially infected persons
-    std::string household_size_file = base_dir + "/average_household_size_initial_infections.csv";
-    std::ofstream household_size_stream(household_size_file);
-    if (household_size_stream.is_open()) {
-        household_size_stream << "Run,Average_Household_Size,Average_Persons_Above_Age_Group_0\n";
-        for (size_t run_idx = 0; run_idx < results.all_runs.size(); ++run_idx) {
-            household_size_stream << run_idx << "," 
-                                << results.all_runs[run_idx].average_household_size_of_initial_infections << ","
-                                << results.all_runs[run_idx].average_persons_above_age_group_0_in_initial_households << "\n";
-        }
-        household_size_stream.close();
-    }
 
     // Save household id
     auto household_id_file = base_dir + "/household_id.csv";
@@ -750,28 +737,6 @@ MultiRunSimulator::run_single_simulation_with_infections(mio::abm::World&& base_
 
     // Apply initial infections
     assign_infection_state(base_world, initial_infections, t0);
-    
-    // Calculate average household size of initially infected persons
-    double total_household_size = 0.0;
-    double total_persons_above_age_group_0 = 0.0;
-    for (const auto& person_id : initial_infections) {
-        auto& person = base_world.get_person(person_id);
-        auto household_index = person.get_assigned_location_index(mio::abm::LocationType::Home);
-        auto& household = base_world.get_individualized_location(
-            mio::abm::LocationId{household_index, mio::abm::LocationType::Home});
-        total_household_size += household.get_persons().size();
-        
-        // Count persons with age group > 0
-        for (const auto& household_person_id : household.get_persons()) {
-            auto household_person = household_person_id->get_age();
-            if (household_person != mio::AgeGroup(0)) {
-                total_persons_above_age_group_0 += 1.0;
-            }
-        }
-    }
-    double average_household_size = initial_infections.empty() ? 0.0 : total_household_size / initial_infections.size();
-    double average_persons_above_age_group_0 = initial_infections.empty() ? 0.0 : total_persons_above_age_group_0 / initial_infections.size();
-    
     // Set infection parameter K
     base_world.parameters.get<mio::abm::InfectionRateFromViralShed>() = k_parameter;
 
@@ -822,8 +787,6 @@ MultiRunSimulator::run_single_simulation_with_infections(mio::abm::World&& base_
         std::vector<std::tuple<uint32_t, mio::abm::LocationType>>{std::get<0>(historyLocationIdAndType.get_log())[0]};
     results.history_infected_status =
         std::vector<std::vector<std::tuple<uint32_t, bool>>>{std::get<0>(historyIsInfected.get_log())};
-    results.average_household_size_of_initial_infections = average_household_size;
-    results.average_persons_above_age_group_0_in_initial_households = average_persons_above_age_group_0;
 
     // Placeholder implementation
     return mio::success(results);

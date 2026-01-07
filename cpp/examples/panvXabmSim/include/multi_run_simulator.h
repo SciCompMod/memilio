@@ -32,8 +32,6 @@ struct SimulationResults {
     std::vector<std::vector<std::tuple<uint32_t, uint32_t, mio::abm::LocationType>>>
         history_detailed_infection; // Figure 2/3
     std::vector<std::vector<std::tuple<uint32_t, bool>>> history_infected_status;
-    double average_household_size_of_initial_infections = 0.0; // Average household size of initially infected persons
-    double average_persons_above_age_group_0_in_initial_households = 0.0; // Average persons above age group 0 in households of initially infected
 };
 
 struct MultiRunResults {
