@@ -136,8 +136,8 @@ def plot_contact_matrix(ax, matrix, title, vmin=None, vmax=None, cmap='YlOrRd'):
     # Set ticks and labels
     ax.set_xticks(np.arange(len(age_groups)))
     ax.set_yticks(np.arange(len(age_groups)))
-    ax.set_xticklabels(age_groups, fontsize=16)
-    ax.set_yticklabels(age_groups, fontsize=16)
+    ax.set_xticklabels(age_groups, fontsize=20)
+    ax.set_yticklabels(age_groups, fontsize=20)
     
     # Rotate x-axis labels
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
@@ -149,11 +149,11 @@ def plot_contact_matrix(ax, matrix, title, vmin=None, vmax=None, cmap='YlOrRd'):
             # Choose text color based on background
             text_color = 'white' if value > (vmax * 0.6 if vmax else 1.5) else 'black'
             text = ax.text(j, i, f'{value:.2f}', ha="center", va="center",
-                          color=text_color, fontsize=14)
+                          color=text_color, fontsize=22)
     
-    ax.set_title(title, fontsize=18, fontweight='bold', pad=10)
-    ax.set_xlabel('Age Group of Contact', fontsize=16)
-    ax.set_ylabel('Age Group', fontsize=16)
+    ax.set_title(title, fontsize=24, fontweight='bold', pad=10)
+    ax.set_xlabel('Age Group of Contact', fontsize=22)
+    ax.set_ylabel('Age Group', fontsize=22)
     
     return im
 
@@ -196,7 +196,7 @@ def create_country_comparison(output_file='contact_matrices_comparison.png'):
     # Create figure
     fig, axes = plt.subplots(4, 3, figsize=(18, 20))
     fig.suptitle('Age-Stratified Contact Matrices by Country and Setting',
-                 fontsize=22, fontweight='bold', y=0.995)
+                 fontsize=24, fontweight='bold', y=0.995)
     
     # Plot matrices
     for col_idx, (country_name, matrices) in enumerate(countries.items()):
@@ -211,7 +211,7 @@ def create_country_comparison(output_file='contact_matrices_comparison.png'):
             # Add colorbar for the rightmost column only
             if col_idx == 2:
                 cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-                cbar.set_label('Contact rate', rotation=270, labelpad=20, fontsize=14)
+                cbar.set_label('Contact rate', rotation=270, labelpad=20, fontsize=18)
     
     plt.tight_layout()
     plt.savefig(output_file, dpi=300, bbox_inches='tight')
@@ -231,7 +231,7 @@ def create_setting_comparison(output_file='contact_matrices_by_setting.png'):
     
     fig, axes = plt.subplots(3, 4, figsize=(20, 15))
     fig.suptitle('Age-Stratified Contact Matrices by Setting Type',
-                 fontsize=22, fontweight='bold', y=0.995)
+                 fontsize=24, fontweight='bold', y=0.995)
     
     for col_idx, (setting, countries) in enumerate(settings_data.items()):
         # Find vmax for this setting
@@ -248,7 +248,7 @@ def create_setting_comparison(output_file='contact_matrices_by_setting.png'):
             # Add colorbar for bottom row only
             if row_idx == 2:
                 cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-                cbar.set_label('Contact rate', rotation=270, labelpad=20, fontsize=14)
+                cbar.set_label('Contact rate', rotation=270, labelpad=20, fontsize=18)
     
     plt.tight_layout()
     plt.savefig(output_file, dpi=300, bbox_inches='tight')
@@ -261,7 +261,7 @@ def create_difference_matrices(output_file='contact_matrices_differences.png'):
     
     fig, axes = plt.subplots(3, 4, figsize=(20, 15))
     fig.suptitle('Contact Matrix Differences (France - Germany, USA - Germany)',
-                 fontsize=22, fontweight='bold', y=0.995)
+                 fontsize=24, fontweight='bold', y=0.995)
     
     settings = ['Home', 'School', 'Work', 'Other']
     comparisons = [
@@ -288,8 +288,8 @@ def create_difference_matrices(output_file='contact_matrices_differences.png'):
             # Set ticks and labels
             ax.set_xticks(np.arange(len(age_groups)))
             ax.set_yticks(np.arange(len(age_groups)))
-            ax.set_xticklabels(age_groups, fontsize=14)
-            ax.set_yticklabels(age_groups, fontsize=14)
+            ax.set_xticklabels(age_groups, fontsize=18)
+            ax.set_yticklabels(age_groups, fontsize=18)
             plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
             
             # Add text annotations
@@ -298,16 +298,16 @@ def create_difference_matrices(output_file='contact_matrices_differences.png'):
                     value = diff_matrix[i, j]
                     text_color = 'white' if abs(value) > abs_max * 0.6 else 'black'
                     text = ax.text(j, i, f'{value:.2f}', ha="center", va="center",
-                                  color=text_color, fontsize=10)
+                                  color=text_color, fontsize=18)
             
-            ax.set_title(f'{comparison_name} - {setting}', fontsize=14, fontweight='bold')
-            ax.set_xlabel('Age of contact', fontsize=14)
-            ax.set_ylabel('Age Groupividual', fontsize=14)
+            ax.set_title(f'{comparison_name} - {setting}', fontsize=18, fontweight='bold')
+            ax.set_xlabel('Age of contact', fontsize=18)
+            ax.set_ylabel('Age Groupividual', fontsize=18)
             
             # Add colorbar for rightmost column
             if col_idx == 3:
                 cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-                cbar.set_label('Difference', rotation=270, labelpad=20, fontsize=14)
+                cbar.set_label('Difference', rotation=270, labelpad=20, fontsize=18)
     
     # Hide the third row (empty)
     for col_idx in range(4):
@@ -345,14 +345,14 @@ def create_total_contact_comparison(output_file='total_contacts_comparison.png')
         for bar in bars:
             height = bar.get_height()
             ax.text(bar.get_x() + bar.get_width()/2., height,
-                   f'{height:.1f}', ha='center', va='bottom', fontsize=9)
+                   f'{height:.1f}', ha='center', va='bottom', fontsize=14)
     
-    ax.set_xlabel('Setting', fontsize=14, fontweight='bold')
-    ax.set_ylabel('Total Contact Rate', fontsize=14, fontweight='bold')
-    ax.set_title('Total Contact Rates by Country and Setting', fontsize=16, fontweight='bold')
+    ax.set_xlabel('Setting', fontsize=18, fontweight='bold')
+    ax.set_ylabel('Total Contact Rate', fontsize=18, fontweight='bold')
+    ax.set_title('Total Contact Rates by Country and Setting', fontsize=20, fontweight='bold')
     ax.set_xticks(x)
-    ax.set_xticklabels(settings, fontsize=14)
-    ax.legend(fontsize=14)
+    ax.set_xticklabels(settings, fontsize=18)
+    ax.legend(fontsize=18)
     ax.grid(axis='y', alpha=0.3)
     
     plt.tight_layout()
@@ -374,7 +374,7 @@ def create_summed_matrices(output_file='contact_matrices_summed_all_locations.pn
 
     fig, axes = plt.subplots(3, 1, figsize=(10, 20))
     fig.suptitle('Total Contact Matrices (Sum of All Location Types)',
-                 fontsize=20, fontweight='bold', y=0.995)
+                 fontsize=28, fontweight='bold', y=0.995)
 
     countries_data = [
         ('Germany', germany_total),
@@ -389,8 +389,8 @@ def create_summed_matrices(output_file='contact_matrices_summed_all_locations.pn
 
         # Add colorbar with larger font
         cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-        cbar.set_label('Contact rate', rotation=270, labelpad=20, fontsize=16)
-        cbar.ax.tick_params(labelsize=16)
+        cbar.set_label('Contact rate', rotation=270, labelpad=22, fontsize=24)
+        cbar.ax.tick_params(labelsize=24)
 
         # Add sum annotation
         # total_sum = matrix.sum()
