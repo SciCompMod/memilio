@@ -84,16 +84,16 @@ def create_combined_median_comparison(scenario_data_list, output_dir):
     """
     # plt.style.use('seaborn-v0_8-darkgrid')
     plt.rcParams.update({
-        'font.size': 18,
-        'axes.titlesize': 22,
-        'axes.labelsize': 24,
-        'xtick.labelsize': 20,
-        'ytick.labelsize': 20,
-        'legend.fontsize': 16
+        'font.size': 20,
+        'axes.titlesize': 24,
+        'axes.labelsize': 26,
+        'xtick.labelsize': 22,
+        'ytick.labelsize': 22,
+        'legend.fontsize': 20
     })
 
     fig, axes = plt.subplots(4, 1, figsize=(14, 24))
-    fig.suptitle('Multi-Seed Median Comparison Across All Scenarios',
+    fig.suptitle('Germany',
                  fontsize=32, fontweight='bold', y=0.995)
 
     # axes is already a 1D array for single column
@@ -114,7 +114,7 @@ def create_combined_median_comparison(scenario_data_list, output_dir):
         
         # Set subplot title (scenario name)
         scenario_name = get_scenario_full_name(event_label)
-        ax.set_title(scenario_name, fontsize=22, fontweight='bold', pad=15)
+        ax.set_title(scenario_name, fontsize=24, fontweight='bold', pad=15)
 
         # Calculate statistics for Memilio
         if grouped_results['memilio']:
@@ -195,12 +195,12 @@ def create_combined_median_comparison(scenario_data_list, output_dir):
         ax.set_ylim(0, global_y_max * 1.05)
         
         # Labels and grid
-        ax.set_xlabel('Days', fontsize=22)
-        ax.set_ylabel('Cumulative Infections', fontsize=22,)
+        ax.set_xlabel('Days', fontsize=24)
+        ax.set_ylabel('Cumulative Infections', fontsize=24)
         ax.grid(True, alpha=0.4, linestyle='--', linewidth=0.8, zorder=0)
-        ax.legend(fontsize=17, loc='upper left', framealpha=0.98, fancybox=True, shadow=True,
+        ax.legend(fontsize=20, loc='upper left', framealpha=0.98, fancybox=True, shadow=True,
                  borderpad=0.5, labelspacing=0.8)
-        ax.tick_params(labelsize=20)
+        ax.tick_params(labelsize=22)
         
         # Add box around plot - make all spines visible and bold
         ax.spines['top'].set_visible(True)
