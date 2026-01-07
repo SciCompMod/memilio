@@ -47,9 +47,27 @@ def parse_label(label):
     return label, "unknown"
 
 
+def load_household_size_data(path):
+    """Load average household size data from CSV file."""
+    csv_path = os.path.join(path, "average_household_size_initial_infections.csv")
+    try:
+        df = pd.read_csv(csv_path)
+        # Calculate averages across all runs
+        avg_household_size = df['Average_Household_Size'].mean()
+        avg_persons_above_age_0 = df['Average_Persons_Above_Age_Group_0'].mean()
+        return {
+            'avg_household_size': avg_household_size,
+            'avg_persons_above_age_0': avg_persons_above_age_0
+        }
+    except Exception as e:
+        print(f"Warning: Could not load household size data from {csv_path}: {e}")
+        return None
+
+
 def group_results_by_simulation_type(results_paths, labels):
     """Group results by simulation type and extract seed information."""
     grouped_results = {'memilio': [], 'panvadere': []}
+    household_data = {'memilio': [], 'panvadere': []}
 
     for path, label in zip(results_paths, labels):
         sim_type, seed = parse_label(label)
@@ -66,11 +84,16 @@ def group_results_by_simulation_type(results_paths, labels):
                     'path': path,
                     'label': label
                 })
+        
+        # Load household size data
+        household_info = load_household_size_data(path)
+        if household_info is not None:
+            household_data[sim_type].append(household_info)
 
-    return grouped_results
+    return grouped_results, household_data
 
 
-def create_multi_seed_comparison_plot(grouped_results, output_dir, event_type, num_seeds):
+def create_multi_seed_comparison_plot(grouped_results, household_data, output_dir, event_type, num_seeds):
     """Create comprehensive multi-seed comparison visualization."""
 
     plt.style.use('default')
@@ -201,7 +224,18 @@ def create_multi_seed_comparison_plot(grouped_results, output_dir, event_type, n
         # Add statistics text with larger font
         stats_text = f"Uniform: μ={np.mean(memilio_finals):.1f}, σ={np.std(memilio_finals):.1f}\n"
         stats_text += f"Transmission-Informed: μ={np.mean(panvadere_finals):.1f}, σ={np.std(panvadere_finals):.1f}\n"
-        stats_text += f"Difference in means: {abs(np.mean(memilio_finals) - np.mean(panvadere_finals)):.1f} (+{abs(np.mean(memilio_finals) - np.mean(panvadere_finals))/min(np.mean(memilio_finals), np.mean(panvadere_finals))*100:.1f}%)"
+        stats_text += f"Difference in means: {abs(np.mean(memilio_finals) - np.mean(panvadere_finals)):.1f} (+{abs(np.mean(memilio_finals) - np.mean(panvadere_finals))/min(np.mean(memilio_finals), np.mean(panvadere_finals))*100:.1f}%)\n"
+        
+        # Add household size information if available
+        if household_data['memilio']:
+            avg_hh_size = np.mean([d['avg_household_size'] for d in household_data['memilio']])
+            avg_above_0 = np.mean([d['avg_persons_above_age_0'] for d in household_data['memilio']])
+            stats_text += f"\nUniform HH size: {avg_hh_size:.2f}, Adults: {avg_above_0:.2f}\n"
+        if household_data['panvadere']:
+            avg_hh_size = np.mean([d['avg_household_size'] for d in household_data['panvadere']])
+            avg_above_0 = np.mean([d['avg_persons_above_age_0'] for d in household_data['panvadere']])
+            stats_text += f"Transmission-Informed HH size: {avg_hh_size:.2f}, Adults: {avg_above_0:.2f}"
+        
         ax4.text(0.02, 0.15, stats_text, transform=ax4.transAxes, fontsize=18,
                  verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
 
@@ -305,7 +339,7 @@ def create_seed_variation_analysis(grouped_results, output_dir):
     return output_file
 
 
-def create_summary_statistics(grouped_results, output_dir, event_type, num_seeds):
+def create_summary_statistics(grouped_results, household_data, output_dir, event_type, num_seeds):
     """Create summary statistics report."""
 
     # Prepare statistics
@@ -316,8 +350,8 @@ def create_summary_statistics(grouped_results, output_dir, event_type, num_seeds
             finals = [result['cumulative'][-1]
                       for result in grouped_results[sim_type]]
             seeds = [result['seed'] for result in grouped_results[sim_type]]
-
-            stats.append({
+            
+            stat_entry = {
                 'Simulation Type': sim_type.capitalize(),
                 'Number of Seeds': len(finals),
                 'Mean Final Infections': f"{np.mean(finals):.1f}",
@@ -326,7 +360,16 @@ def create_summary_statistics(grouped_results, output_dir, event_type, num_seeds
                 'Max Final Infections': f"{np.max(finals):.1f}",
                 'CV Final Infections': f"{np.std(finals)/np.mean(finals):.3f}",
                 'Seeds': ', '.join(seeds[:5]) + ('...' if len(seeds) > 5 else '')
-            })
+            }
+            
+            # Add household size data if available
+            if household_data[sim_type]:
+                avg_hh_size = np.mean([d['avg_household_size'] for d in household_data[sim_type]])
+                avg_above_0 = np.mean([d['avg_persons_above_age_0'] for d in household_data[sim_type]])
+                stat_entry['Avg Household Size'] = f"{avg_hh_size:.2f}"
+                stat_entry['Avg Persons Above Age 0'] = f"{avg_above_0:.2f}"
+            
+            stats.append(stat_entry)
 
     # Create DataFrame and save to CSV
     df = pd.DataFrame(stats)
@@ -423,7 +466,7 @@ def main():
     print(f"Output directory: {args.output_dir}")
 
     # Group results by simulation type
-    grouped_results = group_results_by_simulation_type(
+    grouped_results, household_data = group_results_by_simulation_type(
         args.results_paths, args.labels)
 
     print(f"Found {len(grouped_results['memilio'])} Memilio results")
@@ -436,14 +479,14 @@ def main():
     # Create visualizations
     try:
         # Main comparison plot
-        create_multi_seed_comparison_plot(grouped_results, args.output_dir,
+        create_multi_seed_comparison_plot(grouped_results, household_data, args.output_dir,
                                           args.event_type, args.num_seeds)
 
         # Variation analysis
         # create_seed_variation_analysis(grouped_results, args.output_dir)
 
         # # Summary statistics
-        # create_summary_statistics(grouped_results, args.output_dir,
+        # create_summary_statistics(grouped_results, household_data, args.output_dir,
         #                           args.event_type, args.num_seeds)
 
         print("✓ All visualizations completed successfully!")
