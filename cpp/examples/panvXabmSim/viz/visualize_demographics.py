@@ -59,9 +59,9 @@ def plot_demographics(countries_data, output_path):
         return
 
     # Create a horizontal layout: 2 rows, num_countries columns
-    fig, axes = plt.subplots(2, num_countries, figsize=(6 * num_countries, 10), squeeze=False)
+    fig, axes = plt.subplots(2, num_countries, figsize=(6 * num_countries, 12), squeeze=False)
 
-    fig.suptitle('Demographic Distributions by Country', fontsize=16, fontweight='bold')
+    fig.suptitle('Demographic Distributions by Country', fontsize=18, fontweight='bold')
 
     age_labels_template = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
     household_labels_template = ['1 Person', '2 People', '3 People', '4 People', '5+ People']
@@ -82,11 +82,22 @@ def plot_demographics(countries_data, output_path):
             # Ensure labels match data size
             current_age_labels = age_labels_template[:len(age_data)]
             ax_age.pie(age_data, labels=current_age_labels, autopct='%1.1f%%', startangle=90, counterclock=False,
+<<<<<<< Updated upstream
                        colors=age_colors, pctdistance=0.85)
             ax_age.set_title(f'{country_name} - Age Distribution', fontweight='bold')
+=======
+                       colors=age_colors)
+            if i == num_countries // 2:
+                ax_age.set_title(f'Age Distribution\n{country_name}', fontweight='bold', fontsize=14, pad=10)
+            else:
+                ax_age.set_title(f'{country_name}', fontweight='bold', pad=10)
+>>>>>>> Stashed changes
         else:
             ax_age.text(0.5, 0.5, 'Age data not found', ha='center', va='center')
-            ax_age.set_title(f'{country_name} - Age Distribution', fontweight='bold')
+            if i == num_countries // 2:
+                ax_age.set_title(f'Age Distribution\n{country_name}', fontweight='bold', fontsize=14, pad=10)
+            else:
+                ax_age.set_title(f'{country_name}', fontweight='bold', pad=10)
         ax_age.axis('equal')
 
         # Household Distribution Pie Chart
@@ -95,13 +106,19 @@ def plot_demographics(countries_data, output_path):
             current_household_labels = household_labels_template[:len(household_data)]
             ax_hh.pie(household_data, labels=current_household_labels, autopct='%1.1f%%', startangle=90, counterclock=False,
                       colors=household_colors)
-            ax_hh.set_title(f'{country_name} - Household Size Distribution', fontweight='bold')
+            if i == num_countries // 2:
+                ax_hh.set_title(f'Household Size Distribution\n{country_name}', fontweight='bold', fontsize=14, pad=10)
+            else:
+                ax_hh.set_title(f'{country_name}', fontweight='bold', pad=10)
         else:
             ax_hh.text(0.5, 0.5, 'Household data not found', ha='center', va='center')
-            ax_hh.set_title(f'{country_name} - Household Size Distribution', fontweight='bold')
+            if i == num_countries // 2:
+                ax_hh.set_title(f'Household Size Distribution\n{country_name}', fontweight='bold', fontsize=14, pad=10)
+            else:
+                ax_hh.set_title(f'{country_name}', fontweight='bold', pad=10)
         ax_hh.axis('equal')
 
-    plt.tight_layout(rect=[0, 0, 1, 0.96])
+    plt.tight_layout(rect=[0, 0, 1, 0.96], h_pad=4.0)
     
     # Ensure the output directory exists
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -115,8 +132,8 @@ def main():
     
     countries = {
         "Germany": os.path.join(base_path, 'city_parameters.h'),
-        "USA": os.path.join(base_path, 'city_parameters_us.h'),
-        "France": os.path.join(base_path, 'city_parameters_france.h')
+        "France": os.path.join(base_path, 'city_parameters_france.h'),
+        "USA": os.path.join(base_path, 'city_parameters_us.h')
     }
 
     countries_data = {}
