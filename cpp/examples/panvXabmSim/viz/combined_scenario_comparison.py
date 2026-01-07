@@ -99,15 +99,6 @@ def create_combined_median_comparison(scenario_data_list, output_dir):
     # axes is already a 1D array for single column
     axes_flat = axes
 
-    # Find global y-axis max for consistent scaling
-    global_y_max = 0
-    for event_label, grouped_results in scenario_data_list:
-        for sim_type in ['memilio', 'panvadere']:
-            if grouped_results[sim_type]:
-                for result in grouped_results[sim_type]:
-                    local_max = np.max(result['cumulative'])
-                    global_y_max = max(global_y_max, local_max)
-
     # Plot each scenario
     for idx, (event_label, grouped_results) in enumerate(scenario_data_list):
         ax = axes_flat[idx]
@@ -186,14 +177,11 @@ def create_combined_median_comparison(scenario_data_list, output_dir):
             stats_text += f"Difference in means: {diff_abs:.1f} (+{diff_pct:.1f}%)"
             
             # Add text box at middle-left with larger fontsize, moved down slightly
-            ax.text(0.02, 0.35, stats_text, transform=ax.transAxes, fontsize=18,
+            ax.text(0.02, 0.33, stats_text, transform=ax.transAxes, fontsize=18,
                    verticalalignment='center', 
                    bbox=dict(boxstyle='round,pad=0.5', facecolor="#fff9b5", 
                             edgecolor='#333', linewidth=2.5, alpha=0.95))
 
-        # Set consistent y-axis limits
-        ax.set_ylim(0, global_y_max * 1.05)
-        
         # Labels and grid
         ax.set_xlabel('Days', fontsize=24)
         ax.set_ylabel('Cumulative Infections', fontsize=24)
