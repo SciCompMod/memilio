@@ -50,7 +50,7 @@ SIM_TYPES=("memilio" "panvadere")
 
 # Simulation parameters
 NUM_DAYS=10
-NUM_PERSONS=1000
+NUM_PERSONS=15000
 RUNS=20  # Number of runs per seed (to get median)
 INFECTION_K=22.6
 
