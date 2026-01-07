@@ -143,7 +143,7 @@ def _output_cursor_and_children(cursor: Cursor, ast: AST, writer: Callable[[int,
                         f'{file_path}:{line_number}')
     else:
         cursor_label = f'ID:{cursor_id} {
-            cursor_kind} {file_path}:{line_number}'
+            cursor_kind} {file_path}: {line_number}'
 
     writer(level, cursor_label)
 
