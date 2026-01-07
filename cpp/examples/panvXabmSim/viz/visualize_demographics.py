@@ -61,7 +61,7 @@ def plot_demographics(countries_data, output_path):
     # Create a horizontal layout: 2 rows, num_countries columns
     fig, axes = plt.subplots(2, num_countries, figsize=(6 * num_countries, 12), squeeze=False)
 
-    fig.suptitle('Demographic Distributions by Country', fontsize=18, fontweight='bold')
+    fig.suptitle('Demographic Distributions by Country', fontsize=28, fontweight='bold')
 
     age_labels_template = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
     household_labels_template = ['1 Person', '2 People', '3 People', '4 People', '5+ People']
@@ -81,38 +81,70 @@ def plot_demographics(countries_data, output_path):
         if age_data:
             # Ensure labels match data size
             current_age_labels = age_labels_template[:len(age_data)]
-            ax_age.pie(age_data, labels=current_age_labels, autopct='%1.1f%%', startangle=90, counterclock=False,
-
-                       colors=age_colors)
+            wedges, texts, autotexts = ax_age.pie(age_data, labels=current_age_labels, autopct='%1.1f%%', 
+                                                    startangle=90, counterclock=False,
+                                                    colors=age_colors)
+            for text in ax_age.texts:
+                text.set_fontsize(16)
+            
+            # Adjust label positions to prevent overlap for small adjacent slices
+            for j in range(len(age_data)):
+                if age_data[j] < 3:  # Small slice threshold
+                    # Check if adjacent slice is also small
+                    prev_idx = (j - 1) % len(age_data)
+                    next_idx = (j + 1) % len(age_data)
+                    if (prev_idx < len(age_data) and age_data[prev_idx] < 3) or \
+                       (next_idx < len(age_data) and age_data[next_idx] < 3):
+                        # Move the percentage text farther out
+                        if j % 2 == 0:
+                            autotexts[j].set_position((autotexts[j].get_position()[0] * 1.22, 
+                                                       autotexts[j].get_position()[1] * 1.22))
             if i == num_countries // 2:
-                ax_age.set_title(f'Age Distribution\n{country_name}', fontweight='bold', fontsize=14, pad=10)
+                ax_age.set_title(f'Age Distribution\n{country_name}', fontweight='bold', fontsize=24, pad=10)
             else:
-                ax_age.set_title(f'{country_name}', fontweight='bold', pad=10)
+                ax_age.set_title(f'{country_name}', fontweight='bold', pad=10, fontsize=20)
 
         else:
             ax_age.text(0.5, 0.5, 'Age data not found', ha='center', va='center')
             if i == num_countries // 2:
-                ax_age.set_title(f'Age Distribution\n{country_name}', fontweight='bold', fontsize=14, pad=10)
+                ax_age.set_title(f'Age Distribution\n{country_name}', fontweight='bold', fontsize=24, pad=10)
             else:
-                ax_age.set_title(f'{country_name}', fontweight='bold', pad=10)
+                ax_age.set_title(f'{country_name}', fontweight='bold', pad=10, fontsize=20)
         ax_age.axis('equal')
 
         # Household Distribution Pie Chart
         if household_data:
             # Ensure labels match data size
             current_household_labels = household_labels_template[:len(household_data)]
-            ax_hh.pie(household_data, labels=current_household_labels, autopct='%1.1f%%', startangle=90, counterclock=False,
-                      colors=household_colors)
+            wedges, texts, autotexts = ax_hh.pie(household_data, labels=current_household_labels, autopct='%1.1f%%', 
+                                                   startangle=90, counterclock=False,
+                                                   colors=household_colors)
+            # fontsize of text needs to be bigger
+            for text in ax_hh.texts:
+                text.set_fontsize(16)
+            
+            # Adjust label positions to prevent overlap for small adjacent slices
+            for j in range(len(household_data)):
+                if household_data[j] < 3:  # Small slice threshold
+                    # Check if adjacent slice is also small
+                    prev_idx = (j - 1) % len(household_data)
+                    next_idx = (j + 1) % len(household_data)
+                    if (prev_idx < len(household_data) and household_data[prev_idx] < 3) or \
+                       (next_idx < len(household_data) and household_data[next_idx] < 3):
+                        # Move the percentage text farther out
+                        if j % 2 == 0:
+                            autotexts[j].set_position((autotexts[j].get_position()[0] * 1.22, 
+                                                       autotexts[j].get_position()[1] * 1.22))
             if i == num_countries // 2:
-                ax_hh.set_title(f'Household Size Distribution\n{country_name}', fontweight='bold', fontsize=14, pad=10)
+                ax_hh.set_title(f'Household Size Distribution\n{country_name}', fontweight='bold', fontsize=24, pad=10)
             else:
-                ax_hh.set_title(f'{country_name}', fontweight='bold', pad=10)
+                ax_hh.set_title(f'{country_name}', fontweight='bold', pad=10, fontsize=20)
         else:
             ax_hh.text(0.5, 0.5, 'Household data not found', ha='center', va='center')
             if i == num_countries // 2:
-                ax_hh.set_title(f'Household Size Distribution\n{country_name}', fontweight='bold', fontsize=14, pad=10)
+                ax_hh.set_title(f'Household Size Distribution\n{country_name}', fontweight='bold', fontsize=24, pad=10)
             else:
-                ax_hh.set_title(f'{country_name}', fontweight='bold', pad=10)
+                ax_hh.set_title(f'{country_name}', fontweight='bold', pad=10, fontsize=20)
         ax_hh.axis('equal')
 
     plt.tight_layout(rect=[0, 0, 1, 0.96], h_pad=4.0)
