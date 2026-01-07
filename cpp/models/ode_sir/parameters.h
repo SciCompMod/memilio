@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -136,9 +136,8 @@ public:
             }
             if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
                 this->template get<TransmissionProbabilityOnContact<FP>>()[i] > 1.0) {
-                log_warning(
-                    "Constraint check: Parameter TransmissionProbabilityOnContact changed from {} to {} ",
-                    this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0);
+                log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {} to {} ",
+                            this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0);
                 this->template get<TransmissionProbabilityOnContact<FP>>() = 0.0;
                 corrected                                                  = true;
             }

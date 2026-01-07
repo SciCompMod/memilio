@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Wadim Koslow, Henrik Zunker
 *
@@ -229,12 +229,11 @@ TEST(TestSaveResult, save_result_with_params)
 
 TEST(TestSaveResult, save_result_order)
 {
-    std::vector<mio::TimeSeries<double>> results{
-        mio::TimeSeries<double>(0, Eigen::VectorX<double>::Constant(1, 0)), 
-        mio::TimeSeries<double>(0, Eigen::VectorX<double>::Constant(1, 1)), 
-        mio::TimeSeries<double>(0, Eigen::VectorX<double>::Constant(1, 2))};
+    std::vector<mio::TimeSeries<double>> results{mio::TimeSeries<double>(0, Eigen::VectorX<double>::Constant(1, 0)),
+                                                 mio::TimeSeries<double>(0, Eigen::VectorX<double>::Constant(1, 1)),
+                                                 mio::TimeSeries<double>(0, Eigen::VectorX<double>::Constant(1, 2))};
 
-    // case: check order of results, where lexical ordering would rearrange the results; 
+    // case: check order of results, where lexical ordering would rearrange the results;
     // expect: order follows the ids
     std::vector<int> ids = {1, 2, 10};
 
@@ -250,7 +249,7 @@ TEST(TestSaveResult, save_result_order)
     ASSERT_DOUBLE_EQ(results_from_file.value()[1].get_groups()[Eigen::Index(0)][Eigen::Index(0)], 1);
     ASSERT_DOUBLE_EQ(results_from_file.value()[2].get_groups()[Eigen::Index(0)][Eigen::Index(0)], 2);
 
-    // case: check order of results; 
+    // case: check order of results;
     // expect: order is changed due to ids not increasing
     ids = {1, 10, 2};
 

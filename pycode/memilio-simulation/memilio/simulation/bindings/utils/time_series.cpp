@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
@@ -105,11 +105,14 @@ void bind_time_series(py::module_& m, std::string const& name)
              [](mio::TimeSeries<double>& self, double t, Eigen::Ref<const mio::TimeSeries<double>::Vector> expr) {
                  return self.add_time_point(t, expr);
              })
-        .def("as_ndarray", [](mio::TimeSeries<double>& self) {
-            auto m = Eigen::Map<mio::TimeSeries<double>::Matrix>(self.data(), self.get_num_rows(),
-                                                                 self.get_num_time_points());
-            return Eigen::Ref<mio::TimeSeries<double>::Matrix>(m);
-        }, py::return_value_policy::reference_internal);
+        .def(
+            "as_ndarray",
+            [](mio::TimeSeries<double>& self) {
+                auto m = Eigen::Map<mio::TimeSeries<double>::Matrix>(self.data(), self.get_num_rows(),
+                                                                     self.get_num_time_points());
+                return Eigen::Ref<mio::TimeSeries<double>::Matrix>(m);
+            },
+            py::return_value_policy::reference_internal);
 }
 
 } // namespace pymio
