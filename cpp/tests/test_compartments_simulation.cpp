@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Jan Kleinert, Daniel Abele, Rene Schmieding
 *
@@ -34,7 +34,7 @@ struct MockModel {
         return Eigen::VectorXd::Zero(1);
     }
     void eval_right_hand_side(const Eigen::Ref<const Eigen::VectorXd>&, const Eigen::Ref<const Eigen::VectorXd>&,
-                                double, Eigen::Ref<Eigen::VectorXd> dydt) const
+                              double, Eigen::Ref<Eigen::VectorXd> dydt) const
     {
         dydt[0] = this->m_dydt;
     }
@@ -71,7 +71,7 @@ TEST(TestCompartmentSimulation, copy_simulation)
     auto adapt_sim = [](auto& sim_) {
         sim_.get_model().m_dydt = 2.0;
         sim_.advance(1.0);
-        sim_.get_integrator_core().get_dt_max() = 2.0; 
+        sim_.get_integrator_core().get_dt_max() = 2.0;
     };
     adapt_sim(sim);
 
@@ -79,7 +79,7 @@ TEST(TestCompartmentSimulation, copy_simulation)
     EXPECT_NE(sim_copy_assign.get_model().m_dydt, 2.0);
     EXPECT_NE(sim_copy_cnstr.get_integrator_core().get_dt_max(), 2.0);
     EXPECT_NE(sim_copy_assign.get_integrator_core().get_dt_max(), 2.0);
-    
+
     // modifying copied simulation to same state
     adapt_sim(sim_copy_cnstr);
     adapt_sim(sim_copy_assign);
@@ -88,7 +88,6 @@ TEST(TestCompartmentSimulation, copy_simulation)
     EXPECT_EQ(sim.get_result().get_last_value()[0], sim_copy_assign.get_result().get_last_value()[0]);
     EXPECT_EQ(sim.get_integrator_core().get_dt_max(), sim_copy_cnstr.get_integrator_core().get_dt_max());
     EXPECT_EQ(sim.get_integrator_core().get_dt_max(), sim_copy_assign.get_integrator_core().get_dt_max());
-
 }
 
 struct MockSimulateSim { // looks just enough like a simulation for the simulate functions not to notice
@@ -116,21 +115,20 @@ struct MockSimulateSim { // looks just enough like a simulation for the simulate
         mutable int val;
     };
 
-    template <class ...Integrands>
-    struct Core: public mio::IntegratorCore<double, Integrands...>
-    {
+    template <class... Integrands>
+    struct Core : public mio::IntegratorCore<double, Integrands...> {
         Core(int val_in)
             : mio::IntegratorCore<double, Integrands...>(val_in, 0)
         {
         }
 
         bool step(const Integrands&..., Eigen::Ref<const Eigen::VectorX<double>>, double&, double&,
-                      Eigen::Ref<Eigen::VectorX<double>>) const override
+                  Eigen::Ref<Eigen::VectorX<double>>) const override
         {
             return true;
         }
 
-        std::unique_ptr<mio::IntegratorCore<double, Integrands...>> clone() const override 
+        std::unique_ptr<mio::IntegratorCore<double, Integrands...>> clone() const override
         {
             throw std::runtime_error("Core clone() called unexpectedly");
         }
