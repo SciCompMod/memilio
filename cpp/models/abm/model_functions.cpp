@@ -44,10 +44,8 @@ ScalarType daily_transmissions_by_contacts(const ContactExposureRates& rates, co
         {
 
             prob += rates[{cell_index, virus, age_transmitter}] *
-                    params.get<ContactRates>()[{age_receiver, age_transmitter}] * age_receiver_group_size /
-                    (age_receiver_group_size - 1);
-                    std::cout << "Adjusted contact rate for age group " << age_receiver.get() << " with group size "
-                              << age_receiver_group_size <<" and rate " << rates[{cell_index, virus, age_transmitter}] << " and contact factor " << params.get<ContactRates>()[{age_receiver, age_transmitter}] << "\n";
+                    params.get<ContactRates>()[{age_receiver, age_transmitter}] ;
+               
         }
         else {
             prob += rates[{cell_index, virus, age_transmitter}] *
@@ -103,9 +101,8 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
                     *global_parameters.get<InfectionRateFromViralShed>()[{virus}];
 
                 local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
-                std::cout << "Person " << person.get_id().get() << " in cell " << cell_index.get()
-                          << " has transmission prob for virus " << static_cast<uint32_t>(virus) << ": "
-                          << local_indiv_trans_prob_v << " daily_contacts_exposure: " << daily_contacts_exposure
+                std::cout << "Person " << person.get_id().get() <<"has value " << static_cast<uint32_t>(virus) << ": "
+                          << local_indiv_trans_prob_v << " daily_contacts_exposure = exposed_viral_shed/n_s = viral_shed_normiert: " << daily_contacts_exposure
                           << " daily_air_exposure: " << daily_air_exposure << " mask factor: " << mask
                           << " personal protection: " << personal_protection << "\n";
             }
@@ -139,6 +136,8 @@ void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExpo
         const auto infectivity = infection.get_infectivity(t + dt / 2);
         const auto quarantine_factor =
             person.is_in_quarantine(t, params) ? (1.0 - params.get<QuarantineEffectiveness>()) : 1.0;
+        std::cout << "Person " << person.get_id().get() << " adds exposure contribution for virus " << static_cast<uint32_t>(virus)
+                  << ": infectivity " << infectivity << ", quarantine factor " << quarantine_factor << "\n";
 
         for (CellIndex cell : person.get_cells()) {
             auto air_contribution     = infectivity * quarantine_factor;
@@ -167,6 +166,9 @@ void normalize_exposure_contribution(ContactExposureRates& local_contact_exposur
         if (local_population_by_age[age_index] > 0) {
             // this instruction is not and does not need to be atomic
             local_contact_exposure[index] = local_contact_exposure[index] / local_population_by_age[age_index];
+            std::cout << "Normalized contact exposure " << local_contact_exposure[index] << " with population "
+                      << local_population_by_age[age_index] << " to "
+                      << local_contact_exposure[index] << "\n";
         }
     }
 }

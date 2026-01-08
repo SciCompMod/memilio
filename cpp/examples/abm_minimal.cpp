@@ -136,7 +136,7 @@ int main(int argc, char* argv[])
 
     auto first_person = model.get_persons().begin();
     auto rng = mio::abm::PersonalRandomNumberGenerator(*first_person);
-    mio::abm::InfectionState infection_state = mio::abm::InfectionState::InfectedNoSymptoms;
+    mio::abm::InfectionState infection_state = mio::abm::InfectionState::Exposed;
     auto infection = mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, first_person->get_age(),
                                                          model.parameters, start_date- mio::abm::days(0), infection_state);
     first_person->add_new_infection(std::move(infection));
@@ -150,7 +150,7 @@ int main(int argc, char* argv[])
 
     // Set start and end time for the simulation.
     auto t0   = mio::abm::TimePoint(0);
-    auto tmax = t0 + mio::abm::days(1);
+    auto tmax = t0 + mio::abm::days(10);
     auto sim  = mio::abm::Simulation(t0, std::move(model));
 
     // Create a history object to store the time series of the infection states.

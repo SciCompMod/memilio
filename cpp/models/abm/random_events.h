@@ -66,8 +66,7 @@ T random_transition(RNG& rng, T current_state, TimeSpan dt,
     auto v = ExponentialDistribution<ScalarType>::get_instance()(rng, sum);
     // Calulate probability for v < dt.days()
     auto prob_v_lt_dt = 1 - std::exp(-sum * dt.days());
-    std::cout << " sampled v: " << v << " for sum: " << sum << " and dt: " << dt.days() << " with prob(v<dt)%: " << prob_v_lt_dt*100
-              << " current state: " << static_cast<int>(current_state) << "\n";
+    std::cout <<" lambda_theorie/n_s=lambda_paper*exposed_viral_shed/n_s: " << sum << " with prob(v<dt)%: " << prob_v_lt_dt*100 << "\n";
     if (v < dt.days()) {
         //pick one of the possible transitions using discrete distribution
         std::array<ScalarType, NumTransitions> rates;

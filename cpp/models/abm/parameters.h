@@ -354,7 +354,7 @@ struct VirusShedFactor {
     static Type get_default(AgeGroup size)
     {
         Type default_val({VirusVariant::Count, size},
-                         AbstractParameterDistribution(ParameterDistributionUniform(0.28, 0.28)));
+                         AbstractParameterDistribution(ParameterDistributionUniform(0.14, 0.14)));
         return default_val;
     }
     static std::string name()
