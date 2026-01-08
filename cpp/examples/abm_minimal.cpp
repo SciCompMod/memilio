@@ -106,8 +106,12 @@ int main(int argc, char* argv[])
     // Create the model with 4 age groups.
     auto model = mio::abm::Model(num_age_groups);
     auto start_date = mio::abm::TimePoint(0);
-    // Set same infection parameter for all age groups. For example, the incubation period is log normally distributed with parameters 4 and 1.
-    model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() = mio::ParameterDistributionLogNormal(4., 1.);
+
+    for (auto& loc : model.get_locations()) {
+        if (loc.get_type()== mio::abm::LocationType::Home) {
+             loc.get_infection_parameters().get<mio::abm::ContactRates>()[{age_group_0_to_4, age_group_0_to_4}] = 0.8806*1.6;
+        }
+    }
 
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
     model.parameters.get<mio::abm::AgeGroupGotoSchool>()                    = false;

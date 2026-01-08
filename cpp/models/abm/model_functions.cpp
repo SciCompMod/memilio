@@ -43,8 +43,8 @@ ScalarType daily_transmissions_by_contacts(const ContactExposureRates& rates, co
             age_receiver_group_size > 1) // adjust for the person not meeting themself
         {
 
-            prob += rates[{cell_index, virus, age_transmitter}] *
-                    params.get<ContactRates>()[{age_receiver, age_transmitter}] ;
+            prob += rates[{cell_index, virus, age_transmitter}] *params.get<ContactRates>()[{age_receiver, age_transmitter}] * age_receiver_group_size /
+                    (age_receiver_group_size - 1);
                
         }
         else {
