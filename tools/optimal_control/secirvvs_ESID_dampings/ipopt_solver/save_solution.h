@@ -116,7 +116,7 @@ void save_solution(
                 const auto& ts    = node.property.get_simulation().get_result();
                 auto local_state  = ts.get_last_value();
 
-                size_t groups = model.parameters.get_num_groups();
+                size_t groups = model.parameters.get_num_groups().get();
 
                 for (size_t g = 0; g < groups; g++) {
                     for (size_t s = 0; s < num_infection_states(); s++) {
@@ -142,7 +142,7 @@ void save_solution(
                 const auto& ts    = node.property.get_simulation().get_result();
                 auto local_state  = ts.get_last_value();
 
-                size_t groups = model.parameters.get_num_groups();
+                size_t groups = model.parameters.get_num_groups().get();
 
                 for (size_t g = 0; g < groups; g++) {
                     for (size_t s = 0; s < num_infection_states(); s++) {
