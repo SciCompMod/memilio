@@ -303,8 +303,7 @@ void Model::initial_compute_compartments(ScalarType dt)
             // The scheme of the ODE model for initialization is applied here.
             populations[Eigen::Index(0)][Ri] = total_confirmed_cases[group] - populations[Eigen::Index(0)][ISyi] -
                                                populations[Eigen::Index(0)][ISevi] -
-                                               populations[Eigen::Index(0)][ICri] -
-                                               populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)];
+                                               populations[Eigen::Index(0)][ICri] - populations[Eigen::Index(0)][Di];
 
             populations[Eigen::Index(0)][Si] = m_N[group] - populations[Eigen::Index(0)][Ei] -
                                                populations[Eigen::Index(0)][INSi] - populations[Eigen::Index(0)][ISyi] -
@@ -448,13 +447,16 @@ void Model::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx
     Eigen::Index calc_time_index =
         (Eigen::Index)std::ceil(m_transitiondistributions_support_max[group][idx_InfectionTransitions] / dt);
 
-    int transition_idx = get_transition_flat_index(idx_InfectionTransitions, size_t(group));
+    // Index referring to the incoming flow in TimeSeries transitions.
+    int inflow_index = get_transition_flat_index(idx_IncomingFlow, size_t(group));
     for (Eigen::Index i = current_time_index - calc_time_index; i < current_time_index; i++) {
         // (current_time_index - i)  is the index corresponding to time the individuals have already spent in this state.
         sum += m_transitiondistributions_derivative[group][idx_InfectionTransitions][current_time_index - i] *
-               transitions[i + 1][idx_IncomingFlow];
+               transitions[i + 1][inflow_index];
     }
 
+    // Index referring to the here computed transition in TimeSeries transitions.
+    int transition_idx = get_transition_flat_index(idx_InfectionTransitions, size_t(group));
     transitions.get_value(current_time_index)[transition_idx] =
         (-dt) * parameters.get<TransitionProbabilities>()[group][idx_InfectionTransitions] * sum;
 }
