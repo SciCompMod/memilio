@@ -88,44 +88,6 @@ def preprocess_icu_data(df, moving_average):
             lambda x: x.rolling(window=moving_average, min_periods=1).mean())
         df_merged['ICU_ventilated'] = df_merged.groupby('ID_Provincia')['ICU_ventilated'].transform(
             lambda x: x.rolling(window=moving_average, min_periods=1).mean())
-    # print provinces where ICU or ICU_ventilated are zero for all dates
-    zero_icu = df_merged.groupby('ID_Provincia')['ICU'].apply(
-        lambda x: (x.eq(0).all() or x.isna().any()))
-    zero_icu_vent = df_merged.groupby('ID_Provincia')['ICU_ventilated'].apply(
-        lambda x: x.fillna(0).eq(0).all())
-    ids = sorted(set(zero_icu[zero_icu].index.tolist(
-    ) + zero_icu_vent[zero_icu_vent].index.tolist()))
-    if ids:
-        print("ID_Provincia with ICU or ICU_ventilated zero for all dates:", ids)
-        for pid in ids:
-            icu_zero = bool(zero_icu.get(pid, False))
-            icu_vent_zero = bool(zero_icu_vent.get(pid, False))
-            print(
-                f"ID_Provincia {pid}: ICU zero={icu_zero}, ICU_ventilated zero={icu_vent_zero}")
-
-    # additionally check provinces where ICU or ICU_ventilated are zero in a specific period
-    # period: 2020-10-01 .. 2020-11-30
-    start = pd.to_datetime('2020-10-01')
-    end = pd.to_datetime('2020-11-30')
-    date_series = pd.to_datetime(df_merged['Date'])
-    mask = (date_series >= start) & (date_series <= end)
-    df_period = df_merged[mask]
-
-    if not df_period.empty:
-        zero_icu_period = df_period.groupby('ID_Provincia')['ICU'].apply(
-            lambda x: x.fillna(0).eq(0).all())
-        zero_icu_vent_period = df_period.groupby('ID_Provincia')['ICU_ventilated'].apply(
-            lambda x: x.fillna(0).eq(0).all())
-        ids_period = sorted(set(zero_icu_period[zero_icu_period].index.tolist() +
-                                zero_icu_vent_period[zero_icu_vent_period].index.tolist()))
-        if ids_period:
-            print(
-                "ID_Provincia with ICU or ICU_ventilated zero between 2020-10-01 and 2020-11-30:", ids_period)
-            for pid in ids_period:
-                icu_zero = bool(zero_icu_period.get(pid, False))
-                icu_vent_zero = bool(zero_icu_vent_period.get(pid, False))
-                print(
-                    f"ID_Provincia {pid}: ICU zero={icu_zero}, ICU_ventilated zero={icu_vent_zero}")
 
     return df_merged
 
@@ -327,7 +289,7 @@ def aggregate_to_comunidades(df, column_labels=['ID_County']):
 
 if __name__ == "__main__":
 
-    moving_average = 0
+    moving_average = 7
 
     data_dir = os.path.join(os.path.dirname(
         os.path.abspath(__file__)), "../../../../data/Spain")
