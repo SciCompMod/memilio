@@ -108,6 +108,11 @@ IOResult<std::vector<SimulationResult>> read_result(const std::string& filename)
     MEMILIO_H5_CHECK(H5Literate(file.id, H5_INDEX_NAME, H5_ITER_INC, NULL, &store_group_name, &h5group_names),
                      StatusCode::UnknownError, "Group names could not be read.");
 
+    std::sort(h5group_names.begin(), h5group_names.end(),
+            [](const std::string &a, const std::string &b) {
+                return std::stoi(a) < std::stoi(b);
+            });
+    
     for (auto& h5group_name : h5group_names) {
         H5Group region_h5group{H5Gopen(file.id, h5group_name.c_str(), H5P_DEFAULT)};
         MEMILIO_H5_CHECK(region_h5group.id, StatusCode::UnknownError,

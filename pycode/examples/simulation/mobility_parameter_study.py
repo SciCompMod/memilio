@@ -129,7 +129,7 @@ def run_mobility_parameter_study():
 
     t0 = 0
     tmax = 50
-    study = osecir.ParameterStudy(graph, t0, tmax, dt=1.0, num_runs=3)
+    study = osecir.GraphParameterStudy(graph, t0, tmax, dt=1.0, num_runs=3)
     study.run(handle_result)
 
 

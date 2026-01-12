@@ -13,7 +13,7 @@ The package uses the [Clang C++ library](https://clang.llvm.org/) and the [LibCl
 
 ## Installation
 
-Use the provided `setup.py` script to build and install the package. To install the package, use the command (from the directory containing `setup.py`)
+Use the provided `pyproject.toml` file to build and install the package. To install the package, use the command (from the directory containing `pyproject.toml`)
 
 ```bash
 pip install -e .[dev]
@@ -35,10 +35,21 @@ You can print the AST of your model into a file (Usefull for development/debuggi
 
 ## Testing
 
-The package provides a test suite in `memilio/generation_test`. To run the tests, simply run the following command:
+The package provides a test suite in the `tests` directory.
+To run the tests, make sure the package is installed, and you are in the source directory, then run:
 
 ```bash
+cd tests
 python -m unittest
+```
+
+This works with both normal (`pip install .`) and editable (`pip install -e .`) installations.
+
+Alternatively, you can run the tests from outside the source directory:
+
+```bash
+cd /path/to/another/directory
+python -m unittest discover -s /path/to/memilio/pycode/memilio-generation/tests
 ```
 
 ## Development
@@ -51,4 +62,4 @@ When implementing new model features you can follow these steps:
 - Adjust the substitution dictionaries in the [Generator class](./memilio/generation/generator.py).
 - Write new/Adjust script in the [tool folder](./memilio/tools/) for the model and try to run.
 - Add new strings in the [Default dict](/pycode/memilio-generation/memilio/generation/default_generation_dict.py)
-- Update [tests](./memilio/generation_test/).
+- Update [tests](./tests/).
