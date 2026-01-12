@@ -127,7 +127,7 @@ public:
     /**
      * @returns Get the infection course of the infection.
     */
-    std::vector<std::pair<TimePoint, InfectionState>> get_infection_course() const;
+    std::vector<std::pair<TimePoint, InfectionState>>& get_infection_course();
 
     /// This method is used by the default serialization feature.
     auto default_serialize()

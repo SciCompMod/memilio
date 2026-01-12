@@ -597,12 +597,13 @@ struct LognormSurvivalFunction : public StateAgeFunction<ScalarType> {
      */
     ScalarType eval(ScalarType state_age) override
     {
-        if (state_age < this->m_location) {
+        // Attention: Here we adapted the eval function such that it matches the implementation of the ABM using std.
+        if (state_age < mio::Limits<ScalarType>::zero_tolerance()) {
             return 1;
         }
         boost::math::lognormal_distribution<ScalarType, boost::math::policies::policy<>> logn(
-            0.0, this->m_distribution_parameter);
-        return boost::math::cdf(boost::math::complement(logn, (state_age - this->m_location) / this->m_scale));
+            this->m_location, this->m_distribution_parameter);
+        return boost::math::cdf(boost::math::complement(logn, state_age / this->m_scale));
     }
 
     // Closed form for the mean value is kind of complex, use default implementation.

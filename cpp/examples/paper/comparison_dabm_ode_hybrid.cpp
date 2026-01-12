@@ -172,6 +172,19 @@ mio::dabm::Model<SingleWell<mio::osecir::InfectionState>> initialize_abm()
     return model;
 }
 
+bool is_extinction(const mio::TimeSeries<double>& result)
+{
+    const auto& v = result.get_last_value();
+    return (v[(int)mio::osecir::InfectionState::Exposed] + v[(int)mio::osecir::InfectionState::InfectedNoSymptoms] +
+                v[(int)mio::osecir::InfectionState::InfectedNoSymptomsConfirmed] +
+                v[(int)mio::osecir::InfectionState::InfectedSymptoms] +
+                v[(int)mio::osecir::InfectionState::InfectedSymptomsConfirmed] +
+                v[(int)mio::osecir::InfectionState::InfectedSevere] +
+                v[(int)mio::osecir::InfectionState::InfectedCritical] <
+            1.) &&
+           (v[(int)mio::osecir::InfectionState::Recovered] + v[(int)mio::osecir::InfectionState::Dead] < 10.);
+}
+
 mio::IOResult<void> save_results(std::vector<std::vector<mio::TimeSeries<double>>>& ensemble_result,
                                  std::string result_dir, std::string model_name)
 {
@@ -215,8 +228,27 @@ mio::IOResult<void> simulate_dabm(std::string result_dir, size_t num_runs)
         sim_time[run]           = timer.get_elapsed_time();
         ensemble_result[run][0] = mio::interpolate_simulation_result(sim.get_result());
     }
+
+    // Separate extinction and survival runs
+    std::vector<std::vector<mio::TimeSeries<double>>> extinction_results;
+    std::vector<std::vector<mio::TimeSeries<double>>> survival_results;
+    for (size_t run = 0; run < num_runs; run++) {
+        if (is_extinction(ensemble_result[run][0])) {
+            extinction_results.push_back(ensemble_result[run]);
+        }
+        else {
+            survival_results.push_back(ensemble_result[run]);
+        }
+    }
+
+    std::cerr << "ABM Number of extinction runs: " << extinction_results.size() << " out of " << num_runs << std::endl;
+    std::cerr << "ABM Number of survival runs: " << survival_results.size() << " out of " << num_runs << std::endl;
+
     // Save ensemble results
     BOOST_OUTCOME_TRY(save_results(ensemble_result, result_dir, "dabm"));
+    BOOST_OUTCOME_TRY(save_results(extinction_results, result_dir, "dabm_extinction"));
+    BOOST_OUTCOME_TRY(save_results(survival_results, result_dir, "dabm_survival"));
+
     // Convert init_time and sim_time to TimeSeries and save as csv
     mio::TimeSeries<double> init_time_ts(1);
     mio::TimeSeries<double> sim_time_ts(1);
@@ -298,8 +330,27 @@ mio::IOResult<void> simulate_ode_secir(std::string result_dir, size_t num_runs)
         ensemble_result[run][0] = mio::interpolate_simulation_result(sim.get_result());
     }
 
+    // Separate extinction and survival runs
+    std::vector<std::vector<mio::TimeSeries<double>>> extinction_results;
+    std::vector<std::vector<mio::TimeSeries<double>>> survival_results;
+    for (size_t run = 0; run < num_runs; run++) {
+        if (is_extinction(ensemble_result[run][0])) {
+            extinction_results.push_back(ensemble_result[run]);
+        }
+        else {
+            survival_results.push_back(ensemble_result[run]);
+        }
+    }
+
+    std::cerr << "ODE Number of extinction runs: " << extinction_results.size() << " out of " << num_runs << std::endl;
+    std::cerr << "ODE Number of survival runs: " << survival_results.size() << " out of " << num_runs << std::endl;
+
     // Save ensemble results
     BOOST_OUTCOME_TRY(save_results(ensemble_result, result_dir, "osecir"));
+    if (extinction_results.size() > 0) {
+        BOOST_OUTCOME_TRY(save_results(extinction_results, result_dir, "osecir_extinction"));
+    }
+    BOOST_OUTCOME_TRY(save_results(survival_results, result_dir, "osecir_survival"));
     mio::TimeSeries<double> init_time_ts(1);
     mio::TimeSeries<double> sim_time_ts(1);
     for (size_t i = 0; i < num_runs; i++) {
@@ -417,8 +468,27 @@ mio::IOResult<void> simulate_hybrid(std::string result_dir, size_t num_runs, con
         }
     }
 
+    // Separate extinction and survival runs
+    std::vector<std::vector<mio::TimeSeries<double>>> extinction_results;
+    std::vector<std::vector<mio::TimeSeries<double>>> survival_results;
+    for (size_t run = 0; run < num_runs; run++) {
+        if (is_extinction(ensemble_result[run][0])) {
+            extinction_results.push_back(ensemble_result[run]);
+        }
+        else {
+            survival_results.push_back(ensemble_result[run]);
+        }
+    }
+
+    std::cerr << "Hybrid: Number of extinction runs: " << extinction_results.size() << " out of " << num_runs
+              << std::endl;
+    std::cerr << "Hybrid: Number of survival runs: " << survival_results.size() << " out of " << num_runs << std::endl;
+
     // Save ensemble results
     BOOST_OUTCOME_TRY(save_results(ensemble_result, result_dir, "hybrid"));
+    BOOST_OUTCOME_TRY(save_results(extinction_results, result_dir, "hybrid_extinction"));
+    BOOST_OUTCOME_TRY(save_results(survival_results, result_dir, "hybrid_survival"));
+
     mio::TimeSeries<double> init_time_ts(1);
     mio::TimeSeries<double> sim_time_ts(1);
     mio::TimeSeries<double> switch_survival_ts(1);
@@ -439,14 +509,14 @@ mio::IOResult<void> simulate_hybrid(std::string result_dir, size_t num_runs, con
     BOOST_OUTCOME_TRY(switch_survival_ts.export_csv(result_dir + "hybrid_switch_survival.csv"));
     BOOST_OUTCOME_TRY(switch_extinction_ts.export_csv(result_dir + "hybrid_switch_extinction.csv"));
     std::cerr << "Number of runs where switch occurred: " << switch_runs << " out of " << num_runs << std::endl;
-    std::cerr << "Number of extinction runs: " << extinction_runs << " out of " << num_runs << std::endl;
-    std::cerr << "Number of survival runs: " << survival_runs << " out of " << num_runs << std::endl;
+    std::cerr << "hybrid: Number of extinction runs: " << extinction_runs << " out of " << num_runs << std::endl;
+    std::cerr << "hybrid:Number of survival runs: " << survival_runs << " out of " << num_runs << std::endl;
     return mio::success();
 }
 
 int main()
 {
-    std::string result_dir  = "/home/bick_ju//Documents/MEmilioPaper/HybridApplication/";
+    std::string result_dir  = "/hpc_data/bick_ju/MemilioPaper/HybridApplication/";
     size_t num_runs         = 1000;
     double switch_threshold = 3.0;
 

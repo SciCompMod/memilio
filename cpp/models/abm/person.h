@@ -411,7 +411,7 @@ public:
      * @brief Get this Person's key that is used for the RandomNumberGenerator.
      * @see mio::abm::PersonalRandomNumberGenerator.
      */
-    mio::Key<uint64_t> get_rng_key()
+    mio::Key<uint64_t>& get_rng_key()
     {
         return m_rng_key;
     }
@@ -427,6 +427,7 @@ public:
         return Members("Person")
             .add("location", m_location)
             .add("location_type", m_location_type)
+            .add("location_model_id", m_location_model_id)
             .add("assigned_locations", m_assigned_locations)
             .add("vaccinations", m_vaccinations)
             .add("infections", m_infections)
@@ -441,10 +442,12 @@ public:
             .add("compliance", m_compliance)
             .add("cells", m_cells)
             .add("last_transport_mode", m_last_transport_mode)
-            .add("rng_counter", m_rng_counter)
             .add("test_results", m_test_results)
+            .add("assigned_location_model_ids", m_assigned_location_model_ids)
             .add("id", m_person_id)
-            .add("rng_index", m_rng_index);
+            .add("rng_key", m_rng_key)
+            .add("rng_index", m_rng_index)
+            .add("rng_counter", m_rng_counter);
     }
 
     /**
@@ -462,6 +465,14 @@ public:
      * @return The latest TestResult of the given Type.
     */
     TestResult get_test_result(TestType type) const;
+
+    /**
+     * @brief Get the infections of the Person.
+     */
+    std::vector<Infection> get_infections() const
+    {
+        return m_infections;
+    }
 
 private:
     LocationId m_location; ///< Current Location of the Person.

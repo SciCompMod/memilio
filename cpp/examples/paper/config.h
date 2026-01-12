@@ -27,15 +27,19 @@
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/io/history.h"
 #include "memilio/utils/compiler_diagnostics.h"
+#include <algorithm>
+#include <numeric>
 #include <vector>
 namespace params
 {
-const size_t num_age_groups               = 6;
-const size_t scaling_factor               = 1000;
-const std::vector<double> age_group_sizes = {3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434};
-const ScalarType total_population         = 83155031. / scaling_factor;
-// const ScalarType total_confirmed_cases = 341223.;
-// const ScalarType deaths = 0.;
+const size_t num_age_groups = 6;
+// Define age group sizes and resulting total population of Germany.
+const std::vector<double> age_group_sizes_germany = {3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434};
+const ScalarType total_population_germany =
+    std::accumulate(age_group_sizes_germany.begin(), age_group_sizes_germany.end(), 0.);
+// Define scaling factor so that we can scale population down for faster simulation.
+const size_t scaling_factor       = 1000;
+const ScalarType total_population = total_population_germany / scaling_factor;
 
 // Define transition probabilities per age group.
 const ScalarType infectedSymptomsPerInfectedNoSymptoms[] = {0.75, 0.75, 0.8, 0.8, 0.8, 0.8};
@@ -45,15 +49,15 @@ const ScalarType deathsPerCritical[]                     = {0.05, 0.05, 0.14, 0.
 
 // Define lognormal parameters. For each transition, we need shape and scale.
 // These are given in this order below. The transition distributions are the same for all age groups.
-const ScalarType lognorm_EtINS[]     = {0.32459285, 4.26907484};
-const ScalarType lognorm_INStISy[]   = {0.7158751, 0.85135303};
-const ScalarType lognorm_INStR[]     = {0.24622068, 7.76114};
-const ScalarType lognorm_ISytISev[]  = {0.66258947, 5.29920733};
-const ScalarType lognorm_ISytR[]     = {0.24622068, 7.76114};
-const ScalarType lognorm_ISevtICri[] = {1.01076765, 0.9};
-const ScalarType lognorm_ISevtR[]    = {0.33816427, 17.09411753};
-const ScalarType lognorm_ICritD[]    = {0.42819924, 9.76267505};
-const ScalarType lognorm_ICritR[]    = {0.33816427, 17.09411753};
+const ScalarType lognorm_EtINS[]     = {1.45139714, 0.32459285}; //{0.32459285, 4.26907484};
+const ScalarType lognorm_INStISy[]   = {-0.1609284, 0.7158751}; //{0.7158751, 0.85135303};
+const ScalarType lognorm_INStR[]     = {2.04912923, 0.24622068}; //{0.24622068, 7.76114};
+const ScalarType lognorm_ISytISev[]  = {1.66755725, 0.66258947}; //{0.66258947, 5.29920733};
+const ScalarType lognorm_ISytR[]     = {2.04912923, 0.24622068}; //{0.24622068, 7.76114};
+const ScalarType lognorm_ISevtICri[] = {-0.10536052, 1.01076765}; //{1.01076765, 0.9};
+const ScalarType lognorm_ISevtR[]    = {2.8387344, 0.33816427}; //{0.33816427, 17.09411753};
+const ScalarType lognorm_ICritD[]    = {2.27856645, 0.42819924}; //{0.42819924, 9.76267505};
+const ScalarType lognorm_ICritR[]    = {2.8387344, 0.33816427}; //{0.33816427, 17.09411753};
 
 // Define mean stay times per age group. Note that these are different per age group as the transition probabilities
 // differ between age groups.
@@ -73,16 +77,19 @@ constexpr size_t n_subcomps_ISev[] = {8, 8, 8, 7, 6, 5};
 constexpr size_t n_subcomps_ICri[] = {8, 8, 8, 8, 7, 6};
 
 // Define epidemiological parameters.
-const ScalarType transmissionProbabilityOnContact[] = {0.03, 0.06, 0.06, 0.06, 0.09, 0.175};
-const ScalarType relativeTransmissionNoSymptoms     = 1;
-const ScalarType riskOfInfectionFromSymptomatic     = 1.;
-const ScalarType seasonality                        = 0.;
-const ScalarType scale_confirmed_cases              = 1.;
+const ScalarType relativeTransmissionNoSymptoms = 1;
+const ScalarType riskOfInfectionFromSymptomatic = 1.;
+const ScalarType seasonality                    = 0.; // this implies that we don't have any seasonal effects in EBMs
+const ScalarType scale_confirmed_cases          = 1.;
+
+// Define tolerance for computing the support max for IDE model and initialization of LCT model.
+const ScalarType tol_supp_max = 1e-8;
 
 // Define simulation parameters.
-ScalarType t0   = 0.;
-ScalarType tmax = 20;
-ScalarType dt   = 0.01;
+const ScalarType t0        = 0.;
+const ScalarType init_tmax = 20.;
+const ScalarType tmax      = 120.;
+const ScalarType dt        = 1. / 24.; // corresponds to hours that are used as time step in ABM simulation
 
 } // namespace params
 
@@ -130,11 +137,20 @@ struct LogExposureRate : mio::LogAlways {
         if (rates.size() > 0) {
             size_t num_locs = 0;
             for (auto& loc : sim.get_model().get_locations()) {
-                num_locs += 1;
+                bool counted_loc = false;
                 for (size_t age = 0; age < params::num_age_groups; ++age) {
-                    cum_rate[age] += rates[loc.get_id().get()][{mio::abm::CellIndex(0),
-                                                                mio::abm::VirusVariant::Wildtype, mio::AgeGroup(age)}];
+                    auto& rate = rates[loc.get_id().get()]
+                                      [{mio::abm::CellIndex(0), mio::abm::VirusVariant::Wildtype, mio::AgeGroup(age)}];
+                    cum_rate[age] += rate;
+                    if (rate > 0 && !counted_loc) {
+                        num_locs += 1;
+                        counted_loc = true;
+                    }
                 }
+            }
+
+            if (num_locs < 1) {
+                num_locs = 1;
             }
             // Divide rate by number of locations
             std::transform(cum_rate.begin(), cum_rate.end(), cum_rate.begin(), [num_locs](double x) {
