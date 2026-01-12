@@ -381,7 +381,7 @@ def plot_single_ABM_run(file, seeds, num_age_groups, num_comps, save_dir=""):
 
 if __name__ == '__main__':
 
-    exponential_scenario = True
+    exponential_scenario = False
     one_location = False
     set_fontsize()
 
@@ -396,13 +396,14 @@ if __name__ == '__main__':
         location = "multiple_locations"
 
     folder = "Seed1"
+    num_runs = 100
 
     # Path where simulation results are stored.
     result_dir = os.path.join(os.path.dirname(
-        __file__),  f"simulation_results/compare_abm_ide_lct_ode/20_runs/{distribution}/{location}/{folder}/")
+        __file__),  f"simulation_results/compare_abm_ide_lct_ode/{num_runs}_runs/{distribution}/{location}/{folder}/")
     # Path where plots will be stored.
     plot_dir = os.path.join(os.path.dirname(
-        __file__),  f"plots/compare_abm_ide_lct_ode/20_runs/{distribution}/{location}/{folder}/")
+        __file__),  f"plots/compare_abm_ide_lct_ode/{num_runs}_runs/{distribution}/{location}/{folder}/")
     os.makedirs(plot_dir, exist_ok=True)
 
     num_age_groups = 6

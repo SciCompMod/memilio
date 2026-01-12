@@ -27,7 +27,6 @@
 #include "abm/simulation.h"
 #include "abm/time.h"
 #include "abm/virus_variant.h"
-#include "lct_secir/initializer_flows.h"
 #include "memilio/config.h"
 #include "memilio/data/analyze_result.h"
 #include "memilio/epidemiology/age_group.h"
@@ -155,7 +154,7 @@ IOResult<UncertainContactMatrix<ScalarType>> get_contact_matrix(std::string cont
 
 /**
 * @brief Calculate the size of age groups from a vector containing the number of indiviuals at the start of the simulation
-* for a SECIR-type model.    
+* for an ageresolved SECIR-type model.    
 *
 * @param[in] init_compartments Vector containing number of individuals at start of simulation. 
 * @returns Vector containing age group sizes. 
@@ -173,11 +172,21 @@ Eigen::VectorX<ScalarType> get_age_group_sizes_from_compartment_vector(Eigen::Ve
 }
 
 /**
-* @brief Function that simulates from time 0 until tmax using an IDE model. The simulation results will be saved in the folder save_dir as .h5 files.    
+* @brief Function that simulates IDE-SECIR model from time init_tmax until tmax. The simulation results will be saved 
+* in the folder save_dir as .h5 files.    
 *
+* @param[in] init_flows Flows based on the initial ABM simulation, used for initialization. 
+* @param[in] init_compartments_t0 Compartment sizes at t0 (simulation start of initial ABM simulation), used for 
+* initialization.
+* @param[in] transmissionProbabilityOnContact Transmission probability on contact per age group. 
+* @param[in] contact_data_dir Directory where contact data is stored. 
+* @param[in] exponential_scenario Bool deciding whether exponential or lognormal distributions are used. Default is 
+* false, implying the use of lognormal distributions.
 * @param[in] save_dir Directory where simulation results will be saved. Default is an empty string leading to the 
 * results not being saved. 
-* @returns Any io errors that happen or the simulation results for the compartments.
+* @param[in] filename String that can be used to further specify the name of the simulation results. Default is an 
+* empty string.
+* @returns Any io errors that happen.
 */
 IOResult<void> simulate_ide(TimeSeries<ScalarType> init_flows, Vector init_compartments_t0,
                             std::vector<ScalarType> transmissionProbabilityOnContact, std::string contact_data_dir,
@@ -282,7 +291,7 @@ IOResult<void> simulate_ide(TimeSeries<ScalarType> init_flows, Vector init_compa
         vec_transition_dist_group[(int)InfTransition::InfectedNoSymptomsToRecovered].set_state_age_function(
             survivalInfectedNoSymptomsToRecovered);
         // InfectedSymptomsToInfectedSevere
-        LognormSurvivalFunction survivalInfectedSymptomsToInfectedSevere(lognorm_ISytISev[1], lognorm_ISytR[0]);
+        LognormSurvivalFunction survivalInfectedSymptomsToInfectedSevere(lognorm_ISytISev[1], lognorm_ISytISev[0]);
         vec_transition_dist_group[(int)InfTransition::InfectedSymptomsToInfectedSevere].set_state_age_function(
             survivalInfectedSymptomsToInfectedSevere);
         // InfectedSymptomsToRecovered
@@ -298,7 +307,7 @@ IOResult<void> simulate_ide(TimeSeries<ScalarType> init_flows, Vector init_compa
         vec_transition_dist_group[(int)InfTransition::InfectedSevereToRecovered].set_state_age_function(
             survivalInfectedSevereToRecovered);
         // InfectedCriticalToDead
-        LognormSurvivalFunction survivalInfectedCriticalToDead(lognorm_ICritD[1], lognorm_ICritR[0]);
+        LognormSurvivalFunction survivalInfectedCriticalToDead(lognorm_ICritD[1], lognorm_ICritD[0]);
         vec_transition_dist_group[(int)InfTransition::InfectedCriticalToDead].set_state_age_function(
             survivalInfectedCriticalToDead);
         // InfectedCriticalToRecovered
@@ -383,10 +392,23 @@ IOResult<void> simulate_ide(TimeSeries<ScalarType> init_flows, Vector init_compa
     return success();
 }
 
+/**
+* @brief Function that simulates LCT-SECIR model from time init_tmax until tmax. The simulation results will be saved 
+* in the folder save_dir as .h5 files.    
+*
+* @tparam exponential_scenario Bool deciding whether exponential or Erlang distributions are used. 
+* @param[in] init_compartments Compartment sizes at init_tmax (start time of the simulation), used for initialization.
+* @param[in] transmissionProbabilityOnContact Transmission probability on contact per age group. 
+* @param[in] contact_data_dir Directory where contact data is stored. 
+* @param[in] save_dir Directory where simulation results will be saved. Default is an empty string leading to the 
+* results not being saved. 
+* @param[in] filename String that can be used to further specify the name of the simulation results. Default is an 
+* empty string.
+* @returns Any io errors that happen.
+*/
 template <bool exponential_scenario>
-IOResult<void> simulate_lct(Vector init_compartments, mio::TimeSeries<ScalarType> init_flows,
-                            std::vector<ScalarType> transmissionProbabilityOnContact, std::string contact_data_dir,
-                            std::string save_dir = "", std::string filename = "")
+IOResult<void> simulate_lct(Vector init_compartments, std::vector<ScalarType> transmissionProbabilityOnContact,
+                            std::string contact_data_dir, std::string save_dir = "", std::string filename = "")
 {
     using namespace params;
 
@@ -444,33 +466,6 @@ IOResult<void> simulate_lct(Vector init_compartments, mio::TimeSeries<ScalarType
     BOOST_OUTCOME_TRY(auto&& contact_matrix, get_contact_matrix(contact_data_dir, true));
     model.parameters.template get<lsecir::ContactPatterns<ScalarType>>() = contact_matrix;
     model.parameters.template get<lsecir::Seasonality<ScalarType>>()     = seasonality;
-
-    // // Use init_compartments as a basis to define appropriate initial values.
-    // // Use Initializer class for this.
-    // // Define vectors for total population per age group, total confirmed cases and deaths according to init_compartments.
-    // Eigen::VectorX<ScalarType> total_population_per_age_group =
-    //     get_age_group_sizes_from_compartment_vector(init_compartments);
-    // Eigen::VectorX<ScalarType> total_confirmed_cases = Eigen::VectorX<ScalarType>::Zero(num_age_groups);
-    // Eigen::VectorX<ScalarType> deaths                = Eigen::VectorX<ScalarType>::Zero(num_age_groups);
-    // for (size_t group = 0; group < num_age_groups; group++) {
-    //     // Use indices of IDE as init_compartments uses compartments as in IDE-SECIR model without any subcompartments.
-    //     size_t INSi =
-    //         group * (size_t)isecir::InfectionState::Count + (size_t)isecir::InfectionState::InfectedNoSymptoms;
-    //     size_t ISyi  = group * (size_t)isecir::InfectionState::Count + (size_t)isecir::InfectionState::InfectedSymptoms;
-    //     size_t ISevi = group * (size_t)isecir::InfectionState::Count + (size_t)isecir::InfectionState::InfectedSevere;
-    //     size_t ICri  = group * (size_t)isecir::InfectionState::Count + (size_t)isecir::InfectionState::InfectedCritical;
-    //     size_t Ri    = group * (size_t)isecir::InfectionState::Count + (size_t)isecir::InfectionState::Recovered;
-    //     size_t Di    = group * (size_t)isecir::InfectionState::Count + (size_t)isecir::InfectionState::Dead;
-    //     total_confirmed_cases[group] = init_compartments[INSi] + init_compartments[ISyi] + init_compartments[ISevi] +
-    //                                    init_compartments[ICri] + init_compartments[Ri] + init_compartments[Di];
-    //     deaths[group] = init_compartments[Di];
-    // }
-
-    // // Compute initial populations for LCT model using Initializer class.
-    // lsecir::Initializer<ScalarType, Model> initializer(std::move(init_flows), model);
-    // initializer.set_tol_for_support_max(tol_supp_max);
-    // initializer.compute_initialization_vector(total_population_per_age_group, deaths, total_confirmed_cases);
-    unused(init_flows);
 
     // Use init_compartments as a basis to define appropriate initial values.
     // Compartment values are distributed uniformly to the subcompartments.
@@ -609,6 +604,19 @@ IOResult<void> simulate_lct(Vector init_compartments, mio::TimeSeries<ScalarType
     return success();
 }
 
+/**
+* @brief Function that simulates ODE-SECIR model from time init_tmax until tmax. The simulation results will be saved 
+* in the folder save_dir as .h5 files.    
+*
+* @param[in] init_compartments Compartment sizes at init_tmax (start time of the simulation), used for initialization.
+* @param[in] transmissionProbabilityOnContact Transmission probability on contact per age group. 
+* @param[in] contact_data_dir Directory where contact data is stored. 
+* @param[in] save_dir Directory where simulation results will be saved. Default is an empty string leading to the 
+* results not being saved. 
+* @param[in] filename String that can be used to further specify the name of the simulation results. Default is an 
+* empty string.
+* @returns Any io errors that happen.
+*/
 IOResult<void> simulate_ode(Vector init_compartments, std::vector<ScalarType> transmissionProbabilityOnContact,
                             std::string contact_data_dir, std::string save_dir = "", std::string filename = "")
 {
@@ -1803,10 +1811,10 @@ int main()
 {
     constexpr bool exponential_scenario = false;
 
-    // bool one_location                   = true;
+    bool one_location = false;
     const std::vector<double> infection_distribution{0.99, 0.005, 0.005, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-    size_t num_runs = 20;
+    size_t num_runs = 100;
     std::string save_dir =
         fmt::format("../../cpp/examples/paper/simulation_results/compare_abm_ide_lct_ode/{}_runs/", num_runs);
 
@@ -1872,12 +1880,8 @@ int main()
     }
 
     std::vector<double> transmissionProbabilityOnContact(params::num_age_groups);
-    //final
-    //transmissionProbabilityOnContact = {0.0266432, 0.0225801, 0.0215401, 0.0219972, 0.0213169, 0.019616};
     //final2
     transmissionProbabilityOnContact = {0.0409163, 0.0351982, 0.0337711, 0.0333412, 0.0328736, 0.0300238};
-    //final3
-    //transmissionProbabilityOnContact = {0.0694143, 0.0635391, 0.0611494, 0.0601362, 0.0601732, 0.0546945};
 
     // Simulate IDE.
     mio::set_log_level(LogLevel::info);
@@ -1885,15 +1889,8 @@ int main()
                                    exponential_scenario, save_dir);
 
     // Simulate LCT.
-    // Get extended init flows used for IDE initialization.
-    auto extended_flows_ide = csv_to_timeseries(save_dir + "ide_flows.csv").value();
-    auto init_flows_lct     = TimeSeries<ScalarType>(extended_flows_ide.get_time(0), extended_flows_ide.get_value(0));
-    while (init_flows_lct.get_last_time() < params::init_tmax - 1e-10) {
-        init_flows_lct.add_time_point(init_flows_lct.get_last_time() + params::dt,
-                                      extended_flows_ide.get_value(init_flows_lct.get_num_time_points() - 1));
-    }
-    auto result_lct = simulate_lct<exponential_scenario>(comps_init_tmax, init_flows_lct,
-                                                         transmissionProbabilityOnContact, contact_data_dir, save_dir);
+    auto result_lct = simulate_lct<exponential_scenario>(comps_init_tmax, transmissionProbabilityOnContact,
+                                                         contact_data_dir, save_dir);
 
     // Simulate ODE.
     auto result_ode = simulate_ode(comps_init_tmax, transmissionProbabilityOnContact, contact_data_dir, save_dir);
