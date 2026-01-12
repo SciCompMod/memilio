@@ -9,14 +9,14 @@ models = {"osecir": "ODE", "lsecir": "LCT", "isecir": "IDE"}
 model_colors = {"osecir": colors['Purple'], "lsecir": colors['Teal'], "isecir": colors['Orange']}
 
 data = {
-    "regions": [10, 100, 1000],
+    "regions": [200, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000],
     "osecir": [],
     "lsecir": [],
     "isecir": []
 }
 
 for model in models.keys():
-    folder_path  = os.path.join(plotting_dir, "..", f"simulation_paper_{models[model].lower()}", "results_runtime")
+    folder_path  = os.path.join(plotting_dir, f"{models[model].lower()}", "results_runtime")
     if not os.path.isdir(folder_path):
         continue
 
@@ -25,7 +25,7 @@ for model in models.keys():
         data[model].append(df.C1.mean())
 
 set_fontsize()        
-figsize = (5, 3.5)
+figsize = (8, 5)
 panel = (0.2, 0.2, 0.78, 0.75)
 fig = plt.figure(figsize=figsize)
 ax = fig.add_axes(panel)
