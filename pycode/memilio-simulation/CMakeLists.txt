@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.13)
 project(memilio-python)
 
+set(CMAKE_CXX_STANDARD "20")
+set(CMAKE_CXX_STANDARD_REQUIRED "20")
+
 option(MEMILIO_USE_BUNDLED_PYBIND11 "Use pybind11 bundled with this library." ON)
 mark_as_advanced(MEMILIO_USE_BUNDLED_PYBIND11)
 
@@ -17,7 +20,7 @@ if(MEMILIO_USE_BUNDLED_PYBIND11)
     include(FetchContent)
     FetchContent_Declare(pybind11
         GIT_REPOSITORY https://github.com/pybind/pybind11
-        GIT_TAG v2.11.1
+        GIT_TAG v3.0.0
     )
     FetchContent_GetProperties(pybind11)
 
@@ -39,13 +42,11 @@ function(add_pymio_module target_name)
     set(multiValueArgs LINKED_LIBRARIES SOURCES)
     cmake_parse_arguments(PYBIND11_MODULE "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-
     pybind11_add_module(${target_name} MODULE ${PYBIND11_MODULE_SOURCES})
     target_link_libraries(${target_name} PRIVATE ${PYBIND11_MODULE_LINKED_LIBRARIES})
     target_include_directories(${target_name} PRIVATE memilio/simulation/bindings)
     install(TARGETS ${target_name} LIBRARY DESTINATION memilio/simulation)
 endfunction()
-
 
 # build python extensions
 add_pymio_module(_simulation_abm
@@ -84,4 +85,18 @@ add_pymio_module(_simulation_osecir
 add_pymio_module(_simulation_osecirvvs
     LINKED_LIBRARIES memilio ode_secirvvs
     SOURCES memilio/simulation/bindings/models/osecirvvs.cpp
+)
+
+add_pymio_module(_simulation_ssir
+    LINKED_LIBRARIES memilio sde_sir
+    SOURCES memilio/simulation/bindings/models/ssir.cpp
+)
+
+add_pymio_module(_simulation_ssirs
+    LINKED_LIBRARIES memilio sde_sirs
+    SOURCES memilio/simulation/bindings/models/ssirs.cpp
+)
+add_pymio_module(_simulation_omseirs4
+    LINKED_LIBRARIES memilio ode_mseirs4
+    SOURCES memilio/simulation/bindings/models/omseirs4.cpp
 )

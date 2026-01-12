@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Henrik Zunker
@@ -35,13 +35,18 @@ namespace mio
 class RedirectLogger
 {
 public:
-    RedirectLogger()
+    /**
+     * @brief Create a logger that can temporarily capture another's output into a readable/viewable string stream.
+     * @param[in] level The LogLevel at which the redirect logger will record logs. Uses "warn" by default.
+     */
+    RedirectLogger(LogLevel level = LogLevel::warn)
         : m_is_captured(false)
         , m_output()
         , m_sink(std::make_shared<spdlog::sinks::ostream_sink_st>(m_output))
         , m_logger("redirect", m_sink)
         , m_target(nullptr)
     {
+        m_logger.set_level(details::get_spdlog_level(level));
     }
 
     ~RedirectLogger()

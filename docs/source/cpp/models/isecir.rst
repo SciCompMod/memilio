@@ -1,3 +1,5 @@
+.. include:: ../../literature.rst
+
 IDE-based SECIR-type model
 ==========================
 
@@ -17,10 +19,7 @@ The simulation runs in discrete time steps using a non-standard numerical scheme
 Messina E, Pezzella M. (2022). *A non-standard numerical scheme for an age-of-infection epidemic model*. Journal of Computational Dynamics.
 `https://doi.org/10.3934/jcd.2021029 <https://doi.org/10.3934/jcd.2021029>`_
 
-A detailed investiation of the IDE-SECIR model and numerical experiments can be found in
-Wendler AC, Plötzke L, Tritzschak H, Kühn MJ. (2024). *A nonstandard numerical scheme for a novel SECIR integro 
-differential equation-based model with nonexponentially distributed stay times*. Submitted for publication. `arXiv:2408.12228 <https://arxiv.org/abs/2408.12228>`_
-
+A detailed investigation of the IDE-SECIR model and numerical experiments can be found in |A_nonstandard_numerical_scheme|
 
 Infection States
 ----------------
@@ -355,7 +354,7 @@ Additionally, you can export the results to a CSV file:
 Visualization
 -------------
 
-To visualize the results of a simulation, you can use the Python package :doc:`memilio_plot <../../python/memilio_plot>`
+To visualize the results of a simulation, you can use the Python package :doc:`m-plot <../../python/m-plot>`
 and its documentation.
 
 You can export your simulation results to CSV format as described above.

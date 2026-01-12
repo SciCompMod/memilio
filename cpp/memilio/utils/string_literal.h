@@ -115,6 +115,25 @@ struct StringLiteral {
     }
     /** @} */
 
+    /**
+     * @brief Compare two literals.
+     * @param[in] left, right The strings to compare. Operands can be StringLiteral%s or regular string literals.
+     * @return Whether both strings are the same.
+     * @{
+     */
+    template <size_type N>
+    friend constexpr auto operator==(const StringLiteral& left, const StringLiteral<N>& right)
+    {
+        return left.string_view() == right.string_view();
+    }
+    template <size_type N>
+    friend constexpr auto operator==(const StringLiteral& left, const value_type (&right)[N])
+    {
+        auto r = StringLiteral<N - 1>(right);
+        return left == r;
+    }
+    /** @} */
+
     value_type value[size() + 1] = {}; ///< Contains the actual characters. Access this through data() or string_view().
 };
 

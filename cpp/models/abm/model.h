@@ -94,6 +94,7 @@ public:
     Model(const Model& other, int id = 0)
         : parameters(other.parameters)
         , m_local_population_cache()
+        , m_local_population_by_age_cache()
         , m_air_exposure_rates_cache()
         , m_contact_exposure_rates_cache()
         , m_is_local_population_cache_valid(false)
@@ -129,6 +130,7 @@ public:
         // skip caches, they are rebuild by the deserialized model
         obj.add_list("persons", get_persons().begin(), get_persons().end());
         obj.add_list("locations", get_locations().begin(), get_locations().end());
+        obj.add_list("activeness_statuses", m_activeness_statuses.begin(), m_activeness_statuses.end());
         obj.add_element("location_types", m_has_locations.to_ulong());
         obj.add_element("testing_strategy", m_testing_strategy);
         obj.add_element("trip_list", m_trip_list);
@@ -144,22 +146,24 @@ public:
     template <class IOContext>
     static IOResult<Model> deserialize(IOContext& io)
     {
-        auto obj                = io.expect_object("Model");
-        auto params             = obj.expect_element("parameters", Tag<Parameters>{});
-        auto persons            = obj.expect_list("persons", Tag<Person>{});
-        auto locations          = obj.expect_list("locations", Tag<Location>{});
-        auto location_types     = obj.expect_element("location_types", Tag<unsigned long>{});
-        auto trip_list          = obj.expect_element("trip_list", Tag<TripList>{});
-        auto use_mobility_rules = obj.expect_element("use_mobility_rules", Tag<bool>{});
-        auto cemetery_id        = obj.expect_element("cemetery_id", Tag<LocationId>{});
-        auto rng                = obj.expect_element("rng", Tag<RandomNumberGenerator>{});
+        auto obj                 = io.expect_object("Model");
+        auto params              = obj.expect_element("parameters", Tag<Parameters>{});
+        auto persons             = obj.expect_list("persons", Tag<Person>{});
+        auto locations           = obj.expect_list("locations", Tag<Location>{});
+        auto activeness_statuses = obj.expect_list("activeness_statuses", Tag<bool>{});
+        auto location_types      = obj.expect_element("location_types", Tag<unsigned long>{});
+        auto trip_list           = obj.expect_element("trip_list", Tag<TripList>{});
+        auto use_mobility_rules  = obj.expect_element("use_mobility_rules", Tag<bool>{});
+        auto cemetery_id         = obj.expect_element("cemetery_id", Tag<LocationId>{});
+        auto rng                 = obj.expect_element("rng", Tag<RandomNumberGenerator>{});
         return apply(
             io,
-            [](auto&& params_, auto&& persons_, auto&& locations_, auto&& location_types_, auto&& trip_list_,
-               auto&& use_mobility_rules_, auto&& cemetery_id_, auto&& rng_) {
+            [](auto&& params_, auto&& persons_, auto&& locations_, auto&& activeness_statuses_, auto&& location_types_,
+               auto&& trip_list_, auto&& use_mobility_rules_, auto&& cemetery_id_, auto&& rng_) {
                 Model model{params_};
                 model.m_persons.assign(persons_.cbegin(), persons_.cend());
                 model.m_locations.assign(locations_.cbegin(), locations_.cend());
+                model.m_activeness_statuses.assign(activeness_statuses_.cbegin(), activeness_statuses_.cend());
                 model.m_has_locations      = location_types_;
                 model.m_trip_list          = trip_list_;
                 model.m_use_mobility_rules = use_mobility_rules_;
@@ -167,7 +171,8 @@ public:
                 model.m_rng                = rng_;
                 return model;
             },
-            params, persons, locations, location_types, trip_list, use_mobility_rules, cemetery_id, rng);
+            params, persons, locations, activeness_statuses, location_types, trip_list, use_mobility_rules, cemetery_id,
+            rng);
     }
 
     /** 
@@ -374,14 +379,32 @@ public:
     /**
      * @brief Get the total number of Person%s at the Location.
      * @param[in] location A LocationId from the Model.
-     * @return Number of Person%s in the location.
+     * @return Number of Person%s at the location.
      */
     size_t get_number_persons(LocationId location) const
     {
         if (!m_is_local_population_cache_valid) {
             build_compute_local_population_cache();
+            m_is_local_population_cache_valid = true;
         }
         return m_local_population_cache[location.get()];
+    }
+
+    /**
+     * @brief Get the number of Person%s of a specific AgeGroup in a specific Cell at the Location.
+     * @param[in] location A LocationId from the Model.
+     * @param[in] cell_idx Index of the Cell.
+     * @param[in] AgeGroup An AgeGroup from the Model.
+     * @return Number of Person%s of the AgeGroup in the Cell at the Location.
+     */
+    size_t get_number_persons_age(LocationId location, CellIndex cell_idx, AgeGroup age) const
+    {
+        if (!m_is_local_population_cache_valid) {
+            build_compute_local_population_cache();
+            m_is_local_population_cache_valid = true;
+        }
+        auto& m_local_population_by_age = m_local_population_by_age_cache[location.get()];
+        return m_local_population_by_age[{cell_idx, age}];
     }
 
     // Change the Location of a Person. this requires that Location is part of this Model.
@@ -481,6 +504,11 @@ public:
         }
     }
 
+    const Eigen::Matrix<ContactExposureRates, Eigen::Dynamic, 1>& get_contact_exposure_rates() const
+    {
+        return m_contact_exposure_rates_cache;
+    }
+
 protected:
     /**
      * @brief Person%s interact at their Location and may become infected.
@@ -503,6 +531,7 @@ protected:
 
     /**
      * @brief Store all air/contact exposures for the current simulation step.
+     * This will also compute the local population cache if it is not valid, as it is required for the computation of the exposure rates.
      * @param[in] t Current TimePoint of the simulation.
      * @param[in] dt The duration of the simulation step.
      */
@@ -520,6 +549,7 @@ protected:
                                 const std::vector<uint32_t>& cells = {0})
     {
         LocationId origin               = get_location(person).get_id();
+        auto old_cells                  = person.get_cells();
         const bool has_changed_location = mio::abm::change_location(person, get_location(destination), mode, cells);
         // if the person has changed location, invalidate exposure caches but keep population caches valid
         if (has_changed_location) {
@@ -527,6 +557,14 @@ protected:
             if (m_is_local_population_cache_valid) {
                 --m_local_population_cache[origin.get()];
                 ++m_local_population_cache[destination.get()];
+                for (CellIndex cell : old_cells) {
+                    auto& local_population_by_age = m_local_population_by_age_cache[origin.get()];
+                    --local_population_by_age[{cell, person.get_age()}];
+                }
+                for (CellIndex cell : cells) {
+                    auto& local_population_by_age = m_local_population_by_age_cache[destination.get()];
+                    ++local_population_by_age[{cell, person.get_age()}];
+                }
             }
         }
     }
@@ -575,9 +613,10 @@ protected:
             m_are_exposure_caches_valid = true;
         }
         auto personal_rng = PersonalRandomNumberGenerator(person);
-        mio::abm::interact(personal_rng, person, get_location(person.get_location()),
-                           m_air_exposure_rates_cache[person.get_location().get()],
-                           m_contact_exposure_rates_cache[person.get_location().get()], t, dt, parameters);
+        auto location     = person.get_location();
+        mio::abm::interact(personal_rng, person, get_location(location),
+                           m_local_population_by_age_cache[location.get()], m_air_exposure_rates_cache[location.get()],
+                           m_contact_exposure_rates_cache[location.get()], t, dt, parameters);
     }
 
     /**
@@ -608,13 +647,15 @@ protected:
 
     mutable Eigen::Matrix<std::atomic_int_fast32_t, Eigen::Dynamic, 1>
         m_local_population_cache; ///< Current number of Persons in a given location.
+    mutable Eigen::Matrix<PopulationByAge, Eigen::Dynamic, 1>
+        m_local_population_by_age_cache; ///<Current number of Persons per AgeGroup in a given location.
     Eigen::Matrix<AirExposureRates, Eigen::Dynamic, 1>
         m_air_exposure_rates_cache; ///< Cache for local exposure through droplets in #transmissions/day.
     Eigen::Matrix<ContactExposureRates, Eigen::Dynamic, 1>
         m_contact_exposure_rates_cache; ///< Cache for local exposure through contacts in #transmissions/day.
-    bool m_is_local_population_cache_valid = false;
-    bool m_are_exposure_caches_valid       = false;
-    bool m_exposure_caches_need_rebuild    = true;
+    mutable bool m_is_local_population_cache_valid = false;
+    bool m_are_exposure_caches_valid               = false;
+    bool m_exposure_caches_need_rebuild            = true;
 
     int m_id; ///< Model id. Is only used for abm graph model or hybrid model.
     std::vector<Person> m_persons; ///< Vector of every Person.

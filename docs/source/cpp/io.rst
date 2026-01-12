@@ -1,20 +1,294 @@
-Input / Output
-==============
+Input/Output functionalities
+============================
+
+MEmilio provides a set of input/output (IO) functionalities to read and write data from and to files in different formats. IO functionality has been harmonized as much as possible across different models but due to the inherent differences between models, IO functionality is to some extent model-specific; for details see the descriptions below and the respective model (group) documentations.
+
+Aggregated output
+-----------------
+
+All aggregated models save their results in a :code:`mio::TimeSeries` that contains all subpopulations for every time 
+point, see :doc:`data_types` for a description of the :code:`mio::TimeSeries` data type. The time series can be printed 
+to the terminal with the :code:`TimeSeries::print_table()` function and exported to a CSV file using :code:`TimeSeries::export_csv`. 
+As e.g. for the ODE-based models adaptive step size methods are used, the time series will not be necessarily available 
+on equidistant time points or days. To obtain a  :code:`mio::TimeSeries` interpolated on days or user-defined time points, 
+the :code:`mio::interpolate_simulation_result()` can be used.
 
 This document describes utilities for reading and writing data from and to files in different formats, in cases where
 ``TimeSeries::print_table()`` is not enough. The main sections are:
 
-- The serialization framework, that can be used to define the structure of data without using a specific file format.
+- The :ref:`serialization framework<serialization>`, that can be used to define the structure of data without using a specific file format.
   There are implementations of the framework for different formats. The framework is described in detail below, also
-  see the `serialization example <../../examples/serialize.cpp>`__.
+  see the `serialization example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/serialize.cpp>`__.
   
-- The command line interface, that can be used to set (and get) values of a ``ParameterSet``.
+- The :ref:`command line interface<command line>`, that can be used to set (and get) values of a ``ParameterSet``.
 
-- The History class for logging almost arbitrary information. It can be thought of as a generalization of a results
-  ``TimeSeries``, and is mainly used for the ABM.
- 
+- The :ref:`History class<history>` for logging almost arbitrary information. It can be thought of as a generalization of a results
+  ``TimeSeries``, and is mainly used for the ABM (and currently only implemented for it). 
 
-The Serialization framework
+There also exist other IO modules that are implemented for specific models.
+
+- We have HDF5 support classes for C++, e.g. for reading of mobility matrix files in the graph-based metapopulation model, see :doc:`graph_metapop`.
+
+.. _command line:
+
+The command line interface
+--------------------------
+
+.. note::
+
+    The command line interface (CLI) requires the JsonCPP dependency to be enabled, which is the default when building MEmilio.
+    You can use the CMake variable ``MEMILIO_HAS_JSONCPP`` and the preprocessor macro of the same name to check if the
+    dependency (and the command line interface) is available.
+
+We provide a function ``mio::command_line_interface`` in the header ``memilio/io/cli.h``, that can be used to write to
+or read from a parameter set. It can take parameters from command line arguments (i.e. the content of ``argv`` in the
+main function), and assign them to or get them from a ``mio::ParameterSet``. If the parameter set is only used for the
+CLI, make use of the ``mio::cli::ParameterSetBuilder``. A small example can be seen in
+`cpp/examples/cli.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/cli.cpp>`_.
+
+.. note::
+
+    The CLI function communicates using the error message in its result. Hence, all dialogue, including the help text,
+    is passed through its return value. Use the following code snippet to correctly return error codes and messages:
+
+    .. code-block:: cpp
+
+        auto result = mio::command_line_interface(argv[0], argc, argv, parameters);
+        if (!result) {
+            std::cout << result.error().message();
+            return result.error().code().value();
+        }
+
+The CLI provides some built-in options, listed below.
+
+====================== =====================================
+Name  (Alias)          Description
+====================== =====================================
+``--help`` (``-h``)    Shows the basic usage of the CLI, and lists each parameter by name, as well as any alias and
+                       description. Takes priority before all other options and exits the program.
+``--print_option``     Can be used with a (space-separated) list of parameter names or aliases (both without dashes) to
+                       print the current values of each parameter to the terminal. This shows the correct JSON format
+                       used by the parameters. Exits after use.
+``--read_from_json``   Allows reading parameters from a file instead of the command line. Both parameter names and
+                       aliases can be used, for example:
+
+                       .. code-block::
+
+                          {"<ParameterName>" : <value>, "<ParameterAlias>" : <value> }
+
+``--write_to_json``    Writes *all* parameters with their current values to a specified file.
+====================== =====================================
+
+In general, an option is defined as a string, which consists either of two dashes followed by a name (e.g. ``--help``),
+or a single dash followed by an alias (e.g. ``-h``). Apart from the built-in options, the names each refer to a
+parameter that can be set.
+
+To set the value of a parameter from the command line, first type the corresponding parameter option (see ``--help``),
+followed by the value that should be assigned (reference ``--print_option``). Values are given as a JSON value
+corresponding to the type of the parameter. Note that some characters may need to be escaped or quoted. For example, the
+JSON string ``"some string"`` must be entered as ``\\"some string\\"`` or ``'"some string"'``.
+
+
+Feature overview
+~~~~~~~~~~~~~~~~
+
+Here we briefly list available features of the CLI:
+
+- Built-in options (see table above).
+
+- Can be used with any ``ParameterSet``, as long as all parameters are (de)serializable.
+
+- Default options: As an optional parameter to the CLI function, you can pass a list of parameter names. The
+  first command line arguments (after the program name) are passed to these parameters as values. For example:
+
+  .. code:: cpp
+
+      auto result = mio::command_line_interface("example-program", argc, argv, parameters, {"Path", "N"});
+
+  Now, calling ``example-program /path/to/something 5`` is equivalent to
+  ``example-program --Path /path/to/something --N 5``.
+  Make sure to add quotes to values that contain spaces! 
+
+- Required parameters: The CLI checks that all required parameters are set, and returns an error if some were not set.
+  This can be used, e.g., if a program requires a path to be set. Check out the next section to learn how to mark a
+  parameter as required.
+
+
+Parameters and ParameterSetBuilder
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``mio::cli::ParameterSetBuilder`` can be used to create parameters specifically for usage with the CLI. For general
+purpose parameters, check out ``mio::ParameterSet``.
+
+In the following example, we create a ``mio::cli::ParameterSet`` with two parameters. One minimal parameter called "A"
+of type ``int`` with initial value 5, and a parameter called "B" of type ``double`` with value 2.5, that uses all
+optional features (alias, description, and the required flag).
+
+.. code-block:: cpp
+
+  auto parameters = mio::cli::ParameterSetBuilder()
+                        .add<"A">(5)
+                        .add<"B", double>(2.5, {.alias="b", .description="This is a description.", .is_required=true})
+                        .build();
+
+This set can then be passed to the CLI. You can access parameters using their name, for example ``parameters.get<"A">``.
+
+If you want to use ``mio::ParameterSet`` instead, you can find an equivalent definition of the example parameters A and
+B as structs in the dropdown below.
+
+.. dropdown:: Parameter structs for A and B
+
+    .. code-block:: cpp
+        
+        struct A {
+            using Type = int;
+            static Type get_default()
+            {
+                return 5;
+            }
+            static std::string name()
+            {
+                return "A";
+            }
+        };
+        
+        struct B {
+            using Type = double;
+            static Type get_default()
+            {
+                return 2.5;
+            }
+            static std::string name()
+            {
+                return "B";
+            }
+            static std::string alias()
+            {
+                return "b";
+            }
+            static std::string description()
+            {
+                return "This is a description.";
+            }
+            static bool is_required() {
+                return true;
+            }
+        };
+
+    Note that A is a typical parameter struct, while B has additional member functions. These are only used by the CLI,
+    the ``mio::ParameterSet`` will ignore them.
+
+.. dropdown:: :fa:`gears` Expert's knowledge
+
+    Internally, the CLI uses type erasure via an ``AbstractParameter`` class to avoid dealing with the long template
+    lists needed to use a ``mio::ParametSet`` directly. There are two classes for managing a set of
+    ``AbstractParameter``\s, the ``AbstractSet``, used internally with runtime lookup for parameters by name or alias,
+    and the ``mio::cli::ParameterSet``, which allows direct access of parameters via ``StringLiteral``\s while restoring
+    the parameter's original type. However, the template of a ``mio::cli::ParameterSet`` is difficult to define, since
+    it stores both the name as a ``StringLiteral`` as well as the type of each parameter. The builder allows defining
+    this set iteratively, and makes it easier to change set definitions.
+
+
+.. _history:
+
+Working with the History object
+-------------------------------
+
+The History object provides a way to save data throughout the simulation process. It offers an interface where users can
+define the data to be saved from a given object using Loggers and the method of saving it using ``Writer``\s. Afterward, the
+user can access this data from the History object and manipulate it. For a basic ``Logger`` use case, refer to
+`this example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/history.cpp>`__. For an example demonstrating using a ``Logger`` in the ABM
+`this example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/abm_history_object.cpp>`_.
+
+Loggers
+~~~~~~~
+
+The ``Logger`` struct is a tool for logging data from a given object. Each user-implemented ``Logger`` must have a ``Type``
+and implement two functions: ``Type log(const T&)`` and ``bool should_log(const T&)``. The input ``T`` for these
+functions is the same as the one given to the ``History`` member-function ``History::log``, e.g. ``Model&`` in the ABM.
+
+- ``Type``: Return Type of ``log``.
+
+- ``log``: This function determines which data from the input ``T`` is saved. It must have the same return Type ``Type``
+  as the Loggers Type ``Type``.
+
+- ``should_log``: This function must return a boolean to determine if data should be logged and can use the input ``T``
+  for this, e.g. if ``T`` fulfills some criteria.
+
+Users can derive their Loggers from ``LogOnce`` or ``LogAlways`` to use a predefined ``should_log`` function.
+``LogOnce`` logs only at the first call of ``Logger::log()``, while ``LogAlways`` logs every time ``log`` is called.
+All implemented Loggers must be default constructible/destructible. For user-defined examples in the ABM see
+`this file <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/common_abm_loggers.h>`_.
+
+.. code-block:: cpp
+
+    struct LoggerExample { /* : public LogOnce/LogAlways if one wants to derive the should_log from these. */
+        using Type = /* type of the record */;
+        /* Below, T must be replaced by the type T from History::log(t). */
+        Type log(const T& t) 
+        {
+            return /* something of type Type */;
+        }
+        bool should_log(const T& t) 
+        {
+              /* Determine whether log and add_record should be called by History::log(t). */
+              return /* true or false */;
+        }
+    };
+
+Writers
+~~~~~~~
+
+The ``Writer`` struct defines how to store the logged data from one or more implemented ``Loggers``. Each
+user-implemented ``Writer`` must have a ``Data`` Type and implement the
+``template <class Logger> static void add_record(const typename Logger::Type& t, Data& data)`` function.
+
+- ``Data``: This is some kind of container that stores the data returned by the Loggers. For example, this can be a
+  ``TimeSeries`` or depend on the Loggers (like ``std::tuple<std::vector<Logger::Type>...>``).
+
+- ``add_record``: This manipulates the passed Data member of the ``History`` class to store the value ``t`` returned by
+  the Loggers. It is used whenever ``History::log`` is called and ``Logger::should_log`` is true.
+
+A predefined universal ``Writer`` called ``DataWriterToMemory`` is already implemented in `history.h <https://github.com/SciCompMod/memilio/blob/main/cpp/memilio/io/history.h>`__.
+This stores the data from the loggers in a tuple of vectors every time the ``Logger`` is called. Another ``Writer`` named
+``TimeSeriesWriter`` can be found in `this file <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/common_abm_loggers.h>`_, which saves data in a
+Timeseries. The according ``Logger`` has to have a suitable return type.
+
+.. code-block:: cpp
+
+    template <class... Loggers>
+    struct DataWriterExample {
+        using Data = /* Container for the stored data of the Loggers */;
+        template <class Logger>
+        static void add_record(const typename Logger::Type& t, Data& data)
+        {
+              /* Manipulation of data to store the value t returned by the Loggers */;
+        }
+    };
+
+History
+~~~~~~~
+
+The ``History`` class manages the ``Writer``\s and Loggers and provides an interface to log data. Currently it is only available in the ABM. It is templated on one
+``Writer`` and several suitable and unique ``Logger``\s. To use the Writer to log something, the ``History`` provides the
+function ``void log(const T& t)`` to call the ``add_record`` function of the ``Writer`` if the ``Logger`` function
+``should_log`` returns true.
+
+To access the data from the ``History`` class after logging, we provide the function ``get_log`` to access all records.
+For this, the lifetime of the ``History`` has to be as long as one wants to have access to the data, e.g., a history
+should not be constructed in the function it is called in when data is needed later.
+
+To access data from a specific ``Logger``, one can use ``std::get<x>`` where x is the position of the ``Logger`` in the template
+argument list of the ``History`` object. Refer to `this example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/history.cpp>`__ for a simple
+implementation of a history object and `this full ABM example <https://github.com/SciCompMod/memilio/blob/main/cpp/simulations/abm.cpp>`__ for a more advanced use case
+of the History object with several History objects in use.
+
+As mentioned, if multiple ``Writer``\s have to be used simultaneously, a separate History object is needed for each Writer.
+For a use case of this, refer to `the ABM Simulation advance function <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/simulation.h>`__
+
+.. _serialization:
+
+The serialization framework
 ---------------------------
 
 Serialization is the process of converting a data structure or object into a different format that can be stored or
@@ -48,19 +322,19 @@ file in Json format, then deserialize (read) the Json again.
      Foo foo = io_result.value();
    }
 
-There is also support for a binary format. If you want to use a format directly instead of writing to a file, use the
-``serialize_json``/``deserialize_json`` and ``serialize_binary``/``deserialize_binary`` functions.
+There is also support for a binary format. If you want to use a data format directly instead of writing it to a file,
+use the ``serialize_json``/``deserialize_json`` and ``serialize_binary``/``deserialize_binary`` functions.
 
 Main functions and types
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-- **functions serialize and deserialize**:
-  Main entry points to the framework to write and read values, respectively. The functions expect an IOContext
-  (see Concepts below) that stores the serialized data. (De-)serialization can be customized by providing a
-  (de-)serialize_internal overload or a (de-)serialize member function for the type. See the section "Implementing
-  serialization for a new type" or the documentation for ``serialize`` and ``deserialize``.
+- **Functions serialize and deserialize**:
+  Main entry points to the framework to write and read values, respectively. The functions expect an `IOContext`
+  (see :ref:`Concepts<concepts>` below) that stores the serialized data. (De-)serialization can be customized by providing a
+  (de-)serialize_internal overload or a (de-)serialize member function for the type. See the section 
+  :ref:`Adding a new data type to be serialized<adding new serialization>` or the documentation for ``serialize`` and ``deserialize``.
 - **IOStatus and IOResult**:
-  Used for error handling, see section "Error Handling" below.
+  Used for error handling, see section :ref:`Error Handling<error handling>` below.
 
 Default serialization
 ~~~~~~~~~~~~~~~~~~~~~
@@ -101,16 +375,18 @@ The default serialization is intentionally less flexible than the serialize and 
 
 - Every class member itself must be serializable, deserializable and assignable.
 
-This feature is primarily meant to make data classes easy to (de)serialize, avoiding some repitition that is necessary
+This feature is primarily meant to make data classes easy to (de)serialize, avoiding some repetition that is necessary
 when writing both a serialize and deserialize function. It can, however, be used for any class that should be
 serialized in its entirety, and that does not need to make any decisions or computations while doing so. For example,
 default serialization cannot be used if your class has optional members or values, or if one of its members is stored
 as a pointer.
 
 As to the feature set, default-serialization only supports the ``add_element`` and ``expect_element`` operations defined
-in the Concepts section below, where each operation's arguments are provided through the ``add`` function. Note that the
+in the :ref:`Concepts<concepts>` section, where each operation's arguments are provided through the ``add`` function. Note that the
 value provided to ``add`` is also used to assign a value during deserialization, hence the class members must be used
 directly in the function (i.e. as a non-const lvalue reference).
+
+.. _concepts:
 
 Concepts
 ~~~~~~~~
@@ -133,10 +409,10 @@ Concepts
    - ``io.flags()``:
        Returns the flags that determine the behavior of serialization; see IOFlags.
    - ``io.error()``:
-       Returns an IOStatus object to check if there were any errors during serialization. Usually it is not necessary to
+       Returns an ``IOStatus`` object to check if there were any errors during serialization. Usually it is not necessary to
        check this manually but can be used to report the error faster and avoid expensive operations that would be
        wasted anyway.
-   - ``io.set_error(s)`` with some IOStatus object:
+   - ``io.set_error(s)`` with some ``IOStatus`` object:
        Stores an error that was generated outside of the IOContext, e.g., if a value that was deserialized is outside an
        allowed range.
 
@@ -144,12 +420,12 @@ Concepts
 
    Gives structured access to serialized data. During serialization, data can be added with ``add_...`` operations.
    During deserialization, data can be retrieved with ``expect_...`` operations. Data must be retrieved in the same
-   orderas it was added since, e.g., binary format does not allow lookup by key. The following operations are supported
+   order as it was added since, e.g., binary format does not allow lookup by key. The following operations are supported
    for an IOObject ``obj``:
 
    - ``obj.add_element("Name", t)``:
      Stores an object ``t`` in the IOObject under the key "Name". If ``t`` is of basic type (i.e., int, string),
-     IOObjectis expected to handle it directly. Otherwise, the object uses ``mio::serialize`` to get the data for ``t``.
+     IOObject is expected to handle it directly. Otherwise, the object uses ``mio::serialize`` to get the data for ``t``.
    - ``obj.add_list("Name", b, e)``:
      Stores the elements in the range represented by iterators ``b`` and ``e`` under the key "Name". The individual
      elements are not named. The elements are either handled directly by the IOObject or using ``mio::serialize`` just
@@ -169,13 +445,15 @@ Concepts
      contain a value or it may be empty. Otherwise returns an error. Note that for some formats a wrong key is
      indistinguishable from an empty optional, so make sure to provide the correct key.
 
+.. _error handling:
+
 Error handling
 ~~~~~~~~~~~~~~
 
-Errors are handled by returning error codes. The type IOStatus contains an error code and an optional string with
-additional information. The type IOResult contains either a value or an IOStatus that describes an error. Operations
+Errors are handled by returning error codes. The type ``IOStatus`` contains an error code and an optional string with
+additional information. The type ``IOResult`` contains either a value or an ``IOStatus`` that describes an error. Operations
 that can fail return an ``IOResult<T>`` where T is the type of the value that is produced by the operation if it is
-successful. Except where necessary because of dependencies, the framework does not throw nor catch any exceptions.
+successful. Except where necessary because of dependencies, the MEmilio framework does neither throw nor catch any exceptions.
 IOContext and IOObject implementations are expected to store errors. During serialization, ``add_...`` operations fail
 without returning errors, but the error is stored in the IOObject and subsequent calls are usually no-ops. During
 deserialization, the values produced must usually be used or inspected, so ``expect_...`` operations return an IOResult.
@@ -183,14 +461,15 @@ The ``apply`` utility function provides a simple way to inspect the result of mu
 the values if all are successful. See the documentation of ``IOStatus``, ``IOResult`` and ``apply`` below for more
 details.
 
+.. _adding new serialization:
 Adding a new data type to be serialized
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Serialization of a new type T can be customized by providing *either* member functions ``serialize`` and ``deserialize``
 *or* free functions ``serialize_internal`` and ``deserialize_internal``.
 
-The ``void serialize(IOContext& io)`` member function takes an IO context and uses ``create_object`` and ``add_...``
-operations to add data. The static ``IOResult<T> deserialize(IOContext& io)`` member function takes an IO context and
+The ``void serialize(IOContext& io)`` member function takes an IOContext and uses ``create_object`` and ``add_...``
+operations to add data. The static ``IOResult<T> deserialize(IOContext& io)`` member function takes an IOContext and
 uses ``expect_...`` operations to retrieve the data. The ``apply`` utility function can be used to inspect the result of
 the ``expect_...`` operations and construct the object of type T.
 E.g.:
@@ -213,7 +492,7 @@ E.g.:
     };
 
 The free functions ``serialize_internal`` and ``deserialize_internal`` must be found with argument-dependent lookup
-(ADL). They can be used if no member function should or can be added to the type. See the code in ``memilio/io/io.h``
+(ADL). They can be used if no member function should or can be added to the type. See the code in `memilio/io/io.h <https://memilio.readthedocs.io/en/latest/api/program_listing_file__home_docs_checkouts_readthedocs.org_user_builds_memilio_checkouts_latest_cpp_memilio_io_io.h.html>`_
 for examples where this was done for, e.g., Eigen3 matrices and STL containers.
 
 Adding a new format
@@ -223,140 +502,43 @@ Implement concepts IOContext and IOObject that provide the operations listed abo
 all built-in types as well as ``std::string``. It may handle other types (e.g., STL containers) as well if it can do so
 more efficiently than the provided general free functions.
 
-Other IO modules
-----------------
+.. _epidemiological_data:
 
-- HDF5 support classes for C++
-- Reading of mobility matrix files
+Epidemiological Data Integration
+--------------------------------
 
-The command line interface
---------------------------
+For equation-based models, MEmilio provides direct integration with real-world epidemiological data through the :doc:`memilio-epidata <../python/m-epidata>` package. This allows models to be initialized and calibrated with actual 
+population, case, hospitalization, and ICU data from various sources.
 
-We provide a function ``mio::command_line_interface`` in the header ``memilio/io/cli.h``, that can be used to write to
-or read from a parameter set. It can take parameters from command line arguments (i.e. the content of ``argv`` in the
-main function), and assign them to or get them from a ``mio::ParameterSet``. A small example can be seen in
-``cpp/examples/cli.cpp``.
+MEmilio provides specialized functions in the parameter I/O modules to read and process this epidemiological data 
+for model initialization, such as population data, confirmed cases, vaccination data, and ICU data.
 
-The command line interface (CLI) provides some non-parameter options listed below.
-
-====================== =====================================
-Name  (Alias)          Description
-====================== =====================================
-``--help`` (``-h``)    Shows the basic usage of the CLI, and lists each parameter by name, as well as any alias and
-                       description. Takes priority before all other options and exits the program.
-``--print_option``     Can be used with a (space-separated) list of parameter names or aliases (both without dashes) to
-                       print the current values of each parameter to the terminal. This shows the correct JSON format
-                       used by the parameters. Exits after use.
-``--read_from_json``   Allows reading parameters from a file instead of the command line. Both parameter names and
-                       aliases can be used, for example:
-
-                       .. code-block::
-
-                          {"<ParameterName>" : <value>, "<ParameterAlias>" : <value> }
-
-``--write_to_json``    Writes *all* parameters with their current values to a specified file.
-====================== =====================================
-
-In general, an option is defined as a string, which consists either of two dashes followed by a name (e.g. ``--help``),
-or a single dash followed by an alias (e.g. ``-h``). Apart from the built-in options, the names each refer to a
-parameter that can be set.
-
-To set the value of a parameter from the command line, first type the corresponding parameter option (see ``--help``),
-followed by the value that should be assigned (reference ``--print_option``). Values are given as a JSON value
-corresponding to the Type of the parameter. Note that some characters may need to be escaped or quoted. For example, the
-JSON string ``"some string"`` must be entered as ``\\"some string\\"`` or ``'"some string"'``.
-
-Working with the History object
--------------------------------
-
-The History object provides a way to save data throughout the simulation process. It offers an interface where users can
-define the data to be saved from a given object using Loggers and the method of saving it using Writers. Afterward, the
-user can access this data from the History object and manipulate it. For a basic Logger use case, refer to
-`this example <../../examples/history.cpp>`__. For an example demonstrating using a Logger in the ABM, refer to
-`this example <../../examples/abm_history_example.cpp>`__.
-
-Loggers
-~~~~~~~
-
-The ``Logger`` struct is a tool for logging data from a given object. Each user-implemented Logger must have a ``Type``
-and implement two functions: ``Type log(const T&)`` and ``bool should_log(const T&)``. The input ``T`` for these
-functions is the same as the one given to the ``History`` member-function ``History::log``, e.g. ``Model&`` in the ABM.
-
-- ``Type``: Return Type of ``log``.
-
-- ``log``: This function determines which data from the input ``T`` is saved. It must have the same return Type ``Type``
-  as the Loggers Type ``Type``.
-
-- ``should_log``: This function must return a boolean to determine if data should be logged and can use the input ``T``
-  for this, e.g. if ``T`` fulfills some criteria.
-
-Users can derive their Loggers from ``LogOnce`` or ``LogAlways`` to use a predefined ``should_log`` function.
-``LogOnce`` logs only at the first call of ``Logger::log()``, while ``LogAlways`` logs every time ``log`` is called.
-All implemented Loggers must be default constructible/destructible. For user-defined examples in the ABM, refer to
-`this file <../../models/abm/common_abm_loggers.h>`__.
+Additionally, the integration supports different administrative levels such as districts, counties, and states. 
+Therefore, MEmilio provides high-level functions that combine multiple data sources:
 
 .. code-block:: cpp
 
-    struct LoggerExample { /* : public LogOnce/LogAlways if one wants to derive the should_log from these. */
-        using Type = /* type of the record */;
-        /* Below, T must be replaced by the type T from History::log(t). */
-        Type log(const T& t) 
-        {
-            return /* something of type Type */;
-        }
-        bool should_log(const T& t) 
-        {
-              /* Determine whether log and add_record should be called by History::log(t). */
-              return /* true or false */;
-        }
-    };
+    // Read all input data for Germany
+    template <class Model>
+    IOResult<void> read_input_data_germany(std::vector<Model>& model, 
+                                           Date date,
+                                           const std::vector<double>& scaling_factor_inf,
+                                           double scaling_factor_icu,
+                                           const std::string& pydata_dir);
+    
+    // Read input data for specific counties
+    template <class Model>
+    IOResult<void> read_input_data_county(std::vector<Model>& model, 
+                                          Date date,
+                                          const std::vector<int>& county,
+                                          const std::vector<double>& scaling_factor_inf,
+                                          double scaling_factor_icu,
+                                          const std::string& pydata_dir);
 
-Writers
-~~~~~~~
+These functions automatically handle:
 
-The ``Writer`` struct defines how to store the logged data from one or more implemented ``Loggers``. Each
-user-implemented ``Writer`` must have a ``Data`` Type and implement the
-``template <class Logger> static void add_record(const typename Logger::Type& t, Data& data)`` function.
-
-- ``Data``: This is some kind of container that stores the data returned by the Loggers. For example, this can be a
-  ``TimeSeries`` or depend on the Loggers (like ``std::tuple<std::vector<Logger::Type>...>``).
-
-- ``add_record``: This manipulates the passed Data member of the ``History`` class to store the value ``t`` returned by
-  the Loggers. It is used whenever ``History::log`` is called and ``Logger::should_log`` is true.
-
-A predefined universal ``Writer`` called ``DataWriterToMemory`` is already implemented in `history.h <history.h>`__.
-This stores the data from the loggers in a tuple of vectors every time the Logger is called. Another ``Writer`` named
-``TimeSeriesWriter`` can be found in `this file <../../models/abm/common_abm_loggers.h>`__, which saves data in a
-Timeseries. The according Logger has to have a suitable return type.
-
-.. code-block:: cpp
-
-    template <class... Loggers>
-    struct DataWriterExample {
-        using Data = /* Container for the stored data of the Loggers */;
-        template <class Logger>
-        static void add_record(const typename Logger::Type& t, Data& data)
-        {
-              /* Manipulation of data to store the value t returned by the Loggers */;
-        }
-    };
-
-History
-~~~~~~~
-
-The ``History`` class manages the Writers and Loggers and provides an interface to log data. It is templated on one
-``Writer`` and several suitable and unique ``Loggers``. To use the Writer to log something, the ``History`` provides the
-function ``void log(const T& t)`` to call the ``add_record`` function of the ``Writer`` if the Logger function
-``should_log`` returns true.
-
-To access the data from the ``History`` class after logging, we provide the function ``get_log`` to access all records.
-For this, the lifetime of the ``History`` has to be as long as one wants to have access to the data, e.g., a history
-should not be constructed in the function it is called in when data is needed later.
-
-To access data from a specific Logger, one can use ``std::get<x>`` where x is the position of the Logger in the template
-argument list of the ``History`` object. Refer to `this example <../../examples/history.cpp>`__ for a simple
-implementation of a history object and `this full ABM example <../../simulation/abm.cpp>`__ for a more advanced use case
-of the History object with several History objects in use.
-
-As mentioned, if multiple Writers have to be used simultaneously, a separate History object is needed for each Writer.
-For a use case of this, refer to `the ABM Simulation advance function <../../models/abm/simulation.cpp>`__.
+- Reading population data from census files
+- Loading case data from RKI sources
+- Integrating ICU data from DIVI register
+- Applying scaling factors for data adjustment
+- Setting initial conditions in epidemiological models

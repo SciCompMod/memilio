@@ -6,7 +6,7 @@ particularly suited for simple simulations of infectious diseases in a populatio
 library. The model assumes perfect immunity after recovery and is thus only suited for epidemic use cases. 
 In the following, we present the model in detail.
 
-The infection staes and the transitions are visualized in the following image.
+The infection states and the transitions are visualized in the following image.
 
 .. image:: https://github.com/SciCompMod/memilio/assets/69154294/01c9a2ae-2f5c-4bad-b7f0-34de651f2c73
    :alt: SIR_model
@@ -27,15 +27,15 @@ The model contains the following list of **InfectionState**\s:
 Infection State transitions
 ---------------------------
 
-The ODE-SIR model is implemented as **CompartmentalModel**. In each time step, the model computes the aggregated
-compartment values.
+The ODE-SIR model is implemented as a **CompartmentalModel**, which defines the derivative of the aggregated compartment
+values in time.
 
 
 Sociodemographic Stratification
 -------------------------------
 
 In the ODE-SIR model, the population can be stratified by one sociodemographic dimension. This dimension is denoted 
-**AgeGroup** but can also used for other interpretations. For stratifications with two or more dimensions, see 
+**AgeGroup** but can also be used for other interpretations. For stratification with two or more dimensions, see 
 :doc:`Model Creation <../ode_creation>`.
 
 The number of age groups is specified in the model constructor and the model can be initialized with:
@@ -90,14 +90,14 @@ each compartment:
    // Set the susceptible population as difference to ensure correct total population
    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osir::InfectionState::Susceptible}, nb_total_t0);
 
-For age-resolved simulations, you need to set the initial conditions ofr each age group. Additionally, you can use 
+For age-resolved simulations, you need to set the initial conditions for each age group. Additionally, you can use 
 ``set_difference_from_group_total`` to set the susceptible compartment as the difference between the total group size 
 and all other compartments.
 
 .. code-block:: cpp
 
    for (auto i = mio::AgeGroup(0); i < nb_groups; i++){
-      model.populations[{i, mio::osir::InfectionState::Exposed}] = 1/nb_groups * nb_exp_t0;
+      model.populations[{i, mio::osir::InfectionState::Infected}] = 1/nb_groups * nb_inf_t0;
       model.populations[{i, mio::osir::InfectionState::Recovered}] = 1/nb_groups * nb_rec_t0;
 
       model.populations.set_difference_from_group_total<mio::AgeGroup>(
@@ -117,7 +117,7 @@ Basic dampings can be added to the ContactPatterns as follows:
 
    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(nb_groups, nb_groups, 1/nb_groups * cont_freq));
 
-   // Add a uniform damping acress all age groups
+   // Add a uniform damping across all age groups
    contact_matrix.add_damping(Eigen::MatrixXd::Constant(nb_groups, nb_groups, 0.7), mio::SimulationTime(30.));
 
 
@@ -140,20 +140,20 @@ You can also specify a custom integrator:
 
 .. code-block:: cpp
 
-   auto integrator = std::make_shared<mio::RKIntegratorCore>();
+   auto integrator = std::make_unique<mio::RKIntegratorCore>();
    integrator->set_dt_min(0.3);
    integrator->set_dt_max(1.0);
    integrator->set_rel_tolerance(1e-4);
    integrator->set_abs_tolerance(1e-1);
 
-   mio::TimeSeries<double> result = mio::simulate(t0, tmax, dt, model, integrator);
+   mio::TimeSeries<double> result = mio::simulate(t0, tmax, dt, model, std::move(integrator));
 
 
 Output
 ------
 
-The output of the simulation is a `TimeSeries` object containing the sizes of each compartment at each time point. For a
-basic simulation, you can access the results as follows:
+The output of the simulation is a ``TimeSeries`` object containing the sizes of each compartment at each time point. For
+a basic simulation, you can access the results as follows:
 
 .. code-block:: cpp
 
@@ -190,7 +190,7 @@ Additionally, you can export the results to a CSV file:
 Visualization
 -------------
 
-To visualize the results of a simulation, you can use the Python package :doc:`memilio_plot <../python/memilio_plot>` 
+To visualize the results of a simulation, you can use the Python package :doc:`m-plot <../../python/m-plot>` 
 and its documentation.
 
 

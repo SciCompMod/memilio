@@ -54,7 +54,7 @@ public:
     *   which transit within one timestep dt from one compartment to another.
     *   Possible transitions are specified in #InfectionTransition%s.
     *   Considered time points should have the distance dt. The last time point determines the start time t0 of the 
-    *   simulation. 
+    *   simulation.
     *   The time history must reach a certain point in the past so that the simulation can be performed.
     *   A warning is displayed if the condition is violated.
     * @param[in] N_init A vector, containing the populations of the considered region, for every AgeGroup.
@@ -62,10 +62,14 @@ public:
     * @param[in] num_agegroups The number of AgeGroups.
     * @param[in] total_confirmed_cases_init A vector, containing the total confirmed cases at time t0 can be set if it 
     *   should be used for initialization, for every AgeGroup.
+    * @param[in] populations_init Optional. Vector containing the size of the population at t_init-dt where t_init 
+    *   refers to the first time point in transitions_init. Can be used to initialize the model if transitions_init 
+    *   does not provide enough time points before t0.
     */
     Model(TimeSeries<ScalarType>&& transitions_init, CustomIndexArray<ScalarType, AgeGroup> N_init,
-          CustomIndexArray<ScalarType, AgeGroup> deaths_init, size_t num_agegroups,
-          CustomIndexArray<ScalarType, AgeGroup> total_confirmed_cases_init = CustomIndexArray<ScalarType, AgeGroup>());
+          CustomIndexArray<ScalarType, AgeGroup> deaths_init, const size_t num_agegroups,
+          CustomIndexArray<ScalarType, AgeGroup> total_confirmed_cases_init = CustomIndexArray<ScalarType, AgeGroup>(),
+          Eigen::VectorX<ScalarType> populations_init                       = Eigen::VectorX<ScalarType>());
 
     // ---- Additional functionality such as constraint checking, setters and getters, etc. ----
     /**
@@ -219,7 +223,7 @@ public:
         transitions; ///< TimeSeries containing points of time and the corresponding number of individuals transitioning from
     // one #InfectionState to another as defined in #InfectionTransition%s for every AgeGroup.
     TimeSeries<ScalarType> populations; ///< TimeSeries containing points of time and the corresponding number of
-        // people in defined #InfectionState%s for every AgeGroup.
+    // people in defined #InfectionState%s for every AgeGroup.
     CustomIndexArray<ScalarType, AgeGroup>
         total_confirmed_cases; ///< CustomIndexArray that contains the total number of confirmed cases at time t0 for every AgeGroup.
 
@@ -422,6 +426,8 @@ private:
         m_transitiondistributions_in_forceofinfection; ///< CustomIndexArray
     // of Type AgeGroup containing a Vector containing the weighted TransitionDistributions for all necessary time
     // points in the force of infection term.
+    Eigen::VectorX<ScalarType>
+        m_populations_init; ///< Vector containing the initial populations at some time before the simulation start.
 
     // ---- Friend classes/functions. ----
     // In the Simulation class, the actual simulation is performed which is why it needs access to the here

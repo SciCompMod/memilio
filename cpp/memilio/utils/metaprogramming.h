@@ -23,6 +23,16 @@
 #include <type_traits>
 #include <utility>
 
+namespace ad
+{
+namespace internal
+{
+// Forward declaration of the AD type template
+template <class Value, class Tape>
+struct active_type;
+} // namespace internal
+} // namespace ad
+
 namespace mio
 {
 
@@ -120,7 +130,7 @@ template <class B1>
 struct disjunction<B1> : B1 {
     //disjunction of one element is identity
 };
-template<class B1, class... Bn>
+template <class B1, class... Bn>
 struct disjunction<B1, Bn...> : std::conditional_t<bool(B1::value), B1, disjunction<Bn...>> {
     //disjunction of mutliple elements is equal to the first element if the first element is true.
     //otherwise its equal to the disjunction of the remaining elements.
@@ -277,6 +287,23 @@ public:
  */
 template <class... Types>
 constexpr bool has_duplicates_v = has_duplicates<Types...>::value;
+
+/** 
+ * @brief Detects whether a type is an automatic differentiation (AD) type. 
+ * Intermediate result types from AD operations are not considered to be an AD type, as they use their own classes.
+ * @{ 
+ */
+template <class T, class = void>
+struct is_ad_type : public std::false_type {
+};
+
+template <class Value, class Tape>
+struct is_ad_type<ad::internal::active_type<Value, Tape>> : public std::true_type {
+};
+
+template <class T>
+constexpr bool is_ad_type_v = is_ad_type<T>::value;
+/**@}*/
 
 } // namespace mio
 

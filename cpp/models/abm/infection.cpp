@@ -112,6 +112,11 @@ TimePoint Infection::get_start_date() const
     return m_viral_load.start_date;
 }
 
+std::vector<std::pair<TimePoint, InfectionState>>& Infection::get_infection_course()
+{
+    return m_infection_course;
+}
+
 TimePoint Infection::draw_infection_course(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
                                            TimePoint init_date, InfectionState init_state,
                                            ProtectionEvent latest_protection)
@@ -133,7 +138,7 @@ void Infection::draw_infection_course_forward(PersonalRandomNumberGenerator& rng
         m_virus_variant, age}]; // time distribution parameters for current infection state
     InfectionState next_state{start_state}; // next state to enter
     m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, next_state));
-    auto& uniform_dist = UniformDistribution<double>::get_instance();
+    auto& uniform_dist = UniformDistribution<ScalarType>::get_instance();
     ScalarType p; // uniform random draws from [0, 1]
     while ((next_state != InfectionState::Recovered && next_state != InfectionState::Dead)) {
         switch (next_state) {
@@ -237,7 +242,7 @@ TimePoint Infection::draw_infection_course_backward(PersonalRandomNumberGenerato
     auto time_in_state = params.get<TimeExposedToNoSymptoms>()[{
         m_virus_variant, age}]; // time distribution parameters for current infection state
     InfectionState previous_state{init_state}; // previous state to enter
-    auto& uniform_dist = UniformDistribution<double>::get_instance();
+    auto& uniform_dist = UniformDistribution<ScalarType>::get_instance();
     ScalarType p; // uniform random draws from [0, 1]
 
     while ((previous_state != InfectionState::Exposed)) {
