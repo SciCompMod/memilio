@@ -195,21 +195,26 @@ using type_at_index_t = typename type_at_index<Index, Types...>::type;
 namespace details
 {
 
-template <std::size_t Size, class>
-consteval std::size_t index_of_impl()
+/**
+ * @brief Recursively searches (TypeHead, Types...) for Type.
+ * @tparam Size Total size of the list to search.
+ * @tparam Type to search.
+ * @tparam TypesHead, Types The list to search in. May be empty.
+ * @return The index of Type in the list (TypeHead, Types...), or the size of the list if Type is not in it.
+ * @{
+ */
+template <std::size_t Size, class Type>
+constexpr std::size_t index_of_impl()
 {
+    // this works both as an overload for empty lists as well as a "not found"
     return Size;
 }
-/**
- * @brief Recursively searches Types for Type.
- * @tparam Index Iteration index for Types. Must be set to 0.
- * @tparam Type to search.
- * @tparam Types list to search in.
- * @return The index of Type in Types, or sizeof...(Types) if Type is not in the list.
- */
 template <std::size_t Size, class Type, class TypesHead, class... Types>
-consteval std::size_t index_of_impl()
+constexpr std::size_t index_of_impl()
 {
+    // check if the type matches, otherwise call itself, omitting TypesHead
+    // this is significantly cheaper to compile compared to using an index and carrying the entire list,
+    // as that needs additional work for looking up "Types[Index]", e.g. through type_at_index
     if constexpr (std::is_same_v<Type, TypesHead>) {
         return Size - sizeof...(Types) - 1;
     }
@@ -217,6 +222,7 @@ consteval std::size_t index_of_impl()
         return index_of_impl<Size, Type, Types...>();
     }
 }
+/** @} */
 
 } // namespace details
 
