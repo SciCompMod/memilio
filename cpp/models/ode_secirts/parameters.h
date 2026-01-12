@@ -429,7 +429,7 @@ struct MaxRiskOfInfectionFromSymptomatic {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type(size, 0.);
+        return Type(size, 1.);
     }
     static std::string name()
     {
