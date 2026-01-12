@@ -194,6 +194,12 @@ using type_at_index_t = typename type_at_index<Index, Types...>::type;
 
 namespace details
 {
+
+template <std::size_t Size, class>
+consteval std::size_t index_of_impl()
+{
+    return Size;
+}
 /**
  * @brief Recursively searches Types for Type.
  * @tparam Index Iteration index for Types. Must be set to 0.
@@ -201,21 +207,17 @@ namespace details
  * @tparam Types list to search in.
  * @return The index of Type in Types, or sizeof...(Types) if Type is not in the list.
  */
-template <std::size_t Index, class Type, class... Types>
-constexpr std::size_t index_of_impl()
+template <std::size_t Size, class Type, class TypesHead, class... Types>
+consteval std::size_t index_of_impl()
 {
-    if constexpr (Index < sizeof...(Types)) {
-        if constexpr (std::is_same_v<Type, type_at_index_t<Index, Types...>>) {
-            return Index;
-        }
-        else {
-            return index_of_impl<Index + 1, Type, Types...>();
-        }
+    if constexpr (std::is_same_v<Type, TypesHead>) {
+        return Size - sizeof...(Types) - 1;
     }
     else {
-        return Index;
+        return index_of_impl<Size, Type, Types...>();
     }
 }
+
 } // namespace details
 
 /**
@@ -224,8 +226,9 @@ constexpr std::size_t index_of_impl()
  * @tparam Types A list of types.
  */
 template <class Type, class... Types>
-struct is_type_in_list : std::conditional_t<(details::index_of_impl<0, Type, Types...>() < sizeof...(Types)),
-                                            std::true_type, std::false_type> {
+struct is_type_in_list
+    : std::conditional_t<(details::index_of_impl<sizeof...(Types), Type, Types...>() < sizeof...(Types)),
+                         std::true_type, std::false_type> {
 };
 
 /**
@@ -244,8 +247,8 @@ constexpr bool is_type_in_list_v = is_type_in_list<Type, Types...>::value;
  */
 template <class Type, class... Types>
 struct index_of_type {
+    static constexpr std::size_t value = details::index_of_impl<sizeof...(Types), Type, Types...>();
     static_assert(is_type_in_list_v<Type, Types...>, "Type is not contained in given list.");
-    static constexpr std::size_t value = details::index_of_impl<0, Type, Types...>();
 };
 
 /**
