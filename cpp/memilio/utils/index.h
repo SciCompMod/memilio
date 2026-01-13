@@ -45,14 +45,14 @@ void is_multi_index_impl(Index<T...>);
 
 } // namespace details
 
-/// @brief A MultiIndex is an Index any number of categories. Does accept empty or single category indices.
+/// @brief A MultiIndex is an Index with any number of categories. Does accept empty or single category indices.
 template <typename... CategoryTags>
 concept IsMultiIndex = requires(Index<CategoryTags...> i) { details::is_multi_index_impl(i); };
 
 namespace details
 {
 
-/// @brief Obtain a tuple of singular indices from a Index or MultiIndex.
+/// @brief Obtain a tuple of single-category indices from a Index or MultiIndex.
 template <class... Tags>
 std::tuple<Index<Tags>...> get_tuple(const Index<Tags...>& i)
 {
@@ -64,7 +64,7 @@ std::tuple<Index<Tags>...> get_tuple(const Index<Tags...>& i)
     }
 }
 
-/// @brief Obtain a tuple of one index from an enum value.
+/// @brief Obtain a tuple of one single-category index from an enum value.
 template <class Enum>
 std::tuple<Index<Enum>> get_tuple(Enum i)
     requires std::is_enum<Enum>::value
@@ -72,13 +72,18 @@ std::tuple<Index<Enum>> get_tuple(Enum i)
     return std::tuple(Index<Enum>(i));
 }
 
+/// @brief Merge a series of enums or MultIndex%s into a tuple of single-category indices.
 template <class... IndexArgs>
     requires((std::is_enum_v<IndexArgs> || IsMultiIndex<IndexArgs>) && ...)
-decltype(auto) merge_indices_impl(IndexArgs&&... args)
+decltype(auto) concatenate_indices_impl(IndexArgs&&... args)
 {
     return std::tuple_cat(details::get_tuple(args)...);
 }
 
+/**
+ * @brief Function declaration that allows type conversion from a tuple of single-category indices to MultiIndex.
+ * Used together with concatenate_indices_impl, this allows combining categories of multiple args into a single MultiIndex.
+ */
 template <class... T>
 Index<T...> tuple_to_index(std::tuple<Index<T>...>);
 
@@ -178,25 +183,28 @@ public:
     static constexpr size_t size         = sizeof...(CategoryTag);
     static constexpr bool has_duplicates = has_duplicates_v<CategoryTag...>;
 
+    /// @brief Construct an Index filled with zeroes.
     static Index constexpr Zero()
     {
         return Index(Index<CategoryTag>::Zero()...);
     }
 
-    // constructor from Indices
+    /// @brief Constructor from individual Indices.
     Index(Index<CategoryTag> const&... _indices)
         : indices{_indices...}
     {
     }
 
+    /// @brief Constructor from mixed Indices and MultiIndices.
     template <class... IndexArgs>
         requires(sizeof...(IndexArgs) > 1)
     Index(IndexArgs&&... subindices)
-        : indices(details::merge_indices_impl(std::forward<IndexArgs>(subindices)...))
+        : indices(details::concatenate_indices_impl(std::forward<IndexArgs>(subindices)...))
     {
     }
 
 private:
+    /// @brief Internal constructor from a tuple.
     Index(const std::tuple<Index<CategoryTag>...>& _indices)
         : indices(_indices)
     {
@@ -287,7 +295,7 @@ struct index_of_type<Index<CategoryTags...>, Index<CategoryTags...>> {
     static constexpr std::size_t value = 0;
 };
 
-// retrieves the Index at the Ith position for a Index
+/// @brief Retrieves the Index (by reference) at the Ith position of a MultiIndex.
 template <size_t I, typename... CategoryTags>
 constexpr typename std::tuple_element<I, std::tuple<Index<CategoryTags>...>>::type&
 get(Index<CategoryTags...>& i) noexcept
@@ -301,7 +309,7 @@ get(Index<CategoryTags...>& i) noexcept
     }
 }
 
-// retrieves the Index at the Ith position for a Index, const version
+/// @brief Retrieves the Index (by const reference) at the Ith position of a MultiIndex.
 template <size_t I, typename... CategoryTags>
 constexpr typename std::tuple_element<I, std::tuple<Index<CategoryTags>...>>::type const&
 get(Index<CategoryTags...> const& i) noexcept
@@ -315,7 +323,7 @@ get(Index<CategoryTags...> const& i) noexcept
     }
 }
 
-// retrieves the Index for the tag Tag of a Index with more than one Tag
+/// @brief Retrieves the Index (by reference) by its Tag in a MultiIndex. Requires unique tags.
 template <typename Tag, typename... CategoryTags>
 constexpr Index<Tag>& get(Index<CategoryTags...>& i) noexcept
 {
@@ -330,7 +338,7 @@ constexpr Index<Tag>& get(Index<CategoryTags...>& i) noexcept
     }
 }
 
-// retrieves the Index for the tag Tag of a Index with more than one Tag
+/// @brief Retrieves the Index (by const reference) by its Tag in a MultiIndex. Requires unique tags.
 template <typename Tag, typename... CategoryTags>
 constexpr Index<Tag> const& get(Index<CategoryTags...> const& i) noexcept
 {
@@ -345,10 +353,16 @@ constexpr Index<Tag> const& get(Index<CategoryTags...> const& i) noexcept
     }
 }
 
+/**
+ * @brief Combine several Index%s into one MultiIndex.
+ * @param args Either enum or MultiIndex values.
+ * @return A MultiIndex with all categories and values of the given Indices concatonated.
+ */
 template <class... IndexArgs>
-decltype(auto) merge_indices(IndexArgs&&... args)
+decltype(auto) concatenate_indices(IndexArgs&&... args)
 {
-    using MergedIndex = decltype(details::tuple_to_index(details::merge_indices_impl(std::declval<IndexArgs>()...)));
+    using MergedIndex =
+        decltype(details::tuple_to_index(details::concatenate_indices_impl(std::declval<IndexArgs>()...)));
     return MergedIndex(std::forward<IndexArgs>(args)...);
 }
 
@@ -399,6 +413,7 @@ inline Index<CategoryTags...> extend_index_impl(const Index<Subset...>& i, const
  * @tparam SubIndex An Index that contains a subset of the categories from SuperIndex.
  * @tparam SuperIndex Any Index.
  * @return A (sub)index with the given categories and values from index.
+ * @{
  */
 template <class SubIndex, class SuperIndex>
 decltype(auto) reduce_index(const SuperIndex& index)
@@ -412,13 +427,13 @@ decltype(auto) reduce_index(const SuperIndex& index)
         return details::reduce_index_impl(index, mio::Tag<SubIndex>{});
     }
 }
-
 template <class Enum, class SuperIndex>
     requires std::is_enum_v<Enum>
 Index<Enum> reduce_index(const SuperIndex& index)
 {
     return details::reduce_index_impl(index, mio::Tag<Index<Enum>>{});
 }
+/** @} */
 
 /**
  * @brief Create a SuperIndex by copying values from SubIndex, filling new categories with fill_value.

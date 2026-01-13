@@ -34,17 +34,18 @@ namespace mio
 namespace smm
 {
 
-template <class T, std::size_t>
-using age_group = T;
-
+/// @brief The Index type used to define the SMM population.
 template <class Status, class Region>
-using PopulationIndex = decltype(merge_indices(std::declval<Region>(), std::declval<Status>()));
+using PopulationIndex = decltype(concatenate_indices(std::declval<Region>(), std::declval<Status>()));
 
 /**
  * @brief Stochastic Metapopulation Model.
- * @tparam regions Number of regions.
- * @tparam Status An infection state enum.
- * @tparam Region An (multi)-index, default is @ref mio::regions::Region.
+ * The stratification of the population of this model is split between "Status" and "Region". This split is mostly
+ * arbitrary, with the important distinction, that for second order rates the reference population
+ * (i.e., the N in S' = S * I / N) is calculated by accumulating subpopulations only over the Status. 
+ * @tparam Comp An enum representing the infection states. Must also be contained in Status
+ * @tparam Status A MultiIndex allowing to further stratify infection state adoptions.
+ * @tparam Region A MultiIndex for "spatially" separate subpopulations, default is @ref mio::regions::Region.
  */
 template <typename FP, class Comp, class StatusT = Comp, class RegionT = mio::regions::Region>
 class Model : public mio::CompartmentalModel<FP, Comp, mio::Populations<FP, PopulationIndex<StatusT, RegionT>>,
@@ -59,7 +60,7 @@ public:
     using Region = RegionT;
 
     Model(Status status_dimensions, Region region_dimensions)
-        : Base(typename Base::Populations(merge_indices(region_dimensions, status_dimensions)),
+        : Base(typename Base::Populations(concatenate_indices(region_dimensions, status_dimensions)),
                typename Base::ParameterSet())
     {
     }

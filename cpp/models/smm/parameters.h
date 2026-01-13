@@ -33,10 +33,9 @@ namespace smm
 
 /**
  * @brief A vector of AdoptionRate%s, see mio::AdoptionRate
- * 
- * @tparam FP Floating point type
- * @tparam Status An infection state enum.
- * @tparam Region An (multi)-index.
+ * @tparam FP A floating point type, e.g., double.
+ * @tparam Status A MultiIndex, containing the infection state enum.
+ * @tparam Region A MultiIndex for spatial stratification.
  */
 template <typename FP, class Status, class Region>
 struct AdoptionRates {
@@ -49,10 +48,9 @@ struct AdoptionRates {
 
 /**
  * @brief Struct defining a possible regional transition in a Model based on Poisson Processes.
- *
- * @tparam FP Floating point type
- * @tparam Status An infection state enum.
- * @tparam Region An (multi)-index.
+ * @tparam FP A floating point type, e.g., double.
+ * @tparam Status A MultiIndex, containing the infection state enum.
+ * @tparam Region A MultiIndex for spatial stratification.
  */
 template <typename FP, class Status, class Region = mio::regions::Region>
 struct TransitionRate {
@@ -64,10 +62,9 @@ struct TransitionRate {
 
 /**
  * @brief A vector of TransitionRate%s, see mio::TransitionRate
- *
- * @tparam FP Floating point type
- * @tparam Status An infection state enum.
- * @tparam Region An (multi)-index.
+ * @tparam FP A floating point type, e.g., double.
+ * @tparam Status A MultiIndex, containing the infection state enum.
+ * @tparam Region A MultiIndex for spatial stratification.
  */
 template <typename FP, class Status, class Region>
 struct TransitionRates {

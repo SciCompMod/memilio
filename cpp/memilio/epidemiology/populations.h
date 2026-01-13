@@ -308,12 +308,11 @@ public:
 };
 
 /**
- * @brief Population template specialization for Index types.
+ * @brief Population template specialization, forwarding categories from a MultiIndex to the Population.
  * 
- * @tparam FP Floating point type
- * @tparam Categories Index categories
+ * @tparam FP A floating point type, e.g., double.
+ * @tparam Categories Index categories.
  */
-
 template <typename FP, class... Categories>
 class Populations<FP, Index<Categories...>> : public Populations<FP, Categories...>
 {
