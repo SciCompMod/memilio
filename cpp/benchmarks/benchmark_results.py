@@ -61,7 +61,7 @@ class rawData:
 
         # opencovid single thread (normalized per time step)
         self.opencovid = np.array(
-            [514, 861, 1584, 2959, 5918, 12816, 24275]) * (1/120.0)
+            [380, 622, 1069, 2009, 3947, 8569, 16142]) * (1/120.0)
 
         # now data for weak scaling
         self.weak_scaling_cores = [1, 2, 4, 8, 16, 32]
@@ -96,6 +96,18 @@ class rawData:
         self.memilio_strong_scaling_128_runs_multiple_nodes = np.array(
             # only last data point available
             [7.413365e+04, 3.721441e+04, 1.865978e+04, 9.374108e+03, 4.684981e+03, 2.357355e+03, 1.187477e+03, 6.005680e+02])
+        
+
+        # "Graph-ODE w/ mobility: [19566.8, 9718.44, 4847.9, 2417.92, 1252.95, 615.575, 329.08, 190.454],
+        # "LCT": [746.859, 373.144, 185.975, 92.8182, 46.6567, 24.8617, 12.8418, 7.05302],
+        # "IDE": [5358.52, 2672.95, 1341, 666.594, 332.608, 176.283, 91.0512, 46.2337]
+        self.memilio_graph_ode_strong_scaling_128_runs_one_node = np.array(
+            [19566.8, 9718.44, 4847.9, 2417.92, 1252.95, 615.575, 329.08, 190.454])
+        self.memilio_lct_strong_scaling_128_runs_one_node = np.array(
+            [746.859, 373.144, 185.975, 92.8182, 46.6567, 24.8617, 12.8418, 7.05302])
+        self.memilio_ide_strong_scaling_128_runs_one_node = np.array(
+            [5358.52, 2672.95, 1341, 666.594, 332.608, 176.283, 91.0512, 46.2337])
+        
 
 
 class BenchmarkAnalyzer:
@@ -304,7 +316,6 @@ class BenchmarkAnalyzer:
         ax.plot(raw_data.population_sizes, raw_data.memilio_times_four_cores,
                 marker='o', linewidth=3, markersize=8,
                 color=memilio_color_4, label='MEmilio ABM (4 cores)', linestyle='-')
-
         ax.plot(raw_data.population_sizes, raw_data.memilio_times_sixteen_cores,
                 marker='o', linewidth=3, markersize=8,
                 color=memilio_color_16, label='MEmilio ABM (16 cores)', linestyle='-')
@@ -329,7 +340,7 @@ class BenchmarkAnalyzer:
                       fontsize=self.fontsize)
 
         ax.grid(True, alpha=0.3)
-        ax.legend(fontsize=LEGEND_FONTSIZE, loc='upper left',
+        ax.legend(fontsize=LEGEND_FONTSIZE, loc='lower right',
                   framealpha=0.95, edgecolor='gray', fancybox=False)
 
         # Add speedup annotations between different implementations (min and max only)
@@ -369,11 +380,24 @@ class BenchmarkAnalyzer:
         cores = raw_data.strong_scaling_cores[0:len(
             raw_data.memilio_strong_scaling_128_runs_one_node)]
         runtimes = raw_data.memilio_strong_scaling_128_runs_one_node[0:]
+        runtimes_graph_ode = raw_data.memilio_graph_ode_strong_scaling_128_runs_one_node[0:]
+        runtimes_lct = raw_data.memilio_lct_strong_scaling_128_runs_one_node[0:]
+        runtimes_ide = raw_data.memilio_ide_strong_scaling_128_runs_one_node[0:]
 
         # Plot runtime
         ax.plot(cores, runtimes,
                 marker='o', linewidth=3, markersize=8,
-                color='#1f77b4', label='MEmilio ABM', linestyle='-')
+                color='#0d47a1', label='ABM', linestyle='-')
+        ax.plot(cores, runtimes_graph_ode,
+                marker='s', linewidth=3, markersize=8,
+                color="#741194", label='Graph-ODE\nw/ mobility', linestyle='-')
+        ax.plot(cores, runtimes_lct,
+                marker='^', linewidth=3, markersize=8,
+                color='#20A398', label='LCT', linestyle='-')
+        ax.plot(cores, runtimes_ide,
+                marker='D', linewidth=3, markersize=8,
+                color='#E89A63', label='IDE', linestyle='-')
+        
 
         # Calculate and plot ideal scaling
         if len(runtimes) > 0:
@@ -422,7 +446,7 @@ class BenchmarkAnalyzer:
         # Plot runtime
         ax.plot(nodes, runtimes,
                 marker='s', linewidth=3, markersize=8,
-                color='#2ca02c', label='MEmilio ABM', linestyle='-')
+                color='#0d47a1', label='ABM', linestyle='-')
 
         # Calculate and plot ideal scaling
         if len(runtimes) > 0:
@@ -561,7 +585,7 @@ class BenchmarkAnalyzer:
         eff_2m = calculate_efficiency(raw_data.memilio_weak_scaling_2m)
 
         print("\n" + "="*95)
-        print("WEAK SCALING EFFICIENCY TABLE: MEmilio ABM")
+        print("WEAK SCALING EFFICIENCY TABLE: ABM")
         print("="*95)
         print(f"{'Cores':>8} | {'250k agents/core':>20} | {'500k agents/core':>20} | {'1M agents/core':>20} | {'2M agents/core':>20}")
         print(f"{'':>8} | {'Efficiency (%)':>20} | {'Efficiency (%)':>20} | {'Efficiency (%)':>20} | {'Efficiency (%)':>20}")
@@ -594,10 +618,10 @@ class BenchmarkAnalyzer:
             return [(baseline / (runtime * unit) * 100) for runtime, unit in zip(runtimes, units)]
 
         print("\n" + "="*70)
-        print("STRONG SCALING EFFICIENCY TABLE: MEmilio ABM")
+        print("STRONG SCALING EFFICIENCY TABLE: ABM")
         print("="*70)
 
-        # One node table
+        # One node tablez
         if len(runtimes_one_node) > 0:
             print("\nOne Node Strong Scaling:")
             print(
