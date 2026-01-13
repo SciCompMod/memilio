@@ -223,7 +223,7 @@ def plot_model_comparison_all_compartments(result_dir, percentiles, num_age_grou
     plt.close()
 
 
-def plot_model_comparison_all_scenarios_Exposed_ICU_Deaths(result_dirs_per_scenario, percentiles=["05", "50", "95"], num_age_groups=6, plot_init=True, save_dir=""):
+def plot_model_comparison_all_scenarios_Exposed_ICU_Deaths(result_dirs_per_scenario, scenario_titles, percentiles=["05", "50", "95"], num_age_groups=6, plot_init=True, save_dir=""):
     """
     Plots model comparison results across multiple scenarios for Exposed, ICU, and Dead compartments.
 
@@ -241,7 +241,7 @@ def plot_model_comparison_all_scenarios_Exposed_ICU_Deaths(result_dirs_per_scena
 
     # Define plot with 3 rows (compartments) and 4 columns (scenarios)
     fig, axs = plt.subplots(3, 4,
-                            figsize=(16, 10))
+                            figsize=(12, 8))
     linewidth = 3
 
     # Iterate over scenarios (columns)
@@ -267,12 +267,17 @@ def plot_model_comparison_all_scenarios_Exposed_ICU_Deaths(result_dirs_per_scena
                 ax.set_ylabel(
                     f'{compartment_names[comp_row_idx]} [#]')
 
+            # Scenario titles
+            if comp_row_idx == 0:
+                ax.set_title(
+                    scenario_titles[scenario_idx], fontweight="bold", pad=15.0)
+
             # # X-axis labels at the bottom
             # if comp_row_idx == len(compartments_to_plot) - 1:
             #     ax.set_xlabel('Simulation time [days]')
 
     # X-axis label for all plots at the bottom
-    fig.supxlabel('Simulation time [days]')
+    fig.supxlabel('Simulation time [days]', y=0.04)
 
     # align y-labels of the left column so they share the same horizontal position
     fig.align_ylabels(axs[:, 0])
@@ -291,7 +296,7 @@ def plot_model_comparison_all_scenarios_Exposed_ICU_Deaths(result_dirs_per_scena
                     all_handles.append(handle)
                     all_labels.append(label)
 
-    fig.legend(all_handles, all_labels, loc="lower center", bbox_to_anchor=(0.5, -0.05),
+    fig.legend(all_handles, all_labels, loc="lower center", bbox_to_anchor=(0.5, -0.02),
                fancybox=False, shadow=False, ncol=len(all_labels))
 
     set_fontsize()
@@ -393,7 +398,10 @@ if __name__ == '__main__':
     # Path where simulation results are stored.
     result_dir = f"{root_dir}/{num_runs}_runs/{distribution}/{location}/{seed}/"
     # Path where plots will be stored.
-    plot_dir = f"{root_dir}/{num_runs}_runs/{distribution}/{location}/{seed}/"
+    # plot_dir = os.path.join(os.path.dirname(
+    #     __file__), f"plots/{num_runs}_runs/{distribution}/{location}/{seed}/")
+    plot_dir = os.path.join(os.path.dirname(
+        __file__), f"plots/{num_runs}_runs/")
     os.makedirs(plot_dir, exist_ok=True)
 
     num_age_groups = 6
@@ -408,13 +416,16 @@ if __name__ == '__main__':
     # plot_model_comparison_all_compartments(
     #     result_dir, percentiles, num_age_groups, plot_init, plot_dir)
 
+    scenario_titles = ["S1.1, One location\n" + r"$R_{eff} = 2.08$", "S1.2, Multiple locations \n" + r"$R_{eff} = 2.63$",
+                       "S2.1, One location \n" + r"$R_{eff}=1.17$", "S2.2, Multiple locations \n" + r"$R_{eff}=2.36$"]
+
     result_dirs_per_scenario = [f"{root_dir}/{num_runs}_runs/exponential/one_location/{seed}/",
                                 f"{root_dir}/{num_runs}_runs/exponential/multiple_locations/{seed}/",
                                 f"{root_dir}/{num_runs}_runs/different_dists/one_location/{seed}/",
                                 f"{root_dir}/{num_runs}_runs/different_dists/multiple_locations/{seed}/"]
 
     plot_model_comparison_all_scenarios_Exposed_ICU_Deaths(
-        result_dirs_per_scenario, percentiles, num_age_groups, plot_init, plot_dir)
+        result_dirs_per_scenario, scenario_titles, percentiles, num_age_groups, plot_init, plot_dir)
 
     # plot_ABM_results_one_compartments(
     #     result_dir, 0, ["05", "50", "95"], 6, 8, plot_dir)
