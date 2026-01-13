@@ -211,13 +211,6 @@ private:
     }
 
 public:
-    template <class... IndexArgs,
-              class = std::enable_if_t<is_expression_valid<details::merge_indices_expr, IndexArgs...>::value>>
-    Index(IndexArgs... _index_args)
-        : indices(details::merge_indices(_index_args...))
-    {
-    }
-
     // comparison operators
     bool operator==(Index const& other) const
     {

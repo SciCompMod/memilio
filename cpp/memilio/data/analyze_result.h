@@ -336,6 +336,31 @@ std::vector<TimeSeries<FP>> ensemble_percentile(const std::vector<std::vector<Ti
 }
 
 template <typename FP>
+TimeSeries<FP> ensemble_percentile(const std::vector<TimeSeries<FP>>& ensemble_result, FP p)
+{
+    assert(p > 0.0 && p < 1.0 && "Invalid percentile value.");
+
+    auto num_runs        = ensemble_result.size();
+    auto num_time_points = ensemble_result[0].get_num_time_points();
+    auto num_elements    = ensemble_result[0].get_num_elements();
+
+    TimeSeries<FP> percentile = TimeSeries<FP>::zero(num_time_points, num_elements);
+
+    std::vector<FP> single_element(num_runs); //reused for each element
+    for (Eigen::Index time = 0; time < num_time_points; time++) {
+        percentile.get_time(time) = ensemble_result[0].get_time(time);
+        for (Eigen::Index elem = 0; elem < num_elements; elem++) {
+            std::transform(ensemble_result.begin(), ensemble_result.end(), single_element.begin(), [=](auto& run) {
+                return run[time][elem];
+            });
+            std::sort(single_element.begin(), single_element.end());
+            percentile[time][elem] = single_element[static_cast<size_t>(num_runs * p)];
+        }
+    }
+    return percentile;
+}
+
+template <typename FP>
 FP result_distance_2norm(const std::vector<mio::TimeSeries<FP>>& result1,
                          const std::vector<mio::TimeSeries<FP>>& result2)
 {

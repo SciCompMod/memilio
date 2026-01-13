@@ -704,7 +704,8 @@ public:
                     mio::log_debug("Neighbor node id: {}", node_id);
                     auto neighbour_property = Base::m_graph.nodes()[node_id].property;
                     using Model             = std::decay_t<decltype(neighbour_property.get_simulation().get_model())>;
-                    using AdoptionRate      = mio::smm::AdoptionRates<ScalarType, typename Model::Compartments>;
+                    using AdoptionRate =
+                        mio::smm::AdoptionRates<ScalarType, typename Model::Status, mio::regions::Region>;
                     neighbour_property.get_simulation().get_model().parameters.template get<AdoptionRate>()[1].factor +=
                         infectionrisk;
                 }

@@ -28,6 +28,7 @@
 #include "memilio/mobility/graph_builder.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/custom_index_array.h"
+#include "memilio/utils/index.h"
 #include "memilio/utils/logging.h"
 #include "memilio/timer/auto_timer.h"
 #include "memilio/utils/parameter_distributions.h"
@@ -36,23 +37,12 @@
 #include "memilio/utils/base_dir.h"
 #include "smm/simulation.h"
 #include "smm/parameters.h"
+#include "fmd/infection_state.h"
+#include "fmd/model.h"
 #include "abm/time.h"
 #include "thirdparty/csv.h"
 #include <ranges>
 #include <omp.h>
-
-enum class InfectionState
-{
-    S,
-    E,
-    I,
-    INS,
-    ICS,
-    R,
-    V,
-    D,
-    Count
-};
 
 template <class T>
 MPI_Datatype mpi_type();
@@ -120,8 +110,12 @@ int main(int /*argc*/, char** /*argv*/)
 
     const size_t num_runs = 100000;
 
-    using Model = mio::smm::Model<ScalarType, 1, InfectionState>;
-    auto home   = mio::regions::Region(0);
+    using mio::fmd::InfectionState;
+    using Status = mio::Index<InfectionState>;
+    using mio::regions::Region;
+
+    using Model = mio::smm::Model<ScalarType, InfectionState, Status, Region>;
+    auto home   = Region(0);
     auto S      = InfectionState::S;
     auto E      = InfectionState::E;
     auto I      = InfectionState::I;
@@ -130,7 +124,7 @@ int main(int /*argc*/, char** /*argv*/)
     auto R      = InfectionState::R;
     auto D      = InfectionState::D;
 
-    std::vector<mio::AdoptionRate<ScalarType, InfectionState>> adoption_rates;
+    std::vector<mio::AdoptionRate<ScalarType, Status, Region>> adoption_rates;
     // Adoption rates corresponding to our model, paramters are arbitrary
     adoption_rates.push_back({S, E, home, 0.2, {{I, 0.8}, {INS, 0.1}, {ICS, 0.5}}});
     adoption_rates.push_back({S, E, home, 0.0, {}});
@@ -141,9 +135,7 @@ int main(int /*argc*/, char** /*argv*/)
     adoption_rates.push_back({ICS, R, home, 0.4, {}});
     adoption_rates.push_back({INS, R, home, 0.5, {}});
 
-    mio::GraphBuilder<mio::LocationNode<ScalarType, mio::smm::Simulation<ScalarType, 1, InfectionState>>,
-                      mio::MobilityEdgeDirected<ScalarType>>
-        builder;
+    mio::fmd::Builder builder;
 
     // usage:
     // if (rank==0) v = {1,2,3,4};
@@ -201,21 +193,23 @@ int main(int /*argc*/, char** /*argv*/)
     }
 
     for (size_t i = 0; i < farm_ids.size(); ++i) {
-        Model curr_model;
-        curr_model.populations[{home, InfectionState::S}]                                = num_cows_vec[i];
-        curr_model.populations[{home, InfectionState::E}]                                = 0;
-        curr_model.populations[{home, InfectionState::I}]                                = 0;
-        curr_model.populations[{home, InfectionState::INS}]                              = 0;
-        curr_model.populations[{home, InfectionState::ICS}]                              = 0;
-        curr_model.populations[{home, InfectionState::R}]                                = 0;
-        curr_model.populations[{home, InfectionState::D}]                                = 0;
-        curr_model.parameters.get<mio::smm::AdoptionRates<ScalarType, InfectionState>>() = adoption_rates;
+        Model curr_model(Status{InfectionState::Count}, Region(1));
+        curr_model.populations[{home, InfectionState::S}]                                        = num_cows_vec[i];
+        curr_model.populations[{home, InfectionState::E}]                                        = 0;
+        curr_model.populations[{home, InfectionState::I}]                                        = 0;
+        curr_model.populations[{home, InfectionState::INS}]                                      = 0;
+        curr_model.populations[{home, InfectionState::ICS}]                                      = 0;
+        curr_model.populations[{home, InfectionState::R}]                                        = 0;
+        curr_model.populations[{home, InfectionState::V}]                                        = 0;
+        curr_model.populations[{home, InfectionState::D}]                                        = 0;
+        curr_model.parameters.get<mio::smm::AdoptionRates<ScalarType, Status, Region>>() = adoption_rates;
         builder.add_node(farm_ids[i], longitudes[i], latitudes[i], curr_model, t0);
     }
     auto rng = mio::RandomNumberGenerator();
 
     std::vector<std::vector<size_t>> interesting_indices;
-    interesting_indices.push_back({Model().populations.get_flat_index({home, InfectionState::I})});
+    interesting_indices.push_back(
+        {Model(Status{InfectionState::Count}, Region(1)).populations.get_flat_index({home, InfectionState::I})});
     for (size_t i = 0; i < froms.size(); ++i) {
         builder.add_edge(froms[i], tos[i], interesting_indices);
     }
@@ -308,7 +302,7 @@ int main(int /*argc*/, char** /*argv*/)
             sim2.infectionrisk = 0.1;
         }
         auto index = sim2.get_graph().nodes()[0].property.get_simulation().get_model().populations.get_flat_index(
-            {mio::regions::Region(0), InfectionState::E});
+            {Region(0), InfectionState::E});
         sim2.get_graph().nodes()[145236].property.get_result().get_last_value()[index] = 100;
         return sim2;
     };
