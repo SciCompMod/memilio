@@ -173,15 +173,36 @@ using not_copyable_if = std::conditional<Cond, details::NoCopy, details::Empty>;
 template <bool Cond>
 using not_copyable_if_t = typename not_copyable_if<Cond>::type;
 
+namespace details
+{
+
 /**
- * Finds the type at the Index-th position in the list Types.
+ * @brief Get the type at position Index of list (Head, Tail...).
+ * @tparam Index The index of the type to get.
+ * @tparam Head, Tail The list to search in. May be empty.
+ * @{
+ */
+template <std::size_t Index, class Head, class... Tail>
+struct type_at_index_impl {
+    using type = typename type_at_index_impl<Index - 1, Tail...>::type;
+};
+template <class Head, class... Tail>
+struct type_at_index_impl<0, Head, Tail...> {
+    using type = Head;
+};
+/** @} */
+
+} // namespace details
+
+/**
+ * @brief Finds the type at the Index-th position in the list Types.
  * @tparam Index An index in `[0, sizeof...(Types))`.
  * @tparam Types A list of types.
  */
 template <std::size_t Index, class... Types>
 struct type_at_index {
     static_assert(Index < sizeof...(Types), "Index is too large for the list Types.");
-    using type = typename std::tuple_element<Index, std::tuple<Types...>>::type;
+    using type = typename details::type_at_index_impl<Index, Types...>::type;
 };
 
 /**
@@ -196,10 +217,10 @@ namespace details
 {
 
 /**
- * @brief Recursively searches (TypeHead, Types...) for Type.
+ * @brief Recursively searches the list (Head, Tail...) for Type.
  * @tparam Size Total size of the list to search.
  * @tparam Type to search.
- * @tparam TypesHead, Types The list to search in. May be empty.
+ * @tparam Head, Tail The list to search in. May be empty.
  * @return The index of Type in the list (TypeHead, Types...), or the size of the list if Type is not in it.
  * @{
  */
@@ -209,17 +230,17 @@ constexpr std::size_t index_of_impl()
     // this works both as an overload for empty lists as well as a "not found"
     return Size;
 }
-template <std::size_t Size, class Type, class TypesHead, class... Types>
+template <std::size_t Size, class Type, class Head, class... Tail>
 constexpr std::size_t index_of_impl()
 {
     // check if the type matches, otherwise call itself, omitting TypesHead
     // this is significantly cheaper to compile compared to using an index and carrying the entire list,
     // as that needs additional work for looking up "Types[Index]", e.g. through type_at_index
-    if constexpr (std::is_same_v<Type, TypesHead>) {
-        return Size - sizeof...(Types) - 1;
+    if constexpr (std::is_same_v<Type, Head>) {
+        return Size - sizeof...(Tail) - 1;
     }
     else {
-        return index_of_impl<Size, Type, Types...>();
+        return index_of_impl<Size, Type, Tail...>();
     }
 }
 /** @} */
@@ -246,7 +267,7 @@ template <class Type, class... Types>
 constexpr bool is_type_in_list_v = is_type_in_list<Type, Types...>::value;
 
 /**
- * Finds the index of a Type in the list Types.
+ * @brief Finds the index of a Type in the list Types.
  * If Type does not have a unique index in Types, only the smallest is given as value.
  * @tparam Type A type contained in Types.
  * @tparam Types A list of types.
@@ -254,7 +275,7 @@ constexpr bool is_type_in_list_v = is_type_in_list<Type, Types...>::value;
 template <class Type, class... Types>
 struct index_of_type {
     static constexpr std::size_t value = details::index_of_impl<sizeof...(Types), Type, Types...>();
-    static_assert(is_type_in_list_v<Type, Types...>, "Type is not contained in given list.");
+    static_assert(value < sizeof...(Types), "Type is not contained in given list.");
 };
 
 /**
