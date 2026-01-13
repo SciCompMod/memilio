@@ -39,6 +39,7 @@
 #include "smm/parameters.h"
 #include "fmd/infection_state.h"
 #include "fmd/model.h"
+#include "fmd/adoption_rates.h"
 #include "abm/time.h"
 #include "thirdparty/csv.h"
 #include <ranges>
@@ -116,24 +117,8 @@ int main(int /*argc*/, char** /*argv*/)
 
     using Model = mio::smm::Model<ScalarType, InfectionState, Status, Region>;
     auto home   = Region(0);
-    auto S      = InfectionState::S;
-    auto E      = InfectionState::E;
-    auto I      = InfectionState::I;
-    auto INS    = InfectionState::INS;
-    auto ICS    = InfectionState::ICS;
-    auto R      = InfectionState::R;
-    auto D      = InfectionState::D;
 
-    std::vector<mio::AdoptionRate<ScalarType, Status, Region>> adoption_rates;
-    // Adoption rates corresponding to our model, paramters are arbitrary
-    adoption_rates.push_back({S, E, home, 0.2, {{I, 0.8}, {INS, 0.1}, {ICS, 0.5}}});
-    adoption_rates.push_back({S, E, home, 0.0, {}});
-    adoption_rates.push_back({E, I, home, 0.2, {}});
-    adoption_rates.push_back({I, INS, home, 0.1, {}});
-    adoption_rates.push_back({I, ICS, home, 0.1, {}});
-    adoption_rates.push_back({ICS, D, home, 0.6, {}});
-    adoption_rates.push_back({ICS, R, home, 0.4, {}});
-    adoption_rates.push_back({INS, R, home, 0.5, {}});
+    auto adoption_rates = mio::fmd::generic_adoption_rates();
 
     mio::fmd::Builder builder;
 
@@ -193,17 +178,7 @@ int main(int /*argc*/, char** /*argv*/)
     }
 
     for (size_t i = 0; i < farm_ids.size(); ++i) {
-        Model curr_model(Status{InfectionState::Count}, Region(1));
-        curr_model.populations[{home, InfectionState::S}]                                        = num_cows_vec[i];
-        curr_model.populations[{home, InfectionState::E}]                                        = 0;
-        curr_model.populations[{home, InfectionState::I}]                                        = 0;
-        curr_model.populations[{home, InfectionState::INS}]                                      = 0;
-        curr_model.populations[{home, InfectionState::ICS}]                                      = 0;
-        curr_model.populations[{home, InfectionState::R}]                                        = 0;
-        curr_model.populations[{home, InfectionState::V}]                                        = 0;
-        curr_model.populations[{home, InfectionState::D}]                                        = 0;
-        curr_model.parameters.get<mio::smm::AdoptionRates<ScalarType, Status, Region>>() = adoption_rates;
-        builder.add_node(farm_ids[i], longitudes[i], latitudes[i], curr_model, t0);
+        builder.add_node(farm_ids[i], longitudes[i], latitudes[i], mio::fmd::create_model(num_cows_vec[i], adoption_rates), t0);
     }
     auto rng = mio::RandomNumberGenerator();
 

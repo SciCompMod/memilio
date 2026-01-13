@@ -26,64 +26,38 @@
 #include "memilio/mobility/graph.h"
 #include "memilio/mobility/graph_builder.h"
 #include "memilio/utils/compiler_diagnostics.h"
+#include "memilio/utils/index.h"
 #include "memilio/utils/logging.h"
 #include "memilio/timer/auto_timer.h"
 #include "memilio/utils/parameter_distributions.h"
 #include "memilio/utils/random_number_generator.h"
 #include "smm/simulation.h"
 #include "smm/parameters.h"
+#include "fmd/infection_state.h"
+#include "fmd/model.h"
+#include "fmd/adoption_rates.h"
 #include "thirdparty/csv.h"
 #include <ranges>
 #include <omp.h>
-
-enum class InfectionState
-{
-    S,
-    E,
-    I,
-    INS,
-    ICS,
-    R,
-    V,
-    D,
-    Count
-};
 
 int main(int /*argc*/, char** /*argv*/)
 {
     const auto t0   = 0.;
     const auto tmax = 100.;
     const auto dt   = 1.; //initial time step
-    using Status    = mio::Index<InfectionState>;
+
+    using mio::fmd::InfectionState;
+    using Status = mio::Index<InfectionState>;
     using mio::regions::Region;
 
     //total compartment sizes
 
-    using Model = mio::smm::Model<ScalarType, InfectionState, Status, mio::regions::Region>;
-    auto home   = mio::regions::Region(0);
-    auto S      = InfectionState::S;
-    auto E      = InfectionState::E;
-    auto I      = InfectionState::I;
-    auto INS    = InfectionState::INS;
-    auto ICS    = InfectionState::ICS;
-    auto R      = InfectionState::R;
-    auto D      = InfectionState::D;
+    using Model = mio::smm::Model<ScalarType, InfectionState, Status, Region>;
+    auto home   = Region(0);
 
-    std::vector<mio::AdoptionRate<ScalarType, Status, Region>> adoption_rates;
-    // Adoption rates corresponding to our model, paramters are arbitrary
-    adoption_rates.push_back({S, E, home, 0.2, {{I, 0.8}, {INS, 0.1}, {ICS, 0.5}}});
-    adoption_rates.push_back({S, E, home, 0.0, {}});
-    adoption_rates.push_back({E, I, home, 0.2, {}});
-    adoption_rates.push_back({I, INS, home, 0.1, {}});
-    adoption_rates.push_back({I, ICS, home, 0.1, {}});
-    adoption_rates.push_back({ICS, D, home, 0.6, {}});
-    adoption_rates.push_back({ICS, R, home, 0.4, {}});
-    adoption_rates.push_back({INS, R, home, 0.5, {}});
+    auto adoption_rates = mio::fmd::generic_adoption_rates();
 
-    mio::GraphBuilder<
-        mio::LocationNode<ScalarType, mio::smm::Simulation<ScalarType, InfectionState, Status, mio::regions::Region>>,
-        mio::MobilityEdgeDirected<ScalarType>>
-        builder;
+    mio::fmd::Builder builder;
     mio::log_info("Starting Graph generation");
     {
         mio::timing::AutoTimer<"Graph Nodes Generation"> timer;
@@ -92,23 +66,15 @@ int main(int /*argc*/, char** /*argv*/)
         int farm_id, num_cows;
         double latitude, longitude;
         while (farms.read_row(farm_id, num_cows, latitude, longitude)) {
-            Model curr_model(Status{InfectionState::Count}, Region(1));
-            curr_model.populations[{home, InfectionState::S}]                                = num_cows;
-            curr_model.populations[{home, InfectionState::E}]                                = 1;
-            curr_model.populations[{home, InfectionState::I}]                                = 0;
-            curr_model.populations[{home, InfectionState::INS}]                              = 0;
-            curr_model.populations[{home, InfectionState::ICS}]                              = 0;
-            curr_model.populations[{home, InfectionState::R}]                                = 0;
-            curr_model.populations[{home, InfectionState::D}]                                = 0;
-            curr_model.parameters.get<mio::smm::AdoptionRates<ScalarType, Status, Region>>() = adoption_rates;
-            builder.add_node(farm_id, longitude, latitude, curr_model, t0);
+            builder.add_node(farm_id, longitude, latitude, mio::fmd::create_model(num_cows, adoption_rates), t0);
         }
     }
     mio::log_info("Nodes added to Graph");
     auto rng = mio::RandomNumberGenerator();
 
     std::vector<std::vector<size_t>> interesting_indices;
-    interesting_indices.push_back({Model(Status{InfectionState::Count}, Region(1)).populations.get_flat_index({home, InfectionState::I})});
+    interesting_indices.push_back(
+        {Model(Status{InfectionState::Count}, Region(1)).populations.get_flat_index({home, InfectionState::I})});
     io::CSVReader<2> edges("../../edges200000.csv");
     edges.read_header(io::ignore_extra_column, "from", "to");
     size_t from, to;

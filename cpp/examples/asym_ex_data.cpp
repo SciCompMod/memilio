@@ -35,6 +35,7 @@
 #include "smm/parameters.h"
 #include "fmd/infection_state.h"
 #include "fmd/model.h"
+#include "fmd/adoption_rates.h"
 #include "thirdparty/csv.h"
 #include <ranges>
 #include <omp.h>
@@ -51,24 +52,6 @@ int main(int /*argc*/, char** /*argv*/)
     //total compartment sizes
 
     using Model = mio::smm::Model<ScalarType, InfectionState, Status, Region>;
-    auto home   = Region(0);
-    auto S      = InfectionState::S;
-    auto E      = InfectionState::E;
-    auto I      = InfectionState::I;
-    auto INS    = InfectionState::INS;
-    auto ICS    = InfectionState::ICS;
-    auto R      = InfectionState::R;
-    auto D      = InfectionState::D;
-
-    std::vector<mio::AdoptionRate<ScalarType, Status, Region>> adoption_rates;
-    // Adoption rates corresponding to our model, paramters are arbitrary
-    adoption_rates.push_back({S, E, home, 0.2, {{I, 0.8}, {INS, 0.1}, {ICS, 0.5}}});
-    adoption_rates.push_back({E, I, home, 0.2, {}});
-    adoption_rates.push_back({I, INS, home, 0.1, {}});
-    adoption_rates.push_back({I, ICS, home, 0.1, {}});
-    adoption_rates.push_back({ICS, D, home, 0.6, {}});
-    adoption_rates.push_back({ICS, R, home, 0.4, {}});
-    adoption_rates.push_back({INS, R, home, 0.5, {}});
 
     mio::fmd::Builder builder;
     mio::log_info("Starting Graph generation");
@@ -79,7 +62,7 @@ int main(int /*argc*/, char** /*argv*/)
         size_t farm_id, num_cows;
         double latitude, longitude;
         while (farms.read_row(farm_id, latitude, longitude, num_cows)) {
-            auto curr_model = mio::fmd::create_model(num_cows, adoption_rates);
+            auto curr_model = mio::fmd::create_model(num_cows, mio::fmd::generic_adoption_rates());
             builder.add_node(farm_id, longitude, latitude, curr_model, t0);
         }
     }
@@ -88,8 +71,8 @@ int main(int /*argc*/, char** /*argv*/)
 
     std::vector<std::vector<size_t>> interesting_indices;
     interesting_indices.push_back(
-        {Model(Status{InfectionState::Count}, Region(1)).populations.get_flat_index({home, InfectionState::I})});
-    // graph.reserve_edges(262144);
+        {Model(Status{InfectionState::Count}, Region(1)).populations.get_flat_index({Region(0), InfectionState::I})});
+
     {
         mio::timing::AutoTimer<"Graph Edges Generation"> timer;
         io::CSVReader<2> edges("/home/kilian/Documents/data/read_data/edges.csv");
