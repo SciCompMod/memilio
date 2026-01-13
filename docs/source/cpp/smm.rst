@@ -1,11 +1,20 @@
 Stochastic metapopulation model
 ===============================
 
-The stochastic metapopulation model uses a Markov process to simulate disease dynamics. Similar to the `Diffusive Agent-based Model` the Markov process is given by location and infection state changes. However, in contrast to the diffusive ABM, location changes are not given by agent-dependent diffusion processes, but by stochastic jumps between regions with the requirement that the domain is split into disjoint regions. Hence, there is no further spatial resolution within one region and locations or positions are only given by the region index. The evolution of the system state is determined by the following master equation
+The stochastic metapopulation model uses a Markov process to simulate disease dynamics. Similar to the :doc:`diffusive_abm` the 
+Markov process is given by location and infection state changes. However, in contrast to the diffusive ABM, location changes are 
+not given by agent-dependent diffusion processes, but by stochastic jumps between regions with the requirement that the domain 
+is split into disjoint regions. Hence, there is no further spatial resolution within one region and locations or positions are 
+only given by the region index. The evolution of the system state is determined by the following master equation
 
 :math:`\partial_t p(X,Z;t) = G p(X,Z;t) + L p(X,Z;t)`.
 
-The operator :math:`G` defines the infection state adoptions and only acts on :math:`Z`, the vector containing all subpopulations stratified by infection state. :math:`L` defines location changes, only acting on :math:`X`, the vector containing all subpopulations stratified by region. Infection state adoptions are modeled as stochastic jumps with independent Poisson processes given by adoption rate functions. Similar to the infection state dynamics, spatial transitions between regions are also modeled as stochastic jumps with independent Poisson processes given by transition rate functions. Gillespie's direct method (stochastic simulation algorithm) is used for simulation.
+The operator :math:`G` defines the infection state adoptions and only acts on :math:`Z`, the vector containing all subpopulations 
+stratified by infection state. :math:`L` defines location changes, only acting on :math:`X`, the vector containing all subpopulations 
+stratified by region. Infection state adoptions are modeled as stochastic jumps with independent Poisson processes given by adoption 
+rate functions. Similar to the infection state dynamics, spatial transitions between regions are also modeled as stochastic jumps 
+with independent Poisson processes given by transition rate functions. Gillespie's direct method (stochastic simulation algorithm) 
+is used for the simulation.
 
 In the following, we present more details of the stochastic metapopulation model, including code examples. 
 An overview of nonstandard but often used data types can be found under :doc:`data_types`.
@@ -13,7 +22,8 @@ An overview of nonstandard but often used data types can be found under :doc:`da
 Infection states
 ----------------
 
-The model does not have fixed infection states, but gets an enum class of infection states as template argument. Thus it can be used with any set of infection states.
+The model does not have fixed infection states, but gets an enum class of infection states as template argument. Thus it 
+can be used with any set of infection states.
 Using the infection states Susceptible (S), Exposed (E), Carrier (C), Infected (I), Recovered (R) and Dead (D), this can be done as follows:
 
 .. code-block:: cpp
@@ -32,41 +42,44 @@ Using the infection states Susceptible (S), Exposed (E), Carrier (C), Infected (
 
     const size_t num_regions = 2;
 
-    using Model              = mio::smm::Model<num_regions, InfectionState>;
+    using Status = mio::Index<InfectionState>;
+    using Model              = mio::smm::Model<ScalarType, InfectionState, Status, Region>;
     Model model;
 
 Infection state transitions
 ---------------------------
 
-The infection state transitions are explicitly given by the adoption rates and are therefore subject to user input. Adoption rates always depend on their source infection state. If an adoption event requires interaction of agents (e.g. disease transmission), the corresponding rate depends not only on the source infection state, but also on other infection states, the **Influence**\s. An adoption rate that only depends on the source infection state, e.g. recovery or worsening of disease symptoms, is called `first-order` adoption rate and an adoption rate that has influences is called `second-order` adoption rate. Adoption rates are region-dependent; therefore it is possible to have different rates in two regions for the same infection state transition which can be useful when having e.g. region-dependent interventions or contact behavior.
+The infection state transitions are explicitly given by the adoption rates and are therefore subject to user input. 
+Adoption rates always depend on their source infection state. If an adoption event requires interaction of agents (e.g. 
+disease transmission), the corresponding rate depends not only on the source infection state, but also on other infection 
+states, the **Influence**\s. An adoption rate that only depends on the source infection state, e.g. recovery or worsening 
+of disease symptoms, is called `first-order` adoption rate and an adoption rate that has influences is called `second-order` 
+adoption rate. Adoption rates are region-dependent; therefore it is possible to have different rates in two regions for 
+the same infection state transition which can be useful when having e.g. region-dependent interventions or contact behavior.
 
-Using the infection states from above and two regions, there are five first-order adoption rates per region and one second-order adoption rate per region. In the example below, the second-order adoption rate (transition from S to E) differs between the regions:
+Using the infection states from above and two regions, there are five first-order adoption rates per region and one second-order 
+adoption rate per region. In the example below, the second-order adoption rate (transition from S to E) differs between the regions:
 
 .. code-block:: cpp
 
-   std::vector<mio::AdoptionRate<InfectionState>> adoption_rates;
+   std::vector<mio::AdoptionRate<ScalarType, Status, Region>> adoption_rates;
 
    //Set first-order adoption rates for both regions
    for (size_t r = 0; r < num_regions; ++r) {
-      adoption_rates.push_back({InfectionState::E, InfectionState::C, mio::regions::Region(r), 1.0 / 5., {}});
-      adoption_rates.push_back({InfectionState::C, InfectionState::R, mio::regions::Region(r), 0.2 / 3., {}});
-      adoption_rates.push_back({InfectionState::C, InfectionState::I, mio::regions::Region(r), 0.8 / 3., {}});
-      adoption_rates.push_back({InfectionState::I, InfectionState::R, mio::regions::Region(r), 0.99 / 5., {}});
-      adoption_rates.push_back({InfectionState::I, InfectionState::D, mio::regions::Region(r), 0.01 / 5., {}});
+      adoption_rates.push_back({{InfectionState::E}, {InfectionState::C}, mio::regions::Region(r), 1.0 / 5., {}});
+      adoption_rates.push_back({{InfectionState::C}, {InfectionState::R}, mio::regions::Region(r), 0.2 / 3., {}});
+      adoption_rates.push_back({{InfectionState::C}, {InfectionState::I}, mio::regions::Region(r), 0.8 / 3., {}});
+      adoption_rates.push_back({{InfectionState::I}, {InfectionState::R}, mio::regions::Region(r), 0.99 / 5., {}});
+      adoption_rates.push_back({{InfectionState::I}, {InfectionState::D}, mio::regions::Region(r), 0.01 / 5., {}});
    }
 
   //Set second-order adoption rate different for the two regions
   // adoption rate has the form {i, j, k, c_{i,j}, {{tau1.state, tau1.factor}, {tau2.state, tau2.factor}}}, see the equation below
-   adoption_rates.push_back({InfectionState::S, InfectionState::E, mio::regions::Region(0), 0.1, {{InfectionState::C, 1}, {InfectionState::I, 0.5}}});
-   adoption_rates.push_back({InfectionState::S, InfectionState::E, mio::regions::Region(1), 0.2, {{InfectionState::C, 1}, {InfectionState::I, 0.5}}});
+   adoption_rates.push_back({{InfectionState::S}, {InfectionState::E}, mio::regions::Region(0), 0.1, {{{InfectionState::C}, 1}, {{InfectionState::I}, 0.5}}});
+   adoption_rates.push_back({{InfectionState::S}, {InfectionState::E}, mio::regions::Region(1), 0.2, {{{InfectionState::C}, 1}, {{InfectionState::I}, 0.5}}});
 
    //Initialize model parameter
-   model.parameters.get<mio::smm::AdoptionRates<InfectionState>>()   = adoption_rates;
-
-Sociodemographic stratification
--------------------------------
-
-Sociodemographic stratification e.g. by age, gender or immunity can be incorporated by stratifying the set of infection states passed as template to the model.
+   model.parameters.get<mio::smm::AdoptionRates<ScalarType, Status, Region>>()   = adoption_rates;
 
 Parameters
 ----------
@@ -110,8 +123,9 @@ with :math:`i^{(k)}` the population in region :math:`k` having infection state :
 Initial conditions
 ------------------
 
-Before running a simulation with the stochastic metapopulation model, the initial populations i.e. the number of agents per infection state for every region have to be set.
-These populations have the class type **Populations** and can be set via:
+Before running a simulation with the stochastic metapopulation model, the initial populations i.e. the number of agents 
+per infection state for every region have to be set.
+These populations have the class type ``Populations`` and can be set via:
 
 .. code-block:: cpp
 
@@ -128,7 +142,8 @@ These populations have the class type **Populations** and can be set via:
    }
 
 If individuals should transition between regions, the spatial transition rates of the model have to be initialized as well.
-As the spatial transition rates are dependent on infection state, region changes for specific infection states can be prevented. Below, symmetric spatial transition rates are set for every region:
+As the spatial transition rates are dependent on infection state, region changes for specific infection states can be 
+prevented. Below, symmetric spatial transition rates are set for every region:
 
 .. code-block:: cpp
 
@@ -140,27 +155,32 @@ As the spatial transition rates are dependent on infection state, region changes
                if (i != j) {
             // transition rate has the form {i, k, l, \lambda^{(k,l)}_{i}}
             transition_rates.push_back(
-               {InfectionState(s), mio::regions::Region(i), mio::regions::Region(j), 0.01});
+               {{InfectionState(s)}, mio::regions::Region(i), mio::regions::Region(j), 0.01});
             transition_rates.push_back(
-               {InfectionState(s), mio::regions::Region(j), mio::regions::Region(i), 0.01});
+               {{InfectionState(s)}, mio::regions::Region(j), mio::regions::Region(i), 0.01});
          }
       }
    }
 
    //Initialize model parameter
-   model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
+   model.parameters.get<mio::smm::TransitionRates<ScalarType, Status, Region>>() = transition_rates;
 
 Nonpharmaceutical interventions
 --------------------------------
 
-There are no nonpharmaceutical interventions (NPIs) explicitly implemented in the model. However, NPIs influencing the adoption or spatial transition rates can be realized by resetting the corresponding model parameters.
+There are no nonpharmaceutical interventions (NPIs) explicitly implemented in the model. However, NPIs influencing the 
+adoption or spatial transition rates can be realized by resetting the corresponding model parameters.
 
 Simulation
 ----------
 
-At the beginning of the simulation, the waiting times for all events (infection state adoptions and spatial transitions) are drawn. Then the time is advanced until the time point of the next event - which can be a spatial transition or an infection state adoption - and the event takes places. The waiting times of the other events are updated and a new waiting time for the event that just happened is drawn. The simulation saves the system state in discrete time steps.
+At the beginning of the simulation, the waiting times for all events (infection state adoptions and spatial transitions) 
+are drawn. Then the time is advanced until the time point of the next event - which can be a spatial transition or an 
+infection state adoption - and the event takes places. The waiting times of the other events are updated and a new waiting 
+time for the event that just happened is drawn. The simulation saves the system state in discrete time steps.
 
-To simulate the model from `t0` to `tmax` with given step size `dt`, a **Simulation** has to be created and advanced until `tmax`. The step size is only used to regularly save the system state during the simulation.
+To simulate the model from ``t0`` to ``tmax`` with given step size ``dt``, a **Simulation** has to be created and advanced 
+until ``tmax``. The step size is only used to regularly save the system state during the simulation.
 
 .. code-block:: cpp
 
@@ -193,10 +213,58 @@ If one wants to interpolate the aggregated results to a ``mio::TimeSeries`` cont
 
     auto interpolated_results = mio::interpolate_simulation_result(sim.get_result());
 
+
+Demographic Stratification
+--------------------------
+
+It is possible to add multiple indices to the ``Status`` to differentiate multiple groups on the same region. For example this
+could represent the human and the mosquito populations in a specific region. To use this feature, one first of all has to 
+create a new index:
+
+.. code-block:: cpp
+
+   struct Species : public mio::Index<Species> {
+    Species(size_t val): Index<Species>(val)
+      {
+      }
+   };
+
+Then, one has to create the multiindex, where we reuse the ``InfectionState`` defined in the first example:
+
+.. code-block:: cpp
+
+   using Status = mio::Index<InfectionState, Species>;
+
+Define the size for each index dimension that is not an enum class:
+
+.. code-block:: cpp
+
+   const size_t num_species = 2;
+
+We can define a model:
+
+.. code-block:: cpp
+
+   using Model = mio::smm::Model<ScalarType, InfectionState, Status, Region>
+   Model model(Status{Count, Species(num_species)}, Region(num_regions));
+
+Now, for accessing the population, all indexes need to be given:
+
+-- code-block:: cpp
+
+   model.populations[{Region(r), InfectionState::S, Species(0)}] = 100;
+   // ...
+   adoption_rates.push_back({{InfectionState::S, Species(0)}, {InfectionState::E, Species(0)}, Region(r), 0.1, {{InfectionState::I, Species(1)}, 1});
+   // ...
+   transition_rates.push_back({{InfectionState::S, Species(0)}, Region(i), Region(j), 0.01});
+
+
 Examples
 --------
 
-An example of the stochastic metapopulation model with four regions can be found at: `examples/smm.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/smm.cpp>`_
+A full example with ``Status`` distributed according to ``InfectionState``, ``Age`` and ``Species`` can be found at 
+`examples/smm.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/smm.cpp>`_
+
 
 
 Overview of the ``smm`` namespace:

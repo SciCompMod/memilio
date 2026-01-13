@@ -18,12 +18,12 @@
 * limitations under the License.
 */
 
+#include "memilio/config.h"
 #include "memilio/epidemiology/age_group.h"
 #include "smm/simulation.h"
 #include "smm/model.h"
 #include "smm/parameters.h"
 #include "memilio/data/analyze_result.h"
-#include "memilio/epidemiology/adoption_rate.h"
 
 enum class InfectionState
 {
@@ -36,78 +36,71 @@ enum class InfectionState
     Count
 };
 
-using Age     = mio::AgeGroup;
-using Species = mio::AgeGroup;
+struct Species : public mio::Index<Species> {
+    Species(size_t val)
+        : Index<Species>(val)
+    {
+    }
+};
 
 int main()
 {
+    using Age    = mio::AgeGroup;
+    using Status = mio::Index<InfectionState, Age, Species>;
+    using mio::regions::Region;
+    using enum InfectionState;
 
     //Example how to run the stochastic metapopulation models with four regions
     const size_t num_regions    = 4;
     const size_t num_age_groups = 1;
-    const size_t num_groups     = 1;
-    using Model                 = mio::smm::Model<ScalarType, num_regions, InfectionState, num_age_groups, num_groups>;
+    const size_t num_species    = 1;
+    using Model                 = mio::smm::Model<ScalarType, InfectionState, Status, Region>;
 
     ScalarType numE = 12, numC = 4, numI = 12, numR = 0, numD = 0;
 
-    Model model;
+    Model model(Status{Count, Age(num_age_groups), Species(num_species)}, Region(num_regions));
     //Population are distributed uniformly to the four regions
     for (size_t r = 0; r < num_regions; ++r) {
-        model.populations[{mio::regions::Region(r), InfectionState::S, Age(0), Species(0)}] =
-            (1000 - numE - numC - numI - numR - numD) / num_regions;
-        model.populations[{mio::regions::Region(r), InfectionState::E, Age(0), Species(0)}] = numE / num_regions;
-        model.populations[{mio::regions::Region(r), InfectionState::C, Age(0), Species(0)}] = numC / num_regions;
-        model.populations[{mio::regions::Region(r), InfectionState::I, Age(0), Species(0)}] = numI / num_regions;
-        model.populations[{mio::regions::Region(r), InfectionState::R, Age(0), Species(0)}] = numR / num_regions;
-        model.populations[{mio::regions::Region(r), InfectionState::D, Age(0), Species(0)}] = numD / num_regions;
+        model.populations[{Region(r), S, Age(0), Species(0)}] = (1000 - numE - numC - numI - numR - numD) / num_regions;
+        model.populations[{Region(r), E, Age(0), Species(0)}] = numE / num_regions;
+        model.populations[{Region(r), C, Age(0), Species(0)}] = numC / num_regions;
+        model.populations[{Region(r), I, Age(0), Species(0)}] = numI / num_regions;
+        model.populations[{Region(r), R, Age(0), Species(0)}] = numR / num_regions;
+        model.populations[{Region(r), D, Age(0), Species(0)}] = numD / num_regions;
     }
 
+    using AR = mio::smm::AdoptionRates<ScalarType, Status, Region>;
+    using TR = mio::smm::TransitionRates<ScalarType, Status, Region>;
+
     //Set infection state adoption and spatial transition rates
-    std::vector<mio::AdoptionRate<ScalarType, InfectionState, Age, Species>> adoption_rates;
-    std::vector<mio::smm::TransitionRate<ScalarType, InfectionState, Age, Species>> transition_rates;
+    AR::Type adoption_rates;
+    TR::Type transition_rates;
     for (size_t r = 0; r < num_regions; ++r) {
-        adoption_rates.push_back({InfectionState::S,
-                                  InfectionState::E,
-                                  mio::regions::Region(r),
+        adoption_rates.push_back({{S, Age(0), Species(0)},
+                                  {E, Age(0), Species(0)},
+                                  Region(r),
                                   0.1,
-                                  {{InfectionState::C, 1, mio::regions::Region(3), {Age(0), Species(0)}},
-                                   {InfectionState::I, 0.5, mio::regions::Region(1), {Age(0), Species(0)}}},
-                                  {Age(0), Species(0)}});
-        adoption_rates.push_back(
-            {InfectionState::C, InfectionState::R, mio::regions::Region(r), 0.2 / 3., {}, {Age(0), Species(0)}});
-        adoption_rates.push_back(
-            {InfectionState::E, InfectionState::C, mio::regions::Region(r), 1.0 / 5., {}, {Age(0), Species(0)}});
-        adoption_rates.push_back(
-            {InfectionState::C, InfectionState::I, mio::regions::Region(r), 0.8 / 3., {}, {Age(0), Species(0)}});
-        adoption_rates.push_back(
-            {InfectionState::I, InfectionState::R, mio::regions::Region(r), 0.99 / 5., {}, {Age(0), Species(0)}});
-        adoption_rates.push_back(
-            {InfectionState::I, InfectionState::D, mio::regions::Region(r), 0.01 / 5., {}, {Age(0), Species(0)}});
+                                  {{{C, Age(0), Species(0)}, 1}, {{I, Age(0), Species(0)}, 0.5}}});
+        adoption_rates.push_back({{C, Age(0), Species(0)}, {R, Age(0), Species(0)}, Region(r), 0.2 / 3., {}});
+        adoption_rates.push_back({{E, Age(0), Species(0)}, {C, Age(0), Species(0)}, Region(r), 1.0 / 5., {}});
+        adoption_rates.push_back({{C, Age(0), Species(0)}, {I, Age(0), Species(0)}, Region(r), 0.8 / 3., {}});
+        adoption_rates.push_back({{I, Age(0), Species(0)}, {R, Age(0), Species(0)}, Region(r), 0.99 / 5., {}});
+        adoption_rates.push_back({{I, Age(0), Species(0)}, {D, Age(0), Species(0)}, Region(r), 0.01 / 5., {}});
     }
 
     //Agents in infection state D do not transition
-    for (size_t s = 0; s < static_cast<size_t>(InfectionState::D); ++s) {
+    for (size_t s = 0; s < static_cast<size_t>(D); ++s) {
         for (size_t i = 0; i < num_regions; ++i) {
             for (size_t j = 0; j < num_regions; ++j)
                 if (i != j) {
-                    transition_rates.push_back({InfectionState(s),
-                                                mio::regions::Region(i),
-                                                mio::regions::Region(j),
-                                                0.01,
-                                                {Age(0), Species(0)},
-                                                {Age(0), Species(0)}});
-                    transition_rates.push_back({InfectionState(s),
-                                                mio::regions::Region(j),
-                                                mio::regions::Region(i),
-                                                0.01,
-                                                {Age(0), Species(0)},
-                                                {Age(0), Species(0)}});
+                    transition_rates.push_back({{InfectionState(s), Age(0), Species(0)}, Region(i), Region(j), 0.01});
+                    transition_rates.push_back({{InfectionState(s), Age(0), Species(0)}, Region(j), Region(i), 0.01});
                 }
         }
     }
 
-    model.parameters.get<mio::smm::AdoptionRates<ScalarType, InfectionState, Age, Species>>()   = adoption_rates;
-    model.parameters.get<mio::smm::TransitionRates<ScalarType, InfectionState, Age, Species>>() = transition_rates;
+    model.parameters.get<AR>() = adoption_rates;
+    model.parameters.get<TR>() = transition_rates;
 
     ScalarType dt   = 0.1;
     ScalarType tmax = 30.0;
