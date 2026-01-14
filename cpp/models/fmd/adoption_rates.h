@@ -55,7 +55,7 @@ std::vector<AR> generic_adoption_rates()
                               InfectionState::E,
                               home,
                               0.2,
-                              {{InfectionState::I, 0.8}, {InfectionState::INS, 0.1}, {InfectionState::ICS, 0.5}}});
+                              {{InfectionState::I, 0.3}, {InfectionState::INS, 0.3}, {InfectionState::ICS, 0.8}}});
     adoption_rates.push_back({InfectionState::E, InfectionState::I, home, 0.2, {}});
     adoption_rates.push_back({InfectionState::I, InfectionState::INS, home, 0.1, {}});
     adoption_rates.push_back({InfectionState::I, InfectionState::ICS, home, 0.1, {}});
@@ -68,4 +68,4 @@ std::vector<AR> generic_adoption_rates()
 } // namespace fmd
 } // namespace mio
 
-#endif // FMD_ADOPTION_RATES_H
+#endif // FMD_ADOPTION_RATES_Hs
