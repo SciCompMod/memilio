@@ -483,9 +483,9 @@ public:
         }
     }
 
-    void add_location_closure(TimePoint t, LocationType loc_type, double percentage)
+    void add_location_closure(TimePoint t, LocationType loc_type, double percentage, std::string scheme)
     {
-        parameters.get<LocationClosures>().push_back(std::make_tuple(t, loc_type, percentage));
+        parameters.get<LocationClosures>().push_back(std::make_tuple(t, loc_type, percentage, scheme));
     }
 
 private:
@@ -530,6 +530,14 @@ private:
      * @param[in] t Timepoint at which location closures are checked.
      */
     void check_close_locations(TimePoint t);
+
+    /**
+     * @brief Close location according to a closure scheme.
+     * @param[in] scheme Closure scheme.
+     * @param[in] type Location type that should be closed.
+     * @param[in] value Percentage of locations of given type that should be closed.
+     */
+    void apply_location_closure(std::string scheme, LocationType type, double value);
 
     mutable Eigen::Matrix<std::atomic_int_fast32_t, Eigen::Dynamic, 1>
         m_local_population_cache; ///< Current number of Persons in a given location.

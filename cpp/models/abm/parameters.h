@@ -749,14 +749,15 @@ struct AgeGroupGotoShop {
 
 /**
  * @brief Determines location closures. 
- * x% (3rd tuple value) of locations of the given type are closed at the given TimePoint.
+ * x% (3rd tuple value) of locations of the given type are closed at the given TimePoint following the scheme specified by the string (4th tuple value).
+ * Currently the schemes 'random' and 'maximum' are implemented. 'random' randomly choses the locations to close and 'maximum' closes the first x% with the largest size.
  */
 struct LocationClosures {
-    using Type = std::vector<std::tuple<TimePoint, LocationType, double>>;
+    using Type = std::vector<std::tuple<TimePoint, LocationType, double, std::string>>;
     static Type get_default(AgeGroup /*size*/)
     {
-        return Type(std::vector<std::tuple<TimePoint, LocationType, double>>{
-            std::make_tuple(TimePoint(0), LocationType::Cemetery, 0.)}); //Julia
+        return Type(std::vector<std::tuple<TimePoint, LocationType, double, std::string>>{
+            std::make_tuple(TimePoint(0), LocationType::Cemetery, 0., "random")}); //Julia
     }
     static std::string name()
     {

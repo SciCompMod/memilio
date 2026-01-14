@@ -310,6 +310,16 @@ public:
         m_closed = false;
     }
 
+    void increase_size()
+    {
+        m_size++;
+    }
+
+    size_t get_size() const
+    {
+        return m_size;
+    }
+
 private:
     friend DefaultFactory<Location>;
     Location() = default;
@@ -322,6 +332,7 @@ private:
     GeographicalLocation m_geographical_location; ///< Geographical location (longitude and latitude) of the Location.
     int m_wastewater_id; ///< Only used for INSIDe Munich Demonstrator. Id of wastewater zone the location is in.
     bool m_closed; ///< Only used for INSIDe Munich Demonstrator. If Location is closed, no agents can enter it.
+    size_t m_size; ///< Only used for INSIDe Munich Demonstrator. Number of agents assigned to the location.
 };
 
 } // namespace abm

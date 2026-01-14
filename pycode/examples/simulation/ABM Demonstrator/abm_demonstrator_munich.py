@@ -671,10 +671,37 @@ def write_time_to_file(sim_nums, init_times, sim_times, output_times, file):
     f.close()
 
 
+def save_assigned_locations(model, sim_num):
+    l = []
+    for person in model.persons:
+        print(f'{person.id.index()}/{len(model.persons)}')
+        home = "00" + \
+            str(person.assigned_location(abm.LocationType.Home).index())
+        event = "03" + \
+            str(person.assigned_location(abm.LocationType.SocialEvent).index())
+        shop = "04" + \
+            str(person.assigned_location(abm.LocationType.BasicsShop).index())
+        school = str(-1)
+        work = str(-1)
+        if (person.age == AgeGroup(1)):
+            school = "01" + \
+                str(person.assigned_location(abm.LocationType.School).index())
+        if (person.age == AgeGroup(2) or person.age == AgeGroup(3)):
+            work = "02" + \
+                str(person.assigned_location(abm.LocationType.Work).index())
+        l.append({'Id': person.id.index(), 'Home': home, 'School': school, 'Work': work, 'Shop': shop,
+                  'Event': event})
+    df = pd.DataFrame(l)
+    df.to_csv(sys.path[0] + f'/output/{sim_num}_persons_locs.csv')
+
+
 def run_abm_simulation(sim_num):
     input_path = sys.path[0] + '/input/'
     output_path = sys.path[0] + '/output/'
     local_outbreak = False
+    # Possible schemes are 'random' and 'maximum'
+    location_closure_scheme_random = 'random'
+    location_closure_scheme_maximum = 'maximum'
     max_work_size = 40
     max_school_size = 45
     # Timing for initialization, simulation and output writing
@@ -693,10 +720,9 @@ def run_abm_simulation(sim_num):
     # set seeds for simulation
     abm.set_seeds(sim.model, sim_num)
     # initialize model
-    abm.initialize_model(sim.model, input_path + 'persons.csv', os.path.join(
+    abm.initialize_model(sim.model, input_path + 'persons_corr.csv', os.path.join(
         input_path, 'hospitals.csv'), os.path.join(
         output_path, str(sim_num) + '_mapping.txt'), max_work_size, max_school_size)
-
     # read infection parameters
     parameters = pd.read_csv(os.path.join(
         input_path, 'parameter_table.csv'), index_col=0)
@@ -718,13 +744,13 @@ def run_abm_simulation(sim_num):
     #     abm.TimePoint(abm.days(5).seconds), 0.2)
     # add closure for work, event, shop and school locations at day 5
     # sim.model.add_location_closure(abm.TimePoint(
-    #     abm.days(5).seconds), abm.LocationType.Work, 1.0)
+    #     abm.days(5).seconds), abm.LocationType.Work, 1.0, location_closure_scheme_random)
     # sim.model.add_location_closure(abm.TimePoint(
-    #     abm.days(5).seconds), abm.LocationType.School, 1.0)
+    #     abm.days(5).seconds), abm.LocationType.School, 1.0, location_closure_scheme_random)
     # sim.model.add_location_closure(abm.TimePoint(
-    #     abm.days(5).seconds), abm.LocationType.SocialEvent, 1.0)
+    #     abm.days(5).seconds), abm.LocationType.SocialEvent, 1.0, location_closure_scheme_random)
     # sim.model.add_location_closure(abm.TimePoint(
-    #     abm.days(5).seconds), abm.LocationType.BasicsShop, 1.0)
+    #     abm.days(5).seconds), abm.LocationType.BasicsShop, 1.0, location_closure_scheme_random)
     end_init = time.time()
     print(f'Time for model initialization: {end_init - start_init} seconds')
     total_init_time += (end_init - start_init)
@@ -830,21 +856,21 @@ def run_abm_simulation(sim_num):
     # - Transmission time point and recovery time point for every agent (matrix of size #agents x 2)
     # - TanAreaId (int > 0) at every time step for every agent (matrix of size #agents x #timepoints).
     #   If the agent is at a location not in Munich the id is 0.
-    start_h5_v4 = time.time()
-    abm.write_h5_v4(os.path.join(
-        output_path, str(sim_num) + '_output_v4.h5'), history)
-    end_h5_v4 = time.time()
-    print(f'Time to write v4 output h5: {end_h5_v4 - start_h5_v4} seconds')
-    total_output_time += (end_h5_v4 - start_h5_v4)
+    # start_h5_v4 = time.time()
+    # abm.write_h5_v4(os.path.join(
+    #     output_path, str(sim_num) + '_output_v4.h5'), history)
+    # end_h5_v4 = time.time()
+    # print(f'Time to write v4 output h5: {end_h5_v4 - start_h5_v4} seconds')
+    # total_output_time += (end_h5_v4 - start_h5_v4)
 
-    # write results to h5 file v4. The file has one group with two datasets:
-    # - Transmission time point and recovery time point for every agent (matrix of size #agents x 2)
-    # - LocationType at every time step for every agent (matrix of size #agents x #timepoints).
-    start_h5_v5 = time.time()
-    abm.write_h5_v5(os.path.join(
-        output_path, str(sim_num) + '_output_v5.h5'), history)
-    end_h5_v5 = time.time()
-    print(f'Time to write v5 output h5: {end_h5_v5 - start_h5_v5} seconds')
+    # # write results to h5 file v4. The file has one group with two datasets:
+    # # - Transmission time point and recovery time point for every agent (matrix of size #agents x 2)
+    # # - LocationType at every time step for every agent (matrix of size #agents x #timepoints).
+    # start_h5_v5 = time.time()
+    # abm.write_h5_v5(os.path.join(
+    #     output_path, str(sim_num) + '_output_v5.h5'), history)
+    # end_h5_v5 = time.time()
+    # print(f'Time to write v5 output h5: {end_h5_v5 - start_h5_v5} seconds')
     total_output_time += (end_h5_v5 - start_h5_v5)
     print('done')
     return (sim_num, total_init_time, total_simulation_time, total_output_time)
@@ -861,7 +887,7 @@ if __name__ == "__main__":
     init_times = []
     sim_times = []
     output_times = []
-    for i in range(0, 10):
+    for i in range(0, 5):
         o = run_abm_simulation(i, **args.__dict__)
         sim_nums.append(o[0])
         init_times.append(o[1])

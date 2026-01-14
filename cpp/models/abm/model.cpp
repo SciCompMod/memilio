@@ -410,6 +410,47 @@ void Model::open_locations_of_type(LocationType type)
     }
 }
 
+void Model::apply_location_closure(std::string scheme, LocationType type, double value)
+{
+    if (scheme == "random") {
+        // Distribution used to draw whether location is closed
+        auto& uniform_dist = UniformDistribution<double>::get_instance();
+        double p;
+        //Apply new closure
+        for (auto& loc : m_locations) {
+            if (type == loc.get_type()) {
+                p = uniform_dist(m_rng);
+                if (p < value) {
+                    // close location
+                    loc.close_location();
+                }
+            }
+        }
+    }
+    else if (scheme == "maximum") {
+        // First sort locations by size
+        // Create index vector for locations of given type
+        std::vector<size_t> indices_of_loc_type;
+        for (size_t i = 0; i < m_locations.size(); ++i) {
+            if (type == m_locations[i].get_type()) {
+                indices_of_loc_type.push_back(i);
+            }
+        }
+        // Sort indices based on corresponding values
+        std::sort(indices_of_loc_type.begin(), indices_of_loc_type.end(), [this](int a, int b) {
+            return m_locations[a].get_size() > m_locations[b].get_size(); // descending order
+        });
+        // Get number of locations that should be closed
+        int num_locs_to_be_closed = int(value * indices_of_loc_type.size());
+        for (int i = 0; i < num_locs_to_be_closed; ++i) {
+            m_locations[indices_of_loc_type[i]].close_location();
+        }
+    }
+    else {
+        log_warning("Location closure scheme {} not know. Locations will not be closed.", scheme);
+    }
+}
+
 void Model::check_close_locations(TimePoint t)
 {
     // check whether location closure should be applied
@@ -419,19 +460,9 @@ void Model::check_close_locations(TimePoint t)
         if (std::get<0>(*closures.begin()) <= t) {
             //first remove old closure
             open_locations_of_type(std::get<1>(*closures.begin()));
-            // Distribution used to draw whether location is closed
-            auto& uniform_dist = UniformDistribution<double>::get_instance();
-            double p;
-            //Apply new closure
-            for (auto& loc : m_locations) {
-                if (std::get<1>(*closures.begin()) == loc.get_type()) {
-                    p = uniform_dist(m_rng);
-                    if (p < std::get<2>(*closures.begin())) {
-                        // close location
-                        loc.close_location();
-                    }
-                }
-            }
+            //apply location closure
+            apply_location_closure(std::get<3>(*closures.begin()), std::get<1>(*closures.begin()),
+                                   std::get<2>(*closures.begin()));
             //Remove closure
             closures.erase(closures.begin());
         }
