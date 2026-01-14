@@ -1,7 +1,7 @@
 ODE-based SECIR-type model with COVID-19 variants and vaccinations
 ====================================================================
 
-This model extends the basic :doc:`ODE-SECIR model <cpp/osecir>`. by adding vaccinations and allowing the implicit modeling of a newly arriving variant that takes hold.
+This model extends the basic :doc:`ODE-SECIR model <osecir>`. by adding vaccinations and allowing the implicit modeling of a newly arriving variant that takes hold.
 
 Vaccinations are modeled by adding compartments for partially and fully vaccinated persons. **Partially** and **fully vaccinated** is to be understood in this context as the person having received a first and second vaccine shot as in 2021. Persons that have recovered from the disease are treated as fully vaccinated from that time forward. Vaccinated persons are added on every day of simulation, see parameters ``DailyPartialVaccinations`` and ``DailyFullVaccinations``. All groups can get an infection or get reinfected. Vaccinated persons are less likely to develop symptoms. For example, the probability to develop symptoms when carrying the virus is the base probability from the ODE-SECIR model multiplied with the ``ReducInfectedSymptomsPartialImmunity`` parameter.
 
@@ -277,7 +277,8 @@ After setting the initial populations, you also need to set the vaccination para
             num_vaccinations;
     }
 
-.. _Nonpharmaceutical Interventions:
+.. _Nonpharmaceutical Interventions OSECIRVVS:
+
 Nonpharmaceutical Interventions
 -------------------------------
 
