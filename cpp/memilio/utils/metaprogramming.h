@@ -221,7 +221,7 @@ namespace details
  * @tparam Size Total size of the list to search.
  * @tparam Type to search.
  * @tparam Head, Tail The list to search in. May be empty.
- * @return The index of Type in the list (TypeHead, Types...), or the size of the list if Type is not in it.
+ * @return The index of Type in the list (Head, Tail...), or the size of the list if Type is not in it.
  * @{
  */
 template <std::size_t Size, class Type>
