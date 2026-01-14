@@ -362,7 +362,9 @@ TYPED_TEST(TestTimeSeries, print_table_cout_overload)
     // Just test that the print_table overload without ostream argument doesn't throw any exceptions.
     // The function behaviour is tested in "TestTimeSeries.print_table".
     mio::TimeSeries<TypeParam> ts = mio::TimeSeries<TypeParam>::zero(1, 1);
+    std::cout.setstate(std::ios_base::failbit);
     ASSERT_NO_FATAL_FAILURE(ts.print_table());
+    std::cout.clear();
 }
 
 TYPED_TEST(TestTimeSeries, export_csv)

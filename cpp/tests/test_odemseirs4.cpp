@@ -23,6 +23,7 @@
 #include "ode_mseirs4/model.h"
 #include "ode_mseirs4/infection_state.h"
 #include "ode_mseirs4/parameters.h"
+#include "utils.h"
 
 #include <gtest/gtest.h>
 
@@ -113,6 +114,7 @@ TEST_F(ModelTestOdeMseirs4, checkPopulationConservation)
 
 TEST(TestOdeMseirs4, apply_constraints_parameters)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off); // hide contstraint warnings/errors
     mio::omseirs4::Model<double> model;
 
     auto& params = model.parameters;
@@ -148,6 +150,7 @@ TEST(TestOdeMseirs4, apply_constraints_parameters)
 
 TEST(TestOdeMseirs4, check_constraints_parameters)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off); // hide contstraint warnings/errors
     mio::omseirs4::Model<double> model;
     auto& params = model.parameters;
 
