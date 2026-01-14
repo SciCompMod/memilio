@@ -51,7 +51,7 @@ def merge_eisenach(map_data: geopandas.GeoDataFrame):
     """ Merges geometries for Eisenach with Wartburgkreis of Geopandas
     dataframe.
 
-    :param map_data: geopandas.GeoDataFrame: 
+    :param map_data: geopandas.GeoDataFrame
     :returns: Frame with Wartburgkreis and Eisenach merged.
 
     """
@@ -313,15 +313,15 @@ def plot_map(data: pd.DataFrame,
     returning svg and png image. Allows the comparisons of a variable list of
     data sets.
 
-    :param data: pd.DataFrame:  Data to be plotted. First column must contain regional 
+    :param data: Data to be plotted. First column must contain regional
         specifier, following columns will be plotted for comparison.
-    :param scale_colors: np.array([0, 1]) Array of min-max-values to scale colorbar.
-    :param legend: list: Subtitles for different columns. Can be list of empty strings. (Default value = [])
-    :param title: str: Title of the plot. (Default value = '')
-    :param plot_colorbar: bool: Defines if a colorbar will be plotted. (Default value = True)
-    :param output_path: str: Output path for the figure. (Default value = '')
-    :param fig_name: str: Name of the figure created. (Default value = 'customPlot')
-    :param dpi: int: Dots-per-inch value for the exported figure. (Default value = 300)
+    :param scale_colors: Array of min-max-values to scale colorbar.
+    :param legend: Subtitles for different columns. Can be list of empty strings. (Default value = [])
+    :param title: Title of the plot. (Default value = '')
+    :param plot_colorbar: Defines if a colorbar will be plotted. (Default value = True)
+    :param output_path: Output path for the figure. (Default value = '')
+    :param fig_name: Name of the figure created. (Default value = 'customPlot')
+    :param dpi: Dots-per-inch value for the exported figure. (Default value = 300)
     :param outercolor: Background color of the plot image. (Default value = 'white')
     :param log_scale: Defines if the colorbar is plotted in log scale. (Default value = False)
 

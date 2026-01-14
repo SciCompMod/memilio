@@ -25,10 +25,11 @@ import pandas as pd
 
 
 def interpolate_age_groups(data_entry):
-    """! Interpolates the age groups from the population data into the age groups used in the simulation. 
+    """Interpolates the age groups from the population data into the age groups used in the simulation.
     We assume that the people in the age groups are uniformly distributed.
-    @param data_entry Data entry containing the population data.
-    @return List containing the population in each age group used in the simulation.
+
+    :param data_entry: Data entry containing the population data.
+    :returns: List containing the population in each age group used in the simulation.
     """
     age_groups = {
         "A00-A04": data_entry['<3 years'] + data_entry['3-5 years'] * 2 / 3,

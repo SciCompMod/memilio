@@ -60,7 +60,6 @@ class Scanner:
         Call find_node to visit all nodes of abstract syntax tree and finalize to finish the extraction.
 
         :param root_cursor: Represents the root node of the abstract syntax tree as a Cursor object from libclang.
-        :param self: Self: 
         :returns: Information extracted from the model saved as an IntermediateRepresentation.
 
         """
@@ -74,9 +73,9 @@ class Scanner:
         return intermed_repr
 
     def check_parameter_space(self: Self, intermed_repr: IntermediateRepresentation) -> None:
-        """! Checks for parameter_space.cpp in the model folder and set has_draw_sample
+        """Checks for parameter_space.cpp in the model folder and set has_draw_sample
 
-        @param intermed_repr: Dataclass used for saving the extracted model features.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
         """
         source_file = self.config.source_file
         model_folder = os.path.dirname(source_file)
@@ -94,7 +93,6 @@ class Scanner:
         :param node: Represents the current node of the abstract syntax tree as a Cursor object from libclang.
         :param intermed_repr: Dataclass used for saving the extracted model features.
         :param namespace: Default = ""] Namespace of the current node.
-        :param self: Self: 
 
         """
         if node.kind == CursorKind.NAMESPACE:
@@ -110,9 +108,7 @@ class Scanner:
                                                                    None]:
         """ Dictionary to map CursorKind to methods. Works like a switch.
 
-        :param Underlying: kind of the current node.
-        :param self: Self: 
-        :param kind: CursorKind: 
+        :param kind: Underlying kind of the current node.
         :returns: Appropriate method for the given kind.
 
         """
@@ -137,7 +133,6 @@ class Scanner:
 
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
-        :param self: Self: 
 
         """
         if node.spelling.strip() != default_dict["emptystring"]:
@@ -215,9 +210,8 @@ class Scanner:
         Inspect nodes which represent base specifier.
         For now this is handled by the parent node, which represents the class.
 
-        :param self: Self: 
-        :param node: Cursor: 
-        :param intermed_repr: IntermediateRepresentation: 
+        :param node: Cursor
+        :param intermed_repr: IntermediateRepresentation
 
         """
         pass
@@ -229,7 +223,6 @@ class Scanner:
 
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
-        :param self: Self: 
 
         """
         filepath = node.location.file.name
@@ -265,7 +258,6 @@ class Scanner:
 
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
-        :param self: Self: 
         """
         for base in node.get_children():
             if base.kind != CursorKind.CXX_BASE_SPECIFIER:
@@ -290,7 +282,6 @@ class Scanner:
 
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
-        :param self: Self: 
 
         """
         if intermed_repr.model_class == default_dict["model"]:
@@ -312,7 +303,6 @@ class Scanner:
 
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
-        :param self: Self: 
 
         """
         if node.spelling == self.config.parameterset:
@@ -323,9 +313,8 @@ class Scanner:
             intermed_repr: IntermediateRepresentation) -> None:
         """Not used yet.
 
-        :param self: Self: 
-        :param node: Cursor: 
-        :param intermed_repr: IntermediateRepresentation: 
+        :param node: Cursor 
+        :param intermed_repr: IntermediateRepresentation
 
         """
         pass
@@ -336,7 +325,6 @@ class Scanner:
         delet unnecesary enums and check for missing model features.
 
         :param intermed_repr: Dataclass used for saving the extracted model features.
-        :param self: Self: 
         """
 
         population_groups = []

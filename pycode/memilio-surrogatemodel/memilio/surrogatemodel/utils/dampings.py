@@ -27,10 +27,10 @@ def calc_dist_days(days, min_day, n_dampings, min_distance=1):
     Calculating distance between two dampings if there are n_dampings on the interval
     (min_day, days)
 
-    :param days: Total number of days 
-    :min_day: First day on which a damping can be applied 
-    :n_dampings: Number of dampings
-    :min_distance: Lower bound for the distance between two dampings
+    :param days: Total number of days
+    :param min_day: First day on which a damping can be applied
+    :param n_dampings: Number of dampings
+    :param min_distance: Lower bound for the distance between two dampings
     """
     res = np.floor((days-min_day)/n_dampings)
 
@@ -49,8 +49,8 @@ def generate_dampings(days, number_dampings, method, min_distance=2,
     :param days: Number of days per time series 
     :param number_dampings: Number of days on which damping can occur.
     :param method: Method used to generate the dampings, possible values "classic", "active", "random"
-    :param min_distance: Minimal distance between two dampings 
-    :min_damping_day: First day, where a damping can be applied 
+    :param min_distance: Minimal distance between two dampings
+    :param min_damping_day: First day, where a damping can be applied
     :returns: two lists containing the damping days and the associated damping factors
     """
     if method == "classic":
@@ -209,8 +209,8 @@ def generate_dampings_withshadowdamp(number_of_dampings, days, min_distance, min
     :param number_of_dampings: Number of damping days per run 
     :param days: Total number of days per run 
     :param min_distance: Minimal distance between two damping days
-    :param min_damping_day: First day when a damping can be applied 
-    :number_of_runs: Number of runs for which damping days should be generated 
+    :param min_damping_day: First day when a damping can be applied
+    :param number_of_runs: Number of runs for which damping days should be generated
     :returns: list of list of damping days. 
     """
 

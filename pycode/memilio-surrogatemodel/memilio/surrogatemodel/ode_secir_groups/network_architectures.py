@@ -183,7 +183,7 @@ def lstm_multi_input_multi_output(label_width, num_age_groups=6, num_outputs=8, 
     :param num_hidden_layers: Number of hidden layers in the dense network 
     :param num_neurons_per_layer: Number of neurons per hidden layer 
     :param activation: Name of the used activation function
-    :retruns: Tensorflow keras LSTM model with given architecture
+    :returns: Tensorflow keras LSTM model with given architecture
     """
     # Catching unallowed inputs
     if label_width < 1:
