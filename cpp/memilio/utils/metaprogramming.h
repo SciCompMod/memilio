@@ -233,7 +233,7 @@ constexpr std::size_t index_of_impl()
 template <std::size_t Size, class Type, class Head, class... Tail>
 constexpr std::size_t index_of_impl()
 {
-    // check if the type matches, otherwise call itself, omitting TypesHead
+    // check if the type matches, otherwise call itself, omitting Head
     // this is significantly cheaper to compile compared to using an index and carrying the entire list,
     // as that needs additional work for looking up "Types[Index]", e.g. through type_at_index
     if constexpr (std::is_same_v<Type, Head>) {
