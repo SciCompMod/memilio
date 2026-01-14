@@ -114,9 +114,9 @@ int num_processes                 = 1;
 
 // Define (age-resolved) parameters.
 mio::Date start_date(2021, 01, 01);
-const ScalarType tmax                     = 30;
-const ScalarType dt                       = 0.01;
-const ScalarType t0                       = 0;
+const ScalarType tmax = 30;
+const ScalarType dt   = 0.1;
+const ScalarType t0   = 0;
 
 const ScalarType seasonality              = 0.;
 ScalarType relativeTransmissionNoSymptoms = 1.;
@@ -198,8 +198,8 @@ mio::IOResult<mio::UncertainContactMatrix<ScalarType>> get_contact_matrix(std::s
 
     // Load and set baseline contacts for each contact location.
     for (auto&& contact_location : contact_locations) {
-        BOOST_OUTCOME_TRY(auto&& baseline,
-                          mio::read_mobility_plain(mio::path_join(contact_data_dir, ("baseline_" + contact_location.second + ".txt"))));
+        BOOST_OUTCOME_TRY(auto&& baseline, mio::read_mobility_plain(mio::path_join(
+                                               contact_data_dir, ("baseline_" + contact_location.second + ".txt"))));
         contact_matrices[size_t(contact_location.first)].get_baseline() =
             scale_contacts * baseline; // no uncertain: is matrix
         contact_matrices[size_t(contact_location.first)].get_minimum() =
@@ -255,18 +255,23 @@ Model draw_sample(const Model& model)
 }
 
 template <class Model>
-mio::IOResult<Model> initialize_lsecir(std::string data_dir) {
+mio::IOResult<Model> initialize_lsecir(std::string data_dir)
+{
 
     using namespace params;
     Model model;
 
     // Define parameters used for simulation and initialization.
     for (size_t group = 0; group < num_groups; group++) {
-        model.parameters.template get<mio::lsecir::TimeExposed<ScalarType>>()[group]            = uncertain(timeExposed[group]);
-        model.parameters.template get<mio::lsecir::TimeInfectedNoSymptoms<ScalarType>>()[group] = uncertain(timeInfectedNoSymptoms[group]);
-        model.parameters.template get<mio::lsecir::TimeInfectedSymptoms<ScalarType>>()[group]   = uncertain(timeInfectedSymptoms[group]);
-        model.parameters.template get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[group]     = uncertain(timeInfectedSevere[group]);
-        model.parameters.template get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[group]   = uncertain(timeInfectedCritical[group]);
+        model.parameters.template get<mio::lsecir::TimeExposed<ScalarType>>()[group] = uncertain(timeExposed[group]);
+        model.parameters.template get<mio::lsecir::TimeInfectedNoSymptoms<ScalarType>>()[group] =
+            uncertain(timeInfectedNoSymptoms[group]);
+        model.parameters.template get<mio::lsecir::TimeInfectedSymptoms<ScalarType>>()[group] =
+            uncertain(timeInfectedSymptoms[group]);
+        model.parameters.template get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[group] =
+            uncertain(timeInfectedSevere[group]);
+        model.parameters.template get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[group] =
+            uncertain(timeInfectedCritical[group]);
         model.parameters.template get<mio::lsecir::TransmissionProbabilityOnContact<ScalarType>>()[group] =
             uncertain(transmissionProbabilityOnContact[group]);
 
@@ -278,23 +283,30 @@ mio::IOResult<Model> initialize_lsecir(std::string data_dir) {
             uncertain(recoveredPerInfectedNoSymptoms[group]);
         model.parameters.template get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[group] =
             uncertain(severePerInfectedSymptoms[group]);
-        model.parameters.template get<mio::lsecir::CriticalPerSevere<ScalarType>>()[group] = uncertain(criticalPerSevere[group]);
-        model.parameters.template get<mio::lsecir::DeathsPerCritical<ScalarType>>()[group] = uncertain(deathsPerCritical[group]);
+        model.parameters.template get<mio::lsecir::CriticalPerSevere<ScalarType>>()[group] =
+            uncertain(criticalPerSevere[group]);
+        model.parameters.template get<mio::lsecir::DeathsPerCritical<ScalarType>>()[group] =
+            uncertain(deathsPerCritical[group]);
     }
 
     BOOST_OUTCOME_TRY(auto&& contact_matrix, get_contact_matrix(mio::path_join(data_dir, "Germany/contacts")));
 
-    model.parameters.template get<mio::lsecir::ContactPatterns<ScalarType>>() = contact_matrix; // no uncertain: set by get_contact_matrix
-    model.parameters.template get<mio::lsecir::Seasonality<ScalarType>>()     = seasonality; // no uncertain: is 0
-    model.parameters.template get<mio::lsecir::StartDay<ScalarType>>()        = mio::get_day_in_year(start_date); // no uncertain: is date
+    model.parameters.template get<mio::lsecir::ContactPatterns<ScalarType>>() =
+        contact_matrix; // no uncertain: set by get_contact_matrix
+    model.parameters.template get<mio::lsecir::Seasonality<ScalarType>>() = seasonality; // no uncertain: is 0
+    model.parameters.template get<mio::lsecir::StartDay<ScalarType>>() =
+        mio::get_day_in_year(start_date); // no uncertain: is date
 
     // Set initial values using reported data.
-    BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_data(mio::path_join(data_dir, "Germany/pydata/cases_all_age_ma7.json")));
-    BOOST_OUTCOME_TRY(auto&& divi_data, mio::read_divi_data(mio::path_join(data_dir, "Germany/pydata/germany_divi.json")));
-    auto init = mio::lsecir::set_initial_values_from_reported_data<typename Model::Populations, mio::ConfirmedCasesDataEntry>(
-        rki_data, model.populations, model.parameters, start_date,
-        std::vector<ScalarType>(age_group_sizes, age_group_sizes + num_groups),
-        std::vector<ScalarType>(num_groups, scale_confirmed_cases), divi_data);
+    BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_data(
+                                           mio::path_join(data_dir, "Germany/pydata/cases_all_age_ma7.json")));
+    BOOST_OUTCOME_TRY(auto&& divi_data,
+                      mio::read_divi_data(mio::path_join(data_dir, "Germany/pydata/germany_divi.json")));
+    auto init =
+        mio::lsecir::set_initial_values_from_reported_data<typename Model::Populations, mio::ConfirmedCasesDataEntry>(
+            rki_data, model.populations, model.parameters, start_date,
+            std::vector<ScalarType>(age_group_sizes, age_group_sizes + num_groups),
+            std::vector<ScalarType>(num_groups, scale_confirmed_cases), divi_data);
 
     return mio::success(model);
 }
@@ -329,8 +341,8 @@ mio::IOResult<void> simulate(std::string save_dir, std::string data_dir, size_t 
     // Initialize (age-resolved) model.
     using InfState = mio::lsecir::InfectionState;
     // For 1.) : Define single LctState.
-    using LctState = mio::LctInfectionState<ScalarType, InfState, 1, num_subcompartments, num_subcompartments, num_subcompartments,
-                               num_subcompartments, num_subcompartments, 1, 1>;
+    using LctState = mio::LctInfectionState<ScalarType, InfState, 1, num_subcompartments, num_subcompartments,
+                                            num_subcompartments, num_subcompartments, num_subcompartments, 1, 1>;
     // Decide which LCT model type should be used.
     using Model = mio::lsecir::Model<ScalarType, LctState, LctState, LctState, LctState, LctState, LctState>;
 
@@ -351,12 +363,11 @@ mio::IOResult<void> simulate(std::string save_dir, std::string data_dir, size_t 
         [](auto&& params_model, ScalarType t0, ScalarType dt, size_t) {
             auto copy = params_model;
             return mio::Simulation<ScalarType, Model>(draw_sample<Model>(copy), t0, dt);
-        }, 
+        },
         [&](auto results_model, auto&& run_idx) {
             auto interpolated_results = mio::interpolate_simulation_result(results_model.get_result());
             mio::unused(interpolated_results, run_idx);
-        }
-        );
+        });
     if (mio::mpi::is_root()) {
         total_time += omp_get_wtime();
     }
@@ -400,15 +411,16 @@ mio::IOResult<void> simulate(std::string save_dir, std::string data_dir, size_t 
 int main(int argc, char** argv)
 {
     auto cli_parameters = mio::cli::ParameterSetBuilder()
-                          .add<"ResultDirectory">(mio::path_join(mio::base_dir(), "cpp/examples/simulation_paper_lct/results_ensemble"))
-                          .add<"DataDirectory">(mio::path_join(mio::base_dir(), "data"))
-                          .add<"NumberEnsembleRuns">(100, {.alias = "nRun"})
-                          .build();
+                              .add<"ResultDirectory">(
+                                  mio::path_join(mio::base_dir(), "cpp/examples/simulation_paper_lct/results_ensemble"))
+                              .add<"DataDirectory">(mio::path_join(mio::base_dir(), "data"))
+                              .add<"NumberEnsembleRuns">(100, {.alias = "nRun"})
+                              .build();
 
     auto cli_result = mio::command_line_interface(argv[0], argc, argv, cli_parameters, {"ResultDirectory"});
     if (!cli_result) {
-        std::cout << cli_result.error().message();  
-        return cli_result.error().code().value();  
+        std::cout << cli_result.error().message();
+        return cli_result.error().code().value();
     }
 
     boost::filesystem::path res_dir(cli_parameters.get<"ResultDirectory">());
@@ -419,7 +431,8 @@ int main(int argc, char** argv)
     MPI_Comm_size(mio::mpi::get_world(), &size);
     params::num_processes = size;
 
-    auto result = simulate(cli_parameters.get<"ResultDirectory">(), cli_parameters.get<"DataDirectory">(), cli_parameters.get<"NumberEnsembleRuns">());
+    auto result = simulate(cli_parameters.get<"ResultDirectory">(), cli_parameters.get<"DataDirectory">(),
+                           cli_parameters.get<"NumberEnsembleRuns">());
     if (!result) {
         if (mio::mpi::is_root()) {
             printf("%s\n", result.error().formatted_message().c_str());

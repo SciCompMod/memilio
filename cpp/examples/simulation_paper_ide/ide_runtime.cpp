@@ -48,11 +48,11 @@ const ScalarType factorMobilePopulation = 0.1;
 // Simulation parameters
 ScalarType t0   = 0.;
 ScalarType tmax = 30;
-ScalarType dt   = 0.1;
+ScalarType dt   = 0.01;
 
-}
+} // namespace params
 
-using Model    = mio::isecir::Model;
+using Model = mio::isecir::Model;
 
 Model initialize_isecir()
 {
@@ -98,20 +98,19 @@ Model initialize_isecir()
     return model;
 }
 
-mio::Graph<mio::SimulationNode<ScalarType, mio::isecir::Simulation>, mio::MobilityEdge<ScalarType>> get_graph(size_t num_regions)
+mio::Graph<mio::SimulationNode<ScalarType, mio::isecir::Simulation>, mio::MobilityEdge<ScalarType>>
+get_graph(size_t num_regions)
 {
     mio::Graph<mio::SimulationNode<ScalarType, mio::isecir::Simulation>, mio::MobilityEdge<ScalarType>> sim_graph;
 
-    for (size_t region = 0; region < num_regions; region++)
-    {
+    for (size_t region = 0; region < num_regions; region++) {
         Model model = initialize_isecir();
         sim_graph.add_node((int)region, model, params::dt);
     }
-    
+
     // no edges
     return sim_graph;
 }
-
 
 mio::IOResult<void> simulate(std::string result_dir, size_t num_runs, size_t num_warm_up_runs, size_t num_regions)
 {
@@ -121,7 +120,7 @@ mio::IOResult<void> simulate(std::string result_dir, size_t num_runs, size_t num
     mio::set_log_level(mio::LogLevel::off);
     for (size_t i = 0; i < num_warm_up_runs; i++) {
         auto sim_graph = get_graph(num_regions);
-        auto sim = mio::make_no_mobility_sim(params::t0, std::move(sim_graph));
+        auto sim       = mio::make_no_mobility_sim(params::t0, std::move(sim_graph));
         sim.advance(params::tmax);
     }
 
@@ -130,7 +129,7 @@ mio::IOResult<void> simulate(std::string result_dir, size_t num_runs, size_t num
         // Initialization
         timer.start();
         auto sim_graph = get_graph(num_regions);
-        auto sim = mio::make_no_mobility_sim(params::t0, std::move(sim_graph));
+        auto sim       = mio::make_no_mobility_sim(params::t0, std::move(sim_graph));
         timer.stop();
         init_time[run] = timer.get_elapsed_time();
         timer.reset();
@@ -138,7 +137,7 @@ mio::IOResult<void> simulate(std::string result_dir, size_t num_runs, size_t num
         timer.start();
         sim.advance(params::tmax);
         timer.stop();
-        sim_time[run]           = timer.get_elapsed_time();
+        sim_time[run] = timer.get_elapsed_time();
         // ensemble_result[run][0] = mio::interpolate_simulation_result(sim.get_result());
     }
 
@@ -150,8 +149,10 @@ mio::IOResult<void> simulate(std::string result_dir, size_t num_runs, size_t num
         init_time_ts.add_time_point(i, Eigen::VectorXd::Constant(1, init_time[i]));
         sim_time_ts.add_time_point(i, Eigen::VectorXd::Constant(1, sim_time[i]));
     }
-    BOOST_OUTCOME_TRY(init_time_ts.export_csv(mio::path_join(result_dir, "isecir_" + std::to_string(num_regions) + "regions_init_time.csv")));
-    BOOST_OUTCOME_TRY(sim_time_ts.export_csv(mio::path_join(result_dir,  "isecir_" + std::to_string(num_regions) + "regions_sim_time.csv")));
+    BOOST_OUTCOME_TRY(init_time_ts.export_csv(
+        mio::path_join(result_dir, "isecir_" + std::to_string(num_regions) + "regions_init_time.csv")));
+    BOOST_OUTCOME_TRY(sim_time_ts.export_csv(
+        mio::path_join(result_dir, "isecir_" + std::to_string(num_regions) + "regions_sim_time.csv")));
 
     return mio::success();
 }
@@ -159,21 +160,23 @@ mio::IOResult<void> simulate(std::string result_dir, size_t num_runs, size_t num
 int main(int argc, char** argv)
 {
     auto cli_parameters = mio::cli::ParameterSetBuilder()
-                          .add<"ResultDirectory">(mio::path_join(mio::base_dir(), "cpp/examples/simulation_paper_ide/results_runtime"))
-                          .add<"NumberRuns">(100, {.alias = "nRun"})
-                          .add<"NumberWarmupRuns">(10, {.alias = "nWURun"})
-                          .add<"NumberRegions">(10, {.alias = "nRegion"})
-                          .build();
+                              .add<"ResultDirectory">(
+                                  mio::path_join(mio::base_dir(), "cpp/examples/simulation_paper_ide/results_runtime"))
+                              .add<"NumberRuns">(100, {.alias = "nRun"})
+                              .add<"NumberWarmupRuns">(10, {.alias = "nWURun"})
+                              .add<"NumberRegions">(10, {.alias = "nRegion"})
+                              .build();
 
     auto cli_result = mio::command_line_interface(argv[0], argc, argv, cli_parameters, {"ResultDirectory"});
     if (!cli_result) {
-        std::cout << cli_result.error().message();  
-        return cli_result.error().code().value();  
+        std::cout << cli_result.error().message();
+        return cli_result.error().code().value();
     }
 
     boost::filesystem::path res_dir(cli_parameters.get<"ResultDirectory">());
     boost::filesystem::create_directories(res_dir);
 
-    auto result = simulate(cli_parameters.get<"ResultDirectory">(), cli_parameters.get<"NumberRuns">(), cli_parameters.get<"NumberWarmupRuns">(), cli_parameters.get<"NumberRegions">());
+    auto result = simulate(cli_parameters.get<"ResultDirectory">(), cli_parameters.get<"NumberRuns">(),
+                           cli_parameters.get<"NumberWarmupRuns">(), cli_parameters.get<"NumberRegions">());
     return 0;
 }
