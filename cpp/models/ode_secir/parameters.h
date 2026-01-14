@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -245,7 +245,7 @@ struct MaxRiskOfInfectionFromSymptomatic {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type(size, 0.);
+        return Type(size, 1.);
     }
     static std::string name()
     {
@@ -560,9 +560,8 @@ public:
 
             if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
                 this->template get<TransmissionProbabilityOnContact<FP>>()[i] > 1.0) {
-                log_warning(
-                    "Constraint check: Parameter TransmissionProbabilityOnContact changed from {} to {} ",
-                    this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0);
+                log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {} to {} ",
+                            this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0);
                 this->template get<TransmissionProbabilityOnContact<FP>>()[i] = 0.0;
                 corrected                                                     = true;
             }
@@ -694,8 +693,7 @@ public:
 
             if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
                 this->template get<TransmissionProbabilityOnContact<FP>>()[i] > 1.0) {
-                log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {} or larger {}", 0,
-                          1);
+                log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {} or larger {}", 0, 1);
                 return true;
             }
 
@@ -706,15 +704,13 @@ public:
 
             if (this->template get<RecoveredPerInfectedNoSymptoms<FP>>()[i] < 0.0 ||
                 this->template get<RecoveredPerInfectedNoSymptoms<FP>>()[i] > 1.0) {
-                log_error("Constraint check: Parameter RecoveredPerInfectedNoSymptoms smaller {} or larger {}", 0,
-                          1);
+                log_error("Constraint check: Parameter RecoveredPerInfectedNoSymptoms smaller {} or larger {}", 0, 1);
                 return true;
             }
 
             if (this->template get<RiskOfInfectionFromSymptomatic<FP>>()[i] < 0.0 ||
                 this->template get<RiskOfInfectionFromSymptomatic<FP>>()[i] > 1.0) {
-                log_error("Constraint check: Parameter RiskOfInfectionFromSymptomatic smaller {} or larger {}", 0,
-                          1);
+                log_error("Constraint check: Parameter RiskOfInfectionFromSymptomatic smaller {} or larger {}", 0, 1);
                 return true;
             }
 

@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Henrik Zunker
 *
@@ -141,7 +141,7 @@ TEST(TestOdeSECIRTS, get_flows)
 
 TEST(TestOdeSECIRTS, Simulation)
 {
-    auto sim        = mio::osecirts::Simulation<double>(osecirts_testing_model(), 0, 1);
+    auto sim = mio::osecirts::Simulation<double>(osecirts_testing_model(), 0, 1);
     sim.set_integrator_core(std::make_unique<mio::EulerIntegratorCore<double>>());
     sim.advance(1);
 
@@ -258,7 +258,8 @@ TEST(TestOdeSECIRTS, overflow_vaccinations)
     }
 
     // simulate one step with explicit Euler
-    auto result     = mio::simulate_flows<double, mio::osecirts::Model<double>>(t0, tmax, dt, model, std::make_unique<mio::EulerIntegratorCore<double>>());
+    auto result = mio::simulate_flows<double, mio::osecirts::Model<double>>(
+        t0, tmax, dt, model, std::make_unique<mio::EulerIntegratorCore<double>>());
 
     // get the flow indices for each type of vaccination and also the indices of the susceptible compartments
     auto flow_indx_partial_vaccination =

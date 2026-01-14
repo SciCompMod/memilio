@@ -12,7 +12,7 @@ import inspect
 
 # -- Project information
 project = 'MEmilio'
-copyright = '2020-2025 MEmilio'
+copyright = '2020-2026 MEmilio'
 author = ''
 release = ''
 version = '1.3.0'

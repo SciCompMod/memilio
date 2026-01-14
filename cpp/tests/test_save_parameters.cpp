@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Wadim Koslow
 *
@@ -254,9 +254,8 @@ TEST(TestSaveParameters, read_graph_without_edges)
 
     std::vector<mio::osecir::Model<double>> models = {model, model};
     std::vector<int> ids                           = {0, 1};
-    auto graph_no_edges =
-        mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>(ids, models);
-    auto write_status = mio::write_graph(graph_no_edges, tmp_results_dir);
+    auto graph_no_edges = mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>(ids, models);
+    auto write_status   = mio::write_graph(graph_no_edges, tmp_results_dir);
     ASSERT_THAT(print_wrap(write_status), IsSuccess());
 
     auto read_graph =

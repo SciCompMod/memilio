@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Maximilian Betz
 *
@@ -35,8 +35,8 @@ namespace pymio
 
 void bind_Integrator_Core(pybind11::module_& m)
 {
-    pymio::bind_class<mio::OdeIntegratorCore<double>, pymio::EnablePickling::Never, 
-                      pybind11::smart_holder>(m, "IntegratorCore")
+    pymio::bind_class<mio::OdeIntegratorCore<double>, pymio::EnablePickling::Never, pybind11::smart_holder>(
+        m, "IntegratorCore")
         .def_property("dt_max",
                       pybind11::overload_cast<>(&mio::OdeIntegratorCore<double>::get_dt_max, pybind11::const_),
                       [](mio::OdeIntegratorCore<double>& self, double dt_max) {
