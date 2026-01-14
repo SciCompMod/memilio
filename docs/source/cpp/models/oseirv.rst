@@ -66,54 +66,54 @@ The model uses the following parameters (time unit: week):
 	 :header-rows: 1
 	 :widths: 20 25 55
 
-	 * - Mathematical Symbol
-		 - C++ Name / Type
-		 - Description
-	 * - :math:`R_e`
-		 - ``BaselineTransmissibility``
-		 - Baseline transmissibility (dimensionless); scales the normalized force of infection.
-	 * - :math:`T_E`
-		 - ``TimeExposed``
-		 - Mean time (weeks) in the exposed compartment; progression E -> I occurs with rate :math:`1/T_E`.
-	 * - :math:`T_I`
-		 - ``TimeInfected``
-		 - Mean infectious time (weeks); progression I -> R occurs with rate :math:`1/T_I` and the force of infection scales with :math:`1/T_I`.
-	 * - :math:`\delta`
-		 - ``SeasonalityAmplitude``
-		 - Amplitude of the seasonal modulation :math:`\exp(\delta\,\sin(2\pi(t/52 - t_z + t_s)))`.
-	 * - :math:`t_z`
-		 - ``SeasonalityShiftPerSubtype``
-		 - Coarse (subtype-specific) seasonal phase shift.
-	 * - :math:`t_s`
-		 - ``SeasonalityShiftPerSeason``
-		 - Fine seasonal phase adjustment per season.
-	 * - :math:`\lambda_0`
-		 - ``OutsideFoI``
-		 - External (additive) force of infection, can seed infections.
-	 * - :math:`\rho`
-		 - ``ClusteringExponent``
-		 - Clustering exponent on the infectious fraction.
-	 * - :math:`m`
-		 - ``SickMixing``
-		 - Mixing weight for symptomatic (“sick”) contacts in the blended contact matrix.
-	 * - :math:`C^{H}`
-		 - ``ContactPatternsHealthy``
-		 - Age-structured contact matrix (healthy). Can be time-dependent via damping.
-	 * - :math:`C^{S}`
-		 - ``ContactPatternsSick``
-		 - Age-structured contact matrix (symptomatic), combined using :math:`m`.
-	 * - :math:`\sigma_i`
-		 - ``CustomIndexArray``
-		 - Age-specific baseline susceptibility (pre-existing immunity modifier).
-	 * - :math:`VC_i`
-		 - ``VaccineCoverage``
-		 - Vaccination coverage per age group at season start (share vaccinated).
-	 * - :math:`VE_i`
-		 - ``VaccineEffectiveness``
-		 - Vaccine effectiveness (reducing effective susceptibility).
-	 * - :math:`\phi_0`
-		 - ``SusceptibleFraction``
-		 - Fraction of the total population forming the effectively susceptible pool at :math:`t_0`.
+     * - Mathematical Symbol
+       - C++ Name / Type
+       - Description
+     * - :math:`R_e`
+       - ``BaselineTransmissibility``
+       - Baseline transmissibility (dimensionless); scales the normalized force of infection.
+     * - :math:`T_E`
+       - ``TimeExposed``
+       - Mean time (weeks) in the exposed compartment; progression E -> I occurs with rate :math:`1/T_E`.
+     * - :math:`T_I`
+       - ``TimeInfected``
+       - Mean infectious time (weeks); progression I -> R occurs with rate :math:`1/T_I` and the force of infection scales with :math:`1/T_I`.
+     * - :math:`\delta`
+       - ``SeasonalityAmplitude``
+       - Amplitude of the seasonal modulation :math:`\exp(\delta\,\sin(2\pi(t/52 - t_z + t_s)))`.
+     * - :math:`t_z`
+       - ``SeasonalityShiftPerSubtype``
+       - Coarse (subtype-specific) seasonal phase shift.
+     * - :math:`t_s`
+       - ``SeasonalityShiftPerSeason``
+       - Fine seasonal phase adjustment per season.
+     * - :math:`\lambda_0`
+       - ``OutsideFoI``
+       - External (additive) force of infection, can seed infections.
+     * - :math:`\rho`
+       - ``ClusteringExponent``
+       - Clustering exponent on the infectious fraction.
+     * - :math:`m`
+       - ``SickMixing``
+       - Mixing weight for symptomatic (“sick”) contacts in the blended contact matrix.
+     * - :math:`C^{H}`
+       - ``ContactPatternsHealthy``
+       - Age-structured contact matrix (healthy). Can be time-dependent via damping.
+     * - :math:`C^{S}`
+       - ``ContactPatternsSick``
+       - Age-structured contact matrix (symptomatic), combined using :math:`m`.
+     * - :math:`\sigma_i`
+       - ``CustomIndexArray``
+       - Age-specific baseline susceptibility (pre-existing immunity modifier).
+     * - :math:`VC_i`
+       - ``VaccineCoverage``
+       - Vaccination coverage per age group at season start (share vaccinated).
+     * - :math:`VE_i`
+       - ``VaccineEffectiveness``
+       - Vaccine effectiveness (reducing effective susceptibility).
+     * - :math:`\phi_0`
+       - ``SusceptibleFraction``
+       - Fraction of the total population forming the effectively susceptible pool at :math:`t_0`.
 
 Note: ``VaccineCoverage`` and ``VaccineEffectiveness`` are only used for initialization. Transitions presently
 apply identical hazards to vaccinated and unvaccinated susceptible compartments. Future extensions may introduce
