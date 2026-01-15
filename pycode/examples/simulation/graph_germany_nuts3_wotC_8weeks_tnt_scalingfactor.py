@@ -38,9 +38,10 @@ from memilio.simulation.osecir import Model, interpolate_simulation_result
 from memilio.epidata import defaultDict as dd
 
 import geopandas as gpd
+import json
 import h5py
 
-name = "3dampings_lessnoise_newnetwork_wotC_8weeks"
+name = "3dampings_lessnoise_newnetwork_wotC_8weeks_tnt_scalingfactor"
 
 excluded_ids = [11001, 11002, 11003, 11004, 11005, 11006,
                 11007, 11008, 11009, 11010, 11011, 11012, 16056]
@@ -48,12 +49,13 @@ no_icu_ids = [7338, 9374, 9473, 9573]
 region_ids = [region_id for region_id in dd.County.keys()
               if region_id not in excluded_ids]
 
-inference_params = ['damping_values', 't_E', 't_ISy', 't_ISev',
+inference_params = ['scaling_factor', 'damping_values', 't_E', 't_ISy', 't_ISev',
                     't_Cr', 'mu_CR', 'mu_IH', 'mu_HU', 'mu_UD', 'transmission_prob']
 summary_vars = ['state'] + [f'fed_state{i}' for i in range(16)] + [
     f'region{i}' for i in range(len(region_ids)) if region_ids[i] not in no_icu_ids]
 
 bounds = {
+    'scaling_factor': (1., 10.),
     't_E': (1.0, 5.2),
     't_ISy': (4.0, 10.0),
     't_ISev': (5.0, 10.0),
@@ -151,13 +153,13 @@ def plot_region_fit(
     ax.set_title(f"{dd.County[region_ids[region]]}")
 
 def plot_infected_ts():    
-    file = h5py.File(f"{name}/results_run0.h5")
+    file = h5py.File(f"{name}/results_run0_red.h5")
     infecteds = []
     for region in region_ids: 
         infecteds.append(np.array(file[str(region)]['Total'][:, 4]))
     
     infecteds = np.array(infecteds)  # Convert to numpy array of shape (n_regions, n_time)
-    
+
     n_regions = infecteds.shape[0]
     n_cols = 4
     n_rows = 4
@@ -179,7 +181,7 @@ def plot_infected_ts():
                 ax.axis("off")  # Hide unused subplots
 
         plt.suptitle("Time Series of Infected Cases per Region")
-        plt.savefig(f"{name}/infected_time_series_block{block}.png", dpi=dpi)
+        plt.savefig(f"{name}/infected_time_series_red_block{block}.png", dpi=dpi)
         plt.close()
 
 def plot_aggregated_over_regions(
@@ -213,6 +215,9 @@ def plot_aggregated_over_regions(
 
     ax.plot(x, agg_median,
             label=label or "Aggregated simulation", color=color)
+    # ax.fill_between(x, qs_80[0], qs_80[1], alpha=0.5,
+    #                 color=color, label="80% CI")
+    # if not only_80q:
     ax.fill_between(x, qs_90[0], qs_90[1], alpha=0.5,
                     color=color)
     ax.fill_between(x, qs_95[0], qs_95[1], alpha=0.4,
@@ -240,8 +245,6 @@ def plot_icu_on_germany(simulations, synthetic, with_aug):
     plot_map(values[0], map_data, fedstate_data, axes[0], "Median ICU", vmin, vmax)
     plot_map(values[-1], map_data, fedstate_data, axes[1], "Median ICU", vmin, vmax)
 
-
-
     plt.savefig(f"{name}/median_icu_germany_{name}{synthetic}{with_aug}.png", bbox_inches='tight', dpi=dpi)
 
     # Save the colorbar horizontally in a separate figure
@@ -258,11 +261,6 @@ def plot_icu_on_germany(simulations, synthetic, with_aug):
 def plot_map(values, map_data, fedstate_data, ax, label, vmin, vmax):
     map_data[label] = map_data['ARS'].map(dict(zip([f"{region_id:05d}" for region_id in region_ids], values)))
 
-    map_data['state_id'] = map_data['ARS'].astype(
-        int).map({county: county // 1000 for county in dd.County.keys()}).fillna(0).astype(int)
-
-    states = map_data.dissolve(by='state_id')
-
     map_data.plot(
         column=f"{label}",
         cmap='Reds',
@@ -272,7 +270,6 @@ def plot_map(values, map_data, fedstate_data, ax, label, vmin, vmax):
         vmin=vmin,
         vmax=vmax,
     )
-    states.boundary.plot(ax=ax, edgecolor='darkgray', linewidth=0.5)
 
     ax.axis('off')
 
@@ -514,55 +511,6 @@ def run_prior_predictive_check():
     ax.set_title("Prior predictive check - Aggregated over regions")
     plt.savefig(f'{name}/prior_predictive_check_{name}.png', dpi=dpi)
 
-def compare_median_sim_to_mean_param_sim():
-    num_samples = 10
-
-    divi_dict = load_divi_data()
-    validation_data_skip2w = skip_2weeks(divi_dict)
-    aggregate_states(validation_data_skip2w)
-    divi_region_keys = region_keys_sorted(divi_dict)
-    divi_data = np.concatenate(
-        [divi_dict[key] for key in divi_region_keys], axis=-1
-    )[0]
-
-    simulations_aug = load_pickle(f'{name}/sims_{name}_with_aug.pickle')
-
-    workflow = get_workflow()
-    workflow.approximator = keras.models.load_model(
-        filepath=os.path.join(f"{name}/model_{name}.keras")
-    )
-
-    samples = workflow.sample(conditions=validation_data_skip2w, num_samples=num_samples)
-    for key in inference_params:
-        samples[key] = np.median(samples[key], axis=1)
-    samples['damping_values'] = samples['damping_values'].reshape((samples['damping_values'].shape[0], 16, NUM_DAMPING_POINTS))
-    result = run_germany_nuts3_simulation(
-        damping_values=samples['damping_values'][0],
-        t_E=samples['t_E'][0], t_ISy=samples['t_ISy'][0],
-        t_ISev=samples['t_ISev'][0], t_Cr=samples['t_Cr'][0],
-        mu_CR=samples['mu_CR'][0], mu_IH=samples['mu_IH'][0],
-        mu_HU=samples['mu_HU'][0], mu_UD=samples['mu_UD'][0],
-        transmission_prob=samples['transmission_prob'][0]
-    )
-    for key in result.keys():
-        result[key] = np.array(result[key])[None, ...]  # add sample axis
-
-    result = extract_observables(result)
-    divi_region_keys = region_keys_sorted(result)
-    result = np.concatenate(
-        [result[key] if key in result else np.zeros_like(result[divi_region_keys[0]]) for key in divi_region_keys],
-        axis=-1
-    )[0]
-
-
-    fig, ax = plt.subplots(figsize=(8, 6))
-    plot_aggregated_over_regions(
-        simulations_aug, true_data=result, label="Compare median of sim to sim of median params", ax=ax, color=colors["Red"]
-    )
-    ax.set_title("Comparison of Median Simulation to Simulation of Median Parameters")
-    plt.savefig(f'{name}/compare_median_sim13_to_mean_param_sim_{name}.png', dpi=dpi)
-    plt.close()
-
 def best_fit_sim(results, true_data, ax=None):
     rmse_per_region = np.sqrt(np.mean((results - true_data[None, :, :])**2, axis=1))
     rmse_agg = np.sum(rmse_per_region, axis=-1)
@@ -584,7 +532,7 @@ def best_fit_sim(results, true_data, ax=None):
     ax.set_ylabel("ICU")
     ax.legend()
 
-    return best_fit_index
+    return rmse_agg_idx
 
 class Simulation:
     """ """
@@ -648,7 +596,7 @@ class Simulation:
             params.ContactPatterns.cont_freq_mat[0].add_damping(
                 mio.Damping(np.r_[damping_values[2]], t=start_date))
 
-    def get_graph(self, end_date, t_E, t_ISy, t_ISev, t_Cr, mu_CR, mu_IH, mu_HU, mu_UD, transmission_prob):
+    def get_graph(self, end_date, scaling_factor, t_E, t_ISy, t_ISev, t_Cr, mu_CR, mu_IH, mu_HU, mu_UD, transmission_prob):
         print("Initializing model...")
         model = Model(self.num_groups)
         self.set_covid_parameters(
@@ -658,7 +606,7 @@ class Simulation:
 
         graph = osecir.ModelGraph()
 
-        scaling_factor_infected = [2.5]
+        scaling_factor_infected = [scaling_factor]
         scaling_factor_icu = 1.0
 
         data_dir_Germany = os.path.join(self.data_dir, "Germany")
@@ -677,7 +625,7 @@ class Simulation:
             mio.Date(end_date.year,
                      end_date.month, end_date.day), pydata_dir,
             path_population_data, True, graph, scaling_factor_infected,
-            scaling_factor_icu, 0, 0, False)
+            scaling_factor_icu, 1.0, 0, False)
 
         print("Setting edges...")
         mio.osecir.set_edges(mobility_data_file, graph, 1)
@@ -686,11 +634,11 @@ class Simulation:
 
         return graph
 
-    def run(self, num_days_sim, damping_values, t_E, t_ISy, t_ISev, t_Cr, mu_CR, mu_IH, mu_HU, mu_UD, transmission_prob, export_timeseries):
+    def run(self, num_days_sim, scaling_factor, damping_values, t_E, t_ISy, t_ISev, t_Cr, mu_CR, mu_IH, mu_HU, mu_UD, transmission_prob, export_timeseries):
         mio.set_log_level(mio.LogLevel.Warning)
         end_date = self.start_date + datetime.timedelta(days=num_days_sim)
 
-        graph = self.get_graph(end_date, t_E, t_ISy, t_ISev,
+        graph = self.get_graph(end_date, scaling_factor, t_E, t_ISy, t_ISev,
                                t_Cr, mu_CR, mu_IH, mu_HU, mu_UD, transmission_prob)
 
         mobility_graph = osecir.MobilityGraph()
@@ -733,7 +681,7 @@ class Simulation:
         return results
 
 
-def run_germany_nuts3_simulation(damping_values, t_E, t_ISy, t_ISev, t_Cr, mu_CR, mu_IH, mu_HU, mu_UD, transmission_prob, export_timeseries=False):
+def run_germany_nuts3_simulation(scaling_factor, damping_values, t_E, t_ISy, t_ISev, t_Cr, mu_CR, mu_IH, mu_HU, mu_UD, transmission_prob, export_timeseries=False):
     mio.set_log_level(mio.LogLevel.Warning)
     file_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -743,7 +691,7 @@ def run_germany_nuts3_simulation(damping_values, t_E, t_ISy, t_ISev, t_Cr, mu_CR
         results_dir=os.path.join(file_path, "../../../results_osecir"))
     num_days_sim = 60
 
-    results = sim.run(num_days_sim, damping_values, t_E, t_ISy,
+    results = sim.run(num_days_sim, scaling_factor, damping_values, t_E, t_ISy,
                       t_ISev, t_Cr, mu_CR, mu_IH, mu_HU, mu_UD, transmission_prob, export_timeseries)
 
     return results
@@ -759,6 +707,7 @@ def prior():
             a=a, b=b, loc=mean, scale=scale, size=16
         )
     return {
+        'scaling_factor': np.random.uniform(*bounds['scaling_factor']),
         'damping_values': np.transpose(damping_values),
         't_E': np.random.uniform(*bounds['t_E']),
         't_ISy': np.random.uniform(*bounds['t_ISy']),
@@ -881,6 +830,7 @@ def get_workflow():
         bf.Adapter()
         .to_array()
         .convert_dtype("float64", "float32")
+        .constrain("scaling_factor", lower=bounds["scaling_factor"][0], upper=bounds["scaling_factor"][1])
         .constrain("damping_values", lower=0.0, upper=1.0)
         .constrain("t_E", lower=bounds["t_E"][0], upper=bounds["t_E"][1])
         .constrain("t_ISy", lower=bounds["t_ISy"][0], upper=bounds["t_ISy"][1])
@@ -892,7 +842,7 @@ def get_workflow():
         .constrain("mu_UD", lower=bounds["mu_UD"][0], upper=bounds["mu_UD"][1])
         .constrain("transmission_prob", lower=bounds["transmission_prob"][0], upper=bounds["transmission_prob"][1])
         .concatenate(
-            ["damping_values", "t_E", "t_ISy", "t_ISev", "t_Cr",
+            ["scaling_factor", "damping_values", "t_E", "t_ISy", "t_ISev", "t_Cr",
              "mu_CR", "mu_IH", "mu_HU", "mu_UD", "transmission_prob"],
             into="inference_variables",
             axis=-1
@@ -920,7 +870,7 @@ def get_workflow():
 
 
 def run_training(num_training_files=20):
-    train_template = name+"/trainings_data{i}_"+name+".pickle"
+    train_template = name+"/training_data{i}_"+name+".pickle"
     val_path = f"{name}/validation_data_{name}.pickle"
 
     aug = bf.augmentations.NNPE(
@@ -1015,6 +965,7 @@ def run_inference(num_samples=1000, on_synthetic_data=False):
         results = []
         for i in range(num_samples):  # we only have one dataset for inference here
             result = run_germany_nuts3_simulation(
+                scaling_factor=samples['scaling_factor'][0, i],
                 damping_values=samples['damping_values'][0, i],
                 t_E=samples['t_E'][0, i], t_ISy=samples['t_ISy'][0, i],
                 t_ISev=samples['t_ISev'][0, i], t_Cr=samples['t_Cr'][0, i],
@@ -1042,6 +993,7 @@ def run_inference(num_samples=1000, on_synthetic_data=False):
         plt.close()
 
         best_sim = run_germany_nuts3_simulation(
+            scaling_factor=samples['scaling_factor'][0, sim_idx],
             damping_values=samples['damping_values'][0, sim_idx],
             t_E=samples['t_E'][0, sim_idx], t_ISy=samples['t_ISy'][0, sim_idx],
             t_ISev=samples['t_ISev'][0, sim_idx], t_Cr=samples['t_Cr'][0, sim_idx],
@@ -1124,8 +1076,8 @@ if __name__ == "__main__":
 
     if not os.path.exists(name):
         os.makedirs(name)
-    # create_train_data(filename=f'{name}/test_{name}.pickle', number_samples=1)
+    # create_train_data(filename=f'{name}/validation_data_{name}.pickle', number_samples=100)
     # run_training(num_training_files=10)
     # run_inference(on_synthetic_data=True, num_samples=100)
-    # run_inference(on_synthetic_data=False)
+    # run_inference(on_synthetic_data=False, num_samples=1000)
     plot_infected_ts()

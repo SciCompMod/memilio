@@ -22,6 +22,7 @@
 
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/io/mobility_io.h"
+#include "pybind_util.h"
 
 #include "pybind11/pybind11.h"
 #include <cstddef>
@@ -38,6 +39,20 @@ void bind_write_graph(pybind11::module_& m)
               auto ioresult = mio::write_graph<double, Model>(graph, directory, ioflags);
           });
 }
+
+template <class Model>
+void bind_read_graph(pybind11::module_& m)
+{
+    m.def(
+        "read_graph",
+        [&](const std::string& directory) {
+            auto result = mio::read_graph<double, Model>(directory, 0, true);
+            return pymio::check_and_throw(result);
+        },
+        pybind11::return_value_policy::move);
+}
+
+
 
 } // namespace pymio
 
