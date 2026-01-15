@@ -9,3 +9,7 @@ pycode/memilio-plot
 pycode/memilio-surrogatemodel
 exhale
 sphinx_toolbox
+# Dependencies for memilio.generation (added via sys.path, not pip-installed)
+libclang==18.1.1
+dataclasses_json
+graphviz

@@ -18,6 +18,14 @@ release = ''
 version = '1.3.0'
 
 # =============================================================================
+# Add source directories to sys.path for packages that can't be pip-installed
+# (memilio.simulation requires C++ compilation, memilio.generation requires libclang)
+# =============================================================================
+_docs_dir = pathlib.Path(__file__).parent.parent.parent
+sys.path.insert(0, str(_docs_dir / 'pycode' / 'memilio-simulation'))
+sys.path.insert(0, str(_docs_dir / 'pycode' / 'memilio-generation'))
+
+# =============================================================================
 # C++ extension stub setup (must run before importing memilio)
 # =============================================================================
 
@@ -272,9 +280,6 @@ autodoc_mock_imports = [
     "requests",
     "urllib3",
     "progress",
-    "clang",
-    "graphviz",
-    "dataclasses_json",
 ]
 
 # EPUB output
