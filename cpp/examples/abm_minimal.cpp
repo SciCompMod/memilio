@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
 {
     // Parse command-line arguments
     // Usage: ./abm_minimal_example [infection_rate] [num_household_members]
-    double infection_rate = 10.0; // default value
+    double infection_rate = 1.0; // default value
     int num_household_members = 2; // default value
     
     if (argc > 1) {
@@ -107,12 +107,7 @@ int main(int argc, char* argv[])
     auto model = mio::abm::Model(num_age_groups);
     auto start_date = mio::abm::TimePoint(0);
 
-    for (auto& loc : model.get_locations()) {
-        if (loc.get_type()== mio::abm::LocationType::Home) {
-             loc.get_infection_parameters().get<mio::abm::ContactRates>()[{age_group_0_to_4, age_group_0_to_4}] = 0.8806*1.6;
-        }
-    }
-
+    
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
     model.parameters.get<mio::abm::AgeGroupGotoSchool>()                    = false;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 and 35-59)
@@ -147,6 +142,11 @@ int main(int argc, char* argv[])
    
     model.parameters.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] = infection_rate;
 
+    for (auto& loc : model.get_locations()) {
+        if (loc.get_type()== mio::abm::LocationType::Home) {
+             loc.get_infection_parameters().get<mio::abm::ContactRates>()[{age_group_0_to_4, age_group_0_to_4}] = 0.8806*1.6;
+        }
+    }
 
     // During the lockdown, social events are closed for 90% of people.
     // auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(10);

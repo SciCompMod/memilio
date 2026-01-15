@@ -42,6 +42,10 @@ ScalarType daily_transmissions_by_contacts(const ContactExposureRates& rates, co
         if (age_receiver == age_transmitter &&
             age_receiver_group_size > 1) // adjust for the person not meeting themself
         {
+            std::cout << "Adjusting for self-contact: age_receiver " << age_receiver.get()
+                      << ", age_receiver_group_size " << age_receiver_group_size << " with rate "
+                        << rates[{cell_index, virus, age_transmitter}] << "and contact rate " << params.get<ContactRates>()[{age_receiver, age_transmitter}] <<" and further factors " <<
+                         (double)(age_receiver_group_size) << "\n";
 
             prob += rates[{cell_index, virus, age_transmitter}] *params.get<ContactRates>()[{age_receiver, age_transmitter}] * age_receiver_group_size /
                     (age_receiver_group_size - 1);
@@ -101,7 +105,7 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
                     *global_parameters.get<InfectionRateFromViralShed>()[{virus}];
 
                 local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
-                std::cout << "Person " << person.get_id().get() <<"has value " << static_cast<uint32_t>(virus) << ": "
+                std::cout << "Person " << person.get_id().get() <<"has local_indiv_trans_prob_v: "
                           << local_indiv_trans_prob_v << " daily_contacts_exposure = exposed_viral_shed/n_s = viral_shed_normiert: " << daily_contacts_exposure
                           << " daily_air_exposure: " << daily_air_exposure << " mask factor: " << mask
                           << " personal protection: " << personal_protection << "\n";
