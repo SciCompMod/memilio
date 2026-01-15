@@ -272,7 +272,7 @@ pycode/epi_venv/
 pycode/build_pylint/
 
 # Automatic generated python code
-pycode/memilio-simulation-stubs/
+# pycode/memilio-simulation-stubs/
 
 # Credentials for data download
 pycode/memilio-epidata/memilio/epidata/CredentialsRegio.ini
