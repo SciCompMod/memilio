@@ -9,3 +9,5 @@ pycode/memilio-plot
 pycode/memilio-surrogatemodel
 exhale
 sphinx_toolbox
+doxysphinx
+sphinxcontrib-doxylink
