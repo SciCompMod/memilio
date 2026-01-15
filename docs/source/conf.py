@@ -18,7 +18,8 @@ read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 
 if read_the_docs_build:
 
-    subprocess.call('cd ..; git submodule add https://github.com/jothepro/doxygen-awesome-css.git; cd doxygen-awesome-css; git checkout v2.4.1', shell=True)
+    # subprocess.call('cd ..; git submodule add https://github.com/jothepro/doxygen-awesome-css.git; cd doxygen-awesome-css; git checkout v2.4.1', shell=True)
+    subprocess.call('ls ../doxygen-awesome-css', shell=True)
     subprocess.call('cd ..; doxygen', shell=True)
     subprocess.call('cd ..; doxysphinx build source $READTHEDOCS_OUTPUT/html Doxyfile', shell = True)
 
