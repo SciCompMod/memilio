@@ -64,50 +64,135 @@ _WRAPPER_MODULES = {
 
 
 def _create_module_from_stub(stub_path, module_name):
-    """Create a module with classes/functions extracted from a .pyi stub file."""
+    """Create a module with classes/functions extracted from a .pyi stub file using AST."""
+    import ast
     content = stub_path.read_text()
     module = types.ModuleType(module_name)
     module.__file__ = str(stub_path)
     module.__doc__ = f"C++ bindings (from stub: {stub_path.name})"
     exported_names = []
 
-    # Extract class definitions with methods
-    class_pattern = re.compile(
-        r'^class\s+(\w+)(?:\([^)]*\))?:\s*\n((?:[ \t]+.*\n)*)',
-        re.MULTILINE
-    )
-    for match in class_pattern.finditer(content):
-        class_name = match.group(1)
-        class_body = match.group(2) or ''
+    try:
+        tree = ast.parse(content)
+    except SyntaxError:
+        # Fallback for unparseable stubs
+        module.__all__ = []
+        return module
 
-        # Extract docstring
-        doc_match = re.search(r'^\s+"""(.*?)"""', class_body, re.DOTALL)
-        docstring = doc_match.group(1).strip() if doc_match else f'{class_name} - C++ binding class'
+    # Helper to convert AST annotation to string
+    def annotation_to_str(node):
+        if node is None:
+            return None
+        return ast.unparse(node)
 
-        # Extract methods
-        methods = {}
-        for m in re.finditer(r'^\s+def\s+(\w+)\s*\([^)]*\)[^:]*:', class_body, re.MULTILINE):
-            name = m.group(1)
-            methods[name] = lambda self, *a, **k: None
-            methods[name].__name__ = name
-            methods[name].__doc__ = f'{name} method'
+    # Helper to extract docstring from body
+    def get_docstring(body):
+        if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant):
+            return body[0].value.value
+        return None
 
-        placeholder = type(class_name, (), {'__doc__': docstring, '__module__': module_name, **methods})
-        setattr(module, class_name, placeholder)
-        if not class_name.startswith('_'):
-            exported_names.append(class_name)
+    # Helper to create a function with proper signature
+    def make_method(name, args_node, returns_node, docstring, is_static=False):
+        # Build parameter list from AST
+        params = []
+        args = args_node
 
-    # Extract top-level functions
-    for match in re.finditer(r'^def\s+(\w+)\s*\([^)]*\)[^:]*:', content, re.MULTILINE):
-        func_name = match.group(1)
-        if not func_name.startswith('_'):
-            def make_func(name):
-                def f(*args, **kwargs): pass
-                f.__name__ = name
-                f.__doc__ = f'{name} - C++ binding function'
-                return f
-            setattr(module, func_name, make_func(func_name))
-            exported_names.append(func_name)
+        # Skip 'self' for instance methods
+        arg_list = args.args[1:] if args.args and not is_static else args.args
+
+        for arg in arg_list:
+            param_name = arg.arg
+            annotation = annotation_to_str(arg.annotation) if arg.annotation else None
+            if annotation:
+                params.append(f"{param_name}: {annotation}")
+            else:
+                params.append(param_name)
+
+        sig_str = f"({', '.join(params)})"
+        return_str = annotation_to_str(returns_node) if returns_node else None
+
+        if is_static:
+            def method(*args, **kwargs): pass
+        else:
+            def method(self, *args, **kwargs): pass
+
+        method.__name__ = name
+        method.__module__ = module_name
+        method.__doc__ = docstring or f"{name}{sig_str}"
+
+        # Try to set __signature__ for better autodoc display
+        try:
+            import inspect
+            sig_params = []
+            if not is_static:
+                sig_params.append(inspect.Parameter('self', inspect.Parameter.POSITIONAL_OR_KEYWORD))
+            for arg in arg_list:
+                sig_params.append(inspect.Parameter(arg.arg, inspect.Parameter.POSITIONAL_OR_KEYWORD))
+            method.__signature__ = inspect.Signature(sig_params)
+        except Exception:
+            pass
+
+        return staticmethod(method) if is_static else method
+
+    # Process classes
+    for node in ast.iter_child_nodes(tree):
+        if isinstance(node, ast.ClassDef):
+            class_name = node.name
+            class_doc = get_docstring(node.body) or f"{class_name} - C++ binding class"
+
+            # Extract base classes
+            bases = []
+            for base in node.bases:
+                base_name = ast.unparse(base)
+                # Try to resolve base from already-created classes in module
+                if hasattr(module, base_name):
+                    bases.append(getattr(module, base_name))
+
+            # Build class dict with methods and attributes
+            class_dict = {
+                '__doc__': class_doc,
+                '__module__': module_name,
+            }
+
+            for item in node.body:
+                if isinstance(item, ast.FunctionDef):
+                    is_static = any(
+                        isinstance(d, ast.Name) and d.id == 'staticmethod'
+                        for d in item.decorator_list
+                    )
+                    method_doc = get_docstring(item.body)
+                    method = make_method(item.name, item.args, item.returns, method_doc, is_static)
+                    class_dict[item.name] = method
+
+                elif isinstance(item, ast.AnnAssign) and isinstance(item.target, ast.Name):
+                    # Class attribute annotation (e.g., "parameters: Parameters")
+                    attr_name = item.target.id
+                    # Create a property-like descriptor or just document it
+                    class_dict[attr_name] = property(
+                        lambda self, n=attr_name: None,
+                        doc=f"{attr_name}: {annotation_to_str(item.annotation)}"
+                    )
+
+            # Create the class
+            if bases:
+                placeholder = type(class_name, tuple(bases), class_dict)
+            else:
+                placeholder = type(class_name, (), class_dict)
+
+            setattr(module, class_name, placeholder)
+            if not class_name.startswith('_'):
+                exported_names.append(class_name)
+
+        elif isinstance(node, ast.FunctionDef):
+            func_name = node.name
+            if not func_name.startswith('_'):
+                func_doc = get_docstring(node.body)
+                func = make_method(func_name, node.args, node.returns, func_doc, is_static=True)
+                # Unwrap staticmethod for module-level functions
+                if isinstance(func, staticmethod):
+                    func = func.__func__
+                setattr(module, func_name, func)
+                exported_names.append(func_name)
 
     module.__all__ = exported_names
     return module
