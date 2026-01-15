@@ -34,9 +34,8 @@ extensions = [
     'sphinx_copybutton',
     'sphinx_toolbox.collapse',
     'sphinx_design',
-    'breathe',
-    'exhale',
     'hoverxref.extension',
+    'sphinxcontrib.doxylink',
     #    'sphinx_remove_toctrees'
 ]
 
@@ -62,18 +61,10 @@ hoverxref_role_types = {
     "class": "tooltip",
 }
 
-exhale_args = {
-    "containmentFolder":   "./api",
-    "rootFileName":        "library_root.rst",
-    "doxygenStripFromPath":    "..",
-    "rootFileTitle":       "C++ API",
-    "createTreeView":      True,
-    "treeViewIsBootstrap": False,
-    "contentsDirectives":    False,
+doxylink = {
+    "C++ API": ("source/cppapi/html/tagfile.xml", 
+                "source/cppapi/html")
 }
-
-breathe_projects = {"MEmilio": "../xml"}
-breathe_default_project = "MEmilio"
 
 # remove_from_toctrees = ["api/*"]
 
