@@ -38,6 +38,7 @@ from memilio.simulation.osecir import Model, interpolate_simulation_result
 from memilio.epidata import defaultDict as dd
 
 import geopandas as gpd
+import h5py
 
 name = "3dampings_lessnoise_newnetwork_wotC_8weeks"
 
@@ -136,24 +137,50 @@ def plot_region_fit(
 
     ax.plot(
         x, med, lw=2, label=label or f"{dd.County[region_ids[region]]}", color=color)
-    ax.fill_between(x, qs_80[0], qs_80[1], alpha=0.5,
-                    color=color, label="80% CI")
-    if not only_80q:
-        ax.fill_between(x, qs_90[0], qs_90[1], alpha=0.3,
-                        color=color, label="90% CI")
-        ax.fill_between(x, qs_95[0], qs_95[1], alpha=0.1,
-                        color=color, label="95% CI")
+    ax.fill_between(x, qs_90[0], qs_90[1], alpha=0.3,
+                    color=color)
+    ax.fill_between(x, qs_95[0], qs_95[1], alpha=0.1,
+                    color=color)
 
     if true_data is not None:
         true_vals = true_data[:, region]  # (time_points,)
-        ax.plot(x, true_vals, lw=2, color="black", label="True data")
+        ax.plot(x, true_vals, lw=2, color="black", label="Reported data")
 
     ax.set_xlabel("Time")
-    ax.set_ylabel("ICU")
+    ax.set_ylabel("ICU cases [#]")
     ax.set_title(f"{dd.County[region_ids[region]]}")
-    if label is not None:
-        ax.legend(loc="upper right")
 
+def plot_infected_ts():    
+    file = h5py.File(f"{name}/results_run0.h5")
+    infecteds = []
+    for region in region_ids: 
+        infecteds.append(np.array(file[str(region)]['Total'][:, 4]))
+    
+    infecteds = np.array(infecteds)  # Convert to numpy array of shape (n_regions, n_time)
+    
+    n_regions = infecteds.shape[0]
+    n_cols = 4
+    n_rows = 4
+    n_blocks = (n_regions + n_cols * n_rows - 1) // (n_cols * n_rows)
+    for block in range(n_blocks):
+        start_idx = block * n_cols * n_rows
+        # Plot the time series for every region in 4x4 subplots
+        fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(20, 15), constrained_layout=True)
+        axes = axes.flatten()
+
+        for i, ax in enumerate(axes):
+            if i < n_regions:
+                ax.plot(infecteds[start_idx + i])
+                ax.set_title(f"{dd.County[region_ids[start_idx + i]]}")
+                ax.set_xlabel("Time")
+                ax.set_ylabel("Infected")
+                ax.legend()
+            else:
+                ax.axis("off")  # Hide unused subplots
+
+        plt.suptitle("Time Series of Infected Cases per Region")
+        plt.savefig(f"{name}/infected_time_series_block{block}.png", dpi=dpi)
+        plt.close()
 
 def plot_aggregated_over_regions(
     data: np.ndarray,
@@ -184,22 +211,18 @@ def plot_aggregated_over_regions(
     if ax is None:
         fig, ax = plt.subplots()
 
-    ax.plot(x, agg_median, lw=2,
-            label=label or "Aggregated over regions", color=color)
-    ax.fill_between(x, qs_80[0], qs_80[1], alpha=0.5,
-                    color=color, label="80% CI")
-    if not only_80q:
-        # ax.fill_between(x, qs_90[0], qs_90[1], alpha=0.3,
-        #                 color=color, label="90% CI")
-        ax.fill_between(x, qs_95[0], qs_95[1], alpha=0.1,
-                        color=color, label="95% CI")
+    ax.plot(x, agg_median,
+            label=label or "Aggregated simulation", color=color)
+    ax.fill_between(x, qs_90[0], qs_90[1], alpha=0.5,
+                    color=color)
+    ax.fill_between(x, qs_95[0], qs_95[1], alpha=0.4,
+                    color=color)
     if true_data is not None:
         true_vals = region_agg(true_data, axis=-1)  # (time_points,)
-        ax.plot(x, true_vals, lw=2, color="black", label="True data")
+        ax.scatter(x, true_vals, color="black", label="Reported data", marker='x')
 
     ax.set_xlabel("Time")
-    ax.set_ylabel("ICU")
-    ax.set_title(label)
+    ax.set_ylabel("ICU cases [#]")
 
 def plot_icu_on_germany(simulations, synthetic, with_aug):
     med = np.median(simulations, axis=0)
@@ -211,34 +234,45 @@ def plot_icu_on_germany(simulations, synthetic, with_aug):
     fedstate_data = gpd.read_file(os.path.join(os.getcwd(), 'tools/vg2500_12-31.utm32s.shape/vg2500/VG2500_LAN.shp'))
 
     fig, axes = plt.subplots(1, 2, figsize=(12, 8), layout="constrained")
-    vmin, vmax = min(values[0].min(), values[-1].min()), max(values[0].max(), values[-1].max())  # Shared scale for both plots
+    vmin = 0
+    vmax = 15.5
 
     plot_map(values[0], map_data, fedstate_data, axes[0], "Median ICU", vmin, vmax)
     plot_map(values[-1], map_data, fedstate_data, axes[1], "Median ICU", vmin, vmax)
 
-    # Add a colorbar for the shared scale
-    sm = plt.cm.ScalarMappable(cmap='Reds', norm=plt.Normalize(vmin=vmin, vmax=vmax))
-    sm._A = []  # Dummy array for the ScalarMappable
-    cbar = fig.colorbar(sm, ax=axes, orientation='vertical', shrink=0.6, pad=0.02)
-    cbar.set_label("Median ICU per County")
+
 
     plt.savefig(f"{name}/median_icu_germany_{name}{synthetic}{with_aug}.png", bbox_inches='tight', dpi=dpi)
+
+    # Save the colorbar horizontally in a separate figure
+    sm = plt.cm.ScalarMappable(cmap='Reds', norm=plt.Normalize(vmin=vmin, vmax=vmax))
+    sm._A = []  # Dummy array for the ScalarMappable
+
+    # Create a new figure for the colorbar
+    cbar_fig, cbar_ax = plt.subplots(figsize=(12, 0.5))
+    cbar = cbar_fig.colorbar(sm, cax=cbar_ax, orientation='horizontal')
+    cbar.set_label("Median ICU per 100,000")
+    cbar_fig.savefig(f"{name}/colorbar_median_icu_{name}{synthetic}{with_aug}.png", bbox_inches='tight', dpi=dpi)
 
 
 def plot_map(values, map_data, fedstate_data, ax, label, vmin, vmax):
     map_data[label] = map_data['ARS'].map(dict(zip([f"{region_id:05d}" for region_id in region_ids], values)))
 
+    map_data['state_id'] = map_data['ARS'].astype(
+        int).map({county: county // 1000 for county in dd.County.keys()}).fillna(0).astype(int)
+
+    states = map_data.dissolve(by='state_id')
+
     map_data.plot(
         column=f"{label}",
         cmap='Reds',
-        linewidth=0.5,
+        linewidth=0.,
         ax=ax,
-        edgecolor='0.6',
         legend=False,
         vmin=vmin,
         vmax=vmax,
     )
-    fedstate_data.boundary.plot(ax=ax, color='black', linewidth=1)
+    states.boundary.plot(ax=ax, edgecolor='darkgray', linewidth=0.5)
 
     ax.axis('off')
 
@@ -475,7 +509,7 @@ def run_prior_predictive_check():
 
     fig, ax = plt.subplots(figsize=(8, 6))
     plot_aggregated_over_regions(
-        simulations, true_data=true_data, label="Region Aggregated Median (No Aug)", ax=ax, color=colors["Red"]
+        simulations, true_data=true_data, label="Aggregated Median", ax=ax, color=colors["Red"]
     )
     ax.set_title("Prior predictive check - Aggregated over regions")
     plt.savefig(f'{name}/prior_predictive_check_{name}.png', dpi=dpi)
@@ -544,7 +578,7 @@ def best_fit_sim(results, true_data, ax=None):
     ax.plot(x, agg_over_regions[rmse_agg_idx], lw=2, label="First rmse then aggregated", color="red")
     ax.plot(x, agg_over_regions[best_fit_index], lw=2,
             label="First aggregated then rmse", color="blue", linestyle="--")
-    ax.plot(x, true_vals, lw=2, color="black", label="True data")
+    ax.plot(x, true_vals, lw=2, color="black", label="Reported data")
 
     ax.set_xlabel("Time")
     ax.set_ylabel("ICU")
@@ -864,7 +898,6 @@ def get_workflow():
             axis=-1
         )
         .concatenate(summary_vars, into="summary_variables", axis=-1)
-        .log("summary_variables", p1=True)
     )
 
     summary_network = bf.networks.FusionTransformer(
@@ -1050,10 +1083,10 @@ def run_inference(num_samples=1000, on_synthetic_data=False):
     fig, ax = plt.subplots(figsize=(8, 6), constrained_layout=True)
     # Plot with augmentation
     plot_aggregated_over_regions(
-        simulations_aug, true_data=divi_data, label="Region Aggregated Median", ax=ax, color=colors["Red"]
+        simulations_aug, true_data=divi_data, ax=ax, color=colors["Red"]
     )
     lines, labels = ax.get_legend_handles_labels()
-    fig.legend(lines, labels)
+    fig.legend(lines, labels, loc='upper left', bbox_to_anchor=(0.135, 0.99), ncol=1)
     plt.savefig(f'{name}/region_aggregated_{name}{synthetic}.png', dpi=dpi)
     plt.close()
 
@@ -1091,7 +1124,8 @@ if __name__ == "__main__":
 
     if not os.path.exists(name):
         os.makedirs(name)
-    create_train_data(filename=f'{name}/test_{name}.pickle', number_samples=1)
+    # create_train_data(filename=f'{name}/test_{name}.pickle', number_samples=1)
     # run_training(num_training_files=10)
     # run_inference(on_synthetic_data=True, num_samples=100)
     # run_inference(on_synthetic_data=False)
+    plot_infected_ts()

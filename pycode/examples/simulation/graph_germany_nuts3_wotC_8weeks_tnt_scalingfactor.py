@@ -39,6 +39,7 @@ from memilio.epidata import defaultDict as dd
 
 import geopandas as gpd
 import json
+import h5py
 
 name = "3dampings_lessnoise_newnetwork_wotC_8weeks_tnt_scalingfactor"
 
@@ -138,24 +139,50 @@ def plot_region_fit(
 
     ax.plot(
         x, med, lw=2, label=label or f"{dd.County[region_ids[region]]}", color=color)
-    ax.fill_between(x, qs_80[0], qs_80[1], alpha=0.5,
-                    color=color, label="80% CI")
-    if not only_80q:
-        ax.fill_between(x, qs_90[0], qs_90[1], alpha=0.3,
-                        color=color, label="90% CI")
-        ax.fill_between(x, qs_95[0], qs_95[1], alpha=0.1,
-                        color=color, label="95% CI")
+    ax.fill_between(x, qs_90[0], qs_90[1], alpha=0.3,
+                    color=color)
+    ax.fill_between(x, qs_95[0], qs_95[1], alpha=0.1,
+                    color=color)
 
     if true_data is not None:
         true_vals = true_data[:, region]  # (time_points,)
         ax.plot(x, true_vals, lw=2, color="black", label="Reported data")
 
     ax.set_xlabel("Time")
-    ax.set_ylabel("ICU")
+    ax.set_ylabel("ICU cases [#]")
     ax.set_title(f"{dd.County[region_ids[region]]}")
-    if label is not None:
-        ax.legend(loc="upper right")
 
+def plot_infected_ts():    
+    file = h5py.File(f"{name}/results_run0_red.h5")
+    infecteds = []
+    for region in region_ids: 
+        infecteds.append(np.array(file[str(region)]['Total'][:, 4]))
+    
+    infecteds = np.array(infecteds)  # Convert to numpy array of shape (n_regions, n_time)
+
+    n_regions = infecteds.shape[0]
+    n_cols = 4
+    n_rows = 4
+    n_blocks = (n_regions + n_cols * n_rows - 1) // (n_cols * n_rows)
+    for block in range(n_blocks):
+        start_idx = block * n_cols * n_rows
+        # Plot the time series for every region in 4x4 subplots
+        fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(20, 15), constrained_layout=True)
+        axes = axes.flatten()
+
+        for i, ax in enumerate(axes):
+            if i < n_regions:
+                ax.plot(infecteds[start_idx + i])
+                ax.set_title(f"{dd.County[region_ids[start_idx + i]]}")
+                ax.set_xlabel("Time")
+                ax.set_ylabel("Infected")
+                ax.legend()
+            else:
+                ax.axis("off")  # Hide unused subplots
+
+        plt.suptitle("Time Series of Infected Cases per Region")
+        plt.savefig(f"{name}/infected_time_series_red_block{block}.png", dpi=dpi)
+        plt.close()
 
 def plot_aggregated_over_regions(
     data: np.ndarray,
@@ -999,6 +1026,9 @@ def run_inference(num_samples=1000, on_synthetic_data=False):
     samples['damping_values'] = samples['damping_values'].reshape((samples['damping_values'].shape[0], num_samples, 16, NUM_DAMPING_POINTS))
     plot_damping_values(samples['damping_values'][0], synthetic=synthetic)
 
+    plot_all_regions(simulations, divi_data, synthetic, with_aug="")
+    plot_all_regions(simulations_aug, divi_data, synthetic, with_aug="_with_aug")
+
     plot_aggregated_to_federal_states(simulations, divi_data, synthetic, with_aug="")
     plot_aggregated_to_federal_states(simulations_aug, divi_data, synthetic, with_aug="_with_aug")
 
@@ -1050,3 +1080,4 @@ if __name__ == "__main__":
     # run_training(num_training_files=10)
     # run_inference(on_synthetic_data=True, num_samples=100)
     # run_inference(on_synthetic_data=False, num_samples=1000)
+    plot_infected_ts()
