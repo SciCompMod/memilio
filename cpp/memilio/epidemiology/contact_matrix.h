@@ -34,7 +34,7 @@ namespace mio
 {
 
 /**
- * represents the coefficient wise matrix (or vector) expression B - D * M
+ * Represents the coefficient wise matrix (or vector) expression B - D * (B - M)
  * where B is a baseline, M is a minimum and D is some time dependent complex damping factor.
  * Base class for e.g. time dependent contact matrices.
  * Coefficient wise expression, so B, D, M matrices must have the same shape.
