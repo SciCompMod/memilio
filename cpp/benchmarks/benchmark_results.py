@@ -30,9 +30,23 @@ plt.rcParams['figure.facecolor'] = 'white'
 DPI = 300
 
 # Base fontsize settings
-BASE_FONTSIZE = 20
+BASE_FONTSIZE = 17
 TICK_FONTSIZE = int(0.8 * BASE_FONTSIZE)
 LEGEND_FONTSIZE = int(0.8 * BASE_FONTSIZE)
+
+
+def set_fontsize(base_fontsize=17):
+    """Set font sizes for all plot elements."""
+    fontsize = base_fontsize
+    plt.rcParams.update({
+        'font.size': fontsize,
+        'axes.titlesize': fontsize * 1,
+        'axes.labelsize': fontsize ,
+        'xtick.labelsize': fontsize * 0.8,
+        'ytick.labelsize': fontsize * 0.8,
+        'legend.fontsize': fontsize * 0.8,
+        'font.family': "Arial"
+    })
 
 
 class rawData:
@@ -293,13 +307,11 @@ class BenchmarkAnalyzer:
 
     def plot_agent_scaling(self, raw_data, save_path=None):
         """Plot 1: Scaling with agents - memilio (1, 4, 16 cores), covasim, and opencovid."""
-        figsize = (10, 6)
-        panel = (0.15, 0.15, 0.80, 0.80)
+        set_fontsize()
+        figsize = (8, 5)
+        panel = (0.2, 0.2, 0.78, 0.75)
         fig = plt.figure(figsize=figsize, dpi=DPI)
         ax = fig.add_axes(panel)
-
-        # Set tick label sizes
-        ax.tick_params(axis='both', which='both', labelsize=TICK_FONTSIZE)
 
         # Define colors for memilio lines (shades of blue)
         memilio_color_1 = '#0d47a1'   # dark blue
@@ -310,34 +322,33 @@ class BenchmarkAnalyzer:
 
         # Plot MEmilio with different core counts (all same color family)
         ax.plot(raw_data.population_sizes, raw_data.memilio_times_single_core,
-                marker='o', linewidth=3, markersize=8,
+                marker='o',  
                 color=memilio_color_1, label='MEmilio ABM (1 core)', linestyle='-')
 
         ax.plot(raw_data.population_sizes, raw_data.memilio_times_four_cores,
-                marker='o', linewidth=3, markersize=8,
+                marker='o',  
                 color=memilio_color_4, label='MEmilio ABM (4 cores)', linestyle='-')
         ax.plot(raw_data.population_sizes, raw_data.memilio_times_sixteen_cores,
-                marker='o', linewidth=3, markersize=8,
+                marker='o',  
                 color=memilio_color_16, label='MEmilio ABM (16 cores)', linestyle='-')
 
         # Plot Covasim (fewer data points)
         covasim_pop_sizes = raw_data.population_sizes[:len(raw_data.covasim)]
         ax.plot(covasim_pop_sizes, raw_data.covasim,
-                marker='s', linewidth=3, markersize=8,
+                marker='s',  
                 color=covasim_color, label='Covasim', linestyle='-')
 
         # Plot OpenCOVID (fewer data points)
         opencovid_pop_sizes = raw_data.population_sizes[:len(
             raw_data.opencovid)]
         ax.plot(opencovid_pop_sizes, raw_data.opencovid,
-                marker='^', linewidth=3, markersize=8,
+                marker='^',  
                 color=opencovid_color, label='OpenCOVID', linestyle='-')
 
         ax.set_xscale('log')
         ax.set_yscale('log')
-        ax.set_xlabel('Agents [#]', fontsize=self.fontsize)
-        ax.set_ylabel('Runtime [s]',
-                      fontsize=self.fontsize)
+        ax.set_xlabel('Agents [#]')
+        ax.set_ylabel('Runtime [s]')
 
         ax.grid(True, alpha=0.3)
         ax.legend(fontsize=LEGEND_FONTSIZE, loc='lower right',
@@ -368,8 +379,9 @@ class BenchmarkAnalyzer:
 
     def plot_one_node_strong_scaling(self, raw_data, save_path=None):
         """Plot 3: One node strong scaling."""
-        figsize = (10, 6)
-        panel = (0.15, 0.15, 0.80, 0.80)
+        set_fontsize()
+        figsize = (8, 5)
+        panel = (0.2, 0.2, 0.78, 0.75)
         fig = plt.figure(figsize=figsize, dpi=DPI)
         ax = fig.add_axes(panel)
 
@@ -386,16 +398,16 @@ class BenchmarkAnalyzer:
 
         # Plot runtime
         ax.plot(cores, runtimes,
-                marker='o', linewidth=3, markersize=8,
+                marker='o',  
                 color='#0d47a1', label='ABM', linestyle='-')
         ax.plot(cores, runtimes_graph_ode,
-                marker='s', linewidth=3, markersize=8,
+                marker='s',  
                 color="#741194", label='Graph-ODE\nw/ mobility', linestyle='-')
         ax.plot(cores, runtimes_lct,
-                marker='^', linewidth=3, markersize=8,
+                marker='^',  
                 color='#20A398', label='LCT', linestyle='-')
         ax.plot(cores, runtimes_ide,
-                marker='D', linewidth=3, markersize=8,
+                marker='D',  
                 color='#E89A63', label='IDE', linestyle='-')
         
 
@@ -405,9 +417,8 @@ class BenchmarkAnalyzer:
             ax.plot(cores, ideal_scaling,
                     'k--', linewidth=2, alpha=0.5, label='Ideal Scaling')
 
-        ax.set_xlabel('Cores [#]', fontsize=self.fontsize)
-        ax.set_ylabel('Runtime [s]',
-                      fontsize=self.fontsize)
+        ax.set_xlabel('Cores [#]')
+        ax.set_ylabel('Runtime [s]')
 
         ax.grid(True, alpha=0.3)
         ax.legend(fontsize=LEGEND_FONTSIZE,
@@ -430,8 +441,9 @@ class BenchmarkAnalyzer:
 
     def plot_multi_node_strong_scaling(self, raw_data, save_path=None):
         """Plot 4: Multi-node strong scaling."""
-        figsize = (10, 6)
-        panel = (0.15, 0.15, 0.80, 0.80)
+        set_fontsize()
+        figsize = (8, 5)
+        panel = (0.2, 0.2, 0.78, 0.75)
         fig = plt.figure(figsize=figsize, dpi=DPI)
         ax = fig.add_axes(panel)
 
@@ -445,7 +457,7 @@ class BenchmarkAnalyzer:
 
         # Plot runtime
         ax.plot(nodes, runtimes,
-                marker='s', linewidth=3, markersize=8,
+                marker='s',  
                 color='#0d47a1', label='ABM', linestyle='-')
 
         # Calculate and plot ideal scaling
@@ -454,9 +466,8 @@ class BenchmarkAnalyzer:
             ax.plot(nodes, ideal_scaling,
                     'k--', linewidth=2, alpha=0.5, label='Ideal Scaling')
 
-        ax.set_xlabel('Cores [#]', fontsize=self.fontsize)
-        ax.set_ylabel('Runtime [s]',
-                      fontsize=self.fontsize)
+        ax.set_xlabel('Cores [#]')
+        ax.set_ylabel('Runtime [s]')
 
         ax.grid(True, alpha=0.3)
         ax.legend(fontsize=LEGEND_FONTSIZE,
@@ -479,32 +490,30 @@ class BenchmarkAnalyzer:
 
     def plot_weak_scaling(self, raw_data, save_path=None):
         """Plot 2: Weak scaling plot for different agent counts per core."""
-        figsize = (10, 6)
-        panel = (0.15, 0.15, 0.80, 0.80)
+        set_fontsize()
+        figsize = (8, 5)
+        panel = (0.2, 0.2, 0.78, 0.75)
         fig = plt.figure(figsize=figsize, dpi=DPI)
         ax = fig.add_axes(panel)
-
-        # Set tick label sizes
-        ax.tick_params(axis='both', which='both', labelsize=TICK_FONTSIZE)
 
         # Number of cores for weak scaling
         num_cores = [1, 2, 4, 8, 16, 32]
 
         # Plot each configuration
         ax.plot(num_cores, raw_data.memilio_weak_scaling_250k,
-                marker='o', linewidth=3, markersize=8,
+                marker='o',  
                 label='250k agents per core', linestyle='-')
 
         ax.plot(num_cores, raw_data.memilio_weak_scaling_500k,
-                marker='s', linewidth=3, markersize=8,
+                marker='s',  
                 label='500k agents per core', linestyle='-')
 
         ax.plot(num_cores, raw_data.memilio_weak_scaling_1m,
-                marker='^', linewidth=3, markersize=8,
+                marker='^',  
                 label='1M agents per core', linestyle='-')
 
         ax.plot(num_cores, raw_data.memilio_weak_scaling_2m,
-                marker='D', linewidth=3, markersize=8,
+                marker='D',  
                 label='2M agents per core', linestyle='-')
 
         # Add ideal scaling line (constant runtime)
@@ -512,9 +521,8 @@ class BenchmarkAnalyzer:
         # ax.plot(num_cores, [ideal_runtime] * len(num_cores),
         #         'k--', linewidth=2, alpha=0.5, label='Ideal (constant runtime)')
 
-        ax.set_xlabel('Cores [#]', fontsize=self.fontsize)
-        ax.set_ylabel('Runtime [s]',
-                      fontsize=self.fontsize)
+        ax.set_xlabel('Cores [#]')
+        ax.set_ylabel('Runtime [s]')
 
         ax.grid(True, alpha=0.3)
         ax.legend(fontsize=LEGEND_FONTSIZE,
