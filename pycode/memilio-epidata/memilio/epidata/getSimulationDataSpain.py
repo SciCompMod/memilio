@@ -256,7 +256,7 @@ def get_comunidadid_to_provinciaids_map():
     """
     provincia_ids = [k for k in dd.Provincias.keys() if k not in {
         530, 630, 640, 701, 702}]
-    comunidad_ids = list(sorted({k // 10 for k in provincia_ids}))
+    comunidad_ids = list(sorted(set([k // 10 for k in provincia_ids])))
     comunidad_to_provincia_table = [[] for i in range(len(comunidad_ids))]
 
     for id in provincia_ids:
@@ -274,7 +274,7 @@ def createComunidadesMobility(directory, mobility_file):
         530, 630, 640, 701, 702}]
     if (len(mobility_matrix.index) == len(provinciaIDs)) and (len(mobility_matrix.columns) == len(provinciaIDs)):
         # get county and state IDs
-        comunidadIDs = list(sorted({k // 10 for k in provinciaIDs}))
+        comunidadIDs = list(sorted(set([k // 10 for k in provinciaIDs])))
         # get state ID to county ID map
         comunidadID_to_provinciaID = get_comunidadid_to_provinciaids_map()
         # initialize federal states mobility matrix
@@ -327,7 +327,7 @@ def aggregate_to_comunidades(df, column_labels=['ID_County']):
 
 if __name__ == "__main__":
 
-    moving_average = 0
+    moving_average = 7
 
     data_dir = os.path.join(os.path.dirname(
         os.path.abspath(__file__)), "../../../../data/Spain")
