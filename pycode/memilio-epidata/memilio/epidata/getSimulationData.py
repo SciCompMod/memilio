@@ -87,8 +87,7 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     :param rep_date: True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
     :param sanitize_data: Value in {0,1,2,3}. Redistributes cases of every county either based on regions' ratios or on thresholds and population. (Default value = dd.defaultDict['sanitize_data'])
     :param ref_year: Year that specifies where the data should be taken from. Default value is 2022.
-    :param **kwargs: 
-
+    :param kwargs: Additional keyword arguments.
     """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use

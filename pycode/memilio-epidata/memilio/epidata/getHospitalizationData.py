@@ -165,10 +165,9 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
     :param end_date: Date of last date in dataframe. Default defined in defaultDict.
     :param impute_dates: True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
         Here Dates are always imputed so False changes nothing.
-    :param moving_average: Currently not used] Integers >=0. Applies an 'moving_average'-days moving average on all time series
-        to smooth out weekend effects.  Default defined in defaultDict.
-    :param **kwargs: 
-
+    :param moving_average: Currently not used. Integers >=0. Applies an 'moving_average'-days moving average on all time series
+        to smooth out weekend effects. Default defined in defaultDict.
+    :param kwargs: Additional keyword arguments.
     """
     impute_dates = True
     conf = gd.Conf(out_folder, **kwargs)

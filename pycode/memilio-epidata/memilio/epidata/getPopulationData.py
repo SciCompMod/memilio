@@ -253,9 +253,8 @@ def fetch_population_data(read_data: bool = dd.defaultDict['read_data'],
     :param out_folder: Path to folder where data is written in folder
         out_folder/Germany. Default defined in defaultDict. (Default value = dd.defaultDict['out_folder'])
     :param ref_year: (Default: None) or year (jjjj) convertible to str. Reference year.
-    :param **kwargs: 
+    :param kwargs: Additional keyword arguments.
     :returns: DataFrame with adjusted population data for all ages to current level.
-
     """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
@@ -419,9 +418,8 @@ def get_population_data(read_data: bool = dd.defaultDict['read_data'],
     :param ref_year: Default: None] or year (jjjj) convertible to str. Reference year.
     :param username: str. Username to sign in at regionalstatistik.de.
     :param password: str. Password to sign in at regionalstatistik.de.
-    :param **kwargs: 
+    :param kwargs: Additional keyword arguments.
     :returns: DataFrame with adjusted population data for all ages to current level.
-
     """
     raw_df, ref_year = fetch_population_data(
         read_data=read_data,

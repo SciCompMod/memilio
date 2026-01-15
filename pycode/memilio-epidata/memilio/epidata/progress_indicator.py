@@ -26,24 +26,27 @@ from os import name as os_name
 
 
 class ProgressIndicator:
-    """ Print an animation to show that something is happening.
-    Animations are rendered in a new thread, which is set up as deamon so that
+    """Print an animation to show that something is happening.
+
+    Animations are rendered in a new thread, which is set up as daemon so that
     it stops on main thread exit.
     The subclasses Dots, Spinner and Percentage provide some default animations.
     Start the animation by either using the `start`/`stop` functions or a
     'with as' block, e.g
-    ```
-    with ProgressIndicator.Spinner():
-        do_something...
-    ```
-    or
-    ```
-    with ProgressIndicator.Percentage() as indicator:
-        for i in range(n):
-            do_something...
-            indicator.set_progress((i+1)/n)
-    ```
 
+        ```
+        with ProgressIndicator.Spinner():
+            do_something...
+        ```
+
+    or
+
+        ```
+        with ProgressIndicator.Percentage() as indicator:
+            for i in range(n):
+                do_something...
+                indicator.set_progress((i+1)/n)
+        ```
 
     """
 
@@ -51,21 +54,19 @@ class ProgressIndicator:
     _disabled = False
 
     def __init__(self, message, animator, delay, auto_adjust=False):
-        """ Create a ProgressIndicator.
-        :param message: String. Shown in front of the animation without
-            seperator. If it would not fit in a single line with the
-            animation, it will be printed once in a new line above the
-            animation instead. Must not contain `\r` or `\n`.
-        :param animator: Generator expression. The expression must loop, i.e.
-            it should never return StopIteration. `next(animator)` must be a
-            string of length < `os.get_terminal_size().columns`. The length
-            should be constant, otherwise animations may leave artifacts (this
-            can be worked around by prepending `"\033[K"` to each string).
-        :param delay: Positive real number. Sets delay in seconds between
-            drawing animation frames.
-        :param auto_adjust: [Default: False] Bool. Specify whether each frame
-            of the animation should be forced to fit in a single line. Can be
-            usefull for long, line filling animations.
+        """Create a ProgressIndicator.
+
+        :param message: String. Shown in front of the animation without separator. If it would
+            not fit in a single line with the animation, it will be printed once in a new line
+            above the animation instead. Must not contain carriage return or newline characters.
+        :param animator: Generator expression. The expression must loop, i.e. it should never
+            return StopIteration. next(animator) must be a string of length less than
+            os.get_terminal_size().columns. The length should be constant, otherwise animations
+            may leave artifacts.
+        :param delay: Positive real number. Sets delay in seconds between drawing animation frames.
+        :param auto_adjust: Bool. Specify whether each frame of the animation should be forced
+            to fit in a single line. Can be useful for long, line filling animations.
+            (Default: False)
         """
         assert (delay > 0)
         self._message = message
@@ -151,13 +152,12 @@ class ProgressIndicator:
             time.sleep(self._delay)
 
     def set_message(self, message):
-        """ Change the message displayed in front of the animation.
+        """Change the message displayed in front of the animation.
 
         :param message: String. Shown in front of the animation without
-            seperator. If it would not fit in a single line with the
+            separator. If it would not fit in a single line with the
             animation, it will be printed once in a new line above the
-            animation instead. Must not contain `\r` or `\n`.
-
+            animation instead. Must not contain carriage return or newline characters.
         """
         self._message = message
         self._adjust_to_terminal_size()

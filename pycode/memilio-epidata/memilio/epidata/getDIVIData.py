@@ -276,8 +276,7 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
     :param impute_dates: True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict. (Default value = dd.defaultDict['impute_dates'])
     :param moving_average: Integers >=0. Applies an 'moving_average'-days moving average on all time series
         to smooth out effects of irregular reporting. Default defined in defaultDict. (Default value = dd.defaultDict['moving_average'])
-    :param **kwargs: 
-
+    :param kwargs:
     """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use

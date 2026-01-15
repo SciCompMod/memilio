@@ -69,7 +69,7 @@ def extract_data(
         file_format='json'):
     """Reads data from a general json or specific hdf5 file as output by the
     MEmilio simulation framework and extracts parts of the data if filters are
-     applied. The input regional data can be a time series data where a
+    applied. The input regional data can be a time series data where a
     particular date is extracted or single time data which is used rightaway.
     If the file contains multiple features per region,
     particular columns need to be specified.
@@ -79,8 +79,7 @@ def extract_data(
     :param region_spec: Specificier for region, for json, e.g., column name
         of county IDs for hdf5 level of nesting X where to retrieve
         fileX.keys(), X could either by empty, such that file.keys() is taken
-        or a list of nested keys [X0, X1, ...] such that 
-        file[X0][X1][...].keys()
+        or a list of nested keys [X0, X1, ...] such that file[X0][X1][...].keys()
     :param column: Column with values that will be plotted.
     :param data: Date to be extracted from data frame if it contains a time 
         series or if single or no date information is in the input table, 

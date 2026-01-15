@@ -19,8 +19,9 @@
 #############################################################################
 """
 :strong:`modifyDataframeSeries.py`
+
 Tools for modifying data frame series like imputing zeros for unknown dates,
-    copying previous values, and/or computing moving averages
+copying previous values, and/or computing moving averages.
 """
 import itertools
 from datetime import datetime, timedelta
@@ -319,24 +320,26 @@ def insert_column_by_map(df, col_to_map, new_col_name, map, new_col_dtype='objec
 
 
 def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
-    """ Creates a mapping from given intervals to new desired intervals
+    """Creates a mapping from given intervals to new desired intervals.
 
     :param from_lower_bounds: lower bounds of original intervals
     :param to_lower_bounds: desired lower bounds of new intervals
     :returns: mapping from intervals to intervals
-        The mapping is given as a list of tupels for every original interval.
-        The list contains a tuple for every new interval intersecting the
-        original interval. Each tuple defines the share of the original interval
-        that is mapped to the new interval and the index of the new interval. We
-        assume that the range of the intervals mapped from is contained in the
-        range of the intervals mapped to.
-        For example for from_lower_bounds = [5,20,30,80,85,90] and
-        to_lower_bounds=[0,15,20,60,100] given the mapping would be
+
+    The mapping is given as a list of tupels for every original interval.
+    The list contains a tuple for every new interval intersecting the
+    original interval. Each tuple defines the share of the original interval
+    that is mapped to the new interval and the index of the new interval. We
+    assume that the range of the intervals mapped from is contained in the
+    range of the intervals mapped to.
+    For example for from_lower_bounds = [5,20,30,80,85,90] and
+    to_lower_bounds=[0,15,20,60,100] given the mapping would be
+
         [[[2/3,0], [1/3,1]],
-         [[1,2]],
-         [[3/5,2], [2/5,3]],
-         [[1,3]],
-         [[1,3]]]
+        [[1,2]],
+        [[3/5,2], [2/5,3]],
+        [[1,3]],
+        [[1,3]]]
 
     """
     if (from_lower_bounds[0] != to_lower_bounds[0] or
@@ -397,23 +400,29 @@ def fit_age_group_intervals(
         Where this data is not finely enough resolved or if this data set is not
         provided, we assume the population to be equally distributed.
         Ex.
-        df_age_in = ["1-10": 4, "11-60": 10, "61-99": 8]
-        age_out = ["1-5", "6-10", "11-50", "51-99"]
-        returns
-        ["1-5": 2, "6-10": 2, "11-50": 8, "51-99": 10]
+
+            df_age_in = ["1-10": 4, "11-60": 10, "61-99": 8]
+            age_out = ["1-5", "6-10", "11-50", "51-99"]
+            returns
+            ["1-5": 2, "6-10": 2, "11-50": 8, "51-99": 10]
+
         if no population data is provided.
 
         If we also provide the population data
-        population = ["1-5": 40, "6-7": 5, "8-10": 5, "11-60": 25, "61-99": 25],
+
+            population = ["1-5": 40, "6-7": 5, "8-10": 5, "11-60": 25, "61-99": 25],
+
         The output is:
-        ["1-5": 3.2, "6-10": 0.8, "11-50": 8., "51:99": 10.]
+
+                ["1-5": 3.2, "6-10": 0.8, "11-50": 8., "51:99": 10.]
 
     :param df_age_in: Dataframe with columns of different age intervals and one row for subpopulation sizes for an arbitrary feature.
     :param age_out: Desired age group distribution in list of strings.
-    :param df_population: Total population data of the same structure as df_age_in used to inter- or extrapolate date of @df_age_in. (Default value = None)
-    :param max_age:  (Default value = 100)
-    :returns: Subpopulations of @df_age_in inter- or extrapolated to age stratification as required by @age_out.
-
+    :param df_population: Total population data of the same structure as df_age_in used
+        to inter- or extrapolate data of df_age_in. (Default value = None)
+    :param max_age: Maximum age value. (Default value = 100)
+    :returns: Subpopulations of df_age_in inter- or extrapolated to age stratification
+        as required by age_out.
     """
     # First check if the input is valid.
 

@@ -21,7 +21,7 @@
 :strong:`geoModificationGermany.py`
 
 Provides methods to return lists of local entities such as federal states
-    and counties and geographical merging criteria.
+and counties and geographical merging criteria.
 """
 import os
 
@@ -207,20 +207,21 @@ def insert_names_of_counties(
 
 def check_for_all_counties(
         unique_county_list, merge_berlin=True, merge_eisenach=True):
-    """ Checks if all states are mentioned
+    """Checks if all states are mentioned.
 
     This function checks if all counties are available in the list provided.
     If data is incomplete this function returns false and a parent function may
     try to download from another source.
+
     Note 1: There is no check if data for every day of every county is available.
+
     Note 2: If the source data file contains more local entities than the official
-                county list True is returned and the user has to check on its own.
+    county list True is returned and the user has to check on its own.
 
     :param unique_county_list: unique county list to check.
-    :param merge_berlin:  (Default value = True)
-    :param merge_eisenach:  (Default value = True)
+    :param merge_berlin: (Default value = True)
+    :param merge_eisenach: (Default value = True)
     :returns: Boolean to say if data is complete or not.
-
     """
     # check for all counties outside Berlin plus districts of Berlin
     missing = len(get_county_ids(merge_berlin, merge_eisenach)

@@ -55,11 +55,10 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
         stored data frames.
     :param moving_average: 0 [Default] or Number > 0. Defines the number of
         days for which a centered moving average is computed.
-    :param read_data:  (Default value = dd.defaultDict['read_data'])
-    :param merge_berlin:  (Default value = True)
-    :param merge_eisenach:  (Default value = False)
-    :param **kwargs: 
-
+    :param read_data: (Default value = dd.defaultDict['read_data'])
+    :param merge_berlin: (Default value = True)
+    :param merge_eisenach: (Default value = False)
+    :param kwargs: Additional keyword arguments.
     """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use

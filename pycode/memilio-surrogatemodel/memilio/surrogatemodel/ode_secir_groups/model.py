@@ -212,10 +212,7 @@ def prepare_data_timeseries(data):
     Transforming data to be processable by "timeseries" network, simply repeating static values, flattening and concatenating for each data instance.
 
     :param data: dictionary produces by data_generation
-    :returns: dictionary with entries {
-        "train_inputs", "train_labels", "valid_inputs",
-        "valid_labels", "test_inputs", "test_labels"
-    }
+    :returns: dictionary with entries {"train_inputs", "train_labels", "valid_inputs", "valid_labels", "test_inputs", "test_labels"}
     """
     # Getting the number of samples
     n = data["inputs"].shape[0]
@@ -279,9 +276,9 @@ def initialize_model(parameters):
     """ Initialize model from given list of parameters 
 
     :param parameters: tuple of parameters describing the model architecture, it should be of the form 
-                (number_of_output_days, number_age_groups, number_compartments, 
-                        hidden_layers, neurons_in_hidden_layer, activation_function, modelname)
-    :returns: tensor flow keras model with the given architecture, see network_architectures.py 
+        (number_of_output_days, number_age_groups, number_compartments, hidden_layers, neurons_in_hidden_layer, activation_function, modelname)
+    :returns: tensor flow keras model with the given architecture, see network_architectures.py
+
     """
     label_width, number_age_groups, number_compartments, hidden_layers, neurons_in_hidden_layer, activation_function, modelname = parameters
 

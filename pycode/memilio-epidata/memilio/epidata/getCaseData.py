@@ -174,25 +174,26 @@ def preprocess_case_data(raw_df: pd.DataFrame,
                          split_berlin: bool = dd.defaultDict['split_berlin'],
                          rep_date: bool = dd.defaultDict['rep_date'],
                          ) -> pd.DataFrame:
-    """ Preprocessing of the case data
+    """Preprocessing of the case data.
 
-    While working with the data
+    While working with the data:
+
     - the column names are changed to english depending on defaultDict
     - a new column "Date" is defined.
-    - we are only interested in the values where the parameter NeuerFall, NeuerTodesfall, NeuGenesen are larger than 0.
-    The values, when these parameters are negative are just useful,
-    if one would want to get the difference to the previous day.
-    For details we refer to the above mentioned webpage.
-    - For all different parameters and different columns the values are added up for whole germany for every date
-    and the cumulative sum is calculated. Unless something else is mentioned.
-    - For Berlin all districts can be merged into one [Default]. Otherwise, Berlin is divided into multiple districts and
-        different file names are used.
+    - we are only interested in the values where the parameter NeuerFall,
+      NeuerTodesfall, NeuGenesen are larger than 0. The values, when these
+      parameters are negative are just useful, if one would want to get the
+      difference to the previous day. For details we refer to the above
+      mentioned webpage.
+    - For all different parameters and different columns the values are added
+      up for whole germany for every date and the cumulative sum is calculated.
+      Unless something else is mentioned.
+    - For Berlin all districts can be merged into one [Default]. Otherwise,
+      Berlin is divided into multiple districts and different file names are used.
 
-    :param raw_df: pd.Dataframe. Contains the downloaded or read raw case data
-    :param directory: str
-        Path to the output directory
-    :param filename: str
-        Name of the full dataset filename
+    :param raw_df: Contains the downloaded or read raw case data
+    :param directory: Path to the output directory
+    :param filename: Name of the full dataset filename
     :param conf_obj: configuration object
     :param split_berlin: bool. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict. (Default value = dd.defaultDict['split_berlin'])
     :param rep_date: bool Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict. (Default value = dd.defaultDict['rep_date'])
@@ -285,26 +286,26 @@ def write_case_data(df: pd.DataFrame,
                     rep_date: bool = dd.defaultDict['rep_date'],
                     files: str or list = 'All',
                     ) -> None or dict:
-    """ Writing the different case data file.
-    Following data is generated and written to the mentioned filename
-        - All infected (current and past) for whole germany are stored in "cases_infected"
-        - All deaths whole germany are stored in "cases_deaths"
-        - Infected, deaths and recovered for whole germany are stored in "cases_all_germany"
-        - Infected split for states are stored in "cases_infected_state"
-        - Infected, deaths and recovered split for states are stored in "cases_all_state"
-        - Infected split for counties are stored in "cases_infected_county(_split_berlin)"
-        - Infected, deaths and recovered split for county are stored in "cases_all_county(_split_berlin)"
-        - Infected, deaths and recovered split for gender are stored in "cases_all_gender"
-        - Infected, deaths and recovered split for state and gender are stored in "cases_all_state_gender"
-        - Infected, deaths and recovered split for county and gender are stored in "cases_all_county_gender(_split_berlin)"
-        - Infected, deaths and recovered split for age are stored in "cases_all_age"
-        - Infected, deaths and recovered split for state and age are stored in "cases_all_state_age"
-        - Infected, deaths and recovered split for county and age are stored in "cases_all_county_age(_split_berlin)"
+    """Writing the different case data file.
 
-    :param df: pd.DataFrame
-        Processed dataframe
-    :param directory: str
-        Path to the output directory
+    Following data is generated and written to the mentioned filename:
+
+    - All infected (current and past) for whole germany are stored in "cases_infected"
+    - All deaths whole germany are stored in "cases_deaths"
+    - Infected, deaths and recovered for whole germany are stored in "cases_all_germany"
+    - Infected split for states are stored in "cases_infected_state"
+    - Infected, deaths and recovered split for states are stored in "cases_all_state"
+    - Infected split for counties are stored in "cases_infected_county(_split_berlin)"
+    - Infected, deaths and recovered split for county are stored in "cases_all_county(_split_berlin)"
+    - Infected, deaths and recovered split for gender are stored in "cases_all_gender"
+    - Infected, deaths and recovered split for state and gender are stored in "cases_all_state_gender"
+    - Infected, deaths and recovered split for county and gender are stored in "cases_all_county_gender(_split_berlin)"
+    - Infected, deaths and recovered split for age are stored in "cases_all_age"
+    - Infected, deaths and recovered split for state and age are stored in "cases_all_state_age"
+    - Infected, deaths and recovered split for county and age are stored in "cases_all_county_age(_split_berlin)"
+
+    :param df: Processed dataframe
+    :param directory: Path to the output directory
     :param conf_obj: configuration object
     :param file_format: str
         File format which is used for writing the data. Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
@@ -456,7 +457,7 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
                   files: str or list = 'All',
                   **kwargs
                   ) -> Dict:
-    """ Wrapper function that downloads the case data and provides different kind of structured data into json files.
+    """Wrapper function that downloads the case data and provides different kind of structured data into json files.
 
     The data is read either from the internet or from a json file (CaseDataFull.json), stored in an earlier run.
     If the data is read from the internet, before changing anything the data is stored in CaseDataFull.json.
@@ -465,46 +466,59 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
     The file is read in or stored at the folder "out_folder"/Germany/pydata.
     To store and change the data we use pandas.
 
-    While working with the data
+    While working with the data:
+
     - the column names are changed to english depending on defaultDict
     - a new column "Date" is defined.
-    - we are only interested in the values where the parameter NeuerFall, NeuerTodesfall, NeuGenesen are larger than 0.
-    The values, when these parameters are negative are just useful,
-    if one would want to get the difference to the previous day.
-    For details we refer to the above mentioned webpage.
-    - For all different parameters and different columns the values are added up for whole germany for every date
-    and the cumulative sum is calculated. Unless something else is mentioned.
-    - For Berlin all districts can be merged into one [Default]. Otherwise, Berlin is divided into multiple districts and
-        different file names are used.
-    - Following data is generated and written to the mentioned filename
-        - All infected (current and past) for whole germany are stored in "cases_infected"
-        - All deaths whole germany are stored in "cases_deaths"
-        - Infected, deaths and recovered for whole germany are stored in "cases_all_germany"
-        - Infected split for states are stored in "cases_infected_state"
-        - Infected, deaths and recovered split for states are stored in "cases_all_state"
-        - Infected split for counties are stored in "cases_infected_county(_split_berlin)"
-        - Infected, deaths and recovered split for county are stored in "cases_all_county(_split_berlin)"
-        - Infected, deaths and recovered split for gender are stored in "cases_all_gender"
-        - Infected, deaths and recovered split for state and gender are stored in "cases_all_state_gender"
-        - Infected, deaths and recovered split for county and gender are stored in "cases_all_county_gender(_split_berlin)"
-        - Infected, deaths and recovered split for age are stored in "cases_all_age"
-        - Infected, deaths and recovered split for state and age are stored in "cases_all_state_age"
-        - Infected, deaths and recovered split for county and age are stored in "cases_all_county_age(_split_berlin)"
+    - we are only interested in the values where the parameter NeuerFall,
+      NeuerTodesfall, NeuGenesen are larger than 0. The values, when these
+      parameters are negative are just useful, if one would want to get the
+      difference to the previous day. For details we refer to the above
+      mentioned webpage.
+    - For all different parameters and different columns the values are added
+      up for whole germany for every date and the cumulative sum is calculated.
+      Unless something else is mentioned.
+    - For Berlin all districts can be merged into one [Default]. Otherwise,
+      Berlin is divided into multiple districts and different file names are used.
 
-    :param read_data: True or False. Defines if data is read from file or downloaded. Default defined in defaultDict. (Default value = dd.defaultDict['read_data'])
-    :param file_format: File format which is used for writing the data. Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
-    :param out_folder: Folder where data is written to. Default defined in defaultDict. (Default value = dd.defaultDict['out_folder'])
+    Following data is generated and written to the mentioned filename:
+
+    - All infected (current and past) for whole germany are stored in "cases_infected"
+    - All deaths whole germany are stored in "cases_deaths"
+    - Infected, deaths and recovered for whole germany are stored in "cases_all_germany"
+    - Infected split for states are stored in "cases_infected_state"
+    - Infected, deaths and recovered split for states are stored in "cases_all_state"
+    - Infected split for counties are stored in "cases_infected_county(_split_berlin)"
+    - Infected, deaths and recovered split for county are stored in "cases_all_county(_split_berlin)"
+    - Infected, deaths and recovered split for gender are stored in "cases_all_gender"
+    - Infected, deaths and recovered split for state and gender are stored in "cases_all_state_gender"
+    - Infected, deaths and recovered split for county and gender are stored in "cases_all_county_gender(_split_berlin)"
+    - Infected, deaths and recovered split for age are stored in "cases_all_age"
+    - Infected, deaths and recovered split for state and age are stored in "cases_all_state_age"
+    - Infected, deaths and recovered split for county and age are stored in "cases_all_county_age(_split_berlin)"
+
+    :param read_data: True or False. Defines if data is read from file or downloaded.
+        Default defined in defaultDict. (Default value = dd.defaultDict['read_data'])
+    :param file_format: File format which is used for writing the data.
+        Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
+    :param out_folder: Folder where data is written to.
+        Default defined in defaultDict. (Default value = dd.defaultDict['out_folder'])
     :param start_date: Date of first date in dataframe. (Default value = dd.defaultDict['start_date'])
-    :param end_date: Date of last date in dataframe. Default defined in defaultDict. (Default value = dd.defaultDict['end_date'])
-    :param impute_dates: True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict. (Default value = dd.defaultDict['impute_dates'])
+    :param end_date: Date of last date in dataframe.
+        Default defined in defaultDict. (Default value = dd.defaultDict['end_date'])
+    :param impute_dates: True or False. Defines if values for dates without new information are imputed.
+        Default defined in defaultDict. (Default value = dd.defaultDict['impute_dates'])
     :param moving_average: Integers >=0. Applies an 'moving_average'-days moving average on all time series
-        to smooth out effects of irregular reporting. Default defined in defaultDict. (Default value = dd.defaultDict['moving_average'])
-    :param split_berlin: True or False. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict. (Default value = dd.defaultDict['split_berlin'])
-    :param rep_date: True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict. (Default value = dd.defaultDict['rep_date'])
-    :param files: List of strings or 'All' or 'Plot'. Defnies which files should be provided (and plotted). Default 'All'.
-    :param **kwargs: 
+        to smooth out effects of irregular reporting.
+        Default defined in defaultDict. (Default value = dd.defaultDict['moving_average'])
+    :param split_berlin: True or False. Defines if Berlin's disctricts are kept separated or get merged.
+        Default defined in defaultDict. (Default value = dd.defaultDict['split_berlin'])
+    :param rep_date: True or False. Defines if reporting date or reference date is taken into dataframe.
+        Default defined in defaultDict. (Default value = dd.defaultDict['rep_date'])
+    :param files: List of strings or 'All' or 'Plot'. Defines which files should be provided (and plotted).
+        Default 'All'.
+    :param kwargs: Additional keyword arguments.
     :returns: None
-
     """
 
     conf = gd.Conf(out_folder, **kwargs)

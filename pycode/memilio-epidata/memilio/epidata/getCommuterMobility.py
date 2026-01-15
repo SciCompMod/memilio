@@ -139,28 +139,26 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                       setup_dict='',
                       ref_year=2022,
                       **kwargs):
-    """ Computes DataFrame of commuter mobility patterns based on the Federal
-    Agency of Work data.
-
-    Keyword arguments:
+    """Computes DataFrame of commuter mobility patterns based on the Federal Agency of Work data.
 
     :param read_data: True or False. Defines if data is read from file or downloaded.
-        Only for population data. Commuter data is always downloaded. Default defined in defaultDict. (Default value = dd.defaultDict['read_data'])
-    :param file_format: File format which is used for writing the data. Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
-    :param out_folder: Folder where data is written to. Default defined in defaultDict. (Default value = dd.defaultDict['out_folder'])
-    :param setup_dict: dictionary with necessary values:
-        'path': String with datapath where mobility files can be found
-        'abs_tol': tolerated undetected people
-        'rel_tol': relative Tolerance to undetected people (Default value = '')
+        Only for population data. Commuter data is always downloaded.
+        Default defined in defaultDict. (Default value = dd.defaultDict['read_data'])
+    :param file_format: File format which is used for writing the data.
+        Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
+    :param out_folder: Folder where data is written to.
+        Default defined in defaultDict. (Default value = dd.defaultDict['out_folder'])
+    :param setup_dict: dictionary with necessary values: 'path' (String with datapath where
+        mobility files can be found), 'abs_tol' (tolerated undetected people),
+        'rel_tol' (relative Tolerance to undetected people). (Default value = '')
     :param ref_year: Year between 2013 and 2022 that specifies where the data should be taken from.
         Default value is 2022.
-    :param **kwargs: 
+    :param kwargs: Additional keyword arguments.
     :returns: df_commuter_mobility DataFrame of commuter mobility.
-        df_commuter_mobility[i][j]= number of commuters from county with county-id i to county with county-id j
-    In commuter mobility files is a cumulative value per county for number of commuters from whole Germany given.
-    The printed errors are refering to the absolute and relative errors from included numbers per county in DataFrame and
-    this cumulative values.
-
+        df_commuter_mobility[i][j] = number of commuters from county with county-id i to county
+        with county-id j. In commuter mobility files is a cumulative value per county for number
+        of commuters from whole Germany given. The printed errors are refering to the absolute
+        and relative errors from included numbers per county in DataFrame and this cumulative values.
     """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
@@ -545,10 +543,9 @@ def get_neighbors_mobility(
     :param out_folder: Folder where data is written to. Default defined in defaultDict.
     :param ref_year: Year between 2013 and 2022 that specifies where the data should be taken from.
         Default value is 2022.
-    :param **kwargs: 
+    :param kwargs: Additional keyword arguments.
     :returns: Neighbors of the county with respect to mobility and the number of
         commuters from and to the neighbors.
-
     """
     # This is not very nice either to have the same file with either Eisenach merged or not...
     directory = os.path.join(out_folder, 'Germany', 'mobility')

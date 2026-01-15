@@ -119,35 +119,29 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
                      impute_dates=dd.defaultDict['impute_dates'],
                      moving_average=dd.defaultDict['moving_average'],
                      **kwargs):
-    """ Downloads the RKI testing data and provides positive rates of
-    testing data in different ways. Since positive rates also implicitly
-    provide information on testing numbers while the opposite is
-    not necessarily true without having additional information,
-    only positive rates are provided.
+    """Downloads the RKI testing data and provides positive rates of testing data in different ways.
+
+    Since positive rates also implicitly provide information on testing numbers while the opposite
+    is not necessarily true without having additional information, only positive rates are provided.
 
     The data is read from the internet.
     The file is read in or stored at the folder "out_folder"/Germany/pydata.
     To store and change the data we use pandas.
 
-    While working with the data
+    While working with the data:
+
     - the column names are changed to English depending on defaultDict
-    - The column "Date" provides information on the date of each data
-        point given in the corresponding columns.
-
-    - The data is exported in three different ways:
-        - germany_testpos: Positive rates of testing for whole Germany
-        - germany_states_testpos: Positive rates of testing for all
-            federal states of Germany
-        - germany_counties_from_states_testpos: Positive rates of testing
-            for all counties of Germany, only taken from the
-            values of the federal states. No extrapolation applied.
-
-    - Missing dates are imputed for all data frames ('impute_dates' is
-        not optional but always executed).
+    - The column "Date" provides information on the date of each data point given in the
+      corresponding columns.
+    - The data is exported in three different ways: germany_testpos (Positive rates of testing
+      for whole Germany), germany_states_testpos (Positive rates of testing for all federal
+      states of Germany), germany_counties_from_states_testpos (Positive rates of testing for
+      all counties of Germany, only taken from the values of the federal states, no
+      extrapolation applied).
+    - Missing dates are imputed for all data frames ('impute_dates' is not optional but
+      always executed).
     - A central moving average of N days is optional.
-
-    - Start and end dates can be provided to define the length of the
-        returned data frames.
+    - Start and end dates can be provided to define the length of the returned data frames.
 
     :param read_data: True or False. Defines if data is read from file or downloaded. (Default value = dd.defaultDict['read_data'])
     :param file_format: File format which is used for writing the data. Default defined in defaultDict.
@@ -158,8 +152,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
         At the moment they are always imputed.
     :param moving_average: Integers >=0. Applies an 'moving_average'-days moving average on all time series
         to smooth out effects of irregular reporting. Default defined in defaultDict.
-    :param **kwargs: 
-
+    :param kwargs: Additional keyword arguments.
     """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use

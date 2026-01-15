@@ -898,41 +898,34 @@ def write_vaccination_data(dict_data: dict,
                            impute_dates: bool = True,
                            moving_average: int = dd.defaultDict['moving_average'],
                            ) -> None or Tuple:
-    """ Writes the vaccination data
+    """Writes the vaccination data.
+
     The data is exported in three different ways:
-        - all_county_vacc: Resolved per county by grouping all original age groups (05-11, 12-17, 18-59, 60+)
-        - all_county_agevacc_vacc: Resolved per county and original age group (05-11, 12-17, 18-59, 60+)
-        - all_county_ageinf_vacc: Resolved per county and infection data age group (0-4, 5-14, 15-34, 35-59, 60-79, 80+)
-            - To do so getPopulationData is used and age group specific date from the original source
-                is extrapolated on the new age groups on county level.
 
-    - Missing dates are imputed for all data frames ('fillDates' is not optional but always executed).
-    - A central moving average of N days is optional.
+    - all_county_vacc: Resolved per county by grouping all original age groups (05-11, 12-17, 18-59, 60+)
+    - all_county_agevacc_vacc: Resolved per county and original age group (05-11, 12-17, 18-59, 60+)
+    - all_county_ageinf_vacc: Resolved per county and infection data age group (0-4, 5-14, 15-34,
+      35-59, 60-79, 80+). To do so getPopulationData is used and age group specific data from the
+      original source is extrapolated on the new age groups on county level.
 
-    - Start and end dates can be provided to define the length of the returned data frames.
-    Parameters
-    ----------
+    Missing dates are imputed for all data frames ('fillDates' is not optional but always executed).
+    A central moving average of N days is optional.
+    Start and end dates can be provided to define the length of the returned data frames.
 
-    :param dict_data: dict. Contains various datasets or values
-        - df_data_agevacc_county_cs: pd.DataFrame a Dataframe containing processed vaccination data
-        - vacc_column_names
-        - unique_age_groups_old
-        - population_old_ages
-        - extrapolate_agegroups
-        - population_all_ages
-        - unique_age_groups_new
-        - age_old_to_all_ages_indices
-        - min_all_ages
-        - all_ages_to_age_new_share
-        - population_new_ages
-    :param directory: str
-        Path to the output directory
-    :param conf_obj: configuration object
-    :param file_format: str. File format which is used for writing the data. Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
-    :param impute_dates: bool. True or False. Defines if values for dates without new information are imputed. (Default value = True)
-    :param moving_average: int. Integers >=0. Applies an 'moving_average'-days moving average on all time series to smooth out effects of irregular reporting. Default defined in defaultDict. (Default value = dd.defaultDict['moving_average'])
-    :returns: none
-
+    :param dict_data: dict. Contains various datasets or values including df_data_agevacc_county_cs,
+        vacc_column_names, unique_age_groups_old, population_old_ages, extrapolate_agegroups,
+        population_all_ages, unique_age_groups_new, age_old_to_all_ages_indices, min_all_ages,
+        all_ages_to_age_new_share, population_new_ages.
+    :param directory: Path to the output directory.
+    :param conf_obj: configuration object.
+    :param file_format: File format which is used for writing the data.
+        Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
+    :param impute_dates: True or False. Defines if values for dates without new information
+        are imputed. (Default value = True)
+    :param moving_average: Integers >=0. Applies an 'moving_average'-days moving average on all
+        time series to smooth out effects of irregular reporting.
+        Default defined in defaultDict. (Default value = dd.defaultDict['moving_average'])
+    :returns: None.
     """
 
     df_data_agevacc_county_cs = dict_data["df_data_agevacc_county_cs"]
@@ -1265,9 +1258,8 @@ def get_vaccination_data(
         state level. 
         Default defined in defaultDict. (Default value = dd.defaultDict['sanitize_data'])
     :param impute_dates: bool True or False. Defines if values for dates without new information are imputed. (Default value = True)
-    :param **kwargs: 
+    :param kwargs: Additional keyword arguments.
     :returns: None
-
     """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use

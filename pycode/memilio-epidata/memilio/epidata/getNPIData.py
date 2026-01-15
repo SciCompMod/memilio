@@ -134,19 +134,16 @@ def print_manual_download(filename, url):
 
 
 def read_files(directory, fine_resolution, run_checks):
-    """ Reads files from local directory and returns data in dataframes
+    """Reads files from local directory and returns data in dataframes.
 
     :param directory: Directory where data is loaded from.
-    :param fine_resolution: 2 [Default] or 0 or 1. Defines which categories
-        are considered.
+    :param fine_resolution: 2 [Default] or 0 or 1. Defines which categories are considered.
         If '2' is set, all the subcategories (~1200) are considered.
-        If '1' is set, all incidence levels of subcategories are merged and
-            ~200 NPIs are considered.
+        If '1' is set, all incidence levels of subcategories are merged and ~200 NPIs are considered.
         If '0' is chosen only the main, summarizing categories (~20) are used.
     :param run_checks: 
     :returns: Data frames df_npis_old (Decreed, encoded NPIs for all German
-        counties) and df_npis_desc (Description of NPIs)
-
+        counties) and df_npis_desc (Description of NPIs).
     """
     if fine_resolution > 0:
         try:
@@ -380,21 +377,17 @@ def activate_npis_based_on_incidence(
 
 def drop_codes_and_categories(
         npi_codes_prior, npi_codes_prior_desc, df_npis_old, fine_resolution):
-    """ Drops codes and categories from original data frame if they are not
-    used.
+    """Drops codes and categories from original data frame if they are not used.
 
     :param npi_codes_prior: NPI codes read from description sheet.
     :param npi_codes_prior_desc: NPI code descriptions read from description sheet.
     :param df_npis_old: Original data frame with encoding (decreed, yes or no)
-        for different NPIs
-    :param fine_resolution: 2 [Default] or 0 or 1. Defines which categories
-        are considered.
+        for different NPIs.
+    :param fine_resolution: 2 [Default] or 0 or 1. Defines which categories are considered.
         If '2' is set, all the subcategories (~1200) are considered.
-        If '1' is set, all incidence levels of subcategories are merged and
-            ~200 NPIs are considered.
+        If '1' is set, all incidence levels of subcategories are merged and ~200 NPIs are considered.
         If '0' is chosen only the main, summarizing categories (~20) are used.
     :returns: Returns dropped codes, prior codes and reduced original data frame.
-
     """
     if fine_resolution > 0:
 
@@ -504,51 +497,42 @@ def get_npi_data(fine_resolution=2,
                  npi_lifting_days_threshold=5,
                  **kwargs
                  ):
-    """ Loads a certain resolution of recorded NPI data from
-    the Corona Datenplattform and extracts the counties asked for and
-    activates the NPIs if they are incidence dependent.
+    """Loads a certain resolution of recorded NPI data from the Corona Datenplattform.
+
+    Extracts the counties asked for and activates the NPIs if they are incidence dependent.
 
     Results' data frames will be stored in the directory as:
-        -fine_resolution=2: germany_counties_npi_subcat
-        -fine_resolution=1: germany_counties_npi_subcat_incgrouped
-        -fine_resolution=0: germany_counties_npi_maincat
+
+    - fine_resolution=2: germany_counties_npi_subcat
+    - fine_resolution=1: germany_counties_npi_subcat_incgrouped
+    - fine_resolution=0: germany_counties_npi_maincat
 
     Needs the files 'cases_all_county_all_dates_repdate.json' and
     'county_current_population.json' which can be created by the functions
     getCasesData.py (with argument --rep-date) and getPopulationData.py.
 
-    Please manually download
-    - kr_massnahmen_unterkategorien.csv
-    - datensatzbeschreibung_massnahmen.xlsx
-    from https://www.corona-datenplattform.de/dataset/massnahmen_unterkategorien_kreise
-    and
-    - kr_massnahmen_oberkategorien.csv
-    from https://www.corona-datenplattform.de/dataset/massnahmen_oberkategorien_kreise
-    and move it to the *directory*-path mentioned in the beginning of the function.
+    Please manually download kr_massnahmen_unterkategorien.csv and
+    datensatzbeschreibung_massnahmen.xlsx from
+    https://www.corona-datenplattform.de/dataset/massnahmen_unterkategorien_kreise
+    and kr_massnahmen_oberkategorien.csv from
+    https://www.corona-datenplattform.de/dataset/massnahmen_oberkategorien_kreise
+    and move it to the directory-path mentioned in the beginning of the function.
 
-    :param fine_resolution: 2 [Default] or 0 or 1. Defines which categories
-        are considered.
+    :param fine_resolution: 2 [Default] or 0 or 1. Defines which categories are considered.
         If '2' is set, all the subcategories (~1200) are considered.
-        If '1' is set, all incidence levels of subcategories are merged and
-            ~200 NPIs are considered.
+        If '1' is set, all incidence levels of subcategories are merged and ~200 NPIs are considered.
         If '0' is chosen only the main, summarizing categories (~20) are used.
-    :param file_format: File format which is used for writing the data.
-        Default defined in defaultDict.
+    :param file_format: File format which is used for writing the data. Default defined in defaultDict.
     :param out_folder: Path to folder where data is written in folder
         out_folder/Germany. (Default value = dd.defaultDict['out_folder'])
-    :param start_date: Default = '', taken from read data] Start date
-        of stored data frames.
-    :param end_date: Default = '', taken from read data] End date of
-        stored data frames.
-    :param counties_considered: Default: 'All']. Either 'All' or a list of
-        county IDs from 1001 to 16xxx.
-    :param npi_activation_days_threshold: Default: 3]. Defines necessary number
-         of days exceeding case incidence threshold to activate NPIs.
-    :param npi_alifting_days_threshold: Default: 5]. Defines necessary number
-         of days below case incidence threshold threshold to lift NPIs.
-    :param npi_lifting_days_threshold:  (Default value = 5)
-    :param **kwargs: 
-
+    :param start_date: Start date of stored data frames. Default = '', taken from read data.
+    :param end_date: End date of stored data frames. Default = '', taken from read data.
+    :param counties_considered: Either 'All' or a list of county IDs from 1001 to 16xxx. Default: 'All'.
+    :param npi_activation_days_threshold: Defines necessary number of days exceeding case
+        incidence threshold to activate NPIs. Default: 3.
+    :param npi_lifting_days_threshold: Defines necessary number of days below case incidence
+        threshold to lift NPIs. (Default value = 5)
+    :param kwargs: Additional keyword arguments.
     """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
