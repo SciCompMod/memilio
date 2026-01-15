@@ -19,7 +19,8 @@ read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 if read_the_docs_build:
 
     subprocess.call('cd ..; doxygen', shell=True)
-    subprocess.call('doxysphinx build . $READTHEDOCS_OUTPUT/html ../Doxyfile')
+    subprocess.call('ls', shell = True)
+    subprocess.call('cd ..; doxysphinx build source $READTHEDOCS_OUTPUT/html Doxyfile', shell = True)
 
 # sys.path.insert(0, os.path.abspath('../../pycode'))
 
