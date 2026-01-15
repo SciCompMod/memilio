@@ -9,9 +9,6 @@ import pandas as pd
 import os
 
 # params
-
-color_infected_line = colors["Teal"]
-
 damping_day = 7
 change_day = 60
 state = "InfectedSymptoms"
@@ -26,7 +23,7 @@ regions_to_plot = [
 "1001", # Flensburg
 # "12054", # Potsdam
 ]
-highlighted_region_to_plot = "3457" # Leer
+region_colors = [colors["Teal"], colors["Red"], colors["Green"]]
 
 results_dir = os.path.join(plotting_dir, "../simulation_paper/results")
 save_dir = os.path.join(plotting_dir, "plots")
@@ -63,7 +60,6 @@ def preprocess_data_multiregion(filepath):
     return df_all
 
 df_inference = preprocess_data_multiregion(os.path.join(plotting_dir, "../../../data/results_run0.h5"))
-df_same = preprocess_data_multiregion(os.path.join(results_dir, "result_same.h5"))
 df_dynamic = preprocess_data_multiregion(os.path.join(results_dir, "result_dynamic.h5"))
 
 
@@ -71,9 +67,6 @@ population = df_inference.sum(axis=1).round()
 
 df_inference["Incidence"] = (
     df_inference["InfectedSymptoms"] / population * 100_000
-)
-df_same["Incidence"] = (
-    df_same["InfectedSymptoms"] / population * 100_000
 )
 df_dynamic["Incidence"] = (
     df_dynamic["InfectedSymptoms"] / population * 100_000
@@ -121,6 +114,7 @@ ax.imshow(
     zorder=0
 )
 
+idx=0
 for region in regions_to_plot:
     # --- First phase: df_inference (days 0–60)
     inf_series = df_inference.loc[
@@ -131,9 +125,9 @@ for region in regions_to_plot:
         inf_series.index.get_level_values("time"),
         inf_series.values,
         linestyle="--",
-        color=colors["Grey"],
+        color=region_colors[idx],
         alpha = 1,
-        linewidth=1,
+        linewidth=2.5,
         label='_nolegend_',
     )
 
@@ -149,81 +143,12 @@ for region in regions_to_plot:
         shifted_time,
         dyn_series.values,
         linestyle="-",
-        color=colors["Dark grey"],
+        color=region_colors[idx],
         alpha = 1,
-        linewidth=1,
+        linewidth=2.5,
         label='_nolegend_'   
     )
-
-    # --- Second phase: df_same (days 60–120)
-    same_series = df_same.loc[
-        (region, slice(0, 60)), "Incidence"
-    ]
-
-    # shift time axis
-    shifted_time = (
-        same_series.index.get_level_values("time") + 60
-    )
-
-    plt.plot(
-        shifted_time,
-        same_series.values,
-        linestyle="-",      # different style
-        color=colors["Grey"],
-        alpha = 1,
-        linewidth=1,
-        label='_nolegend_',
-    )
-
-# Plot highlighted region
-inf_series = df_inference.loc[
-    (highlighted_region_to_plot, slice(0, 60)), "Incidence"
-]
-
-plt.plot(
-    inf_series.index.get_level_values("time"),
-    inf_series.values,
-    linestyle="--",
-    color=colors["Teal"],
-    linewidth=2.5,
-    label='_nolegend_',
-)
-
-# --- Third phase: df_dynamic (days 60–120)
-dyn_series = df_dynamic.loc[(highlighted_region_to_plot, slice(None)), "Incidence"]
-
-# shift time axis
-shifted_time = (
-    dyn_series.index.get_level_values("time") + 60
-)
-
-plt.plot(
-    shifted_time,
-    dyn_series.values,
-    linestyle="-",
-    color=colors["Orange"],
-    linewidth=2.5,
-    label=f"{highlighted_region_to_plot} with Dynamic NPIs"
-)
-
-# --- Second phase: df_same (days 60–120)
-same_series = df_same.loc[
-    (highlighted_region_to_plot, slice(0, 60)), "Incidence"
-]
-
-# shift time axis
-shifted_time = (
-    same_series.index.get_level_values("time") + 60
-)
-
-plt.plot(
-    shifted_time,
-    same_series.values,
-    linestyle="-",      # different style
-    color=colors["Teal"],
-    linewidth=2.5,
-    label=f"{highlighted_region_to_plot}",
-)
+    idx += 1
 
 ymin, ymax = ax.get_ylim()
 ax.set_ylim(0, ymax)
@@ -232,4 +157,4 @@ plt.xlabel("Time [days]")
 plt.ylabel("Infected per 100,000 [#]")
 # plt.legend() # no legend, as we plot it seperatly
 
-plt.savefig(os.path.join(save_dir, 'nuts3_dynamic_regional.png'), dpi=dpi)
+plt.savefig(os.path.join(save_dir, 'nuts3_dynamic_regional_optimization.png'), dpi=dpi)

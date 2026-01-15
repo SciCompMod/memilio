@@ -142,6 +142,10 @@ public:
                 // Susceptible -> Exposed
                 flows[this->template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>({i})] +=
                     dummy_S;
+                
+                if (std::abs(pop.sum() - y.sum()) < 1e-5) {
+                    std::cout << t << " " << (cont_freq_eff / season_val) << " " << dummy_S << " " << Nj;
+                }  
             }
 
             // ICU capacity shortage is close
@@ -208,6 +212,17 @@ public:
             flows[this->template get_flat_flow_index<InfectionState::InfectedCritical, InfectionState::Recovered>(
                 {i})] = (1.0 - params.template get<DeathsPerCritical<FP>>()[i]) /
                         params.template get<TimeInfectedCritical<FP>>()[i] * y[ICri];
+
+            if (std::abs(pop.sum() - y.sum()) < 1e-5) {
+                std::cout << " " << flows[this->template get_flat_flow_index<InfectionState::InfectedSymptoms, InfectionState::InfectedSevere>({i})] 
+                          << " " << flows[this->template get_flat_flow_index<InfectionState::InfectedSevere, InfectionState::InfectedCritical>({i})] 
+                          << " " << flows[this->template get_flat_flow_index<InfectionState::InfectedSevere, InfectionState::Dead>({i})] + 
+                                    flows[this->template get_flat_flow_index<InfectionState::InfectedCritical, InfectionState::Dead>({i})]
+                          << " " << flows[this->template get_flat_flow_index<InfectionState::InfectedNoSymptoms, InfectionState::Recovered>({i})] + 
+                                    flows[this->template get_flat_flow_index<InfectionState::InfectedSymptoms, InfectionState::Recovered>({i})] +
+                                    flows[this->template get_flat_flow_index<InfectionState::InfectedSevere, InfectionState::Recovered>({i})] + 
+                                    flows[this->template get_flat_flow_index<InfectionState::InfectedCritical, InfectionState::Recovered>({i})] << "\n";
+            }  
         }
     }
 

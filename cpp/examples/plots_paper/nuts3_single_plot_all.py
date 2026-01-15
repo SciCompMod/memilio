@@ -14,7 +14,7 @@ color_damping_background = colors["Red"]
 
 damping_day = 7
 change_day = 60
-state = "InfectedSymptoms"
+state = "InfectedCritical"
 
 results_dir = os.path.join(plotting_dir, "../simulation_paper/results")
 save_dir = os.path.join(plotting_dir, "plots")

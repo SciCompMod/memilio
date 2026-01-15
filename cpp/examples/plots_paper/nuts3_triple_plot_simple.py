@@ -66,6 +66,7 @@ ax = fig.add_axes(panel)
 # Plot first 60 days with dotted line
 df_inference[state].plot(ax=ax, lw=2, alpha=0.6, color=color_infected_line, linestyle="--", label='_nolegend_')
 
+print(df_dynamic[state].values[-1])
 # Plot the rest normally
 ax.plot(df_open[state].index + change_day, df_open[state].values, color=colors["Green"], linewidth=2.5, alpha=1.0, label='No NPIs')
 ax.plot(df_same[state].index + change_day, df_same[state].values, color=color_infected_line, linewidth=2.5, alpha=1.0, label='Static NPIs')
