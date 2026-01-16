@@ -23,6 +23,7 @@
 #include "memilio/io/io.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/math/floating_point.h"
+#include "memilio/timer/auto_timer.h"
 
 #include <algorithm>
 #include <iterator>
@@ -319,10 +320,14 @@ public:
      */
     Eigen::Ref<const Vector> get_last_value() const
     {
+        mio::timing::AutoTimer<"GetlastValue"> timer;
+
         return get_value(m_num_time_points - 1);
     }
     Eigen::Ref<Vector> get_last_value()
     {
+        mio::timing::AutoTimer<"GetlastValuenonconst"> timer;
+
         return get_value(m_num_time_points - 1);
     }
 
