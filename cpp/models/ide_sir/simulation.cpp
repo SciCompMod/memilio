@@ -33,7 +33,7 @@ namespace isir
 
 using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool backwards_fd)
+void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool backwards_fd, bool use_complement)
 {
     // Get index of t0, i.e. index of last time point of given initial values.
     size_t t0_index = m_model->populations.get_num_time_points() - 1;
@@ -79,8 +79,9 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool backwa
         // Compute Susceptibles.
         size_t num_time_points = m_model->populations.get_num_time_points();
 
-        size_t num_iterations = m_model->compute_S(
-            m_model->populations.get_value(num_time_points - 2)[(size_t)InfectionState::Susceptible], m_dt, t0_index);
+        size_t num_iterations =
+            m_model->compute_S(m_model->populations.get_value(num_time_points - 2)[(size_t)InfectionState::Susceptible],
+                               m_dt, t0_index, use_complement);
 
         if (num_iterations > m_max_number_iterations) {
             m_max_number_iterations = num_iterations;
@@ -106,7 +107,7 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool backwa
         }
 
         // Compute I and R.
-        m_model->compute_I_and_R(m_dt);
+        m_model->compute_I_and_R(m_dt, use_complement);
     }
 
     // If we use a central finite difference scheme, we remove the additional time points for which we have computed S

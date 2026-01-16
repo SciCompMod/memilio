@@ -28,8 +28,11 @@
 #include "memilio/math/floating_point.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 
+#include "boost/math/distributions/exponential.hpp"
 #include "boost/math/distributions/gamma.hpp"
 #include "boost/math/distributions/lognormal.hpp"
+#include <boost/math/distributions/complement.hpp>
+#include <boost/math/distributions/fwd.hpp>
 #include <cmath>
 
 namespace mio
@@ -372,7 +375,11 @@ struct ExponentialSurvivalFunction : public StateAgeFunction {
         if (state_age <= m_location) {
             return 1;
         }
-        return std::exp(-m_distribution_parameter * (state_age - m_location));
+
+        boost::math::exponential_distribution<ScalarType, boost::math::policies::policy<>> exp(
+            m_distribution_parameter);
+        return boost::math::cdf(boost::math::complement(exp, state_age - m_location));
+        // return std::exp(-m_distribution_parameter * (state_age - m_location));
     }
 
     /**
@@ -389,7 +396,10 @@ struct ExponentialSurvivalFunction : public StateAgeFunction {
     {
         unused(dt);
         unused(tol);
-        return 1. / m_distribution_parameter + m_location;
+        // return 1. / m_distribution_parameter + m_location;
+        boost::math::exponential_distribution<ScalarType, boost::math::policies::policy<>> exp(
+            m_distribution_parameter);
+        return boost::math::mean(exp);
     }
 
 protected:
@@ -401,6 +411,71 @@ protected:
     StateAgeFunction* clone_impl() const override
     {
         return new ExponentialSurvivalFunction(*this);
+    }
+};
+
+struct ExponentialCDF : public StateAgeFunction {
+
+    /**
+     * @brief Constructs a new ExponentialSurvivalFunction object.
+     * 
+     * @param[in] init_distribution_parameter Specifies the initial function parameter of the function.
+     * @param[in] init_location Location parameter to shift the ExponentialSurvivalFunction function. 
+     *      Should be a positive number to fulfill characteristics of a TransitionDistribution.
+     */
+    ExponentialCDF(ScalarType init_distribution_parameter, ScalarType init_location = 0)
+        : StateAgeFunction(init_distribution_parameter, init_location)
+    {
+    }
+
+    /**
+     * @brief Defines exponential decay function depending on state_age.
+     *
+     * m_distribution_parameter defines how fast the exponential function decays.
+     * 
+     * @param[in] state_age Time at which the function is evaluated.
+     * @return Evaluation of the function at state_age. 
+     */
+    ScalarType eval(ScalarType state_age) override
+    {
+        if (state_age < m_location - 1e-12) {
+            return 1;
+        }
+
+        boost::math::exponential_distribution<ScalarType, boost::math::policies::policy<>> exp(
+            m_distribution_parameter);
+        return boost::math::cdf(exp, state_age - m_location);
+    }
+
+    /**
+     * @brief Computes the mean value of the function. 
+     * 
+     * For the exponential distribution, the mean value is the reciprocal of the distribution parameter and shifted with respect to the location parameter.
+     *
+     * @param[in] dt Time step size used for the numerical integration (unused for ExponentialSurvivalFunction). 
+     * @param[in] tol The maximum support used for numerical integration is calculated using this tolerance 
+     *  (unused for ExponentialSurvivalFunction). 
+     * @return ScalarType mean value.
+     */
+    ScalarType get_mean(ScalarType dt = 1., ScalarType tol = 1e-10) override
+    {
+        unused(dt);
+        unused(tol);
+        // return 1. / m_distribution_parameter + m_location;
+        boost::math::exponential_distribution<ScalarType, boost::math::policies::policy<>> exp(
+            m_distribution_parameter);
+        return boost::math::mean(exp);
+    }
+
+protected:
+    /**
+     * @brief Implements clone for ExponentialSurvivalFunction.
+     * 
+     * @return Pointer to StateAgeFunction.
+     */
+    StateAgeFunction* clone_impl() const override
+    {
+        return new ExponentialCDF(*this);
     }
 };
 

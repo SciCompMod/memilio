@@ -69,18 +69,18 @@ public:
     ScalarType sum_part2_weight(size_t n, size_t j);
 
     // Returns the number of iterations needed in fixed point iteration.
-    size_t compute_S(ScalarType s_init, ScalarType dt, size_t t0_index = 0, ScalarType tol = 1e-14,
-                     size_t max_iterations = 100);
+    size_t compute_S(ScalarType s_init, ScalarType dt, size_t t0_index = 0, bool use_complement = false,
+                     ScalarType tol = 1e-14, size_t max_iterations = 100);
 
-    ScalarType fixed_point_function(ScalarType s, ScalarType dt, size_t t0_index);
+    ScalarType fixed_point_function(ScalarType s, ScalarType dt, size_t t0_index, bool use_complement = false);
 
     void compute_S_deriv(ScalarType dt, size_t time_point_index);
     void compute_S_deriv(ScalarType dt);
     void compute_S_deriv_central(ScalarType dt, size_t time_point_index);
     void compute_S_deriv_central(ScalarType dt);
 
-    void compute_I_and_R(ScalarType dt, size_t time_point_index);
-    void compute_I_and_R(ScalarType dt);
+    void compute_I_and_R(ScalarType dt, size_t time_point_index, bool use_complement = false);
+    void compute_I_and_R(ScalarType dt, bool use_complement = false);
 
     void set_transitiondistribution_vector(ScalarType dt, ScalarType tmax, size_t t0_index = 0);
     void set_parameter_vectors(ScalarType dt, ScalarType tmax, size_t t0_index = 0);
