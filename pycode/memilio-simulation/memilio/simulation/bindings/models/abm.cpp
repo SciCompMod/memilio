@@ -1342,7 +1342,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def("add_infection_rate_damping", &mio::abm::Model::add_infection_rate_damping, py::arg("t"),
              py::arg("factor"))
         .def("add_location_closure", &mio::abm::Model::add_location_closure, py::arg("t"), py::arg("loc_type"),
-             py::arg("percentage"))
+             py::arg("percentage"), py::arg("scheme"))
         .def("get_rng", &mio::abm::Model::get_rng, py::return_value_policy::reference_internal)
         .def_property_readonly("locations", py::overload_cast<>(&mio::abm::Model::get_locations, py::const_),
                                py::keep_alive<1, 0>{}) //keep this model alive while contents are referenced in ranges
