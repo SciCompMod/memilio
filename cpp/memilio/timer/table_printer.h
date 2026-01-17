@@ -206,8 +206,8 @@ private:
         std::map<std::string, size_t> row_to_index; // map from name to index, used to fill table
         bool is_multithreaded = false; // keep track of whether a thread id > 0 exists
         // map rows from thread 0 first, so the order of timers (mostly) corresponds to their call order
-        for (const auto& [name, scope, _, thread] : timer_register) {
-            if (thread == 0) {
+        for (const auto& [name, scope, timer, thread, rank] : timer_register) {
+            if (thread == 0 && rank == 0) {
                 const std::string qn = qualified_name(name, scope);
                 if (row_to_index.emplace(qn, rows.size()).second) {
                     rows.push_back(qn);
@@ -220,8 +220,8 @@ private:
         // make a second pass to add timers from other threads
         // this does nothing, if all timers are used on thread 0 at least once
         if (is_multithreaded) {
-            for (auto& [name, scope, _, thread] : timer_register) {
-                if (thread != 0) {
+            for (auto& [name, scope, timer, thread, rank] : timer_register) {
+                if (thread != 0 || rank != 0) {
                     const std::string qn = qualified_name(name, scope);
                     if (row_to_index.emplace(qn, rows.size()).second) {
                         rows.push_back(qn);
@@ -245,7 +245,7 @@ private:
         }
         // accumulate elapsed time and gather statistics in the table
         // averages are calculated later, using finished values from elapsed and num
-        for (auto& [name, scope, timer, thread] : timer_register) {
+        for (auto& [name, scope, timer, thread, rank] : timer_register) {
             const auto row  = row_to_index[qualified_name(name, scope)];
             const auto time = time_in_seconds(timer.get_elapsed_time());
             table(row, elapsed) += time;

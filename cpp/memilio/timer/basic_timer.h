@@ -20,9 +20,11 @@
 #ifndef MIO_TIMER_BASIC_TIMER_H
 #define MIO_TIMER_BASIC_TIMER_H
 
+#include "memilio/io/io.h"
 #include "memilio/timer/definitions.h"
 
 #include <string_view>
+#include <utility>
 
 namespace mio
 {
@@ -67,6 +69,37 @@ public:
     ~BasicTimer()
     {
         should_be_running(false, "~BasicTimer");
+    }
+
+    /**
+     * serialize this.
+     * @see mio::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("BasicTimer");
+        obj.add_element("elapsed_time", details::convert_to_ticks(m_elapsed_time));
+    }
+
+    /**
+    * deserialize an object of this class.
+    * @see mio::deserialize
+    */
+    template <class IOContext>
+    static IOResult<BasicTimer> deserialize(IOContext& io)
+    {
+        using Tick = decltype(details::convert_to_ticks(std::declval<DurationType>()));
+        auto obj   = io.expect_object("BasicTimer");
+        auto et    = obj.expect_element("elapsed_time", Tag<Tick>{});
+        return apply(
+            io,
+            [](auto&& et_) {
+                BasicTimer b;
+                b.m_elapsed_time = DurationType{et_};
+                return b;
+            },
+            et);
     }
 
 private:
