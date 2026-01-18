@@ -413,9 +413,9 @@ class BenchmarkAnalyzer:
 
         # Calculate and plot ideal scaling
         if len(runtimes) > 0:
-            ideal_scaling = [runtimes[1] / c * cores[1] for c in cores]
+            ideal_scaling = [((runtimes[1] / c * cores[1])*0.26)for c in cores]
             ax.plot(cores, ideal_scaling,
-                    'k--', linewidth=2, alpha=0.5, label='Ideal Scaling')
+                    'k--', linewidth=2, alpha=0.5, label='Ideal scaling')
 
         ax.set_xlabel('Cores [#]')
         ax.set_ylabel('Runtime [s]')
@@ -464,7 +464,7 @@ class BenchmarkAnalyzer:
         if len(runtimes) > 0:
             ideal_scaling = [runtimes[1] / n * nodes[1] for n in nodes]
             ax.plot(nodes, ideal_scaling,
-                    'k--', linewidth=2, alpha=0.5, label='Ideal Scaling')
+                    'k--', linewidth=2, alpha=0.5, label='Ideal scaling')
 
         ax.set_xlabel('Cores [#]')
         ax.set_ylabel('Runtime [s]')
