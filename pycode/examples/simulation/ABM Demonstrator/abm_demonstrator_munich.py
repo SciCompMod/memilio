@@ -596,7 +596,9 @@ def map_traffic_cell_to_wastewater_area(mapping_path, wastewater_path, new_file,
                 'ID_TAN', 'area']]
             weights = Id_tan['area'] / Id_tan['area'].sum()
             for loc in d[traffic_cell_id].split(' '):
-                ww_area = np.random.choice(Id_tan['ID_TAN'], p=weights)
+                rng = np.random.default_rng(30)
+                ww_area = rng.choice(
+                    Id_tan['ID_TAN'].to_numpy(), p=weights.to_numpy())
                 new_key = str(ww_area)
                 if (new_key in new_dict):
                     new_dict[new_key].append(loc)
@@ -695,6 +697,29 @@ def save_assigned_locations(model, sim_num):
     df.to_csv(sys.path[0] + f'/output/{sim_num}_persons_locs.csv')
 
 
+def write_person_to_loc_assigment(model, sim_num):
+    with open(sys.path[0] + f'/output/{sim_num}_persons_locs.csv', 'w') as f:
+        line = "Id,Home,School,Work,Shop,Event"
+        f.write(line)
+        f.write('\n')
+        for person in model.persons:
+            line = f"{person.id.index()},"
+            line += f"00{person.assigned_location(abm.LocationType.Home).index()},"
+            if (person.age == AgeGroup(1)):
+                line += f"01{person.assigned_location(abm.LocationType.School).index()},"
+            else:
+                line += "-1,"
+            if (person.age == AgeGroup(2) or person.age == AgeGroup(3)):
+                line += f"02{person.assigned_location(abm.LocationType.Work).index()},"
+            else:
+                line += "-1,"
+            line += f"04{person.assigned_location(abm.LocationType.BasicsShop).index()},"
+            line += f"03{person.assigned_location(abm.LocationType.SocialEvent).index()}"
+            f.write(line)
+            f.write('\n')
+    f.close()
+
+
 def run_abm_simulation(sim_num):
     input_path = sys.path[0] + '/input/'
     output_path = sys.path[0] + '/output/'
@@ -720,7 +745,7 @@ def run_abm_simulation(sim_num):
     # set seeds for simulation
     abm.set_seeds(sim.model, sim_num)
     # initialize model
-    abm.initialize_model(sim.model, input_path + 'persons_corr.csv', os.path.join(
+    abm.initialize_model(sim.model, input_path + 'persons_scaled.csv', os.path.join(
         input_path, 'hospitals.csv'), os.path.join(
         output_path, str(sim_num) + '_mapping.txt'), max_work_size, max_school_size)
     # read infection parameters
@@ -797,6 +822,8 @@ def run_abm_simulation(sim_num):
     # write size per location
     abm.write_size_per_location(os.path.join(
         output_path, str(sim_num) + '_size_per_loc.txt'), sim.model)
+
+    #write_person_to_loc_assigment(sim.model, sim_num)
     # output object
     history = History()
     start_advance = time.time()
