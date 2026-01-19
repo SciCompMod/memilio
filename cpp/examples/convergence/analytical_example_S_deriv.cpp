@@ -18,9 +18,9 @@
 * limitations under the License.
 */
 
-#include "ide_sir_analytical/model.h"
-#include "ide_sir_analytical/simulation.h"
-#include "ide_sir_analytical/infection_state.h"
+#include "ide_sir_analytical_S_deriv/model.h"
+#include "ide_sir_analytical_S_deriv/simulation.h"
+#include "ide_sir_analytical_S_deriv/infection_state.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/io/result_io.h"
@@ -30,14 +30,14 @@
 using namespace mio;
 namespace params
 {
-
 size_t num_agegroups = 1;
 
-ScalarType y0 = 1.;
+size_t finite_difference_order = 4;
 
+ScalarType t0_ide = 2.;
 } // namespace params
 
-mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, ScalarType t0_ide,
+mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, ScalarType t0_groundtruth,
                                  ScalarType tmax, std::string save_dir = "")
 {
     using namespace params;
@@ -56,26 +56,24 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 
         // Add values to init_populations.
         vec_init[(size_t)mio::isir::InfectionState::Susceptible] = cosh(0.);
-        vec_init[(size_t)mio::isir::InfectionState::Infected]    = 0.;
+        vec_init[(size_t)mio::isir::InfectionState::Infected]    = 0.; //sinh(0.)
         vec_init[(size_t)mio::isir::InfectionState::Recovered]   = 0.;
 
-        init_populations.add_time_point(t0_ide, vec_init);
+        init_populations.add_time_point(t0_groundtruth, vec_init);
 
-        while (init_populations.get_last_time() < 3 * dt_ide - 1e-10) {
+        while (init_populations.get_last_time() < t0_ide - 1e-10) {
             init_populations.add_time_point(init_populations.get_last_time() + dt_ide);
-            // vec_init[(size_t)mio::isir::InfectionState::Susceptible] =
-            //     cosh(pow(init_populations.get_last_time(), 2) / 2.);
             vec_init[(size_t)mio::isir::InfectionState::Susceptible] = cosh(init_populations.get_last_time());
-            vec_init[(size_t)mio::isir::InfectionState::Infected]    = 0.;
+            vec_init[(size_t)mio::isir::InfectionState::Infected]    = 0.; //sinh(init_populations.get_last_time())
             vec_init[(size_t)mio::isir::InfectionState::Recovered]   = 0.;
             init_populations.get_last_value()                        = vec_init;
         }
 
         // Initialize model.
-        mio::isir::ModelAnalytical model(std::move(init_populations), gregory_order);
+        mio::isir::ModelAnalyticalSDeriv model(std::move(init_populations), gregory_order, finite_difference_order);
 
         // Carry out simulation.
-        mio::isir::SimulationAnalytical sim(model, dt_ide);
+        mio::isir::SimulationAnalyticalSDeriv sim(model, dt_ide);
         sim.advance(tmax);
 
         if (!save_dir.empty()) {
@@ -106,12 +104,14 @@ int main()
     ScalarType t0   = 0.;
     ScalarType tmax = 5.;
 
-    std::vector<ScalarType> ide_exponents = {0, 1, 2, 3, 4};
+    std::vector<ScalarType> ide_exponents = {0, 1, 2, 3};
     std::vector<size_t> gregory_orders    = {1, 2, 3};
 
-    std::string save_dir = fmt::format("../../simulation_results/2025-11-17/analytical_example/"
+    std::string save_dir = fmt::format("../../simulation_results/2026-01-16/analytical_example_S_deriv/"
                                        "t0ide={}_tmax={}/",
                                        t0, tmax);
+
+    std::cout << save_dir << std::endl;
 
     // Make folder if not existent yet.
     boost::filesystem::path dir(save_dir);

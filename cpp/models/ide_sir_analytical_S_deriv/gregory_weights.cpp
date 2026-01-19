@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "ide_sir_analytical/gregory_weights.h"
+#include "ide_sir/gregory_weights.h"
 
 namespace mio
 {

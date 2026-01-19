@@ -34,9 +34,19 @@ def define_groundtruth(timesteps, t0, tmax):
     results = {model: []}
 
     for timestep in timesteps:
-        timepoints = np.linspace(t0, tmax, int((tmax-t0)/timestep)+1)
-        groundtruth_at_timepoints = [
-            np.cosh(timepoint) for timepoint in timepoints]
+        groundtruth_at_timepoints = []
+        for compartment in range(3):
+            timepoints = np.linspace(t0, tmax, int((tmax-t0)/timestep)+1)
+            if compartment == 0:
+                groundtruth_at_timepoints.append([np.cosh(timepoint)
+                                                  for timepoint in timepoints])  # np.cosh(timepoint)
+            if compartment == 1:
+                groundtruth_at_timepoints.append([
+                    np.sinh(timepoint) for timepoint in timepoints])  # np.sinh(timepoint)
+            if compartment == 2:
+                groundtruth_at_timepoints.append([
+                    np.cosh(timepoint) for timepoint in timepoints])
+
         results[model].append(groundtruth_at_timepoints)
 
     return results
@@ -105,7 +115,7 @@ def compute_errors_l2(groundtruth, results, groundtruth_exponent, timesteps_ide,
             num_timepoints = len(results['ide'][i])
 
             result_ode = np.array(groundtruth['ode'][i][int(
-                t0_ide/timestep)::])
+                t0_ide/timestep)::][compartment])
             result_ide = np.array(results['ide'][i][int(
                 t0_ide/timestep)::][:, compartment])
 
@@ -151,11 +161,11 @@ def compute_errors_max(groundtruth, results, groundtruth_exponent, timesteps_ide
             scale_timesteps = timestep/pow(10, -groundtruth_exponent)
 
             difference = groundtruth['ode'][i][int(
-                t0_ide/timestep)::]-results['ide'][i][int(t0_ide/timestep)::][:, compartment]
+                t0_ide/timestep)::][compartment]-results['ide'][i][int(t0_ide/timestep)::][:, compartment]
 
             if relative_error:
                 norm_groundtruth = compute_max_norm(
-                    groundtruth['ode'][i][int(t0_ide/timestep)::])
+                    groundtruth['ode'][i][int(t0_ide/timestep)::][compartment])
                 errors[i].append(compute_max_norm(
                     difference)/norm_groundtruth)
 
@@ -177,11 +187,11 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
         saved.
     """
     # Define subplots and labels.
-    num_plots = 1
+    num_plots = 3
     num_plotted_results = len(gregory_orders_simulation)
 
     fig, axs = plt.subplots(1, num_plots, sharex=True,
-                            figsize=(5, 3))
+                            figsize=(10, 3))
     secir_dict = {0: 'Susceptible', 1:  'Infected', 2:  'Recovered'}
     labels = [
         f"Gregory order {gregory_order}" for gregory_order in gregory_orders_simulation]
@@ -199,57 +209,57 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
     colors = ["darkorange", colors_[1], "darkred"]
 
     # Plot comparison line for linear convergence as well as second, third and fourth order.
-    i = 0
-    plotted_timesteps = timesteps_ide[:6]
-    comparison = [0.5*errors_all_gregory_orders[0]
-                  [0, i]*dt for dt in timesteps_ide]
-    first = axs.plot(plotted_timesteps, comparison,
-                     '--', color='gray', linewidth=1.2, label=r"$\mathcal{O}(\Delta t)$")
+    for i in range(num_plots):
+        plotted_timesteps = timesteps_ide[:6]
+        comparison = [0.5*errors_all_gregory_orders[0]
+                      [0, i]*dt for dt in timesteps_ide]
+        first = axs[i].plot(plotted_timesteps, comparison,
+                            '--', color='gray', linewidth=1.2, label=r"$\mathcal{O}(\Delta t)$")
 
-    plotted_timesteps = timesteps_ide[:6]
-    comparison = [0.5*errors_all_gregory_orders[0]
-                  [0, i]*dt**2 for dt in plotted_timesteps]
-    second = axs.plot(plotted_timesteps, comparison,
-                      '--', color=colors[0], linewidth=1.2, alpha=0.5, label=r"$\mathcal{O}(\Delta t^2)$")
+        plotted_timesteps = timesteps_ide[:6]
+        comparison = [0.5*errors_all_gregory_orders[0]
+                      [0, i]*dt**2 for dt in plotted_timesteps]
+        second = axs[i].plot(plotted_timesteps, comparison,
+                             '--', color=colors[0], linewidth=1.2, alpha=0.5, label=r"$\mathcal{O}(\Delta t^2)$")
 
-    plotted_timesteps = timesteps_ide[:6]
-    comparison = [0.5*errors_all_gregory_orders[1]
-                  [0, i]*dt**3 for dt in plotted_timesteps]
-    third = axs.plot(plotted_timesteps, comparison,
-                     '--', color=colors[1], linewidth=1.2, alpha=0.5, label=r"$\mathcal{O}(\Delta t^3)$")
+        plotted_timesteps = timesteps_ide[:6]
+        comparison = [0.5*errors_all_gregory_orders[1]
+                      [0, i]*dt**3 for dt in plotted_timesteps]
+        third = axs[i].plot(plotted_timesteps, comparison,
+                            '--', color=colors[1], linewidth=1.2, alpha=0.5, label=r"$\mathcal{O}(\Delta t^3)$")
 
-    plotted_timesteps = timesteps_ide[:6]
-    comparison = [0.5*errors_all_gregory_orders[2]
-                  [0, i]*dt**4 for dt in plotted_timesteps]
-    fourth = axs.plot(plotted_timesteps, comparison,
-                      '--', color=colors[2], linewidth=1.2, alpha=0.5, label=r"$\mathcal{O}(\Delta t^4)$")
+        plotted_timesteps = timesteps_ide[:6]
+        comparison = [0.5*errors_all_gregory_orders[2]
+                      [0, i]*dt**4 for dt in plotted_timesteps]
+        fourth = axs[i].plot(plotted_timesteps, comparison,
+                             '--', color=colors[2], linewidth=1.2, alpha=0.5, label=r"$\mathcal{O}(\Delta t^4)$")
 
-    # Plot results.
-    for j in range(len(gregory_orders_simulation)):
-        line = axs.plot(timesteps_ide,
-                        errors_all_gregory_orders[j][:, 0], '-o', color=colors[j], label=labels[j])
-        handles.append(line[0])
+        # Plot results.
+        for j in range(len(gregory_orders_simulation)):
+            line = axs[i].plot(timesteps_ide,
+                               errors_all_gregory_orders[j][:, i], '-o', color=colors[j], label=labels[j])
+            handles.append(line[0])
 
-    # Append lines to handles for legend.
-    if i == 0:
-        handles.append(first[0])
-        handles.append(second[0])
-        handles.append(third[0])
-        handles.append(fourth[0])
+        # Append lines to handles for legend.
+        if i == 0:
+            handles.append(first[0])
+            handles.append(second[0])
+            handles.append(third[0])
+            handles.append(fourth[0])
+            # Invert x axis only for one plot so that sharex=True and invert_xaxis work as intended.
+            axs[i].invert_xaxis()
+        titles = [r"S(t)", r"S'(t)", r"S(0)+\int_0^t S'(x)\,dx"]
+        axs[i].set_title(titles[i], fontsize=10)
 
-    # Adapt plots.
-    axs.set_xscale("log", base=10)
-    axs.set_yscale("log", base=10)
+        # Adapt plots.
+        axs[i].set_xscale("log", base=10)
+        axs[i].set_yscale("log", base=10)
 
-    axs.set_title(secir_dict[i], fontsize=10)
-    axs.grid(True, linestyle='--', alpha=0.6)
+        axs[i].grid(True, linestyle='--', alpha=0.6)
 
     fig.supxlabel(r'Time step $\Delta t$', fontsize=12)
     ylabel = fig.supylabel(
         r"$err_\text{rel}$", fontsize=12)
-
-    # Invert x axis only for one plot so that sharex=True and invert_xaxis work as intended.
-    axs.invert_xaxis()
 
     # print(handles)
 
@@ -334,7 +344,7 @@ def main():
 
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
-    main_dir = "2025-11-17/analytical_example/"
+    main_dir = "2026-01-16/analytical_example_S_deriv/"
     relevant_dir = os.path.join(root_dir, main_dir)
     print(relevant_dir)
     # sub_dirs = subfolders_scandir(relevant_dir)

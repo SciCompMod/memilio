@@ -20,10 +20,10 @@
 
 /* This file contains the SImulation class for the model ModelMessinaExtendedDetailedInit which will be further investiagted and developed. */
 
-#ifndef IDE_SIR_SIMULATION_ANALYTICAL_H
-#define IDE_SIR_SIMULATION_ANALYTICAL_H
+#ifndef IDE_SIR_SIMULATION_H
+#define IDE_SIR_SIMULATION_H
 
-#include "ide_sir_analytical/model.h"
+#include "ide_sir_analytical_S_deriv/model.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include <cstdio>
@@ -33,7 +33,7 @@ namespace mio
 namespace isir
 {
 
-class SimulationAnalytical
+class SimulationAnalyticalSDeriv
 {
 
 public:
@@ -42,8 +42,8 @@ public:
      * @param[in] model An instance of the IDE model.
      * @param[in] dt Step size of numerical solver.
      */
-    SimulationAnalytical(ModelAnalytical const& model, ScalarType dt)
-        : m_model(std::make_unique<ModelAnalytical>(model))
+    SimulationAnalyticalSDeriv(ModelAnalyticalSDeriv const& model, ScalarType dt)
+        : m_model(std::make_unique<ModelAnalyticalSDeriv>(model))
         , m_dt(dt)
     {
         assert(m_dt > 0);
@@ -53,7 +53,7 @@ public:
      * Run the simulation from the current time to tmax.
      * @param tmax Time to stop.
      */
-    void advance(ScalarType tmax);
+    void advance(ScalarType tmax, bool backwards_fd = true);
 
     /**
      * @brief Get the result of the simulation.
@@ -76,9 +76,29 @@ public:
     }
 
     /**
+     * @brief Get the result of the simulation.
+     * Return the number of persons in all #InfectionState%s.
+     * @return The result of the simulation.
+     */
+    TimeSeries<ScalarType> get_flows()
+    {
+        return m_model->flows;
+    }
+
+    /**
+     * @brief Get the result of the simulation.
+     * Return the number of persons in all #InfectionState%s.
+     * @return The result of the simulation.
+     */
+    const TimeSeries<ScalarType>& get_flows() const
+    {
+        return m_model->flows;
+    }
+
+    /**
      * @brief returns the simulation model used in simulation.
      */
-    const ModelAnalytical& get_model() const
+    const ModelAnalyticalSDeriv& get_model() const
     {
         return *m_model;
     }
@@ -86,7 +106,7 @@ public:
     /**
      * @brief returns the simulation model used in simulation.
      */
-    ModelAnalytical& get_model()
+    ModelAnalyticalSDeriv& get_model()
     {
         return *m_model;
     }
@@ -101,7 +121,7 @@ public:
     }
 
 private:
-    std::unique_ptr<ModelAnalytical> m_model; ///< Unique pointer to the Model simulated.
+    std::unique_ptr<ModelAnalyticalSDeriv> m_model; ///< Unique pointer to the Model simulated.
     ScalarType m_dt; ///< Time step used for numerical computations in simulation.
     size_t m_max_number_iterations =
         0; ///< Get maximal number of iterations that was necessary throughout the simulation.

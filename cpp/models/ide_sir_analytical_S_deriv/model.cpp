@@ -17,9 +17,10 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "model.h"
-#include "gregory_weights.h"
-#include "infection_state.h"
+#include "ide_sir_analytical_S_deriv/model.h"
+#include "ide_sir_analytical_S_deriv/parameters.h"
+#include "ide_sir_analytical_S_deriv/infection_state.h"
+#include "ide_sir_analytical_S_deriv/gregory_weights.h"
 #include "memilio/config.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/time_series.h"
@@ -31,14 +32,19 @@ namespace mio
 {
 namespace isir
 {
-ModelAnalytical::ModelAnalytical(TimeSeries<ScalarType>&& populations_init, size_t gregory_order)
-    : populations{std::move(populations_init)}
+ModelAnalyticalSDeriv::ModelAnalyticalSDeriv(TimeSeries<ScalarType>&& populations_init, size_t gregory_order,
+                                             size_t finite_difference_order)
+    : parameters{Parameters()}
+    , populations{std::move(populations_init)}
+    , flows{TimeSeries<ScalarType>((size_t)InfectionTransition::Count)}
     , m_gregory_order(gregory_order)
+    , m_finite_difference_order(finite_difference_order)
 {
     assert(m_gregory_order > 0);
+    assert(m_finite_difference_order > 0);
 }
 
-ScalarType ModelAnalytical::sum_part1_weight(size_t n, size_t j)
+ScalarType ModelAnalyticalSDeriv::sum_part1_weight(size_t n, size_t j)
 {
     assert(n > 0);
     assert(j < n);
@@ -80,7 +86,7 @@ ScalarType ModelAnalytical::sum_part1_weight(size_t n, size_t j)
     return gregory_weight;
 }
 
-ScalarType ModelAnalytical::sum_part2_weight(size_t n, size_t j)
+ScalarType ModelAnalyticalSDeriv::sum_part2_weight(size_t n, size_t j)
 {
     assert(n > 0);
     assert(j <= n);
@@ -114,7 +120,7 @@ ScalarType ModelAnalytical::sum_part2_weight(size_t n, size_t j)
     return gregory_weight;
 }
 
-ScalarType ModelAnalytical::fixed_point_function(ScalarType susceptibles, ScalarType dt)
+ScalarType ModelAnalyticalSDeriv::fixed_point_function(ScalarType susceptibles, ScalarType dt)
 {
     // Get the index of the current time step.
     size_t current_time_index = populations.get_num_time_points() - 1;
@@ -161,13 +167,11 @@ ScalarType ModelAnalytical::fixed_point_function(ScalarType susceptibles, Scalar
     return 1 + dt * sum_first_integral;
 }
 
-size_t ModelAnalytical::compute_S(ScalarType s_init, ScalarType dt, ScalarType tol, size_t max_iterations)
+size_t ModelAnalyticalSDeriv::compute_S(ScalarType s_init, ScalarType dt, ScalarType tol, size_t max_iterations)
 {
     size_t iter_counter = 0;
-
     while (iter_counter < max_iterations) {
 
-        // std::cout << "S init: " << s_init << std::endl;
         ScalarType s_new = fixed_point_function(s_init, dt);
 
         if (std::fabs(s_init - s_new) < tol) {
@@ -186,6 +190,82 @@ size_t ModelAnalytical::compute_S(ScalarType s_init, ScalarType dt, ScalarType t
     populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] = s_init;
 
     return iter_counter;
+}
+
+void ModelAnalyticalSDeriv::compute_S_deriv(ScalarType dt, size_t time_point_index)
+{
+    // Linear backwards finite difference scheme, flow from S to I is then given by -S'.
+    if (std::min(m_finite_difference_order, time_point_index) == 1) {
+        flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+            -(populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] -
+              populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible]) /
+            dt;
+    }
+
+    // Compute S' with backwards finite difference scheme of second order, flow from S to I is then given by -S'.
+    if (std::min(m_finite_difference_order, time_point_index) == 2) {
+        flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+            -(3 * populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] -
+              4 * populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible] +
+              1 * populations[time_point_index - 2][(Eigen::Index)InfectionState::Susceptible]) /
+            (2 * dt);
+    }
+
+    // Compute S' with backwards finite difference scheme of fourth order, flow from S to I is then given by -S'.
+    if (std::min(m_finite_difference_order, time_point_index) == 4) {
+        flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+            -(25 * populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] -
+              48 * populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible] +
+              36 * populations[time_point_index - 2][(Eigen::Index)InfectionState::Susceptible] -
+              16 * populations[time_point_index - 3][(Eigen::Index)InfectionState::Susceptible] +
+              3 * populations[time_point_index - 4][(Eigen::Index)InfectionState::Susceptible]) /
+            (12 * dt);
+    }
+}
+
+void ModelAnalyticalSDeriv::compute_S_deriv(ScalarType dt)
+{
+    // Use the number of time points to determine time_point_index, hence we are calculating S deriv for last time point.
+    size_t time_point_index = flows.get_num_time_points() - 1;
+    compute_S_deriv(dt, time_point_index);
+}
+
+void ModelAnalyticalSDeriv::compute_I_and_R(ScalarType dt, size_t time_point_index)
+{
+    // Index determining when we switch from one Gregory sum to the other one.
+    // TODO: Explain better what the difference between the two Gregory sums is.
+    size_t switch_weights_index = std::min(time_point_index, m_gregory_order);
+
+    ScalarType sum_derivative = 0.;
+
+    // Add first part of sum.
+    for (size_t j = 0; j < switch_weights_index; j++) {
+        ScalarType gregory_weight = sum_part1_weight(time_point_index, j);
+
+        // For each index, the corresponding summand is computed here.
+        sum_derivative += gregory_weight * flows.get_value(j)[(Eigen::Index)InfectionTransition::SusceptibleToInfected];
+    }
+
+    // Add second part of sum.
+    for (size_t j = switch_weights_index; j <= time_point_index; j++) {
+        ScalarType gregory_weight = sum_part2_weight(time_point_index, j);
+
+        // For each index, the corresponding summand is computed here.
+        sum_derivative += gregory_weight * flows.get_value(j)[(Eigen::Index)InfectionTransition::SusceptibleToInfected];
+    }
+
+    populations[time_point_index][(Eigen::Index)InfectionState::Infected] =
+        -flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected];
+    populations[time_point_index][(Eigen::Index)InfectionState::Recovered] =
+        -dt * sum_derivative + populations[0][(Eigen::Index)InfectionState::Susceptible];
+}
+
+void ModelAnalyticalSDeriv::compute_I_and_R(ScalarType dt)
+{
+    // Use the number of time points to determine time_point_index, hence we are calculating I and R for last
+    // time point of flows.
+    size_t time_point_index = flows.get_num_time_points() - 1;
+    compute_I_and_R(dt, time_point_index);
 }
 
 } // namespace isir
