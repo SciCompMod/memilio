@@ -2,15 +2,19 @@ version: "2"
 
 build:
   os: "ubuntu-lts-latest"
-  apt_packages: 
+  apt_packages:
     - libmagic1
-    - cmake
-    - ninja-build
+    - unzip
   tools:
-    python: "3.10"
+    python: "3.12"
   jobs:
+    pre_install:
+      # Download pre-built memilio-simulation wheel from GitHub CI
+      - bash docs/scripts/download_wheel.sh 312
     install:
-      - pip install --exists-action=w --no-cache-dir -r docs/requirements-build.txt
+      # Install the downloaded wheels (cp312 for Python 3.12)
+      - pip install pycode/wheelhouse/*simulation*cp312*.whl
+      - pip install pycode/wheelhouse/*generation*cp312*.whl || true
       - pip install --exists-action=w --no-cache-dir -r docs/requirements.txt
 
 sphinx:

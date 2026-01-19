@@ -18,16 +18,11 @@ release = ''
 version = '1.3.0'
 
 # =============================================================================
-# Add source directories to sys.path for packages that can't be pip-installed
-# (memilio.simulation requires C++ compilation, memilio.generation requires libclang)
+# C++ extension stub setup (fallback when real bindings unavailable)
+# Note: On ReadTheDocs, wheels are downloaded from GitHub CI and installed.
+# The stub fallback below is only used if the wheel installation fails.
 # =============================================================================
 _docs_dir = pathlib.Path(__file__).parent.parent.parent
-sys.path.insert(0, str(_docs_dir / 'pycode' / 'memilio-simulation'))
-sys.path.insert(0, str(_docs_dir / 'pycode' / 'memilio-generation'))
-
-# =============================================================================
-# C++ extension stub setup (must run before importing memilio)
-# =============================================================================
 
 # All C++ extension modules that need mocking/stubbing
 _CPP_EXTENSIONS = [
