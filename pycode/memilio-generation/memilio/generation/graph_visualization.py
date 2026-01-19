@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2025 MEmilio
+# Copyright (C) 2020-2026 MEmilio
 #
 # Authors: Maximilian Betz, Daniel Richter
 #
@@ -142,7 +142,8 @@ def _output_cursor_and_children(cursor: Cursor, ast: AST, writer: Callable[[int,
                         f'{cursor_kind}   '
                         f'{file_path}:{line_number}')
     else:
-        cursor_label = f'ID:{cursor_id} {cursor_kind} {file_path}:{line_number}'
+        cursor_label = f'ID: {cursor_id} {
+            cursor_kind} {file_path}: {line_number}'
 
     writer(level, cursor_label)
 
@@ -166,7 +167,8 @@ def _output_cursor_and_children_graphviz_digraph(cursor: Cursor, graph: Digraph,
     if current_d > max_d:
         return
 
-    node_label = f"{cursor.kind.name}{newline()}({cursor.spelling})" if cursor.spelling else cursor.kind.name
+    node_label = f"{cursor.kind.name}{
+        newline()}({cursor.spelling})" if cursor.spelling else cursor.kind.name
 
     current_node = f"{cursor.kind.name}_{cursor.hash}"
 
@@ -176,7 +178,8 @@ def _output_cursor_and_children_graphviz_digraph(cursor: Cursor, graph: Digraph,
         graph.edge(parent_node, current_node)
 
     if cursor.kind.is_reference():
-        referenced_label = f"ref_to_{cursor.referenced.kind.name}{newline()}({cursor.referenced.spelling})"
+        referenced_label = f"ref_to_{cursor.referenced.kind.name}{
+            newline()}({cursor.referenced.spelling})"
         referenced_node = f"ref_{cursor.referenced.hash}"
         graph.node(referenced_node, label=referenced_label)
         graph.edge(current_node, referenced_node)

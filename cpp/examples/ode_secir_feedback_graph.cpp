@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Henrik Zunker
 *
@@ -112,7 +112,7 @@ create_graph(int num_nodes, int total_population, double cont_freq)
             model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}] = total_population;
         }
         // The function apply_constraints() ensures that all parameters are within their defined bounds.
-        // Note that negative values are set to zero instead of stopping the simulation.        
+        // Note that negative values are set to zero instead of stopping the simulation.
         model.apply_constraints();
 
         // Determine the index for the ICU state (InfectedCritical) for the feedback mechanism

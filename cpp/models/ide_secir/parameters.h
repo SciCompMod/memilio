@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Anna Wendler, Lena Ploetzke
 *
@@ -262,8 +262,8 @@ public:
             for (size_t i = 0; i < (int)InfectionTransition::Count; i++) {
                 if (this->get<TransitionProbabilities>()[group][i] < 0.0 ||
                     this->get<TransitionProbabilities>()[group][i] > 1.0) {
-                    log_error("Constraint check: One parameter in TransitionProbabilities smaller {} or larger {}",
-                              0, 1);
+                    log_error("Constraint check: One parameter in TransitionProbabilities smaller {} or larger {}", 0,
+                              1);
                     return true;
                 }
             }

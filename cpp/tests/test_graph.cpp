@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -148,7 +148,7 @@ TEST(TestGraph, graph_without_edges)
     std::vector<int> ids          = {1, 2};
 
     mio::Graph<MockModel, MockMobility> g(ids, models);
-    
+
     EXPECT_EQ(g.edges().size(), 0);
     EXPECT_EQ(g.nodes().size(), 2);
     EXPECT_EQ(g.nodes()[0].id, 1);

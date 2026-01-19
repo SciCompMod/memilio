@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Jan Kleinert, Daniel Abele
 *
@@ -226,7 +226,7 @@ public:
      */
     template <class Dummy = void,
               class       = std::enable_if_t<
-                  details::AllOf<has_get_default_member_function, ParameterTagTraits<Tags>...>::value, Dummy>>
+                        details::AllOf<has_get_default_member_function, ParameterTagTraits<Tags>...>::value, Dummy>>
     ParameterSet()
         : m_tup(ParameterTagTraits<Tags>::get_default()...)
     {

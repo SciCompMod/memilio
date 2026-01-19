@@ -22,9 +22,9 @@ runs:
         /opt/python/cp38-cp38/bin/python -m pip install --upgrade pip setuptools wheel
         /opt/python/cp38-cp38/bin/python -m pip install scikit-build scikit-build-core
         /opt/python/cp38-cp38/bin/python -m build --no-isolation --wheel
-        /opt/python/cp311-cp311/bin/python -m pip install --upgrade pip setuptools wheel
-        /opt/python/cp311-cp311/bin/python -m pip install scikit-build scikit-build-core
-        /opt/python/cp311-cp311/bin/python -m build --no-isolation --wheel
+        /opt/python/cp312-cp312/bin/python -m pip install --upgrade pip setuptools wheel
+        /opt/python/cp312-cp312/bin/python -m pip install scikit-build scikit-build-core
+        /opt/python/cp312-cp312/bin/python -m build --no-isolation --wheel
         # Exclude memilio-generation, because its a pure python package, cmake is only used in the build process to retrieve data from cpp
         if [[ -f "CMakeLists.txt" ]] && [ "${{ inputs.package }}" != "generation" ]; then 
           # includes native dependencies in the wheel
