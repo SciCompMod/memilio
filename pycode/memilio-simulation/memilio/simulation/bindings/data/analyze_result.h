@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2026 MEmilio
 *
-* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
+* Authors: Rene Schmieding
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
