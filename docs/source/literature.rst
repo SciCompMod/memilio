@@ -63,3 +63,7 @@
 .. |Coupled_Epidemiological_and_Wastewater| replace:: Bicker J, Tomza N, Wallrafen-Sam K, Schmid N, Hofmann A., et al. (2025). *Coupled Epidemiological and Wastwater Modeling at the Urban Scale: A Case Study for Munich*. medRxiv. |Coupled_Epidemiological_and_Wastewater_DOI|_
 .. |Coupled_Epidemiological_and_Wastewater_DOI| replace:: DOI:10.1101/2025.09.25.25336633
 .. _Coupled_Epidemiological_and_Wastewater_DOI: https://doi.org/10.1101/2025.09.25.25336633
+
+.. |Missing_Transmission_Chains| replace:: Korf S, Wagner S J, Köster G, Kühn M J (2025). *On the Effect of Missing Transmission Chain Information in Agent-Based Models: Outcomes of Superspreading Events and Workplace Transmission*. arXiv. |Missing_Transmission_Chains_DOI|_
+.. |Missing_Transmission_Chains_DOI| replace:: DOI:10.48550/ARXIV.2512.06189
+.. _Missing_Transmission_Chains_DOI: https://doi.org/10.48550/ARXIV.2512.06189

@@ -96,6 +96,7 @@ His background is in numerical mathematics, where he studied at the University o
 
    * |Agent-based_modeling_for|
    * |Integrating_Human_Mobility_Models|
+   * |Missing_Transmission_Chains|
 
 .. dropdown:: Links
    :animate: fade-in-slide-down
