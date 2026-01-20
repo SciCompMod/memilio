@@ -20,12 +20,12 @@
 #ifndef MEMILIO_DATA_ANALYZE_RESULT_H
 #define MEMILIO_DATA_ANALYZE_RESULT_H
 
+#include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/math/interpolation.h"
 #include "memilio/io/io.h"
 
-#include <functional>
 #include <vector>
 
 namespace mio
@@ -42,7 +42,8 @@ namespace mio
  * @return interpolated time series
  */
 template <typename FP>
-TimeSeries<FP> interpolate_simulation_result(const TimeSeries<FP>& simulation_result, const FP abs_tol = 1e-14);
+TimeSeries<FP> interpolate_simulation_result(const TimeSeries<FP>& simulation_result,
+                                             const FP abs_tol = FP{100.} * Limits<FP>::zero_tolerance());
 
 /**
  * @brief interpolate time series with freely chosen time points that lie in between the time points of the given time series up to a given tolerance.
