@@ -73,7 +73,7 @@ class rawData:
         self.covasim = np.array(
             [37809, 75152, 198949, 409061, 863334, 1762960, 3618340]) * (1/120.0)*(1/1000)
 
-        # opencovid single thread (normalized per time step)
+        # opencovid single thread (normalized per time step) (in seconds!!!!)
         self.opencovid = np.array(
             [380, 622, 1069, 2009, 3947, 8569, 16142]) * (1/120.0)
 
