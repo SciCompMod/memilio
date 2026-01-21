@@ -41,6 +41,8 @@ def plot_one_compartment_impl(result_dir, ax, compartment_index,  percentiles_in
                                   compartment_index + age * len(secir_dict)]
             ax.plot(df["Time"] + start_time, values, label=f"p{percentiles[0]} ABM",
                     color=model_colors[3], linestyle=linestyles[3], linewidth=linewidth)
+
+            print("Maximal peak size of ABM:", np.max(values))
             del percentiles[0]
         else:
             df_low = pd.read_csv(result_dir + f"ABM_p{percentiles[0]}.csv")
@@ -97,6 +99,10 @@ def plot_one_compartment_impl(result_dir, ax, compartment_index,  percentiles_in
         elif file == 1 or file == 2:
             ax.plot(dates,
                     total[:, compartment_index], label=labels[file],  color=model_colors[file], linestyle=linestyles[file], linewidth=linewidth)
+
+            if file == 2:
+                print("Maximal peak size of IDE:",
+                      np.max(total[:, compartment_index]))
 
             h5file.close()
 
@@ -246,6 +252,7 @@ def plot_model_comparison_all_scenarios_Exposed_ICU_Deaths(result_dirs_per_scena
 
     # Iterate over scenarios (columns)
     for scenario_idx in range(4):
+        print("Scenario: ", scenario_idx)
         # Iterate over compartments (rows)
         for comp_row_idx, compartment_index in enumerate(compartments_to_plot):
             ax = axs[comp_row_idx, scenario_idx]
