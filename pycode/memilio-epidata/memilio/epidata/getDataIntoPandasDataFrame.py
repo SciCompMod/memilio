@@ -84,8 +84,6 @@ class Conf:
         path = os.path.join(os.path.dirname(
             os.path.abspath(__file__)), 'download_config.conf')
 
-        # activate CoW for more predictable behaviour of pandas DataFrames
-        pd.options.mode.copy_on_write = True
         # read in config file
         # if no config file is given, use default values
         if os.path.exists(path):
