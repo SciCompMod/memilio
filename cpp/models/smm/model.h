@@ -34,7 +34,7 @@ namespace mio
 namespace smm
 {
 
-/// @brief The Index type used to define the SMM population.
+/// @brief The Index type used to define the SMM subpopulations.
 template <class Status, class Region>
 using PopulationIndex = decltype(concatenate_indices(std::declval<Region>(), std::declval<Status>()));
 
@@ -45,7 +45,7 @@ using PopulationIndex = decltype(concatenate_indices(std::declval<Region>(), std
  * (i.e., the N in S' = S * I / N) is calculated by accumulating subpopulations only over the Status. 
  * @tparam Comp An enum representing the infection states. Must also be contained in Status
  * @tparam Status A MultiIndex allowing to further stratify infection state adoptions.
- * @tparam Region A MultiIndex for "spatially" separate subpopulations, default is @ref mio::regions::Region.
+ * @tparam Region A MultiIndex for "spatially" distinct subpopulations, default is @ref mio::regions::Region.
  */
 template <typename FP, class Comp, class StatusT = Comp, class RegionT = mio::regions::Region>
 class Model : public mio::CompartmentalModel<FP, Comp, mio::Populations<FP, PopulationIndex<StatusT, RegionT>>,
