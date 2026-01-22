@@ -146,7 +146,7 @@ class Test_osecir_integration(unittest.TestCase):
                         index_compartment + self.nb_comp * index_agegroup]
 
                 self.assertAlmostEqual(
-                    timestep[index_compartment + 1],
+                    timestep.iloc[index_compartment + 1],
                     dummy, delta=1e-10)
 
 
