@@ -423,8 +423,8 @@ if __name__ == '__main__':
     # plot_model_comparison_all_compartments(
     #     result_dir, percentiles, num_age_groups, plot_init, plot_dir)
 
-    scenario_titles = ["S1.1, One location\n" + r"$R_{eff} = 2.08$", "S1.2, Multiple locations \n" + r"$R_{eff} = 2.63$",
-                       "S2.1, One location \n" + r"$R_{eff}=1.17$", "S2.2, Multiple locations \n" + r"$R_{eff}=2.36$"]
+    scenario_titles = ["S1.1, One location\n" + r"$R_\text{eff}(20)=2.08$", "S1.2, Multiple locations \n" + r"$R_\text{eff}(20)=2.63$",
+                       "S2.1, One location \n" + r"$R_\text{eff}(20)=1.17$", "S2.2, Multiple locations \n" + r"$R_\text{eff}(20)=2.36$"]
 
     result_dirs_per_scenario = [f"{root_dir}/{num_runs}_runs/exponential/one_location/{seed}/",
                                 f"{root_dir}/{num_runs}_runs/exponential/multiple_locations/{seed}/",
