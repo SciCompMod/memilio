@@ -24,8 +24,6 @@
 #include "smm/model.h"
 #include "smm/parameters.h"
 #include "memilio/utils/time_series.h"
-#include "memilio/timer/auto_timer.h"
-#include <immintrin.h>
 
 namespace mio
 {
@@ -82,8 +80,6 @@ public:
      */
     Eigen::Ref<Eigen::VectorX<FP>> advance(FP tmax)
     {
-        mio::timing::AutoTimer<"Advance"> timer;
-
         update_current_rates_and_waiting_times();
         size_t next_event = determine_next_event(); // index of the next event
         FP current_time   = m_result.get_last_time();
@@ -202,77 +198,6 @@ private:
                                      : std::numeric_limits<FP>::max();
             i++;
         }
-        compute_conditional_div_unrolled(m_current_rates, m_tp_next_event, m_internal_time, m_waiting_times);
-    }
-
-    void compute_conditional_div_unrolled(const std::vector<double>& a, const std::vector<double>& b,
-                                          const std::vector<double>& c, std::vector<double>& result)
-    {
-        const size_t n = a.size();
-
-        const double* pa = a.data();
-        const double* pb = b.data();
-        const double* pc = c.data();
-        double* pr       = result.data();
-
-        const __m256d max_val = _mm256_set1_pd(std::numeric_limits<double>::max());
-        const __m256d zero    = _mm256_setzero_pd();
-
-        size_t i = 0;
-
-        // Process 16 doubles per iteration (4 AVX registers × 4 doubles)
-        for (; i + 16 <= n; i += 16) {
-            __m256d va0 = _mm256_loadu_pd(pa + i);
-            __m256d va1 = _mm256_loadu_pd(pa + i + 4);
-            __m256d va2 = _mm256_loadu_pd(pa + i + 8);
-            __m256d va3 = _mm256_loadu_pd(pa + i + 12);
-
-            __m256d vb0 = _mm256_loadu_pd(pb + i);
-            __m256d vb1 = _mm256_loadu_pd(pb + i + 4);
-            __m256d vb2 = _mm256_loadu_pd(pb + i + 8);
-            __m256d vb3 = _mm256_loadu_pd(pb + i + 12);
-
-            __m256d vc0 = _mm256_loadu_pd(pc + i);
-            __m256d vc1 = _mm256_loadu_pd(pc + i + 4);
-            __m256d vc2 = _mm256_loadu_pd(pc + i + 8);
-            __m256d vc3 = _mm256_loadu_pd(pc + i + 12);
-
-            __m256d num0 = _mm256_sub_pd(vb0, vc0);
-            __m256d num1 = _mm256_sub_pd(vb1, vc1);
-            __m256d num2 = _mm256_sub_pd(vb2, vc2);
-            __m256d num3 = _mm256_sub_pd(vb3, vc3);
-
-            __m256d div0 = _mm256_div_pd(num0, va0);
-            __m256d div1 = _mm256_div_pd(num1, va1);
-            __m256d div2 = _mm256_div_pd(num2, va2);
-            __m256d div3 = _mm256_div_pd(num3, va3);
-
-            __m256d mask0 = _mm256_cmp_pd(va0, zero, _CMP_GT_OQ);
-            __m256d mask1 = _mm256_cmp_pd(va1, zero, _CMP_GT_OQ);
-            __m256d mask2 = _mm256_cmp_pd(va2, zero, _CMP_GT_OQ);
-            __m256d mask3 = _mm256_cmp_pd(va3, zero, _CMP_GT_OQ);
-
-            _mm256_storeu_pd(pr + i, _mm256_blendv_pd(max_val, div0, mask0));
-            _mm256_storeu_pd(pr + i + 4, _mm256_blendv_pd(max_val, div1, mask1));
-            _mm256_storeu_pd(pr + i + 8, _mm256_blendv_pd(max_val, div2, mask2));
-            _mm256_storeu_pd(pr + i + 12, _mm256_blendv_pd(max_val, div3, mask3));
-        }
-
-        // Handle remainder with single AVX iterations
-        for (; i + 4 <= n; i += 4) {
-            __m256d va   = _mm256_loadu_pd(pa + i);
-            __m256d vb   = _mm256_loadu_pd(pb + i);
-            __m256d vc   = _mm256_loadu_pd(pc + i);
-            __m256d num  = _mm256_sub_pd(vb, vc);
-            __m256d div  = _mm256_div_pd(num, va);
-            __m256d mask = _mm256_cmp_pd(va, zero, _CMP_GT_OQ);
-            _mm256_storeu_pd(pr + i, _mm256_blendv_pd(max_val, div, mask));
-        }
-
-        // Scalar tail
-        for (; i < n; ++i) {
-            pr[i] = (pa[i] > 0) ? (pb[i] - pc[i]) / pa[i] : std::numeric_limits<double>::max();
-        }
     }
 
     /**
@@ -280,7 +205,6 @@ private:
      */
     inline size_t determine_next_event()
     {
-        mio::timing::AutoTimer<"DetermineNextEvent"> timer;
         return std::distance(m_waiting_times.begin(), std::min_element(m_waiting_times.begin(), m_waiting_times.end()));
     }
 

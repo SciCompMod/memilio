@@ -30,7 +30,6 @@
 #include <utility>
 #include "memilio/timer/auto_timer.h"
 
-
 namespace mio
 {
 namespace smm
@@ -75,8 +74,6 @@ public:
      */
     FP evaluate(const AdoptionRate<FP, Status, Region>& rate, const Eigen::VectorX<FP>& x) const
     {
-        mio::timing::AutoTimer<"AdoptionRateEvaluate"> timer;
-
         const auto& pop   = this->populations;
         const auto source = pop.get_flat_index({rate.region, rate.from});
         // determine order and calculate rate
@@ -106,8 +103,6 @@ public:
      */
     FP evaluate(const TransitionRate<FP, Status, Region>& rate, const Eigen::VectorX<FP>& x) const
     {
-        mio::timing::AutoTimer<"TransitionRateEvaluate"> timer;
-
         const auto source = this->populations.get_flat_index({rate.from, rate.status});
         return rate.factor * x[source];
     }
