@@ -51,7 +51,7 @@ struct AdoptionRate {
     Status to; // j
     Region region; // k
     FP factor; // gammahat_{ij}^k
-    std::vector<Influence<FP, Status>> influences; // influences[tau] = ( Psi_{i,j,tau} , gamma_{i,j,tau} )};
+    std::vector<Influence<FP, Status>> influences; // influences[tau] = ( Psi_{i,j,tau} , gamma_{i,j,tau} )
 };
 
 } // namespace mio
