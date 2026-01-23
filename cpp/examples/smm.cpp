@@ -50,7 +50,9 @@ int main()
     using mio::regions::Region;
     using enum InfectionState;
 
-    //Example how to run the stochastic metapopulation models with four regions
+    /* Example how to run the stochastic metapopulation models with four regions. Within each region we differentiate by
+       age groups, species and infection states. The infection states are S, E, C, I, R, D. For the number of age groups
+       and species we choose: */
     const size_t num_regions    = 4;
     const size_t num_age_groups = 1;
     const size_t num_species    = 1;
@@ -72,9 +74,8 @@ int main()
     using AR = mio::smm::AdoptionRates<ScalarType, Status, Region>;
     using TR = mio::smm::TransitionRates<ScalarType, Status, Region>;
 
-    //Set infection state adoption and spatial transition rates
+    //Set infection state adoption rates. Adoptions only happen within a region.
     AR::Type adoption_rates;
-    TR::Type transition_rates;
     for (size_t r = 0; r < num_regions; ++r) {
         adoption_rates.push_back({{S, Age(0), Species(0)},
                                   {E, Age(0), Species(0)},
@@ -88,7 +89,8 @@ int main()
         adoption_rates.push_back({{I, Age(0), Species(0)}, {D, Age(0), Species(0)}, Region(r), 0.01 / 5., {}});
     }
 
-    //Agents in infection state D do not transition
+    //Set transition rates between regions. Agents in infection state D do not transition.
+    TR::Type transition_rates;
     for (size_t s = 0; s < static_cast<size_t>(D); ++s) {
         for (size_t i = 0; i < num_regions; ++i) {
             for (size_t j = 0; j < num_regions; ++j)
