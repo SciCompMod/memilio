@@ -74,7 +74,7 @@ public:
      * @param[in] x The current state of the model.
      * @return Current value of the adoption rate.
      */
-    FP evaluate(const AdoptionRate<FP, Status, Region>& rate, const Eigen::VectorXd& x) const
+    FP evaluate(const AdoptionRate<FP, Status, Region>& rate, const Eigen::VectorX<FP>& x) const
     {
         const auto& pop   = this->populations;
         const auto source = pop.get_flat_index({rate.region, rate.from});
@@ -103,7 +103,7 @@ public:
      * @param[in] x The current state of the model.
      * @return Current value of the transition rate.
      */
-    FP evaluate(const TransitionRate<FP, Status, Region>& rate, const Eigen::VectorXd& x) const
+    FP evaluate(const TransitionRate<FP, Status, Region>& rate, const Eigen::VectorX<FP>& x) const
     {
         const auto source = this->populations.get_flat_index({rate.from, rate.status});
         return rate.factor * x[source];

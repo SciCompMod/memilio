@@ -182,8 +182,8 @@ private:
      */
     inline void update_current_rates_and_waiting_times()
     {
-        size_t i                           = 0; // shared index for iterating both rates
-        const Eigen::VectorXd& last_values = std::as_const(m_result).get_last_value();
+        size_t i               = 0; // shared index for iterating both rates
+        const auto last_values = m_result.get_last_value();
         for (const auto& rate : adoption_rates()) {
             m_current_rates[i] = m_model->evaluate(rate, last_values);
             m_waiting_times[i] = (m_current_rates[i] > 0)
