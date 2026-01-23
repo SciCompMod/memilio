@@ -377,8 +377,8 @@ int main(int argc, char** argv)
     std::string result_dir = data_dir;
     std::string temp_dir   = data_dir;
     // County ID.
-    std::vector<int> lha_ids = {};
-    mio::Date start_date     = mio::Date(2021, 2, 1);
+    std::vector<int> lha_ids = {5314};
+    mio::Date start_date     = mio::Date(2020, 1, 20);
     int num_days_sim         = 30;
     int num_simulation_runs  = 3;
 

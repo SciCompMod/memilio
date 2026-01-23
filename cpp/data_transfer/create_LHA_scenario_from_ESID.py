@@ -19,14 +19,6 @@ class LHASimulation:
         if not os.path.exists(self.results_dir):
             os.makedirs(self.results_dir)
 
-    def preprocess_lha_data(self, lha_data_filename):
-        file = self.data_dir + f"/Germany/pydata/{lha_data_filename}.csv"
-        df = pd.read_csv(file, sep=",")
-        # TODO: Adjust this to new dataset structure, probably first 5 columns that need to be deleted.
-        # Drop first five columns as they contain informaion about the data set and are not needed in for the initialization of the ODE model
-        df.drop(df.columns[[0, 1, 2, 3, 4]], axis=1)
-        df.to_csv(file, sep=";")
-
     def _process_scenario(self, scenario, num_runs):
         scenario_data_run = None
         print("Processing scenario: ", scenario['name'])
@@ -51,7 +43,7 @@ class LHASimulation:
 
             scenario_id = scenario["id"]
 
-            # Get scenario data and list of parameters from scenario information and stroe this in temp_dir.
+            # Get scenario data and list of parameters from scenario information and store this in temp_dir.
             # We can access these files during the simulation, afterwards they will be deleted.
             # Then we get the scenario data and save it as json.
             response_scenario = requests.get(
@@ -66,8 +58,11 @@ class LHASimulation:
                 json.dump(response_params.json(), f, ensure_ascii=False)
 
             # Get start_date of scenario
+            # For now, this is hardcoded.
             start_date = datetime.datetime.strptime(
-                scenario['startDate'], '%Y-%m-%d').date()
+                "2020-01-20", '%Y-%m-%d').date()
+            # start_date = datetime.datetime.strptime(
+            #     scenario['startDate'], '%Y-%m-%d').date()
 
             num_days_sim = (datetime.datetime.strptime(
                 scenario['endDate'],
@@ -83,18 +78,9 @@ class LHASimulation:
             for lha_id in lha_ids:
                 print(f"Computing scenario for LHA {lha_id}")
 
-                # Check if data is available for considered LHA.
-
-                # If yes, preprocess dataset and give LHA id to run function.
-                # TODO: Check if LHA data is available and extract to data_dir.
                 # TODO: Get dataset id and write into description
-                filename = f"lha_{lha_id}_observations_{start_date.year:04d}-{start_date.month:02d}-{start_date.day:02d}"
-                # Preprocess LHA data, i.e. remove columns that describe dataset and do not contain data from LHA
-                # TODO: This function needs to be adapted to final dataset structure.
-                # preprocess_lha_data(data_dir, filename)
 
                 # Run scenario
-
                 result_dir_lha = f"{self.results_dir}/lha_{lha_id}"
                 year = start_date.year
                 month = start_date.month
@@ -113,6 +99,12 @@ class LHASimulation:
                 print(run.stdout)
                 print("STDERR:")
                 print(run.stderr)
+
+                out_path = os.path.join(result_dir_lha, "simulate_stdout.txt")
+
+                os.makedirs(result_dir_lha, exist_ok=True)
+                with open(out_path, "w", encoding="utf-8") as f:
+                    f.write(run.stdout)
 
                 temp_dir.cleanup()
 

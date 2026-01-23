@@ -319,7 +319,7 @@ def post_to_db_nodelist(headers):
         print(post_response.status_code)
 
 
-def post_to_db_scenarios(headers, start_date_scenarios, days_simulated_scenarios=30, days_computed_casedata=10, modelparameters_entry={}, post=True):
+def post_to_db_scenarios(headers, start_date_scenarios, start_date_lha_scenario, days_simulated_scenarios=30, days_computed_casedata=10, modelparameters_entry={}, post=True):
     # Define start and end date for casedata scenario. Here, we assume that last day of the casedata scenario
     # corresponds to the first day of the simulated scenarios.
     start_date_casedata = (datetime.datetime.strptime(start_date_scenarios, "%Y-%m-%d") -
@@ -329,6 +329,9 @@ def post_to_db_scenarios(headers, start_date_scenarios, days_simulated_scenarios
     start_date_simulation = start_date_scenarios
     end_date_simulation = (datetime.datetime.strptime(start_date_scenarios, "%Y-%m-%d") +
                            datetime.timedelta(days=days_simulated_scenarios)).strftime("%Y-%m-%d")
+    # Define end date for LHA scenario
+    end_date_lha_scenario = (datetime.datetime.strptime(start_date_lha_scenario, "%Y-%m-%d") +
+                             datetime.timedelta(days=days_simulated_scenarios)).strftime("%Y-%m-%d")
 
     # Get ids of model, nodelist and interventions.
     get_models = requests.get(url + "models/", headers=headers)
@@ -537,8 +540,8 @@ def post_to_db_scenarios(headers, start_date_scenarios, days_simulated_scenarios
     scenario_data.append({
         "name": f"Scenario1_LHA",
         "description": "",
-        "startDate": f"{start_date_simulation}",
-        "endDate": f"{end_date_simulation}",
+        "startDate": f"{start_date_lha_scenario}",
+        "endDate": f"{end_date_lha_scenario}",
         "modelId": model_id[0],
         "modelParameters": modelparameters_entry,
         "nodeListId": nodelist_id[0],
@@ -570,7 +573,7 @@ def append_parameter_for_agegroup_total(param_dict):
             np.dot(param_dict[key][1], share_of_agegroup))
 
 
-def post_to_db(headers, start_date_scenarios, days_simulated_scenarios, days_computed_casedata):
+def post_to_db(headers, start_date_scenarios, start_date_lha_scenario,  days_simulated_scenarios, days_computed_casedata):
     # Define all necessary data and post.
     post_to_db_compartments(headers)
     post_to_db_groups(headers)
@@ -579,7 +582,7 @@ def post_to_db(headers, start_date_scenarios, days_simulated_scenarios, days_com
     post_to_db_model(headers)
     post_to_db_nodes(headers)
     post_to_db_nodelist(headers)
-    post_to_db_scenarios(headers, start_date_scenarios,
+    post_to_db_scenarios(headers, start_date_scenarios, start_date_lha_scenario,
                          days_simulated_scenarios, days_computed_casedata)
 
 
@@ -588,10 +591,10 @@ def main():
     For the used parameters, see the functions above. """
 
     # Information needed for authentication.
-    service_realm = "lha-a"
-    client_id = "loki-front-dev"
-    username = "simulation@ginger.example"
-    password = "12345"
+    service_realm = ""
+    client_id = ""
+    username = ""
+    password = ""
 
     # Request access token from idp.
     req_auth = requests.post(f'https://lokiam.de/realms/{service_realm}/protocol/openid-connect/token', data={
@@ -612,9 +615,10 @@ def main():
 
     print("Fill db.")
     start_date_scenarios = "2025-05-25"
+    start_date_lha_scenario = "2020-01-20"
     days_simulated_scenarios = 30
     days_computed_casedata = 30
-    post_to_db(headers, start_date_scenarios, days_simulated_scenarios,
+    post_to_db(headers, start_date_scenarios, start_date_lha_scenario, days_simulated_scenarios,
                days_computed_casedata)
 
 

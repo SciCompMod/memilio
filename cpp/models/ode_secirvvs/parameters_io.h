@@ -902,10 +902,10 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
 {
     // Open file.
     std::string filename =
-        fmt::format("lha_{}_observations_{}-{}-{}.csv", std::to_string(lha_id), std::to_string(current_date.year),
-                    std::to_string(current_date.month), std::to_string(current_date.day));
-    std::cout << filename << std::endl;
-    const fs::path lha_data_path = path_join(data_dir, "Germany/pydata", filename);
+        fmt::format("lha_observations_{}-{}-{}.csv", std::to_string(current_date.year),
+                    fmt::format("{:02}", current_date.month), fmt::format("{:02}", current_date.day));
+    const fs::path lha_data_path = path_join(data_dir, fmt::format("Germany/pydata/{}", lha_id), filename);
+    std::cout << "LHA data path: " << lha_data_path << std::endl;
 
     if (!fs::exists(lha_data_path)) {
         mio::log_error("Cannot read in data. File does not exist.");
@@ -1567,13 +1567,13 @@ IOResult<void> read_input_data_germany(std::vector<Model>& model, Date date,
                                        const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
                                        const std::string& pydata_dir, int num_days)
 {
-    BOOST_OUTCOME_TRY(
-        details::set_vaccination_data(model, path_join(pydata_dir, "vacc_germany_ageinf_ma7.json"), date, {0}, num_days));
+    BOOST_OUTCOME_TRY(details::set_vaccination_data(model, path_join(pydata_dir, "vacc_germany_ageinf_ma7.json"), date,
+                                                    {0}, num_days));
 
     // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.
     // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
-    BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(pydata_dir, "germany_divi_ma7.json"), {0}, date,
-                                             scaling_factor_icu));
+    BOOST_OUTCOME_TRY(
+        details::set_divi_data(model, path_join(pydata_dir, "germany_divi_ma7.json"), {0}, date, scaling_factor_icu));
 
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(pydata_dir, "cases_all_age_ma7.json"), {0},
                                                         date, scaling_factor_inf));
@@ -1677,6 +1677,7 @@ template <typename FP>
 IOResult<void> set_lha_data(const Parameters<FP>& params, mio::Graph<Model<FP>, MobilityParameters<FP>>& graph_model,
                             const std::string data_dir, const Date current_date, std::vector<int> lha_ids)
 {
+    std::cout << "Setting LHA data  \n";
     using Model       = Model<FP>;
     using Populations = mio::Populations<FP, AgeGroup, InfectionState>;
 
@@ -1697,7 +1698,7 @@ IOResult<void> set_lha_data(const Parameters<FP>& params, mio::Graph<Model<FP>, 
 
     // Iterate over all LHAs with given data set.
     for (size_t lha_counter = 0; lha_counter < lha_ids.size(); lha_counter++) {
-
+        std::cout << "LHA id: " << lha_ids[lha_counter] << std::endl;
         // Get index of lha_id.
         auto it = std::find(node_ids.begin(), node_ids.end(), lha_ids[lha_counter]);
         if (it == node_ids.end()) {
