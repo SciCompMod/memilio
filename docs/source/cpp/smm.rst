@@ -217,7 +217,7 @@ If one wants to interpolate the aggregated results to a ``mio::TimeSeries`` cont
 Demographic Stratification
 --------------------------
 
-It is possible to add multiple indices to the ``Status`` to differentiate multiple groups on the same region. For example this
+It is possible to add multiple indices to the ``Status`` to differentiate multiple groups in the same region. For example this
 could represent the human and the mosquito populations in a specific region. To use this feature, one first of all has to 
 create a new index:
 
@@ -248,7 +248,7 @@ We can define a model:
    using Model = mio::smm::Model<ScalarType, InfectionState, Status, Region>
    Model model(Status{Count, Species(num_species)}, Region(num_regions));
 
-Now, for accessing the population, all indexes need to be given:
+Now, for accessing the population, all indices need to be given:
 
 -- code-block:: cpp
 
@@ -262,7 +262,7 @@ Now, for accessing the population, all indexes need to be given:
 Examples
 --------
 
-A full example with ``Status`` distributed according to ``InfectionState``, ``Age`` and ``Species`` can be found at 
+A full example with ``Status`` including ``InfectionState``, ``Age`` and ``Species`` can be found at 
 `examples/smm.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/smm.cpp>`_
 
 

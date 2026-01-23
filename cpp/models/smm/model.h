@@ -36,7 +36,7 @@ namespace mio
 namespace smm
 {
 
-/// @brief The Index type used to define the SMM population.
+/// @brief The Index type used to define the SMM subpopulations.
 template <class Status, class Region>
 using PopulationIndex = decltype(concatenate_indices(std::declval<Region>(), std::declval<Status>()));
 
@@ -44,23 +44,23 @@ using PopulationIndex = decltype(concatenate_indices(std::declval<Region>(), std
  * @brief Stochastic Metapopulation Model.
  * The stratification of the population of this model is split between "Status" and "Region". This split is mostly
  * arbitrary, with the important distinction, that for second order rates the reference population
- * (i.e., the N in S' = S * I / N) is calculated by accumulating subpopulations only over the Status. 
+ * (i.e., the N in S' = S * I / N) is calculated by accumulating subpopulations only over the Status, i.e. individuals 
+ * only interact with other individuals within the same Region.
+ * Hence, the assumption of homogeneous mixing of the population only holds across Status groups within one Region. 
+ * Across Regions, no direct interaction is possible (only indirectly, by first transitioning into another Region)
  * @tparam Comp An enum representing the infection states. Must also be contained in Status
  * @tparam Status A MultiIndex allowing to further stratify infection state adoptions.
- * @tparam Region A MultiIndex for "spatially" separate subpopulations, default is @ref mio::regions::Region.
+ * @tparam Region A MultiIndex for "spatially" distinct subpopulations, default is @ref mio::regions::Region.
  */
-template <typename FP, class Comp, class StatusT = Comp, class RegionT = mio::regions::Region>
-class Model : public mio::CompartmentalModel<FP, Comp, mio::Populations<FP, PopulationIndex<StatusT, RegionT>>,
-                                             ParametersBase<FP, StatusT, RegionT>>
+template <typename FP, class Comp, class Status = Comp, class Region = mio::regions::Region>
+class Model : public mio::CompartmentalModel<FP, Comp, mio::Populations<FP, PopulationIndex<Status, Region>>,
+                                             ParametersBase<FP, Status, Region>>
 {
-    using Base = mio::CompartmentalModel<FP, Comp, mio::Populations<FP, PopulationIndex<StatusT, RegionT>>,
-                                         ParametersBase<FP, StatusT, RegionT>>;
+    using Base = mio::CompartmentalModel<FP, Comp, mio::Populations<FP, PopulationIndex<Status, Region>>,
+                                         ParametersBase<FP, Status, Region>>;
     static_assert(!Base::Populations::Index::has_duplicates, "Do not use the same Index tag multiple times!");
 
 public:
-    using Status = StatusT;
-    using Region = RegionT;
-
     Model(Status status_dimensions, Region region_dimensions)
         : Base(typename Base::Populations(concatenate_indices(region_dimensions, status_dimensions)),
                typename Base::ParameterSet())
@@ -73,7 +73,7 @@ public:
      * @param[in] x The current state of the model.
      * @return Current value of the adoption rate.
      */
-    FP evaluate(const AdoptionRate<FP, Status, Region>& rate, const Eigen::VectorXd& x) const
+    FP evaluate(const AdoptionRate<FP, Status, Region>& rate, const Eigen::VectorX<FP>& x) const
     {
         mio::timing::AutoTimer<"AdoptionRateEvaluate"> timer;
 
@@ -104,7 +104,7 @@ public:
      * @param[in] x The current state of the model.
      * @return Current value of the transition rate.
      */
-    FP evaluate(const TransitionRate<FP, Status, Region>& rate, const Eigen::VectorXd& x) const
+    FP evaluate(const TransitionRate<FP, Status, Region>& rate, const Eigen::VectorX<FP>& x) const
     {
         mio::timing::AutoTimer<"TransitionRateEvaluate"> timer;
 
