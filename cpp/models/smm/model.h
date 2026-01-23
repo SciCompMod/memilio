@@ -42,7 +42,10 @@ using PopulationIndex = decltype(concatenate_indices(std::declval<Region>(), std
  * @brief Stochastic Metapopulation Model.
  * The stratification of the population of this model is split between "Status" and "Region". This split is mostly
  * arbitrary, with the important distinction, that for second order rates the reference population
- * (i.e., the N in S' = S * I / N) is calculated by accumulating subpopulations only over the Status. 
+ * (i.e., the N in S' = S * I / N) is calculated by accumulating subpopulations only over the Status, i.e. individuals 
+ * only interact with other individuals within the same Region.
+ * Hence, the assumption of homogeneous mixing of the population only holds across Status groups within one Region. 
+ * Across Regions, no direct interaction is possible (only indirectly, by first transitioning into another Region)
  * @tparam Comp An enum representing the infection states. Must also be contained in Status
  * @tparam Status A MultiIndex allowing to further stratify infection state adoptions.
  * @tparam Region A MultiIndex for "spatially" distinct subpopulations, default is @ref mio::regions::Region.
