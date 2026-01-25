@@ -116,6 +116,16 @@ Infection& Person::get_infection()
     return m_infections.back();
 }
 
+std::vector<Infection>& Person::get_infection_vector()
+{
+    return m_infections;
+}
+
+const std::vector<Infection>& Person::get_infection_vector() const
+{
+    return m_infections;
+}
+
 void Person::set_assigned_location(LocationType type, LocationId id, int model_id = 0)
 {
     m_assigned_locations[static_cast<uint32_t>(type)]          = id;
@@ -250,6 +260,7 @@ ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const 
     return params.get<InfectionProtectionFactor>()[{latest_protection.type, m_age, virus}](
         t.days() - latest_protection.time.days());
 }
+
 
 void Person::set_mask(MaskType type, TimePoint t)
 {

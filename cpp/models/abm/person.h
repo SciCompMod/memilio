@@ -77,6 +77,8 @@ public:
      */
     Infection& get_infection();
     const Infection& get_infection() const;
+    std::vector<Infection>& get_infection_vector();
+    const std::vector<Infection>& get_infection_vector() const;
 
     /**
      * @brief Get all vaccinations of the Person.

@@ -27,11 +27,13 @@
 
 //Includes from MEmilio
 #include "abm/simulation.h"
+#include "forward_pass.h" 
 
 #include "pybind11/attr.h"
 #include "pybind11/cast.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/operators.h"
+#include <pybind11/eigen.h>
 #include <cstdint>
 #include <type_traits>
 
@@ -234,6 +236,11 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_property_readonly("model", py::overload_cast<>(&mio::abm::Simulation<>::get_model));
 
     m.attr("__version__") = "dev";
+
+    m.def("forward_pass",
+      &forward_pass,
+      py::arg("beta"),
+      "Run the ABM forward pass and return a 10-bin Eigen vector.");
 }
 
 PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::Model>().get_locations()))

@@ -1,7 +1,7 @@
 /*
 * Copyright (C) 2020-2025 MEmilio
 *
-* Authors: Khoa Nguyen
+* Authors: Nils Wassmuth
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -21,11 +21,9 @@
 #include "abm/lockdown_rules.h"
 #include "abm/model.h"
 #include "abm/common_abm_loggers.h"
+#include "forward_pass.h"
 
-#include <fstream>
-#include <chrono>
-
-int main()
+Eigen::MatrixXd forward_pass(ScalarType beta)
 {
     auto start = std::chrono::high_resolution_clock::now();
     // This is a minimal example with children and adults < 60 year old.
@@ -98,7 +96,7 @@ int main()
     model.get_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
 
     // Increase aerosol transmission for all locations
-    model.parameters.get<mio::abm::AerosolTransmissionRates>() = 10.0;
+    model.parameters.get<mio::abm::AerosolTransmissionRates>() = 1 / beta;
     // Increase contact rate for all people between 15 and 34 (i.e. people meet more often in the same location)
     model.get_location(work)
         .get_infection_parameters()
@@ -118,9 +116,6 @@ int main()
 
     // Assign infection state to each person.
     // The infection states are chosen randomly with the following distribution
-    //std::vector<ScalarType> infection_distribution{0.5, 0.3, 0.05, 0.05, 0.05, 0.05, 0.0, 0.0};
-
-
     std::vector<ScalarType> infection_distribution{0.9, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     
     for (auto& person : model.get_persons()) {
@@ -161,29 +156,42 @@ int main()
     auto sim  = mio::abm::Simulation(t0, std::move(model));
 
     // Create a history object to store the time series of the infection states.
-    //mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
-    //    Eigen::Index(mio::abm::InfectionState::Count)};
     mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogViralLoad> historyTimeSeries{
         Eigen::Index(10)};
-    auto start2 = std::chrono::high_resolution_clock::now();
     // Run the simulation until tmax with the history object.
     sim.advance(tmax, historyTimeSeries);
-
-
+        
+    const auto& log =std::get<0>(historyTimeSeries.get_log());
+    size_t num_points_log = static_cast<size_t>(log.get_num_time_points());
+    size_t num_elements_log = static_cast<size_t>(log.get_num_elements());
+    Eigen::MatrixXd result(num_points_log, num_elements_log + 1); 
     
-    // The results are written into the file "abm_minimal.txt" as a table with 9 columns.
-    // The first column is Time. The other columns correspond to the number of people with a certain infection state at this Time:
-    // Time = Time in days, S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
-    // I_Crit = InfectedCritical, R = Recovered, D = Dead
-    std::ofstream outfile("abm_minimal.txt");
-    std::get<0>(historyTimeSeries.get_log())
-        .print_table(outfile, {"S"/*, "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"*/}, 7, 4);
-    std::cout << "Results written to abm_minimal.txt" << std::endl;
-    
-    auto end = std::chrono::high_resolution_clock::now(); 
-    std::chrono::duration<double> diff = end - start; 
-    std::chrono::duration<double> diff2 = end - start2; 
-    std::cout << "Time: " << diff.count() << " s\n";
-    std::cout << "Time: " << diff2.count() << " s\n";
-    return 0;
+    for (size_t i = 0; i < num_points_log; i++) { 
+        //auto time = log.get_time(i);
+        //auto res_i = log.get_value(i);
+        //result.row(i) = res_i.transpose();
+
+        result(i, 0) = log.get_time(i); 
+        result.row(i).segment(1, num_elements_log) = log.get_value(i).transpose();
+    }
+    /*
+    constexpr int num_bins = 10;
+    Eigen::VectorX<ScalarType> sum =
+        Eigen::VectorX<ScalarType>::Zero(num_bins);
+    auto curr_time = sim.get_time();
+    PRAGMA_OMP(for)
+    for (auto& person : sim.get_model().get_persons()) 
+    {
+        const auto& infection_vector = person.get_infection_vector();
+        if (!infection_vector.empty())
+        {   
+            const auto& infection = infection_vector[0]; 
+            ScalarType vl = infection.get_viral_load(curr_time);
+            int bin = static_cast<int>(vl);
+            bin = std::clamp(bin, 0, num_bins-1);
+            sum[bin] += ScalarType(1);
+        }            
+    }
+    */
+    return result;
 }

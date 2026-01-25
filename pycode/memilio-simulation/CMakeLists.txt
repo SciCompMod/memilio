@@ -91,8 +91,9 @@ endfunction()
 # build python extensions
 add_pymio_module(_simulation_abm
     LINKED_LIBRARIES memilio abm
-    SOURCES memilio/simulation/bindings/models/abm.cpp
+    SOURCES memilio/simulation/bindings/models/abm.cpp  ${CMAKE_CURRENT_SOURCE_DIR}/../../cpp/examples/forward_pass.cpp
 )
+target_include_directories(_simulation_abm PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../cpp/examples)
 
 add_pymio_module(_simulation
     LINKED_LIBRARIES memilio
@@ -140,6 +141,10 @@ add_pymio_module(_simulation_ssir
 add_pymio_module(_simulation_ssirs
     LINKED_LIBRARIES memilio sde_sirs
     SOURCES memilio/simulation/bindings/models/ssirs.cpp
+)
+add_pymio_module(_simulation_sseirvv
+    LINKED_LIBRARIES memilio sde_seirvv
+    SOURCES memilio/simulation/bindings/models/sseirvv.cpp
 )
 add_pymio_module(_simulation_omseirs4
     LINKED_LIBRARIES memilio ode_mseirs4

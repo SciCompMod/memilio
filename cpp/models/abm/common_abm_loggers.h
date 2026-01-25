@@ -189,6 +189,40 @@ struct LogInfectionState : mio::LogAlways {
     }
 };
 
+
+/**
+* @brief Logger to log the TimeSeries of the number of Person%s with viral load > 1.
+*/
+struct LogViralLoad : mio::LogAlways {
+    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorX<ScalarType>>;
+    /** 
+     * @brief Log the TimeSeries of the number of Person%s in an #InfectionState.
+     * @param[in] sim The simulation of the abm.
+     * @return A pair of the TimePoint and the TimeSeries of the number of Person%s with viral load > 1.
+     */
+    static Type log(const mio::abm::Simulation<>& sim)
+    {
+        constexpr int num_bins = 10;
+        Eigen::VectorX<ScalarType> sum =
+            Eigen::VectorX<ScalarType>::Zero(num_bins);
+        auto curr_time = sim.get_time();
+        PRAGMA_OMP(for)
+        for (auto& person : sim.get_model().get_persons()) 
+        {
+            const auto& infection_vector = person.get_infection_vector();
+            if (!infection_vector.empty())
+            {   
+                const auto& infection = infection_vector[0]; 
+                ScalarType vl = infection.get_viral_load(curr_time);
+                int bin = static_cast<int>(vl);
+                bin = std::clamp(bin, 0, num_bins-1);
+                sum[bin] += ScalarType(1);
+            }            
+        }
+        return std::make_pair(curr_time, sum);
+    }
+};
+
 /**
 * @brief This is like the DataWriterToMemory, but it only logs time series data.
 * @tparam Loggers The loggers that are used to log data. The loggers must return a touple with a TimePoint and a value.

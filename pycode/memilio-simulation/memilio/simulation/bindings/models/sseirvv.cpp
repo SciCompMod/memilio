@@ -27,8 +27,8 @@
 #include "epidemiology/populations.h"
 
 //Includes from MEmilio
-#include "sde_sirs/model.h"
-#include "sde_sirs/infection_state.h"
+#include "sde_seirvv/model.h"
+#include "sde_seirvv/infection_state.h"
 #include "memilio/compartments/stochastic_simulation.h"
 #include "memilio/compartments/stochastic_model.h"
 #include "memilio/data/analyze_result.h"
@@ -43,14 +43,14 @@ namespace pymio
 {
 //specialization of pretty_name
 template <>
-inline std::string pretty_name<mio::ssirs::InfectionState>()
+inline std::string pretty_name<mio::sseirvv::InfectionState>()
 {
     return "InfectionState";
 }
 
 } // namespace pymio
 
-PYBIND11_MODULE(_simulation_ssirs, m)
+PYBIND11_MODULE(_simulation_sseirvv, m)
 {
     m.def("interpolate_simulation_result",
           static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
@@ -59,41 +59,47 @@ PYBIND11_MODULE(_simulation_ssirs, m)
 
     m.def("interpolate_simulation_result",
           static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const std::vector<double>&)>(
-            
               &mio::interpolate_simulation_result),
           py::arg("ts"), py::arg("interpolation_times"));
 
     m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<double>>);
 
-    pymio::iterable_enum<mio::ssirs::InfectionState>(m, "InfectionState")
-        .value("Susceptible", mio::ssirs::InfectionState::Susceptible)
-        .value("Infected", mio::ssirs::InfectionState::Infected)
-        .value("Recovered", mio::ssirs::InfectionState::Recovered);
+    pymio::iterable_enum<mio::sseirvv::InfectionState>(m, "InfectionState")
+        .value("Susceptible", mio::sseirvv::InfectionState::Susceptible)
+        .value("ExposedV1", mio::sseirvv::InfectionState::ExposedV1)
+        .value("InfectedV1", mio::sseirvv::InfectionState::InfectedV1)
+        .value("RecoveredV1", mio::sseirvv::InfectionState::RecoveredV1)
+        .value("ExposedV2", mio::sseirvv::InfectionState::ExposedV2)
+        .value("InfectedV2", mio::sseirvv::InfectionState::InfectedV2)
+        .value("RecoveredV2", mio::sseirvv::InfectionState::RecoveredV2)
+        .value("ExposedV1V2", mio::sseirvv::InfectionState::ExposedV1V2)
+        .value("InfectedV1V2", mio::sseirvv::InfectionState::InfectedV1V2)
+        .value("RecoveredV1V2", mio::sseirvv::InfectionState::RecoveredV1V2);
 
-    pymio::bind_ParameterSet<mio::ssirs::ParametersBase<double>, pymio::EnablePickling::Never>(m, "ParametersBase");
+    pymio::bind_ParameterSet<mio::sseirvv::ParametersBase<double>, pymio::EnablePickling::Never>(m, "ParametersBase");
 
-    pymio::bind_class<mio::ssirs::Parameters<double>, pymio::EnablePickling::Required,
-                      mio::ssirs::ParametersBase<double>>(m, "Parameters")
+    pymio::bind_class<mio::sseirvv::Parameters<double>, pymio::EnablePickling::Required,
+                      mio::sseirvv::ParametersBase<double>>(m, "Parameters")
         .def(py::init<>())
-        .def("check_constraints", &mio::ssirs::Parameters<double>::check_constraints)
-        .def("apply_constraints", &mio::ssirs::Parameters<double>::apply_constraints);
+        .def("check_constraints", &mio::sseirvv::Parameters<double>::check_constraints)
+        .def("apply_constraints", &mio::sseirvv::Parameters<double>::apply_constraints);
 
-    using Populations = mio::Populations<double, mio::ssirs::InfectionState>;
-    pymio::bind_Population(m, "Populations", mio::Tag<mio::ssirs::Model<double>::Populations>{});
-    pymio::bind_CompartmentalModel<mio::ssirs::InfectionState, Populations, mio::ssirs::Parameters<double>,
+    using Populations = mio::Populations<double, mio::sseirvv::InfectionState>;
+    pymio::bind_Population(m, "Populations", mio::Tag<mio::sseirvv::Model<double>::Populations>{});
+    pymio::bind_CompartmentalModel<mio::sseirvv::InfectionState, Populations, mio::sseirvv::Parameters<double>,
                                    pymio::EnablePickling::Never>(m, "ModelBase");
     pymio::bind_class<
-        mio::ssirs::Model<double>, pymio::EnablePickling::Never,
-        mio::CompartmentalModel<double, mio::ssirs::InfectionState, Populations, mio::ssirs::Parameters<double>>>(
+        mio::sseirvv::Model<double>, pymio::EnablePickling::Never,
+        mio::CompartmentalModel<double, mio::sseirvv::InfectionState, Populations, mio::sseirvv::Parameters<double>>>(
         m, "Model")
         .def(py::init<>());
 
     m.def(
         "simulate_stochastic",
-        [](double t0, double tmax, double dt, mio::ssirs::Model<double> const& model) {
-            return mio::simulate_stochastic<double, mio::ssirs::Model<double>>(t0, tmax, dt, model);
+        [](double t0, double tmax, double dt, mio::sseirvv::Model<double> const& model) {
+            return mio::simulate_stochastic<double, mio::sseirvv::Model<double>>(t0, tmax, dt, model);
         },
-        "Simulates an SDE SIRS model from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
+        "Simulates an SDE SEIRVV model from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
         py::arg("model"));
 
     m.attr("__version__") = "dev";
