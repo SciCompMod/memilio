@@ -112,6 +112,10 @@ add_executable(graph_stochastic_mobility_example graph_stochastic_mobility.cpp)
 target_link_libraries(graph_stochastic_mobility_example PRIVATE memilio ode_secir)
 target_compile_options(graph_stochastic_mobility_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(county_simulation county_simulation.cpp)
+target_link_libraries(county_simulation PRIVATE memilio ode_secir)
+target_compile_options(county_simulation PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(abm_minimal_example abm_minimal.cpp)
 target_link_libraries(abm_minimal_example PRIVATE memilio abm)
 target_compile_options(abm_minimal_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})

@@ -21,6 +21,7 @@
 #define MIO_MOBILITY_GRAPH_SIMULATION_H
 
 #include "memilio/mobility/graph.h"
+#include "memilio/mobility/trade.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/compartments/feedback_simulation.h"
 #include "memilio/geography/regions.h"
@@ -141,6 +142,7 @@ public:
         : Base(t0, dt, g, node_func, std::move(edge_func))
         , m_rates(Base::m_graph.edges().size() *
                   Base::m_graph.edges()[0].property.get_parameters().get_coefficients().get_shape().rows())
+        , _trade(Base::m_graph)
     {
     }
 
@@ -148,6 +150,7 @@ public:
         : Base(t0, dt, std::forward<Graph>(g), node_func, std::move(edge_func))
         , m_rates(Base::m_graph.edges().size() *
                   Base::m_graph.edges()[0].property.get_parameters().get_coefficients().get_shape().rows())
+        , _trade(Base::m_graph)
     {
     }
 
@@ -160,8 +163,10 @@ public:
         size_t parameters_per_edge =
             size_t(Base::m_graph.edges()[0].property.get_parameters().get_coefficients().get_shape().rows());
         std::vector<ScalarType> transition_rates(parameters_per_edge * Base::m_graph.edges().size());
-        while (Base::m_t < t_max) {
-            Base::m_dt = std::min({Base::m_dt, t_max - Base::m_t});
+        auto next_trade_time = _trade.next_trade_time(); 
+        while (Base::m_t < t_max)
+        {
+            Base::m_dt = std::min({Base::m_dt, t_max - Base::m_t, next_trade_time - Base::m_t});
             //calculate current transition rates and cumulative rate
             cumulative_rate = get_cumulative_transition_rate();
             if (cumulative_rate * Base::m_dt >
@@ -177,6 +182,7 @@ public:
                     auto flat_index = event % parameters_per_edge;
 
                     //advance nodes until t + (waiting_time / cumulative_rate)
+                    // #pragma omp parallel for
                     for (size_t node_iter = 0; node_iter < Base::m_graph.nodes().size(); ++node_iter) {
                         auto& node = Base::m_graph.nodes()[node_iter];
                         Base::m_node_func(Base::m_t, normalized_waiting_time / cumulative_rate, node.property);
@@ -212,6 +218,10 @@ public:
                 //get new dt of each node
                 dt_cand[node_iter] = node.property.get_simulation().get_dt();
             }
+            if (next_trade_time <= Base::m_t) {
+                _trade.execute_trades(Base::m_t);
+                next_trade_time = _trade.next_trade_time();
+            }
 
             //advance time
             Base::m_t += Base::m_dt;
@@ -241,11 +251,11 @@ private:
     {
         size_t j = 0;
         for (auto& e : Base::m_graph.edges()) {
-            auto edge_rates = e.property.get_transition_rates(Base::m_graph.nodes()[e.start_node_idx].property);
+            auto edge_rates   = e.property.get_transition_rates(Base::m_graph.nodes()[e.start_node_idx].property);
+            const auto result = Base::m_graph.nodes()[e.start_node_idx].property.get_result().get_last_value();
             for (Eigen::Index i = 0; i < edge_rates.size(); ++i) {
-                const auto compartment_value =
-                    Base::m_graph.nodes()[e.start_node_idx].property.get_result().get_last_value()[i];
-                rates[j] = (compartment_value < 1.0) ? 0.0 : edge_rates(i);
+                const auto compartment_value = result[i]; // Move last value out?
+                rates[j]                     = (compartment_value < 1.0) ? 0.0 : edge_rates(i);
 
                 j++;
             }
@@ -254,6 +264,7 @@ private:
 
     std::vector<FP> m_rates;
     RandomNumberGenerator m_rng;
+    mio::Trade<FP, Graph> _trade;
 };
 
 template <typename FP, typename Timepoint, class Timespan, class Graph, class NodeF, class EdgeF>
