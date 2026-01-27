@@ -33,6 +33,7 @@
 #include "mobility/metapopulation_mobility_instant.h"
 #include "io/mobility_io.h"
 #include "io/result_io.h"
+#include "data/analyze_result.h"
 
 //Includes from MEmilio
 #include "ode_secir/model.h"
@@ -87,17 +88,7 @@ PYBIND11_MAKE_OPAQUE(std::vector<MobilityGraph>);
 PYBIND11_MODULE(_simulation_osecir, m)
 {
     // https://github.com/pybind/pybind11/issues/1153
-    m.def("interpolate_simulation_result",
-          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
-              &mio::interpolate_simulation_result),
-          py::arg("ts"), py::arg("abs_tol") = 1e-14);
-
-    m.def("interpolate_simulation_result",
-          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const std::vector<double>&)>(
-              &mio::interpolate_simulation_result),
-          py::arg("ts"), py::arg("interpolation_times"));
-
-    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<double>>);
+    pymio::bind_interpolate_result_methods(m);
 
     m.def("ensemble_mean", &mio::ensemble_mean<double>);
     m.def("ensemble_percentile", &mio::ensemble_percentile<double>);
