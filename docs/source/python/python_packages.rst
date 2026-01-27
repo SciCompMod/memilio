@@ -185,7 +185,3 @@ Run pylint with the commands in the package folder
 
 From the repository root you can also target a package explicitly, for example
 ``python pycode/run_pylint.py --package-dir memilio-plot``.
-
-Pylint report for actual master:
-
-`Pylint Report <https://dlr-sc.github.io/memilio/pylint/>`__
