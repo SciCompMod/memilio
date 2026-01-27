@@ -35,24 +35,26 @@ namespace pymio
  */
 void bind_interpolate_result_methods(py::module_& m)
 {
-
     m.def(
         "interpolate_simulation_result",
         [](const mio::TimeSeries<double>& ts) {
             return mio::interpolate_simulation_result(ts);
         },
+        "Interpolate a given time series with evenly spaced, integer time points that represent whole days.",
         py::arg("ts"));
     m.def("interpolate_simulation_result",
           static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
               &mio::interpolate_simulation_result),
+          "Interpolate a given time series with evenly spaced, integer time points that represent whole days.",
           py::arg("ts"), py::arg("abs_tol"));
 
     m.def("interpolate_simulation_result",
           static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const std::vector<double>&)>(
               &mio::interpolate_simulation_result),
-          py::arg("ts"), py::arg("interpolation_times"));
+          "Interpolate a time series at the given time points.", py::arg("ts"), py::arg("interpolation_times"));
 
-    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<double>>);
+    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<double>>,
+          "Interpolates results of all runs with evenly spaced, integer time points that represent whole days.");
 }
 
 } // namespace pymio
