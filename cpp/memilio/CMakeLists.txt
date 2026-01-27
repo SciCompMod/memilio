@@ -75,6 +75,8 @@ add_library(memilio
     math/math_utils.h
     mobility/metapopulation_mobility_instant.h
     mobility/metapopulation_mobility_instant.cpp
+    mobility/metapopulation_mobility_jolly.h
+    mobility/metapopulation_mobility_jolly.cpp
     mobility/metapopulation_mobility_stochastic.h
     mobility/metapopulation_mobility_stochastic.cpp
     mobility/graph_simulation.h

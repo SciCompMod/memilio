@@ -121,6 +121,71 @@ public:
     }
 };
 
+template <typename FP, class Graph, class Timepoint, class Timespan,
+          class edge_f = void (*)(size_t, FP, typename Graph::EdgeProperty&, typename Graph::NodeProperty&,
+                                  typename Graph::NodeProperty&),
+          class node_f = void (*)(Timepoint, Timespan, typename Graph::NodeProperty&)>
+class JollyGraphSimulation : public GraphSimulationBase<Graph, Timepoint, Timespan, edge_f, node_f>
+{
+    using Base = GraphSimulationBase<Graph, FP, FP,
+                                     std::function<void(size_t, FP, typename Graph::EdgeProperty&,
+                                                        typename Graph::NodeProperty&, typename Graph::NodeProperty&)>,
+                                     std::function<void(FP, FP, typename Graph::NodeProperty&)>>;
+
+    using node_function = typename Base::node_function;
+    using edge_function = typename Base::edge_function;
+
+public:
+    JollyGraphSimulation(FP t0, FP dt, const Graph& g, const node_function& node_func, const edge_function&& edge_func)
+        : Base(t0, dt, g, node_func, std::move(edge_func))
+        , m_rates(Base::m_graph.edges().size() *
+                  Base::m_graph.edges()[0].property.get_parameters().get_coefficients().get_shape().rows())
+        , _trade(Base::m_graph)
+    {
+    }
+
+    JollyGraphSimulation(FP t0, FP dt, Graph&& g, const node_function& node_func, const edge_function&& edge_func)
+        : Base(t0, dt, std::forward<Graph>(g), node_func, std::move(edge_func))
+        , m_rates(Base::m_graph.edges().size() *
+                  Base::m_graph.edges()[0].property.get_parameters().get_coefficients().get_shape().rows())
+        , _trade(Base::m_graph)
+    {
+    }
+
+    void advance(Timepoint t_max = 1.0)
+    {
+        auto dt = Base::m_dt;
+        while (Base::m_t < t_max) {
+            if (Base::m_t + dt > t_max) {
+                dt = t_max - Base::m_t;
+            }
+
+            for (auto& n : Base::m_graph.nodes()) {
+                Base::m_node_func(Base::m_t, dt, n.property);
+            }
+
+            Base::m_t += dt;
+
+            for (auto& e : Base::m_graph.edges()) {
+                size_t index  = 0;
+                FP batch_size = 0.0;
+                Base::m_edge_func(index, batch_size, e.property, Base::m_graph.nodes()[e.start_node_idx].property,
+                                  Base::m_graph.nodes()[e.end_node_idx].property);
+            }
+        }
+    }
+
+    RandomNumberGenerator& get_rng()
+    {
+        return m_rng;
+    }
+
+private:
+    std::vector<FP> m_rates;
+    RandomNumberGenerator m_rng;
+    mio::Trade<FP, Graph> _trade;
+};
+
 template <typename FP, class Graph>
 class GraphSimulationStochastic
     : public GraphSimulationBase<Graph, FP, FP,
@@ -163,9 +228,8 @@ public:
         size_t parameters_per_edge =
             size_t(Base::m_graph.edges()[0].property.get_parameters().get_coefficients().get_shape().rows());
         std::vector<ScalarType> transition_rates(parameters_per_edge * Base::m_graph.edges().size());
-        auto next_trade_time = _trade.next_trade_time(); 
-        while (Base::m_t < t_max)
-        {
+        auto next_trade_time = _trade.next_trade_time();
+        while (Base::m_t < t_max) {
             Base::m_dt = std::min({Base::m_dt, t_max - Base::m_t, next_trade_time - Base::m_t});
             //calculate current transition rates and cumulative rate
             cumulative_rate = get_cumulative_transition_rate();

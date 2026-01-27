@@ -25,6 +25,8 @@
 #include "memilio/mobility/graph.h"
 #include "memilio/mobility/metapopulation_mobility_stochastic.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
+#include "memilio/mobility/metapopulation_mobility_jolly.h"
+
 #include "models/smm/model.h"
 #include "thirdparty/csv.h"
 
@@ -64,12 +66,12 @@ int main(int /*argc*/, char** /*argv*/)
     Model model(Status{Count, Species(num_species)}, Region(num_regions));
 
     for (auto species = 0; species < 6; ++species) {
-        model.populations[{Region(0), S, Species(species)}] = 0.0;
-        model.populations[{Region(0), E, Species(species)}] = 0.0;
-        model.populations[{Region(0), I, Species(species)}] = 0.0;
-        model.populations[{Region(0), C, Species(species)}] = 0.0;
-        model.populations[{Region(0), E, Species(species)}] = 0.0;
-        model.populations[{Region(0), D, Species(species)}] = 0.0;
+        model.populations[{Region(0), S, Species(species)}]     = 0.0;
+        model.populations[{Region(0), E, Species(species)}]     = 0.0;
+        model.populations[{Region(0), I, Species(species)}]     = 0.0;
+        model.populations[{Region(0), C, Species(species)}]     = 0.0;
+        model.populations[{Region(0), Empty, Species(species)}] = 0.0;
+        model.populations[{Region(0), D, Species(species)}]     = 0.0;
     }
 
     using AR = mio::smm::AdoptionRates<ScalarType, Status, Region>;
@@ -101,9 +103,7 @@ int main(int /*argc*/, char** /*argv*/)
     const auto dt              = 0.1; //initial time step
     const auto num_nodes       = 556;
 
-    mio::Graph<mio::SimulationNode<ScalarType, mio::Simulation<ScalarType, Model>>,
-               mio::MobilityEdgeStochastic<ScalarType>>
-        graph;
+    mio::Graph<mio::SimulationNode<ScalarType, mio::Simulation<ScalarType, Model>>, mio::JollyEdge<ScalarType>> graph;
 
     io::CSVReader<6> population_data("/home/kilian/Documents/projects/jolly/data/farms_by_district_type.csv");
     size_t district_id, conventional, organic, broiler_1, broiler_2, layer;
@@ -135,7 +135,6 @@ int main(int /*argc*/, char** /*argv*/)
     }
 
     auto graph_transition_rates = mio::MobilityCoefficients<ScalarType>(model.populations.numel());
-    ScalarType kappa            = 0.01;
 
     auto coeff_idx                                   = model.populations.get_flat_index({Region(0), S, Species(5)});
     graph_transition_rates.get_baseline()[coeff_idx] = 0.02;
@@ -143,8 +142,6 @@ int main(int /*argc*/, char** /*argv*/)
     graph_transition_rates.get_baseline()[coeff_idx] = 0.01;
     coeff_idx                                        = model.populations.get_flat_index({Region(0), I, Species(5)});
     graph_transition_rates.get_baseline()[coeff_idx] = 0.01;
-
-    graph_transition_rates.get_baseline() *= kappa;
 
     io::CSVReader<2> adjacency("/home/kilian/Documents/projects/jolly/data/district_adjacency.csv");
     size_t county_one, county_two;
@@ -154,7 +151,7 @@ int main(int /*argc*/, char** /*argv*/)
         graph.add_edge(county_two, county_one, std::move(graph_transition_rates));
     }
 
-    auto sim = mio::make_mobility_sim<ScalarType>(t0, dt, std::move(graph));
+    auto sim = mio::make_jolly_sim<ScalarType>(t0, dt, graph);
     {
         mio::timing::AutoTimer<"Simulation"> timer;
         sim.advance(tmax);
