@@ -739,6 +739,12 @@ using GammaDistribution = DistributionAdapter<std::gamma_distribution<Real>>;
 template <class Real>
 using NormalDistribution = DistributionAdapter<std::normal_distribution<Real>>;
 
+/**
+ * adapted weibull_distribution.
+ * @see DistributionAdapter
+ */
+template <class Real>
+using WeibullDistribution = DistributionAdapter<std::weibull_distribution<Real>>;
 } // namespace mio
 
 #endif

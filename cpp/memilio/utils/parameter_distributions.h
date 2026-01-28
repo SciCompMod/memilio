@@ -42,12 +42,12 @@ namespace mio
  */
 using ParameterDistributionVisitor =
     Visitor<class ParameterDistributionNormal, class ParameterDistributionUniform, class ParameterDistributionLogNormal,
-            class ParameterDistributionExponential, class ParameterDistributionConstant>;
+            class ParameterDistributionExponential, class ParameterDistributionConstant,
+            class ParameterDistributionWeibull>;
 using ConstParameterDistributionVisitor =
     ConstVisitor<class ParameterDistributionNormal, class ParameterDistributionUniform,
                  class ParameterDistributionLogNormal, class ParameterDistributionExponential,
-                 class ParameterDistributionConstant>;
-
+                 class ParameterDistributionConstant, class ParameterDistributionWeibull>;
 template <class Derived>
 using VisitableParameterDistribution =
     Visitable<Derived, class ParameterDistribution, ParameterDistributionVisitor, ConstParameterDistributionVisitor>;
@@ -65,6 +65,7 @@ struct SerializationVisitor : ConstParameterDistributionVisitor {
     virtual void visit(const ParameterDistributionLogNormal& lognormal_dist) final;
     virtual void visit(const ParameterDistributionExponential& lognormal_dist) final;
     virtual void visit(const ParameterDistributionConstant& lognormal_dist) final;
+    virtual void visit(const ParameterDistributionWeibull& weibull_dist) final;
     IOObj& obj;
 };
 } // namespace details
@@ -925,6 +926,133 @@ void details::SerializationVisitor<IOObj>::visit(const ParameterDistributionCons
     uniform_dist.serialize_elements(obj);
 }
 
+/*
+ * Child class of Parameter Distribution class which represents an weibull distribution 
+ */
+class ParameterDistributionWeibull : public VisitableParameterDistribution<ParameterDistributionWeibull>
+{
+public:
+    ParameterDistributionWeibull(ScalarType shape, ScalarType scale)
+        : VisitableParameterDistribution<ParameterDistributionWeibull>()
+        , m_shape(shape)
+        , m_scale(scale)
+        , m_distribution(shape, scale)
+    {
+    }
+
+    bool smaller_impl(const ParameterDistribution& other) const override
+    {
+        const ParameterDistributionWeibull* PDWeibull = dynamic_cast<const ParameterDistributionWeibull*>(&other);
+        if (PDWeibull) {
+            return m_shape < PDWeibull->m_shape;
+        }
+        else {
+            return false;
+        }
+    }
+
+    std::vector<ScalarType> params() const override
+    {
+        return {m_shape, m_scale};
+    }
+
+    ScalarType get_shape() const
+    {
+        return m_shape;
+    }
+
+    ScalarType get_scale() const
+    {
+        return m_scale;
+    }
+
+    /*
+     * @brief gets a sample of a weibull distributed variable
+     */
+    template <class RNG>
+    ScalarType sample(RNG& rng)
+    {
+        if (m_distribution.params.a() != m_shape || m_distribution.params.b() != m_scale) {
+            m_distribution = WeibullDistribution<ScalarType>::ParamType{m_shape, m_scale};
+        }
+
+        return m_distribution.get_distribution_instance()(rng, m_distribution.params);
+    }
+
+    ScalarType get_rand_sample(RandomNumberGenerator& rng) override
+    {
+        return sample(rng);
+    }
+
+    ScalarType get_rand_sample(abm::PersonalRandomNumberGenerator& rng) override
+    {
+        return sample(rng);
+    }
+
+    ParameterDistribution* clone() const override
+    {
+        return new ParameterDistributionWeibull(*this);
+    }
+
+    template <class IOObject>
+    void serialize_elements(IOObject& obj) const
+    {
+        obj.add_element("Shape", m_shape);
+        obj.add_element("Scale", m_scale);
+        obj.add_list("PredefinedSamples", m_predefined_samples.begin(), m_predefined_samples.end());
+    }
+
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("ParameterDistributionWeibull");
+        serialize_elements(obj);
+    }
+
+    template <class IOContext, class IOObject>
+    static IOResult<ParameterDistributionWeibull> deserialize_elements(IOContext& io, IOObject& obj)
+    {
+        auto shape  = obj.expect_element("Shape", Tag<ScalarType>{});
+        auto scale  = obj.expect_element("Scale", Tag<ScalarType>{});
+        auto predef = obj.expect_list("PredefinedSamples", Tag<ScalarType>{});
+        auto p      = apply(
+            io,
+            [](auto&& shape_, auto&& scale_, auto&& predef_) {
+                auto distr = ParameterDistributionWeibull(shape_, scale_);
+                for (auto&& e : predef_) {
+                    distr.add_predefined_sample(e);
+                }
+                return distr;
+            },
+            shape, scale, predef);
+        if (p) {
+            return success(p.value());
+        }
+        else {
+            return p.as_failure();
+        }
+    }
+
+    template <class IOContext>
+    static IOResult<ParameterDistributionWeibull> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("ParameterDistributionWeibull");
+        return deserialize_elements(io, obj);
+    }
+
+private:
+    ScalarType m_shape;
+    ScalarType m_scale;
+    WeibullDistribution<ScalarType>::ParamType m_distribution;
+};
+
+template <class IOObj>
+void details::SerializationVisitor<IOObj>::visit(const ParameterDistributionWeibull& weibull_dist)
+{
+    obj.add_element("Type", std::string("Weibull"));
+    weibull_dist.serialize_elements(obj);
+}
+
 /**
  * deserialize a parameter distribution as a shared_ptr.
  * @see mio::deserialize
@@ -955,6 +1083,10 @@ IOResult<std::shared_ptr<ParameterDistribution>> deserialize_internal(IOContext&
         else if (type.value() == "Constant") {
             BOOST_OUTCOME_TRY(auto&& r, ParameterDistributionConstant::deserialize_elements(io, obj));
             return std::make_shared<ParameterDistributionConstant>(r);
+        }
+        else if (type.value() == "Weibull") {
+            BOOST_OUTCOME_TRY(auto&& r, ParameterDistributionWeibull::deserialize_elements(io, obj));
+            return std::make_shared<ParameterDistributionWeibull>(r);
         }
         else {
             return failure(StatusCode::InvalidValue, "Type of ParameterDistribution " + type.value() + " not valid.");

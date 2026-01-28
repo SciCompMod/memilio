@@ -116,6 +116,23 @@ void check_distribution(const mio::ParameterDistribution& dist, const mio::Param
                     FloatingPointEqual(p_other_constant_distribution->get_predefined_samples()[i], 1e-12, 1e-12));
             }
         }
+        void visit(const mio::ParameterDistributionWeibull& self) override
+        {
+            auto p_other_weibull_distribution = dynamic_cast<const mio::ParameterDistributionWeibull*>(&other);
+            ASSERT_TRUE(p_other_weibull_distribution != nullptr);
+
+            EXPECT_EQ(self.get_predefined_samples().size(),
+                      p_other_weibull_distribution->get_predefined_samples().size());
+            for (size_t i = 0; i < self.get_predefined_samples().size(); i++) {
+                EXPECT_THAT(
+                    self.get_predefined_samples()[i],
+                    FloatingPointEqual(p_other_weibull_distribution->get_predefined_samples()[i], 1e-12, 1e-12));
+                EXPECT_THAT(self.get_shape(),
+                            FloatingPointEqual(p_other_weibull_distribution->get_shape(), 1e-12, 1e-12));
+                EXPECT_THAT(self.get_scale(),
+                            FloatingPointEqual(p_other_weibull_distribution->get_scale(), 1e-12, 1e-12));
+            }
+        }
         const mio::ParameterDistribution& other;
     };
 
