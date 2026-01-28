@@ -90,12 +90,12 @@ public:
             // update time
             current_time += m_waiting_times[next_event];
             // regularily save current state in m_results
-            if (current_time > last_result_time + m_dt) {
-                last_result_time = current_time;
-                m_result.add_time_point(current_time);
-                // copy from the previous last value
-                m_result.get_last_value() = m_result[m_result.get_num_time_points() - 2];
-            }
+            // if (current_time > last_result_time + m_dt) {
+            //     last_result_time = current_time;
+            //     m_result.add_time_point(current_time);
+            //     // copy from the previous last value
+            //     m_result.get_last_value() = m_result[m_result.get_num_time_points() - 2];
+            // }
             // decide event type by index and perform it
             if (next_event < adoption_rates().size()) {
                 // perform adoption event

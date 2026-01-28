@@ -175,12 +175,71 @@ public:
             for (auto& e : Base::m_graph.edges()) {
                 auto edge_rates = e.property.get_parameters().get_coefficients();
                 for (const auto& [index, rate] : edge_rates) {
-                    Base::m_edge_func(index, m_rates[j], e.property, Base::m_graph.nodes()[e.start_node_idx].property,
-                                      Base::m_graph.nodes()[e.end_node_idx].property);
+                    if (m_rates[j] > 0) {
+                        Base::m_edge_func(index, m_rates[j], e.property,
+                                          Base::m_graph.nodes()[e.start_node_idx].property,
+                                          Base::m_graph.nodes()[e.end_node_idx].property);
+                    }
                     j++;
                 }
             }
         }
+    }
+
+    auto sum_nodes()
+    {
+        const auto size = Base::m_graph.nodes()[0].property.get_result().get_last_value().size();
+        std::vector<double> results(size, 0.0);
+        for (auto& n : Base::m_graph.nodes()) {
+            const auto& node_result = n.property.get_result().get_last_value();
+            assert(n.property.get_result().get_last_value().size() == size);
+            for (int i = 0; i < size; i++) {
+                results[i] += node_result[i];
+            }
+        }
+        return results;
+    }
+
+    auto statistics_per_timestep()
+    {
+        const auto size = Base::m_graph.nodes()[0].property.get_result().get_last_value().size();
+        std::vector<double> timepoints;
+        // Collect all exchange timepoints => All simulations are stopped and write results at those
+
+        for (auto& n : Base::m_graph.edges()) {
+            auto local_timepoints = n.property.get_mobility_results().get_time_points();
+            for (auto t : local_timepoints) {
+                if (std::find(timepoints.begin(), timepoints.end(), t) == timepoints.end()) {
+                    timepoints.push_back(t);
+                }
+            }
+        }
+        std::sort(timepoints.begin(), timepoints.end());
+        auto results = TimeSeries<ScalarType>::zero(timepoints.size(), size, timepoints);
+        for (auto& n : Base::m_graph.nodes()) {
+            assert(n.property.get_result().get_last_value().size() == size);
+            auto node_timeseries = n.property.get_result();
+            for (Eigen::Index time_index = 0; time_index < node_timeseries.get_num_time_points(); ++time_index) {
+                auto time  = node_timeseries.get_time(time_index);
+                auto index = results.get_index_of_time(time);
+                if (index == Eigen::Index(-1)) {
+                    continue;
+                }
+                for (int i = 0; i < size; i++) {
+                    results.get_value(index)[i] += node_timeseries.get_value(time_index)[i];
+                }
+            }
+        }
+        return results;
+    }
+
+    auto return_all_time_series()
+    {
+        std::vector<TimeSeries<ScalarType>> all_time_series;
+        for (auto& n : Base::m_graph.nodes()) {
+            all_time_series.push_back(n.property.get_result());
+        }
+        return all_time_series;
     }
 
     RandomNumberGenerator& get_rng()

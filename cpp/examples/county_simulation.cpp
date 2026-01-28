@@ -101,7 +101,7 @@ int main(int /*argc*/, char** /*argv*/)
     const auto t0              = 0.;
     const auto tmax            = 90.;
     const auto dt              = 0.5; //initial time step
-    const auto num_nodes       = 556;
+    const auto num_nodes       = 14;
 
     mio::Graph<mio::SimulationNode<ScalarType, mio::smm::Simulation<ScalarType, InfectionState, Status, Region>>,
                mio::JollyEdge<ScalarType>>
@@ -125,7 +125,7 @@ int main(int /*argc*/, char** /*argv*/)
         model2.populations[{Region(0), S, Species(2)}] = broiler_1;
         model2.populations[{Region(0), S, Species(3)}] = broiler_2;
         model2.populations[{Region(0), S, Species(4)}] = layer;
-        model2.populations[{Region(0), S, Species(5)}] = 10;
+        model2.populations[{Region(0), S, Species(5)}] = 10000;
         graph.add_node(county_id, model2, t0);
         ++node_index;
     }
@@ -136,18 +136,19 @@ int main(int /*argc*/, char** /*argv*/)
         ++node_index;
     }
 
-    auto graph_transition_rates = mio::BirdFlightParameters<ScalarType>();
-    auto coeff_idx              = model.populations.get_flat_index({Region(0), S, Species(5)});
-    graph_transition_rates.change_coefficient(coeff_idx, 0.02);
-    coeff_idx = model.populations.get_flat_index({Region(0), E, Species(5)});
-    graph_transition_rates.change_coefficient(coeff_idx, 0.01);
-    coeff_idx = model.populations.get_flat_index({Region(0), I, Species(5)});
-    graph_transition_rates.change_coefficient(coeff_idx, 0.01);
-
-    io::CSVReader<2> adjacency("/home/kilian/Documents/projects/jolly/data/county_adjacency.csv");
+    io::CSVReader<3> adjacency("/home/kilian/Documents/projects/jolly/data/county_adjacency.csv");
     size_t county_one, county_two;
-    adjacency.read_header(io::ignore_extra_column, "county_id_1", "county_id_2");
-    while (adjacency.read_row(county_one, county_two)) {
+    ScalarType border_length;
+    adjacency.read_header(io::ignore_extra_column, "county_id_1", "county_id_2", "border_length_m");
+    while (adjacency.read_row(county_one, county_two, border_length)) {
+        auto scaling_factor         = border_length / 65536.;
+        auto graph_transition_rates = mio::BirdFlightParameters<ScalarType>();
+        auto coeff_idx              = model.populations.get_flat_index({Region(0), S, Species(5)});
+        graph_transition_rates.change_coefficient(coeff_idx, 0.5 * scaling_factor);
+        coeff_idx = model.populations.get_flat_index({Region(0), E, Species(5)});
+        graph_transition_rates.change_coefficient(coeff_idx, 0.5 * scaling_factor);
+        coeff_idx = model.populations.get_flat_index({Region(0), I, Species(5)});
+        graph_transition_rates.change_coefficient(coeff_idx, 0.5 * scaling_factor);
         graph.add_edge(county_one, county_two, std::move(graph_transition_rates));
         graph.add_edge(county_two, county_one, std::move(graph_transition_rates));
     }
@@ -157,6 +158,7 @@ int main(int /*argc*/, char** /*argv*/)
         mio::timing::AutoTimer<"Simulation"> timer;
         sim.advance(tmax);
     }
-
+    auto result = sim.return_all_time_series();
+    result[1].print_table();
     return 0;
 }

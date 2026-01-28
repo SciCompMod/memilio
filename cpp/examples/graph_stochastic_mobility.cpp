@@ -137,19 +137,21 @@ int main(int /*argc*/, char** /*argv*/)
         ++node_index;
     }
 
-    auto graph_transition_rates = mio::BirdFlightParameters<ScalarType>();
-    auto coeff_idx              = model.populations.get_flat_index({Region(0), S, Species(5)});
-    graph_transition_rates.change_coefficient(coeff_idx, 0.02);
-    coeff_idx = model.populations.get_flat_index({Region(0), E, Species(5)});
-    graph_transition_rates.change_coefficient(coeff_idx, 0.01);
-    coeff_idx = model.populations.get_flat_index({Region(0), I, Species(5)});
-    graph_transition_rates.change_coefficient(coeff_idx, 0.01);
-    io::CSVReader<2> adjacency("/home/kilian/Documents/projects/jolly/data/district_adjacency.csv");
-    size_t county_one, county_two;
-    adjacency.read_header(io::ignore_extra_column, "district_id_1", "district_id_2");
-    while (adjacency.read_row(county_one, county_two)) {
-        graph.add_edge(county_one, county_two, std::move(graph_transition_rates));
-        graph.add_edge(county_two, county_one, std::move(graph_transition_rates));
+    io::CSVReader<3> adjacency("/home/kilian/Documents/projects/jolly/data/district_adjacency.csv");
+    size_t district_one, district_two;
+    ScalarType border_length;
+    adjacency.read_header(io::ignore_extra_column, "district_id_1", "district_id_2", "border_length_m");
+    while (adjacency.read_row(district_one, district_two, border_length)) {
+        auto scaling_factor         = border_length / 8192.;
+        auto graph_transition_rates = mio::BirdFlightParameters<ScalarType>();
+        auto coeff_idx              = model.populations.get_flat_index({Region(0), S, Species(5)});
+        graph_transition_rates.change_coefficient(coeff_idx, 0.02 * scaling_factor);
+        coeff_idx = model.populations.get_flat_index({Region(0), E, Species(5)});
+        graph_transition_rates.change_coefficient(coeff_idx, 0.01 * scaling_factor);
+        coeff_idx = model.populations.get_flat_index({Region(0), I, Species(5)});
+        graph_transition_rates.change_coefficient(coeff_idx, 0.01 * scaling_factor);
+        graph.add_edge(district_one, district_two, std::move(graph_transition_rates));
+        graph.add_edge(district_two, district_one, std::move(graph_transition_rates));
     }
 
     auto sim = mio::make_jolly_sim<ScalarType>(t0, dt, std::move(graph));
@@ -157,6 +159,8 @@ int main(int /*argc*/, char** /*argv*/)
         mio::timing::AutoTimer<"Simulation"> timer;
         sim.advance(tmax);
     }
+    auto result = sim.return_all_time_series();
+    result[0].print_table();
 
     return 0;
 }

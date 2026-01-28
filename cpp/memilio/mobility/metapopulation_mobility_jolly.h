@@ -235,6 +235,8 @@ void JollyEdge<FP>::apply_mobility(size_t event, FP batch_size, SimulationNode<F
     }
     node_from.get_result().get_last_value()[event] -= batch_size;
     node_to.get_result().get_last_value()[event] += batch_size;
+    mio::log_debug("JollyEdge::apply_mobility: moved {} individuals of compartment {} from node a to node b.",
+                   batch_size, event);
 }
 
 /**
