@@ -37,12 +37,133 @@
 #include "memilio/config.h"
 
 #include "boost/filesystem.hpp"
-#include "metapopulation_mobility_instant.h"
 
 #include <cassert>
+#include <map>
 
 namespace mio
 {
+
+/**
+ * parameters that influence mobility.
+ */
+template <typename FP>
+class BirdFlightParameters
+{
+public:
+    /**
+     * constructor from mobility coefficients.
+     * @param coeffs mobility coefficients
+     */
+    BirdFlightParameters()
+        : m_coefficients()
+    {
+    }
+
+    /**
+     * constructor from mobility coefficients.
+     * @param coeffs mobility coefficients
+     */
+    BirdFlightParameters(const Eigen::VectorX<FP>& coeffs)
+        : m_coefficients()
+    {
+        for (Eigen::Index i = 0; i < coeffs.size(); ++i) {
+            m_coefficients[(size_t)i] = coeffs[i];
+        }
+    }
+
+    /**
+     * equality comparison operators
+     */
+    //@{
+    bool operator==(const BirdFlightParameters& other) const
+    {
+        return m_coefficients == other.m_coefficients;
+    }
+    bool operator!=(const BirdFlightParameters& other) const
+    {
+        return m_coefficients != other.m_coefficients;
+    }
+    //@}
+
+    /**
+     * Get/Set the mobility coefficients.
+     * The coefficients represent the rates for moving
+     * from one node to another by age and infection compartment.
+     * @{
+     */
+    /**
+     * @return the mobility coefficients.
+     */
+    const BirdFlightParameters<FP>& get_coefficients() const
+    {
+        return m_coefficients;
+    }
+    BirdFlightParameters<FP>& get_coefficients()
+    {
+        return m_coefficients;
+    }
+    /**
+     * @param coeffs the mobility coefficients.
+     */
+    void set_coefficients(const BirdFlightParameters<FP>& coeffs)
+    {
+        m_coefficients = coeffs;
+    }
+
+    void change_coefficient(size_t index, FP value)
+    {
+        m_coefficients[index] = value;
+    }
+
+    bool has_coefficient(size_t index)
+    {
+        return m_coefficients.contains(index);
+    }
+
+    size_t size() const
+    {
+        return m_coefficients.size();
+    }
+
+    bool empty() const
+    {
+        return m_coefficients.empty();
+    }
+
+    /**
+     * serialize this.
+     * @see mio::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("BirdFlightParameters");
+        obj.add_element("Coefficients", m_coefficients);
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<BirdFlightParameters> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("BirdFlightParameters");
+        auto c   = obj.expect_element("Coefficients", Tag<BirdFlightParameters<FP>>{});
+        return apply(
+            io,
+            [](auto&& c_) {
+                BirdFlightParameters params(c_);
+                return params;
+            },
+            c);
+    }
+
+private:
+    std::map<size_t, FP> m_coefficients;
+};
+
 /**
  * represents the mobility between two nodes.
  */
@@ -54,7 +175,7 @@ public:
      * create edge with coefficients.
      * @param coeffs mobility rate for each group and compartment
      */
-    JollyEdge(const MobilityParametersStochastic<FP>& params)
+    JollyEdge(const BirdFlightParameters<FP>& params)
         : m_parameters(params)
     {
     }
@@ -71,24 +192,24 @@ public:
     /**
      * get the mobility parameters.
      */
-    const MobilityParametersStochastic<FP>& get_parameters() const
+    const BirdFlightParameters<FP>& get_parameters() const
     {
         return m_parameters;
     }
 
-    /**
-     * get the cumulative transition rate of the edge.
-    */
-    template <class Sim>
-    Eigen::VectorX<FP> get_transition_rates(SimulationNode<FP, Sim>& node_from)
-    {
-        Eigen::VectorX<FP> transitionRates(node_from.get_last_state().size());
-        for (Eigen::Index i = 0; i < node_from.get_last_state().size(); ++i) {
-            transitionRates[i] =
-                node_from.get_last_state()(i) * m_parameters.get_coefficients().get_baseline()[(size_t)i];
-        }
-        return transitionRates;
-    }
+    // /**
+    //  * get the cumulative transition rate of the edge.
+    // */
+    // template <class Sim>
+    // Eigen::VectorX<FP> get_transition_rates(SimulationNode<FP, Sim>& node_from)
+    // {
+    //     Eigen::VectorX<FP> transitionRates(node_from.get_last_state().size());
+    //     for (Eigen::Index i = 0; i < node_from.get_last_state().size(); ++i) {
+    //         transitionRates[i] =
+    //             node_from.get_last_state()(i) * m_parameters.get_coefficients().get_baseline()[(size_t)i];
+    //     }
+    //     return transitionRates;
+    // }
 
     /**
      * compute mobility from node_from to node_to for a given event
@@ -101,7 +222,7 @@ public:
                         SimulationNode<FP, Sim>& node_to);
 
 private:
-    MobilityParametersStochastic<FP> m_parameters;
+    BirdFlightParameters<FP> m_parameters;
 };
 
 template <typename FP>
