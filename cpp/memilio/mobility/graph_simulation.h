@@ -139,26 +139,29 @@ class JollyGraphSimulation
 public:
     JollyGraphSimulation(FP t0, FP dt, const Graph& g, const node_function& node_func, const edge_function&& edge_func)
         : Base(t0, dt, g, node_func, std::move(edge_func))
-        , m_rates(Base::m_graph.edges().size() *
-                  Base::m_graph.edges()[0].property.get_parameters().get_coefficients().get_shape().rows())
+        , m_rates(Base::m_graph.edges().size() * Base::m_graph.edges()[0].property.get_parameters().size())
         , _trade(Base::m_graph)
     {
     }
 
     JollyGraphSimulation(FP t0, FP dt, Graph&& g, const node_function& node_func, const edge_function&& edge_func)
         : Base(t0, dt, std::forward<Graph>(g), node_func, std::move(edge_func))
-        , m_rates(Base::m_graph.edges().size() *
-                  Base::m_graph.edges()[0].property.get_parameters().get_coefficients().get_shape().rows())
+        , m_rates(Base::m_graph.edges().size() * Base::m_graph.edges()[0].property.get_parameters().size())
         , _trade(Base::m_graph)
     {
     }
 
     void advance(FP t_max = 1.0)
     {
-        auto dt = Base::m_dt;
+        auto dt              = Base::m_dt;
+        auto next_trade_time = _trade.next_trade_time();
         while (Base::m_t < t_max) {
             if (Base::m_t + dt > t_max) {
                 dt = t_max - Base::m_t;
+            }
+            if (next_trade_time <= Base::m_t) {
+                _trade.execute_trades(Base::m_t);
+                next_trade_time = _trade.next_trade_time();
             }
 
             for (auto& n : Base::m_graph.nodes()) {
@@ -167,11 +170,15 @@ public:
 
             Base::m_t += dt;
 
+            get_values(m_rates);
+            size_t j = 0;
             for (auto& e : Base::m_graph.edges()) {
-                size_t index  = 0;
-                FP batch_size = 0.0;
-                Base::m_edge_func(index, batch_size, e.property, Base::m_graph.nodes()[e.start_node_idx].property,
-                                  Base::m_graph.nodes()[e.end_node_idx].property);
+                auto edge_rates = e.property.get_parameters().get_coefficients();
+                for (const auto& [index, rate] : edge_rates) {
+                    Base::m_edge_func(index, m_rates[j], e.property, Base::m_graph.nodes()[e.start_node_idx].property,
+                                      Base::m_graph.nodes()[e.end_node_idx].property);
+                    j++;
+                }
             }
         }
     }
@@ -179,6 +186,21 @@ public:
     RandomNumberGenerator& get_rng()
     {
         return m_rng;
+    }
+
+    void get_values(std::vector<FP>& rates)
+    {
+        size_t j           = 0;
+        auto& distribution = mio::PoissonDistribution<int>::get_instance();
+        for (auto& e : Base::m_graph.edges()) {
+            auto edge_rates   = e.property.get_parameters().get_coefficients();
+            const auto result = Base::m_graph.nodes()[e.start_node_idx].property.get_result().get_last_value();
+            for (const auto& [index, rate] : edge_rates) {
+                const auto compartment_value = result[index];
+                rates[j]                     = (compartment_value < 1.0) ? 0.0 : distribution(m_rng, rate);
+                j++;
+            }
+        }
     }
 
 private:

@@ -95,11 +95,11 @@ public:
     /**
      * @return the mobility coefficients.
      */
-    const BirdFlightParameters<FP>& get_coefficients() const
+    const std::map<size_t, FP>& get_coefficients() const
     {
         return m_coefficients;
     }
-    BirdFlightParameters<FP>& get_coefficients()
+    std::map<size_t, FP>& get_coefficients()
     {
         return m_coefficients;
     }
