@@ -121,14 +121,15 @@ public:
     }
 };
 
-template <typename FP, class Graph, class Timepoint, class Timespan,
-          class edge_f = void (*)(size_t, FP, typename Graph::EdgeProperty&, typename Graph::NodeProperty&,
-                                  typename Graph::NodeProperty&),
-          class node_f = void (*)(Timepoint, Timespan, typename Graph::NodeProperty&)>
-class JollyGraphSimulation : public GraphSimulationBase<Graph, Timepoint, Timespan, edge_f, node_f>
+template <typename FP, class Graph>
+class JollyGraphSimulation
+    : public GraphSimulationBase<Graph, FP, FP,
+                                 std::function<void(FP, FP, typename Graph::EdgeProperty&,
+                                                    typename Graph::NodeProperty&, typename Graph::NodeProperty&)>,
+                                 std::function<void(FP, FP, typename Graph::NodeProperty&)>>
 {
     using Base = GraphSimulationBase<Graph, FP, FP,
-                                     std::function<void(size_t, FP, typename Graph::EdgeProperty&,
+                                     std::function<void(FP, FP, typename Graph::EdgeProperty&,
                                                         typename Graph::NodeProperty&, typename Graph::NodeProperty&)>,
                                      std::function<void(FP, FP, typename Graph::NodeProperty&)>>;
 
@@ -152,7 +153,7 @@ public:
     {
     }
 
-    void advance(Timepoint t_max = 1.0)
+    void advance(FP t_max = 1.0)
     {
         auto dt = Base::m_dt;
         while (Base::m_t < t_max) {
@@ -343,6 +344,13 @@ auto make_graph_sim_stochastic(FP t0, FP dt, Graph&& g, NodeF&& node_func, EdgeF
 {
     return GraphSimulationStochastic<FP, std::decay_t<Graph>>(
         t0, dt, std::forward<Graph>(g), std::forward<NodeF>(node_func), std::forward<EdgeF>(edge_func));
+}
+
+template <typename FP, class Graph, class NodeF, class EdgeF>
+auto make_graph_sim_jolly(FP t0, FP dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func)
+{
+    return JollyGraphSimulation<FP, std::decay_t<Graph>>(t0, dt, std::forward<Graph>(g), std::forward<NodeF>(node_func),
+                                                         std::forward<EdgeF>(edge_func));
 }
 
 // FeedbackGraphSimulation is only allowed to be used with local FeedbackSimulation.

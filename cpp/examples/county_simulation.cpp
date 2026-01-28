@@ -64,12 +64,12 @@ int main(int /*argc*/, char** /*argv*/)
     Model model(Status{Count, Species(num_species)}, Region(num_regions));
 
     for (auto species = 0; species < 6; ++species) {
-        model.populations[{Region(0), S, Species(species)}] = 0.0;
-        model.populations[{Region(0), E, Species(species)}] = 0.0;
-        model.populations[{Region(0), I, Species(species)}] = 0.0;
-        model.populations[{Region(0), C, Species(species)}] = 0.0;
-        model.populations[{Region(0), E, Species(species)}] = 0.0;
-        model.populations[{Region(0), D, Species(species)}] = 0.0;
+        model.populations[{Region(0), S, Species(species)}]     = 0.0;
+        model.populations[{Region(0), E, Species(species)}]     = 0.0;
+        model.populations[{Region(0), I, Species(species)}]     = 0.0;
+        model.populations[{Region(0), C, Species(species)}]     = 0.0;
+        model.populations[{Region(0), Empty, Species(species)}] = 0.0;
+        model.populations[{Region(0), D, Species(species)}]     = 0.0;
     }
 
     using AR = mio::smm::AdoptionRates<ScalarType, Status, Region>;

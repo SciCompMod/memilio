@@ -109,7 +109,7 @@ target_link_libraries(ode_secir_graph_example PRIVATE memilio ode_secir)
 target_compile_options(ode_secir_graph_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(graph_stochastic_mobility_example graph_stochastic_mobility.cpp)
-target_link_libraries(graph_stochastic_mobility_example PRIVATE memilio ode_secir)
+target_link_libraries(graph_stochastic_mobility_example PRIVATE memilio smm)
 target_compile_options(graph_stochastic_mobility_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(county_simulation county_simulation.cpp)

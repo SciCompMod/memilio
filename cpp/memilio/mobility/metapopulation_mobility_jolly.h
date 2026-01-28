@@ -20,6 +20,7 @@
 #ifndef METAPOPULATION_MOBILITY_JOLLY_H
 #define METAPOPULATION_MOBILITY_JOLLY_H
 
+#include "graph_simulation.h"
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/metapopulation_mobility_stochastic.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
@@ -33,8 +34,10 @@
 #include "memilio/epidemiology/dynamic_npis.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/date.h"
+#include "memilio/config.h"
 
 #include "boost/filesystem.hpp"
+#include "metapopulation_mobility_instant.h"
 
 #include <cassert>
 
@@ -117,11 +120,11 @@ void JollyEdge<FP>::apply_mobility(size_t event, FP batch_size, SimulationNode<F
  * edge functor for mobility-based simulation.
  * @see JollyEdge::apply_mobility
  */
-template <typename FP, class Sim>
-void apply_mobility(size_t event, FP batch_size, JollyEdge<FP>& JollyEdge, SimulationNode<FP, Sim>& node_from,
+template <typename FP, class Sim, class StochasticEdge>
+void apply_mobility(size_t event, FP batch_size, StochasticEdge& jollyEdge, SimulationNode<FP, Sim>& node_from,
                     SimulationNode<FP, Sim>& node_to)
 {
-    JollyEdge.apply_mobility(event, batch_size, node_from, node_to);
+    jollyEdge.apply_mobility(event, batch_size, node_from, node_to);
 }
 
 /**
@@ -135,31 +138,23 @@ void apply_mobility(size_t event, FP batch_size, JollyEdge<FP>& JollyEdge, Simul
  * @{
  */
 template <typename FP, class Sim>
-JollyGraphSimulation<FP, FP, Graph<SimulationNode<FP, Sim>, JollyEdge<FP>>,
-                     void (*)(size_t, FP, mio::JollyEdge<FP>&, mio::SimulationNode<FP, Sim>&,
-                              mio::SimulationNode<FP, Sim>&),
-                     void (*)(FP, FP, mio::SimulationNode<FP, Sim>&)>
+JollyGraphSimulation<FP, Graph<SimulationNode<FP, Sim>, JollyEdge<FP>>>
 make_jolly_sim(FP t0, FP dt, const Graph<SimulationNode<FP, Sim>, JollyEdge<FP>>& graph)
 {
-    using GraphSim = JollyGraphSimulation<FP, FP, Graph<SimulationNode<FP, Sim>, JollyEdge<FP>>,
-                                          void (*)(size_t, FP, mio::JollyEdge<FP>&, mio::SimulationNode<FP, Sim>&,
-                                                   mio::SimulationNode<FP, Sim>&),
-                                          void (*)(FP, FP, mio::SimulationNode<FP, Sim>&)>;
-    return GraphSim(t0, dt, graph, &advance_model<FP, Sim>, &apply_mobility<FP>);
+    return make_graph_sim_jolly<FP>(
+        t0, dt, graph, &advance_model<FP, Sim>,
+        static_cast<void (*)(size_t, FP, JollyEdge<FP>&, SimulationNode<FP, Sim>&, SimulationNode<FP, Sim>&)>(
+            &apply_mobility<FP, Sim, JollyEdge<FP>>));
 }
 
 template <typename FP, class Sim>
-JollyGraphSimulation<FP, FP, Graph<SimulationNode<FP, Sim>, JollyEdge<FP>>,
-                     void (*)(size_t, FP, mio::JollyEdge<FP>&, mio::SimulationNode<FP, Sim>&,
-                              mio::SimulationNode<FP, Sim>&),
-                     void (*)(FP, FP, mio::SimulationNode<FP, Sim>&)>
+JollyGraphSimulation<FP, Graph<SimulationNode<FP, Sim>, JollyEdge<FP>>>
 make_jolly_sim(FP t0, FP dt, Graph<SimulationNode<FP, Sim>, JollyEdge<FP>>&& graph)
 {
-    using GraphSim = JollyGraphSimulation<FP, FP, Graph<SimulationNode<FP, Sim>, JollyEdge<FP>>,
-                                          void (*)(size_t, FP, mio::JollyEdge<FP>&, mio::SimulationNode<FP, Sim>&,
-                                                   mio::SimulationNode<FP, Sim>&),
-                                          void (*)(FP, FP, mio::SimulationNode<FP, Sim>&)>;
-    return GraphSim(t0, dt, std::move(graph), &advance_model<FP, Sim>, &apply_mobility<FP>);
+    return make_graph_sim_jolly<FP>(
+        t0, dt, std::move(graph), &advance_model<FP, Sim>,
+        static_cast<void (*)(size_t, FP, JollyEdge<FP>&, SimulationNode<FP, Sim>&, SimulationNode<FP, Sim>&)>(
+            &apply_mobility<FP, Sim, JollyEdge<FP>>));
 }
 
 /** @} */
