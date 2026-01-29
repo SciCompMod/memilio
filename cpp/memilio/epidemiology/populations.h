@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Jan Kleinert, Daniel Abele
 *
@@ -26,6 +26,7 @@
 #include "memilio/math/eigen.h"
 #include "memilio/math/math_utils.h"
 
+#include <concepts>
 #include <numeric>
 
 namespace mio
@@ -61,6 +62,25 @@ public:
     explicit Populations(Index const& sizes, Ts... args)
         : Base(sizes, args...)
     {
+    }
+
+    /// @brief Create populations by taking ownership of a CustomIndexArray.
+    explicit Populations(Base&& array)
+        : Base(std::move(array))
+    {
+    }
+
+    /**
+     * @brief Convert internally stored data to OtherType and save into new Populations.
+     * @tparam OtherType The type to convert into.
+     * @return New Populations of OtherType with copy of internal data.
+     */
+    template <class OtherType>
+        requires std::convertible_to<typename Base::Type::Type, OtherType>
+    Populations<OtherType, Categories...> convert() const
+    {
+        return Populations<OtherType, Categories...>(
+            Base::template convert<typename Base::Type::Type>().template convert<UncertainValue<OtherType>>());
     }
 
     /**

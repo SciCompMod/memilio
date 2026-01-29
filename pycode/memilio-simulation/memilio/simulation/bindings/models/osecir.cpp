@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert
 *
@@ -23,6 +23,7 @@
 #include "compartments/simulation.h"
 #include "compartments/flow_simulation.h"
 #include "compartments/compartmental_model.h"
+#include "compartments/parameter_studies.h"
 #include "epidemiology/age_group.h"
 #include "epidemiology/populations.h"
 #include "utils/custom_index_array.h"
@@ -32,13 +33,13 @@
 #include "mobility/metapopulation_mobility_instant.h"
 #include "io/mobility_io.h"
 #include "io/result_io.h"
+#include "data/analyze_result.h"
 
 //Includes from MEmilio
 #include "ode_secir/model.h"
 #include "ode_secir/analyze_result.h"
 #include "ode_secir/parameter_space.h"
 #include "ode_secir/parameters_io.h"
-#include "memilio/compartments/parameter_studies.h"
 #include "memilio/data/analyze_result.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/io/mobility_io.h"
@@ -56,70 +57,6 @@ namespace py = pybind11;
 
 namespace
 {
-
-/*
- * @brief bind ParameterStudy for any model
- */
-template <class Sim>
-void bind_ParameterStudy(py::module_& m, std::string const& name)
-{
-    using GraphT      = mio::Graph<mio::SimulationNode<double, Sim>, mio::MobilityEdge<double>>;
-    using SimulationT = mio::GraphSimulation<double, GraphT, double, double>;
-    using ParametersT = mio::Graph<typename Sim::Model, mio::MobilityParameters<double>>;
-    using StudyT      = mio::ParameterStudy<ParametersT, double>;
-
-    const auto create_simulation = [](const ParametersT& g, double t0, double dt, size_t) {
-        auto copy = g;
-        return mio::make_sampled_graph_simulation<double, Sim>(draw_sample(copy), t0, dt, dt);
-    };
-
-    pymio::bind_class<StudyT, pymio::EnablePickling::Never>(m, name.c_str())
-        .def(py::init<const ParametersT&, double, double, double, size_t>(), py::arg("parameters"), py::arg("t0"),
-             py::arg("tmax"), py::arg("dt"), py::arg("num_runs"))
-        .def_property_readonly("num_runs", &StudyT::get_num_runs)
-        .def_property_readonly("tmax", &StudyT::get_tmax)
-        .def_property_readonly("t0", &StudyT::get_t0)
-        .def_property_readonly("dt", &StudyT::get_dt)
-        .def_property_readonly("model_graph", py::overload_cast<>(&StudyT::get_parameters),
-                               py::return_value_policy::reference_internal)
-        .def_property_readonly("model_graph", py::overload_cast<>(&StudyT::get_parameters, py::const_),
-                               py::return_value_policy::reference_internal)
-        .def(
-            "run",
-            [&create_simulation](StudyT& self, std::function<void(GraphT, size_t)> handle_result) {
-                self.run_serial(create_simulation, [&handle_result](auto&& g, auto&& run_idx) {
-                    handle_result(std::move(g.get_graph()), run_idx);
-                });
-            },
-            "Run a graph simulation, handling its result in the provided function.", py::arg("handle_result_func"))
-        .def(
-            "run",
-            [&create_simulation](StudyT& self) { //default argument doesn't seem to work with functions
-                return self.run_serial(create_simulation, [](SimulationT&& result, size_t) {
-                    return std::move(result.get_graph());
-                });
-            },
-            "Run a graph simulation, returning all result graphs in a vector.")
-        .def(
-            "run_single",
-            [&create_simulation](StudyT& self, std::function<void(Sim, size_t)> handle_result) {
-                self.run_serial(create_simulation, [&handle_result](auto&& r, auto&& run_idx) {
-                    handle_result(std::move(r.get_graph().nodes()[0].property.get_simulation()), run_idx);
-                });
-            },
-            "Run a simulation on a graph with a single model, handling its result in the provided function.",
-            py::arg("handle_result_func"))
-        .def(
-            "run_single",
-            [&create_simulation](StudyT& self) {
-                return self.run_serial(create_simulation, [](SimulationT&& result, size_t) {
-                    //select only the first node of the graph of each run, used for parameterstudy with single nodes
-                    return std::move(result.get_graph().nodes()[0].property.get_simulation());
-                });
-            },
-            "Run a simulation on a graph with a single model, returning all simulations in a vector")
-        .doc() = "Run a (graph) simulation multiple times, drawing new parameters each run.";
-}
 
 enum class ContactLocation
 {
@@ -151,17 +88,7 @@ PYBIND11_MAKE_OPAQUE(std::vector<MobilityGraph>);
 PYBIND11_MODULE(_simulation_osecir, m)
 {
     // https://github.com/pybind/pybind11/issues/1153
-    m.def("interpolate_simulation_result",
-          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
-              &mio::interpolate_simulation_result),
-          py::arg("ts"), py::arg("abs_tol") = 1e-14);
-
-    m.def("interpolate_simulation_result",
-          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const std::vector<double>&)>(
-              &mio::interpolate_simulation_result),
-          py::arg("ts"), py::arg("interpolation_times"));
-
-    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<double>>);
+    pymio::bind_interpolate_result_methods(m);
 
     m.def("ensemble_mean", &mio::ensemble_mean<double>);
     m.def("ensemble_percentile", &mio::ensemble_percentile<double>);
@@ -217,7 +144,8 @@ PYBIND11_MODULE(_simulation_osecir, m)
     //Bound the vector as a custom type that serves as output of ParameterStudy::run and input to
     //interpolate_ensemble_results
     py::bind_vector<std::vector<MobilityGraph>>(m, "EnsembleGraphResults");
-    bind_ParameterStudy<mio::osecir::Simulation<double>>(m, "ParameterStudy");
+    pymio::bind_OdeParameterStudy<mio::osecir::Simulation<double>>(m, "ParameterStudy");
+    pymio::bind_GraphOdeParameterStudy<mio::osecir::Simulation<double>>(m, "GraphParameterStudy");
 
     m.def("set_params_distributions_normal", &mio::osecir::set_params_distributions_normal<double>, py::arg("model"),
           py::arg("t0"), py::arg("tmax"), py::arg("dev_rel"));

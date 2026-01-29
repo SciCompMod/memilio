@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Henrik Zunker, Maximilian Betz
 *
@@ -39,8 +39,8 @@ void bind_save_results(pybind11::module_& m)
               const std::vector<std::vector<Model>>& ensemble_params, const std::vector<int>& county_ids,
               const std::string& result_dir, bool save_single_runs, bool save_percentiles) {
               boost::filesystem::path dir(result_dir);
-              auto ioresult = mio::save_results<Model>(ensemble_results, ensemble_params, county_ids, dir, save_single_runs,
-                                       save_percentiles);
+              auto ioresult = mio::save_results<Model>(ensemble_results, ensemble_params, county_ids, dir,
+                                                       save_single_runs, save_percentiles);
               return NULL;
           });
 }

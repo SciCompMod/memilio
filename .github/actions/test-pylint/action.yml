@@ -13,23 +13,29 @@ runs:
         sudo apt-get -qq update
         sudo apt-get -qq -y install python3-pip gnupg
         python -m pip install --upgrade pip
+    # Pylint runs against the prebuilt wheels in pycode/wheelhouse/*cp312*.
+    # So, use current latest supported Python version.
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
     - name: Download Python Wheels
       uses: actions/download-artifact@v4
       with:
         name: python-wheels-${{ inputs.package }}
+        path: pycode/wheelhouse
     - name: Install Python Wheels
       shell: bash
       run: |
-        for pkg in `ls pycode/wheelhouse/*cp311*.whl`; do python -m pip install $pkg; done # packages that contain native extensions are version specific
-        for pkg in `ls pycode/wheelhouse/*py3*.whl`; do python -m pip install $pkg; done # pure python packages are not version specific
-        pip install -r pycode/memilio-${{ inputs.package }}/requirements-dev.txt
+        shopt -s nullglob
+        for pkg in pycode/wheelhouse/*cp312*.whl; do python -m pip install "$pkg"; done # packages that contain native extensions are version specific
+        for pkg in pycode/wheelhouse/*py3*.whl; do python -m pip install "$pkg"; done # pure python packages are not version specific
+        python -m pip install --upgrade-strategy only-if-needed --prefer-binary --find-links pycode/wheelhouse "memilio-${{ inputs.package }}[dev]"
     - name: Run pylint
       shell: bash
       run: |
-        cd pycode/memilio-${{ inputs.package }}
-        mkdir -p build_pylint
-        python setup.py pylint
-        pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
+        python pycode/run_pylint.py --package-dir memilio-${{ inputs.package }}
+        pylint-json2html -f jsonextended -o pycode/memilio-${{ inputs.package }}/build_pylint/pylint.html < pycode/memilio-${{ inputs.package }}/build_pylint/pylint_extended.json
     - name: Upload Pylint Report
       uses: actions/upload-artifact@v4
       with:

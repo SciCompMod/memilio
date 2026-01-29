@@ -24,7 +24,7 @@ runs:
         else
           sudo apt-get -qq -y install python3-pip gnupg
         fi
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip setuptools
     - name: Download Python Wheels
       uses: actions/download-artifact@v4
       with:
@@ -50,19 +50,20 @@ runs:
       shell: bash
       run: |
         export PYTHON_VERSION_NO_DOT=$(echo "${{ inputs.version }}" | sed 's/\.//g')
-        for pkg in `ls pycode/wheelhouse/*cp$PYTHON_VERSION_NO_DOT*.whl`; do python -m pip install $pkg; done # packages that contain native extensions are version specific
-        for pkg in `ls pycode/wheelhouse/*py3*.whl`; do python -m pip install $pkg; done # pure python packages are not version specific
-        pip install -r pycode/memilio-${{ inputs.package }}/requirements-dev.txt
+        shopt -s nullglob
+        for pkg in pycode/wheelhouse/*cp$PYTHON_VERSION_NO_DOT*.whl; do python -m pip install "$pkg"; done # packages that contain native extensions are version specific
+        for pkg in pycode/wheelhouse/*py3*.whl; do python -m pip install "$pkg"; done # pure python packages are not version specific
+        python -m pip install --upgrade-strategy only-if-needed --prefer-binary --find-links pycode/wheelhouse "memilio-${{ inputs.package }}[dev]"
     - name: Run unit tests
       shell: bash
       run: |
-        cd pycode/memilio-${{inputs.package}}/memilio/${{inputs.package}}_test
+        cd pycode/memilio-${{inputs.package}}/tests
         if [[ "${{ inputs.coverage }}" == "ON" ]]; then
           python -W ignore::DeprecationWarning -m coverage run --include=**/site-packages/memilio/* -m unittest
           python -m coverage report
           python -m coverage xml -o coverage_python.xml
           python -m coverage html -d coverage_python
-          cp -r coverage_python ../../../../
+          cp -r coverage_python ../../../
         else
           python -m unittest
         fi

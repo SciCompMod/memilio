@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin J. Kuehn, Daniel Abele
 *
@@ -41,7 +41,7 @@ public:
     {
     }
 
-    std::unique_ptr<SdeIntegratorCore<FP>> clone() const override 
+    std::unique_ptr<SdeIntegratorCore<FP>> clone() const override
     {
         return std::make_unique<EulerMaruyamaIntegratorCore>(*this);
     }

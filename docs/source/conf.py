@@ -7,7 +7,7 @@ import os
 import subprocess
 import memilio
 project = 'MEmilio'
-copyright = '2020-2025 MEmilio'
+copyright = '2020-2026 MEmilio'
 author = ''
 
 release = ''
@@ -115,6 +115,9 @@ autodoc_mock_imports = [
     "folium",
     "mapclassify",
     "imageio",
+    # Mock C++ extension modules that require compilation
+    "memilio.simulation",
+    "memilio.generation",
 ]
 
 # -- Options for EPUB output

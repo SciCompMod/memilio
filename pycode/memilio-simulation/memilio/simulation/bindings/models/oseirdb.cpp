@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Henrik Zunker
 *
@@ -28,6 +28,7 @@
 #include "compartments/compartmental_model.h"
 #include "epidemiology/age_group.h"
 #include "epidemiology/populations.h"
+#include "data/analyze_result.h"
 
 //Includes from MEmilio
 #include "ode_seirdb/model.h"
@@ -51,17 +52,7 @@ inline std::string pretty_name<mio::oseirdb::InfectionState>()
 
 PYBIND11_MODULE(_simulation_oseirdb, m)
 {
-    m.def("interpolate_simulation_result",
-          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
-              &mio::interpolate_simulation_result),
-          py::arg("ts"), py::arg("abs_tol") = 1e-14);
-
-    m.def("interpolate_simulation_result",
-          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const std::vector<double>&)>(
-              &mio::interpolate_simulation_result),
-          py::arg("ts"), py::arg("interpolation_times"));
-
-    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<double>>);
+    pymio::bind_interpolate_result_methods(m);
 
     pymio::iterable_enum<mio::oseirdb::InfectionState>(m, "InfectionState")
         .value("Susceptible", mio::oseirdb::InfectionState::Susceptible)
