@@ -72,6 +72,7 @@ set(TESTSOURCES
     test_ide_secir_ageres.cpp
     test_state_age_function.cpp
     test_lct_secir.cpp
+    test_lct_secir_2_diseases.cpp
     test_lct_initializer_flows.cpp
     test_glct_secir.cpp
     test_ad.cpp
