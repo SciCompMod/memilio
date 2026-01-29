@@ -35,12 +35,12 @@ namespace abm
 {
 
 /**
- * @brief Represents a transition between infection states with duration and probability.
+ * @brief Represents a transition period between two infection states.
  */
 struct StateTransition {
     InfectionState from_state;
     InfectionState to_state;
-    TimeSpan duration;
+    TimeSpan duration; // Duration that the infection stays in from_state before transitioning to to_state.
 };
 
 /**
@@ -175,21 +175,6 @@ public:
 private:
     friend DefaultFactory<Infection>;
     Infection() = default;
-
-    /**
-     * @brief Determine Infection course based on #InfectionState init_state.
-     * Calls draw_infection_course_backward for all #InfectionState%s prior and draw_infection_course_forward for all
-     * subsequent #InfectionState%s.
-     * @param[inout] rng PersonalRandomNumberGenerator of the Person.
-     * @param[in] age AgeGroup of the Person.
-     * @param[in] params Parameters of the Model.
-     * @param[in] init_date Date of initializing the Infection.
-     * @param[in] init_state #InfectionState at time of initializing the Infection.
-     * @param[in] latest_protection  Latest protection against Infection, has an influence on transition probabilities.
-     * @return The starting date of the Infection.
-     */
-    TimePoint draw_infection_course(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
-                                    TimePoint init_date, InfectionState start_state, ProtectionEvent latest_protection);
 
     /**
      * @brief Determine Infection course subsequent to the given #InfectionState start_state.
