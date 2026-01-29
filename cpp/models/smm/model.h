@@ -23,7 +23,7 @@
 
 #include "memilio/utils/index.h"
 #include "memilio/utils/index_range.h"
-#include "smm/parameters.h"
+#include "models/smm/parameters.h"
 #include "memilio/compartments/compartmental_model.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/geography/regions.h"
@@ -51,15 +51,18 @@ using PopulationIndex = decltype(concatenate_indices(std::declval<Region>(), std
  * @tparam Status A MultiIndex allowing to further stratify infection state adoptions.
  * @tparam Region A MultiIndex for "spatially" distinct subpopulations, default is @ref mio::regions::Region.
  */
-template <typename FP, class Comp, class Status = Comp, class Region = mio::regions::Region>
-class Model : public mio::CompartmentalModel<FP, Comp, mio::Populations<FP, PopulationIndex<Status, Region>>,
-                                             ParametersBase<FP, Status, Region>>
+template <typename FP, class Comp, class StatusT = Comp, class RegionT = mio::regions::Region>
+class Model : public mio::CompartmentalModel<FP, Comp, mio::Populations<FP, PopulationIndex<StatusT, RegionT>>,
+                                             ParametersBase<FP, StatusT, RegionT>>
 {
-    using Base = mio::CompartmentalModel<FP, Comp, mio::Populations<FP, PopulationIndex<Status, Region>>,
-                                         ParametersBase<FP, Status, Region>>;
+    using Base = mio::CompartmentalModel<FP, Comp, mio::Populations<FP, PopulationIndex<StatusT, RegionT>>,
+                                         ParametersBase<FP, StatusT, RegionT>>;
     static_assert(!Base::Populations::Index::has_duplicates, "Do not use the same Index tag multiple times!");
 
 public:
+    using Status = StatusT;
+    using Region = RegionT;
+
     Model(Status status_dimensions, Region region_dimensions)
         : Base(typename Base::Populations(concatenate_indices(region_dimensions, status_dimensions)),
                typename Base::ParameterSet())

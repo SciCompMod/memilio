@@ -79,6 +79,8 @@ int main(int /*argc*/, char** /*argv*/)
 
     //Set infection state adoption rates. Adoptions only happen within a region.
     AR::Type adoption_rates;
+    std::vector<size_t> culling_indices;
+    size_t j = 0;
     for (size_t species = 0; species < 5; ++species) {
         adoption_rates.push_back({{S, Species(species)},
                                   {E, Species(species)},
@@ -87,16 +89,24 @@ int main(int /*argc*/, char** /*argv*/)
                                   {{{E, Species(5)}, 0.2}, {{I, Species(5)}, 0.5}}});
         adoption_rates.push_back({{E, Species(species)}, {I, Species(species)}, Region(0), 1.0 / 5., {}});
         adoption_rates.push_back({{I, Species(species)}, {C, Species(species)}, Region(0), 0.8 / 3., {}});
+        culling_indices.push_back(j + 2);
         adoption_rates.push_back({{C, Species(species)}, {Empty, Species(species)}, Region(0), 0.99 / 5., {}});
         adoption_rates.push_back({{S, Species(species)}, {Empty, Species(species)}, Region(0), 1. / 21, {}});
+        j += 4;
         if (species != 3) {
             adoption_rates.push_back({{E, Species(species)}, {S, Species(species)}, Region(0), 1. / 22, {}});
+            j++;
         }
     }
     adoption_rates.push_back(
         {{S, Species(5)}, {E, Species(5)}, Region(0), 0.1, {{{E, Species(5)}, 0.2}, {{I, Species(5)}, 0.5}}});
     adoption_rates.push_back({{E, Species(5)}, {I, Species(5)}, Region(0), 1.0 / 5., {}});
     adoption_rates.push_back({{I, Species(5)}, {D, Species(5)}, Region(0), 1. / 5., {}});
+
+    std::vector<size_t> infection_indices;
+    for (size_t index = 0; index < num_species - 1; ++index) {
+        infection_indices.push_back(model.populations.get_flat_index({Region(0), I, Species(index)}));
+    }
 
     model.parameters.get<AR>() = adoption_rates;
     const auto t0              = 0.;
@@ -108,7 +118,7 @@ int main(int /*argc*/, char** /*argv*/)
                mio::JollyEdge<ScalarType>>
         graph;
 
-    io::CSVReader<6> population_data("/home/kilian/Documents/projects/jolly/data/farms_by_district_type.csv");
+    io::CSVReader<6> population_data("/home/kilian/Documents/projects/jolly/common_data/farms_by_district_type.csv");
     size_t district_id, conventional, organic, broiler_1, broiler_2, layer;
     population_data.read_header(io::ignore_extra_column, "district_id", "conventional", "broiler_2", "organic",
                                 "broiler_1", "layer");
@@ -137,7 +147,7 @@ int main(int /*argc*/, char** /*argv*/)
         ++node_index;
     }
 
-    io::CSVReader<3> adjacency("/home/kilian/Documents/projects/jolly/data/district_adjacency.csv");
+    io::CSVReader<3> adjacency("/home/kilian/Documents/projects/jolly/common_data/district_adjacency.csv");
     size_t district_one, district_two;
     ScalarType border_length;
     adjacency.read_header(io::ignore_extra_column, "district_id_1", "district_id_2", "border_length_m");
@@ -155,6 +165,8 @@ int main(int /*argc*/, char** /*argv*/)
     }
 
     auto sim = mio::make_jolly_sim<ScalarType>(t0, dt, std::move(graph));
+    sim.set_infection_indices(infection_indices);
+    sim.set_culling_indices(culling_indices);
     {
         mio::timing::AutoTimer<"Simulation"> timer;
         sim.advance(tmax);

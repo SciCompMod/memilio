@@ -25,6 +25,7 @@
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/compartments/feedback_simulation.h"
 #include "memilio/geography/regions.h"
+#include "models/smm/model.h"
 
 namespace mio
 {
@@ -141,6 +142,7 @@ public:
         : Base(t0, dt, g, node_func, std::move(edge_func))
         , m_rates(Base::m_graph.edges().size() * Base::m_graph.edges()[0].property.get_parameters().size())
         , _trade(Base::m_graph)
+        , infection_indices()
     {
     }
 
@@ -148,11 +150,16 @@ public:
         : Base(t0, dt, std::forward<Graph>(g), node_func, std::move(edge_func))
         , m_rates(Base::m_graph.edges().size() * Base::m_graph.edges()[0].property.get_parameters().size())
         , _trade(Base::m_graph)
+        , infection_indices()
     {
     }
 
     void advance(FP t_max = 1.0)
     {
+
+        using Model        = std::decay_t<decltype(Base::m_graph.nodes()[0].property.get_simulation().get_model())>;
+        using AdoptionRate = mio::smm::AdoptionRates<ScalarType, typename Model::Status, mio::regions::Region>;
+
         auto dt              = Base::m_dt;
         auto next_trade_time = _trade.next_trade_time();
         while (Base::m_t < t_max) {
@@ -166,6 +173,15 @@ public:
 
             for (auto& n : Base::m_graph.nodes()) {
                 Base::m_node_func(Base::m_t, dt, n.property);
+            }
+            const auto current_infections = sum_current_infections();
+            mio::log_debug("Current infections at time {}: {}", Base::m_t, current_infections);
+            const auto culling_time = 6. / current_infections;
+            for (auto& n : Base::m_graph.nodes()) {
+                for (auto& index : culling_indices) {
+                    n.property.get_simulation().get_model().parameters.template get<AdoptionRate>()[index].factor =
+                        culling_time;
+                }
             }
 
             Base::m_t += dt;
@@ -262,10 +278,34 @@ public:
         }
     }
 
+    void set_infection_indices(const std::vector<size_t>& indices)
+    {
+        infection_indices = indices;
+    }
+
+    void set_culling_indices(const std::vector<size_t>& indices)
+    {
+        culling_indices = indices;
+    }
+
 private:
+    FP sum_current_infections()
+    {
+        FP sum_inf = 0;
+        for (auto& n : Base::m_graph.nodes()) {
+            const auto& node_result = n.property.get_result().get_last_value();
+            for (const auto& index : infection_indices) {
+                sum_inf += node_result[index];
+            }
+        }
+        return sum_inf;
+    }
+
     std::vector<FP> m_rates;
     RandomNumberGenerator m_rng;
     mio::Trade<FP, Graph> _trade;
+    std::vector<size_t> infection_indices;
+    std::vector<size_t> culling_indices;
 };
 
 template <typename FP, class Graph>
