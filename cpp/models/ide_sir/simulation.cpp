@@ -106,14 +106,6 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool backwa
         m_model->compute_I_and_R(m_dt, use_complement);
     }
 
-    // If we use a central finite difference scheme, we remove the additional time points for which we have computed S
-    // but not I and R.
-    if (!backwards_fd) {
-        for (size_t i = 0; i < num_additional_time_points; i++) {
-            m_model->populations.remove_last_time_point();
-        }
-    }
-
     std::cout << "SIR: " << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] << ", "
               << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Infected] << ", "
               << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] << std::endl;

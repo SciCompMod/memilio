@@ -160,37 +160,14 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
     size_t switch_weights_index = std::min(current_time_index, m_gregory_order);
 
     if (use_complement) {
-        for (size_t j = 0; j < switch_weights_index; j++) {
-            ScalarType gregory_weight = sum_part1_weight(current_time_index, j);
-
-            // For each index, the corresponding summand is computed here.
-            sum_first_integral +=
-                gregory_weight *
-                (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time_index * dt)(0, 0) /
-                 m_N) *
-                m_transmissionproboncontact_vector[current_time_index - j] *
-                m_riskofinffromsymptomatic_vector[current_time_index - j] *
-                (1. - m_transitiondistribution_vector[current_time_index - j]) *
-                populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible];
-
-            // For each index, the corresponding summand is computed here.
-            sum_second_integral += gregory_weight *
-                                   parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                                       (current_time_index - j + t0_index) * dt)(0, 0) *
-                                   m_transmissionproboncontact_vector[current_time_index - j] *
-                                   m_riskofinffromsymptomatic_vector[current_time_index - j] *
-                                   (1. - m_transitiondistribution_vector[current_time_index - j]);
-        }
-
-        // Compute second part of sum where simulated values of Susceptibles are used as well as the given value for the
-        // current time step from the fixed point iteration.
-
-        // In this loop, we compute all summands for j=n0,...,n.
-        for (size_t j = switch_weights_index; j <= current_time_index; j++) {
-
-            ScalarType gregory_weight = sum_part2_weight(current_time_index, j);
-
-            // For each index, the corresponding summand is computed here.
+        for (size_t j = 0; j <= current_time_index; j++) {
+            ScalarType gregory_weight = 0.;
+            if (j < switch_weights_index) {
+                gregory_weight = sum_part1_weight(current_time_index, j);
+            }
+            else {
+                gregory_weight = sum_part2_weight(current_time_index, j);
+            }
 
             ScalarType relevant_susceptibles;
             // If j<n, we take the Susceptibles at the corresponding index that we have already computed.
@@ -203,54 +180,34 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
                 relevant_susceptibles = susceptibles;
             }
 
+            // For each index, the corresponding summand is computed here.
             sum_first_integral +=
+                gregory_weight *
                 (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time_index * dt)(0, 0) /
                  m_N) *
-                gregory_weight * m_transmissionproboncontact_vector[current_time_index - j] *
+                m_transmissionproboncontact_vector[current_time_index - j] *
                 m_riskofinffromsymptomatic_vector[current_time_index - j] *
                 (1. - m_transitiondistribution_vector[current_time_index - j]) * relevant_susceptibles;
 
             // For each index, the corresponding summand is computed here.
             sum_second_integral += gregory_weight *
-                                   (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                                       (current_time_index - j + t0_index) * dt)(0, 0)) *
+                                   parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                                       (current_time_index - j + t0_index) * dt)(0, 0) *
                                    m_transmissionproboncontact_vector[current_time_index - j] *
                                    m_riskofinffromsymptomatic_vector[current_time_index - j] *
                                    (1. - m_transitiondistribution_vector[current_time_index - j]);
         }
     }
     else {
-        for (size_t j = 0; j < switch_weights_index; j++) {
-            ScalarType gregory_weight = sum_part1_weight(current_time_index, j);
+        for (size_t j = 0; j <= current_time_index; j++) {
 
-            // For each index, the corresponding summand is computed here.
-            sum_first_integral +=
-                gregory_weight *
-                (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time_index * dt)(0, 0) /
-                 m_N) *
-                m_transmissionproboncontact_vector[current_time_index - j] *
-                m_riskofinffromsymptomatic_vector[current_time_index - j] *
-                m_transitiondistribution_vector[current_time_index - j] *
-                populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible];
-
-            // For each index, the corresponding summand is computed here.
-            sum_second_integral += gregory_weight *
-                                   parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                                       (current_time_index - j + t0_index) * dt)(0, 0) *
-                                   m_transmissionproboncontact_vector[current_time_index - j] *
-                                   m_riskofinffromsymptomatic_vector[current_time_index - j] *
-                                   m_transitiondistribution_vector[current_time_index - j];
-        }
-
-        // Compute second part of sum where simulated values of Susceptibles are used as well as the given value for the
-        // current time step from the fixed point iteration.
-
-        // In this loop, we compute all summands for j=n0,...,n.
-        for (size_t j = switch_weights_index; j <= current_time_index; j++) {
-
-            ScalarType gregory_weight = sum_part2_weight(current_time_index, j);
-
-            // For each index, the corresponding summand is computed here.
+            ScalarType gregory_weight = 0.;
+            if (j < switch_weights_index) {
+                gregory_weight = sum_part1_weight(current_time_index, j);
+            }
+            else {
+                gregory_weight = sum_part2_weight(current_time_index, j);
+            }
 
             ScalarType relevant_susceptibles;
             // If j<n, we take the Susceptibles at the corresponding index that we have already computed.
@@ -263,17 +220,19 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
                 relevant_susceptibles = susceptibles;
             }
 
+            // For each index, the corresponding summand is computed here.
             sum_first_integral +=
+                gregory_weight *
                 (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time_index * dt)(0, 0) /
                  m_N) *
-                gregory_weight * m_transmissionproboncontact_vector[current_time_index - j] *
+                m_transmissionproboncontact_vector[current_time_index - j] *
                 m_riskofinffromsymptomatic_vector[current_time_index - j] *
                 m_transitiondistribution_vector[current_time_index - j] * relevant_susceptibles;
 
             // For each index, the corresponding summand is computed here.
             sum_second_integral += gregory_weight *
-                                   (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                                       (current_time_index - j + t0_index) * dt)(0, 0)) *
+                                   parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                                       (current_time_index - j + t0_index) * dt)(0, 0) *
                                    m_transmissionproboncontact_vector[current_time_index - j] *
                                    m_riskofinffromsymptomatic_vector[current_time_index - j] *
                                    m_transitiondistribution_vector[current_time_index - j];
