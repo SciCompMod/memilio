@@ -485,7 +485,8 @@ void ModelMessinaExtended::compute_I_and_R(ScalarType dt)
         populations.get_value(0)[(Eigen::Index)InfectionState::Recovered] +
         (1 - m_transitiondistribution_vector[current_time_index]) *
             populations.get_value(0)[(Eigen::Index)InfectionState::Infected] +
-        dt * sum_recovered;
+        populations[0][(Eigen::Index)InfectionState::Susceptible] -
+        populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] - dt * sum_infected;
 }
 
 } // namespace isir

@@ -212,11 +212,9 @@ TEST(IdeSir, compareModelMessinaExtendedAndModelMessinaExtendedDetailedInit)
     size_t gregory_order           = 2;
     size_t finite_difference_order = 1;
 
-    ScalarType dt = 0.1;
-
-    ScalarType t0 = 0.;
-
+    ScalarType t0   = 0.;
     ScalarType tmax = 1.;
+    ScalarType dt   = 0.1;
 
     ScalarType S0               = 90.;
     ScalarType I0               = 10.;
@@ -285,6 +283,12 @@ TEST(IdeSir, compareModelMessinaExtendedAndModelMessinaExtendedDetailedInit)
             EXPECT_NEAR(results_extended[i][compartment], results_extended_detailed_init[i][compartment], 1e-6);
         }
     }
+
+    for (size_t i = 0; i < (size_t)flows_extended.get_num_time_points(); i++) {
+        for (size_t flow = 0; flow < (size_t)mio::isir::InfectionTransition::Count; flow++) {
+            EXPECT_NEAR(flows_extended[i][flow], flows_extended_detailed_init[i][flow], 1e-6);
+        }
+    }
 }
 
 TEST(IdeSir, testFiniteDifferenceApproximation)
@@ -301,10 +305,7 @@ TEST(IdeSir, testFiniteDifferenceApproximation)
     std::vector<size_t> finite_difference_orders = {1, 2, 3, 4};
 
     for (size_t finite_difference_order : finite_difference_orders) {
-        std::cout << "Finite diff order: " << finite_difference_order << std::endl;
-
         // Set values of S to sin(x) on interval from 0 to 2.
-
         std::vector<ScalarType> dt_exponents = {0, 1, 2, 3};
 
         std::vector<ScalarType> errors_max = {};
@@ -374,7 +375,7 @@ TEST(IdeSir, testFiniteDifferenceApproximation)
         }
 
         for (size_t i = 0; i < errors_max.size(); i++) {
-            std::cout << "Max error: " << errors_max[i] << std::endl;
+            // std::cout << "Max error: " << errors_max[i] << std::endl;
             // std::cout << "L2 error: " << errors_l2[i] << std::endl;
         }
 
@@ -382,7 +383,7 @@ TEST(IdeSir, testFiniteDifferenceApproximation)
         for (size_t i = 0; i < errors_max.size() - 1; i++) {
             ScalarType numerical_order_max =
                 log(errors_max[i + 1] / errors_max[i]) / log(pow(10, -dt_exponents[i + 1]) / pow(10, -dt_exponents[i]));
-            std::cout << "Order max: " << numerical_order_max << std::endl;
+            // std::cout << "Order max: " << numerical_order_max << std::endl;
             // Only check for convergence rate if error of smaller time step is sufficiently large.
             if (errors_max[i + 1] > 5e-12) {
                 EXPECT_NEAR(numerical_order_max, finite_difference_order, 0.3);
