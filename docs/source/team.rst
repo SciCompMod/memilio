@@ -292,7 +292,7 @@ Daniel Abele is a research software engineer at the Institute of Software Techno
 
 
 Margrit Klitz
-^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
 .. image:: https://martinkuehn.eu/research/images/margrit.png
    :alt: Margrit Klitz
@@ -308,6 +308,23 @@ Margrit Klitz holds a PhD in mathematics from the University of Bonn. She worked
    :animate: fade-in-slide-down
 
    * `ORCID Profile: 0000-0003-3657-4180 <https://orcid.org/0000-0003-3657-4180>`__
+
+
+Katrin Rack
+^^^^^^^^^^^
+
+**Research Focus:** High performance computing, machine learning, anomaly detection
+
+Kathrin Rack studied physics at the University of Düsseldorf.  She holds a PhD. in theoretical physics from the University 
+of Cologne for her work in computational biophysics at Forschungszentrum Jülich. Since 2015, she has been supporting the 
+Institute for Software Technology at the German Aerospace Center. She was part of the MEmilio project from the beginning 
+until end of 2021. During this period, she designed and developed the initial data-management component. Moreover, she 
+integrated and steered the software-development process.
+
+.. dropdown:: Links
+   :animate: fade-in-slide-down
+
+   * `ORCID Profile: 0000-0002-5794-5705 <https://orcid.org/0000-0002-5794-5705>`__
 
 
 
