@@ -115,6 +115,31 @@ struct LogPersonsPerLocationAndInfectionTime : mio::LogAlways {
     }
 };
 
+struct LogNewInfectionsAndShedding : mio::LogAlways {
+    using Type = std::tuple<
+        int,
+        double>; //First tuple entry is number of new infections per time point, second tuple entry ist summed exposure rates (global_parameters.get<InfectionRateFromViralShed>()[{virus}] * infection.get_infectivity(t + dt / 2)) per time point
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        int new_infections = 0;
+        double shedding    = 0.0;
+        for (auto&& person : sim.get_model().get_persons()) {
+            if (person.get_time_since_transmission().hours() >= 0 && person.get_time_since_transmission().hours() < 1) {
+                new_infections += 1;
+            }
+            if (person.is_infected(sim.get_time())) {
+                auto& infection = person.get_infection();
+                auto virus      = infection.get_virus_variant();
+                for (mio::abm::CellIndex cell : person.get_cells()) {
+                    shedding += sim.get_model().parameters.get<mio::abm::InfectionRateFromViralShed>()[{virus}] *
+                                infection.get_infectivity(sim.get_time() + mio::abm::hours(1) / 2);
+                }
+            }
+        }
+        return std::make_tuple(new_infections, shedding);
+    }
+};
+
 std::pair<double, double> get_my_and_sigma(double mean, double std)
 {
     double my    = log(mean * mean / sqrt(mean * mean + std * std));
@@ -144,6 +169,100 @@ mio::AgeGroup determine_age_group(uint32_t age)
     }
     else {
         return mio::AgeGroup(0);
+    }
+}
+
+void write_compartments_new_inf_and_shedding(
+    std::string filename, mio::abm::Model& model,
+    mio::History<mio::DataWriterToMemory, LogTimePoint, LogNewInfectionsAndShedding>& history)
+{
+    auto file = fopen(filename.c_str(), "w");
+    if (file == NULL) {
+        mio::log(mio::LogLevel::warn, "Could not open file {}", filename);
+    }
+    else {
+        auto log              = history.get_log();
+        auto tps              = std::get<0>(log);
+        auto new_inf_shedding = std::get<1>(log);
+        fprintf(file, "t S E Ins Isy Isev Icri R D NewInf Shedding\n");
+        for (auto t = size_t(0); t < tps.size(); ++t) {
+            auto tp = mio::abm::TimePoint(0) + mio::abm::hours(t);
+            fprintf(file, "%.14f ", tps[t]);
+            int new_inf     = std::get<0>(new_inf_shedding[t]);
+            double shedding = std::get<1>(new_inf_shedding[t]);
+            std::vector<int> comps(static_cast<size_t>(mio::abm::InfectionState::Count));
+            for (auto& person : model.get_persons()) {
+                auto state = person.get_infection_state(tp);
+                comps[static_cast<size_t>(state)] += 1;
+            }
+            for (auto c : comps) {
+                fprintf(file, "%d ", c);
+            }
+            fprintf(file, "%d ", new_inf);
+            fprintf(file, "%.14f ", shedding);
+            fprintf(file, "\n");
+        }
+        fclose(file);
+    }
+}
+
+void write_contact_file(std::string filename, mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
+                                                           LogPersonsPerLocationAndInfectionTime, LogAgentIds>& history)
+{
+    auto file = fopen(filename.c_str(), "w");
+    if (file == NULL) {
+        mio::log(mio::LogLevel::err, "Could not open file {}", filename);
+    }
+    else {
+        // get agents ids
+        auto log          = history.get_log();
+        auto agent_ids    = std::get<3>(log)[0];
+        auto logPerPerson = std::get<2>(log);
+
+        const int num_agents     = static_cast<int>(agent_ids.size());
+        const int num_timepoints = static_cast<int>(logPerPerson.size());
+        fprintf(file, "loc_type t mean_num_agents max_num_agents \n");
+        // Iterate over all agents
+        for (int t = 0; t < num_timepoints; ++t) {
+            // Map for every location type that has number of contacts for every location
+            std::map<mio::abm::LocationType, std::map<mio::abm::LocationId, int>> agents_per_loc;
+            // Iterate over all agents and increase the count of their location
+            for (auto& id : agent_ids) {
+                auto loc_id    = std::get<0>(logPerPerson[t][id.get()]);
+                auto type      = std::get<1>(logPerPerson[t][id.get()]);
+                auto type_iter = agents_per_loc.find(type);
+                if (type_iter == agents_per_loc.end()) {
+                    agents_per_loc.insert({type, {{loc_id, 1}}});
+                }
+                else {
+                    auto id_iter = agents_per_loc[type].find(loc_id);
+                    if (id_iter == agents_per_loc[type].end()) {
+                        agents_per_loc[type].insert({loc_id, 1});
+                    }
+                    else {
+                        agents_per_loc[type][loc_id] += 1;
+                    }
+                }
+            }
+            // Iterate over all location types
+            for (const auto& type_pair : agents_per_loc) {
+                int sum       = 0;
+                int max_value = std::numeric_limits<int>::min();
+                for (const auto& id_contacts : type_pair.second) {
+                    sum += id_contacts.second;
+                    if (id_contacts.second > max_value) {
+                        max_value = id_contacts.second;
+                    }
+                }
+                fprintf(file, "%d ", int(type_pair.first));
+                fprintf(file, "%d ", t);
+                double mean = static_cast<double>(sum) / type_pair.second.size();
+                fprintf(file, "%.14f ", mean);
+                fprintf(file, "%d ", max_value);
+                fprintf(file, "\n");
+            }
+        }
+        fclose(file);
     }
 }
 
@@ -1369,6 +1488,8 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def("advance",
              &mio::abm::Simulation::advance<mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
                                                          LogPersonsPerLocationAndInfectionTime, LogAgentIds>>)
+        .def("advance", &mio::abm::Simulation::advance<
+                            mio::History<mio::DataWriterToMemory, LogTimePoint, LogNewInfectionsAndShedding>>)
         .def("advance",
              static_cast<void (mio::abm::Simulation::*)(mio::abm::TimePoint)>(&mio::abm::Simulation::advance),
              py::arg("tmax"))
@@ -1382,6 +1503,14 @@ PYBIND11_MODULE(_simulation_abm, m)
                                                       LogPersonsPerLocationAndInfectionTime, LogAgentIds>& self) {
             return self.get_log();
         });
+
+    pymio::bind_class<mio::History<mio::DataWriterToMemory, LogTimePoint, LogNewInfectionsAndShedding>,
+                      pymio::EnablePickling::Never>(m, "History_sensitivity")
+        .def(py::init<>())
+        .def_property_readonly(
+            "log", [](mio::History<mio::DataWriterToMemory, LogTimePoint, LogNewInfectionsAndShedding>& self) {
+                return self.get_log();
+            });
 
     m.def(
         "set_viral_load_parameters",
@@ -1505,8 +1634,11 @@ PYBIND11_MODULE(_simulation_abm, m)
     m.def("initialize_model", &initialize_model, py::return_value_policy::reference_internal);
     m.def("save_infection_paths", &write_infection_paths, py::return_value_policy::reference_internal);
     m.def("save_comp_output", &write_compartments, py::return_value_policy::reference_internal);
+    m.def("save_comp_output_sensitivity", &write_compartments_new_inf_and_shedding,
+          py::return_value_policy::reference_internal);
     m.def("set_wastewater_ids", &set_wastewater_ids, py::return_value_policy::reference_internal);
     m.def("write_size_per_location", &write_size_per_location, py::return_value_policy::reference_internal);
+    m.def("write_contacts", &write_contact_file, py::return_value_policy::reference_internal);
 
 #ifdef MEMILIO_HAS_HDF5
     m.def(
