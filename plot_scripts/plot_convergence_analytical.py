@@ -91,7 +91,7 @@ def compute_l2_norm(timeseries, timestep):
     return norm
 
 
-def compute_errors_l2(groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, relative_error=True):
+def compute_errors_l2(groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, relative_error=True, cut_off=0):
     """ Computes relative L2 norm of the difference between time series from ODE and time series
     from IDE for all compartments/flows.
 
@@ -114,10 +114,10 @@ def compute_errors_l2(groundtruth, results, groundtruth_exponent, timesteps_ide,
             scale_timesteps = timestep/pow(10, -groundtruth_exponent)
             num_timepoints = len(results['ide'][i])
 
-            result_ode = np.array(groundtruth['ode'][i][int(
-                t0_ide/timestep)::][compartment])
+            result_ode = np.array(groundtruth['ode'][i][compartment][int(
+                t0_ide/timestep)+cut_off::])
             result_ide = np.array(results['ide'][i][int(
-                t0_ide/timestep)::][:, compartment])
+                t0_ide/timestep)+cut_off::][:, compartment])
 
             difference = result_ode - result_ide
 
@@ -140,12 +140,11 @@ def compute_max_norm(timeseries):
     @param[in] timeseries Considered timeseries.
     @returns Norm.
     """
-    # print(timeseries)
     norm = np.max(np.abs(timeseries))
     return norm
 
 
-def compute_errors_max(groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, relative_error=True):
+def compute_errors_max(groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, relative_error=True, cut_off=0):
     """ Computes relative maximum norm of the difference between time series from ODE and time series
     from IDE for all compartments.
     """
@@ -160,8 +159,8 @@ def compute_errors_max(groundtruth, results, groundtruth_exponent, timesteps_ide
             timestep = timesteps_ide[i]
             scale_timesteps = timestep/pow(10, -groundtruth_exponent)
 
-            difference = groundtruth['ode'][i][int(
-                t0_ide/timestep)::][compartment]-results['ide'][i][int(t0_ide/timestep)::][:, compartment]
+            difference = groundtruth['ode'][i][compartment][int(
+                t0_ide/timestep)+cut_off::]-results['ide'][i][int(t0_ide/timestep)+cut_off::][:, compartment]
 
             if relative_error:
                 norm_groundtruth = compute_max_norm(
@@ -238,7 +237,8 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
         for j in range(len(gregory_orders_simulation)):
             line = axs[i].plot(timesteps_ide,
                                errors_all_gregory_orders[j][:, i], '-o', color=colors[j], label=labels[j])
-            handles.append(line[0])
+            if i == 0:
+                handles.append(line[0])
 
         # Append lines to handles for legend.
         if i == 0:
@@ -258,8 +258,12 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
         axs[i].grid(True, linestyle='--', alpha=0.6)
 
     fig.supxlabel(r'Time step $\Delta t$', fontsize=12)
-    ylabel = fig.supylabel(
-        r"$err_\text{rel}$", fontsize=12)
+    if relative_error:
+        ylabel = fig.supylabel(
+            r"$err_\text{rel}$", fontsize=12)
+    else:
+        ylabel = fig.supylabel(
+            r"$err$", fontsize=12)
 
     # print(handles)
 
@@ -287,6 +291,52 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
                     dpi=500)
 
     plt.close()
+
+
+def plot_difference_per_timestep(groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, gregory_order, cut_off=0, save_dir=""):
+    num_errors = 3
+
+    errors = []
+
+    compartments = ["S", "I", "R"]
+
+    # Compute error.
+    difference = []
+
+    num_plots = 3
+    figsize_x = 12
+
+    for i, timestep in enumerate(timesteps_ide):
+        fig, axs = plt.subplots(1, num_plots, sharex=True,
+                                figsize=(figsize_x, 3))
+
+        errors.append([])
+        for compartment in range(num_errors):
+            scale_timesteps = timestep/pow(10, -groundtruth_exponent)
+
+            # difference = groundtruth[0][int(
+            #     pow(10, groundtruth_exponent)*(t0_ide))::int(scale_timesteps)][:, compartment]-results[i][int(t0_ide/timestep)::][:, compartment]
+
+            difference = groundtruth['ode'][i][compartment][int(
+                t0_ide/timestep)+cut_off::]-results['ide'][i][int(t0_ide/timestep)+cut_off::][:, compartment]
+
+            indices = range(len(difference))
+
+            axs[compartment].scatter(indices[0:], difference[0:], s=1)
+            axs[compartment].set_title(f"{compartments[compartment]}")
+
+        plt.show()
+
+        if save_dir != "":
+            if not os.path.isdir(f"{save_dir}/differences"):
+                os.makedirs(f"{save_dir}/differences")
+
+            filename = f"{save_dir}/differences/gregoryorder={gregory_order}_timestep={timestep}"
+
+            plt.savefig(filename + ".png", format='png',
+                        dpi=500)
+
+        plt.close()
 
 
 def compute_order_of_convergence(errors, timesteps_ide):
@@ -344,13 +394,15 @@ def main():
 
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
-    main_dir = "2026-01-16/analytical_example_S_deriv/"
+    main_dir = "2026-01-27/groundtruth=cosh_S_computed_no_init/"
     relevant_dir = os.path.join(root_dir, main_dir)
-    print(relevant_dir)
-    # sub_dirs = subfolders_scandir(relevant_dir)
-    sub_dirs = ["t0ide=0_tmax=5"]
+    # print(relevant_dir)
+    sub_dirs = subfolders_scandir(relevant_dir)
+    # sub_dirs = ["t0ide=0_tmax=5"]
 
     gregory_orders_simulation = [1, 2, 3]
+
+    cut_off = 10
 
     for dir_index, dir_name in enumerate(sub_dirs):
         print(dir_name)
@@ -364,12 +416,12 @@ def main():
 
         # Path where plots will be stored.
         plot_dir = os.path.join(os.path.dirname(
-            __file__),  f"../plots/{main_dir}/{dir_name}/")
+            __file__),  f"../plots/{main_dir}/{dir_name}/cutoff={cut_off}/")
 
-        errors_all_gregory_orders_l2_rel = []
+        # errors_all_gregory_orders_l2_rel = []
         errors_all_gregory_orders_l2_abs = []
 
-        errors_all_gregory_orders_max_rel = []
+        # errors_all_gregory_orders_max_rel = []
         errors_all_gregory_orders_max_abs = []
 
         # Get exponents for which IDE simulations have been computed for considered subdirectory.
@@ -390,19 +442,22 @@ def main():
                                 gregory_order_simulation)
 
             # Compute errors of IDE results compared to groundtruth.
-            errors_l2_rel = compute_errors_l2(
-                groundtruth, results, groundtruth_exponent, timesteps_ide, t0, True)
+            # errors_l2_rel = compute_errors_l2(
+            #     groundtruth, results, groundtruth_exponent, timesteps_ide, t0, True)
             errors_l2_abs = compute_errors_l2(
-                groundtruth, results, groundtruth_exponent, timesteps_ide, t0, False)
-            errors_all_gregory_orders_l2_rel.append(errors_l2_rel)
+                groundtruth, results, groundtruth_exponent, timesteps_ide, t0, False, cut_off)
+            # errors_all_gregory_orders_l2_rel.append(errors_l2_rel)
             errors_all_gregory_orders_l2_abs.append(errors_l2_abs)
 
-            errors_max_rel = compute_errors_max(
-                groundtruth, results, groundtruth_exponent, timesteps_ide, t0, True)
+            # errors_max_rel = compute_errors_max(
+            #     groundtruth, results, groundtruth_exponent, timesteps_ide, t0, True)
             errors_max_abs = compute_errors_max(
-                groundtruth, results, groundtruth_exponent, timesteps_ide, t0, False)
-            errors_all_gregory_orders_max_rel.append(errors_max_rel)
+                groundtruth, results, groundtruth_exponent, timesteps_ide, t0, False, cut_off)
+            # errors_all_gregory_orders_max_rel.append(errors_max_rel)
             errors_all_gregory_orders_max_abs.append(errors_max_abs)
+
+            plot_difference_per_timestep(
+                groundtruth, results, groundtruth_exponent, timesteps_ide, t0, gregory_order_simulation, cut_off, plot_dir)
 
             print()
             # print(f"Gregory order {gregory_order_simulation}")
@@ -418,30 +473,30 @@ def main():
             # print(order.T)
 
         # Plot convergence of all compartments separately.
-        computed_errors_rel = [
-            errors_all_gregory_orders_l2_rel, errors_all_gregory_orders_max_rel]
-        computed_errors_abs = [
-            errors_all_gregory_orders_l2_abs, errors_all_gregory_orders_max_abs]
+        # computed_errors_rel = [
+        #     errors_all_gregory_orders_l2_rel, errors_all_gregory_orders_max_rel]
+        # computed_errors_abs = [
+        #     errors_all_gregory_orders_l2_abs, errors_all_gregory_orders_max_abs]
 
-        computed_errors = [computed_errors_rel, computed_errors_abs]
+        # computed_errors = [computed_errors_rel, computed_errors_abs]
 
-        for i in range(len(computed_errors)):
-            if i == 0:
-                relative_error = True
-            else:
-                relative_error = False
+        # for i in range(len(computed_errors)):
+        #     if i == 0:
+        #         relative_error = True
+        #     else:
+        relative_error = False
 
-            # L2 norm
-            l2 = True
-            maxnorm = False
-            plot_convergence(computed_errors[i][0], timesteps_ide,
-                             gregory_orders_simulation, l2, maxnorm,  relative_error, plot_dir)
+        # L2 norm
+        l2 = True
+        maxnorm = False
+        plot_convergence(errors_all_gregory_orders_l2_abs, timesteps_ide,
+                         gregory_orders_simulation, l2, maxnorm,  relative_error, plot_dir)
 
-            # max norm
-            l2 = False
-            maxnorm = True
-            plot_convergence(computed_errors[i][1], timesteps_ide,
-                             gregory_orders_simulation,  l2, maxnorm, relative_error, plot_dir)
+        # max norm
+        l2 = False
+        maxnorm = True
+        plot_convergence(errors_all_gregory_orders_max_abs, timesteps_ide,
+                         gregory_orders_simulation,  l2, maxnorm, relative_error, plot_dir)
 
 
 if __name__ == '__main__':

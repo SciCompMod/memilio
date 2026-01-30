@@ -99,12 +99,8 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool backwa
                                       Vec::Constant((size_t)InfectionTransition::Count, 0.));
 
         // Compute S'.
-        if (backwards_fd) {
-            m_model->compute_S_deriv(m_dt);
-        }
-        else {
-            m_model->compute_S_deriv_central(m_dt);
-        }
+
+        m_model->compute_S_deriv(m_dt);
 
         // Compute I and R.
         m_model->compute_I_and_R(m_dt, use_complement);

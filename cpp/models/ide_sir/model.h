@@ -76,8 +76,6 @@ public:
 
     void compute_S_deriv(ScalarType dt, size_t time_point_index);
     void compute_S_deriv(ScalarType dt);
-    void compute_S_deriv_central(ScalarType dt, size_t time_point_index);
-    void compute_S_deriv_central(ScalarType dt);
 
     void compute_I_and_R(ScalarType dt, size_t time_point_index, bool use_complement = false);
     void compute_I_and_R(ScalarType dt, bool use_complement = false);

@@ -34,7 +34,7 @@ size_t num_agegroups = 1;
 
 size_t finite_difference_order = 4;
 
-ScalarType t0_ide = 2.;
+ScalarType t0_init = 4.;
 } // namespace params
 
 mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, ScalarType t0_groundtruth,
@@ -61,10 +61,10 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 
         init_populations.add_time_point(t0_groundtruth, vec_init);
 
-        while (init_populations.get_last_time() < t0_ide - 1e-10) {
+        while (init_populations.get_last_time() < t0_init - 1e-10) {
             init_populations.add_time_point(init_populations.get_last_time() + dt_ide);
             vec_init[(size_t)mio::isir::InfectionState::Susceptible] = cosh(init_populations.get_last_time());
-            vec_init[(size_t)mio::isir::InfectionState::Infected]    = 0.; //sinh(init_populations.get_last_time())
+            vec_init[(size_t)mio::isir::InfectionState::Infected]    = 0.;
             vec_init[(size_t)mio::isir::InfectionState::Recovered]   = 0.;
             init_populations.get_last_value()                        = vec_init;
         }
@@ -102,14 +102,14 @@ int main()
     using namespace params;
 
     ScalarType t0   = 0.;
-    ScalarType tmax = 5.;
+    ScalarType tmax = 10.;
 
     std::vector<ScalarType> ide_exponents = {0, 1, 2, 3};
     std::vector<size_t> gregory_orders    = {1, 2, 3};
 
-    std::string save_dir = fmt::format("../../simulation_results/2026-01-16/analytical_example_S_deriv/"
-                                       "t0ide={}_tmax={}/",
-                                       t0, tmax);
+    std::string save_dir = fmt::format("../../simulation_results/2026-01-27/groundtruth=cosh_S_computed_no_init/"
+                                       "t0ide={}_tinit={}_tmax={}/",
+                                       t0, t0_init, tmax);
 
     std::cout << save_dir << std::endl;
 

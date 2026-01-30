@@ -211,6 +211,16 @@ void ModelAnalyticalSDeriv::compute_S_deriv(ScalarType dt, size_t time_point_ind
             (2 * dt);
     }
 
+    // Compute S' with backwards finite difference scheme of third order, flow from S to I is then given by -S'.
+    if (std::min(m_finite_difference_order, time_point_index) == 3) {
+        flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+            -(11 * populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] -
+              18 * populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible] +
+              9 * populations[time_point_index - 2][(Eigen::Index)InfectionState::Susceptible] -
+              2 * populations[time_point_index - 3][(Eigen::Index)InfectionState::Susceptible]) /
+            (6 * dt);
+    }
+
     // Compute S' with backwards finite difference scheme of fourth order, flow from S to I is then given by -S'.
     if (std::min(m_finite_difference_order, time_point_index) == 4) {
         flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =

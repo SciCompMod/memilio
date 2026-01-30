@@ -44,10 +44,10 @@ def plot_susceptibles(files, fileending, save_dir=""):
     num_plots = 3
     fig, axs = plt.subplots(1, num_plots, sharex='all', num='Compare files')
 
-    colors = ["limegreen", "C0"]
-    linestyles = ['--', '-']
+    colors = ["C0", "limegreen"]
+    linestyles = ['-', '--',]
     linewidth = 1
-    labels = ["IDE result", "Groundtruth"]
+    labels = ["Groundtruth", "IDE result"]
 
     dates = []
 
@@ -70,14 +70,21 @@ def plot_susceptibles(files, fileending, save_dir=""):
 
         if file == 0:  # Plot groundtruth.
             groundtruth_at_timepoints = [
-                np.cosh(timepoint) for timepoint in dates]
+                np.sin(timepoint) for timepoint in dates]
             axs[0].plot(dates,
-                        groundtruth_at_timepoints, label=labels[1],  linestyle=linestyles[1], color=colors[1], linewidth=linewidth)
+                        [
+                            np.sin(timepoint) for timepoint in dates], label=labels[0],  linestyle=linestyles[0], color=colors[0], linewidth=linewidth)
+            axs[1].plot(dates,
+                        [
+                            np.cos(timepoint) for timepoint in dates], label=labels[0],  linestyle=linestyles[0], color=colors[0], linewidth=linewidth)
+            axs[2].plot(dates,
+                        [
+                            np.sin(timepoint) for timepoint in dates], label=labels[0],  linestyle=linestyles[0], color=colors[0], linewidth=linewidth)
 
        # Plot data.
         for i in range(num_plots):
             axs[i].plot(dates,
-                        total[:, i], label=labels[file],  linestyle=linestyles[file], color=colors[file], linewidth=linewidth)
+                        total[:, i], label=labels[1],  linestyle=linestyles[1], color=colors[1], linewidth=linewidth)
 
         h5file.close()
 
@@ -121,7 +128,7 @@ if __name__ == '__main__':
     # dir_name = "detailed_init_exponential_t0ide=50_tmax=51_finite_diff=1_tolexp=8"
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
-    main_dir = "2025-11-17/analytical_example"
+    main_dir = "2026-01-23/S=sin_finite_diff=4"
     relevant_dir = os.path.join(root_dir, main_dir)
 
     sub_dirs = subfolders_scandir(relevant_dir)
@@ -139,7 +146,7 @@ if __name__ == '__main__':
         gregory_orders = [3]
         ide_exponents = "1"
 
-        for ide_exponent in [1]:
+        for ide_exponent in [2]:
             for gregory_order in gregory_orders:
                 plot_susceptibles([
                     os.path.join(result_dir, f"result_ide_dt=1e-{ide_exponent}_gregoryorder={gregory_order}")],

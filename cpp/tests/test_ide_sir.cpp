@@ -291,35 +291,36 @@ TEST(IdeSir, testFiniteDifferenceApproximation)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType t0   = 0.;
-    ScalarType tmax = 2.;
+    ScalarType t0 = 0.;
+
+    ScalarType tmax = 10.;
 
     size_t gregory_order        = 1;
     ScalarType total_population = 2.;
 
-    std::vector<size_t> finite_difference_orders = {1, 2, 4};
+    std::vector<size_t> finite_difference_orders = {1, 2, 3, 4};
 
     for (size_t finite_difference_order : finite_difference_orders) {
-        // std::cout << "Finite diff order: " << finite_difference_order << std::endl;
+        std::cout << "Finite diff order: " << finite_difference_order << std::endl;
 
         // Set values of S to sin(x) on interval from 0 to 2.
 
         std::vector<ScalarType> dt_exponents = {0, 1, 2, 3};
 
-        std::vector<ScalarType> errors = {};
+        std::vector<ScalarType> errors_max = {};
+        std::vector<ScalarType> errors_l2  = {};
 
         for (size_t dt_exponent : dt_exponents) {
 
-            ScalarType dt = pow(10, -(ScalarType)dt_exponent);
+            ScalarType dt     = pow(10, -(ScalarType)dt_exponent);
+            ScalarType t_init = 4 * dt;
 
             mio::TimeSeries<ScalarType> init_populations((size_t)mio::isir::InfectionState::Count);
 
-            for (size_t i = t0 / dt; i <= std::round(tmax / dt); i++) {
+            for (size_t i = t0 / dt; i <= std::ceil(tmax / dt); i++) {
                 Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
                 vec_init[(size_t)mio::isir::InfectionState::Susceptible] = sin(i * dt);
-                vec_init[(size_t)mio::isir::InfectionState::Infected] =
-                    total_population - vec_init[(size_t)mio::isir::InfectionState::Susceptible];
-                // vec_init[(size_t)mio::isir::InfectionState::Recovered]   = 0.;
+                // vec_init[(size_t)mio::isir::InfectionState::Susceptible] = std::pow(i * dt, 3);
 
                 // Add time points t0 to init_populations.
                 init_populations.add_time_point(i * dt, vec_init);
@@ -328,33 +329,67 @@ TEST(IdeSir, testFiniteDifferenceApproximation)
             mio::isir::ModelMessinaExtendedDetailedInit model(std::move(init_populations), total_population,
                                                               gregory_order, finite_difference_order);
 
-            model.flows.add_time_point(
-                0., mio::TimeSeries<ScalarType>::Vector::Constant((size_t)mio::isir::InfectionTransition::Count, 0.));
-            model.flows.get_value(0)[(Eigen::Index)mio::isir::InfectionTransition::SusceptibleToInfected] =
-                -(model.populations.get_value(1)[(Eigen::Index)mio::isir::InfectionState::Susceptible] -
-                  model.populations.get_value(0)[(Eigen::Index)mio::isir::InfectionState::Susceptible]) /
-                dt;
-            for (size_t i = 1; i < (size_t)model.populations.get_num_time_points(); i++) {
+            for (size_t i = 0; i < std::ceil(t_init / dt); i++) {
+                // std::cout << "i: " << i << std::endl;
+                model.flows.add_time_point(i * dt, mio::TimeSeries<ScalarType>::Vector::Constant(
+                                                       (size_t)mio::isir::InfectionTransition::Count, 0.));
+                // model.flows.get_last_value()[(size_t)mio::isir::InfectionTransition::SusceptibleToInfected] =
+                //     -3 * std::pow(i * dt, 2);
+                model.flows.get_last_value()[(size_t)mio::isir::InfectionTransition::SusceptibleToInfected] =
+                    -cos(i * dt);
+            }
+            for (size_t i = std::ceil(t_init / dt); i < (size_t)std::ceil(tmax / dt); i++) {
                 model.flows.add_time_point(i * dt, mio::TimeSeries<ScalarType>::Vector::Constant(
                                                        (size_t)mio::isir::InfectionTransition::Count, 0.));
                 model.compute_S_deriv(dt, i);
             }
+
+            // Compute error in max norm.
+            ScalarType max_error_per_step_size = 0.;
+            for (size_t i = 0; i < (size_t)model.flows.get_num_time_points(); i++) {
+                ScalarType error_per_time_step =
+                    abs(-model.flows.get_value(i)[(Eigen::Index)mio::isir::InfectionTransition::SusceptibleToInfected] -
+                        cos(i * dt));
+                // abs(-model.flows.get_value(i)[(Eigen::Index)mio::isir::InfectionTransition::SusceptibleToInfected] -
+                //     3 * std::pow(i * dt, 2));
+
+                if (error_per_time_step > max_error_per_step_size) {
+                    max_error_per_step_size = error_per_time_step;
+                }
+            }
+
             // Append error.
-            errors.push_back(
-                abs(-model.flows.get_last_value()[(Eigen::Index)mio::isir::InfectionTransition::SusceptibleToInfected] -
-                    cos(tmax)));
+            errors_max.push_back(max_error_per_step_size);
+
+            // Compute error in L2 norm.
+            ScalarType l2_error_per_step_size = 0.;
+            for (size_t i = 0; i < (size_t)model.flows.get_num_time_points(); i++) {
+                l2_error_per_step_size += std::pow(
+                    abs(-model.flows.get_value(i)[(Eigen::Index)mio::isir::InfectionTransition::SusceptibleToInfected] -
+                        cos(i * dt)),
+                    2);
+            }
+            l2_error_per_step_size = std::pow(dt * l2_error_per_step_size, 1. / 2.);
+            errors_l2.push_back(l2_error_per_step_size);
         }
 
-        for (size_t i = 0; i < errors.size(); i++) {
-            // std::cout << "error: " << errors[i] << std::endl;
+        for (size_t i = 0; i < errors_max.size(); i++) {
+            std::cout << "Max error: " << errors_max[i] << std::endl;
+            // std::cout << "L2 error: " << errors_l2[i] << std::endl;
         }
 
         // Compute order of convergence.
-        for (size_t i = 0; i < errors.size() - 1; i++) {
-            ScalarType order =
-                log(errors[i + 1] / errors[i]) / log(pow(10, -dt_exponents[i + 1]) / pow(10, -dt_exponents[i]));
-            // std::cout << "Order: " << order << std::endl;
-            EXPECT_NEAR(order, finite_difference_order, 0.3);
+        for (size_t i = 0; i < errors_max.size() - 1; i++) {
+            ScalarType numerical_order_max =
+                log(errors_max[i + 1] / errors_max[i]) / log(pow(10, -dt_exponents[i + 1]) / pow(10, -dt_exponents[i]));
+            std::cout << "Order max: " << numerical_order_max << std::endl;
+            // Only check for convergence rate if error of smaller time step is sufficiently large.
+            if (errors_max[i + 1] > 5e-12) {
+                EXPECT_NEAR(numerical_order_max, finite_difference_order, 0.3);
+            }
+            // ScalarType numerical_order_l2 =
+            //     log(errors_l2[i + 1] / errors_l2[i]) / log(pow(10, -dt_exponents[i + 1]) / pow(10, -dt_exponents[i]));
+            // std::cout << "Order L2: " << numerical_order_l2 << std::endl;
         }
     }
 }

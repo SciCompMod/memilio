@@ -53,7 +53,7 @@ public:
      * Run the simulation from the current time to tmax.
      * @param tmax Time to stop.
      */
-    void advance(ScalarType tmax, bool backwards_fd = true);
+    void advance(ScalarType tmax);
 
     /**
      * @brief Get the result of the simulation.

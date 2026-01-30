@@ -25,6 +25,7 @@
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
+#include "ode_secir/model.h"
 #include "ode_sir/model.h"
 #include "memilio/config.h"
 #include "memilio/epidemiology/state_age_function.h"
@@ -97,7 +98,7 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent,
 }
 
 mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order,
-                                 size_t finite_difference_order, ScalarType t0_ode, ScalarType t0_ide, ScalarType tmax,
+                                 size_t finite_difference_order, ScalarType t0, ScalarType t_init, ScalarType tmax,
                                  ScalarType TimeInfected, std::string save_dir = "",
                                  mio::TimeSeries<ScalarType> result_groundtruth =
                                      mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
@@ -133,9 +134,9 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
             for (size_t compartment : compartments) {
                 vec_init[compartment] = result_groundtruth.get_value(0)[compartment];
             }
-            init_populations.add_time_point(t0_ode, vec_init);
+            init_populations.add_time_point(t0, vec_init);
 
-            while (init_populations.get_last_time() < t0_ide - 1e-10) {
+            while (init_populations.get_last_time() < t_init - 1e-10) {
                 for (size_t compartment : compartments) {
                     vec_init[compartment] = result_groundtruth.get_value(
                         size_t(init_populations.get_num_time_points() * groundtruth_index_factor))[compartment];
@@ -176,10 +177,15 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
         if (!save_dir.empty()) {
             // Save compartments.
             mio::TimeSeries<ScalarType> compartments = sim.get_result();
+            mio::TimeSeries<ScalarType> flows        = sim.get_flows();
             auto save_result_status_ide =
                 mio::save_result({compartments}, {0}, num_agegroups,
                                  save_dir + "result_ide_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
                                      "_gregoryorder=" + fmt::format("{}", gregory_order) + ".h5");
+            auto save_result_status_ide_flows =
+                mio::save_result({flows}, {0}, num_agegroups,
+                                 save_dir + "result_ide_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
+                                     "_gregoryorder=" + fmt::format("{}", gregory_order) + "_flows.h5");
 
             if (!save_result_status_ide) {
                 return mio::failure(mio::StatusCode::InvalidValue,
@@ -203,8 +209,8 @@ int main()
 
     std::vector<ScalarType> time_infected_values = {2.};
 
-    ScalarType t0_ode                     = 0.;
-    std::vector<ScalarType> t0_ide_values = {50.};
+    ScalarType t0                         = 0.;
+    std::vector<ScalarType> t_init_values = {50.};
     ScalarType tmax                       = 55.;
 
     std::vector<size_t> num_days_vec = {10};
@@ -219,29 +225,29 @@ int main()
 
     for (int time_infected : time_infected_values) {
 
-        for (ScalarType t0_ide : t0_ide_values) {
+        for (ScalarType t_init : t_init_values) {
 
             // for (size_t num_days : num_days_vec) {
             // ScalarType tmax = t0_ide + num_days;
 
             for (size_t finite_difference_order : finite_difference_orders) {
 
-                std::string save_dir = fmt::format("../../simulation_results/2025-11-28/R0+I_t0_ide/"
-                                                   "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
-                                                   t0_ide, tmax, finite_difference_order);
+                std::string save_dir = fmt::format("../../simulation_results/2026-01-29/test/"
+                                                   "detailed_init_exponential_t0={}_tinit={}_tmax={}_finite_diff={}/",
+                                                   t0, t_init, tmax, finite_difference_order);
 
                 // Make folder if not existent yet.
                 boost::filesystem::path dir(save_dir);
                 boost::filesystem::create_directories(dir);
 
-                auto result_ode = simulate_ode(ode_exponent, t0_ode, tmax, time_infected, save_dir).value();
+                auto result_ode = simulate_ode(ode_exponent, t0, tmax, time_infected, save_dir).value();
 
                 // Do IDE simulations.
                 for (size_t gregory_order : gregory_orders) {
                     std::cout << std::endl;
                     std::cout << "Gregory order: " << gregory_order << std::endl;
                     mio::IOResult<void> result_ide =
-                        simulate_ide(ide_exponents, gregory_order, finite_difference_order, t0_ode, t0_ide, tmax,
+                        simulate_ide(ide_exponents, gregory_order, finite_difference_order, t0, t_init, tmax,
                                      time_infected, save_dir, result_ode, backwards_fd);
                 }
             }

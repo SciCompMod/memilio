@@ -314,10 +314,10 @@ def compute_errors_max(groundtruth, results, groundtruth_exponent, timesteps_ide
                     difference)/norm_groundtruth)
 
             else:
-                print(
-                    f"Min abs error of {compartments[compartment]} is at index {np.argmin(np.abs(difference))} out of {len(difference)-1}")
-                print(
-                    f"Max abs error of {compartments[compartment]} is at index {np.argmax(np.abs(difference))} out of {len(difference)-1}")
+                # print(
+                #     f"Min abs error of {compartments[compartment]} is at index {np.argmin(np.abs(difference))} out of {len(difference)-1}")
+                # print(
+                #     f"Max abs error of {compartments[compartment]} is at index {np.argmax(np.abs(difference))} out of {len(difference)-1}")
 
                 errors[i].append(compute_max_norm(
                     difference))
@@ -592,7 +592,8 @@ def get_ide_exponents(data_dir):
 
 
 def get_t0_ide_from_dir_name(dir_name):
-    t0_string = [x for x in dir_name.split("_") if "t0ide" in x]
+    t0_string = [x for x in dir_name.split(
+        "_") if ("t0ide" in x or "tinit" in x)]
     t0 = int(t0_string[0].split("=")[-1])
 
     return t0
@@ -604,8 +605,7 @@ def main():
     groundtruth_ode = True
     only_S = False
 
-    # main_dir = "2025-11-11/s_groundtruth/init_all_comps"
-    main_dir = "2025-11-28/R0+I_t0_ide"
+    main_dir = "2026-01-29/test"
 
     ##############################################
 
@@ -638,13 +638,10 @@ def main():
         groundtruth = read_groundtruth(
             result_dir, groundtruth_exponent, groundtruth_ode=groundtruth_ode)
 
-        errors_all_gregory_orders_endpoint_rel = []
-        errors_all_gregory_orders_endpoint_abs = []
-
-        errors_all_gregory_orders_l2_rel = []
+        # errors_all_gregory_orders_l2_rel = []
         errors_all_gregory_orders_l2_abs = []
 
-        errors_all_gregory_orders_max_rel = []
+        # errors_all_gregory_orders_max_rel = []
         errors_all_gregory_orders_max_abs = []
 
         total_pop_end_all_gregory_orders = []
@@ -666,25 +663,12 @@ def main():
                                 gregory_order_simulation)
 
             # Compute errors of IDE results compared to groundtruth.
-            errors_tmax_rel = compute_errors_endpoint(
-                groundtruth, results, True)
-            errors_tmax_abs = compute_errors_endpoint(
-                groundtruth, results, False)
-            errors_all_gregory_orders_endpoint_rel.append(errors_tmax_rel)
-            errors_all_gregory_orders_endpoint_abs.append(errors_tmax_abs)
-
-            errors_l2_rel = compute_errors_l2(
-                groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, True)
             errors_l2_abs = compute_errors_l2(
                 groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, False)
-            errors_all_gregory_orders_l2_rel.append(errors_l2_rel)
             errors_all_gregory_orders_l2_abs.append(errors_l2_abs)
 
-            errors_max_rel = compute_errors_max(
-                groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, True)
             errors_max_abs = compute_errors_max(
                 groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, False)
-            errors_all_gregory_orders_max_rel.append(errors_max_rel)
             errors_all_gregory_orders_max_abs.append(errors_max_abs)
 
             plot_difference_per_timestep(
@@ -720,42 +704,21 @@ def main():
         # Plot convergence of all compartments separately.
         fd_order = 1  # dummy right now
 
-        computed_errors_rel = [errors_all_gregory_orders_endpoint_rel,
-                               errors_all_gregory_orders_l2_rel, errors_all_gregory_orders_max_rel]
+        relative_error = False
 
-        computed_errors_abs = [errors_all_gregory_orders_endpoint_abs,
-                               errors_all_gregory_orders_l2_abs, errors_all_gregory_orders_max_abs]
+        # L2 norm
+        l2 = True
+        maxnorm = False
+        norm_of_sum = False
+        plot_convergence(errors_all_gregory_orders_l2_abs, timesteps_ide,
+                         gregory_orders_simulation, fd_order, l2, maxnorm, norm_of_sum,  relative_error, plot_dir, only_S)
 
-        computed_errors = [computed_errors_rel,
-                           computed_errors_abs]  # computed_errors_rel,
-
-        for i in range(len(computed_errors)):
-            if i == 0:
-                relative_error = True
-
-            else:
-                relative_error = False
-
-            # endpoint norm
-            l2 = False
-            maxnorm = False
-            norm_of_sum = False
-            plot_convergence(computed_errors[i][0], timesteps_ide,
-                             gregory_orders_simulation, fd_order, l2, maxnorm, norm_of_sum, relative_error, plot_dir, only_S)
-
-            # L2 norm
-            l2 = True
-            maxnorm = False
-            norm_of_sum = False
-            plot_convergence(computed_errors[i][1], timesteps_ide,
-                             gregory_orders_simulation, fd_order, l2, maxnorm, norm_of_sum,  relative_error, plot_dir, only_S)
-
-            # max norm
-            l2 = False
-            maxnorm = True
-            norm_of_sum = False
-            plot_convergence(computed_errors[i][2], timesteps_ide,
-                             gregory_orders_simulation, fd_order, l2, maxnorm, norm_of_sum, relative_error, plot_dir, only_S)
+        # max norm
+        l2 = False
+        maxnorm = True
+        norm_of_sum = False
+        plot_convergence(errors_all_gregory_orders_max_abs, timesteps_ide,
+                         gregory_orders_simulation, fd_order, l2, maxnorm, norm_of_sum, relative_error, plot_dir, only_S)
 
     # Path where plots will be stored.
     # plot_dir = os.path.join(os.path.dirname(
