@@ -287,7 +287,7 @@ class BenchmarkAnalyzer:
             else:
                 y_pos = max(y_mid * shift_factor, offset_lower)
 
-            label = f"{speedup:.1f}×"
+            label = f"{speedup:.0f}×"
             # Increase fontsize - was using TICK_FONTSIZE * 0.85, now use BASE_FONTSIZE * 0.9
             label_fontsize = int(BASE_FONTSIZE * 0.9)
             text_obj = ax.text(
@@ -314,11 +314,11 @@ class BenchmarkAnalyzer:
         ax = fig.add_axes(panel)
 
         # Define colors for memilio lines (shades of blue)
-        memilio_color_1 = '#0d47a1'   # dark blue
-        memilio_color_4 = '#1976d2'   # medium blue
-        memilio_color_16 = '#64b5f6'  # light blue
-        covasim_color = '#ff7f0e'      # orange
-        opencovid_color = '#2ca02c'    # green
+        memilio_color_1 = '#155489'   # dark blue
+        memilio_color_4 = '#155489'   # medium blue
+        memilio_color_16 = '#155489'  # light blue
+        covasim_color = '#5D8A2B'      # orange
+        opencovid_color = '#E89A63'    # green
 
         # Plot MEmilio with different core counts (all same color family)
         ax.plot(raw_data.population_sizes, raw_data.memilio_times_single_core,
@@ -327,22 +327,22 @@ class BenchmarkAnalyzer:
 
         ax.plot(raw_data.population_sizes, raw_data.memilio_times_four_cores,
                 marker='o',  
-                color=memilio_color_4, label='MEmilio ABM (4 cores)', linestyle='-')
+                color=memilio_color_4, label='MEmilio ABM (4 cores)', linestyle='--')
         ax.plot(raw_data.population_sizes, raw_data.memilio_times_sixteen_cores,
                 marker='o',  
-                color=memilio_color_16, label='MEmilio ABM (16 cores)', linestyle='-')
+                color=memilio_color_16, label='MEmilio ABM (16 cores)', linestyle='dotted')
 
         # Plot Covasim (fewer data points)
         covasim_pop_sizes = raw_data.population_sizes[:len(raw_data.covasim)]
         ax.plot(covasim_pop_sizes, raw_data.covasim,
-                marker='s',  
+                marker='o',  
                 color=covasim_color, label='Covasim', linestyle='-')
 
         # Plot OpenCOVID (fewer data points)
         opencovid_pop_sizes = raw_data.population_sizes[:len(
             raw_data.opencovid)]
         ax.plot(opencovid_pop_sizes, raw_data.opencovid,
-                marker='^',  
+                marker='o',  
                 color=opencovid_color, label='OpenCOVID', linestyle='-')
 
         ax.set_xscale('log')
