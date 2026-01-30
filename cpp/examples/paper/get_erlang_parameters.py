@@ -18,38 +18,6 @@
 # limitations under the License.
 #############################################################################
 import numpy as np
-from scipy.stats import lognorm
-
-
-def get_lognormal_parameters(mean, std):
-    """
-    Compute shape and scale parameters to use in lognormal distribution for given mean and standard deviation.
-    The lognormal distribution we consider in state_age_function.h is based on the implementation in scipy and the parameters
-    shape and scale are defined accordingly.
-
-    @param[in] mean Mean of the distribution.
-    @param[in] std Standard deviation of the distribution.
-    @returns Shape and scale parameter of lognormal distribution.
-    """
-    variance = std*std
-
-    mean_tmp = np.log(mean*mean/np.sqrt(mean*mean+variance))
-    variance_tmp = np.log(variance/(mean*mean) + 1)
-
-    shape = np.sqrt(variance_tmp)
-    scale = mean_tmp#np.exp(mean_tmp)
-
-    # Test if mean and std are as expected for computed shape and scale parameters.
-    mean_lognorm, variance_lognorm = lognorm.stats(
-        shape, loc=0, scale=scale, moments='mv')
-
-    if np.abs(mean_lognorm-mean) > 1e-8:
-        print('Distribution does not have expected mean value.')
-
-    if np.abs(np.sqrt(variance_lognorm)-std) > 1e-8:
-        print('Distribution does not have expected standard deviation.')
-
-    return round(scale, 8), round(shape, 8)
 
 
 def compute_optimal_num_subcompartments(mean, std):
@@ -80,7 +48,6 @@ def main():
                                    "InfectedCriticalToRecovered": [18.1, 6.3]}
 
     # Transition probabilities from Assessment paper, see LCT paper.
-    # TODO: Discuss this
     # Store only the probabilities that are not considering the transition to the Recovered compartment as this is
     # determined by the given probabilities.
     transition_probabilities_non_recovered = {"ExposedToInfectedNoSymptoms": [1., 1., 1., 1., 1., 1.],
@@ -91,16 +58,6 @@ def main():
 
     compartments = ["Exposed", "InfectedNoSymptoms",
                     "InfectedSymptoms", "InfectedSevere", "InfectedCritical"]
-
-    print("Lognormal parameters for IDE model:")
-    print()
-    # Get the shape and scale parameters that we need for the IDE model.
-    for i in mean_and_std_per_transition.keys():
-        print(i)
-        shape, scale = get_lognormal_parameters(
-            mean_and_std_per_transition[i][0], mean_and_std_per_transition[i][1])
-        print(f"Shape, scale: {shape}, {scale}")
-        print()
 
     # Get the number of subcompartment for the LCT model.
     # To get the numvber of subcompartments, we first calculate the optimal number of subcompartments that is not
