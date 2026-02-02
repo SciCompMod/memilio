@@ -808,7 +808,7 @@ def run_abm_simulation(sim_num):
 
     # assign initial infection states according to distribution
     start_assign = time.time()
-    assign_infection_states(sim.model, t0, 0.00013, 0.00005,
+    assign_infection_states(sim.model, t0, specs["initE"][sim_num], 0.00005,
                             0.00002, 0.0, 0.0, 0.0, parameters, start_locs)
     end_assign = time.time()
     print(
