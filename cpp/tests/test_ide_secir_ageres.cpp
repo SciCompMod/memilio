@@ -180,14 +180,16 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
 // Check results of a simulation with two age groups with an example calculated by hand,
 // see https://doi.org/10.1016/j.amc.2025.129636 for the used formulas.
 // The idea of this test is to mimic the checkSimulationFunctions test for the nonageresolved IDE-SECIR model.
-// For this, we set up two models with two age groups, respectively. All parameters are set as in the non-ageresolved
-// test. In the first model, we only have individuals in the first age group where the population size as well as the
-// initial values for the deaths and transitions are chosen as in the non-ageresolved test. Hence, we can use the
-// values from the other test to check for correctness. In the second model, we only have individuals in the second
-// age group and the population size as well as the initial values for the deaths and transitions are scaled by some
-// factor. This way, the expected results for this model are determined by the results from the other test and the
-// scaling factor. With this, we can check that the correct indices are used for each age group.
-TEST(IdeSecirAgeres, checkSimulationFunctions)
+// For this, we set up two models with two age groups, respectively, where the first group is as in the nonageresolved
+// test and the second group is a multiple of the first group, but the proportion of infected and dead individuals
+// etc. is the same as in the first group. Both models have the same initial conditions but differ in their contact
+// matrices. In the first model, individuals are only interacting with individuals in their own group, i.e. we only have
+// intra-group contacts. In the second model, individuals are only interacting with individuals of the other group,
+// i.e. we only have inter-group contacts. All remaining parameters are set as in the non-ageresolved test.
+// This way, the expected results for both models are determined by the results from the nonageresolved test and the
+// scaling factor. With this, we can check that the correct indices are used for each age group, both when individuals
+// are interacting only with their own group or with another group.
+TEST(TestIdeAgeres, checkSimulationFunctions)
 {
     using Vec            = mio::TimeSeries<ScalarType>::Vector;
     size_t num_agegroups = 2;
@@ -206,142 +208,102 @@ TEST(IdeSecirAgeres, checkSimulationFunctions)
     // the second age group.
     ScalarType baseline_scaling = 2.;
 
-    /*****************************************************************************************************************/
-
-    // Model with whole population in first age group with index 0. Use baseline values.
-    int considered_group                                      = 0;
-    std::vector<ScalarType> N_vec_group0                      = {population_baseline, 0};
-    std::vector<ScalarType> deaths_vec_group0                 = {deaths_baseline, 0};
-    mio::CustomIndexArray<ScalarType, mio::AgeGroup> N_group0 = mio::CustomIndexArray<ScalarType, mio::AgeGroup>(
-        mio::AgeGroup(num_agegroups), N_vec_group0.begin(), N_vec_group0.end());
-    mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths_group0 = mio::CustomIndexArray<ScalarType, mio::AgeGroup>(
-        mio::AgeGroup(num_agegroups), deaths_vec_group0.begin(), deaths_vec_group0.end());
+    // ***Set up models***
+    std::vector<ScalarType> N_vec      = {population_baseline, baseline_scaling * population_baseline};
+    std::vector<ScalarType> deaths_vec = {deaths_baseline, baseline_scaling * deaths_baseline};
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> N =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), N_vec.begin(), N_vec.end());
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths = mio::CustomIndexArray<ScalarType, mio::AgeGroup>(
+        mio::AgeGroup(num_agegroups), deaths_vec.begin(), deaths_vec.end());
 
     // Create TimeSeries with num_transitions elements where transitions needed for simulation will be stored.
-    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
-    mio::TimeSeries<ScalarType> init_group0(num_transitions * num_agegroups);
+    size_t num_transitions = (size_t)mio::isecir::InfectionTransition::Count;
+    mio::TimeSeries<ScalarType> init_intra(num_transitions * num_agegroups);
+    mio::TimeSeries<ScalarType> init_inter(num_transitions * num_agegroups);
 
-    // Add time points for initialization for transitions and death.
-    Vec vec_init_group0 = Vec::Constant(num_transitions * num_agegroups, 0.);
-    // Set values for vec_init for group 0 as in nonageresolved test.
-    vec_init_group0[considered_group * (int)mio::isecir::InfectionTransition::Count +
-                    (int)mio::isecir::InfectionTransition::SusceptibleToExposed] = susceptibleToExposed_baseline;
-    vec_init_group0[considered_group * (int)mio::isecir::InfectionTransition::Count +
-                    (int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] =
+    // Add time points for transitions for initialization.
+    Vec vec_init = Vec::Constant(num_transitions * num_agegroups, 0.);
+    // Set values for vec_init for group 0 with baseline values.
+    int considered_group                                                  = 0;
+    vec_init[considered_group * (int)mio::isecir::InfectionTransition::Count +
+             (int)mio::isecir::InfectionTransition::SusceptibleToExposed] = susceptibleToExposed_baseline;
+    vec_init[considered_group * (int)mio::isecir::InfectionTransition::Count +
+             (int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] =
         infectedNoSymptomsToInfectedSymptoms_baseline;
-
-    // Add initial time point to TimeSeries.
-    init_group0.add_time_point(-0.5, vec_init_group0);
-    while (init_group0.get_last_time() < 0) {
-        init_group0.add_time_point(init_group0.get_last_time() + dt, vec_init_group0);
-    }
-
-    // Initialize model.
-    mio::isecir::Model model_group0(std::move(init_group0), N_group0, deaths_group0, num_agegroups);
-
-    // Set working parameters.
-    for (size_t group = 0; group < num_agegroups; group++) {
-        // In this example, SmootherCosine with parameter 1 (and thus with a maximum support of 1)
-        // is used for all TransitionDistribution%s for all groups.
-        mio::SmootherCosine<ScalarType> smoothcos(1.0);
-        mio::StateAgeFunctionWrapper<ScalarType> delaydistribution(smoothcos);
-        std::vector<mio::StateAgeFunctionWrapper<ScalarType>> vec_delaydistrib(num_transitions, delaydistribution);
-        model_group0.parameters.get<mio::isecir::TransitionDistributions>()[mio::AgeGroup(group)] = vec_delaydistrib;
-
-        std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
-        vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]            = 1;
-        vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)]     = 1;
-        model_group0.parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(group)] = vec_prob;
-
-        mio::ContactMatrixGroup<ScalarType> contact_matrix = mio::ContactMatrixGroup<ScalarType>(1, num_agegroups);
-        contact_matrix[0] =
-            mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(num_agegroups, num_agegroups, 4.));
-        model_group0.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
-
-        mio::SmootherCosine<ScalarType> smoothcos_prob(1.0);
-        mio::StateAgeFunctionWrapper<ScalarType> prob(smoothcos_prob);
-        model_group0.parameters.get<mio::isecir::TransmissionProbabilityOnContact>()[mio::AgeGroup(group)] = prob;
-        model_group0.parameters.get<mio::isecir::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(group)]   = prob;
-        model_group0.parameters.get<mio::isecir::RiskOfInfectionFromSymptomatic>()[mio::AgeGroup(group)]   = prob;
-    }
-    model_group0.parameters.set<mio::isecir::Seasonality>(0.);
-    model_group0.parameters.set<mio::isecir::StartDay>(0);
-
-    // Carry out simulation.
-    mio::isecir::Simulation sim_group0(model_group0, dt);
-    sim_group0.advance(tmax);
-    mio::TimeSeries<ScalarType> secihurd_simulated_group0    = sim_group0.get_result();
-    mio::TimeSeries<ScalarType> transitions_simulated_group0 = sim_group0.get_transitions();
-
-    /*****************************************************************************************************************/
-
-    // Model with whole population in second age group with index 1. Use baseline values scaled by baseline_scaling.
-    considered_group                                          = 1;
-    std::vector<ScalarType> N_vec_group1                      = {0., baseline_scaling * population_baseline};
-    std::vector<ScalarType> deaths_vec_group1                 = {0., baseline_scaling * deaths_baseline};
-    mio::CustomIndexArray<ScalarType, mio::AgeGroup> N_group1 = mio::CustomIndexArray<ScalarType, mio::AgeGroup>(
-        mio::AgeGroup(num_agegroups), N_vec_group1.begin(), N_vec_group1.end());
-    mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths_group1 = mio::CustomIndexArray<ScalarType, mio::AgeGroup>(
-        mio::AgeGroup(num_agegroups), deaths_vec_group1.begin(), deaths_vec_group1.end());
-
-    // Create TimeSeries with num_transitions elements where transitions needed for simulation will be stored.
-    mio::TimeSeries<ScalarType> init_group1(num_transitions * num_agegroups);
-
-    // Add time points for initialization for transitions and death.
-    Vec vec_init_group1 = Vec::Constant(num_transitions * num_agegroups, 0.);
-    // Set values for vec_init for group 0 as in nonageresolved test.
-    vec_init_group1[considered_group * (int)mio::isecir::InfectionTransition::Count +
-                    (int)mio::isecir::InfectionTransition::SusceptibleToExposed] =
+    // Set values for vec_init for group 1 with baseline values scaled by baseline_scaling.
+    considered_group = 1;
+    vec_init[considered_group * (int)mio::isecir::InfectionTransition::Count +
+             (int)mio::isecir::InfectionTransition::SusceptibleToExposed] =
         baseline_scaling * susceptibleToExposed_baseline;
-    vec_init_group1[considered_group * (int)mio::isecir::InfectionTransition::Count +
-                    (int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] =
+    vec_init[considered_group * (int)mio::isecir::InfectionTransition::Count +
+             (int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] =
         baseline_scaling * infectedNoSymptomsToInfectedSymptoms_baseline;
 
-    // Add initial time point to TimeSeries.
-    init_group1.add_time_point(-0.5, vec_init_group1);
-    while (init_group1.get_last_time() < 0) {
-        init_group1.add_time_point(init_group1.get_last_time() + dt, vec_init_group1);
+    // Add time points to TimeSeries.
+    init_intra.add_time_point(-0.5, vec_init);
+    init_inter.add_time_point(-0.5, vec_init);
+    while (init_intra.get_last_time() < 0) {
+        init_intra.add_time_point(init_intra.get_last_time() + dt, vec_init);
+        init_inter.add_time_point(init_inter.get_last_time() + dt, vec_init);
     }
 
-    // Initialize model.
-    mio::isecir::Model model_group1(std::move(init_group1), N_group1, deaths_group1, num_agegroups);
+    // Initialize models.
+    mio::isecir::Model model_intra(std::move(init_intra), N, deaths, num_agegroups);
+    mio::isecir::Model model_inter(std::move(init_inter), N, deaths, num_agegroups);
 
-    // Set working parameters.
+    // Set working parameters for both models.
     for (size_t group = 0; group < num_agegroups; group++) {
         // In this example, SmootherCosine with parameter 1 (and thus with a maximum support of 1)
         // is used for all TransitionDistribution%s for all groups.
         mio::SmootherCosine<ScalarType> smoothcos(1.0);
         mio::StateAgeFunctionWrapper<ScalarType> delaydistribution(smoothcos);
         std::vector<mio::StateAgeFunctionWrapper<ScalarType>> vec_delaydistrib(num_transitions, delaydistribution);
-        model_group1.parameters.get<mio::isecir::TransitionDistributions>()[mio::AgeGroup(group)] = vec_delaydistrib;
+        model_intra.parameters.get<mio::isecir::TransitionDistributions>()[mio::AgeGroup(group)] = vec_delaydistrib;
+        model_inter.parameters.get<mio::isecir::TransitionDistributions>()[mio::AgeGroup(group)] = vec_delaydistrib;
 
         std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
-        vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]            = 1;
-        vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)]     = 1;
-        model_group1.parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(group)] = vec_prob;
-
-        mio::ContactMatrixGroup<ScalarType> contact_matrix = mio::ContactMatrixGroup<ScalarType>(1, num_agegroups);
-        contact_matrix[0] =
-            mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(num_agegroups, num_agegroups, 4.));
-        model_group1.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+        vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]           = 1;
+        vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)]    = 1;
+        model_intra.parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(group)] = vec_prob;
+        model_inter.parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(group)] = vec_prob;
 
         mio::SmootherCosine<ScalarType> smoothcos_prob(1.0);
         mio::StateAgeFunctionWrapper<ScalarType> prob(smoothcos_prob);
-        model_group1.parameters.get<mio::isecir::TransmissionProbabilityOnContact>()[mio::AgeGroup(group)] = prob;
-        model_group1.parameters.get<mio::isecir::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(group)]   = prob;
-        model_group1.parameters.get<mio::isecir::RiskOfInfectionFromSymptomatic>()[mio::AgeGroup(group)]   = prob;
+        model_intra.parameters.get<mio::isecir::TransmissionProbabilityOnContact>()[mio::AgeGroup(group)] = prob;
+        model_intra.parameters.get<mio::isecir::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(group)]   = prob;
+        model_intra.parameters.get<mio::isecir::RiskOfInfectionFromSymptomatic>()[mio::AgeGroup(group)]   = prob;
+        model_inter.parameters.get<mio::isecir::TransmissionProbabilityOnContact>()[mio::AgeGroup(group)] = prob;
+        model_inter.parameters.get<mio::isecir::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(group)]   = prob;
+        model_inter.parameters.get<mio::isecir::RiskOfInfectionFromSymptomatic>()[mio::AgeGroup(group)]   = prob;
     }
-    model_group1.parameters.set<mio::isecir::Seasonality>(0.);
-    model_group1.parameters.set<mio::isecir::StartDay>(0);
+    model_intra.parameters.set<mio::isecir::Seasonality>(0.);
+    model_intra.parameters.set<mio::isecir::StartDay>(0);
+    model_inter.parameters.set<mio::isecir::Seasonality>(0.);
+    model_inter.parameters.set<mio::isecir::StartDay>(0);
 
-    // Carry out simulation.
-    mio::isecir::Simulation sim_group1(model_group1, dt);
-    sim_group1.advance(tmax);
-    mio::TimeSeries<ScalarType> secihurd_simulated_group1    = sim_group1.get_result();
-    mio::TimeSeries<ScalarType> transitions_simulated_group1 = sim_group1.get_transitions();
+    // Here we set the contact matrices for both models which is where they differ from each other.
+    mio::ContactMatrixGroup<ScalarType> contact_matrix = mio::ContactMatrixGroup<ScalarType>(1, num_agegroups);
+    // With this contact matrix, individuals are only interacting with individuals in their own group.
+    Eigen::MatrixX<ScalarType> matrix_intra{{4., 0.}, {0., 4.}};
+    contact_matrix[0]                                          = mio::ContactMatrix<ScalarType>(matrix_intra);
+    model_intra.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+    // With this contact matrix, individuals  are only interacting with individuals of the other group.
+    Eigen::MatrixX<ScalarType> matrix_inter{{0., 4.}, {4., 0.}};
+    contact_matrix[0]                                          = mio::ContactMatrix<ScalarType>(matrix_inter);
+    model_inter.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    /*****************************************************************************************************************/
+    // ***Simulate***
+    mio::isecir::Simulation sim_intra(model_intra, dt);
+    sim_intra.advance(tmax);
+    mio::TimeSeries<ScalarType> secihurd_simulated_intra    = sim_intra.get_result();
+    mio::TimeSeries<ScalarType> transitions_simulated_intra = sim_intra.get_transitions();
 
+    mio::isecir::Simulation sim_inter(model_inter, dt);
+    sim_inter.advance(tmax);
+    mio::TimeSeries<ScalarType> secihurd_simulated_inter    = sim_inter.get_result();
+    mio::TimeSeries<ScalarType> transitions_simulated_inter = sim_inter.get_transitions();
+
+    // ***Test for correctness***
     // Define vectors for compartments and transitions with expected results from example
     // (calculated by hand, see https://doi.org/10.1016/j.amc.2025.129636 for the used formulas).
     std::vector<ScalarType> secihurd_t0_baseline    = {4995., 0.5, 0., 4., 0., 0., 4990.5, 10.};
@@ -350,55 +312,31 @@ TEST(IdeSecirAgeres, checkSimulationFunctions)
     std::vector<ScalarType> transitions_t1_baseline = {0.99979984, 0.99989992, 0.24997498, 0.24997498, 2.06249374,
                                                        2.06249374, 0.51562344, 0.51562344, 0.12890586, 0.12890586};
 
-    // Define vectors with expected results for first model.
-    int num_compartments = (int)mio::isecir::InfectionState::Count;
-    std::vector<ScalarType> secihurd_t0_group0(num_compartments * num_agegroups, 0.);
-    std::vector<ScalarType> secihurd_t1_group0(num_compartments * num_agegroups, 0.);
-    std::vector<ScalarType> transitions_t1_group0(num_transitions * num_agegroups, 0.);
-
-    // Copy expected results for first age group.
-    std::copy(secihurd_t0_baseline.begin(), secihurd_t0_baseline.end(), secihurd_t0_group0.begin());
-    std::copy(secihurd_t1_baseline.begin(), secihurd_t1_baseline.end(), secihurd_t1_group0.begin());
-    std::copy(transitions_t1_baseline.begin(), transitions_t1_baseline.end(), transitions_t1_group0.begin());
-
-    // Define vectors with expected results for second model.
-    std::vector<ScalarType> secihurd_t0_group1(num_compartments * num_agegroups, 0.);
-    std::vector<ScalarType> secihurd_t1_group1(num_compartments * num_agegroups, 0.);
-    std::vector<ScalarType> transitions_t1_group1(num_transitions * num_agegroups, 0.);
-
-    // Scale baseline vectors by baseline_scaling.
-    std::transform(secihurd_t0_baseline.begin(), secihurd_t0_baseline.end(), secihurd_t0_baseline.begin(),
-                   [baseline_scaling](ScalarType x) {
-                       return baseline_scaling * x;
-                   });
-    std::transform(secihurd_t1_baseline.begin(), secihurd_t1_baseline.end(), secihurd_t1_baseline.begin(),
-                   [baseline_scaling](ScalarType x) {
-                       return baseline_scaling * x;
-                   });
-    std::transform(transitions_t1_baseline.begin(), transitions_t1_baseline.end(), transitions_t1_baseline.begin(),
-                   [baseline_scaling](ScalarType x) {
-                       return baseline_scaling * x;
-                   });
-
-    // Copy expected results for second age group.
-    std::copy(secihurd_t0_baseline.begin(), secihurd_t0_baseline.end(), secihurd_t0_group1.begin() + num_compartments);
-    std::copy(secihurd_t1_baseline.begin(), secihurd_t1_baseline.end(), secihurd_t1_group1.begin() + num_compartments);
-    std::copy(transitions_t1_baseline.begin(), transitions_t1_baseline.end(),
-              transitions_t1_group1.begin() + num_transitions);
-
+    ASSERT_EQ(secihurd_t0_baseline.size() * num_agegroups, secihurd_simulated_intra.get_num_elements());
     // Compare simulated compartments at time points t0 and t1.
-    for (Eigen::Index i = 0; i < (Eigen::Index)secihurd_simulated_group0.get_num_elements(); i++) {
-        EXPECT_NEAR(secihurd_simulated_group0[0][i], secihurd_t0_group0[i], 1e-8);
-        EXPECT_NEAR(secihurd_simulated_group0[1][i], secihurd_t1_group0[i], 1e-8);
-        EXPECT_NEAR(secihurd_simulated_group1[0][i], secihurd_t0_group1[i], 1e-8);
-        EXPECT_NEAR(secihurd_simulated_group1[1][i], secihurd_t1_group1[i], 1e-8);
+    for (size_t i = 0; i < secihurd_t0_baseline.size(); i++) {
+        const size_t age1 = i;
+        const size_t age2 = i + secihurd_t0_baseline.size();
+        EXPECT_NEAR(secihurd_simulated_intra[0][age1], secihurd_t0_baseline[i], 1e-8);
+        EXPECT_NEAR(secihurd_simulated_intra[0][age2], baseline_scaling * secihurd_t0_baseline[i], 1e-8);
+        EXPECT_NEAR(secihurd_simulated_intra[1][age1], secihurd_t1_baseline[i], 1e-8);
+        EXPECT_NEAR(secihurd_simulated_intra[1][age2], baseline_scaling * secihurd_t1_baseline[i], 1e-8);
+        EXPECT_NEAR(secihurd_simulated_inter[0][age1], secihurd_t0_baseline[i], 1e-8);
+        EXPECT_NEAR(secihurd_simulated_inter[0][age2], baseline_scaling * secihurd_t0_baseline[i], 1e-8);
+        EXPECT_NEAR(secihurd_simulated_inter[1][age1], secihurd_t1_baseline[i], 1e-8);
+        EXPECT_NEAR(secihurd_simulated_inter[1][age2], baseline_scaling * secihurd_t1_baseline[i], 1e-8);
     }
 
+    ASSERT_EQ(transitions_t1_baseline.size() * num_agegroups, transitions_simulated_intra.get_num_elements());
     // Compare simulated transitions with expected results at time point t1.
-    for (Eigen::Index i = 0; i < transitions_simulated_group0.get_num_elements(); i++) {
-        EXPECT_NEAR(transitions_simulated_group0[transitions_simulated_group0.get_num_time_points() - 1][i],
-                    transitions_t1_group0[i], 1e-8);
-        EXPECT_NEAR(transitions_simulated_group1[transitions_simulated_group1.get_num_time_points() - 1][i],
-                    transitions_t1_group1[i], 1e-8);
+    for (size_t i = 0; i < transitions_t1_baseline.size(); i++) {
+        const size_t age1 = i;
+        const size_t age2 = i + transitions_t1_baseline.size();
+        EXPECT_NEAR(transitions_simulated_intra.get_last_value()[age1], transitions_t1_baseline[i], 1e-8);
+        EXPECT_NEAR(transitions_simulated_intra.get_last_value()[age2], baseline_scaling * transitions_t1_baseline[i],
+                    1e-8);
+        EXPECT_NEAR(transitions_simulated_inter.get_last_value()[age1], transitions_t1_baseline[i], 1e-8);
+        EXPECT_NEAR(transitions_simulated_inter.get_last_value()[age2], baseline_scaling * transitions_t1_baseline[i],
+                    1e-8);
     }
 }

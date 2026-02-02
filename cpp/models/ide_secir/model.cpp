@@ -267,11 +267,14 @@ void Model::initial_compute_compartments(ScalarType dt)
     // the transitions are used.
     initial_compute_compartments_infection(dt);
 
+    // Define index for initial time point of populations which defines the start of the simulation.
+    const Eigen::Index start_time_point = 0;
+
     // We store in two Booleans if there are Susceptibles or Recovered given for every age group.
     bool susceptibles_given = true;
     for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
         int Si = get_state_flat_index(Eigen::Index(InfectionState::Susceptible), group);
-        if (populations[Eigen::Index(0)][Si] < 1e-12) {
+        if (populations[start_time_point][Si] < 1e-12) {
             susceptibles_given = false;
             break;
         }
@@ -279,7 +282,7 @@ void Model::initial_compute_compartments(ScalarType dt)
     bool recovered_given = true;
     for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
         int Ri = get_state_flat_index(Eigen::Index(InfectionState::Recovered), group);
-        if (populations[Eigen::Index(0)][Ri] < 1e-12) {
+        if (populations[start_time_point][Ri] < 1e-12) {
             recovered_given = false;
             break;
         }
@@ -301,15 +304,15 @@ void Model::initial_compute_compartments(ScalarType dt)
             int Ri    = get_state_flat_index(Eigen::Index(InfectionState::Recovered), group);
             int Di    = get_state_flat_index(Eigen::Index(InfectionState::Dead), group);
             // The scheme of the ODE model for initialization is applied here.
-            populations[Eigen::Index(0)][Ri] = total_confirmed_cases[group] - populations[Eigen::Index(0)][ISyi] -
-                                               populations[Eigen::Index(0)][ISevi] -
-                                               populations[Eigen::Index(0)][ICri] - populations[Eigen::Index(0)][Di];
+            populations[start_time_point][Ri] = total_confirmed_cases[group] - populations[start_time_point][ISyi] -
+                                                populations[start_time_point][ISevi] -
+                                                populations[start_time_point][ICri] - populations[start_time_point][Di];
 
-            populations[Eigen::Index(0)][Si] = m_N[group] - populations[Eigen::Index(0)][Ei] -
-                                               populations[Eigen::Index(0)][INSi] - populations[Eigen::Index(0)][ISyi] -
-                                               populations[Eigen::Index(0)][ISevi] -
-                                               populations[Eigen::Index(0)][ICri] - populations[Eigen::Index(0)][Ri] -
-                                               populations[Eigen::Index(0)][Di];
+            populations[start_time_point][Si] =
+                m_N[group] - populations[start_time_point][Ei] - populations[start_time_point][INSi] -
+                populations[start_time_point][ISyi] - populations[start_time_point][ISevi] -
+                populations[start_time_point][ICri] - populations[start_time_point][Ri] -
+                populations[start_time_point][Di];
         }
     }
 
@@ -326,11 +329,11 @@ void Model::initial_compute_compartments(ScalarType dt)
             int ICri  = get_state_flat_index(Eigen::Index(InfectionState::InfectedCritical), group);
             int Ri    = get_state_flat_index(Eigen::Index(InfectionState::Recovered), group);
             int Di    = get_state_flat_index(Eigen::Index(InfectionState::Dead), group);
-            populations[Eigen::Index(0)][Ri] = m_N[group] - populations[Eigen::Index(0)][Si] -
-                                               populations[Eigen::Index(0)][Ei] - populations[Eigen::Index(0)][INSi] -
-                                               populations[Eigen::Index(0)][ISyi] -
-                                               populations[Eigen::Index(0)][ISevi] -
-                                               populations[Eigen::Index(0)][ICri] - populations[Eigen::Index(0)][Di];
+            populations[start_time_point][Ri] =
+                m_N[group] - populations[start_time_point][Si] - populations[start_time_point][Ei] -
+                populations[start_time_point][INSi] - populations[start_time_point][ISyi] -
+                populations[start_time_point][ISevi] - populations[start_time_point][ICri] -
+                populations[start_time_point][Di];
         }
     }
     else if (recovered_given) {
@@ -346,11 +349,11 @@ void Model::initial_compute_compartments(ScalarType dt)
             int ICri  = get_state_flat_index(Eigen::Index(InfectionState::InfectedCritical), group);
             int Ri    = get_state_flat_index(Eigen::Index(InfectionState::Recovered), group);
             int Di    = get_state_flat_index(Eigen::Index(InfectionState::Dead), group);
-            populations[Eigen::Index(0)][Si] = m_N[group] - populations[Eigen::Index(0)][Ei] -
-                                               populations[Eigen::Index(0)][INSi] - populations[Eigen::Index(0)][ISyi] -
-                                               populations[Eigen::Index(0)][ISevi] -
-                                               populations[Eigen::Index(0)][ICri] - populations[Eigen::Index(0)][Ri] -
-                                               populations[Eigen::Index(0)][Di];
+            populations[start_time_point][Si] =
+                m_N[group] - populations[start_time_point][Ei] - populations[start_time_point][INSi] -
+                populations[start_time_point][ISyi] - populations[start_time_point][ISevi] -
+                populations[start_time_point][ICri] - populations[start_time_point][Ri] -
+                populations[start_time_point][Di];
         }
     }
     else {
@@ -378,16 +381,16 @@ void Model::initial_compute_compartments(ScalarType dt)
                 with a number less than zero, so that a log_error is thrown.
                 However, this initialization method is consistent with the numerical solver of the model equations,
                 so it may sometimes make sense to use this method. */
-                populations[Eigen::Index(0)][Si] =
+                populations[start_time_point][Si] =
                     transitions.get_last_value()[StEi] / (dt * m_forceofinfection[group]);
 
                 // Recovered; calculated as the difference between the total population and the sum of the other
                 // compartment sizes.
-                populations[Eigen::Index(0)][Ri] =
-                    m_N[group] - populations[Eigen::Index(0)][Si] - populations[Eigen::Index(0)][Ei] -
-                    populations[Eigen::Index(0)][INSi] - populations[Eigen::Index(0)][ISyi] -
-                    populations[Eigen::Index(0)][ISevi] - populations[Eigen::Index(0)][ICri] -
-                    populations[Eigen::Index(0)][Di];
+                populations[start_time_point][Ri] =
+                    m_N[group] - populations[start_time_point][Si] - populations[start_time_point][Ei] -
+                    populations[start_time_point][INSi] - populations[start_time_point][ISyi] -
+                    populations[start_time_point][ISevi] - populations[start_time_point][ICri] -
+                    populations[start_time_point][Di];
             }
         }
         else {
