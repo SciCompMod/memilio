@@ -46,11 +46,11 @@ age_group_60_to_79 = AgeGroup(4)
 age_group_80_plus = AgeGroup(5)
 
 
-def set_infection_parameters(parameters):
+def set_infection_parameters(parameters, kappa):
 
     infection_params = abm.Parameters(num_age_groups)
 
-    infection_params.InfectionRateFromViralShed[VirusVariant.Wildtype] = 0.1
+    infection_params.InfectionRateFromViralShed[VirusVariant.Wildtype] = kappa
 
     # AgeGroup 0-4
     abm.set_incubationPeriod(
@@ -721,8 +721,11 @@ def write_person_to_loc_assigment(model, sim_num):
 
 
 def run_abm_simulation(sim_num):
+    mio.abm.set_log_level_warn()
     input_path = sys.path[0] + '/input/'
     output_path = sys.path[0] + '/output/'
+    specs = pd.read_csv(os.path.join(
+        input_path, "pop8_sel_particles.csv"), index_col=0, dtype={"damp_time": "int64"})
     local_outbreak = False
     # Possible schemes are 'random' and 'maximum'
     location_closure_scheme_random = 'random'
@@ -735,7 +738,7 @@ def run_abm_simulation(sim_num):
     total_output_time = 0.0
     start_init = time.time()
     # set seed for initial infection states
-    np.random.seed(sim_num)
+    np.random.seed(specs["seed"][sim_num])
     # starting time point
     t0 = abm.TimePoint(0)
     # end time point of simulation
@@ -743,7 +746,7 @@ def run_abm_simulation(sim_num):
     # create simulation with starting timepoint and number of age groups
     sim = abm.Simulation(t0, num_age_groups)
     # set seeds for simulation
-    abm.set_seeds(sim.model, sim_num)
+    abm.set_seeds(sim.model, specs["seed"][sim_num])
     # initialize model
     abm.initialize_model(sim.model, input_path + 'persons_scaled.csv', os.path.join(
         input_path, 'hospitals.csv'), os.path.join(
@@ -752,7 +755,8 @@ def run_abm_simulation(sim_num):
     parameters = pd.read_csv(os.path.join(
         input_path, 'parameter_table.csv'), index_col=0)
     # set infection parameters
-    sim.model.parameters = set_infection_parameters(parameters)
+    sim.model.parameters = set_infection_parameters(
+        parameters, specs["kappa"][sim_num])
     # set age groups that go to school and work
     abm.set_AgeGroupGoToSchool(sim.model.parameters, age_group_5_to_15)
     abm.set_AgeGroupGoToWork(sim.model.parameters, age_group_16_to_34)
@@ -765,17 +769,17 @@ def run_abm_simulation(sim_num):
     abm.set_AgeGroupGoToShop(sim.model.parameters, age_group_60_to_79)
     abm.set_AgeGroupGoToShop(sim.model.parameters, age_group_80_plus)
     # add dampings
-    # sim.model.add_infection_rate_damping(
-    #     abm.TimePoint(abm.days(5).seconds), 0.2)
+    sim.model.add_infection_rate_damping(
+        abm.TimePoint(abm.days(specs["damp_time"][sim_num]).seconds), specs["damp_lvl"][sim_num])
     # add closure for work, event, shop and school locations at day 5
-    # sim.model.add_location_closure(abm.TimePoint(
-    #     abm.days(5).seconds), abm.LocationType.Work, 1.0, location_closure_scheme_random)
-    # sim.model.add_location_closure(abm.TimePoint(
-    #     abm.days(5).seconds), abm.LocationType.School, 1.0, location_closure_scheme_random)
-    # sim.model.add_location_closure(abm.TimePoint(
-    #     abm.days(5).seconds), abm.LocationType.SocialEvent, 1.0, location_closure_scheme_random)
-    # sim.model.add_location_closure(abm.TimePoint(
-    #     abm.days(5).seconds), abm.LocationType.BasicsShop, 1.0, location_closure_scheme_random)
+    sim.model.add_location_closure(abm.TimePoint(
+        abm.days(19).seconds), abm.LocationType.Work, 0.37, location_closure_scheme_random)
+    sim.model.add_location_closure(abm.TimePoint(
+        abm.days(14).seconds), abm.LocationType.School, 1.0, location_closure_scheme_random)
+    sim.model.add_location_closure(abm.TimePoint(
+        abm.days(19).seconds), abm.LocationType.SocialEvent, 0.51, location_closure_scheme_maximum)
+    sim.model.add_location_closure(abm.TimePoint(
+        abm.days(19).seconds), abm.LocationType.BasicsShop, 0.13, location_closure_scheme_maximum)
     end_init = time.time()
     print(f'Time for model initialization: {end_init - start_init} seconds')
     total_init_time += (end_init - start_init)
@@ -844,6 +848,8 @@ def run_abm_simulation(sim_num):
     start_o2 = time.time()
     abm.save_comp_output(os.path.join(
         output_path, str(sim_num) + '_comps.csv'), sim.model, history)
+    abm.write_contacts(os.path.join(
+        output_path, str(sim_num) + '_contacts.csv'), history)
     end_o2 = time.time()
     print(f'Time writing comps csv: {end_o2 - start_o2} seconds')
     total_output_time += (end_o2 - start_o2)
@@ -898,7 +904,7 @@ def run_abm_simulation(sim_num):
     #     output_path, str(sim_num) + '_output_v5.h5'), history)
     # end_h5_v5 = time.time()
     # print(f'Time to write v5 output h5: {end_h5_v5 - start_h5_v5} seconds')
-    total_output_time += (end_h5_v5 - start_h5_v5)
+    #total_output_time += (end_h5_v5 - start_h5_v5)
     print('done')
     return (sim_num, total_init_time, total_simulation_time, total_output_time)
 
@@ -914,11 +920,11 @@ if __name__ == "__main__":
     init_times = []
     sim_times = []
     output_times = []
-    for i in range(0, 5):
+    for i in range(1, 41):
         o = run_abm_simulation(i, **args.__dict__)
-        sim_nums.append(o[0])
-        init_times.append(o[1])
-        sim_times.append(o[2])
-        output_times.append(o[3])
-    write_time_to_file(sim_nums, init_times, sim_times, output_times,
-                       sys.path[0] + '/output/timings.txt')
+    #     sim_nums.append(o[0])
+    #     init_times.append(o[1])
+    #     sim_times.append(o[2])
+    #     output_times.append(o[3])
+    # write_time_to_file(sim_nums, init_times, sim_times, output_times,
+    #                    sys.path[0] + '/output/timings.txt')
