@@ -114,20 +114,21 @@ int main(int /*argc*/, char** /*argv*/)
     const auto dt              = 0.5; //initial time step
     const auto num_nodes       = 556;
 
-    mio::Graph<mio::SimulationNode<ScalarType, mio::smm::Simulation<ScalarType, InfectionState, Status, Region>>,
+    mio::Graph<mio::LocationNode<ScalarType, mio::smm::Simulation<ScalarType, InfectionState, Status, Region>>,
                mio::JollyEdge<ScalarType>>
         graph;
 
-    io::CSVReader<6> population_data("/home/kilian/Documents/projects/jolly/common_data/farms_by_district_type.csv");
+    io::CSVReader<8> population_data("/home/kilian/Documents/projects/jolly/common_data/farms_by_district_type.csv");
     size_t district_id, conventional, organic, broiler_1, broiler_2, layer;
+    ScalarType x, y;
     population_data.read_header(io::ignore_extra_column, "district_id", "conventional", "broiler_2", "organic",
-                                "broiler_1", "layer");
+                                "broiler_1", "layer", "x", "y");
     size_t node_index = 0;
-    while (population_data.read_row(district_id, conventional, broiler_2, organic, broiler_1, layer)) {
+    while (population_data.read_row(district_id, conventional, broiler_2, organic, broiler_1, layer, x, y)) {
         while (node_index < district_id) {
             auto model2                                    = model;
             model2.populations[{Region(0), S, Species(5)}] = 10;
-            graph.add_node(node_index, model2, t0);
+            graph.add_node(0.0, 0.0, node_index, model2, t0);
             ++node_index;
         }
         auto model2                                    = model;
@@ -137,13 +138,13 @@ int main(int /*argc*/, char** /*argv*/)
         model2.populations[{Region(0), S, Species(3)}] = broiler_2;
         model2.populations[{Region(0), S, Species(4)}] = layer;
         model2.populations[{Region(0), S, Species(5)}] = 10;
-        graph.add_node(district_id, model2, t0);
+        graph.add_node(x, y, district_id, model2, t0);
         ++node_index;
     }
     while (node_index < num_nodes) {
         auto model2                                    = model;
         model2.populations[{Region(0), S, Species(5)}] = 10;
-        graph.add_node(node_index, model2, t0);
+        graph.add_node(0.0, 0.0, node_index, model2, t0);
         ++node_index;
     }
 

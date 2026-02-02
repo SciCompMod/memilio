@@ -176,7 +176,8 @@ public:
             }
             const auto current_infections = sum_current_infections();
             mio::log_debug("Current infections at time {}: {}", Base::m_t, current_infections);
-            const auto culling_time = 6. / current_infections;
+            const auto culling_capacity = 11.5;
+            const auto culling_time = culling_capacity / current_infections;
             for (auto& n : Base::m_graph.nodes()) {
                 for (auto& index : culling_indices) {
                     n.property.get_simulation().get_model().parameters.template get<AdoptionRate>()[index].factor =

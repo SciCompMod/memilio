@@ -166,6 +166,10 @@ add_executable(smm_example smm.cpp)
 target_link_libraries(smm_example PRIVATE memilio smm)
 target_compile_options(smm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(jolly_smm_test jolly_SMM.cpp)
+target_link_libraries(jolly_smm_test PRIVATE memilio smm)
+target_compile_options(jolly_smm_test PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(jolly jolly.cpp)
 target_link_libraries(jolly PRIVATE memilio smm)
 target_compile_options(jolly PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})

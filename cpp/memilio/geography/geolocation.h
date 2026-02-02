@@ -33,9 +33,9 @@ namespace mio
 namespace geo
 {
 /**
- * @brief Class representing a geographical location on the Earth's surface.
+ * @brief Class representing a geographical location in a x-y coordinate system.
  *
- * Provides latitude and longitude in degrees and a method to calculate the distance to another location.
+ * Provides latitude and longitude in meters and a method to calculate the distance to another location.
  */
 class GeographicalLocation
 {
@@ -44,14 +44,13 @@ public:
     /**
      * @brief Construct a new Geographical Location object.
      * 
-     * @param lat Latitude in degrees.
-     * @param lon Longitude in degrees.
+     * @param x X coordinate in meters.
+     * @param y Y coordinate in meters.
      */
-    GeographicalLocation(ScalarType lat, ScalarType lon)
-        : m_latitude(lat)
-        , m_longitude(lon)
+    GeographicalLocation(ScalarType x, ScalarType y)
+        : m_latitude(x)
+        , m_longitude(y)
     {
-        check_input();
     }
     /**
      * @brief Construct a new Geographical Location object.
@@ -62,7 +61,6 @@ public:
         : m_latitude(coordinates.first)
         , m_longitude(coordinates.second)
     {
-        check_input();
     }
 
     /**
@@ -119,73 +117,58 @@ public:
     */
     Distance distance(const GeographicalLocation& other) const
     {
-        const ScalarType delta_latitude           = (m_latitude - other.m_latitude) * radians;
-        const ScalarType delta_longitude          = (m_longitude - other.m_longitude) * radians;
-        const ScalarType sin_delta_latitude_half  = sin(delta_latitude * 0.5);
-        const ScalarType sin_delta_longitude_half = sin(delta_longitude * 0.5);
-        const ScalarType first_part               = sin_delta_latitude_half * sin_delta_latitude_half;
-        const ScalarType second_part              = cos(m_latitude * radians) * cos(other.m_latitude * radians) *
-                                       sin_delta_longitude_half * sin_delta_longitude_half;
-        const ScalarType distance = 2.0 * earth_radius.kilometers() * asin(sqrt(first_part + second_part));
-        return kilometers(distance);
+        const auto distance_in_meters = sqrt((other.get_x() - m_latitude) * (other.get_x() - m_latitude) +
+                                             (other.get_y() - m_longitude) * (other.get_y() - m_longitude));
+        return meters(distance_in_meters);
     }
 
     /**
-     * @brief Get the latitude object
+     * @brief Get the x coordinate
      * 
-     * @return ScalarType latitude in degrees
+     * @return ScalarType x coordinate in meters
      */
-    ScalarType get_latitude() const
+    ScalarType get_x() const
     {
         return m_latitude;
     }
 
     /**
-     * @brief Get the longitude object
+     * @brief Get the y coordinate
      * 
-     * @return ScalarType longitude in degrees
+     * @return ScalarType y coordinate in meters
      */
-    ScalarType get_longitude() const
+    ScalarType get_y() const
     {
         return m_longitude;
     }
 
     /**
-     * @brief Set the latitude object
+     * @brief Set the x coordinate object
      * 
-     * @param lat Latitude in degrees.
+     * @param x X coordinate in meters.
      */
-    void set_latitude(ScalarType lat)
+    void set_x(ScalarType x)
     {
-        m_latitude = lat;
-        check_input();
+        m_latitude = x;
     }
 
     /**
-     * @brief Set the longitude object
+     * @brief Set the y coordinate object
      * 
-     * @param lon Longitude in degrees.
+     * @param y Y coordinate in meters.
      */
-    void set_longitude(ScalarType lon)
+    void set_y(ScalarType y)
     {
-        m_longitude = lon;
-        check_input();
+        m_longitude = y;
     }
 
 private:
     /**
      * @brief Assert that the latitude and longitude are within valid ranges.
      */
-    void check_input() const
-    {
-        assert(m_latitude <= 90. && m_latitude >= -90. && "Latitude must be in [-90, 90]");
-        assert(m_longitude <= 180. && m_longitude >= -180. && "Longitude must be in [-180, 180]");
-    }
 
     ScalarType m_latitude;
     ScalarType m_longitude;
-    constexpr static mio::geo::Distance earth_radius = mio::geo::kilometers(6371.);
-    constexpr static ScalarType radians              = std::numbers::pi / 180.0;
 };
 
 } // namespace geo

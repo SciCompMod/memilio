@@ -293,6 +293,18 @@ public:
         return out_edges(begin(m_edges), end(m_edges), node_idx);
     }
 
+    auto& get_edge(size_t node_a, size_t node_b)
+    {
+        auto edges = out_edges(node_a);
+        for (auto edge = edges.begin(); edge != edges.end(); ++edge) {
+            if (edge->end_node_idx == node_b) {
+                return *edge;
+            }
+        }
+        mio::log_error("Edge from {} to {} not found.", node_a, node_b);
+        throw std::out_of_range("Edge not found");
+    }
+
 private:
     template <typename Iter>
     static auto out_edges(Iter b, Iter e, size_t idx)

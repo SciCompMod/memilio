@@ -24,6 +24,7 @@
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/metapopulation_mobility_stochastic.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
+#include "memilio/geography/geolocation.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/math/eigen.h"
 #include "memilio/math/eigen_util.h"
@@ -43,6 +44,66 @@
 
 namespace mio
 {
+
+template <typename FP, class Sim>
+class LocationNode : public SimulationNode<FP, Sim>
+{
+    using Base = SimulationNode<FP, Sim>;
+
+public:
+    template <class... Args, typename = std::enable_if_t<std::is_constructible<Sim, Args...>::value, void>>
+    LocationNode(FP x, FP y, Args&&... args)
+        : Base(std::forward<Args>(args)...)
+        , m_location(x, y)
+        , regional_neighbor_indices{}
+    {
+    }
+
+    auto get_location() const
+    {
+        return m_location;
+    }
+
+    void set_location(FP x, FP y)
+    {
+        m_location = mio::geo::GeographicalLocation(x, y);
+    }
+
+    FP get_y() const
+    {
+        return m_location.get_y();
+    }
+
+    FP get_x() const
+    {
+        return m_location.get_x();
+    }
+
+    void set_regional_neighbors(const std::vector<std::vector<size_t>>& neighbors)
+    {
+        regional_neighbor_indices = neighbors;
+    }
+
+    auto get_regional_neighbors() const
+    {
+        return regional_neighbor_indices;
+    }
+
+    auto is_quarantined() const
+    {
+        return m_is_quarantined;
+    }
+
+    void set_quarantined(bool quarantine)
+    {
+        m_is_quarantined = quarantine;
+    }
+
+private:
+    mio::geo::GeographicalLocation m_location; // location of the node
+    std::vector<std::vector<size_t>> regional_neighbor_indices;
+    bool m_is_quarantined{false};
+};
 
 /**
  * parameters that influence mobility.
@@ -261,8 +322,8 @@ void apply_mobility(size_t event, FP batch_size, StochasticEdge& jollyEdge, Simu
  * @{
  */
 template <typename FP, class Sim>
-JollyGraphSimulation<FP, Graph<SimulationNode<FP, Sim>, JollyEdge<FP>>>
-make_jolly_sim(FP t0, FP dt, const Graph<SimulationNode<FP, Sim>, JollyEdge<FP>>& graph)
+JollyGraphSimulation<FP, Graph<LocationNode<FP, Sim>, JollyEdge<FP>>>
+make_jolly_sim(FP t0, FP dt, const Graph<LocationNode<FP, Sim>, JollyEdge<FP>>& graph)
 {
     return make_graph_sim_jolly<FP>(
         t0, dt, graph, &advance_model<FP, Sim>,
@@ -271,8 +332,8 @@ make_jolly_sim(FP t0, FP dt, const Graph<SimulationNode<FP, Sim>, JollyEdge<FP>>
 }
 
 template <typename FP, class Sim>
-JollyGraphSimulation<FP, Graph<SimulationNode<FP, Sim>, JollyEdge<FP>>>
-make_jolly_sim(FP t0, FP dt, Graph<SimulationNode<FP, Sim>, JollyEdge<FP>>&& graph)
+JollyGraphSimulation<FP, Graph<LocationNode<FP, Sim>, JollyEdge<FP>>>
+make_jolly_sim(FP t0, FP dt, Graph<LocationNode<FP, Sim>, JollyEdge<FP>>&& graph)
 {
     return make_graph_sim_jolly<FP>(
         t0, dt, std::move(graph), &advance_model<FP, Sim>,

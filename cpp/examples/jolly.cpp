@@ -1,7 +1,7 @@
-/*
-* Copyright (C) 2020-2026 MEmilio
+/* 
+* Copyright (C) 2020-2025 MEmilio
 *
-* Authors: Julia Bicker, René Schmieding, Kilian Volmer
+* Authors: Kilian Volmer
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,110 +17,106 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-
 #include "memilio/config.h"
-#include "memilio/epidemiology/age_group.h"
-#include "smm/simulation.h"
-#include "smm/model.h"
-#include "smm/parameters.h"
-#include "memilio/data/analyze_result.h"
-#include <cstdlib>
+#include "memilio/geography/geolocation.h"
+#include "memilio/geography/rtree.h"
+#include "memilio/geography/distance.h"
+#include "memilio/io/io.h"
+#include "memilio/mobility/graph_simulation.h"
+#include "memilio/mobility/farm_graph_simulation.h"
+#include "memilio/mobility/farm_simulation.h"
+#include "memilio/mobility/graph.h"
+#include "memilio/mobility/graph_builder.h"
+#include "memilio/utils/compiler_diagnostics.h"
+#include "memilio/utils/index.h"
+#include "memilio/utils/logging.h"
 #include "memilio/timer/auto_timer.h"
-
-#pragma GCC target("avx2")
+#include "memilio/utils/parameter_distributions.h"
+#include "memilio/utils/random_number_generator.h"
+#include "smm/simulation.h"
+#include "smm/parameters.h"
+#include "thirdparty/csv.h"
+#include <ranges>
+#include <omp.h>
 
 enum class InfectionState
 {
     S,
     E,
     I,
-    Sus,
-    Lab,
-    C,
-    Desinfected,
+    D,
     Count
 };
 
-struct FarmType : public mio::Index<FarmType> {
-    FarmType(size_t val)
-        : Index<FarmType>(val)
-    {
-    }
-};
-
-int main()
+int main(int /*argc*/, char** /*argv*/)
 {
-    using Status = mio::Index<InfectionState, FarmType>;
+    mio::log_debug("Folder: {}", mio::get_current_dir_name());
+    const auto t0   = 0.;
+    const auto tmax = 100.;
+    const auto dt   = 1.; //initial time step
+
+    using Status = mio::Index<InfectionState>;
     using mio::regions::Region;
-    using enum InfectionState;
 
-    //Example how to run the stochastic metapopulation models with four regions
-    const size_t num_regions    = 100; //557;
-    const size_t num_farm_types = 6;
-    using Model                 = mio::smm::Model<ScalarType, InfectionState, Status, Region>;
+    //total compartment sizes
 
-    Model model(Status{Count, FarmType(num_farm_types)}, Region(num_regions));
+    using Model   = mio::smm::Model<ScalarType, InfectionState, Status, Region>;
+    using Builder = mio::GraphBuilder<
+        mio::FarmNode<ScalarType, mio::smm::Simulation<ScalarType, InfectionState, Status, mio::regions::Region>>,
+        mio::MobilityEdgeDirected<ScalarType>>;
 
-    for (size_t r = 0; r < num_regions; ++r) {
-        mio::timing::AutoTimer<"Population"> timer;
+    auto home = Region(0);
 
-        for (size_t f = 0; f < num_farm_types; ++f) {
-            model.populations[{Region(r), S, FarmType(f)}]           = 10.0;
-            model.populations[{Region(r), E, FarmType(f)}]           = 0.0;
-            model.populations[{Region(r), I, FarmType(f)}]           = 0.0;
-            model.populations[{Region(r), Sus, FarmType(f)}]         = 0.0;
-            model.populations[{Region(r), Lab, FarmType(f)}]         = 0.0;
-            model.populations[{Region(r), C, FarmType(f)}]           = 0.0;
-            model.populations[{Region(r), Desinfected, FarmType(f)}] = 0.0;
-        }
+    using AR = mio::AdoptionRate<ScalarType, Status, Region>;
+    std::vector<AR> adoption_rates;
+    adoption_rates.push_back({InfectionState::S, InfectionState::E, home, 1.0, {{InfectionState::I, 0.5}}});
+
+    adoption_rates.push_back({InfectionState::E, InfectionState::I, home, 0.3, {}});
+    adoption_rates.push_back({InfectionState::I, InfectionState::D, home, 0.1, {}});
+    adoption_rates.push_back({InfectionState::S, InfectionState::E, home, 0.5, {}});
+
+    Model curr_model(Status{InfectionState::Count}, mio::regions::Region(1));
+    curr_model.parameters.get<mio::smm::AdoptionRates<ScalarType, Status, mio::regions::Region>>() = adoption_rates;
+
+    Builder builder;
+
+    io::CSVReader<4> farms("../../../farms10000.csv");
+    farms.read_header(io::ignore_extra_column, "farms", "num_cows", "latitude", "longitude");
+    int farm_id, num_cows;
+    double latitude, longitude;
+    while (farms.read_row(farm_id, num_cows, latitude, longitude)) {
+        builder.add_node(farm_id, longitude, latitude, curr_model, t0);
     }
 
-    using AR = mio::smm::AdoptionRates<ScalarType, Status, Region>;
-    using TR = mio::smm::TransitionRates<ScalarType, Status, Region>;
+    auto rng = mio::RandomNumberGenerator();
 
-    //Set infection state adoption and spatial transition rates
-    AR::Type adoption_rates;
-    TR::Type transition_rates;
-    for (size_t r = 0; r < num_regions; ++r) {
-        mio::timing::AutoTimer<"AdoptionRates"> timer;
-
-        for (size_t f = 0; f < num_farm_types - 1; ++f) {
-            adoption_rates.push_back({{S, FarmType(f)}, {E, FarmType(f)}, Region(r), 0.1, {{{I, FarmType(5)}, 1}}});
-            adoption_rates.push_back({{E, FarmType(f)}, {I, FarmType(f)}, Region(r), 1. / 3., {}});
-            adoption_rates.push_back({{I, FarmType(f)}, {Sus, FarmType(f)}, Region(r), 1. / 3., {}});
-            adoption_rates.push_back({{Sus, FarmType(f)}, {Lab, FarmType(f)}, Region(r), 1. / 2.6, {}});
-            adoption_rates.push_back({{Lab, FarmType(f)}, {C, FarmType(f)}, Region(r), 1. / 2.6, {}});
-            adoption_rates.push_back({{C, FarmType(f)}, {Desinfected, FarmType(f)}, Region(r), 1. / 2., {}});
-            adoption_rates.push_back({{Desinfected, FarmType(f)}, {S, FarmType(f)}, Region(r), 1. / 22., {}});
-            adoption_rates.push_back({{S, FarmType(f)}, {Desinfected, FarmType(f)}, Region(r), 1. / 21., {}});
-        }
+    std::vector<std::vector<size_t>> interesting_indices;
+    interesting_indices.push_back(
+        {Model(Status{InfectionState::Count}, Region(1)).populations.get_flat_index({home, InfectionState::E})});
+    interesting_indices.push_back(
+        {Model(Status{InfectionState::Count}, Region(1)).populations.get_flat_index({home, InfectionState::I})});
+    io::CSVReader<2> edges("../../../edges10000.csv");
+    edges.read_header(io::ignore_extra_column, "from", "to");
+    size_t from, to;
+    while (edges.read_row(from, to)) {
+        builder.add_edge(from, to, interesting_indices);
     }
+    auto graph = std::move(builder).build();
 
-    for (size_t r = 0; r < num_regions; ++r) {
-        adoption_rates.push_back({{S, FarmType(5)}, {E, FarmType(5)}, Region(r), 0.1, {{{I, FarmType(5)}, 1}}});
-        adoption_rates.push_back({{E, FarmType(5)}, {I, FarmType(5)}, Region(r), 1. / 3., {}});
-    }
+    // auto nodes = graph.nodes() | std::views::transform([](const auto& node) {
+    //                  return &node.property;
+    //              });
+    // auto tree  = mio::geo::RTree({nodes.begin(), nodes.end()});
 
-    for (size_t i = 0; i < num_regions; ++i) {
-        for (size_t j = 0; j < num_regions; ++j) {
-            if (i != j && (std::abs(int(i) - int(j)) <= 6)) {
-                transition_rates.push_back({{S, FarmType(5)}, Region(i), Region(j), 0.01});
-                transition_rates.push_back({{E, FarmType(5)}, Region(j), Region(i), 0.01});
-                transition_rates.push_back({{I, FarmType(5)}, Region(j), Region(i), 0.01});
-            }
-        }
-    }
+    // for (auto& node : graph.nodes()) {
+    //     mio::timing::AutoTimer<"neighbourhood search"> timer;
+    //     node.property.set_regional_neighbors(
+    //         tree.in_range_indices_query(node.property.get_location(), {mio::geo::kilometers(2)}));
+    // }
 
-    model.parameters.get<AR>() = adoption_rates;
-    model.parameters.get<TR>() = transition_rates;
+    auto sim = mio::make_farm_sim(t0, dt, std::move(graph));
 
-    ScalarType dt   = 10.0;
-    ScalarType tmax = 90.0;
-
-    auto sim = mio::smm::Simulation(model, 0.0, dt);
-    mio::log_info("Starting simulation...");
     sim.advance(tmax);
-    mio::log_info("Simulation finished.");
-    auto interpolated_results = mio::interpolate_simulation_result(sim.get_result());
-    // interpolated_results.print_table({"S", "E", "C", "I", "R", "D "});
+
+    return 0;
 }

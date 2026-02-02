@@ -79,6 +79,9 @@ add_library(memilio
     mobility/metapopulation_mobility_jolly.cpp
     mobility/metapopulation_mobility_stochastic.h
     mobility/metapopulation_mobility_stochastic.cpp
+    mobility/farm_simulation.cpp
+    mobility/farm_simulation.h
+    mobility/farm_graph_simulation.h
     mobility/graph_simulation.h
     mobility/graph_simulation.cpp
     mobility/graph.h
