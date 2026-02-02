@@ -21,9 +21,9 @@
 #define MIO_IO_HISTORY_H
 
 #include "memilio/utils/metaprogramming.h"
+
 #include <vector>
 #include <tuple>
-#include <iostream>
 
 namespace mio
 {
@@ -66,22 +66,22 @@ struct DataWriterToMemory {
  * @tparam Writer The writer that is used to handle the data, e.g. store it into an array.
  * @tparam Loggers The loggers that are used to log data.
  */
-template <template <class... /*Loggers*/> class Writer, class... Loggers>
+template <template <class... /*Loggers*/> class WriterT, class... LoggersT>
 class History
 {
-    static_assert(!has_duplicates_v<Loggers...>, "The Loggers used for a History must be unique.");
+    static_assert(!has_duplicates_v<LoggersT...>, "The Loggers used for a History must be unique.");
 
 public:
-    using WriteWrapper = Writer<Loggers...>;
+    using Writer = WriterT<LoggersT...>;
 
     History() = default;
 
-    History(typename WriteWrapper::Data data)
-        : m_data(data)
+    History(typename Writer::Data data)
+        : m_data(std::move(data))
     {
     }
 
-    History(typename Loggers::Type... args)
+    History(typename LoggersT::Type... args)
         : m_data(std::tie(args...))
     {
     }
@@ -96,7 +96,7 @@ public:
     template <class T>
     void log(const T& t)
     {
-        (log_impl(t, std::get<index_of_type_v<Loggers, Loggers...>>(m_loggers)), ...);
+        (log_impl(t, std::get<index_of_type_v<LoggersT, LoggersT...>>(m_loggers)), ...);
     }
 
     /**
@@ -104,14 +104,14 @@ public:
      *
      * @return const WriteWrapper::Data&
      */
-    const typename WriteWrapper::Data& get_log() const
+    const typename Writer::Data& get_log() const
     {
         return m_data;
     }
 
 private:
-    typename WriteWrapper::Data m_data;
-    std::tuple<Loggers...> m_loggers;
+    typename Writer::Data m_data;
+    std::tuple<LoggersT...> m_loggers;
 
     /**
      * @brief Checks if the given logger should log. If so, adds a record of the log to m_data.
@@ -123,7 +123,7 @@ private:
     void log_impl(const T& t, Logger& logger)
     {
         if (logger.should_log(t)) {
-            WriteWrapper::template add_record<Logger>(logger.log(t), m_data);
+            Writer::template add_record<Logger>(logger.log(t), m_data);
         }
     }
 };

@@ -35,26 +35,27 @@ add_library(memilio
     compartments/stochastic_simulation.h
     compartments/stochastic_model.h
     compartments/parameter_studies.h
-    io/default_serialize.h
-    io/default_serialize.cpp
-    io/io.h
-    io/io.cpp
-    io/hdf5_cpp.h
-    io/json_serializer.h
-    io/json_serializer.cpp
-    io/binary_serializer.h
     io/binary_serializer.cpp
-    io/history.h
-    io/mobility_io.h
-    io/mobility_io.cpp
-    io/parameters_io.h
-    io/parameters_io.cpp
-    io/result_io.h
-    io/result_io.cpp
-    io/epi_data.h
-    io/epi_data.cpp
+    io/binary_serializer.h
     io/cli.cpp
     io/cli.h
+    io/data_writer_to_files.h
+    io/default_serialize.cpp
+    io/default_serialize.h
+    io/epi_data.cpp
+    io/epi_data.h
+    io/hdf5_cpp.h
+    io/history.h
+    io/io.cpp
+    io/io.h
+    io/json_serializer.cpp
+    io/json_serializer.h
+    io/mobility_io.cpp
+    io/mobility_io.h
+    io/parameters_io.cpp
+    io/parameters_io.h
+    io/result_io.cpp
+    io/result_io.h
     math/euler.cpp
     math/euler.h
     math/smoother.h

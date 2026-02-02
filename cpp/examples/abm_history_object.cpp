@@ -22,8 +22,10 @@
 #include "abm/simulation.h"
 #include "abm/model.h"
 #include "abm/location_type.h"
-#include "memilio/utils/abstract_parameter_distribution.h"
+#include "memilio/io/data_writer_to_files.h"
 #include "memilio/io/history.h"
+#include "memilio/utils/base_dir.h"
+#include "memilio/utils/logging.h"
 #include "memilio/utils/parameter_distributions.h"
 
 #include <fstream>
@@ -143,9 +145,8 @@ int main()
     // The infection states are chosen randomly.
     auto persons = model.get_persons();
     for (auto& person : persons) {
-        auto rng = mio::abm::PersonalRandomNumberGenerator(person);
-        mio::abm::InfectionState infection_state =
-            (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
+        auto rng             = mio::abm::PersonalRandomNumberGenerator(person);
+        auto infection_state = (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
         if (infection_state != mio::abm::InfectionState::Susceptible)
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          model.parameters, start_date, infection_state));
@@ -196,9 +197,15 @@ int main()
         }
     };
 
-    mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds> history;
+    mio::History<mio::DataWriterToFiles, LogTimePoint, LogLocationIds> history(
+        {{mio::base_dir() + "/a", mio::base_dir() + "/b"}});
 
-    sim.advance(tmax, history);
+    if (history.get_log().good()) {
+        sim.advance(tmax, history);
+    }
+    else {
+        mio::log_error("file bad");
+    }
 
-    write_log_to_file(history);
+    // write_log_to_file(history);
 }
