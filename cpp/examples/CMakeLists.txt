@@ -109,7 +109,7 @@ target_link_libraries(abm_minimal_example PRIVATE memilio abm)
 target_compile_options(abm_minimal_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 if(MEMILIO_HAS_HDF5)
-    add_executable(abm_parameter_study_example abm_parameter_study.cpp)
+    add_executable(abm_parameter_study_example abm_benchmark_scaling.cpp)
     target_link_libraries(abm_parameter_study_example PRIVATE memilio abm)
     target_compile_options(abm_parameter_study_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()

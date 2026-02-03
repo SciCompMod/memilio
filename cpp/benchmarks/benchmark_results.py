@@ -314,9 +314,9 @@ class BenchmarkAnalyzer:
         ax = fig.add_axes(panel)
 
         # Define colors for memilio lines (shades of blue)
-        memilio_color_1 = '#155489'   # dark blue
-        memilio_color_4 = '#155489'   # medium blue
-        memilio_color_16 = '#155489'  # light blue
+        memilio_color_1 = '#741194'   # dark blue
+        memilio_color_4 = '#741194'   # medium blue
+        memilio_color_16 = '#741194'  # light blue
         covasim_color = '#5D8A2B'      # orange
         opencovid_color = '#E89A63'    # green
 
@@ -399,15 +399,15 @@ class BenchmarkAnalyzer:
         # Plot runtime
         ax.plot(cores, runtimes,
                 marker='o',  
-                color='#0d47a1', label='ABM', linestyle='-')
+                color='#741194', label='ABM', linestyle='-')
         ax.plot(cores, runtimes_graph_ode,
-                marker='s',  
-                color="#741194", label='Graph-ODE\nw/ mobility', linestyle='-')
+                marker='o',  
+                color="#0D47A1", label='Graph-ODE\nw/ mobility', linestyle='-')
         ax.plot(cores, runtimes_lct,
-                marker='^',  
-                color='#20A398', label='LCT', linestyle='-')
+                marker='o',  
+                color='#5D8A2B', label='LCT', linestyle='-')
         ax.plot(cores, runtimes_ide,
-                marker='D',  
+                marker='o',  
                 color='#E89A63', label='IDE', linestyle='-')
         
 
@@ -457,8 +457,8 @@ class BenchmarkAnalyzer:
 
         # Plot runtime
         ax.plot(nodes, runtimes,
-                marker='s',  
-                color='#0d47a1', label='ABM', linestyle='-')
+                marker='o',  
+                color='#741194', label='ABM', linestyle='-')
 
         # Calculate and plot ideal scaling
         if len(runtimes) > 0:
