@@ -24,6 +24,7 @@
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/geography/geolocation.h"
 #include "memilio/mobility/farm_graph_simulation.h"
+#include "memilio/mobility/trade.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 
@@ -130,6 +131,29 @@ public:
         // ...
     }
 
+    bool is_suspicious() const
+    {
+        return m_date_suspicion > -1;
+    }
+
+    int get_date_suspicion() const
+    {
+        return m_date_suspicion;
+    }
+
+    int get_date_confirmation() const
+    {
+        return m_date_confirmation;
+    }
+    void set_date_suspicion(int date)
+    {
+        m_date_suspicion = date;
+    }
+    void set_date_confirmation(int date)
+    {
+        m_date_confirmation = date;
+    }
+
 private:
     mio::geo::GeographicalLocation m_location; // location of the node
     std::vector<std::vector<size_t>> regional_neighbor_indices;
@@ -138,6 +162,8 @@ private:
     size_t m_farm_size{0};
     size_t m_population_date{0};
     size_t m_slaughter_date{0};
+    int m_date_suspicion{-1};
+    int m_date_confirmation{-1};
 };
 
 /**

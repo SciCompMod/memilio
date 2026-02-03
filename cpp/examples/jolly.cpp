@@ -50,7 +50,6 @@ enum class InfectionState
 
 int main(int /*argc*/, char** /*argv*/)
 {
-    mio::log_debug("Folder: {}", mio::get_current_dir_name());
     const auto t0   = 0.;
     const auto tmax = 100.;
     const auto dt   = 1.; //initial time step
@@ -80,12 +79,13 @@ int main(int /*argc*/, char** /*argv*/)
 
     Builder builder;
 
-    io::CSVReader<4> farms("../../../farms10000.csv");
-    farms.read_header(io::ignore_extra_column, "farms", "num_cows", "latitude", "longitude");
-    int farm_id, num_cows;
-    double latitude, longitude;
-    while (farms.read_row(farm_id, num_cows, latitude, longitude)) {
-        builder.add_node(farm_id, longitude, latitude, curr_model, t0);
+    io::CSVReader<5> farms("/home/kilian/Documents/projects/jolly/common_data/farms.csv");
+    farms.read_header(io::ignore_extra_column, "farm_id", "production_id", "capacity", "x", "y");
+    size_t farm_id, type, size;
+    double x, y;
+    while (farms.read_row(farm_id, type, size, x, y)) {
+        auto model = curr_model;
+        builder.add_node(farm_id, x, y, type, size, model, t0);
     }
 
     auto rng = mio::RandomNumberGenerator();
@@ -95,12 +95,7 @@ int main(int /*argc*/, char** /*argv*/)
         {Model(Status{InfectionState::Count}, Region(1)).populations.get_flat_index({home, InfectionState::E})});
     interesting_indices.push_back(
         {Model(Status{InfectionState::Count}, Region(1)).populations.get_flat_index({home, InfectionState::I})});
-    io::CSVReader<2> edges("../../../edges10000.csv");
-    edges.read_header(io::ignore_extra_column, "from", "to");
-    size_t from, to;
-    while (edges.read_row(from, to)) {
-        builder.add_edge(from, to, interesting_indices);
-    }
+
     auto graph = std::move(builder).build();
 
     // auto nodes = graph.nodes() | std::views::transform([](const auto& node) {
