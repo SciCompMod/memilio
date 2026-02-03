@@ -73,7 +73,7 @@ const ScalarType deathsPerCritical                = 0.21718;
 std::vector<ScalarType> init = {3966564.2110, 664.2367, 545.5523, 1050.3946, 5.6045, 0.5844, 307.4165, 0.};
 
 // Mobility
-const int band_radius_mobility_matrix = 55;
+const int band_radius_mobility_matrix = 50;
 const ScalarType factorMobilePopulation = 0.1;
 
 // Simulation parameters

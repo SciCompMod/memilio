@@ -4,6 +4,7 @@ from memilio.simulation.osecir import InfectionState
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
 import pandas as pd
 import os
 
@@ -58,8 +59,8 @@ df_lockdown = preprocess_data(os.path.join(results_dir, "result_lockdown.h5"))
 df_dynamic = preprocess_data(os.path.join(results_dir, "result_dynamic.h5"))
 
 set_fontsize()        
-figsize = (10, 7)
-panel = (0.08, 0.1, 0.89, 0.86)
+figsize = (5.5, 3.5)
+panel = (0.14, 0.26, 0.82, 0.68)
 fig = plt.figure(figsize=figsize)
 ax = fig.add_axes(panel)
 
@@ -72,12 +73,21 @@ ax.plot(df_same[state].index + change_day, df_same[state].values, color=color_in
 ax.plot(df_lockdown[state].index + change_day, df_lockdown[state].values, color=colors["Red"], linewidth=2.5, alpha=1.0, label='Strict NPIs')
 ax.plot(df_dynamic[state].index + change_day, df_dynamic[state].values, color=colors["Orange"], linewidth=2.5, alpha=1.0, label='Dynamic NPIs')
 
+# Plot X-Axis
+start_date = pd.Timestamp("2020-10-01")
+date_range = pd.date_range(start=start_date, periods=121, freq="D")
+weekly_ticks = np.arange(0, 121, 14)  # Tick every 14 days
+ax.set_xticks(weekly_ticks)
+ax.set_xticklabels(date_range[weekly_ticks].strftime("%Y-%m-%d"), rotation=45)
+
+ax.yaxis.set_major_locator(MultipleLocator(0.5e6))
+
 # Optional: style
-plt.xlabel("Time [days]")
+# plt.xlabel("Time [days]")
 plt.ylabel("Infected [#]")
 plt.grid(False)
 
 ax.set_xlim(0, 120)
-# ax.set_ylim(bottom=None, top=df[state].max()*1.05)
+ax.set_ylim(0, 2100000)
 # plt.legend() # no legend, as we plot it seperatly
 plt.savefig(os.path.join(save_dir, 'nuts3_triple_plot_no_open.png'), dpi=dpi)

@@ -1,6 +1,7 @@
 from plotting_settings import plotting_dir, set_fontsize, colors, dpi
 from matplotlib.lines import Line2D
 import matplotlib.pylab as plt
+from matplotlib.legend_handler import HandlerTuple
 import os
 
 save_dir = os.path.join(plotting_dir, "plots")
@@ -17,13 +18,13 @@ legend_elements = [
     # Line2D([0], [0], color=colors["Red"], lw=1.2, linestyle="--", label="High incidence threshold"),
 ]
 
-fig, ax = plt.subplots(figsize=(6, 1.2))
+fig, ax = plt.subplots(figsize=(1, 1.2))
 ax.axis("off")
 
 ax.legend(
     handles=legend_elements,
     loc="center",
-    ncol=4,
+    ncol=1,
     frameon=False
 )
 
@@ -61,18 +62,66 @@ plt.savefig(
 set_fontsize()
 legend_elements = [
     # Thresholds
-    Line2D([0], [0], color=colors["Blue"], lw=4, alpha = 0.8, linestyle="-", label="High incidence threshold = 0.63"),
-    Line2D([0], [0], color=colors["Blue"], lw=4, alpha = 0.5, linestyle="-", label="Low incidence threshold = 0"),
+    (
+        Line2D([0], [0], color=colors["Blue"], lw=4, alpha = 0.5, linestyle="-"),
+        Line2D([0], [0], color=colors["Blue"], lw=4, alpha = 0.8, linestyle="-"),
+    ),
 ]
 
+labels = [
+    "Incidence thresholds",
+]
+fig, ax = plt.subplots(figsize=(1, 0.4))
+ax.axis("off")
+
+ax.legend(
+    handles=legend_elements,
+    labels=labels,
+    loc="center",
+    ncol=1,
+    frameon=True,
+    handler_map={tuple: HandlerTuple(ndivide=None)}
+)
+
+plt.savefig(
+    os.path.join(save_dir, "nuts3_legend_thresholds_single.png"),
+    dpi=dpi,
+    bbox_inches="tight",
+    pad_inches=0.02
+)
+
+
+set_fontsize()
+legend_elements = [
+    # Thresholds
+    (
+        Line2D([0], [0], color=colors["Blue"], lw=4, alpha = 0.5, linestyle="-"),
+        Line2D([0], [0], color=colors["Blue"], lw=4, alpha = 0.8, linestyle="-"),
+    ),
+    Line2D([0], [0], color=colors["Orange"], lw=0, linestyle="-", marker='o', markersize=12, markeredgewidth=0, markeredgecolor=colors["Orange"], markerfacecolor=colors["Orange"]),
+    Line2D([0], [0], color=colors["Orange"], lw=0, linestyle="-", marker='X', markersize=12, markeredgewidth=0, markeredgecolor=colors["Orange"], markerfacecolor=colors["Orange"]),
+    Line2D([0], [0], color=colors["Orange"], lw=0, linestyle="-", marker='D', markersize=10, markeredgewidth=0, markeredgecolor=colors["Orange"], markerfacecolor=colors["Orange"]),
+    # Line2D([0], [0], color=colors["Teal"], lw=4, linestyle="-"),
+    # Line2D([0], [0], color=colors["Red"], lw=4, linestyle="-"),
+    # Line2D([0], [0], color=colors["Green"], lw=4, linestyle="-")
+]
+
+labels = [
+    "Incidence thresholds",
+    "Aachen",
+    "Flensburg",
+    "Heilbronn"
+]
 fig, ax = plt.subplots(figsize=(3, 0.8))
 ax.axis("off")
 
 ax.legend(
     handles=legend_elements,
+    labels=labels,
     loc="center",
     ncol=1,
-    frameon=True
+    frameon=True,
+    handler_map={tuple: HandlerTuple(ndivide=None)}
 )
 
 plt.savefig(

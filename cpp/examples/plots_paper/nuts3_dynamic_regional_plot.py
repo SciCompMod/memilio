@@ -21,12 +21,14 @@ regions_to_plot = [
 # "5766",
 # "4011",
 # "14511",
-"11000", # Berlin
+# "11000", # Berlin
 "5334", # Aachen
-"1001", # Flensburg
+"8125", # Heilbronn
+# "1001", # Flensburg
 # "12054", # Potsdam
+# "3457" # Leer
 ]
-highlighted_region_to_plot = "3457" # Leer
+highlighted_region_to_plot = "1001"
 
 results_dir = os.path.join(plotting_dir, "../simulation_paper/results")
 save_dir = os.path.join(plotting_dir, "plots")
@@ -80,12 +82,12 @@ df_dynamic["Incidence"] = (
 )
 
 set_fontsize()
-figsize = (10, 6)
+figsize = (9.5, 4.5)
 fig, ax = plt.subplots(figsize=figsize)
 
 # Add horizontal threshold line
-threshold1 = 250
-threshold2 = 1000
+threshold1 = 100
+threshold2 = 500
 plt.axhline(y=threshold2, color=colors["Blue"], linestyle='-', lw=1, alpha = 0.8, label=f"Threshold High = {threshold2}")
 plt.axhline(y=threshold1, color=colors["Blue"], linestyle='-', lw=1, alpha = 0.5, label=f"Threshold Low = {threshold1}")
 
@@ -225,11 +227,19 @@ plt.plot(
     label=f"{highlighted_region_to_plot}",
 )
 
+# Plot X-Axis
+start_date = pd.Timestamp("2020-10-01")
+date_range = pd.date_range(start=start_date, periods=121, freq="D")
+weekly_ticks = np.arange(0, 121, 14)  # Tick every 14 days
+ax.set_xticks(weekly_ticks)
+ax.set_xticklabels(date_range[weekly_ticks].strftime("%Y-%m-%d"), rotation=45)
+
 ymin, ymax = ax.get_ylim()
 ax.set_ylim(0, ymax)
 ax.set_xlim(0, 120)
-plt.xlabel("Time [days]")
-plt.ylabel("Infected per 100,000 [#]")
+# plt.xlabel("Time [days]")
+plt.ylabel("Infected [# per 100k]")
 # plt.legend() # no legend, as we plot it seperatly
 
+plt.tight_layout()
 plt.savefig(os.path.join(save_dir, 'nuts3_dynamic_regional.png'), dpi=dpi)
