@@ -21,10 +21,9 @@
 #ifndef MIO_SMM_SIMULATION_H
 #define MIO_SMM_SIMULATION_H
 
-#include "memilio/config.h"
 #include "smm/model.h"
 #include "smm/parameters.h"
-#include "memilio/compartments/simulation.h"
+#include "memilio/utils/time_series.h"
 
 namespace mio
 {
@@ -37,12 +36,11 @@ namespace smm
  * @tparam regions The number of regions.
  * @tparam Status An infection state enum.
  */
-template <typename FP, size_t regions, class Status>
+template <typename FP, class Comp, class Status = Comp, class Region = mio::regions::Region>
 class Simulation
 {
 public:
-public:
-    using Model = smm::Model<FP, regions, Status>;
+    using Model = smm::Model<FP, Comp, Status, Region>;
 
     /**
      * @brief Set up the simulation for a Stochastic Metapopulation Model.
@@ -61,12 +59,14 @@ public:
     {
         assert(dt > 0);
         assert(m_waiting_times.size() > 0);
-        assert(std::all_of(adoption_rates().begin(), adoption_rates().end(), [](auto&& r) {
-            return static_cast<size_t>(r.region) < regions;
-        }));
-        assert(std::all_of(transition_rates().begin(), transition_rates().end(), [](auto&& r) {
-            return static_cast<size_t>(r.from) < regions && static_cast<size_t>(r.to) < regions;
-        }));
+        assert(std::all_of(adoption_rates().begin(), adoption_rates().end(),
+                           [regions = reduce_index<Region>(model.populations.size())](auto&& r) {
+                               return r.region < regions;
+                           }));
+        assert(std::all_of(transition_rates().begin(), transition_rates().end(),
+                           [regions = reduce_index<Region>(model.populations.size())](auto&& r) {
+                               return r.from < regions && r.to < regions;
+                           }));
         // initialize (internal) next event times by random values
         for (size_t i = 0; i < m_tp_next_event.size(); i++) {
             m_tp_next_event[i] += mio::ExponentialDistribution<FP>::get_instance()(m_model->get_rng(), 1.0);
@@ -164,17 +164,17 @@ private:
     /**
      * @brief Returns the model's transition rates.
      */
-    inline constexpr const typename smm::TransitionRates<FP, Status>::Type& transition_rates()
+    inline constexpr const typename smm::TransitionRates<FP, Status, Region>::Type& transition_rates()
     {
-        return m_model->parameters.template get<smm::TransitionRates<FP, Status>>();
+        return m_model->parameters.template get<smm::TransitionRates<FP, Status, Region>>();
     }
 
     /**
      * @brief Returns the model's adoption rates.
      */
-    inline constexpr const typename smm::AdoptionRates<FP, Status>::Type& adoption_rates()
+    inline constexpr const typename smm::AdoptionRates<FP, Status, Region>::Type& adoption_rates()
     {
-        return m_model->parameters.template get<smm::AdoptionRates<FP, Status>>();
+        return m_model->parameters.template get<smm::AdoptionRates<FP, Status, Region>>();
     }
 
     /**
@@ -182,16 +182,17 @@ private:
      */
     inline void update_current_rates_and_waiting_times()
     {
-        size_t i = 0; // shared index for iterating both rates
+        size_t i               = 0; // shared index for iterating both rates
+        const auto last_values = m_result.get_last_value();
         for (const auto& rate : adoption_rates()) {
-            m_current_rates[i] = m_model->evaluate(rate, m_result.get_last_value());
+            m_current_rates[i] = m_model->evaluate(rate, last_values);
             m_waiting_times[i] = (m_current_rates[i] > 0)
                                      ? (m_tp_next_event[i] - m_internal_time[i]) / m_current_rates[i]
                                      : std::numeric_limits<FP>::max();
             i++;
         }
         for (const auto& rate : transition_rates()) {
-            m_current_rates[i] = m_model->evaluate(rate, m_result.get_last_value());
+            m_current_rates[i] = m_model->evaluate(rate, last_values);
             m_waiting_times[i] = (m_current_rates[i] > 0)
                                      ? (m_tp_next_event[i] - m_internal_time[i]) / m_current_rates[i]
                                      : std::numeric_limits<FP>::max();
@@ -217,7 +218,7 @@ private:
     std::vector<FP> m_current_rates; ///< Current values of both types of rates i.e. adoption and transition rates.
 };
 
-} //namespace smm
+} // namespace smm
 } // namespace mio
 
 #endif
