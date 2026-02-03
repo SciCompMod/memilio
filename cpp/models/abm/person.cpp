@@ -246,9 +246,7 @@ ProtectionEvent Person::get_latest_protection(TimePoint t) const
                 latest_protection_type = it->type;
                 latest_time            = it->time;
             }
-        }
-        else {
-            break; // Stop once we find a vaccination after time t
+            break; // Stop once we find the latest vaccination before time t
         }
     }
 

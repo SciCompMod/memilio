@@ -239,6 +239,7 @@ StateTransition Infection::get_forward_transition(PersonalRandomNumberGenerator&
     }
 
     default:
+        log_error("Forward transition requested for invalid infection state (probably recovered or dead).");
         break;
     }
 
@@ -280,6 +281,7 @@ StateTransition Infection::get_backward_transition(PersonalRandomNumberGenerator
         break;
 
     default:
+        log_error("Backward transition requested for invalid infection state (probably susceptible).");
         break;
     }
 
