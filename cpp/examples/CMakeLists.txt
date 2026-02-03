@@ -109,9 +109,9 @@ target_link_libraries(abm_minimal_example PRIVATE memilio abm)
 target_compile_options(abm_minimal_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 if(MEMILIO_HAS_HDF5)
-    add_executable(abm_benchmark_scaling abm_benchmark_scaling.cpp)
-    target_link_libraries(abm_benchmark_scaling PRIVATE memilio abm)
-    target_compile_options(abm_benchmark_scaling PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+    add_executable(abm_benchmark_strong abm_benchmark_strong.cpp)
+    target_link_libraries(abm_benchmark_strong PRIVATE memilio abm)
+    target_compile_options(abm_benchmark_strong PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()
 
 add_executable(abm_history_example abm_history_object.cpp)
