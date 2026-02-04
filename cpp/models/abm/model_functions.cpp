@@ -32,30 +32,30 @@ namespace mio
 namespace abm
 {
 
-ScalarType daily_transmissions_by_contacts(const ContactExposureRates& rates, const CellIndex cell_index,
-                                           const VirusVariant virus, const AgeGroup age_receiver,
-                                           size_t age_receiver_group_size, const LocalInfectionParameters& params)
+ScalarType total_exposure_by_contacts(const ContactExposureRates& rates, const CellIndex cell_index,
+                                      const VirusVariant virus, const AgeGroup age_receiver,
+                                      size_t age_receiver_group_size, const LocalInfectionParameters& params)
 {
     assert(age_receiver < rates.size<AgeGroup>());
-    ScalarType prob = 0;
+    ScalarType total_exposure = 0;
     for (AgeGroup age_transmitter(0); age_transmitter < rates.size<AgeGroup>(); ++age_transmitter) {
         if (age_receiver == age_transmitter &&
             age_receiver_group_size > 1) // adjust for the person not meeting themself
         {
-            prob += rates[{cell_index, virus, age_transmitter}] *
-                    params.get<ContactRates>()[{age_receiver, age_transmitter}] * age_receiver_group_size /
-                    (age_receiver_group_size - 1);
+            total_exposure += rates[{cell_index, virus, age_transmitter}] *
+                              params.get<ContactRates>()[{age_receiver, age_transmitter}] * age_receiver_group_size /
+                              (age_receiver_group_size - 1);
         }
         else {
-            prob += rates[{cell_index, virus, age_transmitter}] *
-                    params.get<ContactRates>()[{age_receiver, age_transmitter}];
+            total_exposure += rates[{cell_index, virus, age_transmitter}] *
+                              params.get<ContactRates>()[{age_receiver, age_transmitter}];
         }
     }
-    return prob;
+    return total_exposure;
 }
 
-ScalarType daily_transmissions_by_air(const AirExposureRates& rates, const CellIndex cell_index,
-                                      const VirusVariant virus, const Parameters& global_params)
+ScalarType total_exposure_by_air(const AirExposureRates& rates, const CellIndex cell_index, const VirusVariant virus,
+                                 const Parameters& global_params)
 {
     return rates[{cell_index, virus}] * global_params.get<AerosolTransmissionRates>()[{virus}];
 }
@@ -83,25 +83,27 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
         ScalarType mask_protection = person.get_mask_protective_factor(global_parameters);
         assert(person.get_cells().size() && "Person is in multiple cells. Interact logic is incorrect at the moment.");
         for (CellIndex cell_index : person.get_cells()) {
-            std::pair<VirusVariant, ScalarType> local_indiv_trans_prob[static_cast<uint32_t>(VirusVariant::Count)];
+            std::pair<VirusVariant, ScalarType> local_indiv_expected_trans[static_cast<uint32_t>(VirusVariant::Count)];
             for (uint32_t v = 0; v != static_cast<uint32_t>(VirusVariant::Count); ++v) {
                 VirusVariant virus                      = static_cast<VirusVariant>(v);
                 size_t local_population_by_age_receiver = local_population_by_age[{cell_index, age_receiver}];
-                ScalarType local_indiv_trans_prob_v =
-                    (daily_transmissions_by_contacts(local_contact_exposure, cell_index, virus, age_receiver,
-                                                     local_population_by_age_receiver, local_parameters) +
-                     daily_transmissions_by_air(local_air_exposure, cell_index, virus, global_parameters)) *
+                ScalarType exposed_viral_shed =
+                    (total_exposure_by_contacts(local_contact_exposure, cell_index, virus, age_receiver,
+                                                local_population_by_age_receiver, local_parameters) +
+                     total_exposure_by_air(local_air_exposure, cell_index, virus, global_parameters)) *
                     (1 - mask_protection) * (1 - person.get_protection_factor(t, virus, global_parameters));
-
-                local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
+                ScalarType infection_rate =
+                    global_parameters.get<InfectionRateFromViralShed>()[{virus}] * exposed_viral_shed;
+                local_indiv_expected_trans[v] = std::make_pair(virus, infection_rate);
             }
             VirusVariant virus =
                 random_transition(personal_rng, VirusVariant::Count, dt,
-                                  local_indiv_trans_prob); // use VirusVariant::Count for no virus submission
+                                  local_indiv_expected_trans); // use VirusVariant::Count for no virus submission
             if (virus != VirusVariant::Count) {
                 person.add_new_infection(Infection(personal_rng, virus, age_receiver, global_parameters, t + dt / 2,
-                                                   mio::abm::InfectionState::Exposed, person.get_latest_protection(),
-                                                   false)); // Starting time in first approximation
+                                                   mio::abm::InfectionState::Exposed,
+                                                   person.get_latest_protection(t + dt / 2),
+                                                   false)); // Starting time in second order approximation
             }
         }
     }
@@ -121,14 +123,14 @@ void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExpo
         auto& infection = person.get_infection();
         auto virus      = infection.get_virus_variant();
         auto age        = person.get_age();
-        // average infectivity over the time step to second order accuracy using midpoint rule
-        const auto infectivity = infection.get_infectivity(t + dt / 2);
+        // average viral shed over the time step to second order accuracy using midpoint rule
+        const auto viral_shed = infection.get_viral_shed(t + dt / 2);
         const auto quarantine_factor =
             person.is_in_quarantine(t, params) ? (1.0 - params.get<QuarantineEffectiveness>()) : 1.0;
 
         for (CellIndex cell : person.get_cells()) {
-            auto air_contribution     = infectivity * quarantine_factor;
-            auto contact_contribution = infectivity * quarantine_factor;
+            auto air_contribution     = viral_shed * quarantine_factor;
+            auto contact_contribution = viral_shed * quarantine_factor;
 
             if (location.get_infection_parameters().get<UseLocationCapacityForTransmissions>()) {
                 air_contribution *= location.get_cells()[cell.get()].compute_space_per_person_relative();
