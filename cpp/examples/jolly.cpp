@@ -52,7 +52,7 @@ int main(int /*argc*/, char** /*argv*/)
 {
     const auto t0   = 0.;
     const auto tmax = 100.;
-    const auto dt   = 1.; //initial time step
+    const auto dt   = 10.; //initial time step
 
     using Status = mio::Index<InfectionState>;
     using mio::regions::Region;
@@ -69,10 +69,9 @@ int main(int /*argc*/, char** /*argv*/)
     using AR = mio::AdoptionRate<ScalarType, Status, Region>;
     std::vector<AR> adoption_rates;
     adoption_rates.push_back({InfectionState::S, InfectionState::E, home, 1.0, {{InfectionState::I, 0.5}}});
-
     adoption_rates.push_back({InfectionState::E, InfectionState::I, home, 0.3, {}});
     adoption_rates.push_back({InfectionState::I, InfectionState::D, home, 0.1, {}});
-    adoption_rates.push_back({InfectionState::S, InfectionState::E, home, 0.5, {}});
+    adoption_rates.push_back({InfectionState::S, InfectionState::E, home, 0.00, {}});
 
     Model curr_model(Status{InfectionState::Count}, mio::regions::Region(1));
     curr_model.parameters.get<mio::smm::AdoptionRates<ScalarType, Status, mio::regions::Region>>() = adoption_rates;
@@ -84,7 +83,10 @@ int main(int /*argc*/, char** /*argv*/)
     size_t farm_id, type, size;
     double x, y;
     while (farms.read_row(farm_id, type, size, x, y)) {
-        auto model = curr_model;
+        auto model                                        = curr_model;
+        curr_model.populations[{home, InfectionState::S}] = size - 10;
+        // if (farm_id % 2 == 0)
+        //     curr_model.populations[{home, InfectionState::E}] = 1;
         builder.add_node(farm_id, x, y, type, size, model, t0);
     }
 
@@ -112,6 +114,8 @@ int main(int /*argc*/, char** /*argv*/)
     auto sim = mio::make_farm_sim(t0, dt, std::move(graph));
 
     sim.advance(tmax);
+
+    sim.return_all_time_series()[1].print_table({"S", "E", "I", "D"});
 
     return 0;
 }

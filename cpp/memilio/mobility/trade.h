@@ -47,6 +47,12 @@ template <typename ScalarType, class Graph>
 class Trade
 {
 public:
+    Trade()
+        : m_farm_queue{}
+        , m_graph(*(Graph*)nullptr)
+    {
+    }
+
     Trade(Graph& graph)
         : m_farm_queue{}
         , m_graph(graph)
@@ -58,7 +64,7 @@ public:
         m_farm_queue.push(Farm<ScalarType>{region, grown_date});
     }
 
-    const auto next_trade_time()
+    auto next_trade_time() const
     {
         if (!m_farm_queue.empty()) {
             return m_farm_queue.top().grown_date;

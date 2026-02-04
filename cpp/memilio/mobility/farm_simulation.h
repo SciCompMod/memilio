@@ -20,12 +20,9 @@
 #ifndef FARM_SIMULATION_H
 #define FARM_SIMULATION_H
 
-#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/geography/geolocation.h"
-#include "memilio/mobility/farm_graph_simulation.h"
-#include "memilio/mobility/trade.h"
-#include "memilio/mobility/graph.h"
+// #include "memilio/mobility/farm_graph_simulation.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 
 #include <algorithm>
@@ -289,38 +286,6 @@ void apply_timed_mobility(const FP t, const FP num_moving, MobilityEdgeDirected<
                           FarmNode<FP, Sim>& node_to, mio::RandomNumberGenerator& rng)
 {
     edge.apply_mobility(t, num_moving, node_from, node_to, rng);
-}
-
-/**
-     * create a mobility-based simulation.
-     * After every second time step, for each edge a portion of the population corresponding to the coefficients of the edge
-     * changes from one node to the other. In the next timestep, the mobile population returns to their "home" node.
-     * Returns are adjusted based on the development in the target node.
-     * @param t0 start time of the simulation
-     * @param dt time step between mobility
-     * @param graph set up for mobility-based simulation
-     * @{
-     */
-template <typename FP, class Sim>
-FarmSimulation<Graph<FarmNode<FP, Sim>, MobilityEdgeDirected<FP>>>
-make_farm_sim(FP t0, FP dt, const Graph<FarmNode<FP, Sim>, MobilityEdgeDirected<FP>>& graph)
-{
-    using GraphSim = FarmSimulation<Graph<FarmNode<FP, Sim>, MobilityEdgeDirected<FP>>, FP, FP,
-                                    void (*)(FP, FP, mio::MobilityEdgeDirected<FP>&, mio::FarmNode<FP, Sim>&,
-                                             mio::FarmNode<FP, Sim>&, mio::RandomNumberGenerator&),
-                                    void (*)(FP, FP, mio::FarmNode<FP, Sim>&)>;
-    return GraphSim(t0, dt, graph, &advance_model<FP, Sim>, &apply_timed_mobility<FP, Sim>);
-}
-
-template <typename FP, class Sim>
-FarmSimulation<Graph<FarmNode<FP, Sim>, MobilityEdgeDirected<FP>>>
-make_farm_sim(FP t0, FP dt, Graph<FarmNode<FP, Sim>, MobilityEdgeDirected<FP>>&& graph)
-{
-    using GraphSim = FarmSimulation<Graph<FarmNode<FP, Sim>, MobilityEdgeDirected<FP>>, FP, FP,
-                                    void (*)(FP, FP, mio::MobilityEdgeDirected<FP>&, mio::FarmNode<FP, Sim>&,
-                                             mio::FarmNode<FP, Sim>&, mio::RandomNumberGenerator&),
-                                    void (*)(FP, FP, mio::FarmNode<FP, Sim>&)>;
-    return GraphSim(t0, dt, std::move(graph), &advance_model<FP, Sim>, &apply_timed_mobility<FP, Sim>);
 }
 
 /** @} */
