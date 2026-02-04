@@ -29,6 +29,9 @@
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/random_number_generator.h"
+#include <cmath>
+#include <map>
+#include <numeric>
 #include <queue>
 #include "memilio/geography/regions.h"
 #include "models/smm/parameters.h"
@@ -56,10 +59,12 @@ public:
         while (Base::m_t < t_max) {
             dt = std::min(dt, t_max - Base::m_t);
             for (auto& n : graph.nodes()) {
-                update_force_of_infection(n.property);
+                if (n.property.get_result().get_last_value()[2] > 0) {
+                    n.property.set_infection_status(true);
+                }
             }
+            update_force_of_infection(graph);
             for (auto& n : graph.nodes()) {
-                mio::timing::AutoTimer<"Graph Simulation Simulate Nodes"> timer;
                 Base::m_node_func(Base::m_t, dt, n.property);
             }
             if (!m_standstill) {
@@ -75,33 +80,100 @@ public:
                     }
                     else {
                         if (n.property.get_date_confirmation() < Base::m_t + dt) {
-                            //...
+                            m_culling_queue.push({n.id, Base::m_t});
+                            n.property.set_quarantined(true);
                         }
                     }
                 }
                 // dt = std::min(m_trade.next_trade_time() - Base::m_t, 1.0);
             }
+            cull(dt);
             Base::m_t += dt;
         }
     }
 
-    void update_force_of_infection(Node& node)
+    void update_force_of_infection(Graph& graph)
     {
-        mio::unused(node);
-        //...
+        using Model        = std::decay_t<decltype(Base::m_graph.nodes()[0].property.get_simulation().get_model())>;
+        using AdoptionRate = mio::smm::AdoptionRates<ScalarType, typename Model::Status, mio::regions::Region>;
+        for (auto& node : graph.nodes()) {
+            if (std::accumulate(node.property.get_result().get_last_value().begin(),
+                                node.property.get_result().get_last_value().end(), 0) == 0) {
+                continue;
+            }
+            auto infection_pressure = 0.0;
+            for (auto& id : node.property.get_regional_neighbors()[1]) {
+                auto& neighbour = graph.nodes()[id];
+                if (neighbour.id != node.id && neighbour.property.get_infection_status()) {
+                    infection_pressure +=
+                        (m_h0 /
+                         (1 +
+                          pow(node.property.get_location().distance(neighbour.property.get_location()).meters() / m_r0,
+                              m_alpha)));
+                }
+            }
+            mio::unused(node);
+            node.property.get_simulation().get_model().parameters.template get<AdoptionRate>()[3].factor =
+                infection_pressure;
+        }
     }
 
     void update_population(Node& node)
     {
-        mio::unused(node);
-        //...
+        // ducks, layer
+        if (node.get_type() < 3) {
+            if (std::accumulate(node.get_result().get_last_value().begin(), node.get_result().get_last_value().end(),
+                                0) > 0) {
+                if (Base::m_t - node.get_population_date() + 1 > m_duration[node.get_type()]) {
+                    for (auto& val : node.get_result().get_last_value()) {
+                        val = 0;
+                    }
+                    node.set_slaughter_date(Base::m_t);
+                    node.set_infection_status(false);
+                }
+            }
+            else if (Base::m_t - node.get_slaughter_date() + 1 > m_downtime[node.get_type()] &&
+                     !node.is_quarantined()) {
+                node.get_result().get_last_value()[0] = 0.95 * node.get_capacity();
+                node.set_population_date(Base::m_t);
+            }
+        }
+        // broiler 2
+        else if (node.get_type() == 4) {
+            if (std::accumulate(node.get_result().get_last_value().begin(), node.get_result().get_last_value().end(),
+                                0) > 0) {
+                if (Base::m_t - node.get_population_date() + 1 > m_duration[4]) {
+                    for (auto& val : node.get_result().get_last_value()) {
+                        val = 0;
+                    }
+                    node.set_slaughter_date(Base::m_t);
+                    node.set_infection_status(false);
+                }
+            }
+        }
+        // broiler 1
+        else if (std::accumulate(node.get_result().get_last_value().begin(), node.get_result().get_last_value().end(),
+                                 0) > 0) {
+            if (Base::m_t - node.get_population_date() + 1 > m_duration[3]) {
+                //...
+            }
+            else if (Base::m_t - node.get_slaughter_date() + 1 >= m_downtime[3] && !node.is_quarantined()) {
+                node.get_result().get_last_value()[0] = 0.95 * node.get_capacity();
+                node.set_population_date(Base::m_t);
+            }
+        }
     }
 
     void check_for_cases(Node& node, Timepoint t)
     {
-        mio::unused(node);
-        mio::unused(t);
-        //...
+        const auto& current_state = node.get_result().get_last_value();
+        if (current_state[3] / std::accumulate(current_state.begin(), current_state.end(), 0.0) > suspicion_threshold) {
+            node.set_date_suspicion(t);
+            // if (mio::UniformDistribution<ScalarType>::get_instance()(m_rng, 0.0, 1.0) <
+            //     1 - std::pow((1 - m_sensitivity), 20)) {
+            node.set_date_confirmation(t + 2.0);
+            // }
+        }
     }
 
     /**
@@ -125,6 +197,7 @@ public:
                 animals[animals.size() - 1] += num_animals;
                 m_culling_queue.pop();
                 capacity -= num_animals;
+                Base::m_graph.nodes()[node_id].property.set_infection_status(false);
             }
             else {
                 while (capacity > 0) {
@@ -309,53 +382,53 @@ public:
         return results;
     }
 
-    void apply_interventions()
-    {
-        // Set quarantine
-        // for (auto& n : Base::m_graph.nodes()) {
-        //     if (n.property.get_result().get_last_value()[2] > 40) {
-        //         mio::log_debug("Node {} is quarantined at time {}.", n.id, Base::m_t);
-        //         n.property.set_quarantined(true);
-        //     }
-        //     else {
-        //         mio::log_debug("Node {} is not quarantined at time {}.", n.id, Base::m_t);
-        //         n.property.set_quarantined(false);
-        //     }
-        // }
-        auto infectious_compartments = {2};
-        for (auto& n : Base::m_graph.nodes()) {
-            auto total_infections = 0;
-            for (auto comp : infectious_compartments) {
-                total_infections += n.property.get_result().get_last_value()[comp];
-            }
-            if (total_infections > 1) {
-                for (size_t index = 0; index < n.property.get_regional_neighbors()[0].size(); ++index) {
-                    const auto node_id = n.property.get_regional_neighbors()[0][index];
-                    using Model =
-                        std::decay_t<decltype(Base::m_graph.nodes()[node_id].property.get_simulation().get_model())>;
-                    using AdoptionRate =
-                        mio::smm::AdoptionRates<ScalarType, typename Model::Status, mio::regions::Region>;
-                    Base::m_graph.nodes()[node_id]
-                        .property.get_simulation()
-                        .get_model()
-                        .parameters.template get<AdoptionRate>()[1]
-                        .factor += infectionrisk;
-                }
-            }
-            if (total_infections > 4) {
-                if (m_first_detection > Base::m_t) {
-                    m_first_detection = Base::m_t;
-                }
-                mio::log_debug("Node {} is culled at time {} because there are {} total infections.", n.id, Base::m_t,
-                               total_infections);
-                cull_node(n.id);
-                for (size_t index = 0; index < n.property.get_regional_neighbors()[0].size(); ++index) {
-                    const auto node_id = n.property.get_regional_neighbors()[0][index];
-                    vaccinate(node_id);
-                }
-            }
-        }
-    }
+    // void apply_interventions()
+    // {
+    //     // Set quarantine
+    //     // for (auto& n : Base::m_graph.nodes()) {
+    //     //     if (n.property.get_result().get_last_value()[2] > 40) {
+    //     //         mio::log_debug("Node {} is quarantined at time {}.", n.id, Base::m_t);
+    //     //         n.property.set_quarantined(true);
+    //     //     }
+    //     //     else {
+    //     //         mio::log_debug("Node {} is not quarantined at time {}.", n.id, Base::m_t);
+    //     //         n.property.set_quarantined(false);
+    //     //     }
+    //     // }
+    //     auto infectious_compartments = {2};
+    //     for (auto& n : Base::m_graph.nodes()) {
+    //         auto total_infections = 0;
+    //         for (auto comp : infectious_compartments) {
+    //             total_infections += n.property.get_result().get_last_value()[comp];
+    //         }
+    //         if (total_infections > 1) {
+    //             for (size_t index = 0; index < n.property.get_regional_neighbors()[0].size(); ++index) {
+    //                 const auto node_id = n.property.get_regional_neighbors()[0][index];
+    //                 using Model =
+    //                     std::decay_t<decltype(Base::m_graph.nodes()[node_id].property.get_simulation().get_model())>;
+    //                 using AdoptionRate =
+    //                     mio::smm::AdoptionRates<ScalarType, typename Model::Status, mio::regions::Region>;
+    //                 Base::m_graph.nodes()[node_id]
+    //                     .property.get_simulation()
+    //                     .get_model()
+    //                     .parameters.template get<AdoptionRate>()[1]
+    //                     .factor += infectionrisk;
+    //             }
+    //         }
+    //         if (total_infections > 4) {
+    //             if (m_first_detection > Base::m_t) {
+    //                 m_first_detection = Base::m_t;
+    //             }
+    //             mio::log_debug("Node {} is culled at time {} because there are {} total infections.", n.id, Base::m_t,
+    //                            total_infections);
+    //             cull_node(n.id);
+    //             for (size_t index = 0; index < n.property.get_regional_neighbors()[0].size(); ++index) {
+    //                 const auto node_id = n.property.get_regional_neighbors()[0][index];
+    //                 vaccinate(node_id);
+    //             }
+    //         }
+    //     }
+    // }
 
     void cull_node(size_t node_id)
     {
@@ -383,7 +456,14 @@ private:
     ScalarType m_vaccination_capacity_per_day = 500;
     ScalarType m_first_detection              = std::numeric_limits<ScalarType>::max();
     // Trade<ScalarType, Graph> m_trade;
-    bool m_standstill = false;
+    bool m_standstill                       = false;
+    ScalarType suspicion_threshold          = 0.05;
+    ScalarType m_sensitivity                = 0.95;
+    std::map<size_t, ScalarType> m_duration = {{0, 21.0}, {1, 21.0}, {2, 400.0}, {3, 21.0}, {4, 28.0}};
+    std::map<size_t, ScalarType> m_downtime = {{0, 21.0}, {1, 21.0}, {2, 21.0}, {3, 21.0}, {4, 21.0}};
+    ScalarType m_h0                         = 0.001;
+    ScalarType m_r0                         = 1000;
+    ScalarType m_alpha                      = 2;
 };
 
 /**

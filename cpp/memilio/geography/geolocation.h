@@ -161,6 +161,25 @@ public:
     {
         m_longitude = y;
     }
+    /**
+     * @brief Get the latitude object
+     * 
+     * @return latitude 
+     */
+    auto get_latitude() const
+    {
+        return m_latitude;
+    }
+
+    /**
+     * @brief Get the longitude object
+     * 
+     * @return longitude 
+     */
+    auto get_longitude() const
+    {
+        return m_longitude;
+    }
 
 private:
     /**

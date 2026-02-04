@@ -46,6 +46,12 @@ concept IsSphericalLocation = requires(const Location& loc) {
     std::is_floating_point_v<decltype(loc.get_latitude())> && std::is_floating_point_v<decltype(loc.get_longitude())>;
 };
 
+template <class Iter>
+concept SphericalLocationIteratorType = std::indirectly_readable<Iter> && requires(const Iter& loc) {
+    std::is_floating_point_v<decltype((*loc)->get_latitude())> &&
+        std::is_floating_point_v<decltype((*loc)->get_longitude())>;
+};
+
 /**
  * @brief R-tree for spatial queries of geographical locations on the sphere.
  * 
@@ -76,6 +82,26 @@ public:
         for (size_t index = 0; index < locations.size(); index++) {
             Point point(locations[index].get_longitude(), locations[index].get_latitude());
             rtree.insert(Node(point, index));
+        }
+    }
+
+    /**
+     * @brief Construct a new RTree object with data given in a range
+     * 
+     * @param first The beginning of the range
+     * @param last The end of the range
+     * The provided location data needs to provide get_latitude() and get_longitude().
+     */
+    template <SphericalLocationIteratorType Iter>
+    RTree(Iter first, Iter last)
+        : rtree{}
+    {
+        size_t index = 0;
+        while (first != last) {
+            Point point((*first)->get_longitude(), (*first)->get_latitude());
+            rtree.insert(Node(point, index));
+            ++first;
+            ++index;
         }
     }
 
@@ -191,7 +217,7 @@ public:
 
 private:
     /// @brief Point stores longitude and latitude in this order.
-    using Point = boost::geometry::model::point<double, 2, boost::geometry::cs::geographic<boost::geometry::degree>>;
+    using Point = boost::geometry::model::point<double, 2, boost::geometry::cs::cartesian>;
     /// @brief Node stores a point and its associated index.
     using Node = std::pair<Point, size_t>;
     /// @brief MultiPolygon type for circle approximation.
@@ -209,7 +235,7 @@ private:
     {
         using namespace boost::geometry::strategy::buffer;
 
-        geographic_point_circle<> point_strategy(approximation_points);
+        point_circle point_strategy(approximation_points);
         distance_symmetric<double> distance_strategy(radius.meters());
         join_round join_strategy;
         end_round end_strategy;

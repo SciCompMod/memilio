@@ -41,12 +41,15 @@ class FarmNode : public SimulationNode<FP, Sim>
 
 public:
     template <class... Args, typename = std::enable_if_t<std::is_constructible<Sim, Args...>::value, void>>
-    FarmNode(FP latitude, FP longitude, size_t farm_type, size_t farm_size, Args&&... args)
+    FarmNode(FP latitude, FP longitude, size_t farm_type, size_t farm_size, int population, int slaughter,
+             Args&&... args)
         : Base(std::forward<Args>(args)...)
         , m_location(latitude, longitude)
         , regional_neighbor_indices{}
         , m_farm_type(farm_type)
         , m_farm_size(farm_size)
+        , m_population_date(population)
+        , m_slaughter_date(slaughter)
     {
     }
 
@@ -99,19 +102,19 @@ public:
         m_is_quarantined = quarantine;
     }
 
-    void set_population_date(size_t date)
+    void set_population_date(FP date)
     {
         m_population_date = date;
     }
-    size_t get_population_date() const
+    FP get_population_date() const
     {
         return m_population_date;
     }
-    void set_slaughter_date(size_t date)
+    void set_slaughter_date(FP date)
     {
         m_slaughter_date = date;
     }
-    size_t get_slaughter_date() const
+    FP get_slaughter_date() const
     {
         return m_slaughter_date;
     }
@@ -150,6 +153,28 @@ public:
     {
         m_date_confirmation = date;
     }
+    void set_capacity(size_t size)
+    {
+        m_farm_size = size;
+    }
+    size_t get_capacity() const
+    {
+        return m_farm_size;
+    }
+
+    size_t get_type() const
+    {
+        return m_farm_type;
+    }
+
+    void set_infection_status(bool infected)
+    {
+        m_is_infected = infected;
+    }
+    bool get_infection_status() const
+    {
+        return m_is_infected;
+    }
 
 private:
     mio::geo::GeographicalLocation m_location; // location of the node
@@ -157,10 +182,11 @@ private:
     bool m_is_quarantined{false};
     size_t m_farm_type{0};
     size_t m_farm_size{0};
-    size_t m_population_date{0};
-    size_t m_slaughter_date{0};
-    int m_date_suspicion{-1};
-    int m_date_confirmation{-1};
+    FP m_population_date{0};
+    FP m_slaughter_date{0};
+    FP m_date_suspicion{-1};
+    FP m_date_confirmation{-1};
+    bool m_is_infected{false};
 };
 
 /**
