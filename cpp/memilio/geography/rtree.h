@@ -237,7 +237,7 @@ private:
      * @return multi_polygon.
      */
     MultiPolygon create_circle_approximation(const IsCartesianLocation auto& location, Distance radius,
-                                             size_t approximation_points = 36) const
+                                             size_t approximation_points = 12) const
     {
         using namespace boost::geometry::strategy::buffer;
 

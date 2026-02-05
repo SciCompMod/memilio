@@ -38,7 +38,16 @@
 
 namespace mio
 {
-
+/**
+ * @brief Variation of a graph simulation for farm nodes.
+ * 
+ * @tparam Graph 
+ * @tparam Timepoint 
+ * @tparam Timespan 
+ * @tparam (*)(Timepoint, Timespan, typename Graph::EdgeProperty&, typename Graph::NodeProperty&,
+ * typename Graph::NodeProperty&, mio::RandomNumberGenerator&) 
+ * @tparam (*)(Timepoint, Timespan, typename Graph::NodeProperty&) 
+ */
 template <class Graph, class Timepoint = double, class Timespan = double,
           class edge_f = void (*)(Timepoint, Timespan, typename Graph::EdgeProperty&, typename Graph::NodeProperty&,
                                   typename Graph::NodeProperty&, mio::RandomNumberGenerator&),
@@ -80,20 +89,40 @@ public:
                         check_for_cases(n.property, Base::m_t);
                     }
                     else {
-                        if (n.property.get_date_confirmation() < Base::m_t + dt) {
-                            m_culling_queue.push({n.id, Base::m_t});
-                            n.property.set_quarantined(true);
+                        if (n.property.get_date_confirmation() < Base::m_t + dt && !n.property.is_quarantined()) {
+                            cull_node(n.id);
+                            for(size_t index = 0; index < n.property.get_regional_neighbors()[1].size(); ++index){
+                                auto& neighbor = graph.nodes()[n.property.get_regional_neighbors()[1][index]];
+                                neighbor.property.set_reg_zone_day(Base::m_t);
+                            }
                         }
                     }
                 }
-                // dt = std::min(m_trade.next_trade_time() - Base::m_t, 1.0);
+            }
+            if (m_first_detection > Base::m_t) {
+                for(auto& n: graph.nodes()){
+                    if (n.property.get_date_confirmation() <= Base::m_t) {
+                        m_standstill = true;
+                        m_first_detection = Base::m_t;
+                        break;                    
+                    }
+                }
+            }
+            else if (Base::m_t - m_first_detection >= 2) {
+                m_standstill = false;
             }
             cull(dt);
+            // dt = std::min(m_trade.next_trade_time() - Base::m_t, 1.0);
             Base::m_t += dt;
         }
     }
 
 private:
+    /**
+    * @brief Update the force of infection for all farms based on their infected neighbors.
+    * 
+    * @param graph 
+    */
     void update_force_of_infection(Graph& graph)
     {
         mio::timing::AutoTimer<"Update force of infection"> timer;
@@ -106,8 +135,8 @@ private:
             }
             auto infection_pressure = 0.0;
             auto neighbors          = node.property.get_regional_neighbors();
-            for (size_t index = 0; index < neighbors[1].size(); ++index) {
-                auto& neighbour = graph.nodes()[neighbors[1][index]];
+            for (size_t index = 0; index < neighbors[2].size(); ++index) {
+                auto& neighbour = graph.nodes()[neighbors[2][index]];
                 if (neighbour.id != node.id && neighbour.property.get_infection_status()) {
                     infection_pressure +=
                         (m_h0 /
@@ -158,6 +187,14 @@ private:
         else if (std::accumulate(node.get_result().get_last_value().begin(), node.get_result().get_last_value().end(),
                                  0) > 0) {
             if (Base::m_t - node.get_population_date() + 1 > m_duration[3]) {
+                // If farm in regulation zone, only slaughter is allowed
+                if (node.get_reg_zone_day() < Base::m_t && node.get_reg_zone_day() > Base::m_t - 28) {
+                    for (auto& val : node.get_result().get_last_value()) {
+                        val = 0;
+                    }
+                    node.set_slaughter_date(Base::m_t);
+                    node.set_infection_status(false);
+                }
                 //...
             }
             else if (Base::m_t - node.get_slaughter_date() + 1 >= m_downtime[3] && !node.is_quarantined()) {
@@ -182,9 +219,10 @@ private:
     /**
      * @brief Go through the culling queue and cull as many animals as possible within dt.
      * 
+     * Animals are killed in the order of compartments if not all animals of a farm can be culled within dt. 
      * @param dt Time span for culling.
      */
-    void cull(ScalarType dt)
+    void cull(Timespan dt)
     {
         auto capacity = m_culling_capacity_per_day * dt;
         while (!m_culling_queue.empty() && capacity > 0) {
@@ -197,6 +235,7 @@ private:
                 for (auto index = 0; index < (animals.size() - 1); index++) {
                     animals[index] = 0;
                 }
+                // What is happening here????
                 animals[animals.size() - 1] += num_animals;
                 m_culling_queue.pop();
                 capacity -= num_animals;
@@ -223,7 +262,11 @@ private:
             }
         }
     }
-
+    /**
+     * @brief Add a node to the culling queue and set it to quarantined.
+     * 
+     * @param node_id 
+     */
     void cull_node(size_t node_id)
     {
         m_culling_queue.push(std::make_pair(node_id, Base::m_t));
@@ -396,6 +439,12 @@ public:
         return results;
     }
 
+    /**
+     * @brief Get the confirmation dates
+     * 
+     * Lists for all notes the date of confirmation value (-1 if no confirmation)
+     * @return std::vector<int> 
+     */
     std::vector<int> get_confirmation_dates()
     {
         std::vector<int> result;
@@ -454,6 +503,11 @@ public:
     //     }
     // }
 
+    /**
+     * @brief Get the random number generator object
+     * 
+     * @return RandomNumberGenerator&
+     */
     RandomNumberGenerator& get_rng()
     {
         return m_rng;

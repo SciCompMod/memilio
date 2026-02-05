@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <boost/numeric/ublas/vector_expression.hpp>
 #include <cassert>
+#include <limits>
 #include <numeric>
 #include <vector>
 
@@ -41,7 +42,7 @@ class FarmNode : public SimulationNode<FP, Sim>
 
 public:
     template <class... Args, typename = std::enable_if_t<std::is_constructible<Sim, Args...>::value, void>>
-    FarmNode(FP latitude, FP longitude, size_t farm_type, size_t farm_size, int population, int slaughter,
+    FarmNode(FP latitude, FP longitude, size_t farm_type, size_t farm_size, int population, int slaughter, bool hrz,
              Args&&... args)
         : Base(std::forward<Args>(args)...)
         , m_location(latitude, longitude)
@@ -50,9 +51,10 @@ public:
         , m_farm_size(farm_size)
         , m_population_date(population)
         , m_slaughter_date(slaughter)
+        , m_in_hrz(hrz)
     {
     }
-
+    
     auto get_location() const
     {
         return m_location;
@@ -67,16 +69,6 @@ public:
     {
         return m_location.get_x();
     }
-    FP get_longitude() const
-    {
-        return m_location.get_x();
-    }
-
-    FP get_latitude() const
-    {
-        return m_location.get_y();
-    }
-
     FP get_y() const
     {
         return m_location.get_y();
@@ -175,6 +167,18 @@ public:
     {
         return m_is_infected;
     }
+    auto get_in_hrz() const
+    {
+        return m_in_hrz;
+    }
+    auto get_reg_zone_day() const
+    {
+        return regulation_zone_day;
+    }
+    void set_reg_zone_day(int day)
+    {
+        regulation_zone_day = day;
+    }
 
 private:
     mio::geo::GeographicalLocation m_location; // location of the node
@@ -187,6 +191,8 @@ private:
     FP m_date_suspicion{-1};
     FP m_date_confirmation{-1};
     bool m_is_infected{false};
+    bool m_in_hrz{false};
+    int regulation_zone_day = std::numeric_limits<int>::max();
 };
 
 /**

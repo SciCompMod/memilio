@@ -101,13 +101,14 @@ int main(int /*argc*/, char** /*argv*/)
 
     Builder builder;
 
-    io::CSVReader<8> farms("/home/kilian/Documents/projects/jolly/common_data/farms.csv");
+    io::CSVReader<9> farms("/home/kilian/Documents/projects/jolly/common_data/farms.csv");
     farms.read_header(io::ignore_extra_column, "farm_id", "production_id", "capacity", "population_day",
-                      "slaughter_day", "volume", "x", "y");
+                      "slaughter_day", "volume", "in_hrz", "x", "y");
     size_t farm_id, type, size, volume;
     double x, y;
+    int hrz;
     int population, slaughter;
-    while (farms.read_row(farm_id, type, size, population, slaughter, volume, x, y)) {
+    while (farms.read_row(farm_id, type, size, population, slaughter, volume, hrz, x, y)) {
         auto model = curr_model;
         if (type == 0)
             model.parameters.get<mio::smm::AdoptionRates<ScalarType, Status, mio::regions::Region>>() =
@@ -128,7 +129,7 @@ int main(int /*argc*/, char** /*argv*/)
         model.populations[{home, InfectionState::S}] = volume;
         // if (farm_id % 2 == 0)
         //     curr_model.populations[{home, InfectionState::E}] = 1;
-        builder.add_node(farm_id, x, y, type, size, population, slaughter, model, t0);
+        builder.add_node(farm_id, x, y, type, size, population, slaughter, hrz, model, t0);
     }
 
     auto rng = mio::RandomNumberGenerator();
@@ -150,7 +151,7 @@ int main(int /*argc*/, char** /*argv*/)
     for (auto& node : graph.nodes()) {
         mio::timing::AutoTimer<"neighbourhood search"> timer;
         node.property.set_regional_neighbors(tree.in_range_indices_query(
-            node.property.get_location(), {mio::geo::kilometers(1), mio::geo::kilometers(20)}));
+            node.property.get_location(), {mio::geo::kilometers(1), mio::geo::kilometers(10), mio::geo::kilometers(20)}));
     }
 
     auto sim = mio::make_farm_sim(t0, dt, std::move(graph));
