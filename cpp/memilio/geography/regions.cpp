@@ -33,11 +33,6 @@ StateId get_state_id(int county)
     return StateId(county / 1000);
 }
 
-StateId get_comunidad_id(int provincia)
-{
-    return StateId(provincia / 10);
-}
-
 Range<std::pair<std::vector<std::pair<Date, Date>>::const_iterator, std::vector<std::pair<Date, Date>>::const_iterator>>
 get_holidays(StateId state)
 {

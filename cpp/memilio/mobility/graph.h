@@ -307,15 +307,15 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
             });
 
         //uncertainty in populations
-        // for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
-        //     for (auto j = Index<typename Model::Compartments>(0); j < Model::Compartments::Count; ++j) {
-        //         auto& compartment_value = nodes[node_idx].populations[{i, j}];
-        //         compartment_value =
-        //             UncertainValue<FP>(0.5 * (1.1 * double(compartment_value) + 0.9 * double(compartment_value)));
-        //         compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * double(compartment_value),
-        //                                                                              1.1 * double(compartment_value)));
-        //     }
-        // }
+        for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
+            for (auto j = Index<typename Model::Compartments>(0); j < Model::Compartments::Count; ++j) {
+                auto& compartment_value = nodes[node_idx].populations[{i, j}];
+                compartment_value =
+                    UncertainValue<FP>(0.5 * (1.1 * double(compartment_value) + 0.9 * double(compartment_value)));
+                compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * double(compartment_value),
+                                                                                     1.1 * double(compartment_value)));
+            }
+        }
 
         params_graph.add_node(node_ids[node_idx], nodes[node_idx]);
     }

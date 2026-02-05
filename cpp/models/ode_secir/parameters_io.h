@@ -304,15 +304,6 @@ IOResult<void> set_population_data(std::vector<Model<FP>>& model, const std::str
     return success();
 }
 
-template <typename FP = double>
-IOResult<void> set_population_data_provincias(std::vector<Model<FP>>& model, const std::string& path,
-                                              const std::vector<int>& vregion)
-{
-    BOOST_OUTCOME_TRY(const auto&& num_population, read_population_data_spain(path, vregion));
-    BOOST_OUTCOME_TRY(set_population_data(model, num_population, vregion));
-    return success();
-}
-
 } //namespace details
 
 #ifdef MEMILIO_HAS_HDF5

@@ -77,9 +77,6 @@ public:
     double num_recovered;
     double num_deaths;
     Date date;
-    boost::optional<regions::StateId> state_id;
-    boost::optional<regions::CountyId> county_id;
-    boost::optional<regions::DistrictId> district_id;
 
     template <class IOContext>
     static IOResult<ConfirmedCasesNoAgeEntry> deserialize(IOContext& io)
@@ -89,15 +86,12 @@ public:
         auto num_recovered = obj.expect_element("Recovered", Tag<double>{});
         auto num_deaths    = obj.expect_element("Deaths", Tag<double>{});
         auto date          = obj.expect_element("Date", Tag<StringDate>{});
-        auto state_id      = obj.expect_optional("ID_State", Tag<regions::StateId>{});
-        auto county_id     = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
-        auto district_id   = obj.expect_optional("ID_District", Tag<regions::DistrictId>{});
         return apply(
             io,
-            [](auto&& nc, auto&& nr, auto&& nd, auto&& d, auto&& sid, auto&& cid, auto&& did) {
-                return ConfirmedCasesNoAgeEntry{nc, nr, nd, d, sid, cid, did};
+            [](auto&& nc, auto&& nr, auto&& nd, auto&& d) {
+                return ConfirmedCasesNoAgeEntry{nc, nr, nd, d};
             },
-            num_confirmed, num_recovered, num_deaths, date, state_id, county_id, district_id);
+            num_confirmed, num_recovered, num_deaths, date);
     }
 };
 
@@ -350,35 +344,6 @@ public:
     }
 };
 
-class PopulationDataEntrySpain
-{
-public:
-    static std::vector<const char*> age_group_names;
-
-    CustomIndexArray<double, AgeGroup> population;
-    boost::optional<regions::ProvinciaId> provincia_id;
-
-    template <class IoContext>
-    static IOResult<PopulationDataEntrySpain> deserialize(IoContext& io)
-    {
-        auto obj       = io.expect_object("PopulationDataEntrySpain");
-        auto provincia = obj.expect_optional("ID_Provincia", Tag<regions::ProvinciaId>{});
-        std::vector<IOResult<double>> age_groups;
-        age_groups.reserve(age_group_names.size());
-        std::transform(age_group_names.begin(), age_group_names.end(), std::back_inserter(age_groups),
-                       [&obj](auto&& age_name) {
-                           return obj.expect_element(age_name, Tag<double>{});
-                       });
-        return apply(
-            io,
-            [](auto&& ag, auto&& pid) {
-                return PopulationDataEntrySpain{
-                    CustomIndexArray<double, AgeGroup>(AgeGroup(ag.size()), ag.begin(), ag.end()), pid};
-            },
-            details::unpack_all(age_groups), provincia);
-    }
-};
-
 namespace details
 {
 inline void get_rki_age_interpolation_coefficients(const std::vector<double>& age_ranges,
@@ -484,19 +449,6 @@ inline IOResult<std::vector<PopulationDataEntry>> deserialize_population_data(co
 }
 
 /**
- * Deserialize population data from a JSON value.
- * Age groups are interpolated to RKI age groups.
- * @param jsvalue JSON value that contains the population data.
- * @param rki_age_groups Specifies whether population data should be interpolated to rki age groups.
- * @return list of population data.
- */
-inline IOResult<std::vector<PopulationDataEntrySpain>> deserialize_population_data_spain(const Json::Value& jsvalue)
-{
-    BOOST_OUTCOME_TRY(auto&& population_data, deserialize_json(jsvalue, Tag<std::vector<PopulationDataEntrySpain>>{}));
-    return success(population_data);
-}
-
-/**
  * Deserialize population data from a JSON file.
  * Age groups are interpolated to RKI age groups.
  * @param filename JSON file that contains the population data.
@@ -507,18 +459,6 @@ inline IOResult<std::vector<PopulationDataEntry>> read_population_data(const std
 {
     BOOST_OUTCOME_TRY(auto&& jsvalue, read_json(filename));
     return deserialize_population_data(jsvalue, rki_age_group);
-}
-
-/**
- * Deserialize population data from a JSON file.
- * Age groups are interpolated to RKI age groups.
- * @param filename JSON file that contains the population data.
- * @return list of population data.
- */
-inline IOResult<std::vector<PopulationDataEntrySpain>> read_population_data_spain(const std::string& filename)
-{
-    BOOST_OUTCOME_TRY(auto&& jsvalue, read_json(filename));
-    return deserialize_population_data_spain(jsvalue);
 }
 
 /**
@@ -548,8 +488,6 @@ IOResult<void> set_vaccination_data_age_group_names(std::vector<const char*> nam
  */
 IOResult<std::vector<int>> get_node_ids(const std::string& path, bool is_node_for_county, bool rki_age_groups = true);
 IOResult<std::vector<int>> get_country_id(const std::string& /*path*/, bool /*is_node_for_county*/,
-                                          bool /*rki_age_groups*/ = true);
-IOResult<std::vector<int>> get_provincia_ids(const std::string& path, bool /*is_node_for_county*/,
                                           bool /*rki_age_groups*/ = true);
 
 /**

@@ -77,19 +77,11 @@ DECL_TYPESAFE(int, CountyId);
 
 DECL_TYPESAFE(int, DistrictId);
 
-DECL_TYPESAFE(int, ProvinciaId);
-
 /**
          * get the id of the state that the specified county is in. 
          * @param[in, out] county a county id.
          */
 StateId get_state_id(int county);
-
-/**
-         * get the id of the comunidad that the specified provincia is in. 
-         * @param[in, out] provincia a provincia id.
-         */
-StateId get_comunidad_id(int provincia);
 
 /**
          * get the holidays in a german state.

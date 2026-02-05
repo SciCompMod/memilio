@@ -40,7 +40,7 @@ from memilio.epidata import defaultDict as dd
 import geopandas as gpd
 
 
-name = "spain_nuts0_earlierdampings_biggerinfnet"
+name = "spain_nuts0"
 
 excluded_provincias = [530, 630, 640, 701, 702]
 provincia_ids = [region_id for region_id in dd.Provincias.keys()
@@ -112,9 +112,7 @@ def plot_region_fit(
     region: int,
     true_data=None,
     ax=None,
-    label=None,
-    color="red",
-    only_80q=False
+    color="red"
 ):
     if data.ndim != 3:
         raise ValueError("Array not of shape (samples, time_points, regions)")
@@ -128,7 +126,7 @@ def plot_region_fit(
     x = np.arange(n_time)
     vals = data[:, :, region]  # (samples, time_points)
 
-    qs_80 = np.quantile(vals, q=[0.1, 0.9], axis=0)
+    qs_50 = np.quantile(vals, q=[0.25, 0.75], axis=0)
     qs_90 = np.quantile(vals, q=[0.05, 0.95], axis=0)
     qs_95 = np.quantile(vals, q=[0.025, 0.975], axis=0)
 
@@ -138,24 +136,28 @@ def plot_region_fit(
         fig, ax = plt.subplots()
 
     ax.plot(
-        x, med, label="Simulation", color=color)
-    # ax.fill_between(x, qs_80[0], qs_80[1], alpha=0.5,
-    #                 color=color, label="80% CI")
-    # if not only_80q:
-    ax.fill_between(x, qs_90[0], qs_90[1], alpha=0.5,
+        x, med, lw=3, label="Simulation", color=color, zorder=1)
+    ax.fill_between(x, qs_50[0], qs_50[1], alpha=0.6, linewidth=0,
                     color=color)
-    ax.fill_between(x, qs_95[0], qs_95[1], alpha=0.4,
+    ax.fill_between(x, qs_90[0], qs_90[1], linewidth=0, alpha=0.4,
                     color=color)
-
+    ax.fill_between(x, qs_95[0], qs_95[1], linewidth=0, alpha=0.2,
+                    color=color)
     if true_data is not None:
         true_vals = true_data[:, region]  # (time_points,)
-        ax.scatter(x, true_vals, color="black", label="Reported data", marker='x')
+        ax.scatter(x, true_vals, color="black", label="Reported data", marker='x', zorder=2)
 
-    ax.set_xlabel("Time")
+    # Update x-axis to show dates in YYYY-MM format
+    start_date = datetime.date(2020, 10, 1)
+    date_labels = [(start_date + datetime.timedelta(days=int(day))).strftime('%Y-%m-%d') for day in x]
+    ax.set_xticks(x[::14])  # Set ticks every 7 days
+    # ax.set_xticklabels([])
+    ax.set_xticklabels(date_labels[::14], rotation=45)
+
     ax.set_ylabel("ICU cases [#]")
 
 
-def plot_icu_on_spain(simulations, synthetic, with_aug):
+def plot_icu_on_spain(simulations):
     med = np.median(simulations, axis=0)
 
     population = pd.read_json(
@@ -164,32 +166,22 @@ def plot_icu_on_spain(simulations, synthetic, with_aug):
 
     map_data = gpd.read_file(os.path.join(os.getcwd(
     ), 'tools/lineas_limite/SHP_ETRS89/recintos_provinciales_inspire_peninbal_etrs89/recintos_provinciales_inspire_peninbal_etrs89.shp'))
-    map_data['ID_Provincia'] = map_data['NAMEUNIT'].map(
-        dd.invert_dict(dd.Provincias))
+    map_data['ID_Provincia'] = map_data['NAMEUNIT'].map({val: key for key, val in dd.Provincias.items()})
     map_data.dropna(inplace=True, subset=['ID_Provincia'])
     map_data["ID_Provincia"] = map_data["ID_Provincia"].astype(int)
     map_data = map_data[~map_data["ID_Provincia"].isin(excluded_provincias)]
-    fedstate_data = gpd.read_file(os.path.join(
-        os.getcwd(), 'tools/lineas_limite/SHP_ETRS89/recintos_autonomicas_inspire_peninbal_etrs89/recintos_autonomicas_inspire_peninbal_etrs89.shp'))
 
-    fig, axes = plt.subplots(1, 2, figsize=(12, 8), layout="constrained")
+    fig, axes = plt.subplots(1, 2, figsize=(4.5, 2.5), layout="constrained")
     # Shared scale for both plots
-    vmin = 0.
-    vmax = 3.5
-    # vmin, vmax = min(values[0].min(), values[-1].min()
-    #                  ), max(values[0].max(), values[-1].max())
+    vmin, vmax = min(values[0].min(), values[-1].min()
+                     ), max(values[0].max(), values[-1].max())
 
-    plot_map(values[0], map_data, fedstate_data,
+    plot_map(values[0], map_data,
              axes[0], "Median ICU", vmin, vmax)
-    plot_map(values[-1], map_data, fedstate_data,
+    plot_map(values[-1], map_data,
              axes[1], "Median ICU", vmin, vmax)
 
-    plot_map(values[0], map_data, fedstate_data,
-             axes[0], "Median ICU", vmin, vmax)
-    plot_map(values[-1], map_data, fedstate_data,
-             axes[1], "Median ICU", vmin, vmax)
-
-    plt.savefig(f"{name}/median_icu_spain_{name}{synthetic}{with_aug}.png", bbox_inches='tight', dpi=dpi)
+    plt.savefig(f"{name}/median_icu_spain_nuts0.png", bbox_inches='tight', dpi=dpi)
 
     # Save the colorbar horizontally in a separate figure
     sm = plt.cm.ScalarMappable(cmap='Reds', norm=plt.Normalize(vmin=vmin, vmax=vmax))
@@ -198,11 +190,11 @@ def plot_icu_on_spain(simulations, synthetic, with_aug):
     # Create a new figure for the colorbar
     cbar_fig, cbar_ax = plt.subplots(figsize=(12, 0.5))
     cbar = cbar_fig.colorbar(sm, cax=cbar_ax, orientation='horizontal')
-    cbar.set_label("Median ICU per 100,000")
-    cbar_fig.savefig(f"{name}/colorbar_median_icu_{name}{synthetic}{with_aug}.png", bbox_inches='tight', dpi=dpi)
+    cbar.set_label("Median ICU per 100k [#]")
+    cbar_fig.savefig(f"{name}/colorbar_median_icu_nuts0.png", bbox_inches='tight', dpi=dpi)
 
 
-def plot_map(values, map_data, fedstate_data, ax, label, vmin, vmax):
+def plot_map(values, map_data, ax, label, vmin, vmax):
     map_data[label] = map_data['ID_Provincia'].map(
         {region_id: values[0] for region_id in provincia_ids})
 
@@ -223,33 +215,6 @@ def plot_map(values, map_data, fedstate_data, ax, label, vmin, vmax):
     states.boundary.plot(ax=ax, edgecolor='darkgray', linewidth=0.5)
 
     ax.axis('off')
-
-
-def best_fit_sim(results, true_data, ax=None):
-    rmse_per_region = np.sqrt(
-        np.mean((results - true_data[None, :, :])**2, axis=1))
-    rmse_agg = np.sum(rmse_per_region, axis=-1)
-    rmse_agg_idx = np.argmin(rmse_agg)
-
-    agg_over_regions = np.sum(results, axis=-1)  # (samples, time_points)
-    true_vals = np.sum(true_data, axis=-1)  # (time_points,)
-
-    rmse = np.sqrt(np.mean((agg_over_regions - true_vals[None, :])**2, axis=1))
-    best_fit_index = np.argmin(rmse)
-
-    x = np.arange(agg_over_regions.shape[1])
-    ax.plot(x, agg_over_regions[rmse_agg_idx], lw=2,
-            label="First rmse then aggregated", color="red")
-    ax.plot(x, agg_over_regions[best_fit_index], lw=2,
-            label="First aggregated then rmse", color="blue", linestyle="--")
-    ax.plot(x, true_vals, lw=2, color="black", label="Reported data")
-
-    ax.set_xlabel("Time")
-    ax.set_ylabel("ICU")
-    ax.legend()
-
-    return best_fit_index
-
 
 class Simulation:
     """ """
@@ -583,165 +548,65 @@ def run_training(num_training_files=20):
         filepath=os.path.join(f"{name}/model_{name}.keras")
     )
 
-    plots = workflow.plot_default_diagnostics(
-        test_data=validation_data, calibration_ecdf_kwargs={
-            'difference': True, 'stacked': True}
-    )
-    plots['losses'].savefig(f'{name}/losses_{name}.png', dpi=dpi)
-    plots['recovery'].savefig(f'{name}/recovery_{name}.png', dpi=dpi)
-    plots['calibration_ecdf'].savefig(
-        f'{name}/calibration_ecdf_{name}.png', dpi=dpi)
-    plots['z_score_contraction'].savefig(
-        f'{name}/z_score_contraction_{name}.png', dpi=dpi)
 
-
-def run_inference(num_samples=1000, on_synthetic_data=False):
-    val_path = f"{name}/validation_data_{name}.pickle"
-    synthetic = "_synthetic" if on_synthetic_data else ""
+def run_inference(num_samples=1000):
 
     aug = bf.augmentations.NNPE(
         spike_scale=SPIKE_SCALE, slab_scale=SLAB_SCALE, per_dimension=False
     )
 
-    # validation data
-    validation_data = load_pickle(val_path)  # synthetic data
-    if on_synthetic_data:
-        # validation data
-        validation_data = apply_aug(validation_data, aug=aug)
-        validation_data['damping_values'] = validation_data['damping_values'].reshape(
-            (validation_data['damping_values'].shape[0], -1))
-        validation_data = {k: v[0][np.newaxis, ...] if k ==
-                           'state0' else v for k, v in validation_data.items()}  # only one dataset
-        divi_dict = validation_data
-
-        divi_data = np.concatenate(
-            [divi_dict[f'state{i}'] for i in range(len(region_ids))], axis=-1
-        )[0]  # only one dataset
-    else:
-        divi_dict = load_divi_data()
-        divi_data = np.concatenate(
-            [divi_dict[f'state{i}'] for i in range(len(region_ids))], axis=-1
-        )[0]
+    divi_dict = load_divi_data()
+    divi_data = np.concatenate(
+        [divi_dict[f'state{i}'] for i in range(len(region_ids))], axis=-1
+    )[0]
 
     workflow = get_workflow()
     workflow.approximator = keras.models.load_model(
         filepath=os.path.join(f"{name}/model_{name}.keras")
     )
 
-    if os.path.exists(f'{name}/sims_{name}{synthetic}_with_aug.pickle') and os.path.exists(f'{name}/sims_{name}{synthetic}.pickle') and os.path.exists(f'{name}/samples_{name}{synthetic}.pickle'):
-        simulations = load_pickle(f'{name}/sims_{name}{synthetic}.pickle')
-        simulations_aug = load_pickle(
-            f'{name}/sims_{name}{synthetic}_with_aug.pickle')
-        samples = load_pickle(f'{name}/samples_{name}{synthetic}.pickle')
-        print("loaded simulations from file")
-    else:
-        samples = workflow.sample(
-            conditions=divi_dict, num_samples=num_samples)
-        with open(f'{name}/samples_{name}{synthetic}.pickle', 'wb') as f:
-            pickle.dump(samples, f, pickle.HIGHEST_PROTOCOL)
-        samples['damping_values'] = samples['damping_values'].reshape(
-            (samples['damping_values'].shape[0], num_samples, len(region_ids), NUM_DAMPING_POINTS))
-        results = []
-        for i in range(num_samples):  # we only have one dataset for inference here
-            result = run_spain_nuts0_simulation(
-                scaling_factor=samples['scaling_factor'][0, i],
-                damping_values=samples['damping_values'][0, i],
-                t_E=samples['t_E'][0, i], t_ISy=samples['t_ISy'][0, i],
-                t_ISev=samples['t_ISev'][0, i], t_Cr=samples['t_Cr'][0, i],
-                mu_CR=samples['mu_CR'][0, i], mu_IH=samples['mu_IH'][0, i],
-                mu_HU=samples['mu_HU'][0, i], mu_UD=samples['mu_UD'][0, i],
-                transmission_prob=samples['transmission_prob'][0, i]
-            )
-            for key in result.keys():
-                result[key] = np.array(result[key])[
-                    None, ...]  # add sample axis
-            results.append(result)
-        results = combine_results(results)
-        results = extract_observables(results)
-        results_aug = apply_aug(results, aug=aug)
-
-        # get sims in shape (samples, time, regions)
-        simulations = np.zeros(
-            (num_samples, divi_data.shape[0], divi_data.shape[1]))
-        simulations_aug = np.zeros(
-            (num_samples, divi_data.shape[0], divi_data.shape[1]))
-        for i in range(num_samples):
-            simulations[i] = np.concatenate(
-                [results[key][i] for key in results.keys()], axis=-1)
-            simulations_aug[i] = np.concatenate(
-                [results_aug[key][i] for key in results.keys()], axis=-1)
-
-        fig, ax = plt.subplots(1, 1, figsize=(8, 6), constrained_layout=True)
-        sim_idx = best_fit_sim(simulations_aug, true_data=divi_data, ax=ax)
-        plt.savefig(f'{name}/best_sims_{name}{synthetic}.png', dpi=dpi)
-        plt.close()
-
-        best_sim = run_spain_nuts0_simulation(
+    samples = workflow.sample(
+        conditions=divi_dict, num_samples=num_samples)
+    samples['damping_values'] = samples['damping_values'].reshape(
+        (samples['damping_values'].shape[0], num_samples, len(region_ids), NUM_DAMPING_POINTS))
+    results = []
+    for i in range(num_samples):  # we only have one dataset for inference here
+        result = run_spain_nuts0_simulation(
             scaling_factor=samples['scaling_factor'][0, i],
-            damping_values=samples['damping_values'][0, sim_idx],
-            t_E=samples['t_E'][0, sim_idx], t_ISy=samples['t_ISy'][0, sim_idx],
-            t_ISev=samples['t_ISev'][0,
-                                     sim_idx], t_Cr=samples['t_Cr'][0, sim_idx],
-            mu_CR=samples['mu_CR'][0,
-                                   sim_idx], mu_IH=samples['mu_IH'][0, sim_idx],
-            mu_HU=samples['mu_HU'][0,
-                                   sim_idx], mu_UD=samples['mu_UD'][0, sim_idx],
-            transmission_prob=samples['transmission_prob'][0,
-                                                           sim_idx], export_timeseries=True
+            damping_values=samples['damping_values'][0, i],
+            t_E=samples['t_E'][0, i], t_ISy=samples['t_ISy'][0, i],
+            t_ISev=samples['t_ISev'][0, i], t_Cr=samples['t_Cr'][0, i],
+            mu_CR=samples['mu_CR'][0, i], mu_IH=samples['mu_IH'][0, i],
+            mu_HU=samples['mu_HU'][0, i], mu_UD=samples['mu_UD'][0, i],
+            transmission_prob=samples['transmission_prob'][0, i]
         )
+        for key in result.keys():
+            result[key] = np.array(result[key])[
+                None, ...]  # add sample axis
+        results.append(result)
+    results = combine_results(results)
+    results = extract_observables(results)
+    results = apply_aug(results, aug=aug)
 
-        best_samples = {}
-        for key in inference_params:
-            best_samples[key] = samples[key][0, sim_idx]
-        with open(f'{name}/best_samples_{name}.pickle', 'wb') as f:
-            pickle.dump(best_samples, f, pickle.HIGHEST_PROTOCOL)
-
-        # save sims
-        with open(f'{name}/sims_{name}{synthetic}.pickle', 'wb') as f:
-            pickle.dump(simulations, f, pickle.HIGHEST_PROTOCOL)
-        with open(f'{name}/sims_{name}{synthetic}_with_aug.pickle', 'wb') as f:
-            pickle.dump(simulations_aug, f, pickle.HIGHEST_PROTOCOL)
-
-        samples['damping_values'] = samples['damping_values'].reshape(
-            (samples['damping_values'].shape[0], samples['damping_values'].shape[1], -1))
-        validation_data['damping_values'] = validation_data['damping_values'].reshape(
-            (validation_data['damping_values'].shape[0], -1))
-
-        plot = bf.diagnostics.pairs_posterior(
-            samples, priors=validation_data, dataset_id=0)
-        plot.savefig(f'{name}/pairs_posterior_{name}{synthetic}.png', dpi=dpi)
+    # get sims in shape (samples, time, regions)
+    simulations = np.zeros(
+        (num_samples, divi_data.shape[0], divi_data.shape[1]))
+    for i in range(num_samples):
+        simulations[i] = np.concatenate(
+            [results[key][i] for key in results.keys()], axis=-1)
 
     fig, ax = plt.subplots(figsize=(8, 6), constrained_layout=True)
     # Plot with augmentation
     plot_region_fit(
-        simulations_aug, region=0, true_data=divi_data, label="Median", ax=ax, color=colors["Red"]
+        simulations, region=0, true_data=divi_data, ax=ax, color=colors["Red"]
     )
     lines, labels = ax.get_legend_handles_labels()
     fig.legend(lines, labels, loc='upper left',
                bbox_to_anchor=(0.11, 0.99), ncol=1)
-    plt.savefig(f'{name}/region_aggregated_{name}{synthetic}.png', dpi=dpi)
+    plt.savefig(f'{name}/region_aggregated_{name}.png', dpi=dpi)
     plt.close()
 
-    plot_icu_on_spain(simulations_aug, synthetic, with_aug="_with_aug")
-
-    simulation_agg = np.sum(simulations, axis=-1,
-                            keepdims=True)  # sum over regions
-    simulation_aug_agg = np.sum(simulations_aug, axis=-1, keepdims=True)
-
-    rmse = bf.diagnostics.metrics.root_mean_squared_error(np.swapaxes(
-        simulation_agg, 0, 1), np.sum(divi_data, axis=-1, keepdims=True), normalize=False)
-    rmse_aug = bf.diagnostics.metrics.root_mean_squared_error(np.swapaxes(
-        simulation_aug_agg, 0, 1), np.sum(divi_data, axis=-1, keepdims=True), normalize=False)
-    print("Mean RMSE over regions:", rmse["values"].mean())
-    print("Mean RMSE over regions (with aug):", rmse_aug["values"].mean())
-
-    cal_error = bf.diagnostics.metrics.calibration_error(np.swapaxes(
-        simulation_agg, 0, 1), np.sum(divi_data, axis=-1, keepdims=True))
-    cal_error_aug = bf.diagnostics.metrics.calibration_error(np.swapaxes(
-        simulation_aug_agg, 0, 1), np.sum(divi_data, axis=-1, keepdims=True))
-    print("Mean Calibration Error over regions:", cal_error["values"].mean())
-    print("Mean Calibration Error over regions (with aug):",
-          cal_error_aug["values"].mean())
+    plot_icu_on_spain(simulations)
 
 
 if __name__ == "__main__":
@@ -750,8 +615,7 @@ if __name__ == "__main__":
 
     if not os.path.exists(name):
         os.makedirs(name)
-    # create_train_data(
-    #     filename=f'{name}/validation_data_{name}.pickle', number_samples=100)
-    # run_training(num_training_files=2)
-    run_inference(on_synthetic_data=True, num_samples=100)
-    run_inference(on_synthetic_data=False, num_samples=1000)
+    create_train_data(filename=f'{name}/validation_data_{name}.pickle', number_samples=100)
+    create_train_data(filename=f'{name}/trainings_data1_{name}.pickle', number_samples=20000)
+    run_training(num_training_files=1)
+    run_inference(num_samples=1000)

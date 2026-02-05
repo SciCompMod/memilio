@@ -47,8 +47,6 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::vecto
             return r == 0 ||
                    (county_entry.county_id &&
                     regions::StateId(r) == regions::get_state_id(int(*county_entry.county_id))) ||
-                   (county_entry.county_id &&
-                    regions::StateId(r) == regions::get_comunidad_id(int(*county_entry.county_id))) ||
                    (county_entry.county_id && regions::CountyId(r) == *county_entry.county_id) ||
                    (county_entry.district_id && regions::DistrictId(r) == *county_entry.district_id);
         });
@@ -64,43 +62,11 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::vecto
     return success(vnum_population);
 }
 
-IOResult<std::vector<std::vector<double>>>
-read_population_data_spain(const std::vector<PopulationDataEntrySpain>& population_data,
-                           const std::vector<int>& vregion)
-{
-    std::vector<std::vector<double>> vnum_population(vregion.size(), std::vector<double>(1, 0.0));
-
-    for (auto&& provincia_entry : population_data) {
-        if (provincia_entry.provincia_id) {
-            for (size_t idx = 0; idx < vregion.size(); ++idx) {
-                if (vregion[idx] == provincia_entry.provincia_id->get()) {
-                    vnum_population[idx][0] += provincia_entry.population[AgeGroup(0)];
-                }
-            }
-        }
-        // id 0 means the whole country
-        for (size_t idx = 0; idx < vregion.size(); ++idx) {
-            if (vregion[idx] == 0) {
-                vnum_population[idx][0] += provincia_entry.population[AgeGroup(0)];
-            }
-        }
-    }
-
-    return success(vnum_population);
-}
-
 IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path,
                                                                 const std::vector<int>& vregion)
 {
     BOOST_OUTCOME_TRY(auto&& population_data, mio::read_population_data(path));
     return read_population_data(population_data, vregion);
-}
-
-IOResult<std::vector<std::vector<double>>> read_population_data_spain(const std::string& path,
-                                                                      const std::vector<int>& vregion)
-{
-    BOOST_OUTCOME_TRY(auto&& population_data, mio::read_population_data_spain(path));
-    return read_population_data_spain(population_data, vregion);
 }
 } // namespace mio
 #endif //MEMILIO_HAS_JSONCPP

@@ -142,7 +142,7 @@ def plot_region_fit(
     ax.fill_between(x, qs_80[0], qs_80[1], alpha=0.5,
                     color=color, label="80% CI")
     if not only_80q:
-        ax.fill_between(x, qs_90[0], qs_90[1], alpha=0.3,
+        ax.fill_between(x, qs_90[0], qs_90[1], linewidth=0, alpha=0.3,
                         color=color, label="90% CI")
         ax.fill_between(x, qs_95[0], qs_95[1], alpha=0.1,
                         color=color, label="95% CI")
@@ -187,15 +187,20 @@ def plot_aggregated_over_regions(
     ax.plot(x, agg_median,
             label=label or "Aggregated simulation", color=color)
 
-    ax.fill_between(x, qs_90[0], qs_90[1], alpha=0.5,
+    ax.fill_between(x, qs_90[0], qs_90[1], linewidth=0, alpha=0.4,
                     color=color)
-    ax.fill_between(x, qs_95[0], qs_95[1], alpha=0.4,
+    ax.fill_between(x, qs_95[0], qs_95[1], alpha=0.25,
                     color=color)
     if true_data is not None:
         true_vals = region_agg(true_data, axis=-1)  # (time_points,)
         ax.scatter(x, true_vals, color="black", label="Reported data", marker='x')
 
-    ax.set_xlabel("Time")
+    # Update x-axis to show dates in YYYY-MM format
+    start_date = datetime.date(2020, 10, 1)
+    date_labels = [(start_date + datetime.timedelta(days=int(day))).strftime('%Y-%m-%d') for day in x]
+    ax.set_xticks(x[::7])  # Set ticks every 7 days
+    ax.set_xticklabels(date_labels[::7], rotation=45)
+
     ax.set_ylabel("ICU cases [#]")
 
 def plot_icu_on_spain(simulations, synthetic, with_aug):
@@ -885,6 +890,9 @@ def run_inference(num_samples=1000, on_synthetic_data=False):
             [divi_dict[key] for key in divi_region_keys], axis=-1
         )[0]  # only one dataset
 
+    with open(f'{name}/divi_data_{name}{synthetic}.pickle', 'wb') as f:
+        pickle.dump(divi_data, f, pickle.HIGHEST_PROTOCOL)
+        
     workflow = get_workflow()
     workflow.approximator = keras.models.load_model(
         filepath=os.path.join(f"{name}/model_{name}.keras")
@@ -1035,7 +1043,7 @@ if __name__ == "__main__":
     if not os.path.exists(name):
         os.makedirs(name)
     # create_train_data(
-    #     filename=f'{name}/validation_data_{name}.pickle', number_samples=100)
+    #     filename=f'{name}/test_{name}.pickle', number_samples=1)
     # run_training(num_training_files=4)
-    # run_inference(on_synthetic_data=True, num_samples=100)
+    run_inference(on_synthetic_data=True, num_samples=100)
     run_inference(on_synthetic_data=False, num_samples=1000)

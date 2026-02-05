@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2025 MEmilio
 #
-# Authors: Henrik Zunker
+# Authors: Carlotta Gerstein
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -39,13 +39,15 @@ from memilio.epidata import defaultDict as dd
 
 import geopandas as gpd
 
+name = "nuts0"
 
 region_ids = [0]
-inference_params = ['damping_values', 't_E', 't_ISy', 't_ISev',
+inference_params = ['scaling_factor', 'damping_values', 't_E', 't_ISy', 't_ISev',
                     't_Cr', 'mu_CR', 'mu_IH', 'mu_HU', 'mu_UD', 'transmission_prob']
 summary_vars = ['state0']
 
 bounds = {
+    'scaling_factor': (1.0, 10.0),
     't_E': (1.0, 5.2),
     't_ISy': (4.0, 10.0),
     't_ISev': (5.0, 10.0),
@@ -61,14 +63,48 @@ SLAB_SCALE = 0.2
 DATE_TIME = datetime.date(year=2020, month=10, day=1)
 NUM_DAMPING_POINTS = 3
 
+
+def set_fontsize(base_fontsize=17):
+    fontsize = base_fontsize
+    plt.rcParams.update({
+        'font.size': fontsize,
+        'axes.titlesize': fontsize * 1,
+        'axes.labelsize': fontsize,
+        'xtick.labelsize': fontsize * 0.8,
+        'ytick.labelsize': fontsize * 0.8,
+        'legend.fontsize': fontsize * 0.8,
+        'font.family': "Arial"
+    })
+
+
+plt.style.use('default')
+
+dpi = 300
+
+colors = {"Blue": "#155489",
+          "Medium blue": "#64A7DD",
+          "Light blue": "#B4DCF6",
+          "Lilac blue": "#AECCFF",
+          "Turquoise": "#76DCEC",
+          "Light green": "#B6E6B1",
+          "Medium green": "#54B48C",
+          "Green": "#5D8A2B",
+          "Teal": "#20A398",
+          "Yellow": "#FBD263",
+          "Orange": "#E89A63",
+          "Rose": "#CF7768",
+          "Red": "#A34427",
+          "Purple": "#741194",
+          "Grey": "#C0BFBF",
+          "Dark grey": "#616060",
+          "Light grey": "#F1F1F1"}
+
 def plot_region_fit(
     data: np.ndarray,
     region: int,
     true_data=None,
     ax=None,
-    label=None,
-    color="red",
-    only_80q=False
+    color="red"
 ):
     if data.ndim != 3:
         raise ValueError("Array not of shape (samples, time_points, regions)")
@@ -82,7 +118,7 @@ def plot_region_fit(
     x = np.arange(n_time)
     vals = data[:, :, region]  # (samples, time_points)
 
-    qs_80 = np.quantile(vals, q=[0.1, 0.9], axis=0)
+    qs_50 = np.quantile(vals, q=[0.25, 0.75], axis=0)
     qs_90 = np.quantile(vals, q=[0.05, 0.95], axis=0)
     qs_95 = np.quantile(vals, q=[0.025, 0.975], axis=0)
 
@@ -92,108 +128,67 @@ def plot_region_fit(
         fig, ax = plt.subplots()
 
     ax.plot(
-        x, med, lw=2, label=label or f"Germany", color=color)
-    ax.fill_between(x, qs_80[0], qs_80[1], alpha=0.5,
-                    color=color, label="80% CI")
-    if not only_80q:
-        ax.fill_between(x, qs_90[0], qs_90[1], alpha=0.3,
-                        color=color, label="90% CI")
-        ax.fill_between(x, qs_95[0], qs_95[1], alpha=0.1,
-                        color=color, label="95% CI")
-
+        x, med, lw=3, label="Simulation", color=color, zorder=1)
+    ax.fill_between(x, qs_50[0], qs_50[1], alpha=0.6, linewidth=0,
+                    color=color)
+    ax.fill_between(x, qs_90[0], qs_90[1], linewidth=0, alpha=0.4,
+                    color=color)
+    ax.fill_between(x, qs_95[0], qs_95[1], linewidth=0, alpha=0.2,
+                    color=color)
     if true_data is not None:
         true_vals = true_data[:, region]  # (time_points,)
-        ax.plot(x, true_vals, lw=2, color="black", label="True data")
+        ax.scatter(x, true_vals, color="black", label="Reported data", marker='x', zorder=2)
 
-    ax.set_xlabel("Time", fontsize=12)
-    ax.set_ylabel("ICU", fontsize=12)
-    ax.set_title(f"Germany", fontsize=12)
-    if label is not None:
-        ax.legend(fontsize=11, loc="upper right")
+    # Update x-axis to show dates in YYYY-MM format
+    start_date = datetime.date(2020, 10, 1)
+    date_labels = [(start_date + datetime.timedelta(days=int(day))).strftime('%Y-%m-%d') for day in x]
+    ax.set_xticks(x[::14])  # Set ticks every 7 days
+    ax.set_xticklabels([])
+    # ax.set_xticklabels(date_labels[::14], rotation=45)
+
+    ax.set_ylabel("ICU cases [#]")
 
 
-def plot_icu_on_germany(simulations, name, synthetic, with_aug):
+def plot_icu_on_germany(simulations):
     med = np.median(simulations, axis=0)
 
-    print(simulations.shape)
     population = pd.read_json('data/Germany/pydata/county_current_population_germany.json')
-    # print(population['Population'].shape)
-    values = med / population['Population'][None, :] * 100000
-    print(values.shape)
-
+    values = med / population['Population'].to_numpy()[None, :] * 100000
 
     map_data = gpd.read_file(os.path.join(os.getcwd(), 'tools/vg2500_12-31.utm32s.shape/vg2500/VG2500_KRS.shp'))
     fedstate_data = gpd.read_file(os.path.join(os.getcwd(), 'tools/vg2500_12-31.utm32s.shape/vg2500/VG2500_LAN.shp'))
     state_data = gpd.read_file(os.path.join(os.getcwd(), 'tools/vg2500_12-31.utm32s.shape/vg2500/VG2500_STA.shp'))
 
-    plot_map(simulations[0], state_data, map_data, fedstate_data, "Median ICU", f"{name}/median_icu_germany_initial_{name}{synthetic}{with_aug}")
-    plot_map(simulations[-1], state_data, map_data, fedstate_data, "Median ICU", f"{name}/median_icu_germany_final_{name}{synthetic}{with_aug}")
+    fig, axes = plt.subplots(1, 2, figsize=(4.5, 2.5), layout="constrained")
+    vmin = 0
+    vmax = 8
+    
+    plot_map(values[0], state_data, map_data, fedstate_data, axes[0], "Median ICU", vmin, vmax)
+    plot_map(values[-1], state_data, map_data, fedstate_data, axes[1], "Median ICU", vmin, vmax)
 
-def plot_map(values, state_data, map_data, fedstate_data, label, filename):
-    state_data[label] = state_data['ARS'].map(dict(zip([f"{region_id:02d}" for region_id in region_ids], values)))
+    plt.savefig(f"{name}/median_icu_germany_nuts0.png", bbox_inches='tight', dpi=dpi)
 
-    fig, ax = plt.subplots(figsize=(12, 14))
-    state_data.plot(
+
+def plot_map(values, map_data, ax, label, vmin, vmax):
+    map_data[label] = map_data['ARS'].map({f"{region_id:05d}": values[0]  for region_id in dd.County.keys()})
+
+    map_data['state_id'] = map_data['ARS'].astype(
+        int).map({county: county // 1000 for county in dd.County.keys()}).fillna(0).astype(int)
+
+    states = map_data.dissolve(by='state_id')
+
+    map_data.plot(
         column=f"{label}",
         cmap='Reds',
-        linewidth=1.,
+        linewidth=0.,
         ax=ax,
-        edgecolor='0.6',
-        legend=True,
-        legend_kwds={'label': f"{label} per State", 'shrink': 0.6},
+        legend=False,
+        vmin=vmin,
+        vmax=vmax,
     )
-    map_data.boundary.plot(ax=ax, color='black', linewidth=0.2)
-    fedstate_data.boundary.plot(ax=ax, color='black', linewidth=0.4)
-    ax.set_title(f"{label} per Federal State")
+    states.boundary.plot(ax=ax, edgecolor='darkgray', linewidth=0.5)
+
     ax.axis('off')
-    plt.savefig(filename, bbox_inches='tight', dpi=300)
-
-def plot_damping_values(damping_values, name, synthetic, with_aug):
-
-    med = np.median(damping_values, axis=0)
-    mad = np.median(np.abs(damping_values - med), axis=0)
-
-    # Extend for step plotting
-    med_extended = np.hstack([med, med[:, -1][:, None]])
-    mad_extended = np.hstack([mad, mad[:, -1][:, None]])
-
-    # Plot damping values per region
-    fig, axes = plt.subplots(4, 4, figsize=(15, 10), constrained_layout=True)
-    axes = axes.flatten()
-    x = np.arange(15, 61, 15)  # Time steps from 15 to 60
-
-    for i, ax in enumerate(axes):
-        if i < 16:
-            ax.stairs(med[i], edges=x, lw=2, color='red', baseline=None)
-            ax.fill_between(
-                x, med_extended[i] - mad_extended[i], med_extended[i] + mad_extended[i],
-                alpha=0.25, color='red', step='post'
-            )
-            ax.set_title(f"{dd.State[i+1]}", fontsize=10)
-            ax.set_xlabel("Time", fontsize=8)
-            ax.set_ylabel("Damping Value", fontsize=8)
-        else:
-            ax.axis('off')  # Hide unused subplots
-
-    plt.suptitle("Damping Values per Region", fontsize=14)
-    plt.savefig(f"{name}/damping_values{name}{synthetic}{with_aug}.png", dpi=300)
-
-    # Combined plot for all regions
-    fig, ax = plt.subplots(figsize=(10, 6))
-    cmap = plt.cm.get_cmap("viridis", 16)  # Colormap with 16 distinct colors
-
-    for i in range(16):
-        ax.stairs(
-            med[i], edges=x, lw=2, label=f"{dd.State[i+1]}",
-            color=cmap(i), baseline=None
-        )
-
-    ax.set_title("Damping Values per Region (Combined)", fontsize=14)
-    ax.set_xlabel("Time", fontsize=12)
-    ax.set_ylabel("Damping Value", fontsize=12)
-    ax.legend(fontsize=10, loc="upper right", ncol=2)
-    plt.savefig(f"{name}/damping_values_combined{name}{synthetic}{with_aug}.png", dpi=300)
-
 
 class Simulation:
     """ """
@@ -207,13 +202,8 @@ class Simulation:
             os.makedirs(self.results_dir)
 
     def set_covid_parameters(self, model, t_E, t_ISy, t_ISev, t_Cr, mu_CR, mu_IH, mu_HU, mu_UD, transmission_prob):
-        """
-
-        :param model: 
-
-        """
         model.parameters.TimeExposed[mio.AgeGroup(0)] = t_E
-        model.parameters.TimeInfectedNoSymptoms[mio.AgeGroup(0)] = 5.2 - t_E  # todo: correct?
+        model.parameters.TimeInfectedNoSymptoms[mio.AgeGroup(0)] = 5.2 - t_E
         model.parameters.TimeInfectedSymptoms[mio.AgeGroup(0)] = t_ISy
         model.parameters.TimeInfectedSevere[mio.AgeGroup(0)] = t_ISev
         model.parameters.TimeInfectedCritical[mio.AgeGroup(0)] = t_Cr
@@ -235,11 +225,6 @@ class Simulation:
         model.parameters.Seasonality = mio.UncertainValue(0.2)
 
     def set_contact_matrices(self, model):
-        """
-
-        :param model: 
-
-        """
         contact_matrices = mio.ContactMatrixGroup(1, self.num_groups)
 
         baseline = np.ones((self.num_groups, self.num_groups)) * 7.95
@@ -248,15 +233,9 @@ class Simulation:
         model.parameters.ContactPatterns.cont_freq_mat = contact_matrices
 
     def set_npis(self, params, end_date, damping_values):
-        """
-
-        :param params: 
-        :param end_date: 
-
-        """
         start_damping_1 = DATE_TIME + datetime.timedelta(days=15)
-        start_damping_2 = DATE_TIME + datetime.timedelta(days=30)
-        start_damping_3 = DATE_TIME + datetime.timedelta(days=45)
+        start_damping_2 = DATE_TIME + datetime.timedelta(days=25)
+        start_damping_3 = DATE_TIME + datetime.timedelta(days=35)
 
         if start_damping_1 < end_date:
             start_date = (start_damping_1 - self.start_date).days
@@ -273,12 +252,7 @@ class Simulation:
             params.ContactPatterns.cont_freq_mat[0].add_damping(
                 mio.Damping(np.r_[damping_values[2]], t=start_date))
 
-    def get_graph(self, end_date, t_E, t_ISy, t_ISev, t_Cr, mu_CR, mu_IH, mu_HU, mu_UD, transmission_prob):
-        """
-
-        :param end_date: 
-
-        """
+    def get_graph(self, end_date, scaling_factor, t_E, t_ISy, t_ISev, t_Cr, mu_CR, mu_IH, mu_HU, mu_UD, transmission_prob):
         print("Initializing model...")
         model = Model(self.num_groups)
         self.set_covid_parameters(
@@ -288,7 +262,7 @@ class Simulation:
 
         graph = osecir.ModelGraph()
 
-        scaling_factor_infected = [2.5]
+        scaling_factor_infected = [scaling_factor]
         scaling_factor_icu = 1.0
 
         data_dir_Germany = os.path.join(self.data_dir, "Germany")
@@ -305,25 +279,17 @@ class Simulation:
             mio.Date(end_date.year,
                      end_date.month, end_date.day), pydata_dir,
             path_population_data, False, graph, scaling_factor_infected,
-            scaling_factor_icu, 0., 0, False)
+            scaling_factor_icu, 1.0, 0, False)
 
         print("Graph created.")
 
         return graph
 
-    def run(self, num_days_sim, damping_values, t_E, t_ISy, t_ISev, t_Cr, mu_CR, mu_IH, mu_HU, mu_UD, transmission_prob, save_graph=True):
-        """
-
-        :param num_days_sim: 
-        :param num_runs:  (Default value = 10)
-        :param save_graph:  (Default value = True)
-        :param create_gif:  (Default value = True)
-
-        """
+    def run(self, num_days_sim, scaling_factor, damping_values, t_E, t_ISy, t_ISev, t_Cr, mu_CR, mu_IH, mu_HU, mu_UD, transmission_prob, export_timeseries):
         mio.set_log_level(mio.LogLevel.Warning)
         end_date = self.start_date + datetime.timedelta(days=num_days_sim)
 
-        graph = self.get_graph(end_date, t_E, t_ISy, t_ISev,
+        graph = self.get_graph(end_date, scaling_factor, t_E, t_ISy, t_ISev,
                                t_Cr, mu_CR, mu_IH, mu_HU, mu_UD, transmission_prob)
 
         mobility_graph = osecir.MobilityGraph()
@@ -343,6 +309,15 @@ class Simulation:
         mobility_sim = osecir.MobilitySimulation(mobility_graph, t0=0, dt=0.5)
         mobility_sim.advance(num_days_sim)
 
+        if export_timeseries:
+            graph = mobility_sim.graph
+            node_ids = [graph.get_node(i).id for i in range(graph.num_nodes)]
+
+            osecir.save_results(
+                [osecir.interpolate_simulation_result(graph)], [[graph.get_node(node_indx).property.model
+                    for node_indx in range(graph.num_nodes)]], node_ids, self.results_dir, True, False
+            )
+
         results = {}
         for node_idx in range(mobility_sim.graph.num_nodes):
             results[f'state{node_idx}'] = osecir.interpolate_simulation_result(
@@ -351,7 +326,7 @@ class Simulation:
         return results
 
 
-def run_germany_nuts0_simulation(damping_values, t_E, t_ISy, t_ISev, t_Cr, mu_CR, mu_IH, mu_HU, mu_UD, transmission_prob):
+def run_germany_nuts0_simulation(scaling_factor, damping_values, t_E, t_ISy, t_ISev, t_Cr, mu_CR, mu_IH, mu_HU, mu_UD, transmission_prob, export_timeseries=False):
     mio.set_log_level(mio.LogLevel.Warning)
     file_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -361,10 +336,11 @@ def run_germany_nuts0_simulation(damping_values, t_E, t_ISy, t_ISev, t_Cr, mu_CR
         results_dir=os.path.join(file_path, "../../../results_osecir"))
     num_days_sim = 60
 
-    results = sim.run(num_days_sim, damping_values, t_E, t_ISy,
-                      t_ISev, t_Cr, mu_CR, mu_IH, mu_HU, mu_UD, transmission_prob)
+    results = sim.run(num_days_sim, scaling_factor, damping_values, t_E, t_ISy,
+                      t_ISev, t_Cr, mu_CR, mu_IH, mu_HU, mu_UD, transmission_prob, export_timeseries)
 
     return results
+
 
 def prior():
     damping_values = np.zeros((NUM_DAMPING_POINTS, 1))
@@ -376,6 +352,7 @@ def prior():
             a=a, b=b, loc=mean, scale=scale, size=1
         )
     return {
+        'scaling_factor': np.random.uniform(*bounds['scaling_factor']),
         'damping_values': np.transpose(damping_values),
         't_E': np.random.uniform(*bounds['t_E']),
         't_ISy': np.random.uniform(*bounds['t_ISy']),
@@ -446,8 +423,6 @@ def combine_results(dict_list):
         combined = concat_dicts(combined, d) if combined else d
     return combined
 
-def skip_2weeks(d:dict) -> dict:
-    return {k: v[:, 14:, :] if is_state_key(k) else v for k, v in d.items()}
 
 def get_workflow():
 
@@ -458,6 +433,7 @@ def get_workflow():
         bf.Adapter()
         .to_array()
         .convert_dtype("float64", "float32")
+        .constrain("scaling_factor", lower=bounds["scaling_factor"][0], upper=bounds["scaling_factor"][1])
         .constrain("damping_values", lower=0.0, upper=1.0)
         .constrain("t_E", lower=bounds["t_E"][0], upper=bounds["t_E"][1])
         .constrain("t_ISy", lower=bounds["t_ISy"][0], upper=bounds["t_ISy"][1])
@@ -469,7 +445,7 @@ def get_workflow():
         .constrain("mu_UD", lower=bounds["mu_UD"][0], upper=bounds["mu_UD"][1])
         .constrain("transmission_prob", lower=bounds["transmission_prob"][0], upper=bounds["transmission_prob"][1])
         .concatenate(
-            ["damping_values", "t_E", "t_ISy", "t_ISev", "t_Cr",
+            ["scaling_factor", "damping_values", "t_E", "t_ISy", "t_ISev", "t_Cr",
              "mu_CR", "mu_IH", "mu_HU", "mu_UD", "transmission_prob"],
             into="inference_variables",
             axis=-1
@@ -477,10 +453,10 @@ def get_workflow():
         .concatenate(summary_vars, into="summary_variables", axis=-1)
     )
 
-    summary_network = bf.networks.FusionTransformer(
-        summary_dim=(len(bounds)+16*NUM_DAMPING_POINTS)*2, dropout=0.1
+    summary_network = bf.networks.TimeSeriesNetwork(
+        summary_dim=(len(bounds)+1*NUM_DAMPING_POINTS)*2, dropout=0.1
     )
-    inference_network = bf.networks.FlowMatching(subnet_kwargs={'widths': (512, 512, 512, 512, 512)})
+    inference_network = bf.networks.FlowMatching()
 
     # aug = bf.augmentations.NNPE(spike_scale=SPIKE_SCALE, slab_scale=SLAB_SCALE, per_dimension=False)
     workflow = bf.BasicWorkflow(
@@ -495,7 +471,7 @@ def get_workflow():
     return workflow
 
 
-def run_training(name, num_training_files=20):
+def run_training(num_training_files=20):
     train_template = name+"/trainings_data{i}_"+name+".pickle"
     val_path = f"{name}/validation_data_{name}.pickle"
 
@@ -509,7 +485,6 @@ def run_training(name, num_training_files=20):
     for p in train_files:
         d = load_pickle(p)
         d = apply_aug(d, aug=aug)  # only on region keys
-        d = skip_2weeks(d)
         d['damping_values'] = d['damping_values'].reshape((d['damping_values'].shape[0], -1))
         if trainings_data is None:
             trainings_data = d
@@ -518,7 +493,6 @@ def run_training(name, num_training_files=20):
 
     # validation data
     validation_data = apply_aug(load_pickle(val_path), aug=aug)
-    validation_data = skip_2weeks(validation_data)
     validation_data['damping_values'] = validation_data['damping_values'].reshape((validation_data['damping_values'].shape[0], -1))
 
     # check data
@@ -527,144 +501,74 @@ def run_training(name, num_training_files=20):
     print("inference_variables shape:", workflow.adapter(trainings_data)["inference_variables"].shape)
 
     history = workflow.fit_offline(
-        data=trainings_data, epochs=500, batch_size=64, validation_data=validation_data
+        data=trainings_data, epochs=300, batch_size=64, validation_data=validation_data
     )
 
     workflow.approximator.save(
         filepath=os.path.join(f"{name}/model_{name}.keras")
     )
 
-    plots = workflow.plot_default_diagnostics(
-        test_data=validation_data, calibration_ecdf_kwargs={'difference': True, 'stacked': True}
-    )
-    plots['losses'].savefig(f'{name}/losses_{name}.png')
-    plots['recovery'].savefig(f'{name}/recovery_{name}.png')
-    plots['calibration_ecdf'].savefig(f'{name}/calibration_ecdf_{name}.png')
-    #plots['z_score_contraction'].savefig(f'{name}/z_score_contraction_{name}.png')
-
-
-def run_inference(name, num_samples=1000, on_synthetic_data=False):
-    val_path = f"{name}/validation_data_{name}.pickle"
-    synthetic = "_synthetic" if on_synthetic_data else ""
+def run_inference(num_samples=1000):
 
     aug = bf.augmentations.NNPE(
         spike_scale=SPIKE_SCALE, slab_scale=SLAB_SCALE, per_dimension=False
     )
 
-    # validation data
-    validation_data = load_pickle(val_path)  # synthetic data
-    if on_synthetic_data:
-        # validation data
-        validation_data = apply_aug(validation_data, aug=aug)
-        validation_data['damping_values'] = validation_data['damping_values'].reshape((validation_data['damping_values'].shape[0], -1))
-        validation_data_skip2w = skip_2weeks(validation_data)
-        divi_dict = validation_data
-
-        divi_data = np.concatenate(
-            [divi_dict[f'state{i}'] for i in range(len(region_ids))], axis=-1
-        )[0]  # only one dataset
-    else:
-        divi_dict = load_divi_data()
-        validation_data_skip2w = skip_2weeks(divi_dict)
-        divi_data = np.concatenate(
-            [divi_dict[f'state{i}'] for i in range(len(region_ids))], axis=-1
-        )[0]
+    divi_dict = load_divi_data()
+    divi_data = np.concatenate(
+        [divi_dict[f'state{i}'] for i in range(len(region_ids))], axis=-1
+    )[0]
 
     workflow = get_workflow()
     workflow.approximator = keras.models.load_model(
         filepath=os.path.join(f"{name}/model_{name}.keras")
     )
 
-    if os.path.exists(f'{name}/sims_{name}{synthetic}_with_aug.pickle') and os.path.exists(f'{name}/sims_{name}{synthetic}.pickle'):
-        simulations = load_pickle(f'{name}/sims_{name}{synthetic}.pickle')
-        simulations_aug = load_pickle(f'{name}/sims_{name}{synthetic}_with_aug.pickle')
-        print("loaded simulations from file")
-    else:
-        samples = workflow.sample(conditions=validation_data_skip2w, num_samples=num_samples)
-        samples['damping_values'] = samples['damping_values'].reshape((samples['damping_values'].shape[0], num_samples, 1, NUM_DAMPING_POINTS))
-        results = []
-        for i in range(num_samples):  # we only have one dataset for inference here
-            result = run_germany_nuts0_simulation(
-                damping_values=samples['damping_values'][0, i],
-                t_E=samples['t_E'][0, i], t_ISy=samples['t_ISy'][0, i],
-                t_ISev=samples['t_ISev'][0, i], t_Cr=samples['t_Cr'][0, i],
-                mu_CR=samples['mu_CR'][0, i], mu_IH=samples['mu_IH'][0, i],
-                mu_HU=samples['mu_HU'][0, i], mu_UD=samples['mu_UD'][0, i],
-                transmission_prob=samples['transmission_prob'][0, i]
-            )
-            for key in result.keys():
-                result[key] = np.array(result[key])[None, ...]  # add sample axis
-            results.append(result)
-        results = combine_results(results)
-        results = extract_observables(results)
-        results_aug = apply_aug(results, aug=aug)
+    samples = workflow.sample(conditions=divi_dict, num_samples=num_samples)
+    samples['damping_values'] = samples['damping_values'].reshape((samples['damping_values'].shape[0], num_samples, 1, NUM_DAMPING_POINTS))
+    results = []
+    for i in range(num_samples):  # we only have one dataset for inference here
+        result = run_germany_nuts0_simulation(
+            scaling_factor=samples['scaling_factor'][0, i],
+            damping_values=samples['damping_values'][0, i],
+            t_E=samples['t_E'][0, i], t_ISy=samples['t_ISy'][0, i],
+            t_ISev=samples['t_ISev'][0, i], t_Cr=samples['t_Cr'][0, i],
+            mu_CR=samples['mu_CR'][0, i], mu_IH=samples['mu_IH'][0, i],
+            mu_HU=samples['mu_HU'][0, i], mu_UD=samples['mu_UD'][0, i],
+            transmission_prob=samples['transmission_prob'][0, i]
+        )
+        for key in result.keys():
+            result[key] = np.array(result[key])[None, ...]  # add sample axis
+        results.append(result)
+    results = combine_results(results)
+    results = extract_observables(results)
+    results = apply_aug(results, aug=aug)
 
-        # get sims in shape (samples, time, regions)
-        simulations = np.zeros((num_samples, divi_data.shape[0], divi_data.shape[1]))
-        simulations_aug = np.zeros((num_samples, divi_data.shape[0], divi_data.shape[1]))
-        for i in range(num_samples):
-            simulations[i] = np.concatenate([results[key][i] for key in results.keys()], axis=-1)
-            simulations_aug[i] = np.concatenate([results_aug[key][i] for key in results.keys()], axis=-1)
+    # get sims in shape (samples, time, regions)
+    simulations = np.zeros((num_samples, divi_data.shape[0], divi_data.shape[1]))
+    for i in range(num_samples):
+        simulations[i] = np.concatenate([results[key][i] for key in results.keys()], axis=-1)
 
-        # save sims
-        with open(f'{name}/sims_{name}{synthetic}.pickle', 'wb') as f:
-            pickle.dump(simulations, f, pickle.HIGHEST_PROTOCOL)
-        with open(f'{name}/sims_{name}{synthetic}_with_aug.pickle', 'wb') as f:
-            pickle.dump(simulations_aug, f, pickle.HIGHEST_PROTOCOL)
 
-        samples['damping_values'] = samples['damping_values'].reshape((samples['damping_values'].shape[0], samples['damping_values'].shape[1], -1))
-        validation_data['damping_values'] = validation_data['damping_values'].reshape((validation_data['damping_values'].shape[0], -1))
-
-        plot = bf.diagnostics.pairs_posterior(samples, priors=validation_data, dataset_id=0)
-        plot.savefig(f'{name}/pairs_posterior_{name}{synthetic}.png')
-
-    fig, axes = plt.subplots(2, 2, figsize=(12, 12), sharex=True, sharey='row', constrained_layout=True)
-    # Plot without augmentation
-    plot_region_fit(
-        simulations, region=0, true_data=divi_data, label="Region Aggregated Median (No Aug)", ax=axes[0, 0], color="#132a70"
-    )
-    axes[0, 0].set_title("Without Augmentation")
+    fig, ax = plt.subplots(figsize=(8, 6), constrained_layout=True)
     # Plot with augmentation
     plot_region_fit(
-        simulations_aug, region=0, true_data=divi_data, label="Region Aggregated Median (With Aug)", ax=axes[0, 1], color="#132a70"
-    )
-    axes[0, 1].set_title("With Augmentation")
-    # Plot without augmentation (80% quantile only)
-    plot_region_fit(
-        simulations, region=0, true_data=divi_data, label="Region Aggregated Median (No Aug)", ax=axes[1, 0], color="#132a70", only_80q=True
-    )
-    axes[1, 0].set_title("Without Augmentation (80% Quantile)")
-    # Plot with augmentation (80% quantile only)
-    plot_region_fit(
-        simulations_aug, region=0, true_data=divi_data, label="Region Aggregated Median (With Aug)", ax=axes[1, 1], color="#132a70", only_80q=True
-    )
-    axes[1, 1].set_title("With Augmentation (80% Quantile)")
-    plt.savefig(f'{name}/region_aggregated_{name}{synthetic}.png')
+        simulations, region=0, true_data=divi_data, label="Median", ax=ax, color=colors["Red"]
+    )    
+    lines, labels = ax.get_legend_handles_labels()
+    fig.legend(lines, labels, loc='upper left', bbox_to_anchor=(0.115, 0.99), ncol=1)
+    plt.savefig(f'{name}/region_aggregated_{name}.png', dpi=dpi)
     plt.close()
 
-    plot_icu_on_germany(simulations, name, synthetic, with_aug="")
-    plot_icu_on_germany(simulations_aug, name, synthetic, with_aug="_with_aug")
-
-    simulation_agg = np.sum(simulations, axis=-1, keepdims=True)  # sum over regions
-    simulation_aug_agg = np.sum(simulations_aug, axis=-1, keepdims=True)
-
-    rmse = bf.diagnostics.metrics.root_mean_squared_error(np.swapaxes(simulation_agg, 0,1), np.sum(divi_data, axis=-1, keepdims=True), normalize=False)
-    rmse_aug = bf.diagnostics.metrics.root_mean_squared_error(np.swapaxes(simulation_aug_agg, 0,1), np.sum(divi_data, axis=-1, keepdims=True), normalize=False)
-    print("Mean RMSE over regions:", rmse["values"].mean())
-    print("Mean RMSE over regions (with aug):", rmse_aug["values"].mean())
-
-    cal_error = bf.diagnostics.metrics.calibration_error(np.swapaxes(simulation_agg, 0,1), np.sum(divi_data, axis=-1, keepdims=True))
-    cal_error_aug = bf.diagnostics.metrics.calibration_error(np.swapaxes(simulation_aug_agg, 0,1), np.sum(divi_data, axis=-1, keepdims=True))
-    print("Mean Calibration Error over regions:", cal_error["values"].mean())
-    print("Mean Calibration Error over regions (with aug):", cal_error_aug["values"].mean())
-
+    plot_icu_on_germany(simulations)
 
 if __name__ == "__main__":
-    name = "nuts0"
+
+    set_fontsize()
 
     if not os.path.exists(name):
         os.makedirs(name)
-    # create_train_data(filename=f'{name}/trainings_data10_{name}.pickle', number_samples=2000)
-    # run_training(name=name, num_training_files=10)
-    run_inference(name=name, on_synthetic_data=False)
-    run_inference(name=name, on_synthetic_data=True)
+    create_train_data(filename=f'{name}/validation_data_{name}.pickle', number_samples=100)
+    create_train_data(filename=f'{name}/trainings_data1_{name}.pickle', number_samples=20000)
+    run_training(num_training_files=1)
+    run_inference(num_samples=1000)
