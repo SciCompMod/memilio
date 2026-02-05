@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2020-2025 MEmilio
+# Copyright (C) 2020-2026 MEmilio
 #
-# Authors: Carlotta Gerstein
+# Authors: Carlotta Gerstein, Jonas Arruda
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -38,7 +38,6 @@ from memilio.simulation.osecir import Model, interpolate_simulation_result
 from memilio.epidata import defaultDict as dd
 
 import geopandas as gpd
-
 
 name = "spain_nuts0"
 
@@ -145,11 +144,13 @@ def plot_region_fit(
                     color=color)
     if true_data is not None:
         true_vals = true_data[:, region]  # (time_points,)
-        ax.scatter(x, true_vals, color="black", label="Reported data", marker='x', zorder=2)
+        ax.scatter(x, true_vals, color="black",
+                   label="Reported data", marker='x', zorder=2)
 
     # Update x-axis to show dates in YYYY-MM format
     start_date = datetime.date(2020, 10, 1)
-    date_labels = [(start_date + datetime.timedelta(days=int(day))).strftime('%Y-%m-%d') for day in x]
+    date_labels = [(start_date + datetime.timedelta(days=int(day))
+                    ).strftime('%Y-%m-%d') for day in x]
     ax.set_xticks(x[::14])  # Set ticks every 7 days
     # ax.set_xticklabels([])
     ax.set_xticklabels(date_labels[::14], rotation=45)
@@ -166,7 +167,8 @@ def plot_icu_on_spain(simulations):
 
     map_data = gpd.read_file(os.path.join(os.getcwd(
     ), 'tools/lineas_limite/SHP_ETRS89/recintos_provinciales_inspire_peninbal_etrs89/recintos_provinciales_inspire_peninbal_etrs89.shp'))
-    map_data['ID_Provincia'] = map_data['NAMEUNIT'].map({val: key for key, val in dd.Provincias.items()})
+    map_data['ID_Provincia'] = map_data['NAMEUNIT'].map(
+        {val: key for key, val in dd.Provincias.items()})
     map_data.dropna(inplace=True, subset=['ID_Provincia'])
     map_data["ID_Provincia"] = map_data["ID_Provincia"].astype(int)
     map_data = map_data[~map_data["ID_Provincia"].isin(excluded_provincias)]
@@ -181,17 +183,20 @@ def plot_icu_on_spain(simulations):
     plot_map(values[-1], map_data,
              axes[1], "Median ICU", vmin, vmax)
 
-    plt.savefig(f"{name}/median_icu_spain_nuts0.png", bbox_inches='tight', dpi=dpi)
+    plt.savefig(f"{name}/median_icu_spain_nuts0.png",
+                bbox_inches='tight', dpi=dpi)
 
     # Save the colorbar horizontally in a separate figure
-    sm = plt.cm.ScalarMappable(cmap='Reds', norm=plt.Normalize(vmin=vmin, vmax=vmax))
+    sm = plt.cm.ScalarMappable(
+        cmap='Reds', norm=plt.Normalize(vmin=vmin, vmax=vmax))
     sm._A = []  # Dummy array for the ScalarMappable
 
     # Create a new figure for the colorbar
     cbar_fig, cbar_ax = plt.subplots(figsize=(12, 0.5))
     cbar = cbar_fig.colorbar(sm, cax=cbar_ax, orientation='horizontal')
     cbar.set_label("Median ICU per 100k [#]")
-    cbar_fig.savefig(f"{name}/colorbar_median_icu_nuts0.png", bbox_inches='tight', dpi=dpi)
+    cbar_fig.savefig(f"{name}/colorbar_median_icu_nuts0.png",
+                     bbox_inches='tight', dpi=dpi)
 
 
 def plot_map(values, map_data, ax, label, vmin, vmax):
@@ -215,6 +220,7 @@ def plot_map(values, map_data, ax, label, vmin, vmax):
     states.boundary.plot(ax=ax, edgecolor='darkgray', linewidth=0.5)
 
     ax.axis('off')
+
 
 class Simulation:
     """ """
@@ -615,7 +621,9 @@ if __name__ == "__main__":
 
     if not os.path.exists(name):
         os.makedirs(name)
-    create_train_data(filename=f'{name}/validation_data_{name}.pickle', number_samples=100)
-    create_train_data(filename=f'{name}/trainings_data1_{name}.pickle', number_samples=20000)
+    create_train_data(
+        filename=f'{name}/validation_data_{name}.pickle', number_samples=100)
+    create_train_data(
+        filename=f'{name}/trainings_data1_{name}.pickle', number_samples=20000)
     run_training(num_training_files=1)
     run_inference(num_samples=1000)

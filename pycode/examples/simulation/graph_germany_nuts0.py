@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2020-2025 MEmilio
+# Copyright (C) 2020-2026 MEmilio
 #
-# Authors: Carlotta Gerstein
+# Authors: Carlotta Gerstein, Jonas Arruda
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -39,7 +39,7 @@ from memilio.epidata import defaultDict as dd
 
 import geopandas as gpd
 
-name = "nuts0"
+name = "germany_nuts0"
 
 region_ids = [0]
 inference_params = ['scaling_factor', 'damping_values', 't_E', 't_ISy', 't_ISev',
@@ -99,6 +99,7 @@ colors = {"Blue": "#155489",
           "Dark grey": "#616060",
           "Light grey": "#F1F1F1"}
 
+
 def plot_region_fit(
     data: np.ndarray,
     region: int,
@@ -137,11 +138,13 @@ def plot_region_fit(
                     color=color)
     if true_data is not None:
         true_vals = true_data[:, region]  # (time_points,)
-        ax.scatter(x, true_vals, color="black", label="Reported data", marker='x', zorder=2)
+        ax.scatter(x, true_vals, color="black",
+                   label="Reported data", marker='x', zorder=2)
 
     # Update x-axis to show dates in YYYY-MM format
     start_date = datetime.date(2020, 10, 1)
-    date_labels = [(start_date + datetime.timedelta(days=int(day))).strftime('%Y-%m-%d') for day in x]
+    date_labels = [(start_date + datetime.timedelta(days=int(day))
+                    ).strftime('%Y-%m-%d') for day in x]
     ax.set_xticks(x[::14])  # Set ticks every 7 days
     ax.set_xticklabels([])
     # ax.set_xticklabels(date_labels[::14], rotation=45)
@@ -152,25 +155,33 @@ def plot_region_fit(
 def plot_icu_on_germany(simulations):
     med = np.median(simulations, axis=0)
 
-    population = pd.read_json('data/Germany/pydata/county_current_population_germany.json')
+    population = pd.read_json(
+        'data/Germany/pydata/county_current_population_germany.json')
     values = med / population['Population'].to_numpy()[None, :] * 100000
 
-    map_data = gpd.read_file(os.path.join(os.getcwd(), 'tools/vg2500_12-31.utm32s.shape/vg2500/VG2500_KRS.shp'))
-    fedstate_data = gpd.read_file(os.path.join(os.getcwd(), 'tools/vg2500_12-31.utm32s.shape/vg2500/VG2500_LAN.shp'))
-    state_data = gpd.read_file(os.path.join(os.getcwd(), 'tools/vg2500_12-31.utm32s.shape/vg2500/VG2500_STA.shp'))
+    map_data = gpd.read_file(os.path.join(
+        os.getcwd(), 'tools/vg2500_12-31.utm32s.shape/vg2500/VG2500_KRS.shp'))
+    fedstate_data = gpd.read_file(os.path.join(
+        os.getcwd(), 'tools/vg2500_12-31.utm32s.shape/vg2500/VG2500_LAN.shp'))
+    state_data = gpd.read_file(os.path.join(
+        os.getcwd(), 'tools/vg2500_12-31.utm32s.shape/vg2500/VG2500_STA.shp'))
 
     fig, axes = plt.subplots(1, 2, figsize=(4.5, 2.5), layout="constrained")
     vmin = 0
     vmax = 8
-    
-    plot_map(values[0], state_data, map_data, fedstate_data, axes[0], "Median ICU", vmin, vmax)
-    plot_map(values[-1], state_data, map_data, fedstate_data, axes[1], "Median ICU", vmin, vmax)
 
-    plt.savefig(f"{name}/median_icu_germany_nuts0.png", bbox_inches='tight', dpi=dpi)
+    plot_map(values[0], state_data, map_data, fedstate_data,
+             axes[0], "Median ICU", vmin, vmax)
+    plot_map(values[-1], state_data, map_data, fedstate_data,
+             axes[1], "Median ICU", vmin, vmax)
+
+    plt.savefig(f"{name}/median_icu_germany_nuts0.png",
+                bbox_inches='tight', dpi=dpi)
 
 
 def plot_map(values, map_data, ax, label, vmin, vmax):
-    map_data[label] = map_data['ARS'].map({f"{region_id:05d}": values[0]  for region_id in dd.County.keys()})
+    map_data[label] = map_data['ARS'].map(
+        {f"{region_id:05d}": values[0] for region_id in dd.County.keys()})
 
     map_data['state_id'] = map_data['ARS'].astype(
         int).map({county: county // 1000 for county in dd.County.keys()}).fillna(0).astype(int)
@@ -189,6 +200,7 @@ def plot_map(values, map_data, ax, label, vmin, vmax):
     states.boundary.plot(ax=ax, edgecolor='darkgray', linewidth=0.5)
 
     ax.axis('off')
+
 
 class Simulation:
     """ """
@@ -297,8 +309,8 @@ class Simulation:
             node = graph.get_node(node_idx)
 
             self.set_npis(
-                node.property.parameters, 
-                end_date, 
+                node.property.parameters,
+                end_date,
                 damping_values[node_idx])
             mobility_graph.add_node(node.id, node.property)
         for edge_idx in range(graph.num_edges):
@@ -315,7 +327,7 @@ class Simulation:
 
             osecir.save_results(
                 [osecir.interpolate_simulation_result(graph)], [[graph.get_node(node_indx).property.model
-                    for node_indx in range(graph.num_nodes)]], node_ids, self.results_dir, True, False
+                                                                 for node_indx in range(graph.num_nodes)]], node_ids, self.results_dir, True, False
             )
 
         results = {}
@@ -372,18 +384,19 @@ def load_divi_data():
 
     data = pd.read_json(os.path.join(divi_path, "germany_divi_ma7.json"))
     data = data[data['Date'] >= np.datetime64(DATE_TIME)]
-    data = data[data['Date'] <= np.datetime64(DATE_TIME + datetime.timedelta(days=60))]
+    data = data[data['Date'] <= np.datetime64(
+        DATE_TIME + datetime.timedelta(days=60))]
     data = data.sort_values(by=['Date'])
     divi_dict = {}
     divi_dict[f"state0"] = data['ICU'].to_numpy()[None, :, None]
     return divi_dict
 
 
-
 def extract_observables(simulation_results, observable_index=7):
     for key in simulation_results.keys():
         if key not in inference_params:
-            simulation_results[key] = simulation_results[key][:, :, observable_index][..., np.newaxis]
+            simulation_results[key] = simulation_results[key][:,
+                                                              :, observable_index][..., np.newaxis]
     return simulation_results
 
 
@@ -402,11 +415,14 @@ def load_pickle(path):
     with open(path, "rb") as f:
         return pickle.load(f)
 
+
 def is_state_key(k: str) -> bool:
     return 'state' in k
 
+
 def apply_aug(d: dict, aug) -> dict:
     return {k: np.clip(aug(v), 0, None) if is_state_key(k) else v for k, v in d.items()}
+
 
 def concat_dicts(base: dict, new: dict) -> dict:
     missing = set(base) - set(new)
@@ -480,12 +496,14 @@ def run_training(num_training_files=20):
     )
 
     # training data
-    train_files = [train_template.format(i=i) for i in range(1, 1+num_training_files)]
+    train_files = [train_template.format(i=i)
+                   for i in range(1, 1+num_training_files)]
     trainings_data = None
     for p in train_files:
         d = load_pickle(p)
         d = apply_aug(d, aug=aug)  # only on region keys
-        d['damping_values'] = d['damping_values'].reshape((d['damping_values'].shape[0], -1))
+        d['damping_values'] = d['damping_values'].reshape(
+            (d['damping_values'].shape[0], -1))
         if trainings_data is None:
             trainings_data = d
         else:
@@ -493,12 +511,15 @@ def run_training(num_training_files=20):
 
     # validation data
     validation_data = apply_aug(load_pickle(val_path), aug=aug)
-    validation_data['damping_values'] = validation_data['damping_values'].reshape((validation_data['damping_values'].shape[0], -1))
+    validation_data['damping_values'] = validation_data['damping_values'].reshape(
+        (validation_data['damping_values'].shape[0], -1))
 
     # check data
     workflow = get_workflow()
-    print("summary_variables shape:", workflow.adapter(trainings_data)["summary_variables"].shape)
-    print("inference_variables shape:", workflow.adapter(trainings_data)["inference_variables"].shape)
+    print("summary_variables shape:", workflow.adapter(
+        trainings_data)["summary_variables"].shape)
+    print("inference_variables shape:", workflow.adapter(
+        trainings_data)["inference_variables"].shape)
 
     history = workflow.fit_offline(
         data=trainings_data, epochs=300, batch_size=64, validation_data=validation_data
@@ -507,6 +528,7 @@ def run_training(num_training_files=20):
     workflow.approximator.save(
         filepath=os.path.join(f"{name}/model_{name}.keras")
     )
+
 
 def run_inference(num_samples=1000):
 
@@ -525,7 +547,8 @@ def run_inference(num_samples=1000):
     )
 
     samples = workflow.sample(conditions=divi_dict, num_samples=num_samples)
-    samples['damping_values'] = samples['damping_values'].reshape((samples['damping_values'].shape[0], num_samples, 1, NUM_DAMPING_POINTS))
+    samples['damping_values'] = samples['damping_values'].reshape(
+        (samples['damping_values'].shape[0], num_samples, 1, NUM_DAMPING_POINTS))
     results = []
     for i in range(num_samples):  # we only have one dataset for inference here
         result = run_germany_nuts0_simulation(
@@ -545,22 +568,25 @@ def run_inference(num_samples=1000):
     results = apply_aug(results, aug=aug)
 
     # get sims in shape (samples, time, regions)
-    simulations = np.zeros((num_samples, divi_data.shape[0], divi_data.shape[1]))
+    simulations = np.zeros(
+        (num_samples, divi_data.shape[0], divi_data.shape[1]))
     for i in range(num_samples):
-        simulations[i] = np.concatenate([results[key][i] for key in results.keys()], axis=-1)
-
+        simulations[i] = np.concatenate(
+            [results[key][i] for key in results.keys()], axis=-1)
 
     fig, ax = plt.subplots(figsize=(8, 6), constrained_layout=True)
     # Plot with augmentation
     plot_region_fit(
         simulations, region=0, true_data=divi_data, label="Median", ax=ax, color=colors["Red"]
-    )    
+    )
     lines, labels = ax.get_legend_handles_labels()
-    fig.legend(lines, labels, loc='upper left', bbox_to_anchor=(0.115, 0.99), ncol=1)
+    fig.legend(lines, labels, loc='upper left',
+               bbox_to_anchor=(0.115, 0.99), ncol=1)
     plt.savefig(f'{name}/region_aggregated_{name}.png', dpi=dpi)
     plt.close()
 
     plot_icu_on_germany(simulations)
+
 
 if __name__ == "__main__":
 
@@ -568,7 +594,9 @@ if __name__ == "__main__":
 
     if not os.path.exists(name):
         os.makedirs(name)
-    create_train_data(filename=f'{name}/validation_data_{name}.pickle', number_samples=100)
-    create_train_data(filename=f'{name}/trainings_data1_{name}.pickle', number_samples=20000)
+    create_train_data(
+        filename=f'{name}/validation_data_{name}.pickle', number_samples=100)
+    create_train_data(
+        filename=f'{name}/trainings_data1_{name}.pickle', number_samples=20000)
     run_training(num_training_files=1)
     run_inference(num_samples=1000)

@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2020-2025 MEmilio
+# Copyright (C) 2020-2026 MEmilio
 #
-# Authors: Carlotta Gerstein
+# Authors: Carlotta Gerstein, Jonas Arruda
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -38,10 +38,8 @@ from memilio.simulation.osecir import Model, interpolate_simulation_result
 from memilio.epidata import defaultDict as dd
 
 import geopandas as gpd
-import json
-import h5py
 
-name = "nuts3"
+name = "germany_nuts3"
 
 excluded_ids = [11001, 11002, 11003, 11004, 11005, 11006,
                 11007, 11008, 11009, 11010, 11011, 11012, 16056]
@@ -407,20 +405,6 @@ def load_divi_data():
             divi_dict[f"region{i}"] = divi_data[region_id].to_numpy()[None, :, None]
         else:
             divi_dict[f"no_icu_region{i}"] = np.zeros((1, divi_data.shape[0], 1))
-    return divi_dict
-
-
-def load_extrapolated_case_data():
-    file_path = os.path.dirname(os.path.abspath(__file__))
-    case_path = os.path.join(file_path, "../../../data/Germany/pydata")
-
-    file = h5py.File(os.path.join(case_path, "Results_rki.h5"))
-    divi_dict = {}
-    for i, region_id in enumerate(region_ids):
-        if region_id not in no_icu_ids:
-            divi_dict[f"region{i}"] = np.array(file[f"{region_id}"]['Total'][:, 4])[None, :, None]
-        else:
-            divi_dict[f"no_icu_region{i}"] = np.zeros((1, np.array(file[f"{region_id}"]['Total']).shape[0], 1))
     return divi_dict
 
 

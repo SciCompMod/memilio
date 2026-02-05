@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2020-2025 MEmilio
+# Copyright (C) 2020-2026 MEmilio
 #
-# Authors: Carlotta Gerstein
+# Authors: Carlotta Gerstein, Jonas Arruda
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -39,7 +39,7 @@ from memilio.epidata import defaultDict as dd
 
 import geopandas as gpd
 
-name = "spain_nuts3_test"
+name = "spain_nuts3"
 
 excluded_ids = [530, 630, 640, 701, 702]
 no_icu_ids = [112, 220, 241, 242, 411, 413, 414, 415, 417, 419, 423, 431, 522]
@@ -106,6 +106,7 @@ colors = {"Blue": "#155489",
           "Dark grey": "#616060",
           "Light grey": "#F1F1F1"}
 
+
 def plot_aggregated_over_regions(
     data: np.ndarray,
     region_agg=np.sum,
@@ -144,16 +145,19 @@ def plot_aggregated_over_regions(
                     color=color)
     if true_data is not None:
         true_vals = region_agg(true_data, axis=-1)  # (time_points,)
-        ax.scatter(x, true_vals, color="black", label="Reported data", marker='x', zorder=2)
+        ax.scatter(x, true_vals, color="black",
+                   label="Reported data", marker='x', zorder=2)
 
     # Update x-axis to show dates in YYYY-MM format
     start_date = datetime.date(2020, 10, 1)
-    date_labels = [(start_date + datetime.timedelta(days=int(day))).strftime('%Y-%m-%d') for day in x]
+    date_labels = [(start_date + datetime.timedelta(days=int(day))
+                    ).strftime('%Y-%m-%d') for day in x]
     ax.set_xticks(x[::14])  # Set ticks every 7 days
     # ax.set_xticklabels([])
     ax.set_xticklabels(date_labels[::14], rotation=45)
 
     ax.set_ylabel("ICU cases [#]")
+
 
 def plot_icu_on_spain(simulations):
     med = np.median(simulations, axis=0)
@@ -164,7 +168,8 @@ def plot_icu_on_spain(simulations):
 
     map_data = gpd.read_file(os.path.join(os.getcwd(
     ), 'tools/lineas_limite/SHP_ETRS89/recintos_provinciales_inspire_peninbal_etrs89/recintos_provinciales_inspire_peninbal_etrs89.shp'))
-    map_data['ID_Provincia'] = map_data['NAMEUNIT'].map({val: key for key, val in dd.Provincias.items()})
+    map_data['ID_Provincia'] = map_data['NAMEUNIT'].map(
+        {val: key for key, val in dd.Provincias.items()})
     map_data.dropna(inplace=True, subset=['ID_Provincia'])
     map_data["ID_Provincia"] = map_data["ID_Provincia"].astype(int)
     map_data = map_data[~map_data["ID_Provincia"].isin(excluded_ids)]
@@ -172,22 +177,28 @@ def plot_icu_on_spain(simulations):
         os.getcwd(), 'tools/lineas_limite/SHP_ETRS89/recintos_autonomicas_inspire_peninbal_etrs89/recintos_autonomicas_inspire_peninbal_etrs89.shp'))
 
     fig, axes = plt.subplots(1, 2, figsize=(4.5, 2.5), layout="constrained")
-    vmin, vmax = min(values[0].min(), values[-1].min()), max(values[0].max(), values[-1].max()) 
+    vmin, vmax = min(values[0].min(), values[-1].min()
+                     ), max(values[0].max(), values[-1].max())
 
-    plot_map(values[0], map_data, fedstate_data, axes[0], "Median ICU", vmin, vmax)
-    plot_map(values[-1], map_data, fedstate_data, axes[1], "Median ICU", vmin, vmax)
+    plot_map(values[0], map_data, fedstate_data,
+             axes[0], "Median ICU", vmin, vmax)
+    plot_map(values[-1], map_data, fedstate_data,
+             axes[1], "Median ICU", vmin, vmax)
 
-    plt.savefig(f"{name}/median_icu_spain_nuts3.png", bbox_inches='tight', dpi=dpi)
+    plt.savefig(f"{name}/median_icu_spain_nuts3.png",
+                bbox_inches='tight', dpi=dpi)
 
     # Save the colorbar horizontally in a separate figure
-    sm = plt.cm.ScalarMappable(cmap='Reds', norm=plt.Normalize(vmin=vmin, vmax=vmax))
+    sm = plt.cm.ScalarMappable(
+        cmap='Reds', norm=plt.Normalize(vmin=vmin, vmax=vmax))
     sm._A = []  # Dummy array for the ScalarMappable
 
     # Create a new figure for the colorbar
     cbar_fig, cbar_ax = plt.subplots(figsize=(5.5, 0.25))
     cbar = cbar_fig.colorbar(sm, cax=cbar_ax, orientation='horizontal')
     cbar.set_label("Median ICU [# per 100k]")
-    cbar_fig.savefig(f"{name}/colorbar_median_icu_nuts3.png", bbox_inches='tight', dpi=dpi)
+    cbar_fig.savefig(f"{name}/colorbar_median_icu_nuts3.png",
+                     bbox_inches='tight', dpi=dpi)
 
 
 def plot_map(values, map_data, fedstate_data, ax, label, vmin, vmax):
@@ -211,6 +222,7 @@ def plot_map(values, map_data, fedstate_data, ax, label, vmin, vmax):
     states.boundary.plot(ax=ax, edgecolor='darkgray', linewidth=0.5)
 
     ax.axis('off')
+
 
 class Simulation:
     """ """
@@ -341,7 +353,7 @@ class Simulation:
 
             osecir.save_results(
                 [osecir.interpolate_simulation_result(graph)], [[graph.get_node(node_indx).property.model
-                    for node_indx in range(graph.num_nodes)]], node_ids, self.results_dir, True, False
+                                                                 for node_indx in range(graph.num_nodes)]], node_ids, self.results_dir, True, False
             )
 
         results = {}
@@ -410,9 +422,11 @@ def load_divi_data():
     divi_dict = {}
     for i, region_id in enumerate(region_ids):
         if region_id not in no_icu_ids:
-            divi_dict[f"region{i}"] = divi_data[region_id].to_numpy()[None, :, None]
+            divi_dict[f"region{i}"] = divi_data[region_id].to_numpy()[
+                None, :, None]
         else:
-            divi_dict[f"no_icu_region{i}"] = np.zeros((1, divi_data.shape[0], 1))
+            divi_dict[f"no_icu_region{i}"] = np.zeros(
+                (1, divi_data.shape[0], 1))
     return divi_dict
 
 
@@ -465,7 +479,8 @@ def aggregate_states(d: dict) -> None:
             r for r in range(n_regions)
             if region_ids[r] // 10 == state
         ]
-        d[f"comunidad{i}"] = np.sum([d[f"region{r}"] if region_ids[r] not in no_icu_ids else d[f"no_icu_region{r}"] for r in idxs], axis=0)
+        d[f"comunidad{i}"] = np.sum(
+            [d[f"region{r}"] if region_ids[r] not in no_icu_ids else d[f"no_icu_region{r}"] for r in idxs], axis=0)
     # all allowed regions
     d["state"] = np.sum([d[f"comunidad{r}"]
                          for r in range(len(comunidades))], axis=0)
@@ -605,7 +620,7 @@ def run_inference(num_samples=1000):
     results = []
     for i in range(num_samples):  # we only have one dataset for inference here
         result = run_spain_nuts3_simulation(
-        scaling_factor=samples['scaling_factor'][0, i],
+            scaling_factor=samples['scaling_factor'][0, i],
             damping_values=samples['damping_values'][0, i],
             t_E=samples['t_E'][0, i], t_ISy=samples['t_ISy'][0, i],
             t_ISev=samples['t_ISev'][0, i], t_Cr=samples['t_Cr'][0, i],
@@ -625,7 +640,8 @@ def run_inference(num_samples=1000):
     simulations = np.zeros(
         (num_samples, divi_data.shape[0], divi_data.shape[1]))
     for i in range(num_samples):
-        simulations[i] = np.concatenate([results[key][i] for key in divi_region_keys], axis=-1)
+        simulations[i] = np.concatenate(
+            [results[key][i] for key in divi_region_keys], axis=-1)
 
     fig, ax = plt.subplots(figsize=(8, 6), constrained_layout=True)
     # Plot with augmentation
@@ -633,7 +649,8 @@ def run_inference(num_samples=1000):
         simulations, true_data=divi_data, label="Aggregated Median", ax=ax, color=colors["Red"]
     )
     lines, labels = ax.get_legend_handles_labels()
-    fig.legend(lines, labels, loc='upper left', bbox_to_anchor=(0.115, 0.99), ncol=1)
+    fig.legend(lines, labels, loc='upper left',
+               bbox_to_anchor=(0.115, 0.99), ncol=1)
     plt.savefig(f'{name}/region_aggregated_{name}.png', dpi=dpi)
     plt.close()
 
@@ -646,7 +663,9 @@ if __name__ == "__main__":
 
     if not os.path.exists(name):
         os.makedirs(name)
-    create_train_data(filename=f'{name}/validation_data_{name}.pickle', number_samples=100)
-    create_train_data(filename=f'{name}/trainings_data1_{name}.pickle', number_samples=20000)
+    create_train_data(
+        filename=f'{name}/validation_data_{name}.pickle', number_samples=100)
+    create_train_data(
+        filename=f'{name}/trainings_data1_{name}.pickle', number_samples=20000)
     run_training(num_training_files=1)
     run_inference(num_samples=1000)
