@@ -150,14 +150,21 @@ int main(int /*argc*/, char** /*argv*/)
     for (auto& node : graph.nodes()) {
         mio::timing::AutoTimer<"neighbourhood search"> timer;
         node.property.set_regional_neighbors(tree.in_range_indices_query(
-            node.property.get_location(), {mio::geo::kilometers(1), mio::geo::kilometers(250)})); // stimmt das alles?
+            node.property.get_location(), {mio::geo::kilometers(1), mio::geo::kilometers(20)}));
     }
 
     auto sim = mio::make_farm_sim(t0, dt, std::move(graph));
 
     sim.advance(tmax);
 
-    sim.return_all_time_series()[7658].print_table({"S", "E", "I", "D"});
+    // sim.return_all_time_series()[7658].print_table({"S", "E", "I", "D"});
+    auto result  = sim.get_confirmation_dates();
+    auto counter = 0;
+    for (auto r : result) {
+        if (r >= 0)
+            counter++;
+    }
+    mio::log_info("Number of confirmed farms: {}", counter);
 
     return 0;
 }

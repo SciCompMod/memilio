@@ -37,29 +37,34 @@ namespace mio
 namespace geo
 {
 /**
- * @brief Concept for spherical location types.
- * 
- * The location type needs to provide get_latitude() and get_longitude() methods returning floating point types.
+ * @brief Concept for Cartesian location types.
+ *
+ * The location type needs to provide get_x() and get_y() methods returning floating point types.
  */
 template <class Location>
-concept IsSphericalLocation = requires(const Location& loc) {
-    std::is_floating_point_v<decltype(loc.get_latitude())> && std::is_floating_point_v<decltype(loc.get_longitude())>;
+concept IsCartesianLocation = requires(const Location& loc) {
+    std::is_floating_point_v<decltype(loc.get_x())> && std::is_floating_point_v<decltype(loc.get_y())>;
 };
 
 template <class Iter>
-concept SphericalLocationIteratorType = std::indirectly_readable<Iter> && requires(const Iter& loc) {
-    std::is_floating_point_v<decltype((*loc)->get_latitude())> &&
-        std::is_floating_point_v<decltype((*loc)->get_longitude())>;
+concept CartesianLocationIteratorType = std::indirectly_readable<Iter> && requires(const Iter& loc) {
+    std::is_floating_point_v<decltype((*loc)->get_x())> && std::is_floating_point_v<decltype((*loc)->get_y())>;
 };
 
+auto to_point = [](const auto& elem) {
+    return Point(elem->get_x(), elem->get_y());
+};
+
+// Create transform iterators
+
 /**
- * @brief R-tree for spatial queries of geographical locations on the sphere.
- * 
- * Data structure to store spatial indices and allow for efficient in-range and nearest neighbour queries. 
+ * @brief R-tree for spatial queries of geographical locations in Cartesian coordinates.
+ *
+ * Data structure to store spatial indices and allow for efficient in-range and nearest neighbour queries.
  * Wraps the Boost::geometry::index::rtree. Can be initialized with a vector of geographical location data or a range.
- * The provided location data needs to provide get_latitude() and get_longitude().
- * The tree is initialised with a maximum number of elements per tree node of 16, which can be changed for different use 
- * cases. 
+ * The provided location data needs to provide get_x() and get_y() methods returning coordinates in meters.
+ * The tree is initialised with a maximum number of elements per tree node of 16, which can be changed for different use
+ * cases.
  */
 class RTree
 {
@@ -72,33 +77,33 @@ public:
 
     /**
      * @brief Construct a new RTree object with data given in a vector.
-     * 
-     * @param locations A vector of geographical locations, they need to provide get_latitude() and get_longitude().
+     *
+     * @param locations A vector of geographical locations, they need to provide get_x() and get_y().
      */
-    template <IsSphericalLocation Location>
+    template <IsCartesianLocation Location>
     RTree(const std::vector<Location>& locations)
         : rtree{}
     {
         for (size_t index = 0; index < locations.size(); index++) {
-            Point point(locations[index].get_longitude(), locations[index].get_latitude());
+            Point point(locations[index].get_x(), locations[index].get_y());
             rtree.insert(Node(point, index));
         }
     }
 
     /**
      * @brief Construct a new RTree object with data given in a range
-     * 
+     *
      * @param first The beginning of the range
      * @param last The end of the range
-     * The provided location data needs to provide get_latitude() and get_longitude().
+     * The provided location data needs to provide get_x() and get_y().
      */
-    template <SphericalLocationIteratorType Iter>
+    template <CartesianLocationIteratorType Iter>
     RTree(Iter first, Iter last)
         : rtree{}
     {
         size_t index = 0;
         while (first != last) {
-            Point point((*first)->get_longitude(), (*first)->get_latitude());
+            Point point((*first)->get_x(), (*first)->get_y());
             rtree.insert(Node(point, index));
             ++first;
             ++index;
@@ -117,30 +122,30 @@ public:
 
     /**
      * @brief Return the indices of the k nearest neighbors (i.e. nodes with the least distance) of a given location.
-     * 
-     * @param location Midpoint for the query, provides get_latitude() and get_longitude().
+     *
+     * @param location Midpoint for the query, provides get_x() and get_y().
      * @param number The number of nearest neighbours to find.
      * @return Vector with indices of the nearest neighbours.
      */
-    std::vector<size_t> nearest_neighbor_indices(const IsSphericalLocation auto& location, size_t number) const
+    std::vector<size_t> nearest_neighbor_indices(const IsCartesianLocation auto& location, size_t number) const
     {
         using boost::geometry::index::nearest;
         using boost::geometry::index::query;
 
-        Point point(location.get_longitude(), location.get_latitude());
+        Point point(location.get_x(), location.get_y());
         std::vector<size_t> indices;
         query(rtree, nearest(point, number), mio::back_inserter_second_element<std::vector<size_t>, Node>{indices});
         return indices;
     }
 
     /**
-     * @brief Return the indices of the points within a given radius (in kilometers) where the circle is approximated by a polygon.
-     * 
-     * @param location Midpoint for the query, provides get_latitude() and get_longitude().
+     * @brief Return the indices of the points within a given radius where the circle is approximated by a polygon.
+     *
+     * @param location Midpoint for the query, provides get_x() and get_y().
      * @param radius The radius of the query.
      * @return Vector with indices of the points found.
      */
-    std::vector<size_t> in_range_indices_approximate(const IsSphericalLocation auto& location, Distance radius) const
+    std::vector<size_t> in_range_indices_approximate(const IsCartesianLocation auto& location, Distance radius) const
     {
         using boost::geometry::index::covered_by;
         using boost::geometry::index::query;
@@ -154,11 +159,11 @@ public:
     /**
      * @brief Return the indices of the points within each given radius for multiple radii at the same time.
      *
-     * @param location Midpoint for the query, provides get_latitude() and get_longitude().
+     * @param location Midpoint for the query, provides get_x() and get_y().
      * @param radii Vector containing the radii of the query.
      * @return Vector of vectors with indices of the points found.
      */
-    std::vector<std::vector<size_t>> in_range_indices_query(const IsSphericalLocation auto& location,
+    std::vector<std::vector<size_t>> in_range_indices_query(const IsCartesianLocation auto& location,
                                                             const std::vector<Distance>& radii) const
     {
         using boost::geometry::distance;
@@ -169,7 +174,7 @@ public:
         auto circle     = create_circle_approximation(location, *max_radius);
         std::vector<Node> nodes;
         query(rtree, covered_by(circle), std::back_inserter(nodes));
-        auto midpoint = Point(location.get_longitude(), location.get_latitude());
+        auto midpoint = Point(location.get_x(), location.get_y());
         std::vector<std::vector<size_t>> result;
         for (const auto& radius : radii) {
             auto radius_in_meter = radius.meters();
@@ -187,14 +192,14 @@ public:
 
     /**
      * @brief Return the indices of the points within a given radius.
-     * 
-     * @param location Midpoint for the query, provides get_latitude() and get_longitude().
+     *
+     * @param location Midpoint for the query, provides get_x() and get_y().
      * @param radius The radius of the query.
      * @return Vector with indices of the points found.
      *
      * Basically the same as \ref in_range_indices_approximate, but filters the result to make sure the points are within the radius.
      */
-    std::vector<size_t> in_range_indices(const IsSphericalLocation auto& location, Distance radius) const
+    std::vector<size_t> in_range_indices(const IsCartesianLocation auto& location, Distance radius) const
     {
         using boost::geometry::distance;
         using boost::geometry::index::covered_by;
@@ -204,7 +209,8 @@ public:
 
         std::vector<Node> nodes;
         query(rtree, covered_by(circle), std::back_inserter(nodes));
-        auto midpoint = Point(location.get_longitude(), location.get_latitude());
+        mio::log_info("RTree query found {} candidates.", nodes.size());
+        auto midpoint = Point(location.get_x(), location.get_y());
         std::vector<size_t> indices;
         indices.reserve(nodes.size());
         for (auto& node : nodes) {
@@ -216,8 +222,8 @@ public:
     }
 
 private:
-    /// @brief Point stores longitude and latitude in this order.
-    using Point = boost::geometry::model::point<double, 2, boost::geometry::cs::cartesian>;
+    /// @brief Point stores x and y coordinates in meters.
+    using Point = boost::geometry::model::d2::point_xy<double>;
     /// @brief Node stores a point and its associated index.
     using Node = std::pair<Point, size_t>;
     /// @brief MultiPolygon type for circle approximation.
@@ -225,12 +231,12 @@ private:
     /**
      * @brief Create a circle approximation object.
      *
-     * @param location Midpoint, needs to provide get_latitude() and get_longitude().
+     * @param location Midpoint, needs to provide get_x() and get_y().
      * @param radius
      * @param approximation_points Number of points used to approximate the circle. Default is 36, i.e. we build a 36-gon.
      * @return multi_polygon.
      */
-    MultiPolygon create_circle_approximation(const IsSphericalLocation auto& location, Distance radius,
+    MultiPolygon create_circle_approximation(const IsCartesianLocation auto& location, Distance radius,
                                              size_t approximation_points = 36) const
     {
         using namespace boost::geometry::strategy::buffer;
@@ -241,7 +247,7 @@ private:
         end_round end_strategy;
         side_straight side_strategy;
 
-        Point midpoint(location.get_longitude(), location.get_latitude());
+        Point midpoint(location.get_x(), location.get_y());
 
         MultiPolygon circle;
         boost::geometry::buffer(midpoint, circle, distance_strategy, side_strategy, join_strategy, end_strategy,

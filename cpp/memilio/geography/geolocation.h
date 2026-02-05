@@ -182,10 +182,6 @@ public:
     }
 
 private:
-    /**
-     * @brief Assert that the latitude and longitude are within valid ranges.
-     */
-
     ScalarType m_latitude;
     ScalarType m_longitude;
 };

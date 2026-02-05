@@ -65,6 +65,7 @@ public:
             }
             update_force_of_infection(graph);
             for (auto& n : graph.nodes()) {
+                mio::timing::AutoTimer<"Node Function"> node_timer;
                 Base::m_node_func(Base::m_t, dt, n.property);
             }
             if (!m_standstill) {
@@ -92,8 +93,10 @@ public:
         }
     }
 
+private:
     void update_force_of_infection(Graph& graph)
     {
+        mio::timing::AutoTimer<"Update force of infection"> timer;
         using Model        = std::decay_t<decltype(Base::m_graph.nodes()[0].property.get_simulation().get_model())>;
         using AdoptionRate = mio::smm::AdoptionRates<ScalarType, typename Model::Status, mio::regions::Region>;
         for (auto& node : graph.nodes()) {
@@ -102,8 +105,9 @@ public:
                 continue;
             }
             auto infection_pressure = 0.0;
-            for (auto& id : node.property.get_regional_neighbors()[1]) {
-                auto& neighbour = graph.nodes()[id];
+            auto neighbors          = node.property.get_regional_neighbors();
+            for (size_t index = 0; index < neighbors[1].size(); ++index) {
+                auto& neighbour = graph.nodes()[neighbors[1][index]];
                 if (neighbour.id != node.id && neighbour.property.get_infection_status()) {
                     infection_pressure +=
                         (m_h0 /
@@ -112,7 +116,6 @@ public:
                               m_alpha)));
                 }
             }
-            mio::unused(node);
             node.property.get_simulation().get_model().parameters.template get<AdoptionRate>()[3].factor =
                 infection_pressure;
         }
@@ -221,6 +224,17 @@ public:
         }
     }
 
+    void cull_node(size_t node_id)
+    {
+        m_culling_queue.push(std::make_pair(node_id, Base::m_t));
+        Base::m_graph.nodes()[node_id].property.set_quarantined(true);
+    }
+
+    void vaccinate_node(size_t node_id)
+    {
+        m_vaccination_queue.push(std::make_pair(node_id, Base::m_t));
+    }
+
     /**
      * get the mobility parameters.
      */
@@ -228,7 +242,7 @@ public:
     // {
     //     return m_trade;
     // }
-
+public:
     auto sum_exchanges()
     {
         const auto size = Base::m_graph.edges()[0].property.get_mobility_results().get_num_elements();
@@ -382,6 +396,16 @@ public:
         return results;
     }
 
+    std::vector<int> get_confirmation_dates()
+    {
+        std::vector<int> result;
+        result.reserve(Base::m_graph.nodes().size());
+        for (auto& n : Base::m_graph.nodes()) {
+            result.push_back(n.property.get_date_confirmation());
+        }
+        return result;
+    }
+
     // void apply_interventions()
     // {
     //     // Set quarantine
@@ -430,23 +454,10 @@ public:
     //     }
     // }
 
-    void cull_node(size_t node_id)
-    {
-        m_culling_queue.push(std::make_pair(node_id, Base::m_t));
-        Base::m_graph.nodes()[node_id].property.set_quarantined(true);
-    }
-
-    void vaccinate_node(size_t node_id)
-    {
-        m_vaccination_queue.push(std::make_pair(node_id, Base::m_t));
-    }
-
     RandomNumberGenerator& get_rng()
     {
         return m_rng;
     }
-
-    ScalarType infectionrisk = 0.0;
 
 private:
     RandomNumberGenerator m_rng;
@@ -461,9 +472,9 @@ private:
     ScalarType m_sensitivity                = 0.95;
     std::map<size_t, ScalarType> m_duration = {{0, 21.0}, {1, 21.0}, {2, 400.0}, {3, 21.0}, {4, 28.0}};
     std::map<size_t, ScalarType> m_downtime = {{0, 21.0}, {1, 21.0}, {2, 21.0}, {3, 21.0}, {4, 21.0}};
-    ScalarType m_h0                         = 0.001;
-    ScalarType m_r0                         = 1000;
-    ScalarType m_alpha                      = 2;
+    ScalarType m_h0                         = 0.0002;
+    ScalarType m_r0                         = 4000;
+    ScalarType m_alpha                      = 10;
 };
 
 /**
