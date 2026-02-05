@@ -219,7 +219,6 @@ TEST(TestIdeAgeres, checkSimulationFunctions)
     // Create TimeSeries with num_transitions elements where transitions needed for simulation will be stored.
     size_t num_transitions = (size_t)mio::isecir::InfectionTransition::Count;
     mio::TimeSeries<ScalarType> init_intra(num_transitions * num_agegroups);
-    mio::TimeSeries<ScalarType> init_inter(num_transitions * num_agegroups);
 
     // Add time points for transitions for initialization.
     Vec vec_init = Vec::Constant(num_transitions * num_agegroups, 0.);
@@ -241,15 +240,12 @@ TEST(TestIdeAgeres, checkSimulationFunctions)
 
     // Add time points to TimeSeries.
     init_intra.add_time_point(-0.5, vec_init);
-    init_inter.add_time_point(-0.5, vec_init);
     while (init_intra.get_last_time() < 0) {
         init_intra.add_time_point(init_intra.get_last_time() + dt, vec_init);
-        init_inter.add_time_point(init_inter.get_last_time() + dt, vec_init);
     }
 
-    // Initialize models.
+    // Initialize model.
     mio::isecir::Model model_intra(std::move(init_intra), N, deaths, num_agegroups);
-    mio::isecir::Model model_inter(std::move(init_inter), N, deaths, num_agegroups);
 
     // Set working parameters for both models.
     for (size_t group = 0; group < num_agegroups; group++) {
@@ -259,27 +255,23 @@ TEST(TestIdeAgeres, checkSimulationFunctions)
         mio::StateAgeFunctionWrapper<ScalarType> delaydistribution(smoothcos);
         std::vector<mio::StateAgeFunctionWrapper<ScalarType>> vec_delaydistrib(num_transitions, delaydistribution);
         model_intra.parameters.get<mio::isecir::TransitionDistributions>()[mio::AgeGroup(group)] = vec_delaydistrib;
-        model_inter.parameters.get<mio::isecir::TransitionDistributions>()[mio::AgeGroup(group)] = vec_delaydistrib;
 
         std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
         vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]           = 1;
         vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)]    = 1;
         model_intra.parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(group)] = vec_prob;
-        model_inter.parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(group)] = vec_prob;
 
         mio::SmootherCosine<ScalarType> smoothcos_prob(1.0);
         mio::StateAgeFunctionWrapper<ScalarType> prob(smoothcos_prob);
         model_intra.parameters.get<mio::isecir::TransmissionProbabilityOnContact>()[mio::AgeGroup(group)] = prob;
         model_intra.parameters.get<mio::isecir::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(group)]   = prob;
         model_intra.parameters.get<mio::isecir::RiskOfInfectionFromSymptomatic>()[mio::AgeGroup(group)]   = prob;
-        model_inter.parameters.get<mio::isecir::TransmissionProbabilityOnContact>()[mio::AgeGroup(group)] = prob;
-        model_inter.parameters.get<mio::isecir::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(group)]   = prob;
-        model_inter.parameters.get<mio::isecir::RiskOfInfectionFromSymptomatic>()[mio::AgeGroup(group)]   = prob;
     }
     model_intra.parameters.set<mio::isecir::Seasonality>(0.);
     model_intra.parameters.set<mio::isecir::StartDay>(0);
-    model_inter.parameters.set<mio::isecir::Seasonality>(0.);
-    model_inter.parameters.set<mio::isecir::StartDay>(0);
+
+    // Define model_inter as copy of model_intra, i.e. all initial conditions and parameters are the same in both models.
+    mio::isecir::Model model_inter = model_intra;
 
     // Here we set the contact matrices for both models which is where they differ from each other.
     mio::ContactMatrixGroup<ScalarType> contact_matrix = mio::ContactMatrixGroup<ScalarType>(1, num_agegroups);
@@ -314,13 +306,18 @@ TEST(TestIdeAgeres, checkSimulationFunctions)
 
     ASSERT_EQ(secihurd_t0_baseline.size() * num_agegroups, secihurd_simulated_intra.get_num_elements());
     // Compare simulated compartments at time points t0 and t1.
+    // In both models, the two age groups have the same number of contacts where the only difference lies in whom they
+    // have contact with. In both age groups, the probability of meeting an infected individualis the same, hence we
+    // expect the same results in both models.
     for (size_t i = 0; i < secihurd_t0_baseline.size(); i++) {
         const size_t age1 = i;
         const size_t age2 = i + secihurd_t0_baseline.size();
+        // Test model_intra.
         EXPECT_NEAR(secihurd_simulated_intra[0][age1], secihurd_t0_baseline[i], 1e-8);
         EXPECT_NEAR(secihurd_simulated_intra[0][age2], baseline_scaling * secihurd_t0_baseline[i], 1e-8);
         EXPECT_NEAR(secihurd_simulated_intra[1][age1], secihurd_t1_baseline[i], 1e-8);
         EXPECT_NEAR(secihurd_simulated_intra[1][age2], baseline_scaling * secihurd_t1_baseline[i], 1e-8);
+        // Test model_inter.
         EXPECT_NEAR(secihurd_simulated_inter[0][age1], secihurd_t0_baseline[i], 1e-8);
         EXPECT_NEAR(secihurd_simulated_inter[0][age2], baseline_scaling * secihurd_t0_baseline[i], 1e-8);
         EXPECT_NEAR(secihurd_simulated_inter[1][age1], secihurd_t1_baseline[i], 1e-8);
@@ -332,9 +329,11 @@ TEST(TestIdeAgeres, checkSimulationFunctions)
     for (size_t i = 0; i < transitions_t1_baseline.size(); i++) {
         const size_t age1 = i;
         const size_t age2 = i + transitions_t1_baseline.size();
+        // Test model_intra.
         EXPECT_NEAR(transitions_simulated_intra.get_last_value()[age1], transitions_t1_baseline[i], 1e-8);
         EXPECT_NEAR(transitions_simulated_intra.get_last_value()[age2], baseline_scaling * transitions_t1_baseline[i],
                     1e-8);
+        // Test model_inter.
         EXPECT_NEAR(transitions_simulated_inter.get_last_value()[age1], transitions_t1_baseline[i], 1e-8);
         EXPECT_NEAR(transitions_simulated_inter.get_last_value()[age2], baseline_scaling * transitions_t1_baseline[i],
                     1e-8);
