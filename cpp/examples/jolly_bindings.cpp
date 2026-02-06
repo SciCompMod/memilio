@@ -49,15 +49,17 @@ enum class InfectionState
     Count
 };
 
-std::vector<int> simulate(ScalarType tmax = 40, ScalarType dt = 1.0, ScalarType suspicion_threshold = 0.05,
-                          ScalarType sensitivity = 0.95, ScalarType h0 = 0.001, ScalarType r0 = 1000,
-                          ScalarType alpha = 2, ScalarType A0_SEI = 0.2, ScalarType A0_EI = 0.2, ScalarType A0_ID = 0.2,
-                          ScalarType A1_SEI = 0.2, ScalarType A1_EI = 0.2, ScalarType A1_ID = 0.2,
-                          ScalarType A2_SEI = 0.2, ScalarType A2_EI = 0.2, ScalarType A2_ID = 0.2,
-                          ScalarType A3_SEI = 0.2, ScalarType A3_EI = 0.2, ScalarType A3_ID = 0.2,
-                          ScalarType A4_SEI = 0.2, ScalarType A4_EI = 0.2, ScalarType A4_ID = 0.2,
-                          ScalarType first_infection_day = 0, ScalarType second_infection_day = 2,
-                          ScalarType third_infection_day = 2)
+std::vector<int>
+simulate(ScalarType tmax = 40, ScalarType dt = 1.0, ScalarType suspicion_threshold = 0.05,
+         ScalarType sensitivity = 0.95, ScalarType h0 = 0.001, ScalarType r0 = 1000, ScalarType alpha = 2,
+         ScalarType A0_SEI = 0.2, ScalarType A0_EI = 0.2, ScalarType A0_ID = 0.2, ScalarType A1_SEI = 0.2,
+         ScalarType A1_EI = 0.2, ScalarType A1_ID = 0.2, ScalarType A2_SEI = 0.2, ScalarType A2_EI = 0.2,
+         ScalarType A2_ID = 0.2, ScalarType A3_SEI = 0.2, ScalarType A3_EI = 0.2, ScalarType A3_ID = 0.2,
+         ScalarType A4_SEI = 0.2, ScalarType A4_EI = 0.2, ScalarType A4_ID = 0.2, ScalarType foi_inner_factor0 = 1.0,
+         ScalarType foi_outer_factor0 = 1.0, ScalarType foi_inner_factor1 = 1.0, ScalarType foi_outer_factor1 = 1.0,
+         ScalarType foi_inner_factor2 = 1.0, ScalarType foi_outer_factor2 = 1.0, ScalarType foi_inner_factor3 = 1.0,
+         ScalarType foi_outer_factor3 = 1.0, ScalarType foi_inner_factor4 = 1.0, ScalarType foi_outer_factor4 = 1.0,
+         ScalarType first_infection_day = 0, ScalarType second_infection_day = 2, ScalarType third_infection_day = 2)
 {
     const auto t0 = 0.;
 
@@ -162,7 +164,9 @@ std::vector<int> simulate(ScalarType tmax = 40, ScalarType dt = 1.0, ScalarType 
 
     auto sim = mio::make_farm_sim(t0, dt, std::move(graph));
     sim.set_parameters(suspicion_threshold, sensitivity, h0, r0, alpha,
-                       {first_infection_day, second_infection_day, third_infection_day});
+                       {first_infection_day, second_infection_day, third_infection_day},
+                       {foi_inner_factor0, foi_inner_factor1, foi_inner_factor2, foi_inner_factor3, foi_inner_factor4},
+                       {foi_outer_factor0, foi_outer_factor1, foi_outer_factor2, foi_outer_factor3, foi_outer_factor4});
 
     sim.advance(tmax);
 

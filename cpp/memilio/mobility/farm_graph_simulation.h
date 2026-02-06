@@ -75,7 +75,6 @@ public:
             }
             update_force_of_infection(graph);
             for (auto& n : graph.nodes()) {
-                mio::timing::AutoTimer<"Node Function"> node_timer;
                 Base::m_node_func(Base::m_t, dt, n.property);
             }
             if (!m_standstill) {
@@ -144,7 +143,6 @@ private:
     */
     void update_force_of_infection(Graph& graph)
     {
-        mio::timing::AutoTimer<"Update force of infection"> timer;
         using Model        = std::decay_t<decltype(Base::m_graph.nodes()[0].property.get_simulation().get_model())>;
         using AdoptionRate = mio::smm::AdoptionRates<ScalarType, typename Model::Status, mio::regions::Region>;
         for (auto& node : graph.nodes()) {
@@ -158,6 +156,7 @@ private:
                 auto& neighbour = graph.nodes()[neighbors[2][index]];
                 if (neighbour.id != node.id && neighbour.property.get_infection_status()) {
                     infection_pressure +=
+                        m_foi_inner_factor[neighbour.property.get_type()] *
                         (m_h0 /
                          (1 +
                           pow(node.property.get_location().distance(neighbour.property.get_location()).meters() / m_r0,
@@ -165,7 +164,7 @@ private:
                 }
             }
             node.property.get_simulation().get_model().parameters.template get<AdoptionRate>()[3].factor =
-                infection_pressure;
+                m_foi_outer_factor[node.property.get_type()] * infection_pressure;
         }
     }
 
@@ -563,10 +562,14 @@ public:
      * @param sensitivity 
      * @param h0 
      * @param r0 
-     * @param alpha 
+     * @param alpha
+     * @param infection_dates
+     * @param foi_inner_factors
+     * @param foi_outer_factors
      */
     void set_parameters(ScalarType suspicion_threshold, ScalarType sensitivity, ScalarType h0, ScalarType r0,
-                        ScalarType alpha, std::vector<Timepoint> infection_dates)
+                        ScalarType alpha, std::vector<Timepoint> infection_dates,
+                        std::vector<ScalarType> foi_inner_factors, std::vector<ScalarType> foi_outer_factors)
     {
         m_suspicion_threshold = suspicion_threshold;
         m_sensitivity         = sensitivity;
@@ -574,6 +577,8 @@ public:
         m_r0                  = r0;
         m_alpha               = alpha;
         m_infection_dates     = infection_dates;
+        m_foi_inner_factor    = foi_inner_factors;
+        m_foi_outer_factor    = foi_outer_factors;
     }
 
 private:
@@ -585,15 +590,17 @@ private:
     ScalarType m_vaccination_capacity_per_day = 500;
     ScalarType m_first_detection              = std::numeric_limits<ScalarType>::max();
     // Trade<ScalarType, Graph> m_trade;
-    bool m_standstill                        = false;
-    ScalarType m_suspicion_threshold         = 0.05;
-    ScalarType m_sensitivity                 = 0.95;
-    std::map<size_t, ScalarType> m_duration  = {{0, 21.0}, {1, 21.0}, {2, 400.0}, {3, 21.0}, {4, 28.0}};
-    std::map<size_t, ScalarType> m_downtime  = {{0, 21.0}, {1, 21.0}, {2, 21.0}, {3, 21.0}, {4, 21.0}};
-    ScalarType m_h0                          = 0.0002;
-    ScalarType m_r0                          = 4000;
-    ScalarType m_alpha                       = 10;
-    std::vector<Timepoint> m_infection_dates = {0, 2, 2};
+    bool m_standstill                          = false;
+    ScalarType m_suspicion_threshold           = 0.05;
+    ScalarType m_sensitivity                   = 0.95;
+    std::vector<ScalarType> m_duration         = {21.0, 21.0, 400.0, 21.0, 28.0};
+    std::vector<ScalarType> m_downtime         = {21.0, 21.0, 21.0, 21.0, 21.0};
+    std::vector<ScalarType> m_foi_inner_factor = {1.0, 1.0, 1.0, 1.0, 1.0};
+    std::vector<ScalarType> m_foi_outer_factor = {1.0, 1.0, 1.0, 1.0, 1.0};
+    ScalarType m_h0                            = 0.0002;
+    ScalarType m_r0                            = 4000;
+    ScalarType m_alpha                         = 10;
+    std::vector<Timepoint> m_infection_dates   = {0, 2, 2};
 };
 
 /**
