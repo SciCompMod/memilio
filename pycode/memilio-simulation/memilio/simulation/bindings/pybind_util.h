@@ -235,7 +235,7 @@ auto bind_Range(pybind11::module_& m, const std::string& class_name)
 {
     //bindings for iterator for the range
     struct Iterator {
-        typename Range::Iterators iter_pair;
+        std::pair<typename Range::iterator, typename Range::iterator> iter_pair;
     };
     bind_class<Iterator, EnablePickling::Never>(m, (std::string("_Iter") + class_name).c_str())
         .def(
@@ -255,7 +255,7 @@ auto bind_Range(pybind11::module_& m, const std::string& class_name)
         .def(
             "__iter__",
             [](Range& self) {
-                return Iterator{{self.begin(), self.end()}};
+                return self;
             },
             pybind11::keep_alive<1, 0>{}) //keep alive the Range as long as there is an iterator
         .def(

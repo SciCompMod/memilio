@@ -249,6 +249,12 @@ public:
     {
     }
 
+    explicit RowMajorIterator()
+        : m_matrix(nullptr)
+        , m_i(0)
+    {
+    }
+
     /**
      * pre increment operator.
      */

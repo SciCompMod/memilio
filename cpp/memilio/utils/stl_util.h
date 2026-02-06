@@ -22,6 +22,7 @@
 
 #include <array>
 #include <numeric>
+#include <ranges>
 #include <vector>
 #include <algorithm>
 #include <utility>
@@ -85,109 +86,80 @@ void insert_sorted_replace(std::vector<T>& vec, T const& item)
 }
 
 /**
- * @brief immutable random access range, e.g. a piece of a vector, represented by a pair of iterators
- * immutable means no elements can be added or removed. the elements themselves 
- * can be modified if the iterators that make up the range allow it.
+ * @brief A range of items defined by two iterators.
+ * Models an immutable random access range, e.g. a piece of a vector. Immutable means that elements can not be added or
+ * removed, while the elements themselves can be modified, if the iterators that make up the range allow it.
+ * @tparam Iterator An iterator to the beginning of the range.
+ * @tparam Sentinel An iterator to the end of the range. Defaults to the same type as Iterator.
  */
-template <class IterPair>
-class Range
+template <class Iterator, class Sentinel = Iterator>
+class Range : public std::ranges::subrange<Iterator, Sentinel>
 {
 public:
-    using Iterators              = IterPair;
-    using iterator               = typename IterPair::first_type;
-    using const_iterator         = typename IterPair::first_type;
+    using Base = std::ranges::subrange<Iterator>;
+
+    using iterator               = Iterator;
+    using const_iterator         = iterator;
     using reverse_iterator       = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
     using value_type             = typename std::iterator_traits<iterator>::value_type;
     using reference              = typename std::iterator_traits<iterator>::reference;
 
-    Range(IterPair iter_pair)
-        : m_iter_pair(iter_pair)
+    /// @brief Directly construct a Range from two iterators.
+    Range(Iterator begin, Sentinel end)
+        : Base(std::move(begin), std::move(end))
     {
     }
 
-    /** @brief index operator.
-     * constant complexity if random access iterator, linear otherwise
-     */
-    reference operator[](size_t idx) const
+    /// @brief Construct a Range from another range.
+    Range(std::ranges::range auto range)
+        : Base(std::move(range).begin(), std::move(range).end())
     {
-        auto it = begin();
-        std::advance(it, idx);
-        return *it;
     }
 
-    reference back() const
+    /// @brief Construct a Range from an std::pair of iterators.
+    template <class I, class S>
+    Range(std::pair<I, S> iterator_pair)
+        : Base(std::move(iterator_pair).first, std::move(iterator_pair).second)
     {
-        return *(--end());
     }
 
-    size_t size() const
-    {
-        return static_cast<size_t>(std::distance(begin(), end()));
-    }
-
-    auto begin() const
-    {
-        return m_iter_pair.first;
-    }
-
-    auto end() const
-    {
-        return m_iter_pair.second;
-    }
-
-    auto rbegin() const
+    decltype(auto) rbegin() const
         requires(std::is_base_of_v<std::bidirectional_iterator_tag,
                                    typename std::iterator_traits<iterator>::iterator_category>)
     {
-        return std::make_reverse_iterator(end());
+        return std::make_reverse_iterator(Base::end());
     }
 
-    auto rend() const
+    decltype(auto) rend() const
         requires(std::is_base_of_v<std::bidirectional_iterator_tag,
                                    typename std::iterator_traits<iterator>::iterator_category>)
     {
-        return std::make_reverse_iterator(begin());
+        return std::make_reverse_iterator(Base::begin());
     }
-
-private:
-    IterPair m_iter_pair;
 };
 
-/**
- * @brief factories for template argument deduction
- */
-template <class IterPair>
-auto make_range(IterPair&& p)
-{
-    return Range<std::remove_reference_t<std::remove_cv_t<IterPair>>>{p};
-}
+/// @brief Deduction guide to correctly deduce range type when constructed from a pair.
+template <class I, class S>
+Range(std::pair<I, S> iterator_pair) -> Range<I, S>;
 
-template <class Iter1, class Iter2>
-auto make_range(Iter1&& iter1, Iter2&& iter2)
-{
-    return make_range(std::make_pair(iter1, iter2));
-}
-
-/**
- * @brief Concept to check if type T has an existing stream output operator "<<".
- */
+/// @brief Concept to check if type T has an existing stream output operator "<<".
 template <class T>
 concept HasOstreamOperator = requires(std::ostream os, T t) { os << t; };
 
 namespace details
 {
 /**
-     * length of a null terminated C string
-     */
+ * length of a null terminated C string
+ */
 inline size_t string_length(const char* str)
 {
     return std::strlen(str);
 }
 
 /**
-     * length of a string (e.g std::string)
-     */
+ * length of a string (e.g std::string)
+ */
 template <class String>
 size_t string_length(String&& str)
 {
@@ -195,19 +167,19 @@ size_t string_length(String&& str)
 }
 
 /**
-     * breaks the recursion of path_join_rec.
-     */
+ * breaks the recursion of path_join_rec.
+ */
 inline void path_join_rec(std::stringstream&, bool)
 {
 }
 
 /**
-     * recursive template helper function to join paths
-     * @param ss stream that collects the result
-     * @param writeSeparator add separator before adding the next part of the path
-     * @param head next part of the path to add
-     * @param tail remaining parts of the path
-     */
+ * recursive template helper function to join paths
+ * @param ss stream that collects the result
+ * @param writeSeparator add separator before adding the next part of the path
+ * @param head next part of the path to add
+ * @param tail remaining parts of the path
+ */
 template <class Head, class... Tail>
 void path_join_rec(std::stringstream& ss, bool writeSeparator, Head&& head, Tail&&... tail)
 {
@@ -305,10 +277,8 @@ constexpr std::array<T, size_t(T::Count)> enum_members()
 template <class T>
 using VectorRange =
     std::conditional_t<std::is_const_v<T>,
-                       typename mio::Range<std::pair<typename std::vector<std::remove_const_t<T>>::const_iterator,
-                                                     typename std::vector<std::remove_const_t<T>>::const_iterator>>,
-                       typename mio::Range<std::pair<typename std::vector<std::remove_const_t<T>>::iterator,
-                                                     typename std::vector<std::remove_const_t<T>>::iterator>>>;
+                       typename mio::Range<typename std::vector<std::remove_const_t<T>>::const_iterator>,
+                       typename mio::Range<typename std::vector<std::remove_const_t<T>>::iterator>>;
 
 } // namespace mio
 
