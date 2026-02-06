@@ -54,6 +54,10 @@ add_executable(ode_seir_flow_explicit_comp_example ode_seir_flow_explicit_comp.c
 target_link_libraries(ode_seir_flow_explicit_comp_example PRIVATE memilio ode_seir)
 target_compile_options(ode_seir_flow_explicit_comp_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(ode_seir_flow_convergence_test ode_seir_flow_convergence_test.cpp)
+target_link_libraries(ode_seir_flow_convergence_test PRIVATE memilio ode_seir)
+target_compile_options(ode_seir_flow_convergence_test PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(ode_sir_example ode_sir.cpp)
 target_link_libraries(ode_sir_example PRIVATE memilio ode_sir)
 target_compile_options(ode_sir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
@@ -208,3 +212,11 @@ if(MEMILIO_HAS_JSONCPP)
     target_link_libraries(ide_initialization_example PRIVATE memilio ide_secir)
     target_compile_options(ide_initialization_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()
+
+add_executable(ode_seir_flow_convergence_euler_euler ode_seir_flow_convergence_euler_euler.cpp)
+target_link_libraries(ode_seir_flow_convergence_euler_euler PRIVATE memilio ode_seir)
+target_compile_options(ode_seir_flow_convergence_euler_euler PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(ode_seir_flow_convergence_all_methods ode_seir_flow_convergence_all_methods.cpp)
+target_link_libraries(ode_seir_flow_convergence_all_methods PRIVATE memilio ode_seir)
+target_compile_options(ode_seir_flow_convergence_all_methods PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})

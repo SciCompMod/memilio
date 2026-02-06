@@ -7,12 +7,15 @@
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/type_list.h"
 #include "memilio/math/eigen.h"
+#include "memilio/math/stepper_wrapper.h"
 #include "ode_seir/model.h"
 
 namespace mio
 {
 namespace examples
 {
+
+using ScalarType = double;
 
 // Enum class for dynamic commuter groups
 enum class CommuterType
@@ -328,19 +331,6 @@ void integrate_mobile_population_euler(Eigen::Ref<Eigen::VectorXd> mobile_popula
         y0, t, dt, y1);
 }
 
-void integrate_mobile_population_high_order(Eigen::Ref<Eigen::VectorXd> mobile_population, const SimType& sim,
-                                            Eigen::Ref<const Eigen::VectorXd> total, ScalarType t, ScalarType dt)
-{
-    auto y0         = mobile_population.eval();
-    auto y1         = mobile_population;
-    auto integrator = std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta4>>();
-    integrator->step(
-        [&](auto&& y, auto&& t_, auto&& dydt) {
-            sim.get_model().get_derivatives(total, y, t_, dydt);
-        },
-        y0, t, dt, y1);
-}
-
 // Helper function to apply flows to mobile population (Specific to SEIR model structure).
 void apply_flows_to_mobile_population(Eigen::Ref<Eigen::VectorXd> mobile_population, const SimType& sim,
                                       Eigen::Ref<const Eigen::VectorXd> total, const Eigen::VectorXd& diff)
@@ -422,64 +412,6 @@ void flow_based_mobility_returns(Eigen::Ref<Eigen::VectorXd> mobile_population, 
     }
 }
 
-void probabilistic_mobility_returns(Eigen::Ref<Eigen::VectorXd> mobile_population, const SimType& sim,
-                                    Eigen::Ref<const Eigen::VectorXd> total, ScalarType t, ScalarType dt)
-{
-    mio::unused(t);
-    const auto& model       = sim.get_model();
-    const size_t num_groups = static_cast<size_t>(model.parameters.get_num_groups());
-    using InfState          = mio::oseir::InfectionState;
-
-    Eigen::VectorXd mobile_pop_initial = mobile_population;
-
-    for (mio::AgeGroup i(0); i < mio::AgeGroup(num_groups); ++i) {
-        size_t S_i = model.populations.get_flat_index({i, InfState::Susceptible});
-        size_t E_i = model.populations.get_flat_index({i, InfState::Exposed});
-        size_t I_i = model.populations.get_flat_index({i, InfState::Infected});
-        size_t R_i = model.populations.get_flat_index({i, InfState::Recovered});
-
-        ScalarType time_exposed  = model.parameters.get<mio::oseir::TimeExposed<ScalarType>>()[i];
-        ScalarType time_infected = model.parameters.get<mio::oseir::TimeInfected<ScalarType>>()[i];
-
-        ScalarType force_of_infection = 0.0;
-        for (mio::AgeGroup j(0); j < mio::AgeGroup(num_groups); ++j) {
-            const size_t Ij = model.populations.get_flat_index({j, InfState::Infected});
-
-            ScalarType Nj = 0;
-            for (size_t comp = 0; comp < static_cast<size_t>(InfState::Count); ++comp) {
-                Nj += total[model.populations.get_flat_index({j, static_cast<InfState>(comp)})];
-            }
-
-            const ScalarType divNj = (Nj < mio::Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / Nj;
-            const ScalarType coeffStoE =
-                model.parameters.template get<mio::oseir::ContactPatterns<ScalarType>>()
-                    .get_cont_freq_mat()
-                    .get_matrix_at(t)(i.get(), j.get()) *
-                model.parameters.template get<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>()[i] * divNj;
-
-            force_of_infection += coeffStoE * total[Ij];
-        }
-
-        double p_S_to_S = std::exp(-force_of_infection * dt);
-        double p_E_to_E = (time_exposed > 1e-10) ? std::exp(-dt / time_exposed) : 1.0;
-        double p_I_to_I = (time_infected > 1e-10) ? std::exp(-dt / time_infected) : 1.0;
-
-        p_S_to_S = std::max(0.0, std::min(1.0, p_S_to_S));
-        p_E_to_E = std::max(0.0, std::min(1.0, p_E_to_E));
-        p_I_to_I = std::max(0.0, std::min(1.0, p_I_to_I));
-
-        double p_S_to_E = 1.0 - p_S_to_S;
-        double p_E_to_I = 1.0 - p_E_to_E;
-        double p_I_to_R = 1.0 - p_I_to_I;
-
-        mobile_population[S_i] = mobile_pop_initial[S_i] * p_S_to_S;
-        mobile_population[E_i] = mobile_pop_initial[E_i] * p_E_to_E + mobile_pop_initial[S_i] * p_S_to_E;
-        mobile_population[I_i] = mobile_pop_initial[I_i] * p_I_to_I + mobile_pop_initial[E_i] * p_E_to_I;
-        mobile_population[R_i] = mobile_pop_initial[R_i] + mobile_pop_initial[I_i] * p_I_to_R;
-    }
-    mobile_population = mobile_population.cwiseMax(0.0);
-}
-
 mio::TimeSeries<ScalarType> calculate_mobile_population(
     ScalarType t0, ScalarType tmax, ScalarType step_size,
     const std::function<void(Eigen::Ref<Eigen::VectorXd>, const SimType&, Eigen::Ref<const Eigen::VectorXd>, ScalarType,
@@ -503,6 +435,453 @@ mio::TimeSeries<ScalarType> calculate_mobile_population(
     }
 
     return solution;
+}
+
+inline void
+flow_based_mobility_returns_rk4(Eigen::Ref<Eigen::VectorXd> commuter, // in/out: X_c(t) -> X_c(t+dt)
+                                Eigen::Ref<Eigen::VectorXd> totals, // in/out: \widetilde X(t) -> \widetilde X(t+dt)
+                                const mio::oseir::Model<double>& model, // model supplies totals-RHS and totals-flows
+                                double t, // current time
+                                double dt) // step size
+{
+    using IS             = mio::oseir::InfectionState;
+    const std::size_t G  = static_cast<std::size_t>(model.parameters.get_num_groups());
+    const std::size_t NC = 4 * G; // S,E,I,R per age group
+
+    assert((std::size_t)totals.size() == NC && "totals size must be 4*G");
+    assert((std::size_t)commuter.size() == NC && "commuter size must be 4*G");
+
+    // ------- Helpers: index maps S,E,I,R for each age group g -------
+    auto idxS = [&](std::size_t g) {
+        return (int)model.populations.get_flat_index({mio::AgeGroup(g), IS::Susceptible});
+    };
+    auto idxE = [&](std::size_t g) {
+        return (int)model.populations.get_flat_index({mio::AgeGroup(g), IS::Exposed});
+    };
+    auto idxI = [&](std::size_t g) {
+        return (int)model.populations.get_flat_index({mio::AgeGroup(g), IS::Infected});
+    };
+    auto idxR = [&](std::size_t g) {
+        return (int)model.populations.get_flat_index({mio::AgeGroup(g), IS::Recovered});
+    };
+
+    // ------- lambdas for totals derivatives & flows -------
+    auto totals_rhs = [&](const Eigen::VectorXd& y, double tt, Eigen::VectorXd& dy) {
+        dy.resize(NC);
+        // In the SEIR integrators in MEmilio: get_derivatives(pop, y, t, dy)
+        // Here, locals+commuters are already aggregated in y.
+        model.get_derivatives(y, y, tt, dy);
+    };
+
+    // flows vector stores (per group): [ f_SE, f_EI, f_IR ], length = 3*G
+    auto totals_flows = [&](const Eigen::VectorXd& y, double tt, Eigen::VectorXd& flows) {
+        flows.resize(3 * (int)G);
+        flows.setZero();
+        model.get_flows(y, y, tt, flows);
+    };
+
+    // ------- Commuter derivative from Left-Share at a given stage -------
+    // Given totals flows (f_SE, f_EI, f_IR per group) and shares ξ = Xc / Xt at that stage,
+    // compute dXc/dt per compartment using only scaled totals flows:
+    //
+    //   S: dXc_S = - ξ_S * f_SE
+    //   E: dXc_E = + ξ_S * f_SE - ξ_E * f_EI
+    //   I: dXc_I = + ξ_E * f_EI - ξ_I * f_IR
+    //   R: dXc_R = + ξ_I * f_IR
+    //
+    auto commuter_rhs_from_shares = [&](const Eigen::VectorXd& flows, const Eigen::VectorXd& xi, Eigen::VectorXd& dxc) {
+        dxc.setZero(NC);
+        for (std::size_t g = 0; g < G; ++g) {
+            const int oS = idxS(g), oE = idxE(g), oI = idxI(g), oR = idxR(g);
+            const int of = 3 * (int)g;
+
+            const double fSE = flows[of + 0];
+            const double fEI = flows[of + 1];
+            const double fIR = flows[of + 2];
+
+            const double xiS = xi[oS];
+            const double xiE = xi[oE];
+            const double xiI = xi[oI];
+            // xiR not needed in RHS (no outflow from R in SEIR)
+
+            dxc[oS] = -xiS * fSE;
+            dxc[oE] = xiS * fSE - xiE * fEI;
+            dxc[oI] = xiE * fEI - xiI * fIR;
+            dxc[oR] = xiI * fIR;
+        }
+    };
+
+    // ------- share vector ξ = Xc / Xt  (safe division, clamped to [0,1]) -------
+    auto compute_shares = [&](const Eigen::VectorXd& Xc, const Eigen::VectorXd& Xt, Eigen::VectorXd& xi) {
+        xi.resize(NC);
+        for (int i = 0; i < (int)NC; ++i) {
+            const double denom = Xt[i];
+            double v           = (denom > 0.0) ? (Xc[i] / denom) : 0.0;
+            // numerical safety
+            if (v < 0.0)
+                v = 0.0;
+            if (v > 1.0)
+                v = 1.0;
+            xi[i] = v;
+        }
+    };
+
+    // ------- Storage for RK4 stages -------
+    Eigen::VectorXd k1_tot(NC), k2_tot(NC), k3_tot(NC), k4_tot(NC);
+    Eigen::VectorXd f1(3 * (int)G), f2(3 * (int)G), f3(3 * (int)G), f4(3 * (int)G);
+
+    Eigen::VectorXd k1_com(NC), k2_com(NC), k3_com(NC), k4_com(NC);
+    Eigen::VectorXd xi1(NC), xi2(NC), xi3(NC), xi4(NC);
+
+    // stage states
+    Eigen::VectorXd y1  = totals;
+    Eigen::VectorXd Xc0 = commuter;
+
+    // --- Stage 1 (t) ---
+    totals_rhs(y1, t, k1_tot);
+    totals_flows(y1, t, f1);
+    compute_shares(Xc0, y1, xi1);
+    commuter_rhs_from_shares(f1, xi1, k1_com);
+
+    // --- Stage 2 (t + dt/2) ---
+    Eigen::VectorXd y2 = y1 + (dt * 0.5) * k1_tot;
+    // commuter stage-2 state via RK4 relation (NO rhs eval for Xc needed here)
+    Eigen::VectorXd Xc2 = Xc0 + (dt * 0.5) * k1_com;
+    totals_rhs(y2, t + 0.5 * dt, k2_tot);
+    totals_flows(y2, t + 0.5 * dt, f2);
+    compute_shares(Xc2, y2, xi2);
+    commuter_rhs_from_shares(f2, xi2, k2_com);
+
+    // --- Stage 3 (t + dt/2) ---
+    Eigen::VectorXd y3  = y1 + (dt * 0.5) * k2_tot;
+    Eigen::VectorXd Xc3 = Xc0 + (dt * 0.5) * k2_com;
+    totals_rhs(y3, t + 0.5 * dt, k3_tot);
+    totals_flows(y3, t + 0.5 * dt, f3);
+    compute_shares(Xc3, y3, xi3);
+    commuter_rhs_from_shares(f3, xi3, k3_com);
+
+    // --- Stage 4 (t + dt) ---
+    Eigen::VectorXd y4  = y1 + dt * k3_tot;
+    Eigen::VectorXd Xc4 = Xc0 + dt * k3_com;
+    totals_rhs(y4, t + dt, k4_tot);
+    totals_flows(y4, t + dt, f4);
+    compute_shares(Xc4, y4, xi4);
+    commuter_rhs_from_shares(f4, xi4, k4_com);
+
+    // --- Combine (classical RK4 weights) ---
+    totals = y1 + (dt / 6.0) * (k1_tot + 2.0 * k2_tot + 2.0 * k3_tot + k4_tot);
+
+    Eigen::VectorXd Xc_next = Xc0 + (dt / 6.0) * (k1_com + 2.0 * k2_com + 2.0 * k3_com + k4_com);
+
+    // Numerical guards: non-negativity and commuter <= totals (component-wise)
+    for (int i = 0; i < (int)NC; ++i) {
+        if (Xc_next[i] < 0.0)
+            Xc_next[i] = 0.0;
+        // enforce Xc <= totals (avoid tiny drifts)
+        if (totals[i] < 0.0)
+            totals[i] = 0.0; // paranoid clamp for totals as well
+        if (Xc_next[i] > totals[i])
+            Xc_next[i] = totals[i];
+    }
+
+    commuter = Xc_next;
+}
+
+// ============================================================================
+// RK2 Implementation
+// ============================================================================
+// Classical Runge-Kutta 2nd order method (Midpoint):
+//   k1 = f(t, y)
+//   k2 = f(t + dt/2, y + dt/2 * k1)
+//   y_{n+1} = y_n + dt * k2
+//
+// For the coupled totals+commuter system:
+//   - Totals: standard RK2 on model.get_derivatives()
+//   - Commuter: RK2 on share-scaled flows (ξ computed at each stage)
+//
+inline void
+flow_based_mobility_returns_rk2(Eigen::Ref<Eigen::VectorXd> commuter, // in/out: X_c(t) -> X_c(t+dt)
+                                Eigen::Ref<Eigen::VectorXd> totals, // in/out: \widetilde X(t) -> \widetilde X(t+dt)
+                                const mio::oseir::Model<double>& model, // model supplies totals-RHS and totals-flows
+                                double t, // current time
+                                double dt) // step size
+{
+    using IS             = mio::oseir::InfectionState;
+    const std::size_t G  = static_cast<std::size_t>(model.parameters.get_num_groups());
+    const std::size_t NC = 4 * G; // S,E,I,R per age group
+
+    assert((std::size_t)totals.size() == NC && "totals size must be 4*G");
+    assert((std::size_t)commuter.size() == NC && "commuter size must be 4*G");
+
+    // ------- Helpers: index maps S,E,I,R for each age group g -------
+    auto idxS = [&](std::size_t g) {
+        return (int)model.populations.get_flat_index({mio::AgeGroup(g), IS::Susceptible});
+    };
+    auto idxE = [&](std::size_t g) {
+        return (int)model.populations.get_flat_index({mio::AgeGroup(g), IS::Exposed});
+    };
+    auto idxI = [&](std::size_t g) {
+        return (int)model.populations.get_flat_index({mio::AgeGroup(g), IS::Infected});
+    };
+    auto idxR = [&](std::size_t g) {
+        return (int)model.populations.get_flat_index({mio::AgeGroup(g), IS::Recovered});
+    };
+
+    // ------- lambdas for totals derivatives & flows -------
+    auto totals_rhs = [&](const Eigen::VectorXd& y, double tt, Eigen::VectorXd& dy) {
+        dy.resize(NC);
+        model.get_derivatives(y, y, tt, dy);
+    };
+
+    // flows vector stores (per group): [ f_SE, f_EI, f_IR ], length = 3*G
+    auto totals_flows = [&](const Eigen::VectorXd& y, double tt, Eigen::VectorXd& flows) {
+        flows.resize(3 * (int)G);
+        flows.setZero();
+        model.get_flows(y, y, tt, flows);
+    };
+
+    // ------- Commuter derivative from Left-Share at a given stage -------
+    // Given totals flows (f_SE, f_EI, f_IR per group) and shares ξ = Xc / Xt at that stage,
+    // compute dXc/dt per compartment using only scaled totals flows:
+    //
+    //   S: dXc_S = - ξ_S * f_SE
+    //   E: dXc_E = + ξ_S * f_SE - ξ_E * f_EI
+    //   I: dXc_I = + ξ_E * f_EI - ξ_I * f_IR
+    //   R: dXc_R = + ξ_I * f_IR
+    //
+    auto commuter_rhs_from_shares = [&](const Eigen::VectorXd& flows, const Eigen::VectorXd& xi, Eigen::VectorXd& dxc) {
+        dxc.setZero(NC);
+        for (std::size_t g = 0; g < G; ++g) {
+            const int oS = idxS(g), oE = idxE(g), oI = idxI(g), oR = idxR(g);
+            const int of = 3 * (int)g;
+
+            const double fSE = flows[of + 0];
+            const double fEI = flows[of + 1];
+            const double fIR = flows[of + 2];
+
+            const double xiS = xi[oS];
+            const double xiE = xi[oE];
+            const double xiI = xi[oI];
+
+            dxc[oS] = -xiS * fSE;
+            dxc[oE] = xiS * fSE - xiE * fEI;
+            dxc[oI] = xiE * fEI - xiI * fIR;
+            dxc[oR] = xiI * fIR;
+        }
+    };
+
+    // ------- share vector ξ = Xc / Xt  (safe division, clamped to [0,1]) -------
+    auto compute_shares = [&](const Eigen::VectorXd& Xc, const Eigen::VectorXd& Xt, Eigen::VectorXd& xi) {
+        xi.resize(NC);
+        for (int i = 0; i < (int)NC; ++i) {
+            const double denom = Xt[i];
+            double v           = (denom > 0.0) ? (Xc[i] / denom) : 0.0;
+            // numerical safety: clamp to [0,1]
+            if (v < 0.0)
+                v = 0.0;
+            if (v > 1.0)
+                v = 1.0;
+            xi[i] = v;
+        }
+    };
+
+    // ------- Storage for RK2 stages -------
+    Eigen::VectorXd k1_tot(NC), k2_tot(NC);
+    Eigen::VectorXd f1(3 * (int)G), f2(3 * (int)G);
+    Eigen::VectorXd k1_com(NC), k2_com(NC);
+    Eigen::VectorXd xi1(NC), xi2(NC);
+
+    // Initial states
+    Eigen::VectorXd y0  = totals;
+    Eigen::VectorXd Xc0 = commuter;
+
+    // --- Stage 1: Evaluate at (t, y0, Xc0) ---
+    totals_rhs(y0, t, k1_tot);
+    totals_flows(y0, t, f1);
+    compute_shares(Xc0, y0, xi1);
+    commuter_rhs_from_shares(f1, xi1, k1_com);
+
+    // --- Stage 2: Evaluate at midpoint (t + dt/2, y_mid, Xc_mid) ---
+    // Midpoint prediction for totals
+    Eigen::VectorXd y_mid = y0 + (dt * 0.5) * k1_tot;
+
+    // Midpoint prediction for commuter
+    Eigen::VectorXd Xc_mid = Xc0 + (dt * 0.5) * k1_com;
+
+    // Evaluate derivatives at midpoint
+    totals_rhs(y_mid, t + 0.5 * dt, k2_tot);
+    totals_flows(y_mid, t + 0.5 * dt, f2);
+    compute_shares(Xc_mid, y_mid, xi2);
+    commuter_rhs_from_shares(f2, xi2, k2_com);
+
+    // --- Final update: use k2 (derivative at midpoint) for full step ---
+    totals                  = y0 + dt * k2_tot;
+    Eigen::VectorXd Xc_next = Xc0 + dt * k2_com;
+
+    // Numerical guards: non-negativity and commuter <= totals (component-wise)
+    for (int i = 0; i < (int)NC; ++i) {
+        if (Xc_next[i] < 0.0)
+            Xc_next[i] = 0.0;
+        if (totals[i] < 0.0)
+            totals[i] = 0.0;
+        if (Xc_next[i] > totals[i])
+            Xc_next[i] = totals[i];
+    }
+
+    commuter = Xc_next;
+}
+
+// ============================================================================
+// RK3 (Kutta's Third-Order Method) Implementation
+// ============================================================================
+// Classical Runge-Kutta 3rd order method:
+//   k1 = f(t, y)
+//   k2 = f(t + dt/2, y + dt/2 * k1)
+//   k3 = f(t + dt, y - dt*k1 + 2*dt*k2)
+//   y_{n+1} = y_n + dt/6 * (k1 + 4*k2 + k3)
+//
+// For the coupled totals+commuter system:
+//   - Totals: standard RK3 on model.get_derivatives()
+//   - Commuter: RK3 on share-scaled flows (ξ computed at each stage)
+//
+inline void
+flow_based_mobility_returns_rk3(Eigen::Ref<Eigen::VectorXd> commuter, // in/out: X_c(t) -> X_c(t+dt)
+                                Eigen::Ref<Eigen::VectorXd> totals, // in/out: \widetilde X(t) -> \widetilde X(t+dt)
+                                const mio::oseir::Model<double>& model, // model supplies totals-RHS and totals-flows
+                                double t, // current time
+                                double dt) // step size
+{
+    using IS             = mio::oseir::InfectionState;
+    const std::size_t G  = static_cast<std::size_t>(model.parameters.get_num_groups());
+    const std::size_t NC = 4 * G; // S,E,I,R per age group
+
+    assert((std::size_t)totals.size() == NC && "totals size must be 4*G");
+    assert((std::size_t)commuter.size() == NC && "commuter size must be 4*G");
+
+    // ------- Helpers: index maps S,E,I,R for each age group g -------
+    auto idxS = [&](std::size_t g) {
+        return (int)model.populations.get_flat_index({mio::AgeGroup(g), IS::Susceptible});
+    };
+    auto idxE = [&](std::size_t g) {
+        return (int)model.populations.get_flat_index({mio::AgeGroup(g), IS::Exposed});
+    };
+    auto idxI = [&](std::size_t g) {
+        return (int)model.populations.get_flat_index({mio::AgeGroup(g), IS::Infected});
+    };
+    auto idxR = [&](std::size_t g) {
+        return (int)model.populations.get_flat_index({mio::AgeGroup(g), IS::Recovered});
+    };
+
+    // ------- lambdas for totals derivatives & flows -------
+    auto totals_rhs = [&](const Eigen::VectorXd& y, double tt, Eigen::VectorXd& dy) {
+        dy.resize(NC);
+        model.get_derivatives(y, y, tt, dy);
+    };
+
+    // flows vector stores (per group): [ f_SE, f_EI, f_IR ], length = 3*G
+    auto totals_flows = [&](const Eigen::VectorXd& y, double tt, Eigen::VectorXd& flows) {
+        flows.resize(3 * (int)G);
+        flows.setZero();
+        model.get_flows(y, y, tt, flows);
+    };
+
+    // ------- Commuter derivative from Left-Share at a given stage -------
+    // Given totals flows (f_SE, f_EI, f_IR per group) and shares ξ = Xc / Xt at that stage,
+    // compute dXc/dt per compartment using only scaled totals flows:
+    //
+    //   S: dXc_S = - ξ_S * f_SE
+    //   E: dXc_E = + ξ_S * f_SE - ξ_E * f_EI
+    //   I: dXc_I = + ξ_E * f_EI - ξ_I * f_IR
+    //   R: dXc_R = + ξ_I * f_IR
+    //
+    auto commuter_rhs_from_shares = [&](const Eigen::VectorXd& flows, const Eigen::VectorXd& xi, Eigen::VectorXd& dxc) {
+        dxc.setZero(NC);
+        for (std::size_t g = 0; g < G; ++g) {
+            const int oS = idxS(g), oE = idxE(g), oI = idxI(g), oR = idxR(g);
+            const int of = 3 * (int)g;
+
+            const double fSE = flows[of + 0];
+            const double fEI = flows[of + 1];
+            const double fIR = flows[of + 2];
+
+            const double xiS = xi[oS];
+            const double xiE = xi[oE];
+            const double xiI = xi[oI];
+
+            dxc[oS] = -xiS * fSE;
+            dxc[oE] = xiS * fSE - xiE * fEI;
+            dxc[oI] = xiE * fEI - xiI * fIR;
+            dxc[oR] = xiI * fIR;
+        }
+    };
+
+    // ------- share vector ξ = Xc / Xt  (safe division, clamped to [0,1]) -------
+    auto compute_shares = [&](const Eigen::VectorXd& Xc, const Eigen::VectorXd& Xt, Eigen::VectorXd& xi) {
+        xi.resize(NC);
+        for (int i = 0; i < (int)NC; ++i) {
+            const double denom = Xt[i];
+            double v           = (denom > 0.0) ? (Xc[i] / denom) : 0.0;
+            // numerical safety: clamp to [0,1]
+            if (v < 0.0)
+                v = 0.0;
+            if (v > 1.0)
+                v = 1.0;
+            xi[i] = v;
+        }
+    };
+
+    // ------- Storage for RK3 stages -------
+    Eigen::VectorXd k1_tot(NC), k2_tot(NC), k3_tot(NC);
+    Eigen::VectorXd f1(3 * (int)G), f2(3 * (int)G), f3(3 * (int)G);
+    Eigen::VectorXd k1_com(NC), k2_com(NC), k3_com(NC);
+    Eigen::VectorXd xi1(NC), xi2(NC), xi3(NC);
+
+    // Initial states
+    Eigen::VectorXd y0  = totals;
+    Eigen::VectorXd Xc0 = commuter;
+
+    // --- Stage 1: Evaluate at (t, y0, Xc0) ---
+    totals_rhs(y0, t, k1_tot);
+    totals_flows(y0, t, f1);
+    compute_shares(Xc0, y0, xi1);
+    commuter_rhs_from_shares(f1, xi1, k1_com);
+
+    // --- Stage 2: Evaluate at midpoint (t + dt/2, y2, Xc2) ---
+    // RK3 uses midpoint prediction like RK2 for stage 2
+    Eigen::VectorXd y2  = y0 + (dt * 0.5) * k1_tot;
+    Eigen::VectorXd Xc2 = Xc0 + (dt * 0.5) * k1_com;
+
+    totals_rhs(y2, t + 0.5 * dt, k2_tot);
+    totals_flows(y2, t + 0.5 * dt, f2);
+    compute_shares(Xc2, y2, xi2);
+    commuter_rhs_from_shares(f2, xi2, k2_com);
+
+    // --- Stage 3: Evaluate at endpoint (t + dt, y3, Xc3) ---
+    // RK3 formula: y3 = y0 - dt*k1 + 2*dt*k2 = y0 + dt*(-k1 + 2*k2)
+    Eigen::VectorXd y3  = y0 + dt * (-k1_tot + 2.0 * k2_tot);
+    Eigen::VectorXd Xc3 = Xc0 + dt * (-k1_com + 2.0 * k2_com);
+
+    totals_rhs(y3, t + dt, k3_tot);
+    totals_flows(y3, t + dt, f3);
+    compute_shares(Xc3, y3, xi3);
+    commuter_rhs_from_shares(f3, xi3, k3_com);
+
+    // --- Final update: weighted combination of all three stages ---
+    // RK3 weights: (k1 + 4*k2 + k3) / 6
+    totals                  = y0 + (dt / 6.0) * (k1_tot + 4.0 * k2_tot + k3_tot);
+    Eigen::VectorXd Xc_next = Xc0 + (dt / 6.0) * (k1_com + 4.0 * k2_com + k3_com);
+
+    // Numerical guards: non-negativity and commuter <= totals (component-wise)
+    for (int i = 0; i < (int)NC; ++i) {
+        if (Xc_next[i] < 0.0)
+            Xc_next[i] = 0.0;
+        if (totals[i] < 0.0)
+            totals[i] = 0.0;
+        if (Xc_next[i] > totals[i])
+            Xc_next[i] = totals[i];
+    }
+
+    commuter = Xc_next;
 }
 
 } // namespace examples

@@ -49,6 +49,10 @@ add_library(memilio
     io/cli.h
     math/euler.cpp
     math/euler.h
+    math/rk2.cpp
+    math/rk2.h
+    math/rk3.cpp
+    math/rk3.h
     math/smoother.h
     math/adapt_rk.h
     math/adapt_rk.cpp
