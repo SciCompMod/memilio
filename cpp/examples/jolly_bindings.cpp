@@ -55,7 +55,9 @@ std::vector<int> simulate(ScalarType tmax = 40, ScalarType dt = 1.0, ScalarType 
                           ScalarType A1_SEI = 0.2, ScalarType A1_EI = 0.2, ScalarType A1_ID = 0.2,
                           ScalarType A2_SEI = 0.2, ScalarType A2_EI = 0.2, ScalarType A2_ID = 0.2,
                           ScalarType A3_SEI = 0.2, ScalarType A3_EI = 0.2, ScalarType A3_ID = 0.2,
-                          ScalarType A4_SEI = 0.2, ScalarType A4_EI = 0.2, ScalarType A4_ID = 0.2)
+                          ScalarType A4_SEI = 0.2, ScalarType A4_EI = 0.2, ScalarType A4_ID = 0.2,
+                          ScalarType first_infection_day = 0, ScalarType second_infection_day = 2,
+                          ScalarType third_infection_day = 2)
 {
     const auto t0 = 0.;
 
@@ -159,7 +161,8 @@ std::vector<int> simulate(ScalarType tmax = 40, ScalarType dt = 1.0, ScalarType 
     }
 
     auto sim = mio::make_farm_sim(t0, dt, std::move(graph));
-    sim.set_parameters(suspicion_threshold, sensitivity, h0, r0, alpha);
+    sim.set_parameters(suspicion_threshold, sensitivity, h0, r0, alpha,
+                       {first_infection_day, second_infection_day, third_infection_day});
 
     sim.advance(tmax);
 

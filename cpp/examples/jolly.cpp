@@ -140,8 +140,7 @@ int main(int /*argc*/, char** /*argv*/)
     interesting_indices.push_back(
         {Model(Status{InfectionState::Count}, Region(1)).populations.get_flat_index({home, InfectionState::I})});
 
-    auto graph                                                    = std::move(builder).build();
-    graph.nodes()[7658].property.get_result().get_last_value()[1] = 1;
+    auto graph = std::move(builder).build();
 
     auto nodes = graph.nodes() | std::views::transform([](const auto& node) {
                      return &node.property;
@@ -150,8 +149,9 @@ int main(int /*argc*/, char** /*argv*/)
 
     for (auto& node : graph.nodes()) {
         mio::timing::AutoTimer<"neighbourhood search"> timer;
-        node.property.set_regional_neighbors(tree.in_range_indices_query(
-            node.property.get_location(), {mio::geo::kilometers(1), mio::geo::kilometers(10), mio::geo::kilometers(20)}));
+        node.property.set_regional_neighbors(
+            tree.in_range_indices_query(node.property.get_location(),
+                                        {mio::geo::kilometers(1), mio::geo::kilometers(10), mio::geo::kilometers(20)}));
     }
 
     auto sim = mio::make_farm_sim(t0, dt, std::move(graph));

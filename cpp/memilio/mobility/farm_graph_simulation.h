@@ -67,6 +67,7 @@ public:
         auto& graph = Base::get_graph();
         while (Base::m_t < t_max) {
             dt = std::min(dt, t_max - Base::m_t);
+            seed_infections(graph, Base::m_t);
             for (auto& n : graph.nodes()) {
                 if (n.property.get_result().get_last_value()[2] > 0) {
                     n.property.set_infection_status(true);
@@ -118,6 +119,21 @@ public:
     }
 
 private:
+    void seed_infections(Graph& graph, Timepoint t)
+    {
+        if (t == m_infection_dates[0]) {
+            graph.nodes()[7658].property.get_result().get_last_value()[2] = 100;
+            graph.nodes()[7658].property.get_result().get_last_value()[0] -= 100;
+        }
+        if (t == m_infection_dates[1]) {
+            graph.nodes()[4117].property.get_result().get_last_value()[2] = 100;
+            graph.nodes()[4117].property.get_result().get_last_value()[0] -= 100;
+        }
+        if (t == m_infection_dates[2]) {
+            graph.nodes()[5369].property.get_result().get_last_value()[2] = 100;
+            graph.nodes()[5369].property.get_result().get_last_value()[0] -= 100;
+        }
+    }
     /**
     * @brief Update the force of infection for all farms based on their infected neighbors.
     * 
@@ -523,13 +539,14 @@ public:
      * @param alpha 
      */
     void set_parameters(ScalarType suspicion_threshold, ScalarType sensitivity, ScalarType h0, ScalarType r0,
-                        ScalarType alpha)
+                        ScalarType alpha, std::vector<Timepoint> infection_dates)
     {
         m_suspicion_threshold = suspicion_threshold;
         m_sensitivity         = sensitivity;
         m_h0                  = h0;
         m_r0                  = r0;
         m_alpha               = alpha;
+        m_infection_dates     = infection_dates;
     }
 
 private:
@@ -540,14 +557,15 @@ private:
     ScalarType m_vaccination_capacity_per_day = 500;
     ScalarType m_first_detection              = std::numeric_limits<ScalarType>::max();
     // Trade<ScalarType, Graph> m_trade;
-    bool m_standstill                       = false;
-    ScalarType m_suspicion_threshold        = 0.05;
-    ScalarType m_sensitivity                = 0.95;
-    std::map<size_t, ScalarType> m_duration = {{0, 21.0}, {1, 21.0}, {2, 400.0}, {3, 21.0}, {4, 28.0}};
-    std::map<size_t, ScalarType> m_downtime = {{0, 21.0}, {1, 21.0}, {2, 21.0}, {3, 21.0}, {4, 21.0}};
-    ScalarType m_h0                         = 0.0002;
-    ScalarType m_r0                         = 4000;
-    ScalarType m_alpha                      = 10;
+    bool m_standstill                        = false;
+    ScalarType m_suspicion_threshold         = 0.05;
+    ScalarType m_sensitivity                 = 0.95;
+    std::map<size_t, ScalarType> m_duration  = {{0, 21.0}, {1, 21.0}, {2, 400.0}, {3, 21.0}, {4, 28.0}};
+    std::map<size_t, ScalarType> m_downtime  = {{0, 21.0}, {1, 21.0}, {2, 21.0}, {3, 21.0}, {4, 21.0}};
+    ScalarType m_h0                          = 0.0002;
+    ScalarType m_r0                          = 4000;
+    ScalarType m_alpha                       = 10;
+    std::vector<Timepoint> m_infection_dates = {0, 2, 2};
 };
 
 /**
