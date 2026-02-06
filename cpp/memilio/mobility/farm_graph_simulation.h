@@ -91,7 +91,7 @@ public:
                     else {
                         if (n.property.get_date_confirmation() < Base::m_t + dt && !n.property.is_quarantined()) {
                             cull_node(n.id);
-                            for(size_t index = 0; index < n.property.get_regional_neighbors()[1].size(); ++index){
+                            for (size_t index = 0; index < n.property.get_regional_neighbors()[1].size(); ++index) {
                                 auto& neighbor = graph.nodes()[n.property.get_regional_neighbors()[1][index]];
                                 neighbor.property.set_reg_zone_day(Base::m_t);
                             }
@@ -100,11 +100,11 @@ public:
                 }
             }
             if (m_first_detection > Base::m_t) {
-                for(auto& n: graph.nodes()){
+                for (auto& n : graph.nodes()) {
                     if (n.property.get_date_confirmation() <= Base::m_t) {
-                        m_standstill = true;
+                        m_standstill      = true;
                         m_first_detection = Base::m_t;
-                        break;                    
+                        break;
                     }
                 }
             }
@@ -207,7 +207,8 @@ private:
     void check_for_cases(Node& node, Timepoint t)
     {
         const auto& current_state = node.get_result().get_last_value();
-        if (current_state[3] / std::accumulate(current_state.begin(), current_state.end(), 0.0) > suspicion_threshold) {
+        if (current_state[3] / std::accumulate(current_state.begin(), current_state.end(), 0.0) >
+            m_suspicion_threshold) {
             node.set_date_suspicion(t);
             // if (mio::UniformDistribution<ScalarType>::get_instance()(m_rng, 0.0, 1.0) <
             //     1 - std::pow((1 - m_sensitivity), 20)) {
@@ -512,6 +513,24 @@ public:
     {
         return m_rng;
     }
+    /**
+     * @brief Set the free parameters for the simulation.
+     * 
+     * @param suspicion_threshold 
+     * @param sensitivity 
+     * @param h0 
+     * @param r0 
+     * @param alpha 
+     */
+    void set_parameters(ScalarType suspicion_threshold, ScalarType sensitivity, ScalarType h0, ScalarType r0,
+                        ScalarType alpha)
+    {
+        m_suspicion_threshold = suspicion_threshold;
+        m_sensitivity         = sensitivity;
+        m_h0                  = h0;
+        m_r0                  = r0;
+        m_alpha               = alpha;
+    }
 
 private:
     RandomNumberGenerator m_rng;
@@ -522,7 +541,7 @@ private:
     ScalarType m_first_detection              = std::numeric_limits<ScalarType>::max();
     // Trade<ScalarType, Graph> m_trade;
     bool m_standstill                       = false;
-    ScalarType suspicion_threshold          = 0.05;
+    ScalarType m_suspicion_threshold        = 0.05;
     ScalarType m_sensitivity                = 0.95;
     std::map<size_t, ScalarType> m_duration = {{0, 21.0}, {1, 21.0}, {2, 400.0}, {3, 21.0}, {4, 28.0}};
     std::map<size_t, ScalarType> m_downtime = {{0, 21.0}, {1, 21.0}, {2, 21.0}, {3, 21.0}, {4, 21.0}};

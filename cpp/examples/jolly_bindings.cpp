@@ -51,15 +51,13 @@ enum class InfectionState
 
 std::vector<int> simulate(ScalarType tmax = 40, ScalarType dt = 1.0, ScalarType suspicion_threshold = 0.05,
                           ScalarType sensitivity = 0.95, ScalarType h0 = 0.001, ScalarType r0 = 1000,
-                          ScalarType alpha = 2, ScalarType A0_SEI = 0.0, ScalarType A0_EI = 0.0, ScalarType A0_ID = 0.0, 
-                            ScalarType A1_SEI = 0.0, ScalarType A1_EI = 0.0, ScalarType A1_ID = 0.0, 
-                            ScalarType A2_SEI = 0.0, ScalarType A2_EI = 0.0, ScalarType A2_ID = 0.0, 
-                            ScalarType A3_SEI = 0.0, ScalarType A3_EI = 0.0, ScalarType A3_ID = 0.0, 
-                            ScalarType A4_SEI = 0.0, ScalarType A4_EI = 0.0, ScalarType A4_ID = 0.0)
+                          ScalarType alpha = 2, ScalarType A0_SEI = 0.2, ScalarType A0_EI = 0.2, ScalarType A0_ID = 0.2,
+                          ScalarType A1_SEI = 0.2, ScalarType A1_EI = 0.2, ScalarType A1_ID = 0.2,
+                          ScalarType A2_SEI = 0.2, ScalarType A2_EI = 0.2, ScalarType A2_ID = 0.2,
+                          ScalarType A3_SEI = 0.2, ScalarType A3_EI = 0.2, ScalarType A3_ID = 0.2,
+                          ScalarType A4_SEI = 0.2, ScalarType A4_EI = 0.2, ScalarType A4_ID = 0.2)
 {
-    const auto t0   = 0.;
-
-    mio::unused(suspicion_threshold, sensitivity, h0, r0, alpha);
+    const auto t0 = 0.;
 
     using Status = mio::Index<InfectionState>;
     using mio::regions::Region;
@@ -155,14 +153,24 @@ std::vector<int> simulate(ScalarType tmax = 40, ScalarType dt = 1.0, ScalarType 
     auto tree  = mio::geo::RTree(nodes.begin(), nodes.end());
 
     for (auto& node : graph.nodes()) {
-        mio::timing::AutoTimer<"neighbourhood search"> timer;
-        node.property.set_regional_neighbors(tree.in_range_indices_query(
-            node.property.get_location(), {mio::geo::kilometers(1), mio::geo::kilometers(250)})); // stimmt das alles?
+        node.property.set_regional_neighbors(
+            tree.in_range_indices_query(node.property.get_location(),
+                                        {mio::geo::kilometers(1), mio::geo::kilometers(10), mio::geo::kilometers(25)}));
     }
 
     auto sim = mio::make_farm_sim(t0, dt, std::move(graph));
+    sim.set_parameters(suspicion_threshold, sensitivity, h0, r0, alpha);
 
     sim.advance(tmax);
 
     return sim.get_confirmation_dates();
+}
+
+int main()
+{
+    auto result = simulate();
+    mio::log_info("Number of infected farms: {}", std::count_if(result.begin(), result.end(), [](int r) {
+                      return r >= 0;
+                  }));
+    return 0;
 }
