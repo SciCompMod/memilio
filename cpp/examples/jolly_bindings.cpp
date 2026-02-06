@@ -108,13 +108,14 @@ std::vector<int> simulate(ScalarType tmax = 40, ScalarType dt = 1.0, ScalarType 
 
     Builder builder;
 
-    io::CSVReader<8> farms("/home/kilian/Documents/projects/jolly/common_data/farms.csv");
+    io::CSVReader<9> farms("/home/kilian/Documents/projects/jolly/common_data/farms.csv");
     farms.read_header(io::ignore_extra_column, "farm_id", "production_id", "capacity", "population_day",
-                      "slaughter_day", "volume", "x", "y");
+                      "slaughter_day", "volume", "in_hrz", "x", "y");
     size_t farm_id, type, size, volume;
     double x, y;
+    int hrz;
     int population, slaughter;
-    while (farms.read_row(farm_id, type, size, population, slaughter, volume, x, y)) {
+    while (farms.read_row(farm_id, type, size, population, slaughter, volume, hrz, x, y)) {
         auto model = curr_model;
         if (type == 0)
             model.parameters.get<mio::smm::AdoptionRates<ScalarType, Status, mio::regions::Region>>() =
@@ -135,7 +136,7 @@ std::vector<int> simulate(ScalarType tmax = 40, ScalarType dt = 1.0, ScalarType 
         model.populations[{home, InfectionState::S}] = volume;
         // if (farm_id % 2 == 0)
         //     curr_model.populations[{home, InfectionState::E}] = 1;
-        builder.add_node(farm_id, x, y, type, size, population, slaughter, model, t0);
+        builder.add_node(farm_id, x, y, type, size, population, slaughter, hrz, model, t0);
     }
 
     auto rng = mio::RandomNumberGenerator();
