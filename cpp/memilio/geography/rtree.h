@@ -22,6 +22,7 @@
 
 #include "memilio/utils/back_inserter_second_element.h"
 #include "memilio/geography/distance.h"
+#include "memilio/utils/logging.h"
 #include <boost/geometry/geometries/multi_polygon.hpp>
 #include <boost/geometry/index/rtree.hpp>
 #include <boost/geometry/strategies/cartesian/buffer_side_straight.hpp>

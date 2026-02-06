@@ -51,15 +51,15 @@ enum class InfectionState
 
 std::vector<int> simulate(ScalarType tmax = 40, ScalarType dt = 1.0, ScalarType suspicion_threshold = 0.05,
                           ScalarType sensitivity = 0.95, ScalarType h0 = 0.001, ScalarType r0 = 1000,
-                          ScalarType alpha = 2, ScalarType A0_SEI, ScalarType A0_EI, ScalarType A0_ID, 
-                            ScalarType A1_SEI, ScalarType A1_EI, ScalarType A1_ID, 
-                            ScalarType A2_SEI, ScalarType A2_EI, ScalarType A2_ID, 
-                            ScalarType A3_SEI, ScalarType A3_EI, ScalarType A3_ID, 
-                            ScalarType A4_SEI, ScalarType A4_EI, ScalarType A4_ID)
+                          ScalarType alpha = 2, ScalarType A0_SEI = 0.0, ScalarType A0_EI = 0.0, ScalarType A0_ID = 0.0, 
+                            ScalarType A1_SEI = 0.0, ScalarType A1_EI = 0.0, ScalarType A1_ID = 0.0, 
+                            ScalarType A2_SEI = 0.0, ScalarType A2_EI = 0.0, ScalarType A2_ID = 0.0, 
+                            ScalarType A3_SEI = 0.0, ScalarType A3_EI = 0.0, ScalarType A3_ID = 0.0, 
+                            ScalarType A4_SEI = 0.0, ScalarType A4_EI = 0.0, ScalarType A4_ID = 0.0)
 {
     const auto t0   = 0.;
-    const auto tmax = tmax;
-    const auto dt   = dt; //initial time step
+
+    mio::unused(suspicion_threshold, sensitivity, h0, r0, alpha);
 
     using Status = mio::Index<InfectionState>;
     using mio::regions::Region;
@@ -88,7 +88,7 @@ std::vector<int> simulate(ScalarType tmax = 40, ScalarType dt = 1.0, ScalarType 
 
     std::vector<AR> adoption_rates_2;
     adoption_rates_2.push_back({InfectionState::S, InfectionState::E, home, 1.0, {{InfectionState::I, A2_SEI}}});
-    adoption_rates_2.push_back({InfectionState::E, InfectionState::I, home, A2_EI, {});
+    adoption_rates_2.push_back({InfectionState::E, InfectionState::I, home, A2_EI, {}});
     adoption_rates_2.push_back({InfectionState::I, InfectionState::D, home, A2_ID, {}});
     adoption_rates_2.push_back({InfectionState::S, InfectionState::E, home, 0.00, {}});
 
@@ -113,8 +113,7 @@ std::vector<int> simulate(ScalarType tmax = 40, ScalarType dt = 1.0, ScalarType 
                       "slaughter_day", "volume", "in_hrz", "x", "y");
     size_t farm_id, type, size, volume;
     double x, y;
-    int hrz;
-    int population, slaughter;
+    int population, slaughter, hrz;
     while (farms.read_row(farm_id, type, size, population, slaughter, volume, hrz, x, y)) {
         auto model = curr_model;
         if (type == 0)
@@ -165,5 +164,5 @@ std::vector<int> simulate(ScalarType tmax = 40, ScalarType dt = 1.0, ScalarType 
 
     sim.advance(tmax);
 
-    return sim.get_confirmation_dates()
+    return sim.get_confirmation_dates();
 }
