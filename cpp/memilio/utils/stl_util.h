@@ -112,7 +112,7 @@ public:
     }
 
     /// @brief Construct a Range from another range.
-    Range(std::ranges::range auto range)
+    Range(auto range)
         : Base(std::move(range).begin(), std::move(range).end())
     {
     }
