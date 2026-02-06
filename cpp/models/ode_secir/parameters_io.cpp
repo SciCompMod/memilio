@@ -86,7 +86,7 @@ IOResult<void> read_confirmed_cases_data(
             std::equal_range(rki_data.begin(), rki_data.end(), vregion[region_idx], [](auto&& a, auto&& b) {
                 return get_region_id(a) < get_region_id(b);
             });
-        auto region_entry_range = Range(region_entry_range_it);
+        auto region_entry_range = make_range(region_entry_range_it);
         if (region_entry_range.begin() == region_entry_range.end()) {
             log_error("No entries found for region {}", vregion[region_idx]);
             return failure(StatusCode::InvalidFileFormat,

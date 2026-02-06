@@ -34,7 +34,8 @@ StateId get_state_id(int county)
     return StateId(county / 1000);
 }
 
-Range<std::vector<std::pair<Date, Date>>::const_iterator> get_holidays(StateId state)
+Range<std::pair<std::vector<std::pair<Date, Date>>::const_iterator, std::vector<std::pair<Date, Date>>::const_iterator>>
+get_holidays(StateId state)
 {
     static const std::vector<std::pair<mio::Date, mio::Date>> def;
     assert(int(state) >= 1 && int(state) <= 16 && "invalid state_id");
@@ -92,18 +93,22 @@ Range<std::vector<std::pair<Date, Date>>::const_iterator> get_holidays(StateId s
     default:
         break;
     }
-    return {data->cbegin(), data->cend()};
+    return make_range(data->cbegin(), data->cend());
 }
 
-Range<std::vector<std::pair<Date, Date>>::const_iterator> get_holidays(StateId state, Date start_date, Date end_date)
+Range<std::pair<std::vector<std::pair<Date, Date>>::const_iterator, std::vector<std::pair<Date, Date>>::const_iterator>>
+get_holidays(StateId state, Date start_date, Date end_date)
 {
     auto all = get_holidays(state);
 
     //all holiday periods that overlap with the specified period
-    return std::ranges::equal_range(all, std::make_pair(start_date, end_date), [](auto& p1, auto& p2) {
-        return std::tie(p1.second.year, p1.second.month, p1.second.day) <
-               std::tie(p2.first.year, p2.first.month, p2.first.day);
-    });
+    auto holidays_in_range =
+        std::ranges::equal_range(all, std::make_pair(start_date, end_date), [](auto& p1, auto& p2) {
+            return std::tie(p1.second.year, p1.second.month, p1.second.day) <
+                   std::tie(p2.first.year, p2.first.month, p2.first.day);
+        });
+
+    return {holidays_in_range};
 }
 
 } // namespace regions

@@ -83,7 +83,8 @@ StateId get_state_id(int county);
  * @param[in] state id of the state.
  * @return range of pairs of start and end dates of holiday periods, sorted by start date.
  */
-Range<std::vector<std::pair<Date, Date>>::const_iterator> get_holidays(StateId state);
+Range<std::pair<std::vector<std::pair<Date, Date>>::const_iterator, std::vector<std::pair<Date, Date>>::const_iterator>>
+get_holidays(StateId state);
 
 /**
  * get the holidays in a german state in a given time period.
@@ -94,7 +95,8 @@ Range<std::vector<std::pair<Date, Date>>::const_iterator> get_holidays(StateId s
  * @param[in] end_date end of the queried period.
  * @return range of pairs of start and end dates of holiday periods, sorted by start date.
  */
-Range<std::vector<std::pair<Date, Date>>::const_iterator> get_holidays(StateId state, Date start_date, Date end_date);
+Range<std::pair<std::vector<std::pair<Date, Date>>::const_iterator, std::vector<std::pair<Date, Date>>::const_iterator>>
+get_holidays(StateId state, Date start_date, Date end_date);
 
 } // namespace regions
 } // namespace mio
