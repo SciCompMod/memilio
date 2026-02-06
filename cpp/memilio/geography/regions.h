@@ -17,18 +17,13 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_EPI_REGIONS_H
-#define MIO_EPI_REGIONS_H
+#ifndef MIO_GEOGRAPHY_REGIONS_H
+#define MIO_GEOGRAPHY_REGIONS_H
 
 #include "memilio/utils/date.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/utils/type_safe.h"
 #include "memilio/utils/index.h"
-
-#include "boost/filesystem.hpp"
-
-//is used to provide some paths as function arguments
-namespace fs = boost::filesystem;
 
 namespace mio
 {
@@ -106,4 +101,4 @@ get_holidays(StateId state, Date start_date, Date end_date);
 } // namespace regions
 } // namespace mio
 
-#endif //MIO_EPI_REGIONS_H
+#endif // MIO_GEOGRAPHY_REGIONS_H

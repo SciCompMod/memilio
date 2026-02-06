@@ -20,8 +20,8 @@
 #ifndef MIO_MATH_EULER_MARUYAMA_H
 #define MIO_MATH_EULER_MARUYAMA_H
 
+#include "memilio/math/eigen.h" // IWYU pragma: keep
 #include "memilio/math/integrator.h"
-#include "memilio/math/eigen.h"
 #include "memilio/math/math_utils.h"
 #include "memilio/utils/logging.h"
 

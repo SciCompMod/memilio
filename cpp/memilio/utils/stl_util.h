@@ -17,10 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef STL_UTIL_H
-#define STL_UTIL_H
-
-#include "memilio/utils/metaprogramming.h"
+#ifndef MIO_UTIL_STL_UTIL_H
+#define MIO_UTIL_STL_UTIL_H
 
 #include <array>
 #include <numeric>
@@ -138,16 +136,16 @@ public:
         return m_iter_pair.second;
     }
 
-    template <class T = typename std::iterator_traits<iterator>::iterator_category,
-              class   = std::enable_if_t<std::is_base_of<std::bidirectional_iterator_tag, T>::value>>
     auto rbegin() const
+        requires(std::is_base_of_v<std::bidirectional_iterator_tag,
+                                   typename std::iterator_traits<iterator>::iterator_category>)
     {
         return std::make_reverse_iterator(end());
     }
 
-    template <class T = typename std::iterator_traits<iterator>::iterator_category,
-              class   = std::enable_if_t<std::is_base_of<std::bidirectional_iterator_tag, T>::value>>
     auto rend() const
+        requires(std::is_base_of_v<std::bidirectional_iterator_tag,
+                                   typename std::iterator_traits<iterator>::iterator_category>)
     {
         return std::make_reverse_iterator(begin());
     }
@@ -172,28 +170,10 @@ auto make_range(Iter1&& iter1, Iter2&& iter2)
 }
 
 /**
- * meta function to check type T for an existing stream output operator "<<"
+ * @brief Concept to check if type T has an existing stream output operator "<<".
  */
 template <class T>
-using ostream_op_expr_t = decltype(std::declval<std::ostream&>() << std::declval<T>());
-template <class T>
-using has_ostream_op = is_expression_valid<ostream_op_expr_t, T>;
-
-/**
- * meta function to check type T for an existing equality comparison operator
- */
-template <class T>
-using eq_op_t = decltype(std::declval<T>() == std::declval<T>());
-template <class T>
-using has_eq_op = is_expression_valid<eq_op_t, T>;
-
-/**
- * meta function to check type T for beeing an iterator
- */
-template <class T>
-using is_iterator_expr_t = typename std::iterator_traits<T>::iterator_category;
-template <class T>
-using is_iterator = is_expression_valid<is_iterator_expr_t, T>;
+concept HasOstreamOperator = requires(std::ostream os, T t) { os << t; };
 
 namespace details
 {
@@ -332,4 +312,4 @@ using VectorRange =
 
 } // namespace mio
 
-#endif //STL_UTIL_H
+#endif // MIO_UTIL_STL_UTIL_H

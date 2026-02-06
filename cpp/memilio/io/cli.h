@@ -20,7 +20,7 @@
 #ifndef MIO_IO_CLI_H
 #define MIO_IO_CLI_H
 
-#include "memilio/config.h" // needed for defining MEMILIO_HAS_JSONCPP
+#include "memilio/config.h" // IWYU pragma: keep
 
 #ifdef MEMILIO_HAS_JSONCPP
 
@@ -34,6 +34,7 @@
 #include <cassert>
 #include <iostream>
 #include <memory>
+#include <span>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -48,74 +49,48 @@ namespace cli
 namespace details
 {
 
-/// @brief A Field that gets the name of a Parameter.
-struct Name {
-    template <class Parameter>
-    static const std::string get(const Parameter& p)
-    {
-        return p.name();
+/// @brief Get the name of a Parameter. Expected to be always available.
+template <class Parameter>
+const std::string get_name(const Parameter& p)
+{
+    return p.name();
+}
+
+/// @brief Get the alias of a Parameter, or an empty string if there is none.
+template <class Parameter>
+const std::string get_alias(const Parameter& p)
+{
+    if constexpr (requires { p.alias(); }) {
+        return p.alias();
     }
-};
-
-/// @brief A Field that gets the alias of a Parameter, or an empty string if there is none.
-struct Alias {
-    template <class T>
-    using alias_expr = decltype(std::declval<T>().alias());
-
-    template <class T>
-    constexpr static bool has_alias_v = mio::is_expression_valid<alias_expr, T>::value;
-
-    template <class Parameter>
-    static const std::string get(const Parameter& p)
-    {
-        if constexpr (has_alias_v<Parameter>) {
-            return p.alias();
-        }
-        else {
-            return "";
-        }
+    else {
+        return "";
     }
-};
+}
 
-/// @brief A Field that gets the description of a Parameter, or an empty string if there is none.
-struct Description {
-    template <class T>
-    using description_expr = decltype(std::declval<T>().description());
-
-    template <class T>
-    constexpr static bool has_description_v = mio::is_expression_valid<description_expr, T>::value;
-
-    template <class Parameter>
-    static const std::string get(const Parameter& p)
-    {
-        if constexpr (has_description_v<Parameter>) {
-            return p.description();
-        }
-        else {
-            return "";
-        }
+/// @brief Get the description of a Parameter, or an empty string if there is none.
+template <class Parameter>
+const std::string get_description(const Parameter& p)
+{
+    if constexpr (requires { p.description(); }) {
+        return p.description();
     }
-};
-
-/// @brief A Field that gets the required flag of a Parameter, or false if there is none.
-struct IsRequired {
-    template <class T>
-    using is_required_expr = decltype(std::declval<T>().is_required());
-
-    template <class T>
-    constexpr static bool has_is_required_v = is_expression_valid<is_required_expr, T>::value;
-
-    template <class Parameter>
-    constexpr static bool get(const Parameter& p)
-    {
-        if constexpr (has_is_required_v<Parameter>) {
-            return p.is_required();
-        }
-        else {
-            return false;
-        }
+    else {
+        return "";
     }
-};
+}
+
+/// @brief Get the required flag of a Parameter, or false if there is none.
+template <class Parameter>
+constexpr bool get_is_required(const Parameter& p)
+{
+    if constexpr (requires { p.is_required(); }) {
+        return p.is_required();
+    }
+    else {
+        return false;
+    }
+}
 
 /// @brief Struct containing all non-data members of a parameter. Serves as base for AbstractParameter.
 struct DatalessParameter {
@@ -178,7 +153,7 @@ public:
      */
     static Identifier make_raw(const std::string& raw_name)
     {
-        return Identifier(raw_name, IdentifierType::Raw);
+        return {raw_name, IdentifierType::Raw};
     }
 
     /// @brief Check if a string is a name option.
@@ -206,9 +181,9 @@ public:
     {
         switch (type) {
         case IdentifierType::Name:
-            return std::string_view{string.data() + 2, string.size() - 2};
+            return std::string_view{string}.substr(2);
         case IdentifierType::Alias:
-            return std::string_view{string.data() + 1, string.size() - 1};
+            return std::string_view{string}.substr(1);
         case IdentifierType::Raw:
             return std::string_view{string};
         }
@@ -239,21 +214,30 @@ public:
 
 /// @brief Static container holding all preset options. Used for matching input arguments and writing help text.
 struct PresetOptions {
-    const inline static DatalessParameter help{"help", "h", "Show this dialogue and exit.", false};
+    const inline static DatalessParameter help{
+        .name = "help", .alias = "h", .description = "Show this dialogue and exit.", .is_required = false};
 
     const inline static DatalessParameter print_option{
-        "print_option", "",
-        "Use with parameter option name(s) without \"--\" as value(s). Prints the current values of specified "
-        "options in their correct json format, then exits.",
-        false};
+        .name  = "print_option",
+        .alias = "",
+        .description =
+            "Use with parameter option name(s) without \"--\" as value(s). Prints the current values of specified "
+            "options in their correct json format, then exits.",
+        .is_required = false};
 
     const inline static DatalessParameter read_from_json{
-        "read_from_json", "",
-        "Takes a filepath as value. Reads and assigns parameter option values from the specified json file.", false};
+        .name  = "read_from_json",
+        .alias = "",
+        .description =
+            "Takes a filepath as value. Reads and assigns parameter option values from the specified json file.",
+        .is_required = false};
 
     const inline static DatalessParameter write_to_json{
-        "write_to_json", "",
-        "Takes a filepath as value. Writes current values of all parameter options to the specified json file.", false};
+        .name  = "write_to_json",
+        .alias = "",
+        .description =
+            "Takes a filepath as value. Writes current values of all parameter options to the specified json file.",
+        .is_required = false};
 
     const inline static std::vector<DatalessParameter> all_presets{help, print_option, read_from_json, write_to_json};
 };
@@ -277,7 +261,7 @@ public:
     template <class Type>
     AbstractParameter(mio::Tag<Type>, const DatalessParameter& p, std::shared_ptr<void>&& value)
         : DatalessParameter(p)
-        , m_data(value)
+        , m_data(std::move(value))
         , m_serialize([](const std::shared_ptr<void>& param) -> IOResult<Json::Value> {
             return mio::serialize_json(*static_cast<Type*>(param.get()));
         })
@@ -309,8 +293,8 @@ public:
     template <class Param>
     AbstractParameter(mio::Tag<Param>, typename Param::Type& value)
         : AbstractParameter(mio::Tag<typename Param::Type>{},
-                            DatalessParameter{Name::get(Param{}), Alias::get(Param{}), Description::get(Param{}),
-                                              IsRequired::get(Param{})},
+                            DatalessParameter{get_name(Param{}), get_alias(Param{}), get_description(Param{}),
+                                              get_is_required(Param{})},
                             std::shared_ptr<void>(static_cast<void*>(&value), [](void*) {}))
     {
     }
@@ -419,7 +403,7 @@ public:
     {
         auto param = find(id);
         if (!param) {
-            return IOResult<Json::Value>(param.error().code(), "Could not get parameter: " + param.error().message());
+            return mio::failure(param.error().code(), "Could not get parameter: " + param.error().message());
         }
         else {
             return param.value()->second.get();
@@ -438,7 +422,7 @@ public:
         std::string errors;
         Json::CharReaderBuilder builder;
         const std::unique_ptr<Json::CharReader> parser(builder.newCharReader());
-        parser->parse(args.c_str(), args.c_str() + args.size(), &js, &errors);
+        parser->parse(args.begin().base(), args.end().base(), &js, &errors);
         // do not directly raise errors, to avoid hiding e.g. a "parameter not found"
         return set_param(id, js, errors);
     }
@@ -454,7 +438,7 @@ public:
     {
         auto param = find(id);
         if (!param) {
-            return IOResult<void>(param.error().code(), "Could not set parameter: " + param.error().message());
+            return mio::failure(param.error().code(), "Could not set parameter: " + param.error().message());
         }
         else {
             // try to set the value
@@ -520,7 +504,7 @@ private:
      */
     IOResult<MapType::iterator> find(const Identifier& id)
     {
-        MapType::iterator param_itr = m_map_by_alias.find(id.strip());
+        auto param_itr = m_map_by_alias.find(id.strip());
         if (param_itr != m_map_by_alias.end()) {
             return mio::success(param_itr);
         }
@@ -577,7 +561,7 @@ void write_help(const std::string& executable_name, const AbstractSet& set,
  * @brief Implementation of the CLI. See the main function below for details.
  * This function may overwrite parameter values and is_required flags.
  */
-mio::IOResult<void> command_line_interface(const std::string& executable_name, const int argc, char** argv,
+mio::IOResult<void> command_line_interface(const std::string& executable_name, const std::span<char*>& argv,
                                            cli::details::AbstractSet& parameters,
                                            const std::vector<std::string>& default_options);
 
@@ -601,7 +585,7 @@ public:
      * @param[in] parameters A vector of AbstractParameter%s holding their own data.
      */
     ParameterSet(std::vector<details::AbstractParameter>&& parameters)
-        : m_parameters(parameters)
+        : m_parameters(std::move(parameters))
     {
     }
 
@@ -683,11 +667,13 @@ public:
         // since we get *this as rvalue, we can move the parameters
         auto new_params = std::move(m_parameters);
         // create a new owning data pointer, stored as void*
-        std::shared_ptr<void> data(new ValueType(initial_value), std::default_delete<ValueType>{});
+        std::shared_ptr<void> data(new ValueType(std::forward<Type>(initial_value)), std::default_delete<ValueType>{});
         // create a new abstract parameter, then move all parameters to a new builder
         new_params.emplace_back(Tag<ValueType>{},
-                                details::DatalessParameter{std::string(Name), optionals.alias, optionals.description,
-                                                           optionals.is_required},
+                                details::DatalessParameter{.name        = std::string(Name),
+                                                           .alias       = std::move(optionals).alias,
+                                                           .description = std::move(optionals).description,
+                                                           .is_required = std::move(optionals).is_required},
                                 std::move(data));
         return ParameterSetBuilder<Params..., TypeList<details::NamedType<Name>, ValueType>>{std::move(new_params)};
     }
@@ -778,7 +764,7 @@ mio::IOResult<void> command_line_interface(const std::string& executable_name, c
 {
     // parse the parameters into an iterable format
     BOOST_OUTCOME_TRY(auto&& set, cli::details::AbstractSet::build(parameters));
-    return cli::details::command_line_interface(executable_name, argc, argv, set, default_options);
+    return cli::details::command_line_interface(executable_name, std::span(argv, argc), set, default_options);
 }
 
 /**

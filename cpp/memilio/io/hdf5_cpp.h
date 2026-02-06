@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_IO_HDF5_CPP_H
-#define EPI_IO_HDF5_CPP_H
+#ifndef MIO_IO_HDF5_CPP_H
+#define MIO_IO_HDF5_CPP_H
 
 #include "memilio/config.h"
 
@@ -97,6 +97,6 @@ struct H5DataSet {
 
 } // namespace mio
 
-#endif //MEMILIO_HAS_HDF5
+#endif // MEMILIO_HAS_HDF5
 
-#endif //EPI_IO_HDF5_CPP_H
+#endif // MIO_IO_HDF5_CPP_H

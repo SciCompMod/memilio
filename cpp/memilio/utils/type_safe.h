@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_UTILS_TYPE_SAFE_H
-#define EPI_UTILS_TYPE_SAFE_H
+#ifndef MIO_UTILS_TYPE_SAFE_H
+#define MIO_UTILS_TYPE_SAFE_H
 
 #include "memilio/io/io.h"
 #include <ostream>
@@ -46,9 +46,7 @@ public:
     /**
      * default constructor.
      */
-    TypeSafe()
-    {
-    }
+    TypeSafe() = default;
 
     /**
      * value constructor.
@@ -234,4 +232,4 @@ public:
 
 } // namespace mio
 
-#endif //EPI_UTILS_TYPE_SAFE_H
+#endif // MIO_UTILS_TYPE_SAFE_H

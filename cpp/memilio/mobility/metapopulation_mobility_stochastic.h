@@ -20,16 +20,9 @@
 #ifndef METAPOPULATION_MOBILITY_STOCHASTIC_H
 #define METAPOPULATION_MOBILITY_STOCHASTIC_H
 
-#include "memilio/compartments/simulation.h"
-#include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/contact_matrix.h"
-#include "memilio/epidemiology/age_group.h"
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
-
-#include "boost/filesystem.hpp"
-
-#include <cassert>
 
 namespace mio
 {

@@ -20,13 +20,13 @@
 #ifndef MIO_EPI_LCT_POPULATIONS_H
 #define MIO_EPI_LCT_POPULATIONS_H
 
-#include "boost/type_traits/make_void.hpp"
-#include "memilio/config.h"
-#include "memilio/utils/uncertain_value.h"
-#include "memilio/math/eigen.h"
-#include "memilio/epidemiology/lct_infection_state.h"
-#include "memilio/utils/type_list.h"
+#include "memilio/config.h" // IWYU pragma: keep
+#include "memilio/math/eigen.h" // IWYU pragma: keep
+#include "memilio/epidemiology/lct_infection_state.h" // IWYU pragma: keep for ease of use
 #include "memilio/utils/metaprogramming.h"
+#include "memilio/utils/type_list.h"
+#include "memilio/utils/uncertain_value.h"
+#include <cstddef>
 
 namespace mio
 {
@@ -64,9 +64,8 @@ public:
 
     /// @brief Default constructor.
     LctPopulations()
+        : m_y(InternalArrayType::Constant(get_count(), UncertainValue<FP>(0.0)))
     {
-        set_count();
-        m_y = InternalArrayType::Constant(m_count, UncertainValue<FP>(0.0));
     }
 
     /**
@@ -75,7 +74,7 @@ public:
      */
     size_t get_num_compartments() const
     {
-        return m_count;
+        return m_y.size();
     }
 
     /**
@@ -98,7 +97,7 @@ public:
      */
     Type& operator[](size_t index)
     {
-        assert(index < m_count);
+        assert(index < static_cast<size_t>(m_y.size()));
         return m_y[index];
     }
 
@@ -125,7 +124,7 @@ public:
      */
     inline Eigen::VectorX<FP> get_compartments() const
     {
-        return m_y.array().template cast<FP>();
+        return m_y.template cast<FP>();
     }
 
     /**
@@ -136,8 +135,7 @@ public:
     template <size_t Group>
     FP get_group_total() const
     {
-        return m_y.array()
-            .template cast<FP>()
+        return m_y.template cast<FP>()
             .segment(get_first_index_of_group<Group>(), type_at_index_t<Group, LctStatesGroups>::Count)
             .sum();
     }
@@ -148,7 +146,7 @@ public:
      */
     FP get_total() const
     {
-        return m_y.array().template cast<FP>().sum();
+        return m_y.template cast<FP>().sum();
     }
 
     /**
@@ -166,16 +164,16 @@ public:
     bool apply_constraints()
     {
         bool corrected = false;
-        for (int i = 0; i < m_y.array().size(); i++) {
-            if (m_y.array()[i] < 0.0) {
-                if (m_y.array()[i] > -1e-10) {
-                    log_warning("Constraint check: Compartment number {} changed from {} to {}", i, m_y.array()[i], 0);
+        for (int i = 0; i < m_y.size(); i++) {
+            if (m_y[i] < 0.0) {
+                if (m_y[i] > -1e-10) {
+                    log_warning("Constraint check: Compartment number {} changed from {} to {}", i, m_y[i], 0);
                 }
                 else {
-                    log_error("Constraint check: Compartment number {} changed from {} to {}", i, m_y.array()[i], 0);
+                    log_error("Constraint check: Compartment number {} changed from {} to {}", i, m_y[i], 0);
                 }
-                m_y.array()[i] = 0.;
-                corrected      = true;
+                m_y[i]    = 0.;
+                corrected = true;
             }
         }
         return corrected;
@@ -187,7 +185,7 @@ public:
      */
     bool check_constraints() const
     {
-        if ((m_y.array() < 0.0).any()) {
+        if ((m_y < 0.0).any()) {
             log_error("Constraint check: At least one compartment size is smaller {}.", 0);
             return true;
         }
@@ -200,18 +198,15 @@ private:
      * The number also corresponds to the size of the internal vector.
      */
     template <size_t Group = 0>
-    void set_count()
+    [[nodiscard]] static size_t get_count()
     {
-        if constexpr (Group == 0) {
-            m_count = 0;
-        }
+        size_t count = 0;
         if constexpr (Group < num_groups) {
-            m_count += type_at_index_t<Group, LctStatesGroups>::Count;
-            set_count<Group + 1>();
+            count = type_at_index_t<Group, LctStatesGroups>::Count + get_count<Group + 1>();
         }
+        return count;
     }
 
-    size_t m_count; //< Number of groups stored.
     InternalArrayType m_y{}; //< An array containing the number of people in the groups.
 };
 

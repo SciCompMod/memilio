@@ -120,8 +120,9 @@ mio::IOResult<void> mio::cli::details::read_abstract_set_from_file(mio::cli::det
     return mio::success();
 }
 
-mio::IOResult<void> mio::cli::details::command_line_interface(const std::string& executable_name, const int argc,
-                                                              char** argv, cli::details::AbstractSet& set,
+mio::IOResult<void> mio::cli::details::command_line_interface(const std::string& executable_name,
+                                                              const std::span<char*>& argv,
+                                                              cli::details::AbstractSet& set,
                                                               const std::vector<std::string>& default_options)
 {
     assert(set.parameters().size() > 0 && "At least one parameter is required!");
@@ -137,8 +138,8 @@ mio::IOResult<void> mio::cli::details::command_line_interface(const std::string&
     }
     // pre-scan all argumemts before doing anything with them to deal with help and print_option
     // this avoids returning e.g. parsing errors instead of the help dialogue
-    for (int i = 1; i < argc; i++) {
-        auto id_result = Identifier::parse(argv[i]);
+    for (auto arg_itr = argv.begin() + 1; arg_itr != argv.end(); ++arg_itr) {
+        auto id_result = Identifier::parse(*arg_itr);
         // skip non-option arguments
         if (!id_result) {
             continue;
@@ -153,31 +154,32 @@ mio::IOResult<void> mio::cli::details::command_line_interface(const std::string&
         }
         // handle print_option option
         else if (id.matches_parameter(PresetOptions::print_option)) {
-            i++; // skip the PrintOption argument
+            ++arg_itr; // skip the PrintOption argument
             std::stringstream ss;
-            for (; i < argc && !Identifier::is_option(argv[i]); i++) {
+            for (; arg_itr != argv.end() && !Identifier::is_option(*arg_itr); ++arg_itr) {
                 // try to get the parameter's json value
-                BOOST_OUTCOME_TRY(auto&& value, set.get_param(Identifier::make_raw(argv[i])));
+                BOOST_OUTCOME_TRY(auto&& value, set.get_param(Identifier::make_raw(*arg_itr)));
                 // print the name (or alias) and value
-                ss << "Option " << argv[i] << ":\n" << value << "\n";
+                ss << "Option " << *arg_itr << ":\n" << value << "\n";
             }
             // return after all values are printed
             return mio::failure(StatusCode::OK, ss.str());
         }
     }
     // main pass over all args to set options
-    int i = 1;
+    auto arg_itr = argv.begin() + 1;
+    auto def_itr = default_options.begin();
     // handle parameter options that require values iteratively. assign given values or return an error
-    while (i < argc) {
-        const auto id_result = Identifier::parse(argv[i]);
+    while (arg_itr != argv.end()) {
+        const auto id_result = Identifier::parse(*arg_itr);
         // try to parse the first default_options.size() as arguments; afterwards, require an identifier
         if (!id_result) {
             // checking #defaults suffices, as non-option arguments are greedily collected into "arguments" below
-            if (i - 1 < static_cast<int>(default_options.size())) {
-                const auto& param_name = Identifier::make_raw(default_options[i - 1]);
-                BOOST_OUTCOME_TRY(set.set_param(param_name, std::string(argv[i])));
-
-                i++;
+            if (def_itr != default_options.end()) {
+                const auto& param_name = Identifier::make_raw(*def_itr);
+                BOOST_OUTCOME_TRY(set.set_param(param_name, std::string(*arg_itr)));
+                ++arg_itr;
+                ++def_itr;
                 continue;
             }
             else {
@@ -185,19 +187,19 @@ mio::IOResult<void> mio::cli::details::command_line_interface(const std::string&
             }
         }
         const Identifier current_option(id_result.value());
-        i++; // go to first argument
+        ++arg_itr; // go to first argument
         // assert that the first argument is not an identifier (i.e. name or alias)
-        if (i == argc || Identifier::is_option(argv[i])) {
+        if (arg_itr == argv.end() || Identifier::is_option(*arg_itr)) {
             return mio::failure(mio::StatusCode::OutOfRange,
                                 "Missing value for option \"" + current_option.string + "\".");
         }
         // collect all argv's that are not identifiers and set i to the position of the next identifier
-        std::string arguments(argv[i]);
-        i++;
-        for (; (i < argc) && !Identifier::is_option(argv[i]); i++) {
+        std::string arguments(*arg_itr);
+        ++arg_itr;
+        for (; (arg_itr != argv.end()) && !Identifier::is_option(*arg_itr); ++arg_itr) {
             // here space separated args are joined together. maybe a better way is to make users use 'ticks' to group
             // their input.
-            arguments.append(" ").append(argv[i]);
+            arguments.append(" ").append(*arg_itr);
         }
         // handle built-in options
         if (current_option.matches_parameter(PresetOptions::read_from_json)) {

@@ -77,7 +77,7 @@ public:
      * @param table A list of time points, passed to the TimeSeries constructor.
      */
     TimeSeriesFunctor(TimeSeriesFunctorType type, std::vector<std::vector<FP>>&& table)
-        : TimeSeriesFunctor(type, TimeSeries<FP>{table})
+        : TimeSeriesFunctor(type, TimeSeries<FP>{std::move(table)})
     {
     }
 

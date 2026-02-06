@@ -24,7 +24,7 @@
 #include "memilio/compartments/compartmental_model.h"
 #include "memilio/utils/index_range.h"
 #include "memilio/utils/flow.h"
-#include "memilio/utils/type_list.h"
+#include "memilio/utils/type_list.h" // IWYU pragma: keep for easier flow definitions
 
 namespace mio
 {
@@ -37,8 +37,8 @@ namespace details
 // First a list of tuples is generated for each Tag in Tags, where the tuple is either of type tuple<Tag>, or if
 // Tag == OmittedTag, of type tuple<>. This list is then concatenated, effectively removing OmittedTag.
 template <class OmittedTag, class... Tags>
-decltype(std::tuple_cat(std::declval<typename std::conditional<std::is_same<OmittedTag, Tags>::value, std::tuple<>,
-                                                               std::tuple<Tags>>::type>()...))
+decltype(std::tuple_cat(
+    std::declval<std::conditional_t<std::is_same_v<OmittedTag, Tags>, std::tuple<>, std::tuple<Tags>>>()...))
     filter_tuple(std::tuple<Tags...>);
 
 // Function declaration used to replace type T by std::tuple.
@@ -135,7 +135,7 @@ public:
      * @param[out] dydt A reference to the calculated output.
      */
     void get_derivatives(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
-                         Eigen::Ref<Eigen::VectorX<FP>> dydt) const override final
+                         Eigen::Ref<Eigen::VectorX<FP>> dydt) const final
     {
         m_flow_values.setZero();
         get_flows(pop, y, t, m_flow_values);
@@ -199,7 +199,7 @@ public:
     template <Comp Source, Comp Target>
     constexpr size_t get_flat_flow_index() const
     {
-        static_assert(std::is_same<FlowIndex, Index<>>::value, "Other indices must be specified");
+        static_assert(std::is_same_v<FlowIndex, Index<>>, "Other indices must be specified");
         return index_of_type_v<Flow<Source, Target>, Flows>;
     }
 

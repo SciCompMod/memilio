@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MEMILIO_IO_PARAMETER_H
-#define MEMILIO_IO_PARAMETER_H
+#ifndef MIO_IO_PARAMETERS_IO_H
+#define MIO_IO_PARAMETERS_IO_H
 
 #include "memilio/config.h"
 
@@ -26,7 +26,7 @@
 
 #include "memilio/io/epi_data.h"
 #include "memilio/io/result_io.h"
-#include "json/value.h"
+
 #include <string>
 #include <vector>
 
@@ -45,9 +45,18 @@ namespace mio
 template <class EpiDataEntry>
 int get_region_id(const EpiDataEntry& data_entry)
 {
-    return data_entry.county_id ? data_entry.county_id->get()
-                                : (data_entry.state_id ? data_entry.state_id->get()
-                                                       : (data_entry.district_id ? data_entry.district_id->get() : 0));
+    if (data_entry.county_id) {
+        return data_entry.county_id->get();
+    }
+    else if (data_entry.state_id) {
+        return data_entry.state_id->get();
+    }
+    else if (data_entry.district_id) {
+        return data_entry.district_id->get();
+    }
+    else {
+        return 0;
+    }
 }
 
 /**
@@ -138,6 +147,6 @@ IOResult<std::vector<std::vector<ScalarType>>> read_population_data(const std::s
 
 } // namespace mio
 
-#endif //MEMILIO_HAS_JSONCPP
+#endif // MEMILIO_HAS_JSONCPP
 
-#endif //MEMILIO_IO_PARAMETER_H
+#endif // MIO_IO_PARAMETERS_IO_H

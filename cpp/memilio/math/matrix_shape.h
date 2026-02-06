@@ -29,11 +29,10 @@
  * - equality comparable
  */
 
-#ifndef EPI_UTILS_MATRIX_SHAPE_H
-#define EPI_UTILS_MATRIX_SHAPE_H
+#ifndef MIO_MATH_MATRIX_SHAPE_H
+#define MIO_MATH_MATRIX_SHAPE_H
 
-#include "memilio/math/eigen.h"
-#include "memilio/math/eigen_util.h"
+#include "memilio/math/eigen.h" // IWYU pragma: keep
 #include "memilio/io/io.h"
 
 namespace mio
@@ -338,4 +337,4 @@ private:
 
 } // namespace mio
 
-#endif //EPI_UTILS_MATRIX_SHAPE_H
+#endif // MIO_MATH_MATRIX_SHAPE_H

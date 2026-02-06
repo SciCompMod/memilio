@@ -17,12 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef CUSTOMINDEXARRAY_H
-#define CUSTOMINDEXARRAY_H
+#ifndef MIO_UTILS_CUSTOM_INDEX_ARRAY_H
+#define MIO_UTILS_CUSTOM_INDEX_ARRAY_H
 
 #include "memilio/math/eigen_util.h"
 #include "memilio/utils/index.h"
-#include "memilio/utils/stl_util.h"
+#include "memilio/utils/metaprogramming.h"
 
 #include <concepts>
 
@@ -30,17 +30,16 @@ namespace
 {
 
 //calculate the product of tuple elements
-// std::apply or fold expression in C++17
+// TODO std::apply or fold expression in C++17; current version required by CustomIndexArray::Slice
 template <int I, template <class...> class Index, class... Ts>
-typename std::enable_if<(I == sizeof...(Ts)), size_t>::type product(Index<Ts...> const&)
+size_t product(Index<Ts...> const& t)
 {
-    return 1;
-}
-
-template <int I, template <class...> class Index, class... Ts>
-typename std::enable_if<(I < sizeof...(Ts)), size_t>::type product(Index<Ts...> const& t)
-{
-    return (size_t)mio::get<I>(t) * product<I + 1, Index, Ts...>(t);
+    if constexpr (I < sizeof...(Ts)) {
+        return static_cast<size_t>(mio::get<I>(t)) * product<I + 1, Index, Ts...>(t);
+    }
+    else {
+        return 1;
+    }
 }
 
 template <template <class...> class Index, class... Ts>
@@ -57,39 +56,18 @@ namespace mio
 namespace details
 {
 
-// calculate the Position of an element in a MultiIndex, given its type
-template <class T, class Tuple>
-struct IndexPosition;
-
-template <class T, class... Types>
-struct IndexPosition<T, Index<T, Types...>> {
-    static const std::size_t value = 0;
-};
-
-template <class T, class U, class... Types>
-struct IndexPosition<T, Index<U, Types...>> {
-    static const std::size_t value = 1 + IndexPosition<T, Index<Types...>>::value;
-};
-
 // Internal implementation for flatten_index
 template <size_t I, typename Index>
-std::enable_if_t<(I == (Index::size - 1)), std::pair<size_t, size_t>> flatten_index(Index const& indices,
-                                                                                    Index const& dimensions)
+std::pair<size_t, size_t> flatten_index(Index const& indices, Index const& dimensions)
 {
     assert(get<I>(indices) < get<I>(dimensions));
-    return {(size_t)mio::get<I>(indices), (size_t)mio::get<I>(dimensions)};
-}
-
-template <size_t I, typename Index>
-std::enable_if_t<(I < (Index::size - 1)), std::pair<size_t, size_t>> flatten_index(Index const& indices,
-                                                                                   Index const& dimensions)
-{
-    assert(mio::get<I>(indices) < mio::get<I>(dimensions));
-
-    size_t val, prod;
-    std::tie(val, prod) = flatten_index<I + 1>(indices, dimensions);
-
-    return {val + (size_t)mio::get<I>(indices) * prod, prod * (size_t)mio::get<I>(dimensions)};
+    if constexpr (I < (Index::size - 1)) {
+        auto [val, prod] = flatten_index<I + 1>(indices, dimensions);
+        return {val + (size_t)mio::get<I>(indices) * prod, prod * (size_t)mio::get<I>(dimensions)};
+    }
+    else {
+        return {(size_t)mio::get<I>(indices), (size_t)mio::get<I>(dimensions)};
+    }
 }
 
 template <typename T>
@@ -179,7 +157,8 @@ public:
      * @tparam Ts The argument types of the constructor arguments of Type
      * @param args The constructor arguments of Type
      */
-    template <class... Ts, typename std::enable_if_t<std::is_constructible<Type, Ts...>::value>* = nullptr>
+    template <class... Ts>
+        requires(std::is_constructible_v<Type, Ts...>)
     CustomIndexArray(Index const& dims, Ts&&... args)
         : m_dimensions{dims}
         , m_numel(product(dims))
@@ -195,7 +174,7 @@ public:
      * @param b begin of the range of values.
      * @param e end of the range of values.
      */
-    template <class Iter, typename std::enable_if_t<is_iterator<Iter>::value>* = nullptr>
+    template <std::input_or_output_iterator Iter>
     CustomIndexArray(Index const& dims, Iter b, Iter e)
         : m_dimensions(dims)
         , m_numel(product(dims))
@@ -360,130 +339,6 @@ public:
     }
 
 private:
-    // Random Access Iterator for CustomIndexArray
-    // To Do: As of Eigen 3.4, this is not needed anymore,
-    // because the Eigen Matrix classes directly implement stl-compatible
-    // iterators
-    template <typename T>
-    struct Iterator {
-        using iterator_category = std::random_access_iterator_tag;
-        using difference_type   = std::ptrdiff_t;
-        using value_type        = T;
-        using pointer           = value_type*;
-        using reference         = value_type&;
-
-        Iterator(pointer ptr)
-            : m_ptr(ptr)
-        {
-        }
-
-        Iterator& operator=(pointer rhs)
-        {
-            m_ptr = rhs;
-            return *this;
-        }
-        Iterator& operator=(const Iterator& rhs)
-        {
-            m_ptr = rhs.m_ptr;
-            return *this;
-        }
-        Iterator& operator+=(const int& rhs)
-        {
-            m_ptr += rhs;
-            return *this;
-        }
-        Iterator& operator-=(const int& rhs)
-        {
-            m_ptr -= rhs;
-            return *this;
-        }
-
-        reference operator[](const difference_type& rhs)
-        {
-            return m_ptr[rhs];
-        }
-        value_type const& operator[](const difference_type& rhs) const
-        {
-            return m_ptr[rhs];
-        }
-        reference operator*()
-        {
-            return *(m_ptr);
-        }
-        value_type const& operator*() const
-        {
-            return *(m_ptr);
-        }
-        pointer operator->()
-        {
-            return m_ptr;
-        }
-
-        Iterator& operator++()
-        {
-            ++m_ptr;
-            return *this;
-        }
-        Iterator operator++(int)
-        {
-            Iterator tmp = *this;
-            ++(*this);
-            return tmp;
-        }
-        Iterator& operator--()
-        {
-            --m_ptr;
-            return *this;
-        }
-        Iterator operator--(int)
-        {
-            Iterator tmp = *this;
-            --(*this);
-            return tmp;
-        }
-
-        Iterator operator+(const int& rhs) const
-        {
-            return Iterator(m_ptr + rhs);
-        }
-        Iterator operator-(const int& rhs) const
-        {
-            return Iterator(m_ptr - rhs);
-        }
-        difference_type operator-(const Iterator& rhs) const
-        {
-            return m_ptr - rhs.m_ptr;
-        }
-
-        friend bool operator==(const Iterator& a, const Iterator& b)
-        {
-            return a.m_ptr == b.m_ptr;
-        }
-        friend bool operator!=(const Iterator& a, const Iterator& b)
-        {
-            return !(a == b);
-        }
-        friend bool operator<(const Iterator& a, const Iterator& b)
-        {
-            return a.m_ptr < b.m_ptr;
-        }
-        friend bool operator<=(const Iterator& a, const Iterator& b)
-        {
-            return a.m_ptr <= b.m_ptr;
-        }
-        friend bool operator>(const Iterator& a, const Iterator& b)
-        {
-            return a.m_ptr > b.m_ptr;
-        }
-        friend bool operator>=(const Iterator& a, const Iterator& b)
-        {
-            return a.m_ptr >= b.m_ptr;
-        }
-
-    private:
-        pointer m_ptr;
-    };
-
     /**
      * @brief A Slice represents a slice of data along one dimension, given a start and
      * end index into that dimension. Its sole use is to provide an iterator for the data
@@ -507,8 +362,8 @@ private:
      * returned values are traversed in the flat index from front to back.
      *
      */
-    template <typename Tag, typename iter_type,
-              typename std::enable_if_t<details::is_random_access_iterator<iter_type>::value>* = nullptr>
+    template <typename Tag, typename iter_type>
+        requires details::is_random_access_iterator<iter_type>::value
     class Slice
     {
         using difference_type = typename iter_type::difference_type;
@@ -672,7 +527,7 @@ private:
             , idx_sequence(idx_sequence_)
             , m_dimensions(dimensions)
             , di(mio::get<Tag>(dimensions))
-            , dr(product<details::IndexPosition<Tag, Index>::value>(dimensions) / di)
+            , dr(product<index_of_type_v<Tag, Index>>(dimensions) / di)
             , dl(product(dimensions) / (di * dr))
         {
             assert((size_t)idx_sequence.start + idx_sequence.n <= di);
@@ -791,8 +646,8 @@ private:
 public:
     using value_type     = Type;
     using reference      = Type&;
-    using iterator       = Iterator<Type>;
-    using const_iterator = Iterator<Type const>;
+    using iterator       = typename InternalArrayType::iterator;
+    using const_iterator = typename InternalArrayType::const_iterator;
 
     /**
      * @brief Get a start iterator for the elements
@@ -800,7 +655,7 @@ public:
      */
     iterator begin()
     {
-        return iterator(array().data());
+        return array().begin();
     }
 
     /**
@@ -809,7 +664,7 @@ public:
      */
     const_iterator begin() const
     {
-        return const_iterator(array().data());
+        return array().cbegin();
     }
 
     /**
@@ -818,7 +673,7 @@ public:
      */
     iterator end()
     {
-        return iterator(array().data() + array().size());
+        return array().end();
     }
 
     /**
@@ -827,7 +682,7 @@ public:
      */
     const_iterator end() const
     {
-        return const_iterator(array().data() + array().size());
+        return array().cend();
     }
 
     /**
@@ -868,12 +723,14 @@ public:
     {
         return slice<Tag>({(size_t)idx, 1});
     }
-    template <typename Tag, std::enable_if_t<std::is_enum<Tag>::value, void*> = nullptr>
+    template <typename Tag>
+        requires std::is_enum_v<Tag>
     Slice<Tag, iterator> slice(Tag idx)
     {
         return slice<Tag>(mio::Index<Tag>(idx));
     }
-    template <typename Tag, std::enable_if_t<std::is_enum<Tag>::value, void*> = nullptr>
+    template <typename Tag>
+        requires std::is_enum_v<Tag>
     Slice<Tag, const_iterator> slice(Tag idx) const
     {
         return slice<Tag>(mio::Index<Tag>(idx));
@@ -929,4 +786,4 @@ public:
 
 } // namespace mio
 
-#endif // CUSTOMINDEXARRAY_H
+#endif // MIO_UTILS_CUSTOM_INDEX_ARRAY_H

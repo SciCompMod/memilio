@@ -17,14 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ODE_CONTACT_FREQUENCY_MATRIX_H
-#define EPI_ODE_CONTACT_FREQUENCY_MATRIX_H
+#ifndef MIO_EPI_CONTACT_MATRIX_H
+#define MIO_EPI_CONTACT_MATRIX_H
 
 #include "memilio/epidemiology/damping.h"
-#include "memilio/math/matrix_shape.h"
 #include "memilio/math/math_utils.h"
 #include "memilio/utils/stl_util.h"
-#include "memilio/utils/logging.h"
 
 #include <numeric>
 #include <ostream>
@@ -84,7 +82,8 @@ public:
      * @param shape_args shape arguments.
      * @tparam T shape arguments.
      */
-    template <class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, void>>
+    template <class... T>
+        requires std::is_constructible_v<Shape, T...>
     explicit DampingMatrixExpression(T... shape_args)
         : DampingMatrixExpression(Matrix::Zero(Shape(shape_args...).rows(), Shape(shape_args...).cols()))
     {
@@ -287,7 +286,8 @@ public:
      * @param num_groups number of groups.
      * @param num_matrices number of matrices.
      */
-    template <class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, int>>
+    template <class... T>
+        requires(std::is_constructible_v<Shape, T...>)
     explicit DampingMatrixExpressionGroup(size_t num_matrices, T... shape_args)
         : m_matrices(num_matrices, value_type{shape_args...})
     {
@@ -559,4 +559,4 @@ public:
 
 } // namespace mio
 
-#endif //EPI_ODE_CONTACT_FREQUENCY_MATRIX_H
+#endif // MIO_EPI_CONTACT_MATRIX_H

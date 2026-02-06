@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_TIME_SERIES_H
-#define EPI_TIME_SERIES_H
+#ifndef MIO_UTILS_TIME_SERIES_H
+#define MIO_UTILS_TIME_SERIES_H
 
 #include "memilio/io/io.h"
 #include "memilio/utils/stl_util.h"
@@ -916,4 +916,4 @@ decltype(std::declval<TS>().rend()) find_value_reverse(TS&& ts, FP t_search, FP 
 
 } // namespace mio
 
-#endif
+#endif // MIO_UTILS_TIME_SERIES_H

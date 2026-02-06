@@ -25,6 +25,7 @@
 #include "memilio/utils/logging.h" // included for fmt
 
 #include <algorithm>
+#include <iostream>
 #include <limits>
 #include <ostream>
 #include <list>

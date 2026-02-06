@@ -20,7 +20,6 @@
 #ifndef MIO_EPI_ODE_UNCERTAINMATRIX_H
 #define MIO_EPI_ODE_UNCERTAINMATRIX_H
 
-#include "memilio/utils/date.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/epidemiology/damping_sampling.h"
 

@@ -427,8 +427,8 @@ public:
     struct ParamType {
         using DistType = DistributionAdapter<DistT>;
 
-        template <typename... Ps,
-                  typename std::enable_if_t<std::is_constructible<typename DistT::param_type, Ps...>::value>* = nullptr>
+        template <typename... Ps>
+            requires std::is_constructible_v<typename DistT::param_type, Ps...>
         ParamType(Ps&&... ps)
             : params(std::forward<Ps>(ps)...)
         {
@@ -684,9 +684,8 @@ template <class Real>
 using UniformDistribution = DistributionAdapter<std::uniform_real_distribution<Real>>;
 
 template <class IOContext, class UniformDistributionParams,
-          class Real              = typename UniformDistributionParams::DistType::ResultType,
-          std::enable_if_t<std::is_same_v<UniformDistributionParams, typename UniformDistribution<Real>::ParamType>,
-                           void*> = nullptr>
+          class Real = typename UniformDistributionParams::DistType::ResultType>
+    requires std::is_same_v<UniformDistributionParams, typename UniformDistribution<Real>::ParamType>
 void serialize_internal(IOContext& io, const UniformDistributionParams& p)
 {
     auto obj = io.create_object("UniformDistributionParams");
@@ -695,9 +694,8 @@ void serialize_internal(IOContext& io, const UniformDistributionParams& p)
 }
 
 template <class IOContext, class UniformDistributionParams,
-          class Real              = typename UniformDistributionParams::DistType::ResultType,
-          std::enable_if_t<std::is_same_v<UniformDistributionParams, typename UniformDistribution<Real>::ParamType>,
-                           void*> = nullptr>
+          class Real = typename UniformDistributionParams::DistType::ResultType>
+    requires std::is_same_v<UniformDistributionParams, typename UniformDistribution<Real>::ParamType>
 IOResult<UniformDistributionParams> deserialize_internal(IOContext& io, Tag<UniformDistributionParams>)
 {
     auto obj = io.expect_object("UniformDistributionParams");

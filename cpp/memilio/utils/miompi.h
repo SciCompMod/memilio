@@ -20,7 +20,7 @@
 #ifndef MIO_UTILS_MPI_H
 #define MIO_UTILS_MPI_H
 
-#include "memilio/config.h"
+#include "memilio/config.h" // IWYU pragma: keep
 
 #ifdef MEMILIO_ENABLE_MPI
 #include "mpi.h"

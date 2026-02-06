@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_DISTANCE_H
-#define MIO_DISTANCE_H
+#ifndef MIO_GEOGRAPHY_DISTANCE_H
+#define MIO_GEOGRAPHY_DISTANCE_H
 
 #include "memilio/config.h"
 #include "memilio/io/default_serialize.h"
@@ -150,4 +150,4 @@ constexpr inline Distance kilometers(ScalarType kilometers)
 } // namespace geo
 } // namespace mio
 
-#endif
+#endif // MIO_GEOGRAPHY_DISTANCE_H

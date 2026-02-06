@@ -20,6 +20,7 @@
 #include "memilio/geography/regions.h"
 #include "memilio/geography/holiday_data.ipp"
 
+#include <algorithm>
 #include <tuple>
 
 namespace mio
@@ -102,7 +103,7 @@ get_holidays(StateId state, Date start_date, Date end_date)
 
     //all holiday periods that overlap with the specified period
     auto holidays_in_range =
-        std::equal_range(all.begin(), all.end(), std::make_pair(start_date, end_date), [](auto& p1, auto& p2) {
+        std::ranges::equal_range(all, std::make_pair(start_date, end_date), [](auto& p1, auto& p2) {
             return std::tie(p1.second.year, p1.second.month, p1.second.day) <
                    std::tie(p2.first.year, p2.first.month, p2.first.day);
         });

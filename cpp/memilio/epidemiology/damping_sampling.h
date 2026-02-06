@@ -17,13 +17,11 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_SECIR_DAMPING_SAMPLING_H
-#define EPI_SECIR_DAMPING_SAMPLING_H
+#ifndef MIO_EPI_DAMPING_SAMPLING_H
+#define MIO_EPI_DAMPING_SAMPLING_H
 
 #include "memilio/epidemiology/damping.h"
-#include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/uncertain_value.h"
-#include <memory>
 
 namespace mio
 {
@@ -309,4 +307,4 @@ auto make_mobility_damping_vector(ColumnVectorShape<FP> shape, V&& groups)
 
 } // namespace mio
 
-#endif //EPI_SECIR_DAMPING_SAMPLING_H
+#endif // MIO_EPI_DAMPING_SAMPLING_H
