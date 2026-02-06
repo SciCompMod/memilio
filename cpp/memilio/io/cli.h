@@ -422,7 +422,7 @@ public:
         std::string errors;
         Json::CharReaderBuilder builder;
         const std::unique_ptr<Json::CharReader> parser(builder.newCharReader());
-        parser->parse(args.begin().base(), args.end().base(), &js, &errors);
+        parser->parse(&(*args.begin()), &(*args.end()), &js, &errors);
         // do not directly raise errors, to avoid hiding e.g. a "parameter not found"
         return set_param(id, js, errors);
     }
