@@ -25,8 +25,8 @@ import time
 
 start = time.time()
 
-for i in range(1000):
-    test = forward_pass(0.08)
+for i in range(100):
+    test = forward_pass(0.08, 5)
 end = time.time()
 print(end - start)
 #df = pd.DataFrame(test)

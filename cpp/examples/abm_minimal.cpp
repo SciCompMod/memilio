@@ -175,10 +175,10 @@ int main()
     // The first column is Time. The other columns correspond to the number of people with a certain infection state at this Time:
     // Time = Time in days, S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
     // I_Crit = InfectedCritical, R = Recovered, D = Dead
-    std::ofstream outfile("abm_minimal.txt");
-    std::get<0>(historyTimeSeries.get_log())
-        .print_table(outfile, {"S"/*, "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"*/}, 7, 4);
-    std::cout << "Results written to abm_minimal.txt" << std::endl;
+    //std::ofstream outfile("abm_minimal.txt");
+    //std::get<0>(historyTimeSeries.get_log())
+    //    .print_table(outfile, {"S"/*, "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"*/}, 7, 4);
+    //std::cout << "Results written to abm_minimal.txt" << std::endl;
     
     auto end = std::chrono::high_resolution_clock::now(); 
     std::chrono::duration<double> diff = end - start; 

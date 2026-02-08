@@ -239,7 +239,7 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     m.def("forward_pass",
       &forward_pass,
-      py::arg("beta"),
+      py::arg("beta"), py::arg("kappa"),
       "Run the ABM forward pass and return a 10-bin Eigen vector.");
 }
 

@@ -279,6 +279,9 @@ struct DataWriterToMemoryDelta {
     }
 };
 
+
+
+
 } // namespace abm
 } // namespace mio
 #endif //ABM_COMMON_LOGGERS_H

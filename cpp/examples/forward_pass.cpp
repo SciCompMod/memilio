@@ -23,7 +23,7 @@
 #include "abm/common_abm_loggers.h"
 #include "forward_pass.h"
 
-Eigen::MatrixXd forward_pass(ScalarType beta)
+Eigen::MatrixXd forward_pass(ScalarType beta, ScalarType kappa)
 {
     auto start = std::chrono::high_resolution_clock::now();
     // This is a minimal example with children and adults < 60 year old.
@@ -38,7 +38,7 @@ Eigen::MatrixXd forward_pass(ScalarType beta)
     // Create the model with 4 age groups.
     auto model = mio::abm::Model(num_age_groups);
     // Set same infection parameter for all age groups. For example, the incubation period is log normally distributed with parameters 4 and 1.
-    model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() = mio::ParameterDistributionLogNormal(1.38, 1.);
+    model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() = mio::ParameterDistributionLogNormal(log(kappa), 1.);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
     model.parameters.get<mio::abm::AgeGroupGotoSchool>()                    = false;
     model.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
@@ -49,7 +49,7 @@ Eigen::MatrixXd forward_pass(ScalarType beta)
     model.parameters.check_constraints();
 
     // There are 10 households for each household group.
-    int n_households = 10;
+    int n_households = 100;
 
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
     auto child = mio::abm::HouseholdMember(num_age_groups); // A child is 50/50% 0-4 or 5-14.
@@ -164,6 +164,25 @@ Eigen::MatrixXd forward_pass(ScalarType beta)
     const auto& log =std::get<0>(historyTimeSeries.get_log());
     size_t num_points_log = static_cast<size_t>(log.get_num_time_points());
     size_t num_elements_log = static_cast<size_t>(log.get_num_elements());
+    std::vector<Eigen::RowVectorXd> rows;
+
+    for (size_t i = 0; i < num_points_log; ++i) {
+        double t = log.get_time(i);
+
+        if (std::abs(t - std::round(t)) < 1e-10) {
+            Eigen::RowVectorXd row(num_elements_log + 1);
+            row(0) = std::round(t);
+            row.tail(num_elements_log) = log.get_value(i).transpose();
+            rows.push_back(row);
+        }
+    }
+
+    Eigen::MatrixXd result(rows.size(), num_elements_log + 1);
+    for (size_t i = 0; i < rows.size(); ++i) {
+        result.row(i) = rows[i];
+    }
+
+    /*
     Eigen::MatrixXd result(num_points_log, num_elements_log + 1); 
     
     for (size_t i = 0; i < num_points_log; i++) { 
@@ -173,24 +192,6 @@ Eigen::MatrixXd forward_pass(ScalarType beta)
 
         result(i, 0) = log.get_time(i); 
         result.row(i).segment(1, num_elements_log) = log.get_value(i).transpose();
-    }
-    /*
-    constexpr int num_bins = 10;
-    Eigen::VectorX<ScalarType> sum =
-        Eigen::VectorX<ScalarType>::Zero(num_bins);
-    auto curr_time = sim.get_time();
-    PRAGMA_OMP(for)
-    for (auto& person : sim.get_model().get_persons()) 
-    {
-        const auto& infection_vector = person.get_infection_vector();
-        if (!infection_vector.empty())
-        {   
-            const auto& infection = infection_vector[0]; 
-            ScalarType vl = infection.get_viral_load(curr_time);
-            int bin = static_cast<int>(vl);
-            bin = std::clamp(bin, 0, num_bins-1);
-            sum[bin] += ScalarType(1);
-        }            
     }
     */
     return result;
