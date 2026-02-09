@@ -519,11 +519,11 @@ details::ApplyResultT<F, T...> apply(IOContext& io, F f, const std::tuple<IOResu
 
 //detect a serialize member function
 template <class T, class IOContext>
-concept HasSerialize = requires(IOContext& ctxt, const T t) { t.serialize(ctxt); };
+concept HasSerialize = requires(IOContext& ctxt, const T& t) { t.serialize(ctxt); };
 
 //detect a static deserialize member function
 template <class T, class IOContext>
-concept HasDeserialize = requires(IOContext& ctxt, const T t) {
+concept HasDeserialize = requires(IOContext& ctxt) {
     { T::deserialize(ctxt) } -> std::same_as<IOResult<T>>;
 };
 
