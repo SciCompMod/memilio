@@ -56,7 +56,8 @@ int main(int /*argc*/, char** /*argv*/)
 
     using Status = mio::Index<InfectionState>;
     using mio::regions::Region;
-
+    auto rng = mio::RandomNumberGenerator();
+    rng.seed({42, 123});
     //total compartment sizes
 
     using Model   = mio::smm::Model<ScalarType, InfectionState, Status, Region>;
@@ -97,7 +98,7 @@ int main(int /*argc*/, char** /*argv*/)
     adoption_rates_4.push_back({InfectionState::I, InfectionState::D, home, 0.1, {}});
     adoption_rates_4.push_back({InfectionState::S, InfectionState::E, home, 0.00, {}});
 
-    Model curr_model(Status{InfectionState::Count}, mio::regions::Region(1));
+    Model curr_model(Status{InfectionState::Count}, mio::regions::Region(1), rng);
 
     Builder builder;
 
@@ -132,13 +133,9 @@ int main(int /*argc*/, char** /*argv*/)
         builder.add_node(farm_id, x, y, type, size, population, slaughter, hrz, model, t0);
     }
 
-    auto rng = mio::RandomNumberGenerator();
-
     std::vector<std::vector<size_t>> interesting_indices;
-    interesting_indices.push_back(
-        {Model(Status{InfectionState::Count}, Region(1)).populations.get_flat_index({home, InfectionState::E})});
-    interesting_indices.push_back(
-        {Model(Status{InfectionState::Count}, Region(1)).populations.get_flat_index({home, InfectionState::I})});
+    interesting_indices.push_back({curr_model.populations.get_flat_index({home, InfectionState::E})});
+    interesting_indices.push_back({curr_model.populations.get_flat_index({home, InfectionState::I})});
 
     auto graph = std::move(builder).build();
 
@@ -154,7 +151,7 @@ int main(int /*argc*/, char** /*argv*/)
                                         {mio::geo::kilometers(1), mio::geo::kilometers(10), mio::geo::kilometers(20)}));
     }
 
-    auto sim = mio::make_farm_sim(t0, dt, std::move(graph));
+    auto sim = mio::make_farm_sim(t0, dt, std::move(graph), rng);
 
     sim.advance(tmax);
 

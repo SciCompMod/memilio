@@ -63,9 +63,10 @@ public:
     using Status = StatusT;
     using Region = RegionT;
 
-    Model(Status status_dimensions, Region region_dimensions)
+    Model(Status status_dimensions, Region region_dimensions, mio::RandomNumberGenerator& rng)
         : Base(typename Base::Populations(concatenate_indices(region_dimensions, status_dimensions)),
                typename Base::ParameterSet())
+        , m_rng(rng)
     {
     }
 
@@ -120,7 +121,7 @@ public:
     }
 
 private:
-    mio::RandomNumberGenerator m_rng; ///< Model's random number generator.
+    mio::RandomNumberGenerator& m_rng; ///< Model's random number generator.
 };
 
 } //namespace smm

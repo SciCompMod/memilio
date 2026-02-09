@@ -54,7 +54,7 @@ public:
         , m_in_hrz(hrz)
     {
     }
-    
+
     auto get_location() const
     {
         return m_location;
@@ -195,15 +195,21 @@ private:
     int regulation_zone_day = std::numeric_limits<int>::max();
 };
 
-/**
- * node functor for mobility-based simulation.
- * @see SimulationNode::advance
- */
 template <typename FP, class Sim>
-void advance_model(FP t, FP dt, FarmNode<FP, Sim>& node)
+void advance_farm_model(FP t, FP dt, FarmNode<FP, Sim>& node)
 {
     node.advance(t, dt);
 }
+
+// /**
+//  * node functor for mobility-based simulation.
+//  * @see SimulationNode::advance
+//  */
+// template <typename FP, class Sim>
+// void advance_model(FP t, FP dt, FarmNode<FP, Sim>& node)
+// {
+//     node.advance(t, dt);
+// }
 
 /**
  * represents the mobility between two nodes.
@@ -313,8 +319,8 @@ void MobilityEdgeDirected<FP>::apply_mobility(const FP t, const FP num_moving, F
     add_mobility_result_time_point(t, travellers);
 }
 
-template <typename FP, class Sim>
-void apply_timed_mobility(const FP t, const FP num_moving, MobilityEdgeDirected<FP>& edge, FarmNode<FP, Sim>& node_from,
+template <typename FP, class Sim, class StochasticEdge>
+void apply_timed_mobility(const FP t, const FP num_moving, StochasticEdge& edge, FarmNode<FP, Sim>& node_from,
                           FarmNode<FP, Sim>& node_to, mio::RandomNumberGenerator& rng)
 {
     edge.apply_mobility(t, num_moving, node_from, node_to, rng);

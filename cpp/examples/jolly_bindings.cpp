@@ -59,15 +59,17 @@ simulate(ScalarType tmax = 40, ScalarType dt = 1.0, ScalarType suspicion_thresho
          ScalarType foi_outer_factor0 = 1.0, ScalarType foi_inner_factor1 = 1.0, ScalarType foi_outer_factor1 = 1.0,
          ScalarType foi_inner_factor2 = 1.0, ScalarType foi_outer_factor2 = 1.0, ScalarType foi_inner_factor3 = 1.0,
          ScalarType foi_outer_factor3 = 1.0, ScalarType foi_inner_factor4 = 1.0, ScalarType foi_outer_factor4 = 1.0,
-         ScalarType first_infection_day = 0, ScalarType second_infection_day = 2, ScalarType third_infection_day = 2)
+         ScalarType first_infection_day = 0, ScalarType second_infection_day = 2, ScalarType third_infection_day = 2,
+         u_int seed = 42)
 {
     const auto t0 = 0.;
 
     using Status = mio::Index<InfectionState>;
     using mio::regions::Region;
+    auto rng = mio::RandomNumberGenerator();
+    rng.seed({seed});
 
     //total compartment sizes
-
     using Model   = mio::smm::Model<ScalarType, InfectionState, Status, Region>;
     using Builder = mio::GraphBuilder<
         mio::FarmNode<ScalarType, mio::smm::Simulation<ScalarType, InfectionState, Status, mio::regions::Region>>,
@@ -106,7 +108,7 @@ simulate(ScalarType tmax = 40, ScalarType dt = 1.0, ScalarType suspicion_thresho
     adoption_rates_4.push_back({InfectionState::I, InfectionState::D, home, A4_ID, {}});
     adoption_rates_4.push_back({InfectionState::S, InfectionState::E, home, 0.00, {}});
 
-    Model curr_model(Status{InfectionState::Count}, mio::regions::Region(1));
+    Model curr_model(Status{InfectionState::Count}, mio::regions::Region(1), rng);
 
     Builder builder;
 
@@ -140,13 +142,9 @@ simulate(ScalarType tmax = 40, ScalarType dt = 1.0, ScalarType suspicion_thresho
         builder.add_node(farm_id, x, y, type, size, population, slaughter, hrz, model, t0);
     }
 
-    auto rng = mio::RandomNumberGenerator();
-
     std::vector<std::vector<size_t>> interesting_indices;
-    interesting_indices.push_back(
-        {Model(Status{InfectionState::Count}, Region(1)).populations.get_flat_index({home, InfectionState::E})});
-    interesting_indices.push_back(
-        {Model(Status{InfectionState::Count}, Region(1)).populations.get_flat_index({home, InfectionState::I})});
+    interesting_indices.push_back({curr_model.populations.get_flat_index({home, InfectionState::E})});
+    interesting_indices.push_back({curr_model.populations.get_flat_index({home, InfectionState::I})});
 
     auto graph                                                    = std::move(builder).build();
     graph.nodes()[7658].property.get_result().get_last_value()[1] = 1;
@@ -162,7 +160,7 @@ simulate(ScalarType tmax = 40, ScalarType dt = 1.0, ScalarType suspicion_thresho
                                         {mio::geo::kilometers(1), mio::geo::kilometers(10), mio::geo::kilometers(25)}));
     }
 
-    auto sim = mio::make_farm_sim(t0, dt, std::move(graph));
+    auto sim = mio::make_farm_sim(t0, dt, std::move(graph), rng);
     sim.set_parameters(suspicion_threshold, sensitivity, h0, r0, alpha,
                        {first_infection_day, second_infection_day, third_infection_day},
                        {foi_inner_factor0, foi_inner_factor1, foi_inner_factor2, foi_inner_factor3, foi_inner_factor4},

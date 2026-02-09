@@ -59,6 +59,19 @@ class FarmSimulation : public GraphSimulationBase<Graph, Timepoint, Timespan, ed
     using Node = Graph::NodeProperty;
 
 public:
+    FarmSimulation(Timepoint t0, Timespan dt, const Graph& g, const node_f& node_func, const edge_f&& edge_func,
+                   mio::RandomNumberGenerator& rng)
+        : Base(t0, dt, g, node_func, std::move(edge_func))
+        , m_rng(rng)
+    {
+    }
+
+    FarmSimulation(Timepoint t0, Timespan dt, Graph&& g, const node_f& node_func, const edge_f&& edge_func,
+                   mio::RandomNumberGenerator& rng)
+        : Base(t0, dt, std::forward<Graph>(g), node_func, std::move(edge_func))
+        , m_rng(rng)
+    {
+    }
     void advance(Timepoint t_max = 1.0)
     {
         mio::timing::AutoTimer<"Graph Simulation Advance"> timer;
@@ -582,7 +595,7 @@ public:
     }
 
 private:
-    RandomNumberGenerator m_rng;
+    RandomNumberGenerator& m_rng;
     std::queue<std::pair<size_t, ScalarType>> m_culling_queue;
     std::queue<std::pair<size_t, ScalarType>> m_prev_culling_queue;
     ScalarType m_culling_capacity_per_day = 2000;
@@ -613,27 +626,67 @@ private:
      * @param graph set up for mobility-based simulation
      * @{
      */
+// template <typename FP, class Sim>
+// FarmSimulation<Graph<FarmNode<FP, Sim>, MobilityEdgeDirected<FP>>>
+// make_farm_sim(FP t0, FP dt, const Graph<FarmNode<FP, Sim>, MobilityEdgeDirected<FP>>& graph)
+// {
+//     using GraphSim = FarmSimulation<Graph<FarmNode<FP, Sim>, MobilityEdgeDirected<FP>>, FP, FP,
+//                                     void (*)(FP, FP, mio::MobilityEdgeDirected<FP>&, mio::FarmNode<FP, Sim>&,
+//                                              mio::FarmNode<FP, Sim>&, mio::RandomNumberGenerator&),
+//                                     void (*)(FP, FP, mio::FarmNode<FP, Sim>&)>;
+//     return GraphSim(t0, dt, graph, &advance_model<FP, Sim>, &apply_timed_mobility<FP, Sim>);
+// }
+
+// template <typename FP, class Sim>
+// FarmSimulation<Graph<FarmNode<FP, Sim>, MobilityEdgeDirected<FP>>>
+// make_farm_sim(FP t0, FP dt, Graph<FarmNode<FP, Sim>, MobilityEdgeDirected<FP>>&& graph)
+// {
+//     using GraphSim = FarmSimulation<Graph<FarmNode<FP, Sim>, MobilityEdgeDirected<FP>>, FP, FP,
+//                                     void (*)(FP, FP, mio::MobilityEdgeDirected<FP>&, mio::FarmNode<FP, Sim>&,
+//                                              mio::FarmNode<FP, Sim>&, mio::RandomNumberGenerator&),
+//                                     void (*)(FP, FP, mio::FarmNode<FP, Sim>&)>;
+//     return GraphSim(t0, dt, std::move(graph), &advance_model<FP, Sim>, &apply_timed_mobility<FP, Sim>);
+// }
+
 template <typename FP, class Sim>
 FarmSimulation<Graph<FarmNode<FP, Sim>, MobilityEdgeDirected<FP>>>
-make_farm_sim(FP t0, FP dt, const Graph<FarmNode<FP, Sim>, MobilityEdgeDirected<FP>>& graph)
+make_farm_sim(FP t0, FP dt, const Graph<FarmNode<FP, Sim>, MobilityEdgeDirected<FP>>& graph,
+              mio::RandomNumberGenerator& rng)
 {
-    using GraphSim = FarmSimulation<Graph<FarmNode<FP, Sim>, MobilityEdgeDirected<FP>>, FP, FP,
-                                    void (*)(FP, FP, mio::MobilityEdgeDirected<FP>&, mio::FarmNode<FP, Sim>&,
-                                             mio::FarmNode<FP, Sim>&, mio::RandomNumberGenerator&),
-                                    void (*)(FP, FP, mio::FarmNode<FP, Sim>&)>;
-    return GraphSim(t0, dt, graph, &advance_model<FP, Sim>, &apply_timed_mobility<FP, Sim>);
+    return _make_farm_sim<FP>(
+        t0, dt, graph, &advance_farm_model<FP, Sim>,
+        static_cast<void (*)(FP, FP, MobilityEdgeDirected<FP>&, FarmNode<FP, Sim>&, FarmNode<FP, Sim>&,
+                             mio::RandomNumberGenerator&)>(&apply_timed_mobility<FP, Sim, MobilityEdgeDirected<FP>>),
+        rng);
 }
 
 template <typename FP, class Sim>
 FarmSimulation<Graph<FarmNode<FP, Sim>, MobilityEdgeDirected<FP>>>
-make_farm_sim(FP t0, FP dt, Graph<FarmNode<FP, Sim>, MobilityEdgeDirected<FP>>&& graph)
+make_farm_sim(FP t0, FP dt, Graph<FarmNode<FP, Sim>, MobilityEdgeDirected<FP>>&& graph, mio::RandomNumberGenerator& rng)
 {
-    using GraphSim = FarmSimulation<Graph<FarmNode<FP, Sim>, MobilityEdgeDirected<FP>>, FP, FP,
-                                    void (*)(FP, FP, mio::MobilityEdgeDirected<FP>&, mio::FarmNode<FP, Sim>&,
-                                             mio::FarmNode<FP, Sim>&, mio::RandomNumberGenerator&),
-                                    void (*)(FP, FP, mio::FarmNode<FP, Sim>&)>;
-    return GraphSim(t0, dt, std::move(graph), &advance_model<FP, Sim>, &apply_timed_mobility<FP, Sim>);
+    return _make_farm_sim<FP>(
+        t0, dt, std::move(graph), &advance_farm_model<FP, Sim>,
+        static_cast<void (*)(FP, FP, MobilityEdgeDirected<FP>&, FarmNode<FP, Sim>&, FarmNode<FP, Sim>&,
+                             mio::RandomNumberGenerator&)>(&apply_timed_mobility<FP, Sim, MobilityEdgeDirected<FP>>),
+        rng);
 }
+
+template <typename FP, class Graph, class NodeF, class EdgeF>
+auto _make_farm_sim(FP t0, FP dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func, mio::RandomNumberGenerator& rng)
+{
+    return FarmSimulation<std::decay_t<Graph>>(t0, dt, std::forward<Graph>(g), std::forward<NodeF>(node_func),
+                                               std::forward<EdgeF>(edge_func), rng);
+}
+
+// template <typename FP, class Graph, class NodeF, class EdgeF>
+// auto _make_farm_sim(FP t0, FP dt, Graph g, NodeF&& node_func, EdgeF&& edge_func)
+// {
+//     return FarmSimulation<FP, std::decay_t<Graph>>(t0, dt, std::forward<Graph>(g), std::forward<NodeF>(node_func),
+//                                                    std::forward<EdgeF>(edge_func));
+// }
+
+// Timepoint, Timespan, typename Graph::EdgeProperty&, typename Graph::NodeProperty&,
+//                                   typename Graph::NodeProperty&, mio::RandomNumberGenerator&
 
 } // namespace mio
 
