@@ -84,7 +84,7 @@ setup(
         'matplotlib',
         'tables',
         # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
-        'numpy>=1.22,<1.25',
+        'numpy>=1.22,!=1.25',
         'openpyxl',
         'xlrd',
         'xlsxwriter',
