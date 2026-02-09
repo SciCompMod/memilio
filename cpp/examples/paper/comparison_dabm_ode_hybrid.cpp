@@ -21,6 +21,7 @@
 #include "memilio/config.h"
 #include "memilio/io/io.h"
 #include "memilio/timer/basic_timer.h"
+#include "memilio/timer/definitions.h"
 #include "memilio/utils/parameter_set.h"
 #include "models/d_abm/model.h"
 #include "memilio/data/analyze_result.h"
@@ -101,7 +102,7 @@ mio::dabm::Model<SingleWell<mio::osecir::InfectionState>> initialize_abm()
     agents[0].status = mio::osecir::InfectionState::Exposed;
 
     // Initialize adoption rates
-    std::vector<mio::AdoptionRate<mio::osecir::InfectionState>> adoption_rates;
+    std::vector<mio::AdoptionRate<ScalarType, mio::osecir::InfectionState>> adoption_rates;
     //Second-order adoption rate (S->E)
     adoption_rates.push_back(
         {mio::osecir::InfectionState::Susceptible,
@@ -219,13 +220,13 @@ mio::IOResult<void> simulate_dabm(std::string result_dir, size_t num_runs)
         auto model = initialize_abm();
         auto sim   = mio::dabm::Simulation(model, params::t0, params::dt);
         timer.stop();
-        init_time[run] = timer.get_elapsed_time();
+        init_time[run] = mio::timing::time_in_seconds(timer.get_elapsed_time());
         timer.reset();
         // Simulation
         timer.start();
         sim.advance(params::tmax);
         timer.stop();
-        sim_time[run]           = timer.get_elapsed_time();
+        sim_time[run]           = mio::timing::time_in_seconds(timer.get_elapsed_time());
         ensemble_result[run][0] = mio::interpolate_simulation_result(sim.get_result());
     }
 
@@ -296,8 +297,9 @@ mio::osecir::Model<double> initialize_osecir()
         params::criticalPerInfectedSevere;
     model.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[mio::AgeGroup(0)] = params::deathsPerCritical;
     model.apply_constraints();
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1.0));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
+    contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, 1.0));
     model.apply_constraints();
     return model;
 }
@@ -320,13 +322,13 @@ mio::IOResult<void> simulate_ode_secir(std::string result_dir, size_t num_runs)
         auto model = initialize_osecir();
         auto sim   = mio::Simulation(model, params::t0, params::dt);
         timer.stop();
-        init_time[run] = timer.get_elapsed_time();
+        init_time[run] = mio::timing::time_in_seconds(timer.get_elapsed_time());
         timer.reset();
         //Simulation
         timer.start();
         sim.advance(params::tmax);
         timer.stop();
-        sim_time[run]           = timer.get_elapsed_time();
+        sim_time[run]           = mio::timing::time_in_seconds(timer.get_elapsed_time());
         ensemble_result[run][0] = mio::interpolate_simulation_result(sim.get_result());
     }
 
@@ -425,13 +427,13 @@ mio::IOResult<void> simulate_hybrid(std::string result_dir, size_t num_runs, con
         auto sim = HybridSim(std::move(sim_abm), std::move(sim_pbm), result_fct_abm, result_fct_pbm, true, params::t0,
                              params::dt_switch);
         timer.stop();
-        init_time[run] = timer.get_elapsed_time();
+        init_time[run] = mio::timing::time_in_seconds(timer.get_elapsed_time());
         timer.reset();
         //Simulation
         timer.start();
         sim.advance(params::tmax, condition);
         timer.stop();
-        sim_time[run]           = timer.get_elapsed_time();
+        sim_time[run]           = mio::timing::time_in_seconds(timer.get_elapsed_time());
         auto merged_result      = mio::merge_time_series(sim.get_result_model1(), sim.get_result_model2()).value();
         ensemble_result[run][0] = mio::interpolate_simulation_result(merged_result);
 #pragma omp critical
