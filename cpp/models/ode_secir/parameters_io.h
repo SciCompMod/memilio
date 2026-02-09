@@ -387,7 +387,7 @@ IOResult<void> read_input_data_germany(std::vector<Model>& model, Date date, std
                                        bool /*export_time_series*/ = false)
 {
     BOOST_OUTCOME_TRY(
-        details::set_divi_data(model, path_join(pydata_dir, "germany_divi.json"), {0}, date, scaling_factor_icu));
+        details::set_divi_data(model, path_join(pydata_dir, "germany_divi_ma7.json"), {0}, date, scaling_factor_icu));
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(pydata_dir, "cases_all_age_ma7.json"), {0},
                                                         date, scaling_factor_inf));
     BOOST_OUTCOME_TRY(
