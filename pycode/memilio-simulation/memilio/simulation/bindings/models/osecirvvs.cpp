@@ -31,6 +31,7 @@
 #include "epidemiology/populations.h"
 #include "io/mobility_io.h"
 #include "io/result_io.h"
+#include "data/analyze_result.h"
 
 //Includes from MEmilio
 #include "ode_secirvvs/model.h"
@@ -79,15 +80,7 @@ PYBIND11_MAKE_OPAQUE(std::vector<MobilityGraph>);
 
 PYBIND11_MODULE(_simulation_osecirvvs, m)
 {
-    m.def("interpolate_simulation_result",
-          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
-              &mio::interpolate_simulation_result),
-          py::arg("ts"), py::arg("abs_tol") = 1e-14);
-
-    m.def("interpolate_simulation_result",
-          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const std::vector<double>&)>(
-              &mio::interpolate_simulation_result),
-          py::arg("ts"), py::arg("interpolation_times"));
+    pymio::bind_interpolate_result_methods(m);
 
     pymio::iterable_enum<mio::osecirvvs::InfectionState>(m, "InfectionState")
         .value("SusceptibleNaive", mio::osecirvvs::InfectionState::SusceptibleNaive)

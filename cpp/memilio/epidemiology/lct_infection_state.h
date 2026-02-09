@@ -96,34 +96,17 @@ public:
 
         Eigen::VectorX<FP> compartments((Eigen::Index)InfectionState::Count);
         // Use segment of the vector subcompartments of each InfectionState and sum up the values of subcompartments.
-        compartments[(Eigen::Index)InfectionState::Susceptible] = subcompartments[0];
-        compartments[(Eigen::Index)InfectionState::Exposed] =
-            subcompartments
-                .segment(get_first_index<InfectionState::Exposed>(), get_num_subcompartments<InfectionState::Exposed>())
-                .sum();
-        compartments[(Eigen::Index)InfectionState::InfectedNoSymptoms] =
-            subcompartments
-                .segment(get_first_index<InfectionState::InfectedNoSymptoms>(),
-                         get_num_subcompartments<InfectionState::InfectedNoSymptoms>())
-                .sum();
-        compartments[(Eigen::Index)InfectionState::InfectedSymptoms] =
-            subcompartments
-                .segment(get_first_index<InfectionState::InfectedSymptoms>(),
-                         get_num_subcompartments<InfectionState::InfectedSymptoms>())
-                .sum();
-        compartments[(Eigen::Index)InfectionState::InfectedSevere] =
-            subcompartments
-                .segment(get_first_index<InfectionState::InfectedSevere>(),
-                         get_num_subcompartments<InfectionState::InfectedSevere>())
-                .sum();
-        compartments[(Eigen::Index)InfectionState::InfectedCritical] =
-            subcompartments
-                .segment(get_first_index<InfectionState::InfectedCritical>(),
-                         get_num_subcompartments<InfectionState::InfectedCritical>())
-                .sum();
-        compartments[(Eigen::Index)InfectionState::Recovered] =
-            subcompartments[get_first_index<InfectionState::Recovered>()];
-        compartments[(Eigen::Index)InfectionState::Dead] = subcompartments[get_first_index<InfectionState::Dead>()];
+        for (int i = 0; i < (Eigen::Index)InfectionState::Count; i++) {
+            InfectionState State = static_cast<InfectionState>(i);
+            // first index of first subcompartment:
+            size_t index = 0;
+            for (size_t j = 0; j < (size_t)(State); j++) {
+                index = index + m_subcompartment_numbers[j];
+            }
+            // number of subcompartments:
+            size_t num_subcomp = m_subcompartment_numbers[(size_t)State];
+            compartments[i]    = subcompartments.segment(index, num_subcomp).sum();
+        }
 
         return compartments;
     }
