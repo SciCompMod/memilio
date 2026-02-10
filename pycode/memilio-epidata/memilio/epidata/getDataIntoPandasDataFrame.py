@@ -42,7 +42,7 @@ import matplotlib
 from io import BytesIO
 from zipfile import ZipFile
 from enum import Enum
-from pkg_resources import parse_version
+from packaging.version import parse
 
 import pandas as pd
 
@@ -66,7 +66,7 @@ class Conf:
 
     v_level = 'Info'
     show_progr = False
-    if parse_version(pd.__version__) < parse_version('2.2'):
+    if parse(pd.__version__) < parse('2.2'):
         excel_engine = 'openpyxl'
     else:
         # calamine is faster, but cannot be used for pandas < 2.2
@@ -194,9 +194,12 @@ def download_file(
 
     """
     if verify not in [True, False, "interactive"]:
-        warnings.warn('Invalid input for argument verify. Expected True, False, or'
-                      ' "interactive", got ' + str(verify) + '.'
-                      ' Proceeding with "verify=True".', category=RuntimeWarning)
+        warnings.warn(
+            'Invalid input for argument verify. Expected True, False, or'
+            ' "interactive", got ' + str(verify) +
+            '.'
+            ' Proceeding with "verify=True".',
+            category=RuntimeWarning)
         verify = True
     # send GET request as stream so the content is not downloaded at once
     try:
@@ -436,8 +439,7 @@ def cli(what):
         parser.add_argument(
             '-s', '--start-date', default=start_date_default,
             help='Defines start date for data download. Should have form: YYYY-mm-dd.'
-            'Default is ' +
-            str(dd.defaultDict['start_date']) +
+            'Default is ' + str(dd.defaultDict['start_date']) +
             ' (2020-04-24 for divi and 2020-01-22 for jh)',
             type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date())
     if 'end_date' in what_list:
@@ -453,8 +455,10 @@ def cli(what):
             ' omitting dates where no data was reported', action='store_true')
     if 'moving_average' in what_list:
         parser.add_argument(
-            '-m', '--moving-average', type=int, default=dd.defaultDict['moving_average'],
-            help='Compute a moving average of N days over the time series. Default is ' + str(dd.defaultDict['moving_average']))
+            '-m', '--moving-average', type=int, default=dd.defaultDict
+            ['moving_average'],
+            help='Compute a moving average of N days over the time series. Default is '
+            + str(dd.defaultDict['moving_average']))
     if 'split_berlin' in what_list:
         parser.add_argument(
             '-b', '--split-berlin', default=dd.defaultDict['split_berlin'],
@@ -502,7 +506,8 @@ def cli(what):
     if '--interactive' in sys.argv:
         parser.add_argument(
             '--interactive',
-            help='Interactive download (Handle warnings, passwords etc.).', action='store_true')
+            help='Interactive download (Handle warnings, passwords etc.).',
+            action='store_true')
 
     if not {'--verbose', '-v', '-vv', '-vvv', '-vvvv', '-vvvvv', '-vvvvvv'}.isdisjoint(sys.argv):
         parser.add_argument(
