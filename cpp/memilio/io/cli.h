@@ -21,8 +21,6 @@
 #define MIO_IO_CLI_H
 
 #include "memilio/config.h" // IWYU pragma: keep
-#include "json/reader.h"
-#include <sstream>
 
 #ifdef MEMILIO_HAS_JSONCPP
 
@@ -37,6 +35,7 @@
 #include <iostream>
 #include <memory>
 #include <span>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <unordered_map>
