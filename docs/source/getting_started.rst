@@ -179,7 +179,17 @@ Please see the full :doc:`C++ Build instructions <cpp/installation>` for more de
 
         cmake -S cpp -B cpp/build
 
-2.  Compile the code and create the executables. You can find them under *cpp/build/bin*. By appending `-j x` you can compile using `x` cores. With 4 cores on a laptop it takes around 6 minutes.
+2. Compile the code and create the executables.
+Run the build command from inside your build directory. To speed up the process,
+you can use the ``-j`` flag (e.g., using 4 cores):
+
+.. code-block:: bash
+
+   cmake --build . -j 4
+
+.. note::
+   On a standard 4-core laptop, compilation takes approximately 6 minutes.
+   Upon completion, the executables are located in the ``cpp/build/bin`` directory.
 
     .. code-block:: console
 
