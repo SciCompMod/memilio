@@ -92,7 +92,7 @@ public:
             }
             if (!m_standstill) {
                 for (auto& n : graph.nodes()) {
-                    update_population(n.property);
+                    update_population(n.property, n.id);
                 }
             }
             for (auto& n : graph.nodes()) {
@@ -181,7 +181,7 @@ private:
         }
     }
 
-    void update_population(Node& node)
+    void update_population(Node& node, size_t id)
     {
         // ducks, layer
         if (node.get_type() < 3) {
@@ -217,7 +217,32 @@ private:
         // broiler 1
         else if (std::accumulate(node.get_result().get_last_value().begin(), node.get_result().get_last_value().end(),
                                  0) > 0) {
+            //TESTING five days before transport for HRZ farms
+            if (Base::m_t - node.get_population_date() + 1 > m_duration[3] - 5 && node.get_in_hrz()) {
+                bool positive_test                   = false;
+                const std::vector<ScalarType> values = {node.get_result().get_last_value().begin(),
+                                                        node.get_result().get_last_value().end() - 1};
+                for (size_t test = 0; test < 20; test++) {
+                    const auto test_compartment = mio::DiscreteDistribution<size_t>::get_instance()(m_rng, values);
+                    if (test_compartment == 3 &&
+                        mio::UniformDistribution<ScalarType>::get_instance()(m_rng, 0.0, 1.0) < m_sensitivity) {
+                        positive_test = true;
+                        break;
+                    }
+                    else if (mio::UniformDistribution<ScalarType>::get_instance()(m_rng, 0.0, 1.0) > m_specificity) {
+                        positive_test = true;
+                        break;
+                    }
+                }
+                if (positive_test) {
+                    node.set_date_suspicion(Base::m_t);
+                    node.set_date_confirmation(Base::m_t + 2.0);
+                }
+            }
             if (Base::m_t - node.get_population_date() + 1 > m_duration[3]) {
+                // mio::log_info("Farm Type: {}, In HRZ: {}, Population Date: {}, Slaughter Date: {}, Current Time: {}",
+                //   node.get_farm_type(), node.get_in_hrz(), node.get_population_date(),
+                //   node.get_slaughter_date(), Base::m_t);
                 // If farm in regulation zone, only slaughter is allowed
                 if (node.get_reg_zone_day() < Base::m_t && node.get_reg_zone_day() > Base::m_t - 28) {
                     for (auto& val : node.get_result().get_last_value()) {
@@ -226,7 +251,27 @@ private:
                     node.set_slaughter_date(Base::m_t);
                     node.set_infection_status(false);
                 }
-                //...
+                else {
+                    mio::timing::AutoTimer<"Farm Simulation Update Population"> localtimer;
+                    const std::vector<ScalarType> probabilities{0.125, 0.44, 0.425};
+                    auto num_destinations = mio::DiscreteDistribution<int>::get_instance()(m_rng, probabilities) + 1;
+                    mio::log_info("Destinations: {}", num_destinations);
+                    while (num_destinations > 0) {
+                        auto destination_node = find_destination_farm(node);
+                        auto destination_result =
+                            Base::m_graph.nodes()[destination_node].property.get_result().get_last_value();
+                        for (size_t index = 0; index < 3; index++) {
+                            const auto num_animals =
+                                std::ceil(node.get_result().get_last_value()[index] / num_destinations);
+                            destination_result[index] = num_animals;
+                            node.get_result().get_last_value()[index] -= num_animals;
+                        }
+                        Base::m_graph.nodes()[destination_node].property.set_population_date(Base::m_t);
+                        num_destinations--;
+                        mio::log_info("{}, {}, {}", id, destination_node, Base::m_t);
+                    }
+                    node.set_slaughter_date(Base::m_t);
+                }
             }
             else if (Base::m_t - node.get_slaughter_date() + 1 >= m_downtime[3] && !node.is_quarantined()) {
                 node.get_result().get_last_value()[0] = 0.95 * node.get_capacity();
@@ -246,6 +291,42 @@ private:
             node.set_date_confirmation(t + 2.0);
             // }
         }
+    }
+
+    size_t find_destination_farm(const Node& node)
+    {
+        std::vector<ScalarType> distances;
+        std::vector<size_t> ids;
+        for (auto& n : Base::m_graph.nodes()) {
+            if (check_for_open_broiler2(n.property)) {
+                distances.push_back(node.get_location().distance(n.property.get_location()).meters());
+                ids.push_back(n.id);
+            }
+        }
+        if (distances.size() == 0) {
+            mio::log_info("Expecting segfault:");
+        }
+        const auto d0 = 96460.0;
+        for (auto& d : distances) {
+            d = std::exp(d / d0);
+        }
+        mio::log_info("Number of possible farms: {}", distances.size());
+        return ids[mio::DiscreteDistribution<size_t>::get_instance()(m_rng, distances)];
+    }
+
+    /**
+     * @brief Check if a broiler 2 farm can be repopulated.
+     * 
+     * We can repopulate if the farm is a broiler 2 farm, it is not allowed to be quarantined, 
+     * the necessary downtime has to be passed and the farm has to be empty, i.e. the repopulation date is older than 
+     * the slaughter date.
+     * @param node Farm node to check
+     */
+    bool check_for_open_broiler2(const Node& node)
+    {
+        return node.get_type() == 4 && !node.is_quarantined() &&
+               node.get_slaughter_date() + m_downtime[4] <= Base::m_t &&
+               node.get_population_date() < node.get_slaughter_date();
     }
 
     /**
@@ -606,6 +687,7 @@ private:
     bool m_standstill                          = false;
     ScalarType m_suspicion_threshold           = 0.05;
     ScalarType m_sensitivity                   = 0.95;
+    ScalarType m_specificity                   = 0.99;
     std::vector<ScalarType> m_duration         = {21.0, 21.0, 400.0, 21.0, 28.0};
     std::vector<ScalarType> m_downtime         = {21.0, 21.0, 21.0, 21.0, 21.0};
     std::vector<ScalarType> m_foi_inner_factor = {1.0, 1.0, 1.0, 1.0, 1.0};
