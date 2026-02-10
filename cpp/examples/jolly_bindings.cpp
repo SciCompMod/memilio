@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Kilian Volmer
 *
@@ -37,6 +37,7 @@
 #include "smm/parameters.h"
 #include "thirdparty/csv.h"
 #include <ranges>
+#include <string>
 #include <omp.h>
 #include <vector>
 
@@ -50,7 +51,7 @@ enum class InfectionState
 };
 
 std::vector<int>
-simulate(ScalarType tmax = 40, ScalarType dt = 1.0, ScalarType suspicion_threshold = 0.05,
+simulate(std::string farm_file, ScalarType tmax = 40, ScalarType dt = 1.0, ScalarType suspicion_threshold = 0.05,
          ScalarType sensitivity = 0.95, ScalarType h0 = 0.001, ScalarType r0 = 1000, ScalarType alpha = 2,
          ScalarType A0_SEI = 0.2, ScalarType A0_EI = 0.2, ScalarType A0_ID = 0.2, ScalarType A1_SEI = 0.2,
          ScalarType A1_EI = 0.2, ScalarType A1_ID = 0.2, ScalarType A2_SEI = 0.2, ScalarType A2_EI = 0.2,
@@ -112,7 +113,7 @@ simulate(ScalarType tmax = 40, ScalarType dt = 1.0, ScalarType suspicion_thresho
 
     Builder builder;
 
-    io::CSVReader<9> farms("/home/kilian/Documents/projects/jolly/common_data/farms.csv");
+    io::CSVReader<9> farms(farm_file);
     farms.read_header(io::ignore_extra_column, "farm_id", "production_id", "capacity", "population_day",
                       "slaughter_day", "volume", "in_hrz", "x", "y");
     size_t farm_id, type, size, volume;
@@ -171,11 +172,14 @@ simulate(ScalarType tmax = 40, ScalarType dt = 1.0, ScalarType suspicion_thresho
     return sim.get_confirmation_dates();
 }
 
+#ifndef JOLLY_BINDINGS_SKIP_MAIN
 int main()
 {
-    auto result = simulate();
+    const std::string farm_file = "farms.csv";
+    auto result                 = simulate(farm_file);
     mio::log_info("Number of infected farms: {}", std::count_if(result.begin(), result.end(), [](int r) {
                       return r >= 0;
                   }));
     return 0;
 }
+#endif
