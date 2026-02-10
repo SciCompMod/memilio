@@ -1,10 +1,10 @@
-2 Diseases in LCT-based SECIR-type model
+Two diseases in LCT-based SECIR-type model
 ==========================
 
-| The LCT-SECIR-2-DISEASES model is an extension of the :doc:`model with one disease <lsecir>`.
-| The model is ODE-based and uses the Linear Chain Trick to allow for more general Erlang distributed stay times in each compartment instead of just exponentially distributed stay times induced by basic ODE-based models.
-| With the SECIR structure the model is particularly suited for pathogens with pre- or asymptomatic infection states and when severe or critical states are possible. 
-| For the two diseases or variants of one disease :math:`a` and :math:`b` the model assumes no co-infection, a certain independence in the sense that prior infection with one disease does not affect the infection with the other disease (e.g. probability to get infected, time spend in each state, chances of recovery etc.), and perfect immunity after recovery for both diseases.
+The LCT-SECIR-2-DISEASES model is an extension of the :doc:`model with one disease <lsecir>`.
+The model is ODE-based and uses the Linear Chain Trick to allow for more general Erlang distributed stay times in each compartment instead of just exponentially distributed stay times induced by basic ODE-based models.
+With the SECIR structure the model is particularly suited for pathogens with pre- or asymptomatic infection states and when severe or critical states are possible. 
+For the two diseases or variants of one disease :math:`a` and :math:`b` the model assumes no co-infection, a certain independence in the sense that prior infection with one disease does not affect the infection with the other disease (e.g. probability to get infected, time spend in each state, chances of recovery etc.), and perfect immunity after recovery for both diseases.
 
 
 There are two possibilities for a susceptible individual (since we assume no co-infection): 
@@ -16,7 +16,7 @@ so the full model is given by the combination of infections :math:`1a`, :math:`2
 
 Below is a visualization of the infection states split into LCT-states and transitions without a stratification according to sociodemographic groups.
 
-.. image:: ""
+.. image:: "http://martinkuehn.eu/research/images/lct_2d.png"
    :alt: tikz_lct-2d
 
 With infection states for :math:`i \in \{1,2\}, x \in \{a,b\}`:
@@ -98,12 +98,12 @@ The model contains the following list of **InfectionState**\s:
    
     `Recovered_ab`
 
-| It is possible to include subcompartments for the states `E`, `C`, `I`, `H`, and `U`, so compartments 
-| Exposed_1a, Exposed_2a, Exposed_1b, Exposed_2b,
-| InfectedNoSymptoms_1a, InfectedNoSymptoms_2a, InfectedNoSymptoms_1b, InfectedNoSymptoms_2b,
-| InfectedSymptoms_1a , InfectedSymptoms_2a, InfectedSymptoms_1b , InfectedSymptoms_2b, 
-| InfectedSevere_1a, InfectedSevere_2a , InfectedSevere_1b , InfectedSevere_2b,
-| InfectedCritical_1a, InfectedCritical_2a, InfectedCritical_1b, and InfectedCritical_2b. 
+It is possible to include subcompartments for the states `E`, `C`, `I`, `H`, and `U`, so compartments 
+Exposed_1a, Exposed_2a, Exposed_1b, Exposed_2b,
+InfectedNoSymptoms_1a, InfectedNoSymptoms_2a, InfectedNoSymptoms_1b, InfectedNoSymptoms_2b,
+InfectedSymptoms_1a , InfectedSymptoms_2a, InfectedSymptoms_1b , InfectedSymptoms_2b, 
+InfectedSevere_1a, InfectedSevere_2a , InfectedSevere_1b , InfectedSevere_2b,
+InfectedCritical_1a, InfectedCritical_2a, InfectedCritical_1b, and InfectedCritical_2b. 
  
 The number of subcompartments can be set individually for each compartment.
 
