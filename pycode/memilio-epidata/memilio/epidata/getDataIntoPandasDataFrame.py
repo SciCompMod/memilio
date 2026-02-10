@@ -489,47 +489,56 @@ def cli(what):
         )
 
     # add optional download options
-    if '--no-progress-indicators' in sys.argv:
+    argv = sys.argv[1:]
+    if '--no-progress-indicators' in argv:
         parser.add_argument(
             '--no-progress-indicators', dest='show_progress',
             help='Disables all progress indicators (used for downloads etc.).',
             action='store_false')
 
-    if not {'--no-raw', '-n'}.isdisjoint(sys.argv):
+    if not {'--no-raw', '-n'}.isdisjoint(argv):
         parser.add_argument(
             '-n', '--no-raw',
             help='Defines if raw data will be stored for further use.',
             action='store_true')
 
-    if not {'--make_plot', '-p'}.isdisjoint(sys.argv):
+    if not {'--make_plot', '-p'}.isdisjoint(argv):
         parser.add_argument('-p', '--make-plot',
                             help='Plots the data.', action='store_true')
 
-    if '--interactive' in sys.argv:
+    if '--interactive' in argv:
         parser.add_argument(
             '--interactive',
             help='Interactive download (Handle warnings, passwords etc.).',
             action='store_true')
 
-    if not {'--verbose', '-v', '-vv', '-vvv', '-vvvv', '-vvvvv', '-vvvvvv'}.isdisjoint(sys.argv):
+    if not {'--verbose', '-v', '-vv', '-vvv', '-vvvv', '-vvvvv', '-vvvvvv'}.isdisjoint(argv):
         parser.add_argument(
             '-v', '--verbose', dest='verbosity_level',
             help='Increases verbosity level (Trace, Debug, Info, Warning, Error, Critical, Off).',
             action='count', default=0)
 
-    if '--skip-checks' in sys.argv:
+    if '--skip-checks' in argv:
         parser.add_argument(
             '--skip-checks', dest='run_checks', action='store_false',
             help='Skips sanity checks etc.')
 
-    if '--to-dataset' in sys.argv:
+    if '--to-dataset' in argv:
         parser.add_argument(
             '--to-dataset', dest='to_dataset',
             help="To return saved dataframes as objects.",
             action='store_true'
         )
 
-    args = vars(parser.parse_args())
+    args, unknown = parser.parse_known_args()
+    if unknown:
+        # if unknown arguments are present, check if they are from
+        # a test runner (unittest, pytest). If not, we want to fail.
+        if not any(x in sys.argv[0] for x in
+                   ['unittest', 'pytest']):
+            parser.parse_args()
+
+    args = vars(args)
 
     return args
 

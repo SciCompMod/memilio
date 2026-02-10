@@ -371,9 +371,9 @@ def get_nuts3_county_id_map():
     """
     # download county list
     county_table = get_official_county_table()
-    # delete rows with nuts3 = NaN
+    # delete rows with nuts3 or idCounty = NaN
     # take just columns with name dd.EngEng['idCounty'] and dd.EngEng['nuts3']
-    key_nuts3 = county_table.dropna(subset=[dd.EngEng['nuts3']])[
+    key_nuts3 = county_table.dropna(subset=[dd.EngEng['nuts3'], dd.EngEng['idCounty']])[
         [dd.EngEng['idCounty'], dd.EngEng['nuts3']]]
     # convert ID data types
     key_nuts3 = key_nuts3.astype({dd.EngEng['idCounty']: int})
