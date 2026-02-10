@@ -73,30 +73,45 @@ int main(int /*argc*/, char** /*argv*/)
     adoption_rates_0.push_back({InfectionState::E, InfectionState::I, home, 0.3, {}});
     adoption_rates_0.push_back({InfectionState::I, InfectionState::D, home, 0.1, {}});
     adoption_rates_0.push_back({InfectionState::S, InfectionState::E, home, 0.00, {}});
+    adoption_rates_0.push_back({InfectionState::S, InfectionState::D, home, 0.0001, {}});
+    adoption_rates_0.push_back({InfectionState::E, InfectionState::D, home, 0.0001, {}});
+    adoption_rates_0.push_back({InfectionState::I, InfectionState::D, home, 0.0001, {}});
 
     std::vector<AR> adoption_rates_1;
     adoption_rates_1.push_back({InfectionState::S, InfectionState::E, home, 1.0, {{InfectionState::I, 0.5}}});
     adoption_rates_1.push_back({InfectionState::E, InfectionState::I, home, 0.3, {}});
     adoption_rates_1.push_back({InfectionState::I, InfectionState::D, home, 0.1, {}});
     adoption_rates_1.push_back({InfectionState::S, InfectionState::E, home, 0.00, {}});
+    adoption_rates_1.push_back({InfectionState::S, InfectionState::D, home, 0.0001, {}});
+    adoption_rates_1.push_back({InfectionState::E, InfectionState::D, home, 0.0001, {}});
+    adoption_rates_1.push_back({InfectionState::I, InfectionState::D, home, 0.0001, {}});
 
     std::vector<AR> adoption_rates_2;
     adoption_rates_2.push_back({InfectionState::S, InfectionState::E, home, 1.0, {{InfectionState::I, 0.5}}});
     adoption_rates_2.push_back({InfectionState::E, InfectionState::I, home, 0.3, {}});
     adoption_rates_2.push_back({InfectionState::I, InfectionState::D, home, 0.1, {}});
     adoption_rates_2.push_back({InfectionState::S, InfectionState::E, home, 0.00, {}});
+    adoption_rates_2.push_back({InfectionState::S, InfectionState::D, home, 0.0001, {}});
+    adoption_rates_2.push_back({InfectionState::E, InfectionState::D, home, 0.0001, {}});
+    adoption_rates_2.push_back({InfectionState::I, InfectionState::D, home, 0.0001, {}});
 
     std::vector<AR> adoption_rates_3;
     adoption_rates_3.push_back({InfectionState::S, InfectionState::E, home, 1.0, {{InfectionState::I, 0.5}}});
     adoption_rates_3.push_back({InfectionState::E, InfectionState::I, home, 0.3, {}});
     adoption_rates_3.push_back({InfectionState::I, InfectionState::D, home, 0.1, {}});
     adoption_rates_3.push_back({InfectionState::S, InfectionState::E, home, 0.00, {}});
+    adoption_rates_3.push_back({InfectionState::S, InfectionState::D, home, 0.0001, {}});
+    adoption_rates_3.push_back({InfectionState::E, InfectionState::D, home, 0.0001, {}});
+    adoption_rates_3.push_back({InfectionState::I, InfectionState::D, home, 0.0001, {}});
 
     std::vector<AR> adoption_rates_4;
     adoption_rates_4.push_back({InfectionState::S, InfectionState::E, home, 1.0, {{InfectionState::I, 0.5}}});
     adoption_rates_4.push_back({InfectionState::E, InfectionState::I, home, 0.3, {}});
     adoption_rates_4.push_back({InfectionState::I, InfectionState::D, home, 0.1, {}});
     adoption_rates_4.push_back({InfectionState::S, InfectionState::E, home, 0.00, {}});
+    adoption_rates_4.push_back({InfectionState::S, InfectionState::D, home, 0.0001, {}});
+    adoption_rates_4.push_back({InfectionState::E, InfectionState::D, home, 0.0001, {}});
+    adoption_rates_4.push_back({InfectionState::I, InfectionState::D, home, 0.0001, {}});
 
     Model curr_model(Status{InfectionState::Count}, mio::regions::Region(1), rng);
 
@@ -155,7 +170,7 @@ int main(int /*argc*/, char** /*argv*/)
 
     sim.advance(tmax);
 
-    // sim.return_all_time_series()[7658].print_table({"S", "E", "I", "D"});
+    sim.return_all_time_series()[7658].print_table({"S", "E", "I", "D"});
     auto result  = sim.get_confirmation_dates();
     auto counter = 0;
     for (auto r : result) {
