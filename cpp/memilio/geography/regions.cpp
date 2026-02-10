@@ -20,6 +20,7 @@
 #include "memilio/geography/regions.h"
 #include "memilio/geography/holiday_data.ipp"
 
+#include <algorithm>
 #include <tuple>
 
 namespace mio

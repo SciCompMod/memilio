@@ -20,9 +20,7 @@
 #ifndef MIO_EPI_DYNAMIC_LOCKDOWN_H
 #define MIO_EPI_DYNAMIC_LOCKDOWN_H
 
-#include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/epidemiology/damping_sampling.h"
-#include "memilio/math/floating_point.h"
 #include "memilio/utils/stl_util.h"
 
 namespace mio

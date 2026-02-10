@@ -94,8 +94,8 @@ struct Bar {
 
 TEST(TestTemplateUtils, has_stream_op)
 {
-    EXPECT_TRUE(mio::has_ostream_op<Foo>::value);
-    EXPECT_FALSE(mio::has_ostream_op<Bar>::value);
+    EXPECT_TRUE(mio::HasOstreamOperator<Foo>);
+    EXPECT_FALSE(mio::HasOstreamOperator<Bar>);
 }
 
 TEST(TestInsertSortedReplace, normal)

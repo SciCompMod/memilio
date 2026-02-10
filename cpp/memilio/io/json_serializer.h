@@ -17,20 +17,24 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_IO_JSON_SERIALIZER_H
-#define EPI_IO_JSON_SERIALIZER_H
+#ifndef MIO_IO_JSON_SERIALIZER_H
+#define MIO_IO_JSON_SERIALIZER_H
 
-#include "memilio/config.h"
+#include "memilio/config.h" // IWYU pragma: keep
+#include <boost/function_types/components.hpp>
+#include <type_traits>
 
 #ifdef MEMILIO_HAS_JSONCPP
 
 #include "memilio/io/io.h"
 #include "memilio/io/serializer_base.h"
 #include "memilio/utils/metaprogramming.h"
-#include "json/json.h"
+
+#include "json/json.h" // IWYU pragma: keep
+
 #include <fstream>
-#include <utility>
 #include <limits>
+#include <utility>
 
 namespace mio
 {
@@ -44,7 +48,7 @@ namespace mio
  * @tparam T the type to be serialized.
  * @{
  */
-template <class T, class = void>
+template <class T>
 struct JsonType : std::false_type {
 };
 //bool
@@ -59,15 +63,15 @@ struct JsonType<bool> : std::true_type {
     }
     static Json::Value transform(bool b)
     {
-        return Json::Value(b);
+        return {b};
     }
 };
-//all integers less than 32 bit must be stored as int
-template <class T>
-using is_small_integral = std::integral_constant<bool, (std::is_integral<T>::value && sizeof(T) <= 4)>;
+// all integers less than 32 bit must be stored as int
+
 //signed small ints
 template <class T>
-struct JsonType<T, std::enable_if_t<conjunction_v<is_small_integral<T>, std::is_signed<T>>>> : std::true_type {
+    requires(is_small_integral<T>::value && std::is_signed_v<T>)
+struct JsonType<T> : std::true_type {
     static IOResult<T> transform(const Json::Value& js)
     {
         if (js.isInt()) {
@@ -86,7 +90,8 @@ struct JsonType<T, std::enable_if_t<conjunction_v<is_small_integral<T>, std::is_
 };
 //unsigned small ints
 template <class T>
-struct JsonType<T, std::enable_if_t<conjunction_v<is_small_integral<T>, std::is_unsigned<T>>>> : std::true_type {
+    requires(is_small_integral<T>::value && std::is_unsigned_v<T>)
+struct JsonType<T> : std::true_type {
     static IOResult<T> transform(const Json::Value& js)
     {
         if (js.isUInt()) {
@@ -104,11 +109,10 @@ struct JsonType<T, std::enable_if_t<conjunction_v<is_small_integral<T>, std::is_
         return Json::Value(Json::UInt(i));
     }
 };
-template <class T>
-using is_64bit_integral = std::integral_constant<bool, (std::is_integral<T>::value && sizeof(T) == 8)>;
 //signed big ints
 template <class T>
-struct JsonType<T, std::enable_if_t<conjunction_v<is_64bit_integral<T>, std::is_signed<T>>>> : std::true_type {
+    requires(is_64bit_integral<T>::value && std::is_signed_v<T>)
+struct JsonType<T> : std::true_type {
     static IOResult<T> transform(const Json::Value& js)
     {
         if (js.isInt64()) {
@@ -118,12 +122,13 @@ struct JsonType<T, std::enable_if_t<conjunction_v<is_64bit_integral<T>, std::is_
     }
     static Json::Value transform(T i)
     {
-        return Json::Value(Json::Int64(i));
+        return {Json::Int64(i)};
     }
 };
 //unsigned big ints
 template <class T>
-struct JsonType<T, std::enable_if_t<conjunction_v<is_64bit_integral<T>, std::is_unsigned<T>>>> : std::true_type {
+    requires(is_64bit_integral<T>::value && std::is_unsigned_v<T>)
+struct JsonType<T> : std::true_type {
     static IOResult<T> transform(const Json::Value& js)
     {
         if (js.isUInt64()) {
@@ -133,7 +138,7 @@ struct JsonType<T, std::enable_if_t<conjunction_v<is_64bit_integral<T>, std::is_
     }
     static Json::Value transform(T i)
     {
-        return Json::Value(Json::UInt64(i));
+        return {Json::UInt64(i)};
     }
 };
 //double
@@ -149,7 +154,7 @@ struct JsonType<double> : std::true_type {
     }
     static Json::Value transform(double d)
     {
-        return Json::Value(d);
+        return {d};
     }
 };
 //float
@@ -168,7 +173,7 @@ struct JsonType<float> : std::true_type {
     }
     static Json::Value transform(float f)
     {
-        return Json::Value(double(f));
+        return {double(f)};
     }
 };
 //string
@@ -183,7 +188,7 @@ struct JsonType<std::string> : std::true_type {
     }
     static Json::Value transform(const std::string& s)
     {
-        return Json::Value(s);
+        return {s};
     }
 };
 //string literals
@@ -192,10 +197,14 @@ struct JsonType<const char*> : std::true_type {
     //cannot be read, but may be written (e.g. string literal), so only one way transform
     static Json::Value transform(const char* s)
     {
-        return Json::Value(s);
+        return {s};
     }
 };
 /**@}*/
+
+/// @brief Concept for checking if T is a json type.
+template <class T>
+concept IsJsonType = JsonType<T>::value;
 
 /**
  * Implementation of the IOObject concept for JSON format.
@@ -222,9 +231,11 @@ public:
      * @param value value of the element.
      * @{
      */
-    template <class T, std::enable_if_t<JsonType<T>::value, void*> = nullptr>
+    template <class T>
+        requires(IsJsonType<T>)
     void add_element(const std::string& name, const T& value);
-    template <class T, std::enable_if_t<!JsonType<T>::value, void*> = nullptr>
+    template <class T>
+        requires(!IsJsonType<T>)
     void add_element(const std::string& name, const T& value);
     /**@}*/
 
@@ -255,9 +266,11 @@ public:
      * @return retrieved element if succesful, error otherwise.
      * @{
      */
-    template <class T, std::enable_if_t<JsonType<T>::value, void*> = nullptr>
+    template <class T>
+        requires(IsJsonType<T>)
     IOResult<T> expect_element(const std::string& name, Tag<T> tag) const;
-    template <class T, std::enable_if_t<!JsonType<T>::value, void*> = nullptr>
+    template <class T>
+        requires(!IsJsonType<T>)
     IOResult<T> expect_element(const std::string& name, Tag<T> tag) const;
     /**@}*/
 
@@ -319,9 +332,9 @@ public:
      * @param status status of serialization, shared with parent IO contexts and objects.
      * @param flags flags to determine behavior of serialization.
      */
-    JsonContext(const Json::Value& value, const std::shared_ptr<IOStatus>& status, int flags)
+    JsonContext(Json::Value value, const std::shared_ptr<IOStatus>& status, int flags)
         : SerializerBase(status, flags)
-        , m_value(value)
+        , m_value(std::move(value))
     {
     }
 
@@ -352,7 +365,7 @@ public:
         if (!m_value.isObject()) {
             *m_status = IOStatus(StatusCode::InvalidType, "Json value must be an object.");
         }
-        return JsonObject(m_value, m_status, m_flags);
+        return {m_value, m_status, m_flags};
     }
 
     /**
@@ -379,7 +392,8 @@ public:
      * @param io reference JsonContext.
      * @param t value to be serialized.
      */
-    template <class T, std::enable_if_t<JsonType<T>::value, void*> = nullptr>
+    template <class T>
+        requires(IsJsonType<T>)
     friend void serialize_internal(JsonContext& io, const T& t)
     {
         io.m_value = JsonType<T>::transform(t);
@@ -392,7 +406,8 @@ public:
      * @param io reference JsonContext.
      * @param t value to be serialized.
      */
-    template <class T, std::enable_if_t<JsonType<T>::value, void*> = nullptr>
+    template <class T>
+        requires(IsJsonType<T>)
     friend IOResult<T> deserialize_internal(JsonContext& io, Tag<T>)
     {
         return JsonType<T>::transform(io.m_value);
@@ -402,9 +417,8 @@ public:
      * json specialization of serialization for containers.
      * Serialize containers as pure json array without a wrapping object.
      */
-    template <class Container, std::enable_if_t<conjunction_v<is_container<Container>, negation<JsonType<Container>>,
-                                                              negation<has_serialize<JsonContext, Container>>>,
-                                                void*> = nullptr>
+    template <IsContainer Container>
+        requires(!IsJsonType<Container> && !HasDeserialize<Container, JsonContext>)
     friend void serialize_internal(JsonContext& io, const Container& v)
     {
         if (io.m_status->is_ok()) {
@@ -426,9 +440,8 @@ public:
      * json specialization of deserialization for containers.
      * Deserialize containers from pure json arrays without a wrapping object.
      */
-    template <class Container, std::enable_if_t<conjunction_v<is_container<Container>, negation<JsonType<Container>>,
-                                                              negation<has_deserialize<JsonContext, Container>>>,
-                                                void*> = nullptr>
+    template <IsContainer Container>
+        requires(!IsJsonType<Container> && !HasDeserialize<Container, JsonContext>)
     friend IOResult<Container> deserialize_internal(JsonContext& io, Tag<Container>)
     {
         const auto& array = io.m_value;
@@ -560,7 +573,8 @@ IOResult<T> read_json(const std::string& path, Tag<T> tag, int flags = IOF_None)
 //Implementations for JsonContext/Object member functions below//
 /////////////////////////////////////////////////////////////////
 
-template <class T, std::enable_if_t<JsonType<T>::value, void*>>
+template <class T>
+    requires(IsJsonType<T>)
 void JsonObject::add_element(const std::string& name, const T& value)
 {
     if (m_status->is_ok()) {
@@ -568,7 +582,8 @@ void JsonObject::add_element(const std::string& name, const T& value)
     }
 }
 
-template <class T, std::enable_if_t<!JsonType<T>::value, void*>>
+template <class T>
+    requires(!IsJsonType<T>)
 void JsonObject::add_element(const std::string& name, const T& value)
 {
     if (m_status->is_ok()) {
@@ -604,7 +619,8 @@ void JsonObject::add_list(const std::string& name, Iter b, Iter e)
     }
 }
 
-template <class T, std::enable_if_t<JsonType<T>::value, void*>>
+template <class T>
+    requires(IsJsonType<T>)
 IOResult<T> JsonObject::expect_element(const std::string& name, Tag<T> /*tag*/) const
 {
     if (m_status->is_error()) {
@@ -624,7 +640,8 @@ IOResult<T> JsonObject::expect_element(const std::string& name, Tag<T> /*tag*/) 
                    r.error().message() + " (" + name + ")"); //annotate type error message with element name
 }
 
-template <class T, std::enable_if_t<!JsonType<T>::value, void*>>
+template <class T>
+    requires(!IsJsonType<T>)
 IOResult<T> JsonObject::expect_element(const std::string& name, Tag<T> tag) const
 {
     if (m_status->is_error()) {
@@ -683,6 +700,6 @@ IOResult<std::vector<T>> JsonObject::expect_list(const std::string& name, Tag<T>
 
 } // namespace mio
 
-#endif //MEMILIO_HAS_JSONCPP
+#endif // MEMILIO_HAS_JSONCPP
 
-#endif //EPI_IO_JSON_SERIALIZER_H
+#endif // MIO_IO_JSON_SERIALIZER_H

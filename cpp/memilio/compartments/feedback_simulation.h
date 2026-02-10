@@ -20,13 +20,11 @@
 #ifndef MIO_COMPARTMENTS_FEEDBACK_SIMULATION_H
 #define MIO_COMPARTMENTS_FEEDBACK_SIMULATION_H
 
-#include <cassert>
-#include "memilio/compartments/simulation.h"
-#include "memilio/utils/time_series.h"
-#include "memilio/utils/parameter_set.h"
 #include "memilio/epidemiology/age_group.h"
-#include "memilio/utils/uncertain_value.h"
 #include "memilio/epidemiology/damping_sampling.h"
+#include "memilio/utils/parameter_set.h"
+#include "memilio/utils/time_series.h"
+#include "memilio/utils/uncertain_value.h"
 
 namespace mio
 {

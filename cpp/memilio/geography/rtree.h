@@ -20,14 +20,16 @@
 #ifndef MIO_GEOGRAPHY_RTREE_H
 #define MIO_GEOGRAPHY_RTREE_H
 
-#include "memilio/utils/back_inserter_second_element.h"
 #include "memilio/geography/distance.h"
+#include "memilio/utils/back_inserter_second_element.h"
+
 #include <boost/geometry/geometries/multi_polygon.hpp>
+#include <boost/geometry/geometry.hpp>
 #include <boost/geometry/index/rtree.hpp>
 #include <boost/geometry/strategies/cartesian/buffer_side_straight.hpp>
 #include <boost/geometry/strategies/geographic/buffer_point_circle.hpp>
-#include <boost/geometry/geometry.hpp>
-#include <math.h>
+
+#include <cmath>
 #include <iterator>
 #include <type_traits>
 #include <vector>

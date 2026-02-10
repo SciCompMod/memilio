@@ -17,12 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#pragma once
+#ifndef MIO_MATH_EIGEN_UTIL_H
+#define MIO_MATH_EIGEN_UTIL_H
 
-#include "memilio/math/eigen.h"
-#include "memilio/utils/metaprogramming.h"
+#include "memilio/math/eigen.h" // IWYU pragma: keep
+
 #include <utility>
-#include <iostream>
 #include <iterator>
 
 namespace mio
@@ -49,21 +49,17 @@ struct Seq {
  * @brief check if Eigen::Matrix type M is a dynamic vector type.
  */
 template <class M>
-struct is_dynamic_vector {
-    static constexpr bool value = (std::remove_reference_t<M>::RowsAtCompileTime == Eigen::Dynamic &&
-                                   std::remove_reference_t<M>::ColsAtCompileTime == 1) ||
-                                  (std::remove_reference_t<M>::RowsAtCompileTime == 1 &&
-                                   std::remove_reference_t<M>::ColsAtCompileTime == Eigen::Dynamic);
-};
+concept IsDynamicVector = (std::remove_reference_t<M>::RowsAtCompileTime == Eigen::Dynamic &&
+                           std::remove_reference_t<M>::ColsAtCompileTime == 1) ||
+                          (std::remove_reference_t<M>::RowsAtCompileTime == 1 &&
+                           std::remove_reference_t<M>::ColsAtCompileTime == Eigen::Dynamic);
 
 /**
  * @brief check if Eigen::Matrix type M is a dynamic matrix type.
  */
 template <class M>
-struct is_dynamic_matrix {
-    static constexpr bool value = std::remove_reference_t<M>::RowsAtCompileTime == Eigen::Dynamic &&
-                                  std::remove_reference_t<M>::ColsAtCompileTime == Eigen::Dynamic;
-};
+concept IsDynamicMatrix = std::remove_reference_t<M>::RowsAtCompileTime == Eigen::Dynamic &&
+                          std::remove_reference_t<M>::ColsAtCompileTime == Eigen::Dynamic;
 
 /**
  * @brief number of rows (columns) of a row (column) major matrix.
@@ -107,7 +103,7 @@ using CVPlainMatrixT = typename CVPlainMatrix<M>::Type;
  * @param elems sequence of row or column indices
  * @returns vector expression with selected entries from the input vector
  */
-template <class V, std::enable_if_t<is_dynamic_vector<V>::value, int> = 0>
+template <IsDynamicVector V>
 auto slice(V&& v, Seq<Eigen::Index> elems)
 {
     return Eigen::Map<CVPlainMatrixT<std::decay_t<V>>, 0, Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>>(
@@ -124,7 +120,7 @@ auto slice(V&& v, Seq<Eigen::Index> elems)
  * @param cols sequence of column indices
  * @returns matrix expression with selected entries from the input matrix
  */
-template <class M, std::enable_if_t<is_dynamic_matrix<M>::value, int> = 0>
+template <IsDynamicMatrix M>
 auto slice(M&& m, Seq<Eigen::Index> rows, Seq<Eigen::Index> cols)
 {
     assert(rows.start + rows.stride * rows.n <= m.rows());
@@ -161,13 +157,9 @@ auto reshape(M&& m, Eigen::Index rows, Eigen::Index cols)
     return Eigen::Map<CVPlainMatrixT<std::remove_reference_t<M>>>(m.data(), rows, cols);
 }
 
-/**
- * template utility.
- * Defines value = true if M is an Eigen matrix expression.
- * Defines value = false, otherwise.
- */
+/// @brief Concept to detect whether T is an Eigen matrix expression.
 template <class M>
-using is_matrix_expression = std::is_base_of<Eigen::EigenBase<M>, M>;
+concept IsMatrixExpression = std::is_base_of_v<Eigen::EigenBase<M>, M>;
 
 /**
  * coefficient wise maximum of two matrices.
@@ -209,8 +201,8 @@ namespace details
 //true if elements returned by matrix(i, j) are references where matrix is of type M;
 //false if the elements are temporaries, e.g. for expressions like Eigen::MatrixXd::Constant(r, c, v).
 template <class M>
-using IsElementReference =
-    std::is_reference<decltype(std::declval<M>()(std::declval<Eigen::Index>(), std::declval<Eigen::Index>()))>;
+concept IsElementReference =
+    std::is_reference_v<decltype(std::declval<M>()(std::declval<Eigen::Index>(), std::declval<Eigen::Index>()))>;
 } // namespace details
 
 /**
@@ -224,8 +216,7 @@ class RowMajorIterator
 public:
     using MatrixRef = std::conditional_t<IsConst, const M&, M&>;
     using MatrixPtr = std::conditional_t<IsConst, const M*, M*>;
-    static_assert(IsConst || details::IsElementReference<M>::value,
-                  "Iterator must be const if matrix is not in memory.");
+    static_assert(IsConst || details::IsElementReference<M>, "Iterator must be const if matrix is not in memory.");
 
     using iterator_category = std::random_access_iterator_tag;
     using value_type        = typename M::Scalar;
@@ -243,7 +234,7 @@ public:
             return &value;
         }
     };
-    using pointer = std::conditional_t<details::IsElementReference<MatrixRef>::value,
+    using pointer = std::conditional_t<details::IsElementReference<MatrixRef>,
                                        std::conditional_t<IsConst, const value_type*, value_type*>, Proxy>;
 
     /**
@@ -354,13 +345,14 @@ public:
      * The proxy stores a copy of the element and forwards the address of this copy.
      * @{
      */
-    template <class Dummy = MatrixRef, std::enable_if_t<details::IsElementReference<Dummy>::value, void*> = nullptr>
     pointer operator->() const
+        requires details::IsElementReference<MatrixRef>
     {
         return &(**this);
     }
-    template <class Dummy = MatrixRef, std::enable_if_t<!details::IsElementReference<Dummy>::value, void*> = nullptr>
+
     pointer operator->() const
+        requires(!details::IsElementReference<MatrixRef>)
     {
         return Proxy{**this};
     }
@@ -418,10 +410,9 @@ private:
  * create a non-const iterator to first element of the matrix m.
  * only enabled if the matrix is evaluated in memory, i.e. elements can be modified. 
  */
-template <class M>
-std::enable_if_t<conjunction_v<std::is_base_of<Eigen::EigenBase<M>, M>, details::IsElementReference<M>>,
-                 RowMajorIterator<M, false>>
-begin(M& m)
+template <IsMatrixExpression M>
+    requires details::IsElementReference<M>
+RowMajorIterator<M, false> begin(M& m)
 {
     return {m, 0};
 }
@@ -429,8 +420,8 @@ begin(M& m)
 /**
  * create a const iterator to first element of the matrix m.
  */
-template <class M>
-std::enable_if_t<std::is_base_of<Eigen::EigenBase<M>, M>::value, RowMajorIterator<M, true>> begin(const M& m)
+template <IsMatrixExpression M>
+RowMajorIterator<M, true> begin(const M& m)
 {
     return {m, 0};
 }
@@ -438,8 +429,8 @@ std::enable_if_t<std::is_base_of<Eigen::EigenBase<M>, M>::value, RowMajorIterato
 /**
  * create a const iterator to first element of the matrix m.
  */
-template <class M>
-std::enable_if_t<std::is_base_of<Eigen::EigenBase<M>, M>::value, RowMajorIterator<M, true>> cbegin(const M& m)
+template <IsMatrixExpression M>
+RowMajorIterator<M, true> cbegin(const M& m)
 {
     return {m, 0};
 }
@@ -447,10 +438,9 @@ std::enable_if_t<std::is_base_of<Eigen::EigenBase<M>, M>::value, RowMajorIterato
 /**
  * create a non-const end iterator for the matrix m.
  */
-template <class M>
-std::enable_if_t<conjunction_v<std::is_base_of<Eigen::EigenBase<M>, M>, details::IsElementReference<M>>,
-                 RowMajorIterator<M, false>>
-end(M& m)
+template <IsMatrixExpression M>
+    requires details::IsElementReference<M>
+RowMajorIterator<M, false> end(M& m)
 {
     return {m, m.size()};
 }
@@ -458,8 +448,8 @@ end(M& m)
 /**
  * create a const end iterator for the matrix m.
  */
-template <class M>
-std::enable_if_t<std::is_base_of<Eigen::EigenBase<M>, M>::value, RowMajorIterator<M, true>> end(const M& m)
+template <IsMatrixExpression M>
+RowMajorIterator<M, true> end(const M& m)
 {
     return {m, m.size()};
 }
@@ -467,10 +457,12 @@ std::enable_if_t<std::is_base_of<Eigen::EigenBase<M>, M>::value, RowMajorIterato
 /**
  * create a non-const end iterator for the matrix m.
  */
-template <class M>
-std::enable_if_t<std::is_base_of<Eigen::EigenBase<M>, M>::value, RowMajorIterator<M, true>> cend(const M& m)
+template <IsMatrixExpression M>
+RowMajorIterator<M, true> cend(const M& m)
 {
     return {m, m.size()};
 }
 
 } // namespace mio
+
+#endif // MIO_MATH_EIGEN_UTIL_H

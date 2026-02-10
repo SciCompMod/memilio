@@ -20,8 +20,7 @@
 #ifndef MIO_EPI_ADOPTIONRATE_H
 #define MIO_EPI_ADOPTIONRATE_H
 
-#include "memilio/utils/index.h"
-#include "memilio/config.h"
+#include "memilio/config.h" // IWYU pragma: keep
 #include "memilio/geography/regions.h"
 
 namespace mio

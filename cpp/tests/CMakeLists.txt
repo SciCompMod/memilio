@@ -62,7 +62,6 @@ set(TESTSOURCES
     test_binary_serializer.cpp
     test_compartments_simulation.cpp
     test_mobility_io.cpp
-    test_transform_iterator.cpp
     test_metaprogramming.cpp
     test_history.cpp
     test_utils.cpp
