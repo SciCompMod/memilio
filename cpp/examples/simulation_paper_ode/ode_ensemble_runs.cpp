@@ -52,7 +52,6 @@ mio::UncertainValue<ScalarType> uncertain(ScalarType v)
 namespace params
 {
     constexpr size_t num_groups       = 6;
-    size_t num_regions                = 400;
     int num_processes = 1;
 
     mio::Date start_date(2021, 01, 01);
@@ -73,13 +72,6 @@ namespace params
     const ScalarType timeInfectedSymptoms[]   = {7.02625, 7.02625, 7.0665, 6.9385, 6.835, 6.775};
     const ScalarType timeInfectedSevere[]     = {5., 5., 5.925, 7.55, 8.5, 11.};
     const ScalarType timeInfectedCritical[]   = {6.95, 6.95, 6.86, 17.36, 17.1, 11.6};
-
-    const ScalarType age_group_sizes[]        = {3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434};
-    const ScalarType total_population         = 83155031.0;
-
-    // Mobility
-    const int band_radius_mobility_matrix = 50;
-    const ScalarType factorMobilePopulation = 0.1;
 
     // Simulation parameters
     ScalarType t0   = 0.;

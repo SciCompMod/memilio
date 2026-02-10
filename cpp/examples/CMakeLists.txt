@@ -32,6 +32,12 @@ if(MEMILIO_ENABLE_MPI AND MEMILIO_ENABLE_OPENMP)
     target_compile_options(ide_ensemble_runs PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()
 
+if(MEMILIO_ENABLE_IPOPT AND MEMILIO_HAS_JSONCPP AND MEMILIO_HAS_HDF5)
+    add_executable(graph_germany_nuts3_optimal_control simulation_paper_opt/opt_scenario.cpp)
+    target_link_libraries(graph_germany_nuts3_optimal_control PRIVATE memilio ode_secir Boost::filesystem AD::AD Ipopt::Ipopt ${HDF5_C_LIBRARIES})
+    target_compile_options(graph_germany_nuts3_optimal_control PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+endif()
+
 add_executable(euler_example euler_test.cpp)
 target_link_libraries(euler_example PRIVATE memilio)
 target_compile_options(euler_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})

@@ -426,7 +426,7 @@ IOResult<void> set_edges(const fs::path& mobility_data_file, Graph<Model, Mobili
             commuting_weights =
                 (commuting_weights.size() == 0 ? std::vector<FP>(num_age_groups, 1.0) : commuting_weights);
             //commuters
-            auto working_population = 0.0;
+            FP working_population = 0.0;
             for (auto age = AgeGroup(0); age < populations.template size<mio::AgeGroup>(); ++age) {
                 working_population += populations.get_group_total(age) * commuting_weights[size_t(age)];
             }

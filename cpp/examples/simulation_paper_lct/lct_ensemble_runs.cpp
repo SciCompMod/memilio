@@ -207,27 +207,27 @@ mio::IOResult<mio::UncertainContactMatrix<ScalarType>> get_contact_matrix(std::s
     }
 
     // Add NPIs to the contact matrices.
-    mio::Date end_date     = mio::offset_date_by_days(start_date, (int)tmax);
-    auto start_npi_october = mio::Date(2020, 10, 11);
-    if ((int)(start_npi_october < end_date) & (int)(start_date < start_npi_october)) {
-        auto offset_npi = mio::SimulationTime<ScalarType>(mio::get_offset_in_days(start_npi_october, start_date));
-        for (auto&& contact_location : contact_locations) {
-            contact_matrices[size_t(contact_location.first)].add_damping(
-                Eigen::MatrixXd::Constant(num_groups, num_groups, 0.4),
-                offset_npi); // no uncertain: internal type is MatrixXd
-        }
-    }
+    // mio::Date end_date     = mio::offset_date_by_days(start_date, (int)tmax);
+    // auto start_npi_october = mio::Date(2020, 10, 11);
+    // if ((int)(start_npi_october < end_date) & (int)(start_date < start_npi_october)) {
+    //     auto offset_npi = mio::SimulationTime<ScalarType>(mio::get_offset_in_days(start_npi_october, start_date));
+    //     for (auto&& contact_location : contact_locations) {
+    //         contact_matrices[size_t(contact_location.first)].add_damping(
+    //             Eigen::MatrixXd::Constant(num_groups, num_groups, 0.4),
+    //             offset_npi); // no uncertain: internal type is MatrixXd
+    //     }
+    // }
 
-    // Add NPIs to the contact matrices.
-    start_npi_october = mio::Date(2020, 10, 21);
-    if ((int)(start_npi_october < end_date) & (int)(start_date < start_npi_october)) {
-        auto offset_npi = mio::SimulationTime<ScalarType>(mio::get_offset_in_days(start_npi_october, start_date));
-        for (auto&& contact_location : contact_locations) {
-            contact_matrices[size_t(contact_location.first)].add_damping(
-                Eigen::MatrixXd::Constant(num_groups, num_groups, 0.1),
-                offset_npi); // no uncertain: internal type is MatrixXd
-        }
-    }
+    // // Add NPIs to the contact matrices.
+    // start_npi_october = mio::Date(2020, 10, 21);
+    // if ((int)(start_npi_october < end_date) & (int)(start_date < start_npi_october)) {
+    //     auto offset_npi = mio::SimulationTime<ScalarType>(mio::get_offset_in_days(start_npi_october, start_date));
+    //     for (auto&& contact_location : contact_locations) {
+    //         contact_matrices[size_t(contact_location.first)].add_damping(
+    //             Eigen::MatrixXd::Constant(num_groups, num_groups, 0.1),
+    //             offset_npi); // no uncertain: internal type is MatrixXd
+    //     }
+    // }
     return mio::success(mio::UncertainContactMatrix<ScalarType>(contact_matrices));
 }
 
