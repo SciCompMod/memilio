@@ -164,6 +164,10 @@ add_executable(nonconst_contacts nonconst_contacts/nonconst_contacts.cpp)
 target_link_libraries(nonconst_contacts PRIVATE memilio ide_sir)
 target_compile_options(nonconst_contacts PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(secir_changepoints nonconst_contacts/secir_changepoints.cpp)
+target_link_libraries(secir_changepoints PRIVATE memilio ide_secir)
+target_compile_options(secir_changepoints PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(lct_secir_example lct_secir.cpp)
 target_link_libraries(lct_secir_example PRIVATE memilio lct_secir)
 target_compile_options(lct_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})

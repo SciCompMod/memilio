@@ -153,7 +153,7 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
     size_t current_time_index = populations.get_num_time_points() - 1;
 
     // Compute first part of sum where already known initial values of Susceptibles are used.
-    ScalarType sum_first_integral = 0., sum_second_integral = 0.;
+    ScalarType sum = 0.;
 
     // Index determining when we switch from one Gregory sum to the other one.
     // TODO: Explain better what the difference between the two Gregory sums is.
@@ -181,21 +181,17 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
             }
 
             // For each index, the corresponding summand is computed here.
-            sum_first_integral +=
+            sum +=
                 gregory_weight *
-                (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time_index * dt)(0, 0) /
-                 m_N) *
+
                 m_transmissionproboncontact_vector[current_time_index - j] *
                 m_riskofinffromsymptomatic_vector[current_time_index - j] *
-                (1. - m_transitiondistribution_vector[current_time_index - j]) * relevant_susceptibles;
-
-            // For each index, the corresponding summand is computed here.
-            sum_second_integral += gregory_weight *
-                                   parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                                       (current_time_index - j + t0_index) * dt)(0, 0) *
-                                   m_transmissionproboncontact_vector[current_time_index - j] *
-                                   m_riskofinffromsymptomatic_vector[current_time_index - j] *
-                                   (1. - m_transitiondistribution_vector[current_time_index - j]);
+                (1. - m_transitiondistribution_vector[current_time_index - j]) *
+                (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                     (current_time_index - j + t0_index) * dt)(0, 0) -
+                 (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time_index * dt)(0, 0) /
+                  m_N) *
+                     relevant_susceptibles);
         }
     }
     else {
@@ -221,26 +217,17 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
             }
 
             // For each index, the corresponding summand is computed here.
-            sum_first_integral +=
-                gregory_weight *
-                (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time_index * dt)(0, 0) /
-                 m_N) *
-                m_transmissionproboncontact_vector[current_time_index - j] *
-                m_riskofinffromsymptomatic_vector[current_time_index - j] *
-                m_transitiondistribution_vector[current_time_index - j] * relevant_susceptibles;
-
-            // For each index, the corresponding summand is computed here.
-            sum_second_integral += gregory_weight *
-                                   parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                                       (current_time_index - j + t0_index) * dt)(0, 0) *
-                                   m_transmissionproboncontact_vector[current_time_index - j] *
-                                   m_riskofinffromsymptomatic_vector[current_time_index - j] *
-                                   m_transitiondistribution_vector[current_time_index - j];
+            ScalarType current_time = populations.get_last_time();
+            sum += gregory_weight * m_transmissionproboncontact_vector[current_time_index - j] *
+                   m_riskofinffromsymptomatic_vector[current_time_index - j] *
+                   m_transitiondistribution_vector[current_time_index - j] *
+                   (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time - j * dt)(0, 0) -
+                    (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0) / m_N) *
+                        relevant_susceptibles);
         }
     }
 
-    return populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible] *
-           std::exp(dt * (sum_first_integral - sum_second_integral));
+    return populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible] * std::exp(-dt * sum);
 }
 
 size_t ModelMessinaExtendedDetailedInit::compute_S(ScalarType s_init, ScalarType dt, size_t t0_index,
