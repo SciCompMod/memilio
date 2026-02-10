@@ -21,6 +21,8 @@
 #define MIO_IO_CLI_H
 
 #include "memilio/config.h" // IWYU pragma: keep
+#include "json/reader.h"
+#include <sstream>
 
 #ifdef MEMILIO_HAS_JSONCPP
 
@@ -420,9 +422,8 @@ public:
     {
         Json::Value js;
         std::string errors;
-        Json::CharReaderBuilder builder;
-        const std::unique_ptr<Json::CharReader> parser(builder.newCharReader());
-        parser->parse(&(*args.begin()), &(*args.end()), &js, &errors);
+        std::stringstream args_stream(args);
+        Json::parseFromStream(Json::CharReaderBuilder{}, args_stream, &js, &errors);
         // do not directly raise errors, to avoid hiding e.g. a "parameter not found"
         return set_param(id, js, errors);
     }
