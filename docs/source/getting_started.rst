@@ -188,7 +188,7 @@ you can use the ``-j`` flag (e.g., using 4 cores):
    cmake --build . -j 4
 
 .. note::
-   On a standard 4-core laptop, compilation takes approximately 6 minutes.
+   On a standard 4-core (2024) laptop, compilation takes approximately 6 minutes.
    Upon completion, the executables are located in the ``cpp/build/bin`` directory.
 
     .. code-block:: console
