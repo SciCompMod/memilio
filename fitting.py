@@ -142,7 +142,7 @@ distance = pyabc.AdaptiveAggregatedDistance(
     [distance_not_confirmed, distance_confirmed], adaptive=False)
 
 abc = pyabc.ABCSMC(model, prior, distance, population_size=100,
-                   transitions=pyabc.transition.LocalTransition)
+                   transitions=pyabc.transition.LocalTransition(20, 5))
 db_path = "sqlite:///" + os.path.join(tempfile.gettempdir(), "tmp2.db")
 abc.new(db_path, obs_data)
 history = abc.run(max_nr_populations=6, minimum_epsilon=0.1)
