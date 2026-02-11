@@ -23,7 +23,7 @@
 
 #include "opt_model.h"
 
-namespace params
+namespace simParams
 {
     double tmax = 60;
 
@@ -34,7 +34,7 @@ namespace params
     double strength_upper_bound = 1.0;
 
     // constraint
-    double constraint_compartment_upper_bound = 250000;
+    double constraint_compartment_upper_bound = 100'000;
 
     // opt variables
     int control_interval = 1; // How often to update objective; 1 = each day
@@ -285,11 +285,11 @@ private:
     const int numControlIntervals_; // number of piecewise constants interval for controls (same for all control variables)
     const int pcresolution_; // the resultion of path constraints is by this factor higher than the control discretization
     const int numControls_; // number of control variables
-    const int numPathConstraints_; // number of path constraints
+    const int numTerminalConstraints_; // number of terminal constraints
     const int numIntervals_ = pcresolution_ * numControlIntervals_; // number of integration intervals
 
     const int n_            = numControls_; // number of optimization variables in the NLP
-    const int m_            = numPathConstraints_; // number of constraints in the NLP
+    const int m_            = numTerminalConstraints_; // number of constraints in the NLP
 
     std::unique_ptr<GraphModel<gt1s_type>> model_ad_gt1s_;
     std::unique_ptr<GraphModel<internal_type>> model_double_;
@@ -297,13 +297,13 @@ private:
 
 Secir_NLP::Secir_NLP(std::string data_dir)
     : t0_(0)
-    , tmax_(params::tmax)
-    , num_age_groups_(params::num_groups)
-    , controlInterval_(params::control_interval)
+    , tmax_(simParams::tmax)
+    , num_age_groups_(simParams::num_groups)
+    , controlInterval_(simParams::control_interval)
     , numControlIntervals_(((int)tmax_ - 1) / controlInterval_ + 1)
     , pcresolution_(1)
-    , numControls_(params::num_dynamic_dampings)
-    , numPathConstraints_(1)
+    , numControls_(simParams::num_dynamic_dampings)
+    , numTerminalConstraints_(1)
 {
     model_ad_gt1s_ = std::make_unique<GraphModel<gt1s_type>>(create_graph_model<gt1s_type>(data_dir));
     model_double_ = std::make_unique<GraphModel<internal_type>>(create_graph_model<internal_type>(data_dir));
@@ -333,14 +333,14 @@ bool Secir_NLP::get_bounds_info(Ipopt::Index n, Ipopt::Number* x_l, Ipopt::Numbe
 {
     mio::unused(n, m);
     for (int control_idx = 0; control_idx < numControls_; ++control_idx) {
-        x_l[control_idx] = params::strength_lower_bound + mio::Limits<double>::zero_tolerance(); // lower bound of 
-        x_u[control_idx] = params::strength_upper_bound - mio::Limits<double>::zero_tolerance(); // upper bound of 
+        x_l[control_idx] = simParams::strength_lower_bound + mio::Limits<double>::zero_tolerance(); // lower bound of 
+        x_u[control_idx] = simParams::strength_upper_bound - mio::Limits<double>::zero_tolerance(); // upper bound of 
     }
 
     // constraints
     for (int i = 0; i < m_; ++i) {
         g_l[i] = 0.0 + mio::Limits<double>::zero_tolerance();
-        g_u[i] = params::constraint_compartment_upper_bound - mio::Limits<double>::zero_tolerance();
+        g_u[i] = simParams::constraint_compartment_upper_bound - mio::Limits<double>::zero_tolerance();
     }
     return true;
 }
@@ -353,7 +353,7 @@ bool Secir_NLP::get_starting_point(Ipopt::Index n, bool init_x, Ipopt::Number* x
     assert(init_lambda == false);
 
     for (int i = 0; i < n; ++i) {
-        x[i] = 0.5;
+        x[i] = 1.0;
     }
     return true;
 }
@@ -468,7 +468,7 @@ void Secir_NLP::eval_objective_constraints(const std::vector<FP>& x, std::vector
     
     // for (auto& node : graph_model.nodes()) {
     //     node.property.get_simulation().set_integrator_core(
-    //         std::move(make_integrator<FP>(settings.integrator_type(), settings.dt())));
+    //         std::move(make_integrator<FP>(settings.integrator_type(), dt)));
     // }
 
     auto graph_simulation      = mio::make_mobility_sim<FP>(t0, 0.5, graph_model);
@@ -503,7 +503,8 @@ void Secir_NLP::eval_objective_constraints(const std::vector<FP>& x, std::vector
             size_t index = 0;
             for (auto& threshold : dynamic_npis.get_thresholds()) {
                 FP strength = dynamic_NPI_strengths[index];
-
+                
+                //std::cout << "Strength Value: " << strength << "\n";
                 if (inf_rel >= threshold.first) {
                     objective += strength * (model.populations.get_total() / total_population);
                 }
@@ -551,7 +552,7 @@ void Secir_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n, co
     }
 
     std::cout << "\nTerminal Constraints:\n";
-    for (int i = 0; i < numPathConstraints_; ++i) {
+    for (int i = 0; i < numTerminalConstraints_; ++i) {
         std::cout << "Constraint " << i << ": "<< g[i] << std::endl;
     }
 

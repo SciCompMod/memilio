@@ -78,7 +78,7 @@ enum class ContactLocation
     Count = 1
 };
 
-namespace params
+namespace simParams
 {
     constexpr size_t num_groups = 1;
 
@@ -112,11 +112,11 @@ mio::IOResult<void> set_initial_dynamic_npis(mio::osecir::Parameters<FP>& params
 
     auto& dynamic_npis        = params.template get<mio::osecir::DynamicNPIsInfectedSymptoms<FP>>();
 
-    dynamic_npis.set_interval(mio::SimulationTime<FP>(params::npis_interval));
-    dynamic_npis.set_duration(mio::SimulationTime<FP>(params::npis_duration));
-    dynamic_npis.set_base_value(params::npis_base_value);
-    dynamic_npis.set_threshold(params::thresholds[0], dynamic_npi_dampings1);
-    dynamic_npis.set_threshold(params::thresholds[1], dynamic_npi_dampings2);
+    dynamic_npis.set_interval(mio::SimulationTime<FP>(simParams::npis_interval));
+    dynamic_npis.set_duration(mio::SimulationTime<FP>(simParams::npis_duration));
+    dynamic_npis.set_base_value((FP)simParams::npis_base_value);
+    dynamic_npis.set_threshold(simParams::thresholds[0], dynamic_npi_dampings1);
+    dynamic_npis.set_threshold(simParams::thresholds[1], dynamic_npi_dampings2);
 
     return mio::success();
 }
@@ -124,7 +124,7 @@ mio::IOResult<void> set_initial_dynamic_npis(mio::osecir::Parameters<FP>& params
 template <typename FP>
 GraphModel<FP> create_graph_model(const std::string& data_directory)
 {
-    mio::osecir::Model<FP> model(params::num_groups);
+    mio::osecir::Model<FP> model(simParams::num_groups);
     auto& params = model.parameters;
 
     params.template get<mio::osecir::StartDay<FP>>()    = 334.0;
@@ -134,7 +134,7 @@ GraphModel<FP> create_graph_model(const std::string& data_directory)
 
     auto set_all_groups = [&](auto Tag, FP value) {
         auto& age_group_params = params.template get<decltype(Tag)>();
-        for (size_t age_group = 0; age_group < params::num_groups; age_group++) {
+        for (size_t age_group = 0; age_group < simParams::num_groups; age_group++) {
             age_group_params[mio::AgeGroup(age_group)] = value;
         }
     };
@@ -168,7 +168,7 @@ GraphModel<FP> create_graph_model(const std::string& data_directory)
     /* RiskOfInfectionFromSymptomatic default: 1.0 */
     // set_all_groups(mio::osecir::RiskOfInfectionFromSymptomatic<FP>{}, 0.2);
     /* MaxRiskOfInfectionFromSymptomatic default: 0.0 */
-    // set_all_groups(mio::osecir::MaxRiskOfInfectionFromSymptomatic<FP>{}, 0.45);
+    set_all_groups(mio::osecir::MaxRiskOfInfectionFromSymptomatic<FP>{}, 1.0);
     /* RecoveredPerInfectedNoSymptoms default: 0.0 */
     set_all_groups(mio::osecir::RecoveredPerInfectedNoSymptoms<FP>{}, parameter_list["mu_CR"][0].asDouble());
     /* RecoveredPerInfectedNoSymptoms default: 0.0 */
@@ -180,16 +180,10 @@ GraphModel<FP> create_graph_model(const std::string& data_directory)
 
     // --------------------------- //
     // Define the contact matrices //
-    constexpr size_t num_contact_locations = 1;
-    Eigen::Matrix<FP, params::num_groups, params::num_groups> baseline;
-    Eigen::Matrix<FP, params::num_groups, params::num_groups> minimum;
-    baseline.setConstant(7.95);
-    minimum.setZero();
-    mio::ContactMatrixGroup<FP> contact_matrices(num_contact_locations, params::num_groups);
-    contact_matrices[0].get_baseline() = baseline;
-    contact_matrices[0].get_minimum()  = minimum;
-    params.template get<mio::osecir::ContactPatterns<FP>>() =
-        mio::UncertainContactMatrix<FP>(std::move(contact_matrices));
+    mio::ContactMatrixGroup<FP>& contact_matrix = params.template get<mio::osecir::ContactPatterns<FP>>();
+    contact_matrix[0] =
+        mio::ContactMatrix<FP>(Eigen::MatrixX<FP>::Constant(simParams::num_groups, simParams::num_groups, 7.95),
+                           Eigen::MatrixX<FP>::Zero(simParams::num_groups, simParams::num_groups));
 
     // DynamicNPIsInfectedSymptoms
     auto result_dynamic_npis = set_initial_dynamic_npis<FP>(params);
@@ -255,8 +249,8 @@ GraphModel<FP> create_graph_model(const std::string& data_directory)
         auto& node_params                           = node.property.parameters;
         int state                                   = static_cast<int>(mio::regions::get_state_id(node.id)) - 1;
         double damping_value                        = parameter_list["damping_values"][state][2].asDouble();
-        mio::ContactMatrixGroup<FP>& contact_matrix = node_params.template get<mio::osecir::ContactPatterns<FP>>();
-        contact_matrix[0].add_damping(Eigen::MatrixX<FP>::Constant(1, 1, damping_value), mio::SimulationTime<FP>(0.0));
+        mio::ContactMatrixGroup<FP>& contact_matrix_local = node_params.template get<mio::osecir::ContactPatterns<FP>>();
+        contact_matrix_local[0].add_damping(Eigen::MatrixX<FP>::Constant(1, 1, damping_value), mio::SimulationTime<FP>(0.0));
     }
 
     for (size_t node_idx = 0; node_idx < parameter_graph.nodes().size(); ++node_idx) {
@@ -265,9 +259,8 @@ GraphModel<FP> create_graph_model(const std::string& data_directory)
         /* DynamicNPIsImplementationDelay default: 0.0 */
         node_params.template get<mio::osecir::DynamicNPIsImplementationDelay<FP>>() = 0.0;
         /* TestAndTraceCapacity default: std::numeric_limits<FP>::max() */
-        FP test_and_trace_capacity_factor = 0.0 / 100000.0;
         node_params.template get<mio::osecir::TestAndTraceCapacity<FP>>() =
-            node.property.populations.get_total() * test_and_trace_capacity_factor;
+            100000000;
         /* TestAndTraceCapacityMaxRisk default: 5.0 */
         node_params.template get<mio::osecir::TestAndTraceCapacityMaxRisk<FP>>() = 5.0;
     }
