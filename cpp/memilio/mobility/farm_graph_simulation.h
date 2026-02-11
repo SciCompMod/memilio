@@ -90,6 +90,7 @@ public:
             for (auto& n : graph.nodes()) {
                 Base::m_node_func(Base::m_t, dt, n.property);
             }
+            Base::m_t += dt;
             if (!m_standstill) {
                 for (auto& n : graph.nodes()) {
                     update_population(n.property, n.id);
@@ -129,7 +130,6 @@ public:
             }
             cull(dt);
             // dt = std::min(m_trade.next_trade_time() - Base::m_t, 1.0);
-            Base::m_t += dt;
         }
     }
 
@@ -159,14 +159,17 @@ private:
         using Model        = std::decay_t<decltype(Base::m_graph.nodes()[0].property.get_simulation().get_model())>;
         using AdoptionRate = mio::smm::AdoptionRates<ScalarType, typename Model::Status, mio::regions::Region>;
         for (auto& node : graph.nodes()) {
+            // Skip calculation for nodes without animals
             if (std::accumulate(node.property.get_result().get_last_value().begin(),
                                 node.property.get_result().get_last_value().end(), 0) == 0) {
                 continue;
             }
             auto infection_pressure = 0.0;
             auto neighbors          = node.property.get_regional_neighbors();
+            // Iterate over all neighbours in third neighbourhood layer
             for (size_t index = 0; index < neighbors[2].size(); ++index) {
                 auto& neighbour = graph.nodes()[neighbors[2][index]];
+                // Only count infected neighbours
                 if (neighbour.id != node.id && neighbour.property.get_infection_status()) {
                     infection_pressure +=
                         m_foi_inner_factor[neighbour.property.get_type()] *
@@ -185,8 +188,10 @@ private:
     {
         // ducks, layer
         if (node.get_type() < 3) {
+            // Check for animals on the farm
             if (std::accumulate(node.get_result().get_last_value().begin(), node.get_result().get_last_value().end(),
                                 0) > 0) {
+                // Slaughter if production period is over
                 if (Base::m_t - node.get_population_date() + 1 > m_duration[node.get_type()]) {
                     for (auto& val : node.get_result().get_last_value()) {
                         val = 0;
@@ -195,14 +200,16 @@ private:
                     node.set_infection_status(false);
                 }
             }
+            // Restock if downtime is over and not quarantined
             else if (Base::m_t - node.get_slaughter_date() + 1 > m_downtime[node.get_type()] &&
                      !node.is_quarantined()) {
-                node.get_result().get_last_value()[0] = 0.95 * node.get_capacity();
+                node.get_result().get_last_value()[0] = std::ceil(0.97 * node.get_capacity());
                 node.set_population_date(Base::m_t);
             }
         }
         // broiler 2
         else if (node.get_type() == 4) {
+            // Slaughter if production period is over
             if (std::accumulate(node.get_result().get_last_value().begin(), node.get_result().get_last_value().end(),
                                 0) > 0) {
                 if (Base::m_t - node.get_population_date() + 1 > m_duration[4]) {
@@ -215,20 +222,23 @@ private:
             }
         }
         // broiler 1
-        else if (std::accumulate(node.get_result().get_last_value().begin(), node.get_result().get_last_value().end(),
+        else if (std::accumulate(node.get_result().get_last_value().begin(),
+                                 node.get_result().get_last_value().end(), // else if structure?
                                  0) > 0) {
-            //TESTING five days before transport for HRZ farms
+            //Testing five days before transport for farms in HRZ
             if (Base::m_t - node.get_population_date() + 1 > m_duration[3] - 5 && node.get_in_hrz()) {
                 bool positive_test                   = false;
                 const std::vector<ScalarType> values = {node.get_result().get_last_value().begin(),
                                                         node.get_result().get_last_value().end() - 1};
                 for (size_t test = 0; test < 20; test++) {
                     const auto test_compartment = mio::DiscreteDistribution<size_t>::get_instance()(m_rng, values);
+                    // Test infected animals
                     if (test_compartment == 3 &&
                         mio::UniformDistribution<ScalarType>::get_instance()(m_rng, 0.0, 1.0) < m_sensitivity) {
                         positive_test = true;
                         break;
                     }
+                    // Test non-infected animals
                     else if (mio::UniformDistribution<ScalarType>::get_instance()(m_rng, 0.0, 1.0) > m_specificity) {
                         positive_test = true;
                         break;
@@ -239,10 +249,12 @@ private:
                     node.set_date_confirmation(Base::m_t + 2.0);
                 }
             }
+            // If production period is over
             if (Base::m_t - node.get_population_date() + 1 > m_duration[3]) {
                 // mio::log_info("Farm Type: {}, In HRZ: {}, Population Date: {}, Slaughter Date: {}, Current Time: {}",
                 //   node.get_farm_type(), node.get_in_hrz(), node.get_population_date(),
                 //   node.get_slaughter_date(), Base::m_t);
+
                 // If farm in regulation zone, only slaughter is allowed
                 if (node.get_reg_zone_day() < Base::m_t && node.get_reg_zone_day() > Base::m_t - 28) {
                     for (auto& val : node.get_result().get_last_value()) {
@@ -251,15 +263,18 @@ private:
                     node.set_slaughter_date(Base::m_t);
                     node.set_infection_status(false);
                 }
+                // Otherwise move animals to broiler 2 farms
                 else {
-                    mio::timing::AutoTimer<"Farm Simulation Update Population"> localtimer;
-                    const std::vector<ScalarType> probabilities{0.125, 0.44, 0.425};
-                    auto num_destinations = mio::DiscreteDistribution<int>::get_instance()(m_rng, probabilities) + 1;
+                    mio::timing::AutoTimer<"Farm Simulation Shipment"> localtimer;
+                    const std::vector<ScalarType> splitting_probs{0.135, 0.44, 0.425};
+                    auto num_destinations = mio::DiscreteDistribution<int>::get_instance()(m_rng, splitting_probs) + 1;
                     mio::log_info("Destinations: {}", num_destinations);
+                    // Move fraction of animals to destination farm
                     while (num_destinations > 0) {
                         auto destination_node = find_destination_farm(node);
                         auto destination_result =
                             Base::m_graph.nodes()[destination_node].property.get_result().get_last_value();
+                        // Only move living animals
                         for (size_t index = 0; index < 3; index++) {
                             const auto num_animals =
                                 std::ceil(node.get_result().get_last_value()[index] / num_destinations);
@@ -271,15 +286,23 @@ private:
                         mio::log_info("{}, {}, {}", id, destination_node, Base::m_t);
                     }
                     node.set_slaughter_date(Base::m_t);
+                    node.set_infection_status(false);
                 }
             }
+            // Check for possible repopulation
             else if (Base::m_t - node.get_slaughter_date() + 1 >= m_downtime[3] && !node.is_quarantined()) {
-                node.get_result().get_last_value()[0] = 0.95 * node.get_capacity();
+                node.get_result().get_last_value()[0] = std::ceil(0.96 * node.get_capacity());
                 node.set_population_date(Base::m_t);
             }
         }
     }
-
+    /**
+     * @brief Check if number of dead animals is suspicious and test for confirmation if so.
+     * 
+     * We assume that the tests will always give a positive result and do not model them explicitly.
+     * @param node Farm node
+     * @param t Current time
+     */
     void check_for_cases(Node& node, Timepoint t)
     {
         const auto& current_state = node.get_result().get_last_value();
@@ -326,7 +349,9 @@ private:
     {
         return node.get_type() == 4 && !node.is_quarantined() &&
                node.get_slaughter_date() + m_downtime[4] <= Base::m_t &&
-               node.get_population_date() < node.get_slaughter_date();
+               std::accumulate(node.get_result().get_last_value().begin(), node.get_result().get_last_value().end(),
+                               0) == 0;
+        //    node.get_population_date() < node.get_slaughter_date();
     }
 
     /**

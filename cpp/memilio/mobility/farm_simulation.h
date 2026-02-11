@@ -118,11 +118,6 @@ public:
     {
         return m_farm_size;
     }
-    void slaughter()
-    {
-        // ...
-    }
-
     bool is_suspicious() const
     {
         return m_date_suspicion > -1;
