@@ -34,7 +34,7 @@ namespace simParams
     double strength_upper_bound = 1.0;
 
     // constraint
-    double constraint_compartment_upper_bound = 100'000;
+    double constraint_compartment_upper_bound = 250'000;
 
     // opt variables
     int control_interval = 1; // How often to update objective; 1 = each day
