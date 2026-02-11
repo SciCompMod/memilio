@@ -76,6 +76,7 @@ each **InfectionState** and sociodemographic group.
 
 
 .. _Nonpharmaceutical Interventions:
+
 Nonpharmaceutical interventions
 -------------------------------
 
@@ -143,6 +144,7 @@ List of models
     models/oseirdb
     models/oseair
     models/osecir
+    models/oseirv
     models/osecirvvs
     models/osecirts
     models/omseirs4

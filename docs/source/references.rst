@@ -8,6 +8,8 @@ The following gives an overview on (peer-reviewed) publications extending or usi
 Recently submitted publications
 --------------------------------------
 
+- |Missing_Transmission_Chains|
+
 - |Coupled_Epidemiological_and_Wastewater|
 
 - |Differentially_private_federated_learning|

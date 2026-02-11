@@ -108,7 +108,7 @@ Then, dampings can be added as a relative factor to (partially) reduce the conta
 .. code-block:: python
 
    model.parameters.ContactPatterns.cont_freq_mat.add_damping(
-        Damping(coeffs=np.r_[0.9], t=30.0, level=0, type=0))
+        mio.Damping(coeffs=np.r_[0.9], t=30.0, level=0, type=0))
 
 
 If a minimum pattern is set, the contact reduction will reduce the difference between the baseline and minimum patterns and subtract it from the baseline instead of only acting on the contact patterns baseline. That means that when the contact patterns are damped to 100%, the contact patterns will be equal to the minimum pattern instead of zero.
@@ -217,7 +217,7 @@ Now, the infectious diesease dynamics can be simulated by calling ``simulate()``
 
 .. code-block:: python
 
-   result = oseir.simulate(t0=0, tmax=60, dt=1, model)
+   result = oseir.simulate(t0=0, tmax=60, dt=1, model=model)
 
 Similar to the MEmilio C++ library, the Python interface provides the option of adjusting the solver.
 Currently available are:
@@ -231,7 +231,7 @@ The integrator can be changed as the last parameter of the simulate function.
 .. code-block:: python
 
    integrator = mio.RKIntegratorCore(dt_max=1)
-   result = oseir.simulate(0, tmax=60, dt=1, model, integrator)
+   result = oseir.simulate(0, tmax=60, dt=1, model = model, integrator = integrator)
 
 Output and visualization
 -------------------------

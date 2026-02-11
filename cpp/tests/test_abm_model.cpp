@@ -424,11 +424,11 @@ TEST_F(TestModel, evolveMobilityTrips)
     EXPECT_CALL(mock_uniform_dist2.get_mock(), invoke)
         .Times(testing::Exactly(6))
         .WillOnce(testing::Return(1.0)) // draw transition to Recovered p1
-        .WillOnce(testing::Return(0.8)) // draw random virus shed p1
+        .WillOnce(testing::Return(0.8)) // draw random viral shed p1
         .WillOnce(testing::Return(1.0)) // draw transition to Recovered p3
-        .WillOnce(testing::Return(0.8)) // draw random virus shed p3
+        .WillOnce(testing::Return(0.8)) // draw random viral shed p3
         .WillOnce(testing::Return(0.0)) // draw transition from InfectedCritical p4
-        .WillOnce(testing::Return(0.8)) // draw random virus shed p4
+        .WillOnce(testing::Return(0.8)) // draw random viral shed p4
         .RetiresOnSaturation();
 
     auto rng_p1 = mio::abm::PersonalRandomNumberGenerator(p1);
@@ -674,17 +674,19 @@ TEST_F(TestModel, checkParameterConstraints)
     params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]     = 0.05;
     params.get<mio::abm::DeathsPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]       = 0.001;
     params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]     = 0.1;
-    params.get<mio::abm::DetectInfection>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]               = 0.3;
-    params.get<mio::abm::GotoWorkTimeMinimum>()[age_group_35_to_59]       = mio::abm::hours(4);
-    params.get<mio::abm::GotoWorkTimeMaximum>()[age_group_35_to_59]       = mio::abm::hours(8);
-    params.get<mio::abm::GotoSchoolTimeMinimum>()[age_group_0_to_4]       = mio::abm::hours(3);
-    params.get<mio::abm::GotoSchoolTimeMaximum>()[age_group_0_to_4]       = mio::abm::hours(6);
-    params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Community] = 0.5;
-    params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2]      = 0.6;
-    params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical]  = 0.7;
-    params.get<mio::abm::QuarantineEffectiveness>()                       = 0.5;
-    params.get<mio::abm::QuarantineDuration>()                            = mio::abm::days(14);
-    params.get<mio::abm::LockdownDate>()                                  = mio::abm::TimePoint(0);
+    params.get<mio::abm::ViralShedFactor>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
+        mio::ParameterDistributionUniform(1.0, 1.0);
+    params.get<mio::abm::GotoWorkTimeMinimum>()[age_group_35_to_59]                      = mio::abm::hours(4);
+    params.get<mio::abm::GotoWorkTimeMaximum>()[age_group_35_to_59]                      = mio::abm::hours(8);
+    params.get<mio::abm::GotoSchoolTimeMinimum>()[age_group_0_to_4]                      = mio::abm::hours(3);
+    params.get<mio::abm::GotoSchoolTimeMaximum>()[age_group_0_to_4]                      = mio::abm::hours(6);
+    params.get<mio::abm::InfectionRateFromViralShed>()[mio::abm::VirusVariant::Wildtype] = 0.1;
+    params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Community]                = 0.5;
+    params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2]                     = 0.6;
+    params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical]                 = 0.7;
+    params.get<mio::abm::QuarantineEffectiveness>()                                      = 0.5;
+    params.get<mio::abm::QuarantineDuration>()                                           = mio::abm::days(14);
+    params.get<mio::abm::LockdownDate>()                                                 = mio::abm::TimePoint(0);
     ASSERT_EQ(params.check_constraints(), false);
 
     params.get<mio::abm::TimeExposedToNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
@@ -737,10 +739,6 @@ TEST_F(TestModel, checkParameterConstraints)
     ASSERT_EQ(params.check_constraints(), true);
     params.get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
         mio::ParameterDistributionLogNormal(9., 0.5);
-    params.get<mio::abm::DetectInfection>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 1.1;
-    ASSERT_EQ(params.check_constraints(), true);
-    params.get<mio::abm::DetectInfection>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 0.3;
-
     params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -0.1;
     ASSERT_EQ(params.check_constraints(), true);
     params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 0.2;
@@ -758,6 +756,11 @@ TEST_F(TestModel, checkParameterConstraints)
     params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -0.1;
     ASSERT_EQ(params.check_constraints(), true);
     params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 0.1;
+    params.get<mio::abm::ViralShedFactor>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
+        mio::ParameterDistributionUniform(-1.0, 1.0);
+    ASSERT_EQ(params.check_constraints(), true);
+    params.get<mio::abm::ViralShedFactor>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
+        mio::ParameterDistributionUniform(1.0, 1.0);
 
     params.get<mio::abm::GotoWorkTimeMinimum>()[age_group_35_to_59] = mio::abm::hours(30);
     EXPECT_TRUE(params.check_constraints());
@@ -771,6 +774,10 @@ TEST_F(TestModel, checkParameterConstraints)
     params.get<mio::abm::GotoSchoolTimeMaximum>()[age_group_0_to_4] = mio::abm::hours(30);
     EXPECT_TRUE(params.check_constraints());
     params.get<mio::abm::GotoSchoolTimeMaximum>()[age_group_0_to_4] = mio::abm::hours(6);
+
+    params.get<mio::abm::InfectionRateFromViralShed>()[mio::abm::VirusVariant::Wildtype] = -0.1;
+    EXPECT_TRUE(params.check_constraints());
+    params.get<mio::abm::InfectionRateFromViralShed>()[mio::abm::VirusVariant::Wildtype] = 0.1;
 
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Community] = 1.2;
     EXPECT_TRUE(params.check_constraints());
