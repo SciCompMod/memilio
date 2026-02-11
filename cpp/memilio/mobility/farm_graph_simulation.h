@@ -74,7 +74,9 @@ public:
     }
     void advance(Timepoint t_max = 1.0)
     {
+#ifndef JOLLY_BINDINGS_SKIP_MAIN
         mio::timing::AutoTimer<"Graph Simulation Advance"> timer;
+#endif
         // auto dt = std::min(m_trade.next_trade_time() - Base::m_t, 1.0);
         auto dt     = Base::m_dt;
         auto& graph = Base::get_graph();
@@ -97,10 +99,9 @@ public:
                 }
             }
             for (auto& n : graph.nodes()) {
-                if (std::accumulate(n.property.get_result().get_last_value().begin(),
-                                    n.property.get_result().get_last_value().end(), 0) > 0) {
+                if (n.property.get_result().get_last_value().sum() > 0) {
                     if (!n.property.is_suspicious()) {
-                        check_for_cases(n.property, Base::m_t);
+                        check_for_cases(n.property, Base::m_t, n.id);
                     }
                     else {
                         if (n.property.get_date_confirmation() < Base::m_t + dt && !n.property.is_quarantined()) {
@@ -118,7 +119,7 @@ public:
             }
             if (m_first_detection > Base::m_t) {
                 for (auto& n : graph.nodes()) {
-                    if (n.property.get_date_confirmation() <= Base::m_t) {
+                    if (n.property.get_date_confirmation() <= Base::m_t && n.property.get_date_confirmation() >= 0) {
                         m_standstill      = true;
                         m_first_detection = Base::m_t;
                         break;
@@ -160,8 +161,7 @@ private:
         using AdoptionRate = mio::smm::AdoptionRates<ScalarType, typename Model::Status, mio::regions::Region>;
         for (auto& node : graph.nodes()) {
             // Skip calculation for nodes without animals
-            if (std::accumulate(node.property.get_result().get_last_value().begin(),
-                                node.property.get_result().get_last_value().end(), 0) == 0) {
+            if (node.property.get_result().get_last_value().sum() == 0) {
                 continue;
             }
             auto infection_pressure = 0.0;
@@ -189,8 +189,7 @@ private:
         // ducks, layer
         if (node.get_type() < 3) {
             // Check for animals on the farm
-            if (std::accumulate(node.get_result().get_last_value().begin(), node.get_result().get_last_value().end(),
-                                0) > 0) {
+            if (node.get_result().get_last_value().sum() > 0) {
                 // Slaughter if production period is over
                 if (Base::m_t - node.get_population_date() + 1 > m_duration[node.get_type()]) {
                     for (auto& val : node.get_result().get_last_value()) {
@@ -210,8 +209,7 @@ private:
         // broiler 2
         else if (node.get_type() == 4) {
             // Slaughter if production period is over
-            if (std::accumulate(node.get_result().get_last_value().begin(), node.get_result().get_last_value().end(),
-                                0) > 0) {
+            if (node.get_result().get_last_value().sum() > 0) {
                 if (Base::m_t - node.get_population_date() + 1 > m_duration[4]) {
                     for (auto& val : node.get_result().get_last_value()) {
                         val = 0;
@@ -222,9 +220,7 @@ private:
             }
         }
         // broiler 1
-        else if (std::accumulate(node.get_result().get_last_value().begin(),
-                                 node.get_result().get_last_value().end(), // else if structure?
-                                 0) > 0) {
+        else if (node.get_result().get_last_value().sum() > 0) { // else if structure?
             //Testing five days before transport for farms in HRZ
             if (Base::m_t - node.get_population_date() + 1 > m_duration[3] - 5 && node.get_in_hrz()) {
                 bool positive_test                   = false;
@@ -265,10 +261,12 @@ private:
                 }
                 // Otherwise move animals to broiler 2 farms
                 else {
+#ifndef JOLLY_BINDINGS_SKIP_MAIN
                     mio::timing::AutoTimer<"Farm Simulation Shipment"> localtimer;
+#endif
                     const std::vector<ScalarType> splitting_probs{0.135, 0.44, 0.425};
                     auto num_destinations = mio::DiscreteDistribution<int>::get_instance()(m_rng, splitting_probs) + 1;
-                    mio::log_info("Destinations: {}", num_destinations);
+                    mio::log_debug("Destinations: {}", num_destinations);
                     // Move fraction of animals to destination farm
                     while (num_destinations > 0) {
                         auto destination_node = find_destination_farm(node);
@@ -283,8 +281,10 @@ private:
                         }
                         Base::m_graph.nodes()[destination_node].property.set_population_date(Base::m_t);
                         num_destinations--;
-                        mio::log_info("{}, {}, {}", id, destination_node, Base::m_t);
+                        mio::log_debug("{}, {}, {}", id, destination_node, Base::m_t);
                     }
+                    // Dead animals are not traded, but anyways removed
+                    node.get_result().get_last_value()[3] = 0;
                     node.set_slaughter_date(Base::m_t);
                     node.set_infection_status(false);
                 }
@@ -303,11 +303,12 @@ private:
      * @param node Farm node
      * @param t Current time
      */
-    void check_for_cases(Node& node, Timepoint t)
+    void check_for_cases(Node& node, Timepoint t, size_t id)
     {
         const auto& current_state = node.get_result().get_last_value();
-        if (current_state[3] / std::accumulate(current_state.begin(), current_state.end(), 0.0) >
-            m_suspicion_threshold) {
+        if (current_state[3] / current_state.sum() > m_suspicion_threshold) {
+            mio::log_debug("Suspicious farm found: {}, Number dead: {}, number overall: {}, Time: {}", id,
+                           current_state[3], std::accumulate(current_state.begin(), current_state.end(), 0.0), t);
             node.set_date_suspicion(t);
             // if (mio::UniformDistribution<ScalarType>::get_instance()(m_rng, 0.0, 1.0) <
             //     1 - std::pow((1 - m_sensitivity), 20)) {
@@ -327,13 +328,13 @@ private:
             }
         }
         if (distances.size() == 0) {
-            mio::log_info("Expecting segfault:");
+            mio::log_warning("No open broiler 2 farms found. Segmentation fault follows:");
         }
         const auto d0 = 96460.0;
         for (auto& d : distances) {
             d = std::exp(d / d0);
         }
-        mio::log_info("Number of possible farms: {}", distances.size());
+        mio::log_debug("Number of possible farms: {}", distances.size());
         return ids[mio::DiscreteDistribution<size_t>::get_instance()(m_rng, distances)];
     }
 
@@ -348,10 +349,7 @@ private:
     bool check_for_open_broiler2(const Node& node)
     {
         return node.get_type() == 4 && !node.is_quarantined() &&
-               node.get_slaughter_date() + m_downtime[4] <= Base::m_t &&
-               std::accumulate(node.get_result().get_last_value().begin(), node.get_result().get_last_value().end(),
-                               0) == 0;
-        //    node.get_population_date() < node.get_slaughter_date();
+               node.get_slaughter_date() + m_downtime[4] <= Base::m_t && node.get_result().get_last_value().sum() == 0;
     }
 
     /**
@@ -617,6 +615,10 @@ public:
         return result;
     }
 
+    ScalarType get_time_of_first_infection()
+    {
+        return m_first_detection;
+    }
     // void apply_interventions()
     // {
     //     // Set quarantine
@@ -704,17 +706,17 @@ private:
     RandomNumberGenerator& m_rng;
     std::queue<std::pair<size_t, ScalarType>> m_culling_queue;
     std::queue<std::pair<size_t, ScalarType>> m_prev_culling_queue;
-    ScalarType m_culling_capacity_per_day = 2000;
+    ScalarType m_culling_capacity_per_day = 64116;
     std::queue<std::pair<size_t, ScalarType>> m_vaccination_queue;
     ScalarType m_vaccination_capacity_per_day = 500;
     ScalarType m_first_detection              = std::numeric_limits<ScalarType>::max();
     // Trade<ScalarType, Graph> m_trade;
     bool m_standstill                          = false;
-    ScalarType m_suspicion_threshold           = 0.05;
+    ScalarType m_suspicion_threshold           = 0.2;
     ScalarType m_sensitivity                   = 0.95;
     ScalarType m_specificity                   = 0.99;
-    std::vector<ScalarType> m_duration         = {21.0, 21.0, 400.0, 21.0, 28.0};
-    std::vector<ScalarType> m_downtime         = {21.0, 21.0, 21.0, 21.0, 21.0};
+    std::vector<ScalarType> m_duration         = {77.0, 52.0, 400.0, 21.0, 28.0};
+    std::vector<ScalarType> m_downtime         = {23.6, 23.9, 23.6, 31.1, 21.0};
     std::vector<ScalarType> m_foi_inner_factor = {1.0, 1.0, 1.0, 1.0, 1.0};
     std::vector<ScalarType> m_foi_outer_factor = {1.0, 1.0, 1.0, 1.0, 1.0};
     ScalarType m_h0                            = 0.0002;

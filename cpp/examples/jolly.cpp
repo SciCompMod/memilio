@@ -143,6 +143,10 @@ int main(int /*argc*/, char** /*argv*/)
                 adoption_rates_4;
 
         model.populations[{home, InfectionState::S}] = volume;
+        model.populations[{home, InfectionState::E}] = 0.0;
+        model.populations[{home, InfectionState::I}] = 0.0;
+        model.populations[{home, InfectionState::D}] = 0.0;
+
         // if (farm_id % 2 == 0)
         //     curr_model.populations[{home, InfectionState::E}] = 1;
         builder.add_node(farm_id, x, y, type, size, population, slaughter, hrz, model, t0);
