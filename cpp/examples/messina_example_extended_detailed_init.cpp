@@ -120,7 +120,8 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
         mio::StateAgeFunctionWrapper dist(normaldensity);
         // mio::ExponentialSurvivalFunction exp(2.);
         // mio::StateAgeFunctionWrapper dist(exp);
-        std::vector<mio::StateAgeFunctionWrapper> vec_dist((size_t)mio::isir::InfectionTransition::Count, dist);
+        std::vector<mio::StateAgeFunctionWrapper<ScalarType>> vec_dist((size_t)mio::isir::InfectionTransition::Count,
+                                                                       dist);
         model.parameters.get<mio::isir::TransitionDistributions>() = vec_dist;
 
         mio::ConstantFunction transmissiononcontact(1.5);
@@ -131,8 +132,9 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
         mio::StateAgeFunctionWrapper riskofinfection_wrapper(riskofinfection);
         model.parameters.get<mio::isir::RiskOfInfectionFromSymptomatic>() = riskofinfection_wrapper;
 
-        mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
-        contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq / total_population));
+        mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup<ScalarType>(1, 1);
+        contact_matrix[0] =
+            mio::ContactMatrix<ScalarType>(Eigen::MatrixXd::Constant(1, 1, cont_freq / total_population));
         model.parameters.get<mio::isir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
         // Carry out simulation.

@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -65,7 +65,7 @@ TEST(TestOdeSECIRVVS, simulateDefault)
     model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().array().setConstant(0);
     model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
     model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().array().setConstant(0);
-    mio::TimeSeries<double> result = simulate(t0, tmax, dt, model);
+    mio::TimeSeries<double> result = mio::simulate<double>(t0, tmax, dt, model);
 
     EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
 }
@@ -122,8 +122,8 @@ TEST(TestOdeSECIRVVS, reduceToSecirAndCompareWithPreviousRun)
 
     auto& contacts       = model.parameters.get<mio::osecirvvs::ContactPatterns<double>>();
     auto& contact_matrix = contacts.get_cont_freq_mat();
-    contact_matrix[0]    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
-    contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
+    contact_matrix[0]    = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, 10));
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime<double>(30.));
 
     //times
     model.parameters.get<mio::osecirvvs::TimeExposed<double>>()[mio::AgeGroup(0)]            = 3.2;
@@ -158,12 +158,12 @@ TEST(TestOdeSECIRVVS, reduceToSecirAndCompareWithPreviousRun)
     model.apply_constraints();
     mio::set_log_level(mio::LogLevel::warn);
     // TODO: gets stuck by division by zero!!
-    // auto integrator = std::make_shared<mio::RKIntegratorCore>();
+    // auto integrator = std::make_unique<mio::RKIntegratorCore>();
     // integrator->set_dt_min(0.3);
     // integrator->set_dt_max(1.0);
     // integrator->set_rel_tolerance(1e-4);
     // integrator->set_abs_tolerance(1e-1);
-    // mio::TimeSeries<double> secihurd = simulate(t0, tmax, 0.1, model, integrator);
+    // mio::TimeSeries<double> secihurd = mio::simulate<double>(t0, tmax, 0.1, model, std::move(integrator));
 
     // auto compare = load_test_data_csv<double>("secihurd-compare.csv");
 
@@ -282,17 +282,17 @@ void set_contact_parameters(mio::osecirvvs::Model<double>::ParameterSet& paramet
     auto& contact_matrix = contacts.get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(0.5);
     contact_matrix[0].get_baseline().diagonal().setConstant(5.0);
-    contact_matrix[0].add_damping(0.3, mio::SimulationTime(5.0));
+    contact_matrix[0].add_damping(0.3, mio::SimulationTime<double>(5.0));
 
     auto& npis      = parameters.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms<double>>();
     auto npi_groups = Eigen::VectorXd::Ones(contact_matrix[0].get_num_groups());
     auto npi_value  = mio::UncertainValue<double>(0.5);
     assign_uniform_distribution(npi_value, 0.25, 0.75, set_invalid_initial_value);
     npis.set_threshold(10.0, {mio::DampingSampling<double>(npi_value, mio::DampingLevel(0), mio::DampingType(0),
-                                                           mio::SimulationTime(0), {0}, npi_groups)});
+                                                           mio::SimulationTime<double>(0), {0}, npi_groups)});
     npis.set_base_value(100'000);
-    npis.set_interval(mio::SimulationTime(3.0));
-    npis.set_duration(mio::SimulationTime(14.0));
+    npis.set_interval(mio::SimulationTime<double>(3.0));
+    npis.set_duration(mio::SimulationTime<double>(14.0));
     parameters.get_end_dynamic_npis() = 10.0; //required for dynamic NPIs to have effect in this model
     parameters.template get<mio::osecirvvs::DynamicNPIsImplementationDelay<double>>() = 7;
 }
@@ -439,7 +439,7 @@ TEST(TestOdeSECIRVVS, draw_sample)
     graph.add_node(0, make_model(num_age_groups, /*set_invalid_initial_value*/ true));
     graph.add_edge(0, 1, Eigen::VectorXd::Constant(num_age_groups, num_age_groups));
 
-    auto sampled_graph = mio::osecirvvs::draw_sample(graph, true);
+    auto sampled_graph = mio::osecirvvs::draw_sample(graph);
 
     ASSERT_EQ(sampled_graph.nodes().size(), graph.nodes().size());
     ASSERT_EQ(sampled_graph.edges().size(), graph.edges().size());
@@ -1179,7 +1179,7 @@ TEST(TestOdeSECIRVVS, parameter_percentiles)
     //sample a few times
     auto sampled_graphs = std::vector<mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>>();
     std::generate_n(std::back_inserter(sampled_graphs), 10, [&graph]() {
-        return mio::osecirvvs::draw_sample(graph, true);
+        return mio::osecirvvs::draw_sample(graph);
     });
 
     //extract nodes from graph
@@ -1233,7 +1233,7 @@ TEST(TestOdeSECIRVVS, get_mobility_factors)
 {
     auto num_age_groups = 2;
     auto model          = make_model(num_age_groups);
-    auto sim            = mio::osecirvvs::Simulation<>(model);
+    auto sim            = mio::osecirvvs::Simulation<double>(model);
     auto y              = sim.get_result()[0];
 
     auto mobility_factors = mio::osecirvvs::get_mobility_factors<double>(sim, 0.0, y);
@@ -1253,7 +1253,7 @@ TEST(TestOdeSECIRVVS, test_commuters)
     model.parameters.get_start_commuter_detection() = 0.0;
     model.parameters.get_end_commuter_detection()   = 20.0;
     model.parameters.get_commuter_nondetection()    = non_detection_factor;
-    auto sim                                        = mio::osecirvvs::Simulation<>(model);
+    auto sim                                        = mio::osecirvvs::Simulation<double>(model);
     auto before_testing                             = sim.get_result().get_last_value().eval();
     auto mobile_population                          = (sim.get_result().get_last_value() * mobility_factor).eval();
     auto mobile_population_tested                   = mobile_population.eval();
@@ -1479,7 +1479,7 @@ TEST(TestOdeSECIRVVS, check_constraints_parameters)
 TEST(TestOdeSECIRVVS, apply_constraints_parameters)
 {
     const double tol_times = 1e-1;
-    auto model             = mio::osecirvvs::Model(1);
+    auto model             = mio::osecirvvs::Model<double>(1);
     auto indx_agegroup     = mio::AgeGroup(0);
     EXPECT_EQ(model.parameters.apply_constraints(), 0);
 
@@ -1612,13 +1612,13 @@ TEST(TestOdeSECIRVVS, apply_constraints_parameters)
 
 TEST(TestOdeSECIRVVS, apply_variant_function)
 {
-    auto model = mio::osecirvvs::Model(1);
+    auto model = mio::osecirvvs::Model<double>(1);
     model.parameters.set<mio::osecirvvs::TransmissionProbabilityOnContact<double>>(0.2);
 
-    model.parameters.set<mio::osecirvvs::StartDay>(0);
-    model.parameters.set<mio::osecirvvs::StartDayNewVariant>(10);
+    model.parameters.set<mio::osecirvvs::StartDay<double>>(0);
+    model.parameters.set<mio::osecirvvs::StartDayNewVariant<double>>(10);
     model.parameters.set<mio::osecirvvs::InfectiousnessNewVariant<double>>(2.0);
-    auto sim = mio::osecirvvs::Simulation<>(model);
+    auto sim = mio::osecirvvs::Simulation<double>(model);
 
     // test that the transmission probability is not changed due to calling the advance function
     sim.advance(0.01);

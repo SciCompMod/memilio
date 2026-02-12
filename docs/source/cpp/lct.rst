@@ -11,7 +11,7 @@ An overview of nonstandard but often used data types can be found under :doc:`da
 Infection states
 ----------------
 
-The model contains a list of **InfectionState**s that define particular features of the subpopulations in the particular state.
+The model contains a list of **InfectionState**\s that define particular features of the subpopulations in the particular state.
 
 .. code-block:: RST
 
@@ -20,11 +20,14 @@ The model contains a list of **InfectionState**s that define particular features
     `...`
 
 To make use of the LCT, we additionally need to define the numbers of subcompartments for each **InfectionState**.
+This is done by creating an **LctInfectionState** object for each group. These objects are then passed as template 
+parameter to the model. 
 
-.. code-block:: RST
-    `Number of subcompartments of State1`
-    `Number of subcompartments of State2`
-    `...`
+.. code-block:: cpp
+
+    using LctStateGroup1 = mio::LctInfectionState<ScalarType, `List of InfectionStates`, `Number of subcompartments of State1`, 
+                                                                                         `Number of subcompartments of State2`, 
+                                                                                         `...`>;
 
 The model is implemented as **CompartmentalModel**.
 
@@ -45,7 +48,7 @@ We use different types of parameters to represent epidemiological parameters suc
 compartment or the contact rates between different age groups. Most model parameters are constants that describe 
 pathogen-specific characteristics (possibly resolved by sociodemographic groups) and are represented by a vector with a value for each sociodemographic group. 
 To model different contact rates between different sociodemographic groups, we use a parameter denoted **ContactPatterns** of type **UncertainContactMatrix**. 
-The **UncertainContactMatrix** contains anmarbitrary large set of contact matrices which can represent the different contact locations in the model like 
+The **UncertainContactMatrix** contains an arbitrary large set of contact matrices which can represent the different contact locations in the model like 
 schools, workplaces, or homes. The matrices can be loaded or stored in the particular example.
 In the **ContactPatterns**, each matrix element stores baseline contact rates :math:`c_{i,j}` between sociodemographic group :math:`i` to group :math:`j`. 
 The dimension of the matrix is automatically defined by the model initialization and is reduced to one value if no stratification is used. 
@@ -114,3 +117,4 @@ List of models
     :titlesonly:
     
     models/lsecir
+    models/lsecir2d

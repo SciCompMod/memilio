@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen, Carlotta Gerstein
 *
@@ -86,16 +86,14 @@ TEST_F(TestLocation, interact)
     auto t  = mio::abm::TimePoint(0);
     auto dt = mio::abm::seconds(8640); //0.1 days
 
-    // Setup model parameters for viral loads and infectivity distributions.
-    // Setup model parameters for viral loads and infectivity distributions.
+    // Setup model parameters for viral loads and viral shed distributions.
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
     params.set_default<mio::abm::ViralLoadDistributions>(num_age_groups);
     params.get<mio::abm::ViralLoadDistributions>()[{variant, age}] = {mio::ParameterDistributionConstant(1.),
                                                                       mio::ParameterDistributionConstant(0.0001),
                                                                       mio::ParameterDistributionConstant(-0.0001)};
-    params.set_default<mio::abm::InfectivityDistributions>(num_age_groups);
-    params.get<mio::abm::InfectivityDistributions>()[{variant, age}] = {mio::ParameterDistributionConstant(1.),
-                                                                        mio::ParameterDistributionConstant(1.)};
+    params.set_default<mio::abm::ViralShedParameters>(num_age_groups);
+    params.get<mio::abm::ViralShedParameters>()[{variant, age}] = {1., 1.};
 
     // Set incubtion period to two days so that the newly infected person is still exposed
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::LogNormalDistribution<double>>>> mock_logNorm_dist;
@@ -167,7 +165,7 @@ TEST_F(TestLocation, getGeographicalLocation)
     // Create a location of type Home.
     auto location = mio::abm::Location(mio::abm::LocationType::Home, 0);
     // Set a geographical location for the location.
-    mio::abm::GeographicalLocation geographical_location = {10.5100470359749, 52.2672785559812};
+    mio::geo::GeographicalLocation geographical_location = {10.5100470359749, 52.2672785559812};
     location.set_geographical_location(geographical_location);
     // Verify that the set geographical location matches the expected values.
     EXPECT_EQ(location.get_geographical_location(), geographical_location);

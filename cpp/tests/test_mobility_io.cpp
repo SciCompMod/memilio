@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Wadim Koslow
 *
@@ -22,6 +22,7 @@
 #include "memilio/utils/logging.h"
 #include "memilio/math/eigen.h"
 #include "matchers.h"
+#include "temp_file_register.h"
 
 #include <gtest/gtest.h>
 
@@ -37,8 +38,9 @@ TEST(TestReadMobility, readFormatted)
     }
 
     std::fstream file;
-
-    file.open("test_mobility.txt", std::ios::out);
+    TempFileRegister file_register;
+    auto tmp_file_path = file_register.get_unique_path("test_mobility-%%%%-%%%%.txt");
+    file.open(tmp_file_path, std::ios::out);
 
     if (!file) {
         mio::log_error("File was not created");
@@ -61,7 +63,7 @@ TEST(TestReadMobility, readFormatted)
         file.close();
     }
 
-    auto matrix_read = mio::read_mobility_formatted("test_mobility.txt");
+    auto matrix_read = mio::read_mobility_formatted(tmp_file_path);
     ASSERT_TRUE(matrix_read);
     ASSERT_EQ(test_matrix.rows(), matrix_read.value().rows());
     ASSERT_EQ(test_matrix.cols(), matrix_read.value().cols());

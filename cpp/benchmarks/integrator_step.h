@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Rene Schmieding
 *
@@ -32,31 +32,31 @@ namespace benchmark
 /// @brief parameters for integrator-step benchmark
 struct IntegratorStepConfig {
     int num_agegroups;
-    double t_init, dt_init, abs_tol, rel_tol, dt_min, dt_max;
-    Eigen::VectorXd yt, ytp1;
+    ScalarType t_init, dt_init, abs_tol, rel_tol, dt_min, dt_max;
+    Eigen::VectorX<ScalarType> yt, ytp1;
     /**
-         * @brief creates configuration with default parameters for a secir model
-         * @return configuration for integrator-step benchmark
-         */
+     * @brief creates configuration with default parameters for a secir model
+     * @return configuration for integrator-step benchmark
+     */
     static IntegratorStepConfig initialize()
     {
-        const double vals[8] = {6377.873644, 35.249156, 30.029611,   182.145865,
-                                66.153059,   79.530621, 3069.383604, 159.634440};
+        const ScalarType vals[8] = {6377.873644, 35.249156, 30.029611,   182.145865,
+                                    66.153059,   79.530621, 3069.383604, 159.634440};
         return IntegratorStepConfig{1,
                                     50,
                                     1,
                                     1e-10,
                                     1e-5,
-                                    std::numeric_limits<double>::min(),
-                                    std::numeric_limits<double>::max(),
-                                    Eigen::Matrix<double, 8, 1>(vals),
-                                    Eigen::VectorXd::Zero(8)};
+                                    std::numeric_limits<ScalarType>::min(),
+                                    std::numeric_limits<ScalarType>::max(),
+                                    Eigen::Matrix<ScalarType, 8, 1>(vals),
+                                    Eigen::VectorX<ScalarType>::Zero(8)};
     }
     /**
-         * @brief reads configuration from json file
-         * @param path the path of the configfile
-         * @return configuration for integrator-step benchmark
-         */
+     * @brief reads configuration from json file
+     * @param path the path of the configfile
+     * @return configuration for integrator-step benchmark
+     */
     static IntegratorStepConfig initialize(std::string path)
     {
         auto result = mio::read_json(path, mio::Tag<IntegratorStepConfig>{});
@@ -72,13 +72,13 @@ struct IntegratorStepConfig {
     {
         auto obj              = io.expect_object("integrator_step");
         auto num_agegroups_io = obj.expect_element("num_agegroups", mio::Tag<int>{});
-        auto t_init_io        = obj.expect_element("t_init", mio::Tag<double>{});
-        auto dt_init_io       = obj.expect_element("dt_init", mio::Tag<double>{});
-        auto abs_tol_io       = obj.expect_element("abs_tol", mio::Tag<double>{});
-        auto rel_tol_io       = obj.expect_element("rel_tol", mio::Tag<double>{});
-        auto dt_min_io        = obj.expect_element("dt_min", mio::Tag<double>{});
-        auto dt_max_io        = obj.expect_element("dt_max", mio::Tag<double>{});
-        auto yt_io            = obj.expect_list("yt", mio::Tag<double>{});
+        auto t_init_io        = obj.expect_element("t_init", mio::Tag<ScalarType>{});
+        auto dt_init_io       = obj.expect_element("dt_init", mio::Tag<ScalarType>{});
+        auto abs_tol_io       = obj.expect_element("abs_tol", mio::Tag<ScalarType>{});
+        auto rel_tol_io       = obj.expect_element("rel_tol", mio::Tag<ScalarType>{});
+        auto dt_min_io        = obj.expect_element("dt_min", mio::Tag<ScalarType>{});
+        auto dt_max_io        = obj.expect_element("dt_max", mio::Tag<ScalarType>{});
+        auto yt_io            = obj.expect_list("yt", mio::Tag<ScalarType>{});
         return mio::apply(
             io,
             [](auto&& num_agegroups, auto&& t_init, auto&& dt_init, auto&& abs_tol, auto&& rel_tol, auto&& dt_min,
@@ -90,8 +90,8 @@ struct IntegratorStepConfig {
                                          rel_tol,
                                          dt_min,
                                          dt_max,
-                                         Eigen::VectorXd::Zero(yt.size()),
-                                         Eigen::VectorXd::Zero(yt.size())};
+                                         Eigen::VectorX<ScalarType>::Zero(yt.size()),
+                                         Eigen::VectorX<ScalarType>::Zero(yt.size())};
                 for (size_t i = 0; i < yt.size(); i++) {
                     cfg.yt[i] = yt[i];
                 }

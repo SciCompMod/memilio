@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Rene Schmieding
 *
@@ -35,9 +35,9 @@ void simulation(::benchmark::State& state)
 
     for (auto _ : state) {
         // This code gets timed
-        std::shared_ptr<mio::OdeIntegratorCore<ScalarType>> I =
-            std::make_shared<Integrator>(cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
-        simulate(cfg.t0, cfg.t_max, cfg.dt, model, I);
+        std::unique_ptr<mio::OdeIntegratorCore<ScalarType>> I =
+            std::make_unique<Integrator>(cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
+        simulate(cfg.t0, cfg.t_max, cfg.dt, model, std::move(I));
     }
 }
 

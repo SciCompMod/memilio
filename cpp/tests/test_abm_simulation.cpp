@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen
 *
@@ -18,10 +18,14 @@
 * limitations under the License.
 */
 #include "abm/location_type.h"
+#include "abm/simulation.h"
+#include "abm/result_simulation.h"
+#include "abm/time.h"
 #include "abm_helpers.h"
 #include "abm/common_abm_loggers.h"
 #include "matchers.h"
 #include "memilio/io/history.h"
+#include <cstddef>
 #include <cstdint>
 
 TEST(TestSimulation, advance_random)
@@ -142,4 +146,29 @@ TEST(TestSimulation, advanceWithCommonHistory)
     EXPECT_EQ(logMobilityInfoDelta[0].size(),
               3); // Check if all persons are in the delta-logger Mobility helper entry 0, 3 persons
     EXPECT_EQ(logMobilityInfoDelta[1].size(), 3); // Check if all persons are in the delta-log first entry, 3 persons
+}
+
+TEST(TestSimulation, ResultSimulation)
+{
+    // run a ResultSimulation on a minimal setup
+    auto model    = mio::abm::Model(num_age_groups);
+    auto location = model.add_location(mio::abm::LocationType::Home);
+    auto person   = model.add_person(location, age_group_15_to_34);
+
+    model.assign_location(person, location);
+
+    const auto t0   = mio::abm::TimePoint(0) + mio::abm::hours(100);
+    const auto tmax = t0 + mio::abm::hours(50);
+    auto sim        = mio::abm::ResultSimulation(std::move(model), t0);
+
+    // run simulation. expect one timepoint per day, but nothing to change in the results
+    sim.advance(tmax);
+    const size_t N = (size_t)(tmax - t0).hours() + 1;
+    ASSERT_EQ(sim.get_result().get_num_time_points(), N);
+    EXPECT_THAT(sim.get_result().get_times(), ElementsAreLinspace(t0.days(), tmax.days(), N));
+    for (const auto& tp : sim.get_result()) {
+        EXPECT_EQ(tp.sum(), 1.0);
+    }
+    EXPECT_EQ(sim.get_result().get_value(0)[(Eigen::Index)mio::abm::InfectionState::Susceptible], 1.0);
+    EXPECT_EQ(sim.get_result().get_value(N - 1)[(Eigen::Index)mio::abm::InfectionState::Susceptible], 1.0);
 }

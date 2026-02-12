@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Rene Schmieding, Henrik Zunker
 *
@@ -37,10 +37,9 @@ namespace details
  * @tparam M An implementation of FlowModel.
  * @tparam Integrands One or more function types used for defining the right hand side of a system of equations.
  */
-template <typename FP, class M, class... Integrands>
+template <typename FP, IsFlowModel<FP> M, class... Integrands>
 class FlowSimulationBase : public SimulationBase<FP, M, Integrands...>
 {
-    static_assert(is_flow_model<FP, M>::value, "Template parameter must be a flow model.");
 
 public:
     using Base  = SimulationBase<FP, M, Integrands...>;
@@ -50,11 +49,12 @@ public:
     /**
      * @brief Create a FlowSimulationBase.
      * @param[in] model An instance of a flow model.
+     * @param[in] integrator_core A unique pointer to an object derived from IntegratorCore.
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration.
      */
-    FlowSimulationBase(Model const& model, std::shared_ptr<Core> integrator, FP t0, FP dt)
-        : Base(model, integrator, t0, dt)
+    FlowSimulationBase(Model const& model, std::unique_ptr<Core>&& integrator_core, FP t0, FP dt)
+        : Base(model, std::move(integrator_core), t0, dt)
         , m_flow_result(t0, model.get_initial_flows())
     {
     }

@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Nils Wassmuth, Rene Schmieding, Martin J. Kuehn
 *
@@ -39,38 +39,38 @@ namespace ssir
 using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Infected>,
                        Flow<InfectionState::Infected, InfectionState::Recovered>>;
 
-class Model : public mio::StochasticModel<ScalarType, InfectionState, mio::Populations<ScalarType, InfectionState>,
-                                          Parameters, Flows>
+template <typename FP>
+class Model
+    : public mio::StochasticModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>, Flows>
 {
 public:
-    using Base = mio::StochasticModel<ScalarType, InfectionState, mio::Populations<ScalarType, InfectionState>,
-                                      Parameters, Flows>;
+    using Base = mio::StochasticModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>, Flows>;
 
     Model()
         : Base(typename Base::Populations({InfectionState::Count}, 0.), typename Base::ParameterSet())
     {
     }
 
-    void get_flows(Eigen::Ref<const Eigen::VectorX<ScalarType>> pop, Eigen::Ref<const Eigen::VectorX<ScalarType>> y,
-                   ScalarType t, Eigen::Ref<Eigen::VectorX<ScalarType>> flows) const
+    void get_flows(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
+                   Eigen::Ref<Eigen::VectorX<FP>> flows) const
     {
-        auto& params         = Base::parameters;
-        ScalarType coeffStoI = params.template get<ContactPatterns>().get_matrix_at(t)(0, 0) *
-                               params.template get<TransmissionProbabilityOnContact>() / Base::populations.get_total();
+        auto& params = Base::parameters;
+        FP coeffStoI = params.template get<ContactPatterns<FP>>().get_matrix_at(SimulationTime<FP>(t))(0, 0) *
+                       params.template get<TransmissionProbabilityOnContact<FP>>() / this->populations.get_total();
 
         flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>()] =
             coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
         flows[Base::template get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>()] =
-            (1.0 / params.template get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
+            (1.0 / params.template get<TimeInfected<FP>>()) * y[(size_t)InfectionState::Infected];
     }
 
-    void get_noise(Eigen::Ref<const Eigen::VectorX<ScalarType>> pop, Eigen::Ref<const Eigen::VectorX<ScalarType>> y,
-                   ScalarType t, Eigen::Ref<Eigen::VectorX<ScalarType>> noise) const
+    void get_noise(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
+                   Eigen::Ref<Eigen::VectorX<FP>> noise) const
     {
-        Eigen::VectorX<ScalarType> flows(Flows::size());
+        Eigen::VectorX<FP> flows(Flows::size());
         get_flows(pop, y, t, flows);
         flows = flows.array().sqrt() * Base::white_noise(Flows::size()).array();
-        get_derivatives(flows, noise);
+        this->get_derivatives(flows, noise);
     }
 };
 

@@ -5,9 +5,11 @@ set(GOOGLE_TEST_INDIVIDUAL ON)
 include(AddGoogleTest)
 
 set(TESTSOURCES
-    # testmain.cpp
+    testmain.cpp
     # test_populations.cpp
     # test_odeseir.cpp
+    # test_odeseirdb.cpp
+    # test_odeseirv.cpp
     # test_odesir.cpp
     # test_numericalIntegration.cpp
     # test_smoother.cpp
@@ -65,16 +67,19 @@ set(TESTSOURCES
     # test_history.cpp
     # test_utils.cpp
     # test_timers.cpp
-    test_ide_sir.cpp
     # test_ide_seir.cpp
+    test_ide_sir.cpp
     # test_ide_secir.cpp
     # test_ide_secir_ageres.cpp
     # test_state_age_function.cpp
     # test_lct_secir.cpp
+    # test_lct_secir_2_diseases.cpp
     # test_lct_initializer_flows.cpp
     # test_glct_secir.cpp
     # test_ad.cpp
     # test_smm_model.cpp
+    # test_geography.cpp
+    # test_distance.cpp
     # abm_helpers.h
     # abm_helpers.cpp
     # actions.h
@@ -88,6 +93,8 @@ set(TESTSOURCES
     # test_graph_abm.cpp
     # test_abstract_parameter_dist.cpp
     # test_temporal_hybrid_model.cpp
+    # test_odemseirs4.cpp
+    # test_uncertain_ad_compatibility.cpp
 )
 
 # if(MEMILIO_HAS_JSONCPP)
@@ -108,7 +115,7 @@ set(TESTSOURCES
 
 add_executable(memilio-test ${TESTSOURCES})
 target_include_directories(memilio-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(memilio-test PRIVATE memilio ode_secir ode_seir ode_secirvvs ode_secirts ode_seair ide_sir ide_seir ide_secir lct_secir glct_secir abm gtest_main AD::AD graph_abm d_abm smm)
+target_link_libraries(memilio-test PRIVATE memilio ode_secir ode_seir ode_seirdb ode_secirvvs ode_secirts ode_seair ide_seir ide_sir ide_secir lct_secir glct_secir abm gtest_main AD::AD graph_abm d_abm smm)
 target_compile_options(memilio-test PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 # make unit tests find the test data files

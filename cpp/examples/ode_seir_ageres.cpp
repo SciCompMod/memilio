@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -27,19 +27,19 @@ int main()
 {
     mio::set_log_level(mio::LogLevel::debug);
 
-    double t0   = 0;
-    double tmax = 50;
-    double dt   = 0.001;
+    ScalarType t0   = 0;
+    ScalarType tmax = 50;
+    ScalarType dt   = 0.001;
 
     mio::log_info("Simulating SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    double cont_freq = 10;
+    ScalarType cont_freq = 10;
 
-    double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_rec_t0 = 10;
+    ScalarType nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_rec_t0 = 10;
     const size_t num_groups = 3;
 
-    mio::oseir::Model<double> model(num_groups);
-    double fact = 1.0 / num_groups;
+    mio::oseir::Model<ScalarType> model(num_groups);
+    ScalarType fact = 1.0 / num_groups;
 
     auto& params = model.parameters;
 
@@ -50,25 +50,28 @@ int main()
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::oseir::InfectionState::Susceptible},
                                                                          fact * nb_total_t0);
 
-        model.parameters.get<mio::oseir::TimeExposed<double>>()[i]                      = 5.2;
-        model.parameters.get<mio::oseir::TimeInfected<double>>()[i]                     = 6;
-        model.parameters.get<mio::oseir::TransmissionProbabilityOnContact<double>>()[i] = 0.04;
+        model.parameters.get<mio::oseir::TimeExposed<ScalarType>>()[i]                      = 5.2;
+        model.parameters.get<mio::oseir::TimeInfected<ScalarType>>()[i]                     = 6;
+        model.parameters.get<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>()[i] = 0.04;
     }
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::oseir::ContactPatterns<double>>();
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant(num_groups, num_groups, 0.7), mio::SimulationTime(30.));
-
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix = params.get<mio::oseir::ContactPatterns<ScalarType>>();
+    contact_matrix[0] =
+        mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(num_groups, num_groups, fact * cont_freq));
+    contact_matrix.add_damping(Eigen::MatrixX<ScalarType>::Constant(num_groups, num_groups, 0.7),
+                               mio::SimulationTime<ScalarType>(30.));
+    // The function apply_constraints() ensures that all parameters are within their defined bounds.
+    // Note that negative values are set to zero instead of stopping the simulation.
     model.apply_constraints();
 
-    auto seir = simulate(t0, tmax, dt, model);
+    auto seir = mio::simulate<ScalarType>(t0, tmax, dt, model);
 
     std::vector<std::string> vars = {"S", "E", "I", "R"};
     printf("Number of time points :%d\n", static_cast<int>(seir.get_num_time_points()));
     printf("People in\n");
 
     for (size_t k = 0; k < (size_t)mio::oseir::InfectionState::Count; k++) {
-        double dummy = 0;
+        ScalarType dummy = 0;
 
         for (size_t i = 0; i < (size_t)params.get_num_groups(); i++) {
             printf("\t %s[%d]: %.0f", vars[k].c_str(), (int)i,

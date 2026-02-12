@@ -20,6 +20,7 @@
 #ifndef IDE_SIR_PARAMS_H
 #define IDE_SIR_PARAMS_H
 
+#include "memilio/config.h"
 #include "memilio/utils/parameter_set.h"
 #include "ide_sir_analytical_S_deriv/infection_state.h"
 #include "memilio/epidemiology/state_age_function.h"
@@ -43,13 +44,12 @@ namespace isir
  */
 struct TransitionDistributions {
 
-    using Type = std::vector<StateAgeFunctionWrapper>;
+    using Type = std::vector<StateAgeFunctionWrapper<ScalarType>>;
     static Type get_default()
     {
         SmootherCosine smoothcos(2.0);
         StateAgeFunctionWrapper delaydistribution(smoothcos);
-        std::vector<StateAgeFunctionWrapper> state_age_function_vector((int)InfectionTransition::Count,
-                                                                       delaydistribution);
+        Type state_age_function_vector((int)InfectionTransition::Count, delaydistribution);
         return Type(state_age_function_vector);
     }
 
@@ -67,8 +67,8 @@ struct ContactPatterns {
 
     static Type get_default()
     {
-        ContactMatrixGroup contact_matrix = ContactMatrixGroup(1, static_cast<Eigen::Index>(1));
-        contact_matrix[0]                 = mio::ContactMatrix(
+        ContactMatrixGroup contact_matrix = ContactMatrixGroup<ScalarType>(1, static_cast<Eigen::Index>(1));
+        contact_matrix[0]                 = mio::ContactMatrix<ScalarType>(
             Eigen::MatrixXd::Constant(static_cast<Eigen::Index>(1), static_cast<Eigen::Index>(1), 3.));
         return Type(contact_matrix);
     }
@@ -94,7 +94,7 @@ struct beta {
 * @brief Probability of getting infected from a contact.
 */
 struct TransmissionProbabilityOnContact {
-    using Type = StateAgeFunctionWrapper;
+    using Type = StateAgeFunctionWrapper<ScalarType>;
     static Type get_default()
     {
         ConstantFunction constfunc(0.1);
@@ -110,7 +110,7 @@ struct TransmissionProbabilityOnContact {
 * @brief The risk of infection from symptomatic cases in the SECIR model.
 */
 struct RiskOfInfectionFromSymptomatic {
-    using Type = StateAgeFunctionWrapper;
+    using Type = StateAgeFunctionWrapper<ScalarType>;
     static Type get_default()
     {
         ConstantFunction constfunc(1.0);

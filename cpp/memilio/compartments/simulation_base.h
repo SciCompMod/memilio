@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Jan Kleinert, Daniel Abele, Rene Schmieding
 *
@@ -37,10 +37,9 @@ namespace details
  * @tparam M An implementation of CompartmentalModel.
  * @tparam Integrands One or more function types used for defining the right hand side of a system of equations.
  */
-template <typename FP, class M, class... Integrands>
+template <typename FP, IsCompartmentalModel<FP> M, class... Integrands>
 class SimulationBase
 {
-    static_assert(is_compartment_model<FP, M>::value, "Template parameter must be a compartment model.");
 
 public:
     using Model = M;
@@ -49,40 +48,58 @@ public:
     /**
      * @brief Create a SimulationBase.
      * @param[in] model An instance of a compartmental model
+     * @param[in] integrator_core A unique pointer to an object derived from IntegratorCore.
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration
      */
-    SimulationBase(Model const& model, std::shared_ptr<Core> integrator, FP t0, FP dt)
-        : m_integratorCore(integrator)
-        , m_model(std::make_unique<Model>(model))
-        , m_integrator(m_integratorCore)
+    SimulationBase(Model const& model, std::unique_ptr<Core>&& integrator_core, FP t0, FP dt)
+        : m_model(std::make_unique<Model>(model))
+        , m_integrator(std::move(integrator_core))
         , m_result(t0, m_model->get_initial_values())
         , m_dt(dt)
     {
     }
 
-    /**
-     * @brief Set the integrator core used in the simulation.
-     * @param[in] integrator A shared pointer to an object derived from IntegratorCore.
-     */
-    void set_integrator(std::shared_ptr<Core> integrator)
+    SimulationBase(const SimulationBase& other)
+        : m_model(std::make_unique<Model>(*other.m_model))
+        , m_integrator(other.m_integrator)
+        , m_result(other.m_result)
+        , m_dt(other.m_dt)
     {
-        m_integratorCore = std::move(integrator);
-        m_integrator.set_integrator(m_integratorCore);
+    }
+
+    SimulationBase& operator=(const SimulationBase& other)
+    {
+        if (this != &other) {
+            m_model      = std::make_unique<Model>(*other.m_model);
+            m_integrator = other.m_integrator;
+            m_result     = other.m_result;
+            m_dt         = other.m_dt;
+        }
+        return *this;
     }
 
     /**
-     * @brief Access the integrator core used in the simulation.
-     * @return A reference to the integrator core used in the simulation
+     * @brief Set the IntegratorCore used in the simulation.
+     * @param[in] integrator_core A unique pointer to an object derived from IntegratorCore.
+     */
+    void set_integrator_core(std::unique_ptr<Core>&& integrator_core)
+    {
+        m_integrator.set_integrator_core(std::move(integrator_core));
+    }
+
+    /**
+     * @brief Access the IntegratorCore used in the simulation.
+     * @return A reference to the IntegratorCore used in the simulation
      * @{
      */
-    Core& get_integrator()
+    Core& get_integrator_core()
     {
-        return *m_integratorCore;
+        return m_integrator.get_integrator_core();
     }
-    const Core& get_integrator() const
+    const Core& get_integrator_core() const
     {
-        return *m_integratorCore;
+        return m_integrator.get_integrator_core();
     }
     /** @} */
 
@@ -151,12 +168,11 @@ protected:
     }
 
 private:
-    std::shared_ptr<Core> m_integratorCore; ///< Defines the integration scheme via its step function.
     std::unique_ptr<Model> m_model; ///< The model defining the ODE system and initial conditions.
     SystemIntegrator<FP, Integrands...>
         m_integrator; ///< Integrates the DerivFunction (see advance) and stores resutls in m_result.
     TimeSeries<FP> m_result; ///< The simulation results.
-    FP m_dt; ///< The time step used (and possibly set) by m_integratorCore::step.
+    FP m_dt; ///< The time step used (and possibly set) by m_integrator::m_core::step.
 };
 
 /// @brief Specialization of SimulationBase that takes a SystemIntegrator instead of it's Integrands.

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -20,6 +20,8 @@
 #ifndef MIO_MATH_FLOATING_POINT_H
 #define MIO_MATH_FLOATING_POINT_H
 
+#include "memilio/config.h"
+
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -33,12 +35,12 @@ namespace mio
  * @param v2 second number
  * @return maximum absolute value between v1 and v2
  */
-template <class T>
-T abs_max(T v1, T v2)
+template <typename FP>
+FP abs_max(FP v1, FP v2)
 {
     using std::abs;
     using std::max;
-    return max<T>(abs(v1), abs(v2));
+    return max<FP>(abs(v1), abs(v2));
 }
 
 /**
@@ -51,12 +53,12 @@ T abs_max(T v1, T v2)
  * @param rel_tol maximum allowed relative difference, default numeric_limits::min.
  * @return true if v1 is within the specified relative OR absolute tolerance of v2  
  */
-template <class T>
-bool floating_point_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
+template <typename FP>
+bool floating_point_equal(FP v1, FP v2, FP abs_tol = 0, FP rel_tol = std::numeric_limits<FP>::min())
 {
     using std::abs;
     auto diff = abs(v1 - v2);
-    return diff <= abs_tol || diff <= abs_max(v1, v2) * rel_tol;
+    return diff <= abs_tol || diff <= abs_max<FP>(v1, v2) * rel_tol;
 }
 
 /**
@@ -72,11 +74,11 @@ bool floating_point_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_li
  * @param rel_tol maximum allowed relative difference for equality, default numeric_limits::min.
  * @return true if v1 is less than v2 and not within relative or absolute tolerance of v2.
  */
-template <class T>
-bool floating_point_less(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
+template <typename FP>
+bool floating_point_less(FP v1, FP v2, FP abs_tol = 0, FP rel_tol = std::numeric_limits<FP>::min())
 {
     auto diff = v1 - v2;
-    return diff < -(abs_tol + rel_tol * abs_max(v1, v2));
+    return diff < -(abs_tol + rel_tol * abs_max<FP>(v1, v2));
 }
 
 /**
@@ -92,10 +94,10 @@ bool floating_point_less(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_lim
  * @param rel_tol maximum allowed relative difference, default numeric_limits::min.
  * @return true if v1 is greater than v2 and not within absolute or relative tolerance of v2.
  */
-template <class T>
-bool floating_point_greater(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
+template <typename FP>
+bool floating_point_greater(FP v1, FP v2, FP abs_tol = 0, FP rel_tol = std::numeric_limits<FP>::min())
 {
-    return floating_point_less(v2, v1, abs_tol, rel_tol);
+    return floating_point_less<FP>(v2, v1, abs_tol, rel_tol);
 }
 
 /**
@@ -111,10 +113,10 @@ bool floating_point_greater(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_
  * @param rel_tol maximum allowed relative difference, default numeric_limits::min.
  * @return true if v1 is less than v2 or within relative or absolute tolerances of v2.
  */
-template <class T>
-bool floating_point_less_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
+template <typename FP>
+bool floating_point_less_equal(FP v1, FP v2, FP abs_tol = 0, FP rel_tol = std::numeric_limits<FP>::min())
 {
-    return !floating_point_greater(v1, v2, abs_tol, rel_tol);
+    return !floating_point_greater<FP>(v1, v2, abs_tol, rel_tol);
 }
 
 /**
@@ -130,10 +132,10 @@ bool floating_point_less_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::numer
  * @param rel_tol maximum allowed relative difference, default numeric_limits::min.
  * @return true if v1 is greater than v2 or within absolute or relative tolerance of v2.
  */
-template <class T>
-bool floating_point_greater_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
+template <typename FP>
+bool floating_point_greater_equal(FP v1, FP v2, FP abs_tol = 0, FP rel_tol = std::numeric_limits<FP>::min())
 {
-    return !floating_point_less(v1, v2, abs_tol, rel_tol);
+    return !floating_point_less<FP>(v1, v2, abs_tol, rel_tol);
 }
 
 } // namespace mio

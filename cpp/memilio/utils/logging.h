@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Martin Siggel
 *
@@ -27,7 +27,7 @@
 #endif
 
 #include "memilio/utils/compiler_diagnostics.h"
-#include "ad/ad.hpp"
+#include "memilio/ad/ad.h"
 
 // C4996: Some stdext functions used in spdlog 1.11 are marked as deprecated in version 19.38.33135.0 of MSVC. Maybe a future version of spdlog will fix this.
 MSVC_WARNING_DISABLE_PUSH(4996)

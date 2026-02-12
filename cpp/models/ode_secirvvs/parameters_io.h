@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
@@ -25,12 +25,14 @@
 #ifdef MEMILIO_HAS_JSONCPP
 
 #include "ode_secirvvs/model.h"
+#include "memilio/mobility/graph.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/io/parameters_io.h"
 #include "memilio/io/io.h"
 #include "memilio/io/result_io.h"
 #include "memilio/utils/date.h"
 #include "memilio/utils/logging.h"
+#include "memilio/math/math_utils.h"
 
 namespace mio
 {
@@ -166,7 +168,13 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
                                                 t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
 
     for (size_t county = 0; county < model.size(); county++) {
-        // if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) > 0) {
+        // if (std::accumulate(
+        //         num_InfectedSymptoms[county].begin(),
+        //         num_InfectedSymptoms[county].end(),
+        //         double(0.0),
+        //         [](const double& a, const double& b) { return evaluate_intermediate<double>(a + b); }
+        //     ) > 0)
+        // {
         size_t num_groups = (size_t)model[county].parameters.get_num_groups();
         for (size_t i = 0; i < num_groups; i++) {
             model[county].populations[{AgeGroup(i), InfectionState::ExposedNaive}] = num_Exposed[county][i];
@@ -196,7 +204,10 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
         }
 
         // }
-        if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) == 0) {
+        if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), double(0.0),
+                            [](const double& a, const double& b) {
+                                return evaluate_intermediate<double>(a + b);
+                            }) == 0.0) {
             log_warning(
                 "No infections for unvaccinated reported on date {} for region {}. Population data has not been set.",
                 date, region[county]);
@@ -265,7 +276,13 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
                                                 t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
 
     for (size_t county = 0; county < model.size(); county++) {
-        // if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) > 0) {
+        // if (std::accumulate(
+        //         num_InfectedSymptoms[county].begin(),
+        //         num_InfectedSymptoms[county].end(),
+        //         double(0.0),
+        //         [](const double& a, const double& b) { return evaluate_intermediate<double>(a + b); }
+        //     ) > 0)
+        // {
         size_t num_groups = (size_t)model[county].parameters.get_num_groups();
         for (size_t i = 0; i < num_groups; i++) {
             model[county].populations[{AgeGroup(i), InfectionState::ExposedPartialImmunity}] = num_Exposed[county][i];
@@ -284,7 +301,10 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
             }
         }
         // }
-        if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) == 0) {
+        if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), double(0.0),
+                            [](const double& a, const double& b) {
+                                return evaluate_intermediate<double>(a + b);
+                            }) == 0.0) {
             log_warning("No infections for partially vaccinated reported on date {} for region {}. "
                         "Population data has not been set.",
                         date, region[county]);
@@ -370,7 +390,11 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
                     num_icu[county][i];
             }
         }
-        if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) == 0) {
+
+        if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), double(0.0),
+                            [](const double& a, const double& b) {
+                                return evaluate_intermediate<double>(a + b);
+                            }) == 0.0) {
             log_warning("No infections for vaccinated reported on date {} for region {}. "
                         "Population data has not been set.",
                         date, region[county]);
@@ -463,7 +487,11 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::vector<
     BOOST_OUTCOME_TRY(read_confirmed_cases_data_fix_recovered(case_data, vregion, date, vnum_rec, 14.));
 
     for (size_t region = 0; region < vregion.size(); region++) {
-        if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {
+
+        if (std::accumulate(num_population[region].begin(), num_population[region].end(), double(0.0),
+                            [](const double& a, const double& b) {
+                                return evaluate_intermediate<double>(a + b);
+                            }) > 0) {
             auto num_groups = model[region].parameters.get_num_groups();
             for (auto i = AgeGroup(0); i < num_groups; i++) {
 
@@ -656,7 +684,7 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
 
 /**
  * @brief Sets vaccination data for models stored in a vector.
- * 
+ *
  * @tparam FP Floating point type used in the Model objects.
  * @param[in, out] model Vector of Model objects in which the vaccination data is set.
  * @param[in] vacc_data Vector of VaccinationDataEntry objects containing the vaccination data.
@@ -805,7 +833,7 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::ve
 
 /**
  * @brief Reads vaccination data from a file and sets it for each model.
- * 
+ *
  * @tparam FP Floating point type used in the Model objects.
  * @param[in, out] model Vector of Model objects in which the vaccination data is set.
  * @param[in] path Path to vaccination data file.
@@ -847,7 +875,7 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::st
 #ifdef MEMILIO_HAS_HDF5
 
 /**
-* @brief Uses the initialisation method, which uses the reported data to set the initial conditions for the model for a given day. 
+* @brief Uses the initialisation method, which uses the reported data to set the initial conditions for the model for a given day.
 * The initialisation is applied for a predefined number of days and finally saved in a timeseries for each region. In the end,
 * we save the files "Results_rki.h5" and "Results_rki_sum.h5" in the results_dir.
 * Results_rki.h5 contains a time series for each region and Results_rki_sum.h5 contains the sum of all regions.
@@ -936,7 +964,7 @@ IOResult<void> export_input_data_county_timeseries(std::vector<Model>, const std
 
 /**
     * Reads compartments for German counties at a specified date from data files.
-    * Estimates all compartments from available data using the model parameters, so the 
+    * Estimates all compartments from available data using the model parameters, so the
     * model parameters must be set before calling this function.
     * Uses data files that contain centered 7-day moving average.
     * @param[in, out] model Vector of SECIRVVS models, one per county.
@@ -985,7 +1013,7 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
 
 /**
     * Reads compartments for German counties at a specified date from data files.
-    * Estimates all compartments from available data using the model parameters, so the 
+    * Estimates all compartments from available data using the model parameters, so the
     * model parameters must be set before calling this function.
     * Uses data files that contain centered 7-day moving average.
     * @param[in, out] model Vector of SECIRVVS models, one per county.
@@ -1029,6 +1057,33 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
     }
 
     return success();
+}
+
+/**
+ * @brief Converts input data from one range of models to another with different type.
+ * 
+ * @tparam FP Floating point type.
+ * @param[in] model_from VectorRange of Node%s each containing a Model with the input data.
+ * @param[in,out] model_to VectorRange of Node%s each containing a Model to be initialized with data.
+ * 
+ * @return An IOResult indicating success or failure.
+ */
+template <class FP>
+IOResult<void> convert_model_data_type(mio::VectorRange<Node<Model<ScalarType>>> model_from,
+                                       mio::VectorRange<Node<Model<FP>>> model_to)
+{
+    assert(model_from.size() == model_to.size());
+    assert((size_t)model_from[0].property.parameters.get_num_groups() ==
+           (size_t)model_to[0].property.parameters.get_num_groups());
+    // Todo: Add conversion of ParameterSet and then re-use code from all model parameters io
+    //       OR call set_vacination_data with FP to set correct parameters
+
+    for (size_t region_idx = 0; region_idx < model_from.size(); ++region_idx) {
+        // convert populations to mio::UncertainValue<FP>
+        // needs 2 converts as mio::UncertainValue<ScalarType> -> mio::UncertainValue<FP> does not work
+        model_to[region_idx].property.populations = model_from[region_idx].property.populations.template convert<FP>();
+    }
+    return mio::success();
 }
 
 } // namespace osecirvvs

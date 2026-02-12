@@ -166,7 +166,7 @@ TEST(IdeSir, compareModelMessinaAndModelMessinaExtended)
 
     mio::NormalDistributionDensity normaldensity(0.4, 0.6);
     mio::StateAgeFunctionWrapper dist(normaldensity);
-    std::vector<mio::StateAgeFunctionWrapper> vec_dist((size_t)mio::isir::InfectionTransition::Count, dist);
+    std::vector<mio::StateAgeFunctionWrapper<ScalarType>> vec_dist((size_t)mio::isir::InfectionTransition::Count, dist);
     model.parameters.get<mio::isir::TransitionDistributions>()          = vec_dist;
     model_extended.parameters.get<mio::isir::TransitionDistributions>() = vec_dist;
 
@@ -184,8 +184,8 @@ TEST(IdeSir, compareModelMessinaAndModelMessinaExtended)
     // matrix and the total population.
     model.parameters.get<mio::isir::beta>() = beta;
 
-    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
-    contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup<ScalarType>(1, 1);
+    contact_matrix[0]                      = mio::ContactMatrix<ScalarType>(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     model_extended.parameters.get<mio::isir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
     // Simulate.
@@ -245,7 +245,7 @@ TEST(IdeSir, compareModelMessinaExtendedAndModelMessinaExtendedDetailedInit)
 
     mio::ExponentialSurvivalFunction exp(2.);
     mio::StateAgeFunctionWrapper dist(exp);
-    std::vector<mio::StateAgeFunctionWrapper> vec_dist((size_t)mio::isir::InfectionTransition::Count, dist);
+    std::vector<mio::StateAgeFunctionWrapper<ScalarType>> vec_dist((size_t)mio::isir::InfectionTransition::Count, dist);
     model_extended.parameters.get<mio::isir::TransitionDistributions>()               = vec_dist;
     model_extended_detailed_init.parameters.get<mio::isir::TransitionDistributions>() = vec_dist;
 
@@ -260,8 +260,8 @@ TEST(IdeSir, compareModelMessinaExtendedAndModelMessinaExtendedDetailedInit)
     model_extended.parameters.get<mio::isir::RiskOfInfectionFromSymptomatic>()               = riskofinfection_wrapper;
     model_extended_detailed_init.parameters.get<mio::isir::RiskOfInfectionFromSymptomatic>() = riskofinfection_wrapper;
 
-    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
-    contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup<ScalarType>(1, 1);
+    contact_matrix[0]                      = mio::ContactMatrix<ScalarType>(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     model_extended.parameters.get<mio::isir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
     model_extended_detailed_init.parameters.get<mio::isir::ContactPatterns>() =
         mio::UncertainContactMatrix(contact_matrix);

@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Ralf Hannemann-Tamas
 *
@@ -16,12 +16,12 @@
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 * See the License for the specific language governing permissions and
 * limitations under the License.
-* 
+*
 * The documentation of the Ipopt::TNLP member functions  in Seair_NLP
 * is extracted from the Ipopt documentation
 */
 
-#include "ad/ad.hpp"
+#include "memilio/ad/ad.h"
 
 #include "memilio/utils/compiler_diagnostics.h"
 #include "ode_seair/model.h"
@@ -47,13 +47,13 @@
 class Seair_NLP : public Ipopt::TNLP
 {
 public:
-    static constexpr double N   = 327167434; // total US population
-    Seair_NLP()                 = default;
-    Seair_NLP(const Seair_NLP&) = delete;
-    Seair_NLP(Seair_NLP&&)      = delete;
+    static constexpr double N              = 327167434; // total US population
+    Seair_NLP()                            = default;
+    Seair_NLP(const Seair_NLP&)            = delete;
+    Seair_NLP(Seair_NLP&&)                 = delete;
     Seair_NLP& operator=(const Seair_NLP&) = delete;
-    Seair_NLP& operator=(Seair_NLP&&) = delete;
-    ~Seair_NLP()                      = default;
+    Seair_NLP& operator=(Seair_NLP&&)      = delete;
+    ~Seair_NLP()                           = default;
 
     /** Method to request the initial information about the problem.
     *
@@ -266,7 +266,7 @@ public:
  * @param constraints are the constraints of the NLP
  * @param objective is the objectie of the NLP
  */
-    template <typename FP = double>
+    template <typename FP>
     void eval_objective_constraints(const std::vector<FP>& x, std::vector<FP>& constraints, FP& objective);
 
 public:
@@ -619,7 +619,6 @@ int main()
     //       suitable for your optimization problem.
     app->Options()->SetNumericValue("tol", 1e-6);
     app->Options()->SetStringValue("mu_strategy", "adaptive");
-    app->Options()->SetStringValue("output_file", "ipopt.out");
     app->Options()->SetStringValue("hessian_approximation", "limited-memory");
     app->Options()->SetStringValue("limited_memory_update_type", "bfgs");
 

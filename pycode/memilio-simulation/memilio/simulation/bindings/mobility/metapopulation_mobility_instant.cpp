@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
@@ -31,10 +31,10 @@ void bind_mobility_parameters(py::module_& m, std::string const& name)
 {
     bind_class<mio::MobilityParameters<double>, EnablePickling::IfAvailable>(m, name.c_str())
         .def(py::init<const Eigen::VectorXd&>(), py::arg("coeffs"))
-        .def(py::init<const mio::MobilityCoefficientGroup&>(), py::arg("coeffs"))
+        .def(py::init<const mio::MobilityCoefficientGroup<double>&>(), py::arg("coeffs"))
         .def_property(
             "coefficients", py::overload_cast<>(&mio::MobilityParameters<double>::get_coefficients),
-            [](mio::MobilityParameters<double>& self, const mio::MobilityCoefficientGroup& v) {
+            [](mio::MobilityParameters<double>& self, const mio::MobilityCoefficientGroup<double>& v) {
                 self.get_coefficients() = v;
             },
             py::return_value_policy::reference_internal);

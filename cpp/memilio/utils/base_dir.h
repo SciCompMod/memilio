@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Julia Bicker
 *
@@ -22,13 +22,15 @@
 
 #include "memilio/config.h"
 
+#include <string>
+
 namespace mio
 {
 
 /**
- * @brief Returns path to the repo directory.
-*/
-constexpr std::string mio::base_dir()
+ * @brief Returns the absolute path to the project directory.
+ */
+const static std::string base_dir()
 {
     return MEMILIO_BASE_DIR;
 }

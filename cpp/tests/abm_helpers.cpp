@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: David Kerkmann, Khoa Nguyen
 *
@@ -65,7 +65,19 @@ void interact_testing(mio::abm::PersonalRandomNumberGenerator& personal_rng, mio
     for (const mio::abm::Person& p : local_population) {
         add_exposure_contribution(local_air_exposure, local_contact_exposure, p, location, global_parameters, t, dt);
     }
+    // count local population by age group and cell
+    mio::abm::PopulationByAge local_population_by_age;
+    local_population_by_age.resize(
+        {mio::abm::CellIndex(location.get_cells().size()), mio::AgeGroup(global_parameters.get_num_groups())});
+    std::for_each(local_population_by_age.begin(), local_population_by_age.end(), [](auto& r) {
+        r = 0; // initialize with 0
+    });
+    for (const mio::abm::Person& p : local_population) {
+        for (mio::abm::CellIndex cell_index : p.get_cells()) {
+            local_population_by_age[{cell_index, p.get_age()}]++;
+        }
+    }
     // run interaction
-    mio::abm::interact(personal_rng, person, location, local_air_exposure, local_contact_exposure, t, dt,
-                       global_parameters);
+    mio::abm::interact(personal_rng, person, location, local_population_by_age, local_air_exposure,
+                       local_contact_exposure, t, dt, global_parameters);
 }

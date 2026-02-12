@@ -1,11 +1,17 @@
+.. include:: ../../literature.rst
+
 LCT-based SECIR-type model
 ==========================
 
-The LCT-SECIR module models and simulates an epidemic using an ODE-based approach while making use of the Linear Chain 
-This provides the option of Erlang distributed stay times in the compartments through the use of subcompartments. 
-The model is particularly suited for pathogens with pre- or asymptomatic infection states and when severe or critical states are possible. The model assumes perfect immunity after recovery and is thus only suited for epidemic use cases. 
+The LCT-SECIR module models and simulates an epidemic using an ODE-based SECIR-type model approach while making use of the Linear Chain Trick (LCT).
+Throught the LCT, exponentially distributed stay times are replaced by Gamma or Erlang distributed stay times by defining the compartments through the use of subcompartments. 
+The model is particularly suited for pathogens with pre- or asymptomatic infection states and when severe or critical states are possible. The model assumes perfect immunity after recovery. It is thus only suited for epidemic use cases and, mostly, early epidemic phases.
 
-Below is a visualization of the infection states and transitions without a stratification according to socisdemographic groups.
+*   A generalization of the model that allows for arbitrary distributed stay times is the :doc:`IDE-SECIR model <isecir>`.
+*   A generalization of the model in the application sense that includes three immunity layers and vaccination is the :doc:`ODE-SECIRVVS model <osecirvvs>`. However, this model does not allow for arbitrary stay time distributions.
+*   A generalization of the model in the application sense that includes three immunity layers, vaccination, and waning immunity is the :doc:`ODE-SECIRTS model <osecirts>`. However, this model does not allow for arbitrary stay time distributions.
+
+Below is a visualization of the infection states and transitions without a stratification according to sociodemographic groups.
 
 .. image:: https://github.com/SciCompMod/memilio/assets/70579874/6a5d5a95-20f9-4176-8894-c091bd48bfb7
    :alt: tikzLCTSECIR
@@ -13,7 +19,7 @@ Below is a visualization of the infection states and transitions without a strat
 
 For a detailed description and application of the model, see:
 
-- Plötzke L, Wendler A, Schmieding R, Kühn MJ. (2024). *Revisiting the Linear Chain Trick in epidemiological models: Implications of underlying assumptions for numerical solutions*. Under review. `https://doi.org/10.48550/arXiv.2412.09140 <https://doi.org/10.48550/arXiv.2412.09140>`_ 
+- |Revisiting_the_Linear_Chain|
 - Plötzke L. (2023). *Der Linear Chain Trick in der epidemiologischen Modellierung als Kompromiss zwischen gewöhnlichen und Integro-Differentialgleichungen*. Master's thesis, University of Cologne. `https://elib.dlr.de/200381/ <https://elib.dlr.de/200381/>`_
 - Hurtado PJ, Kirosingh AS. (2019). *Generalizations of the ‘Linear Chain Trick’: incorporating more flexible dwell time distributions into mean field ODE models*. Journal of Mathematical Biology. `https://doi.org/10.1007/s00285-019-01412-w <https://doi.org/10.1007/s00285-019-01412-w>`_
 
@@ -218,8 +224,7 @@ For age-resolved models, you can apply different dampings to different groups:
     contact_matrix.add_damping(Eigen::VectorX<ScalarType>::Constant(num_agegroups, 0.7).asDiagonal(),
                              mio::SimulationTime(30.));
 
-
-For more complex scenarios, such as real-world lockdown modeling, you can implement detailed NPIs with location-specific dampings. The LCT-SECIR model supports contact matrices for different locations (e.g., home, school, work, other) and can apply different dampings to each location.
+For more complex scenarios, such as real-world venue closures or lockdown modeling, you can implement detailed NPIs with location-specific dampings. The LCT-SECIR model supports contact matrices for different locations (e.g., home, school, work, other) and can apply different dampings to each location.
 
 Example for defining different contact locations:
 
@@ -284,13 +289,13 @@ You can also specify a custom integrator:
 
 .. code-block:: cpp
 
-    auto integrator = std::make_shared<mio::RKIntegratorCore>();
+    auto integrator = std::make_unique<mio::RKIntegratorCore>();
     integrator->set_dt_min(0.3);
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
     
-    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(t0, tmax, dt, model, integrator);
+    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(t0, tmax, dt, model, std::move(integrator));
 
 
 Output

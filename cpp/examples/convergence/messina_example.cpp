@@ -90,7 +90,8 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
         mio::StateAgeFunctionWrapper dist(normaldensity);
         // mio::ExponentialSurvivalFunction exp(2.);
         // mio::StateAgeFunctionWrapper dist(exp);
-        std::vector<mio::StateAgeFunctionWrapper> vec_dist((size_t)mio::isir::InfectionTransition::Count, dist);
+        std::vector<mio::StateAgeFunctionWrapper<ScalarType>> vec_dist((size_t)mio::isir::InfectionTransition::Count,
+                                                                       dist);
         model.parameters.get<mio::isir::TransitionDistributions>() = vec_dist;
 
         mio::ConstantFunction transmissiononcontact(1.5);

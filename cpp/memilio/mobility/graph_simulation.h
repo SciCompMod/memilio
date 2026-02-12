@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Henrik Zunker
 *
@@ -31,10 +31,12 @@ namespace mio
 /**
  * @brief abstract simulation on a graph with alternating node and edge actions
  */
-template <class Graph, class Timepoint, class Timespan, class edge_f, class node_f>
+template <class GraphT, class Timepoint, class Timespan, class edge_f, class node_f>
 class GraphSimulationBase
 {
 public:
+    using Graph = GraphT;
+
     using node_function = node_f;
     using edge_function = edge_f;
 
@@ -86,14 +88,14 @@ protected:
     edge_function m_edge_func;
 };
 
-template <class Graph, class Timepoint = double, class Timespan = double,
+template <typename FP, class Graph, class Timepoint, class Timespan,
           class edge_f = void (*)(Timepoint, Timespan, typename Graph::EdgeProperty&, typename Graph::NodeProperty&,
                                   typename Graph::NodeProperty&),
           class node_f = void (*)(Timepoint, Timespan, typename Graph::NodeProperty&)>
 class GraphSimulation : public GraphSimulationBase<Graph, Timepoint, Timespan, edge_f, node_f>
 {
     using Base = GraphSimulationBase<Graph, Timepoint, Timespan, edge_f, node_f>;
-    using Base::GraphSimulationBase;
+    using Base::Base;
 
 public:
     void advance(Timepoint t_max = 1.0)
@@ -118,22 +120,23 @@ public:
     }
 };
 
-template <class Graph>
+template <typename FP, class Graph>
 class GraphSimulationStochastic
-    : public GraphSimulationBase<Graph, double, double,
+    : public GraphSimulationBase<Graph, FP, FP,
                                  std::function<void(typename Graph::EdgeProperty&, size_t,
                                                     typename Graph::NodeProperty&, typename Graph::NodeProperty&)>,
-                                 std::function<void(double, double, typename Graph::NodeProperty&)>>
+                                 std::function<void(FP, FP, typename Graph::NodeProperty&)>>
 {
-    using Base          = GraphSimulationBase<Graph, double, double,
+    using Base = GraphSimulationBase<Graph, FP, FP,
                                      std::function<void(typename Graph::EdgeProperty&, size_t,
                                                         typename Graph::NodeProperty&, typename Graph::NodeProperty&)>,
-                                     std::function<void(double, double, typename Graph::NodeProperty&)>>;
+                                     std::function<void(FP, FP, typename Graph::NodeProperty&)>>;
+
     using node_function = typename Base::node_function;
     using edge_function = typename Base::edge_function;
 
 public:
-    GraphSimulationStochastic(double t0, double dt, const Graph& g, const node_function& node_func,
+    GraphSimulationStochastic(FP t0, FP dt, const Graph& g, const node_function& node_func,
                               const edge_function&& edge_func)
         : Base(t0, dt, g, node_func, std::move(edge_func))
         , m_rates(Base::m_graph.edges().size() *
@@ -141,15 +144,14 @@ public:
     {
     }
 
-    GraphSimulationStochastic(double t0, double dt, Graph&& g, const node_function& node_func,
-                              const edge_function&& edge_func)
+    GraphSimulationStochastic(FP t0, FP dt, Graph&& g, const node_function& node_func, const edge_function&& edge_func)
         : Base(t0, dt, std::forward<Graph>(g), node_func, std::move(edge_func))
         , m_rates(Base::m_graph.edges().size() *
                   Base::m_graph.edges()[0].property.get_parameters().get_coefficients().get_shape().rows())
     {
     }
 
-    void advance(double t_max)
+    void advance(FP t_max)
     {
         //draw normalized waiting time
         ScalarType normalized_waiting_time = ExponentialDistribution<ScalarType>::get_instance()(m_rng, 1.0);
@@ -224,10 +226,10 @@ public:
     }
 
 private:
-    ScalarType get_cumulative_transition_rate()
+    FP get_cumulative_transition_rate()
     {
         //compute current cumulative transition rate
-        ScalarType cumulative_transition_rate = 0;
+        FP cumulative_transition_rate = 0.0;
         for (auto& e : Base::m_graph.edges()) {
             cumulative_transition_rate +=
                 e.property.get_transition_rates(Base::m_graph.nodes()[e.start_node_idx].property).sum();
@@ -235,7 +237,7 @@ private:
         return cumulative_transition_rate;
     }
 
-    void get_rates(std::vector<ScalarType>& rates)
+    void get_rates(std::vector<FP>& rates)
     {
         size_t j = 0;
         for (auto& e : Base::m_graph.edges()) {
@@ -243,28 +245,28 @@ private:
             for (Eigen::Index i = 0; i < edge_rates.size(); ++i) {
                 const auto compartment_value =
                     Base::m_graph.nodes()[e.start_node_idx].property.get_result().get_last_value()[i];
-                rates[j] = (compartment_value < 1.) ? 0. : edge_rates(i);
+                rates[j] = (compartment_value < 1.0) ? 0.0 : edge_rates(i);
 
                 j++;
             }
         }
     }
 
-    std::vector<ScalarType> m_rates;
+    std::vector<FP> m_rates;
     RandomNumberGenerator m_rng;
 };
 
-template <typename Timepoint, class Timespan, class Graph, class NodeF, class EdgeF>
+template <typename FP, typename Timepoint, class Timespan, class Graph, class NodeF, class EdgeF>
 auto make_graph_sim(Timepoint t0, Timespan dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func)
 {
-    return GraphSimulation<std::decay_t<Graph>, Timepoint, Timespan, EdgeF, NodeF>(
+    return GraphSimulation<FP, std::decay_t<Graph>, Timepoint, Timespan, EdgeF, NodeF>(
         t0, dt, std::forward<Graph>(g), std::forward<NodeF>(node_func), std::forward<EdgeF>(edge_func));
 }
 
 template <typename FP, class Graph, class NodeF, class EdgeF>
 auto make_graph_sim_stochastic(FP t0, FP dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func)
 {
-    return GraphSimulationStochastic<std::decay_t<Graph>>(
+    return GraphSimulationStochastic<FP, std::decay_t<Graph>>(
         t0, dt, std::forward<Graph>(g), std::forward<NodeF>(node_func), std::forward<EdgeF>(edge_func));
 }
 

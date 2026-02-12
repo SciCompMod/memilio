@@ -347,8 +347,11 @@ ScalarType ModelMessinaExtended::fixed_point_function(ScalarType susceptibles, S
         sum += gregory_weight * m_transmissionproboncontact_vector[current_time_index - j] *
                m_riskofinffromsymptomatic_vector[current_time_index - j] *
                m_transitiondistribution_vector[current_time_index - j] *
-               (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(state_age)(0, 0) -
-                (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0) / m_N) *
+               (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                    SimulationTime<ScalarType>(state_age))(0, 0) -
+                (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                     SimulationTime<ScalarType>(current_time))(0, 0) /
+                 m_N) *
                     populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible]);
     }
 
@@ -380,8 +383,11 @@ ScalarType ModelMessinaExtended::fixed_point_function(ScalarType susceptibles, S
         sum += gregory_weight * m_transmissionproboncontact_vector[current_time_index - j] *
                m_riskofinffromsymptomatic_vector[current_time_index - j] *
                m_transitiondistribution_vector[current_time_index - j] *
-               (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(state_age)(0, 0) -
-                (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0) / m_N) *
+               (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                    SimulationTime<ScalarType>(state_age))(0, 0) -
+                (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                     SimulationTime<ScalarType>(current_time))(0, 0) /
+                 m_N) *
                     relevant_susceptibles);
     }
 
@@ -448,6 +454,7 @@ void ModelMessinaExtended::compute_I_and_R(ScalarType dt)
     size_t current_time_index = populations.get_num_time_points() - 1;
 
     ScalarType sum_infected = 0., sum_recovered = 0.;
+    unused(sum_recovered);
 
     // Add first part of sum.
     for (size_t j = 0; j < std::min(current_time_index, m_gregory_order); j++) {

@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -35,12 +35,12 @@ namespace mio
  * The damping value is weighted by group (e.g. age) to be able to e.g. construct dampings that only
  * apply to specific groups.
  */
-template <typename FP = double>
+template <typename FP>
 class DampingSampling
 {
 public:
     /**
-     * Creates a DampingSampling.  
+     * Creates a DampingSampling.
      * @param value random value that all matrix coefficients depend on.
      * @param level level of the damping.
      * @param type type of the damping.
@@ -49,7 +49,7 @@ public:
      * @param groups weights of age groups.
      */
     template <class V>
-    DampingSampling(const UncertainValue<FP>& value, DampingLevel level, DampingType type, SimulationTime time,
+    DampingSampling(const UncertainValue<FP>& value, DampingLevel level, DampingType type, SimulationTime<FP> time,
                     const std::vector<size_t> matrices, const Eigen::MatrixBase<V>& groups)
         : m_value(value)
         , m_level(level)
@@ -124,7 +124,7 @@ public:
      * Get the time the damping becomes active.
      * @return the damping time.
      */
-    SimulationTime get_time() const
+    SimulationTime<FP> get_time() const
     {
         return m_time;
     }
@@ -133,7 +133,7 @@ public:
      * Set the time the damping becomes active.
      * @param t the damping time.
      */
-    void set_time(SimulationTime t)
+    void set_time(SimulationTime<FP> t)
     {
         m_time = t;
     }
@@ -162,7 +162,7 @@ public:
      * The groups correspond to e.g. age groups in the SECIR model.
      * @return weights of groups.
      */
-    const Eigen::VectorXd& get_group_weights() const
+    const Eigen::VectorX<FP>& get_group_weights() const
     {
         return m_groups;
     }
@@ -186,7 +186,7 @@ public:
     }
 
     /**
-     * equality comparison operators. 
+     * equality comparison operators.
      * @{
      */
     bool operator==(const DampingSampling& other) const
@@ -201,7 +201,7 @@ public:
     /**@}*/
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>
@@ -224,12 +224,12 @@ public:
     static IOResult<DampingSampling> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("DampingSampling");
-        auto ti  = obj.expect_element("Time", Tag<SimulationTime>{});
+        auto ti  = obj.expect_element("Time", Tag<SimulationTime<FP>>{});
         auto ty  = obj.expect_element("Type", Tag<DampingType>{});
         auto l   = obj.expect_element("Level", Tag<DampingLevel>{});
         auto v   = obj.expect_element("Value", Tag<UncertainValue<FP>>{});
         auto m   = obj.expect_list("MatrixIndices", Tag<size_t>{});
-        auto g   = obj.expect_element("GroupWeights", Tag<Eigen::VectorXd>{});
+        auto g   = obj.expect_element("GroupWeights", Tag<Eigen::VectorX<FP>>{});
         return apply(
             io,
             [](auto&& ti_, auto&& ty_, auto&& l_, auto&& v_, auto&& m_, auto&& g_) {
@@ -242,9 +242,9 @@ private:
     UncertainValue<FP> m_value;
     DampingLevel m_level;
     DampingType m_type;
-    SimulationTime m_time;
+    SimulationTime<FP> m_time;
     std::vector<size_t> m_matrices;
-    Eigen::VectorXd m_groups;
+    Eigen::VectorX<FP> m_groups;
 };
 
 /**
@@ -260,7 +260,7 @@ void apply_dampings(DampingExpression& damping_expression, const DampingSampling
     damping_expression.set_automatic_cache_update(false);
     for (auto& d : dampings) {
         for (auto& i : d.get_matrix_indices()) {
-            auto m = make_matrix(double(d.get_value()) * d.get_group_weights());
+            auto m = make_matrix(d.get_value().value() * d.get_group_weights());
             damping_expression[i].add_damping(m, d.get_level(), d.get_type(), d.get_time());
         }
     }
@@ -273,9 +273,9 @@ void apply_dampings(DampingExpression& damping_expression, const DampingSampling
  * d_ij = 1 - sqrt((1 - g_i) * (1 - g_j))
  * where d_ij is a coefficient of the matrix
  * and g_i,g_j are coefficients of the group vector.
- * For diagonal elements (i.e. contacts of group with itself): d_ii = g_i; 
- * the damping of the corresponding group is applied directly. 
- * For off diagonal elements (i.e. contacts of group with other group): d_ij between g_i and g_j; 
+ * For diagonal elements (i.e. contacts of group with itself): d_ii = g_i;
+ * the damping of the corresponding group is applied directly.
+ * For off diagonal elements (i.e. contacts of group with other group): d_ij between g_i and g_j;
  * the dampings of both groups are combined and applied equally.
  * @param groups damping value weighted by group.
  * @return square matrix expression of damping coefficients.
@@ -297,10 +297,10 @@ auto make_contact_damping_matrix(V&& groups)
  * @param groups damping value weighted by group.
  * @return vector expression of mobility coefficient damping.
  */
-template <class V>
-auto make_mobility_damping_vector(ColumnVectorShape shape, V&& groups)
+template <typename FP, class V>
+auto make_mobility_damping_vector(ColumnVectorShape<FP> shape, V&& groups)
 {
-    return Eigen::VectorXd::NullaryExpr(shape.size(), [shape, groups = std::forward<V>(groups)](Eigen::Index i) {
+    return Eigen::VectorX<FP>::NullaryExpr(shape.size(), [shape, groups = std::forward<V>(groups)](Eigen::Index i) {
         auto num_groups       = groups.size();
         auto num_compartments = size_t(shape.size()) / num_groups;
         return groups[size_t(i) / num_compartments];

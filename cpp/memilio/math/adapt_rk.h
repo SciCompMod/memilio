@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin J. Kuehn, Daniel Abele
 *
@@ -59,10 +59,11 @@ namespace mio
  *       | 16/135      0             6656/12825   28561/56430   -9/50       2/55
  *
  */
+template <typename FP>
 class Tableau
 {
 public:
-    std::vector<Eigen::VectorXd> entries;
+    std::vector<Eigen::VectorX<FP>> entries;
 
     /**
      * @brief default is Runge-Kutta-Fehlberg4(5) tableau
@@ -71,7 +72,7 @@ public:
     {
         entries.resize(5);
         for (size_t i = 0; i < entries.size(); i++) {
-            entries.at(i).resize(i + 2);
+            entries[i].resize(i + 2);
         }
 
         entries[0][0] = 0.25;
@@ -106,11 +107,12 @@ public:
  *       | 16/135      0             6656/12825   28561/56430   -9/50       2/55
  *
  */
+template <typename FP>
 class TableauFinal
 {
 public:
-    Eigen::VectorXd entries_low;
-    Eigen::VectorXd entries_high;
+    Eigen::VectorX<FP> entries_low;
+    Eigen::VectorX<FP> entries_high;
 
     /**
      * @brief default is Runge-Kutta-Fehlberg4(5) tableau
@@ -148,7 +150,7 @@ public:
      * @brief Setting up the integrator
      */
     RKIntegratorCore()
-        : OdeIntegratorCore<FP>(std::numeric_limits<double>::min(), std::numeric_limits<double>::max())
+        : OdeIntegratorCore<FP>(std::numeric_limits<FP>::min(), std::numeric_limits<FP>::max())
         , m_abs_tol(1e-10)
         , m_rel_tol(1e-5)
     {
@@ -157,43 +159,48 @@ public:
     /**
      * @brief Set up the integrator
      * @param abs_tol absolute tolerance
-     * @param rel_tol relative tolerance 
+     * @param rel_tol relative tolerance
      * @param dt_min lower bound for time step dt
      * @param dt_max upper bound for time step dt
      */
-    RKIntegratorCore(const double abs_tol, const double rel_tol, const double dt_min, const double dt_max)
+    RKIntegratorCore(const FP abs_tol, const FP rel_tol, const FP dt_min, const FP dt_max)
         : OdeIntegratorCore<FP>(dt_min, dt_max)
         , m_abs_tol(abs_tol)
         , m_rel_tol(rel_tol)
     {
     }
 
+    std::unique_ptr<OdeIntegratorCore<FP>> clone() const override
+    {
+        return std::make_unique<RKIntegratorCore>(*this);
+    }
+
     /// @param tol the required absolute tolerance for the comparison with the Fehlberg approximation
-    void set_abs_tolerance(double tol)
+    void set_abs_tolerance(FP tol)
     {
         m_abs_tol = tol;
     }
 
     /// @param tol the required relative tolerance for the comparison with the Fehlberg approximation
-    void set_rel_tolerance(double tol)
+    void set_rel_tolerance(FP tol)
     {
         m_rel_tol = tol;
     }
 
     /// @param dt_min sets the minimum step size
-    void set_dt_min(double dt_min)
+    void set_dt_min(FP dt_min)
     {
         this->get_dt_min() = dt_min;
     }
 
     /// @param dt_max sets the maximum step size
-    void set_dt_max(double dt_max)
+    void set_dt_max(FP dt_max)
     {
         this->get_dt_max() = dt_max;
     }
 
     // Allow setting different RK tableau schemes
-    void set_tableaus(const Tableau& tab, const TableauFinal& final_tab)
+    void set_tableaus(const Tableau<FP>& tab, const TableauFinal<FP>& final_tab)
     {
         m_tab       = tab;
         m_tab_final = final_tab;
@@ -207,9 +214,13 @@ public:
      * @param[in,out] dt current time step size h=dt
      * @param[out] ytp1 approximated value y(t+1)
      */
-    bool step(const DerivFunction<FP>& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
-              Eigen::Ref<Eigen::VectorXd> ytp1) const override
+    bool step(const DerivFunction<FP>& f, Eigen::Ref<const Eigen::VectorX<FP>> yt, FP& t, FP& dt,
+              Eigen::Ref<Eigen::VectorX<FP>> ytp1) const override
     {
+        using std::max;
+        using std::min;
+        using std::pow;
+
         assert(0 <= this->get_dt_min());
         assert(this->get_dt_min() <= this->get_dt_max());
 
@@ -217,11 +228,10 @@ public:
             mio::log_warning("IntegratorCore: Restricting given step size dt = {} to [{}, {}].", dt, this->get_dt_min(),
                              this->get_dt_max());
         }
+        dt = min<FP>(dt, this->get_dt_max());
 
-        dt = std::min(dt, this->get_dt_max());
-
-        double t_eval; // shifted time for evaluating yt
-        double dt_new; // updated dt
+        FP t_eval; // shifted time for evaluating yt
+        FP dt_new; // updated dt
 
         bool converged     = false; // carry for convergence criterion
         bool dt_is_invalid = false;
@@ -248,7 +258,7 @@ public:
                           dt; // t_eval = t + c_i * h // note: line zero of Butcher tableau not stored in array
                 // use ytp1 as temporary storage for evaluating m_kt_values[i]
                 ytp1 = m_yt_eval;
-                for (Eigen::VectorXd::Index k = 1; k < m_tab.entries[i - 1].size(); k++) {
+                for (Eigen::Index k = 1; k < m_tab.entries[i - 1].size(); k++) {
                     ytp1 += (dt * m_tab.entries[i - 1][k]) * m_kt_values.col(k - 1);
                 }
                 // get the derivatives, i.e., compute kt_i for all y in ytp1: kt_i = f(t_eval, ytp1_low)
@@ -274,22 +284,22 @@ public:
             // compute new value for dt
             // converged implies eps/error_estimate >= 1, so dt will be increased for the next step
             // hence !converged implies 0 < eps/error_estimate < 1, strictly decreasing dt
-            dt_new = dt * std::pow((m_eps / m_error_estimate).minCoeff(), (1. / (m_tab_final.entries_low.size() - 1)));
+            dt_new = dt * pow((m_eps / m_error_estimate).minCoeff(), (1. / (m_tab_final.entries_low.size() - 1)));
             // safety factor for more conservative step increases,
             // and to avoid dt_new -> dt for step decreases when |error_estimate - eps| -> 0
             dt_new *= 0.9;
             // check if updated dt stays within desired bounds and update dt for next step
-            dt = std::min(dt_new, this->get_dt_max());
+            dt = min<FP>(dt_new, this->get_dt_max());
         }
-        dt = std::max(dt, this->get_dt_min());
+        dt = max<FP>(dt, this->get_dt_min());
         // return 'converged' in favor of '!dt_is_invalid', as these values only differ if step sizing failed,
         // but the step with size dt_min was accepted.
         return converged;
     }
 
 protected:
-    Tableau m_tab;
-    TableauFinal m_tab_final;
+    Tableau<FP> m_tab;
+    TableauFinal<FP> m_tab_final;
     FP m_abs_tol, m_rel_tol;
     mutable Eigen::Matrix<FP, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> m_kt_values;
     mutable Eigen::VectorX<FP> m_yt_eval;

@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Khoa Nguyen
 *
@@ -178,7 +178,7 @@ int main()
     auto sim  = mio::abm::Simulation(t0, std::move(model));
 
     struct LogTimePoint : mio::LogAlways {
-        using Type = double;
+        using Type = ScalarType;
         static Type log(const mio::abm::Simulation<>& sim)
         {
             return sim.get_time().hours();

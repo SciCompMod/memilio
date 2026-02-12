@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -31,7 +31,7 @@ class TempFileRegister
 {
 public:
     /**
-     * Destructor. 
+     * Destructor.
      * Removes all registered files.
      */
     ~TempFileRegister()
@@ -49,9 +49,9 @@ public:
     /**
      * create a unique path and register it for cleanup.
      * The path will be in the system temp directory if available.
-     * Otherwise it will be in the current working directory. 
+     * Otherwise it will be in the current working directory.
      * The name of the file or directory follows the specified model.
-     * The model may contain placeholders one or more `%` that are replaced with random characters to make the name unique.  
+     * The model may contain placeholders one or more `%` that are replaced with random characters to make the name unique.
      * @param model name of the file or directory with placeholders for random characters.
      * @return a unique file path that follows the specified model.
      */

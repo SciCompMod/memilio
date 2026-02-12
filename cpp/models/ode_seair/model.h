@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Ralf Hannemann-Tamas
 *
@@ -32,7 +32,7 @@ namespace mio
 namespace oseair
 {
 
-template <typename FP = ScalarType>
+template <typename FP>
 class Model : public mio::CompartmentalModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>>
 {
     using Base = mio::CompartmentalModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>>;
@@ -42,7 +42,7 @@ public:
     using typename Base::Populations;
 
     Model()
-        : Base(Populations({InfectionState::Count}, 0.), ParameterSet())
+        : Base(Populations({InfectionState::Count}, 0.0), ParameterSet())
     {
     }
 

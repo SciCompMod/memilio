@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Julia Bicker
 *
@@ -107,7 +107,7 @@ class ABMMobilityEdge
 
 public:
     /**
-     * @brief Exchanges persons via the edge. 
+     * @brief Exchanges persons via the edge.
      * Commuters are given by the person buffer of node_from.
      * @param[in] node_from Commuters home node
      * @param[in] node_to Node commuters (temporarily) move to
@@ -151,7 +151,7 @@ public:
 };
 
 /**
- * @brief Edge functor for abm graph simulation. 
+ * @brief Edge functor for abm graph simulation.
  * @see ABMMobilityEdge::apply_mobility
  * The attribute dt is required by the GraphSimulation class and therefore an input argument of the function.
  * However it is not used in ABMMobilityEdge::apply_mobility.
@@ -182,21 +182,23 @@ void advance_model(abm::TimePoint t, abm::TimeSpan dt, ABMSimulationNode<History
 
 /**
  * @brief Creates an abm graph simulation.
- * Every dt time step for each edge the persons that want to change to a location in another node 
+ * Every dt time step for each edge the persons that want to change to a location in another node
  * are removed from the model in their former location's node and added to the model of the new location.
  * @param[in] t0 Start time point of the simulation.
  * @param[in] dt Step between mobility on edges.
  * @param[in] graph Graph for simulation.
  */
 template <class... History>
-GraphSimulation<Graph<ABMSimulationNode<History...>, ABMMobilityEdge<History...>>, abm::TimePoint, abm::TimeSpan,
+GraphSimulation<ScalarType, Graph<ABMSimulationNode<History...>, ABMMobilityEdge<History...>>, abm::TimePoint,
+                abm::TimeSpan,
                 void (*)(mio::abm::TimePoint, mio::abm::TimeSpan, mio::ABMMobilityEdge<History...>&,
                          mio::ABMSimulationNode<History...>&, mio::ABMSimulationNode<History...>&),
                 void (*)(mio::abm::TimePoint, mio::abm::TimeSpan, mio::ABMSimulationNode<History...>&)>
 make_abm_graph_sim(abm::TimePoint t0, abm::TimeSpan dt,
                    Graph<ABMSimulationNode<History...>, ABMMobilityEdge<History...>>&& graph)
 {
-    return make_graph_sim(t0, dt, std::move(graph), &advance_model<History...>, &apply_mobility<History...>);
+    return make_graph_sim<ScalarType>(t0, dt, std::move(graph), &advance_model<History...>,
+                                      &apply_mobility<History...>);
 }
 
 } // namespace mio

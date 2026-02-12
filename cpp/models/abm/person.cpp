@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Khoa Nguyen
 *
@@ -52,10 +52,10 @@ Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, Loca
     , m_rng_key(rng.get_key())
     , m_rng_index(static_cast<uint32_t>(person_id.get()))
 {
-    m_random_workgroup        = UniformDistribution<double>::get_instance()(rng);
-    m_random_schoolgroup      = UniformDistribution<double>::get_instance()(rng);
-    m_random_goto_work_hour   = UniformDistribution<double>::get_instance()(rng);
-    m_random_goto_school_hour = UniformDistribution<double>::get_instance()(rng);
+    m_random_workgroup        = UniformDistribution<ScalarType>::get_instance()(rng);
+    m_random_schoolgroup      = UniformDistribution<ScalarType>::get_instance()(rng);
+    m_random_goto_work_hour   = UniformDistribution<ScalarType>::get_instance()(rng);
+    m_random_goto_school_hour = UniformDistribution<ScalarType>::get_instance()(rng);
 }
 
 Person::Person(const Person& other, PersonId person_id)
@@ -134,7 +134,7 @@ int Person::get_assigned_location_model_id(LocationType type) const
 
 bool Person::goes_to_work(TimePoint t, const Parameters& params) const
 {
-    return m_random_workgroup < params.get<WorkRatio>().get_matrix_at(t.days())[0];
+    return m_random_workgroup < params.get<WorkRatio>().get_matrix_at(SimulationTime<ScalarType>(t.days()))[0];
 }
 
 TimeSpan Person::get_go_to_work_time(const Parameters& params) const
@@ -157,7 +157,7 @@ TimeSpan Person::get_go_to_school_time(const Parameters& params) const
 
 bool Person::goes_to_school(TimePoint t, const Parameters& params) const
 {
-    return m_random_schoolgroup < params.get<SchoolRatio>().get_matrix_at(t.days())[0];
+    return m_random_schoolgroup < params.get<SchoolRatio>().get_matrix_at(SimulationTime<ScalarType>(t.days()))[0];
 }
 
 void Person::remove_quarantine()
@@ -167,7 +167,7 @@ void Person::remove_quarantine()
 
 bool Person::get_tested(PersonalRandomNumberGenerator& rng, TimePoint t, const TestParameters& params)
 {
-    ScalarType random = UniformDistribution<double>::get_instance()(rng);
+    ScalarType random = UniformDistribution<ScalarType>::get_instance()(rng);
     if (is_infected(t)) {
         // true positive
         if (random < params.sensitivity) {
@@ -221,28 +221,41 @@ ScalarType Person::get_mask_protective_factor(const Parameters& params) const
 
 bool Person::is_compliant(PersonalRandomNumberGenerator& rng, InterventionType intervention) const
 {
-    ScalarType compliance_check = UniformDistribution<double>::get_instance()(rng);
+    ScalarType compliance_check = UniformDistribution<ScalarType>::get_instance()(rng);
     return compliance_check <= get_compliance(intervention);
 }
 
-ProtectionEvent Person::get_latest_protection() const
+ProtectionEvent Person::get_latest_protection(TimePoint t) const
 {
     ProtectionType latest_protection_type = ProtectionType::NoProtection;
-    TimePoint infection_time              = TimePoint(0);
-    if (!m_infections.empty()) {
-        latest_protection_type = ProtectionType::NaturalInfection;
-        infection_time         = m_infections.back().get_start_date();
+    TimePoint latest_time                 = TimePoint(std::numeric_limits<int>::min());
+
+    // Use reverse iterators to start from the most recent infection
+    for (auto it = m_infections.rbegin(); it != m_infections.rend(); ++it) {
+        if (it->get_start_date() <= t) {
+            latest_protection_type = ProtectionType::NaturalInfection;
+            latest_time            = it->get_start_date();
+            break; // Stop once we find the latest infection before time t
+        }
     }
-    if (!m_vaccinations.empty() && infection_time.days() <= m_vaccinations.back().time.days()) {
-        latest_protection_type = m_vaccinations.back().type;
-        infection_time         = m_vaccinations.back().time;
+
+    // Look for any Vaccination that happens after the latest Infection and before time t
+    for (auto it = m_vaccinations.rbegin(); it != m_vaccinations.rend(); ++it) {
+        if (it->time <= t) {
+            if (it->time > latest_time) {
+                latest_protection_type = it->type;
+                latest_time            = it->time;
+            }
+            break; // Stop once we find the latest vaccination before time t
+        }
     }
-    return ProtectionEvent{latest_protection_type, infection_time};
+
+    return ProtectionEvent{latest_protection_type, latest_time};
 }
 
 ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const Parameters& params) const
 {
-    auto latest_protection = get_latest_protection();
+    auto latest_protection = get_latest_protection(t);
     // If there is no previous protection or vaccination, return 0.
     if (latest_protection.type == ProtectionType::NoProtection) {
         return 0;

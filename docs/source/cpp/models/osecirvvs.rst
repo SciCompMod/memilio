@@ -1,7 +1,7 @@
 ODE-based SECIR-type model with COVID-19 variants and vaccinations
 ====================================================================
 
-This model extends the basic ODE-SECIR model by adding vaccinations and allowing the implicit modeling of a newly arriving variant that takes hold.
+This model extends the basic :doc:`ODE-SECIR model <cpp/osecir>`. by adding vaccinations and allowing the implicit modeling of a newly arriving variant that takes hold.
 
 Vaccinations are modeled by adding compartments for partially and fully vaccinated persons. **Partially** and **fully vaccinated** is to be understood in this context as the person having received a first and second vaccine shot as in 2021. Persons that have recovered from the disease are treated as fully vaccinated from that time forward. Vaccinated persons are added on every day of simulation, see parameters ``DailyPartialVaccinations`` and ``DailyFullVaccinations``. All groups can get an infection or get reinfected. Vaccinated persons are less likely to develop symptoms. For example, the probability to develop symptoms when carrying the virus is the base probability from the ODE-SECIR model multiplied with the ``ReducInfectedSymptomsPartialImmunity`` parameter.
 
@@ -57,7 +57,7 @@ All compartments with the same base state (e.g., ExposedNaive, ExposedPartialImm
 Infection State Transitions
 ---------------------------
 
-The ODE-SECIRVVS model is implemented as a **FlowModel**, which computes the flows between compartments explicitly. The model follows the same flow pattern as the basic ODE-SECIR model but with three parallel sets of compartments representing different immunity levels.
+The ODE-SECIRVVS model is implemented as a **FlowModel**, which defines the derivatives of each flow between compartments. The model follows the same flow pattern as the basic ODE-SECIR model but with three parallel sets of compartments representing different immunity levels.
 
 The key characteristic of this model is that recovered individuals always end up in the improved immunity level, regardless of their starting immunity level. This represents the immunity gained after infection.
 
@@ -296,7 +296,7 @@ Basic dampings can be added to the contact matrix as follows:
     // Add a damping that reduces contacts by 30% starting at day 5
     contact_matrix[0].add_damping(0.3, mio::SimulationTime(5.0));
 
-For more complex scenarios, such as real-world lockdown modeling, you can implement detailed NPIs with location-specific dampings as in the ODE-SECIR model. The ODE-SECIRVVS model supports the same contact locations (e.g., home, school, work, other) and can apply different dampings to each location.
+For more complex scenarios, such as real-world , you can implement detailed NPIs with location-specific dampings as in the ODE-SECIR model. The ODE-SECIRVVS model supports the same contact locations (e.g., home, school, work, other) and can apply different dampings to each location.
 
 Example of defining locations and interventions for a detailed scenario:
 
@@ -361,13 +361,13 @@ For both simulation types, you can also specify a custom integrator:
 
 .. code-block:: cpp
 
-    auto integrator = std::make_shared<mio::RKIntegratorCore>();
+    auto integrator = std::make_unique<mio::RKIntegratorCore>();
     integrator->set_dt_min(0.3);
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
     
-    mio::TimeSeries<double> result = mio::osecirvvs::simulate(t0, tmax, dt, model, integrator);
+    mio::TimeSeries<double> result = mio::osecirvvs::simulate(t0, tmax, dt, model, std::move(integrator));
 
 Output
 ------

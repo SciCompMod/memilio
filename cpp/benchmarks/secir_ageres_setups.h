@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Rene Schmieding
 *
@@ -33,30 +33,30 @@ namespace benchmark
 namespace detail
 {
 /**
-         * @brief Helper function to create a secir model with consistent setup for use in benchmarking.
-         */
+ * @brief Helper function to create a secir model with consistent setup for use in benchmarking.
+ */
 mio::osecir::Model<ScalarType> make_model(int num)
 {
 
-    double cont_freq = 10; // see Polymod study
+    ScalarType cont_freq = 10; // see Polymod study
 
-    double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
-           nb_rec_t0 = 10, nb_dead_t0 = 0;
+    ScalarType nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
+               nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    mio::osecir::Model model(num);
-    auto nb_groups = model.parameters.get_num_groups();
-    double fact    = 1.0 / (double)(size_t)nb_groups;
+    mio::osecir::Model<ScalarType> model(num);
+    auto nb_groups  = model.parameters.get_num_groups();
+    ScalarType fact = 1.0 / (ScalarType)(size_t)nb_groups;
 
     auto& params = model.parameters;
 
-    params.set<mio::osecir::ICUCapacity<ScalarType>>(std::numeric_limits<double>::max());
-    params.set<mio::osecir::StartDay>(0);
+    params.set<mio::osecir::ICUCapacity<ScalarType>>(std::numeric_limits<ScalarType>::max());
+    params.set<mio::osecir::StartDay<ScalarType>>(0);
     params.set<mio::osecir::Seasonality<ScalarType>>(0);
 
     for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
         params.get<mio::osecir::TimeExposed<ScalarType>>()[i]            = 3.2;
-        params.get<mio::osecir::TimeInfectedNoSymptoms<ScalarType>>()[i] = 2.;
-        params.get<mio::osecir::TimeInfectedSymptoms<ScalarType>>()[i]   = 6.;
+        params.get<mio::osecir::TimeInfectedNoSymptoms<ScalarType>>()[i] = 2.0;
+        params.get<mio::osecir::TimeInfectedSymptoms<ScalarType>>()[i]   = 6.0;
         params.get<mio::osecir::TimeInfectedSevere<ScalarType>>()[i]     = 12;
         params.get<mio::osecir::TimeInfectedCritical<ScalarType>>()[i]   = 8;
 
@@ -79,11 +79,11 @@ mio::osecir::Model<ScalarType> make_model(int num)
         params.get<mio::osecir::DeathsPerCritical<ScalarType>>()[i]                = 0.3;
     }
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<ScalarType>>();
-    contact_matrix[0] =
-        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
-                               mio::SimulationTime(30.));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix = params.get<mio::osecir::ContactPatterns<ScalarType>>();
+    contact_matrix[0]                                   = mio::ContactMatrix<ScalarType>(
+        Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
+    contact_matrix.add_damping(Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
+                               mio::SimulationTime<ScalarType>(30.0));
 
     model.apply_constraints();
 
@@ -94,87 +94,90 @@ mio::osecir::Model<ScalarType> make_model(int num)
 namespace model
 {
 /**
-         * @brief Secir model with consistent setup for use in benchmarking.
-         */
+ * @brief Secir model with consistent setup for use in benchmarking.
+ */
 mio::osecir::Model<ScalarType> SecirAgeres(size_t num_agegroups)
 {
     mio::osecir::Model<ScalarType> model = mio::benchmark::detail::make_model(num_agegroups);
 
-    auto nb_groups   = model.parameters.get_num_groups();
-    double cont_freq = 10, fact = 1.0 / (double)(size_t)nb_groups;
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
-    contact_matrix[0] =
-        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
+    auto nb_groups       = model.parameters.get_num_groups();
+    ScalarType cont_freq = 10, fact = 1.0 / (ScalarType)(size_t)nb_groups;
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
+    contact_matrix[0] = mio::ContactMatrix<ScalarType>(
+        Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
 
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
-                               mio::SimulationTime(30.));
+    contact_matrix.add_damping(Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
+                               mio::SimulationTime<ScalarType>(30.0));
 
     return model;
 }
 /**
-         * @brief Secir model with consistent setup for use in benchmarking with added dampings.
-         */
+ * @brief Secir model with consistent setup for use in benchmarking with added dampings.
+ */
 mio::osecir::Model<ScalarType> SecirAgeresDampings(size_t num_agegroups)
 {
     mio::osecir::Model<ScalarType> model = mio::benchmark::detail::make_model(num_agegroups);
 
-    auto nb_groups   = model.parameters.get_num_groups();
-    double cont_freq = 10, fact = 1.0 / (double)(size_t)nb_groups;
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
-    contact_matrix[0] =
-        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
+    auto nb_groups       = model.parameters.get_num_groups();
+    ScalarType cont_freq = 10, fact = 1.0 / (ScalarType)(size_t)nb_groups;
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
+    contact_matrix[0] = mio::ContactMatrix<ScalarType>(
+        Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
 
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
-                               mio::SimulationTime(25.));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.3),
-                               mio::SimulationTime(40.));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.8),
-                               mio::SimulationTime(60.));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.5),
-                               mio::SimulationTime(75.));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 1.0),
-                               mio::SimulationTime(95.));
+    contact_matrix.add_damping(Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
+                               mio::SimulationTime<ScalarType>(25.0));
+    contact_matrix.add_damping(Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, 0.3),
+                               mio::SimulationTime<ScalarType>(40.0));
+    contact_matrix.add_damping(Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, 0.8),
+                               mio::SimulationTime<ScalarType>(60.0));
+    contact_matrix.add_damping(Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, 0.5),
+                               mio::SimulationTime<ScalarType>(75.0));
+    contact_matrix.add_damping(Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, 1.0),
+                               mio::SimulationTime<ScalarType>(95.0));
 
     return model;
 }
 /**
-         * @brief Secir model with consistent setup for use in benchmarking with added dampings.
-         * Dampings are set up to challenge the integrator, not to be realistic.
-         */
+ * @brief Secir model with consistent setup for use in benchmarking with added dampings.
+ * Dampings are set up to challenge the integrator, not to be realistic.
+ */
 mio::osecir::Model<ScalarType> SecirAgeresAbsurdDampings(size_t num_agegroups)
 {
     mio::osecir::Model<ScalarType> model = mio::benchmark::detail::make_model(num_agegroups);
 
-    auto nb_groups   = model.parameters.get_num_groups();
-    double cont_freq = 10, fact = 1.0 / (double)(size_t)nb_groups;
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
-    contact_matrix[0] =
-        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
+    auto nb_groups       = model.parameters.get_num_groups();
+    ScalarType cont_freq = 10, fact = 1.0 / (ScalarType)(size_t)nb_groups;
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
+    contact_matrix[0] = mio::ContactMatrix<ScalarType>(
+        Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
 
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.8),
-                               mio::SimulationTime(10.));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.5),
-                               mio::SimulationTime(11.));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.2),
-                               mio::SimulationTime(12.));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.1),
-                               mio::SimulationTime(13.));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.9),
-                               mio::SimulationTime(30.));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.2),
-                               mio::SimulationTime(30.5));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
-                               mio::SimulationTime(31.));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.2),
-                               mio::SimulationTime(31.5));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.8),
-                               mio::SimulationTime(32.));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.1),
-                               mio::SimulationTime(40.));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.001),
-                               mio::SimulationTime(44.));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.9),
-                               mio::SimulationTime(46.));
+    contact_matrix.add_damping(Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, 0.8),
+                               mio::SimulationTime<ScalarType>(10.0));
+    contact_matrix.add_damping(Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, 0.5),
+                               mio::SimulationTime<ScalarType>(11.0));
+    contact_matrix.add_damping(Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, 0.2),
+                               mio::SimulationTime<ScalarType>(12.0));
+    contact_matrix.add_damping(Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, 0.1),
+                               mio::SimulationTime<ScalarType>(13.0));
+    contact_matrix.add_damping(Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, 0.9),
+                               mio::SimulationTime<ScalarType>(30.0));
+    contact_matrix.add_damping(Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, 0.2),
+                               mio::SimulationTime<ScalarType>(30.5));
+    contact_matrix.add_damping(Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
+                               mio::SimulationTime<ScalarType>(31.0));
+    contact_matrix.add_damping(Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, 0.2),
+                               mio::SimulationTime<ScalarType>(31.5));
+    contact_matrix.add_damping(Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, 0.8),
+                               mio::SimulationTime<ScalarType>(32.0));
+    contact_matrix.add_damping(Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, 0.1),
+                               mio::SimulationTime<ScalarType>(40.0));
+    contact_matrix.add_damping(Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, 0.001),
+                               mio::SimulationTime<ScalarType>(44.0));
+    contact_matrix.add_damping(Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, 0.9),
+                               mio::SimulationTime<ScalarType>(46.0));
 
     return model;
 }

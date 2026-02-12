@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Rene Schmieding
 *
@@ -34,11 +34,9 @@ namespace mio
  * @tparam FP A floating point type, e.g. double.
  * @tparam M An implementation of a StochasticModel.
  */
-template <typename FP, class M>
+template <typename FP, IsStochasticModel<FP> M>
 class StochasticSimulation : public details::SimulationBase<FP, M, SdeIntegrator<FP>>
 {
-    static_assert(is_stochastic_model<FP, M>::value, "Template parameter must be a stochastic model.");
-
 public:
     using Base  = details::SimulationBase<FP, M, SdeIntegrator<FP>>;
     using Model = M;
@@ -50,7 +48,7 @@ public:
      * @param[in] dt Initial step size of integration.
      */
     StochasticSimulation(Model const& model, FP t0 = 0., FP dt = 0.1)
-        : Base(model, std::make_shared<EulerMaruyamaIntegratorCore<FP>>(), t0, dt)
+        : Base(model, std::make_unique<EulerMaruyamaIntegratorCore<FP>>(), t0, dt)
     {
     }
 
@@ -77,12 +75,12 @@ public:
 
 template <typename FP, class Model, class Sim = StochasticSimulation<FP, Model>>
 TimeSeries<FP> simulate_stochastic(FP t0, FP tmax, FP dt, Model const& model,
-                                   std::shared_ptr<SdeIntegratorCore<FP>> integrator = nullptr)
+                                   std::unique_ptr<SdeIntegratorCore<FP>>&& integrator_core = nullptr)
 {
     model.check_constraints();
     Sim sim(model, t0, dt);
-    if (integrator) {
-        sim.set_integrator(integrator);
+    if (integrator_core) {
+        sim.set_integrator_core(std::move(integrator_core));
     }
     sim.advance(tmax);
     return sim.get_result();

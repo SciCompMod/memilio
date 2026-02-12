@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin J Kuehn, Anna Wendler, Lena Ploetzke
 *
@@ -41,7 +41,7 @@ void Simulation::advance(ScalarType tmax)
         m_model->transitions.add_time_point(m_model->transitions.get_last_time() + m_dt);
         m_model->populations.add_time_point(m_model->populations.get_last_time() + m_dt);
 
-        // compute Susceptibles:
+        // Compute Susceptibles:
         m_model->compute_susceptibles(m_dt);
 
         // Compute flows:

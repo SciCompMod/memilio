@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: René Schmieding, Julia Bicker
 *
@@ -32,10 +32,10 @@ namespace mio
  * The population having "status" is multiplied with "factor."
  * @tparam Status An infection state enum.
  */
-template <class Status>
+template <typename FP, class Status>
 struct Influence {
     Status status;
-    ScalarType factor;
+    FP factor;
 };
 
 /**
@@ -45,13 +45,13 @@ struct Influence {
  * the sum over all "influences", which scale their "status" with the respective "factor".
  * @tparam Status An infection state enum.
  */
-template <class Status>
+template <typename FP, class Status>
 struct AdoptionRate {
     Status from; // i
     Status to; // j
     mio::regions::Region region; // k
-    ScalarType factor; // gammahat_{ij}^k
-    std::vector<Influence<Status>> influences; // influences[tau] = ( Psi_{i,j,tau} , gamma_{i,j,tau} )
+    FP factor; // gammahat_{ij}^k
+    std::vector<Influence<FP, Status>> influences; // influences[tau] = ( Psi_{i,j,tau} , gamma_{i,j,tau} )
 };
 
 } // namespace mio

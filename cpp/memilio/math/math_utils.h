@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Rene Schmieding
 *
@@ -62,6 +62,27 @@ IOResult<void> map_to_nonnegative(Eigen::Ref<Eigen::VectorX<FP>> x, const FP tol
         }
     }
     return success();
+}
+
+/**
+ * @brief Evaluate an intermediate expression to its underlying type, if necessary.
+ * @param x An intermediate expression, resulting e.g. from `auto x = y + z`.
+ * @tparam Type Underlying type of the expression, e.g. an AD type. Usually this is set to `FP`.
+ * @tparam Intermediate Type of the expression result. Do not specify this template, let the compiler deduce it.
+ * @return Either casts the intermediate expression to Type, or forwards it.
+ *
+ * The main purpose of this function is reconcile the handling of intermediate types from Eigen and AD.
+ * Eigen wants to return intermediates for optimization, while AD values must be evaluated (due to using references).
+ */
+template <typename Type, typename Intermediate>
+inline auto evaluate_intermediate(Intermediate&& x)
+{
+    if constexpr (is_ad_type_v<Type>) {
+        return static_cast<Type>(x);
+    }
+    else {
+        return x;
+    }
 }
 
 } // namespace mio

@@ -16,7 +16,7 @@ Dependencies
 Required python packages:
 
 - pandas >= 1.2.2
-- numpy >= 1.22, < 1.25
+- numpy >= 1.22, !=1.25.*
 - tensorflow
 - matplotlib
 - scikit-learn
@@ -45,7 +45,7 @@ The package currently provides the following modules:
 - `tests`: This file contains all tests.
 
 ODE-SECIR Simple Model
------------------
+----------------------
 
 The `ode_secir_simple` module provides surrogate models for the basic ODE-SECIR epidemiological model. This model is not stratified by age groups and simulates disease progression through the following compartments:
 
@@ -61,7 +61,7 @@ The `ode_secir_simple` module provides surrogate models for the basic ODE-SECIR 
 For more details on the model structure and parameters, we refer to the ODE-SECIR model documentation.
 
 Data Generation
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 The `data_generation.py` module provides functionality to generate training data for the surrogate models by running multiple simulations of the basic ODE-SECIR model with randomized initial conditions. The data generation process involves:
 
@@ -87,7 +87,7 @@ The data generation process can be summarized as follows:
 5. Saves the dataset as a pickle file for later use.
 
 Network Architectures
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 The `network_architectures.py` module provides different neural network architectures for time series prediction:
 
@@ -107,7 +107,7 @@ The `network_architectures.py` module provides different neural network architec
    - Particularly efficient for capturing local temporal patterns
 
 Model Training and Evaluation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The `model.py` module provides functionality for:
 
@@ -144,7 +144,7 @@ Example usage:
                                      modeltype, model, 'InfectedSymptoms')
 
 Hyperparameter Optimization
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The `grid_search.py` and `hyperparameter_tuning.py` modules provide tools for systematic hyperparameter optimization:
 
@@ -164,6 +164,6 @@ The `grid_search.py` and `hyperparameter_tuning.py` modules provide tools for sy
    - Selection of optimal model configurations
 
 SECIR Groups Model
------------------
+------------------
 
 To be added...

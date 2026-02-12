@@ -221,12 +221,13 @@ mio::TimeSeries<ScalarType> postprocess_timeseries(const mio::TimeSeries<ScalarT
 mio::UncertainContactMatrix<ScalarType> scale_contact_matrix(ScalarType damping, ScalarType scaling_time)
 {
 
-    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
+    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup<ScalarType>(1, 1);
     if (damping <= 1.) {
         // Perform simulation with a decrease in contacts.
-        contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, simulation_parameter["cont_freq"]));
-        contact_matrix[0].add_damping(0., mio::SimulationTime(scaling_time));
-        contact_matrix[0].add_damping(damping, mio::SimulationTime(scaling_time + 0.00001));
+        contact_matrix[0] =
+            mio::ContactMatrix<ScalarType>(Eigen::MatrixXd::Constant(1, 1, simulation_parameter["cont_freq"]));
+        contact_matrix[0].add_damping(0., mio::SimulationTime<ScalarType>(scaling_time));
+        contact_matrix[0].add_damping(damping, mio::SimulationTime<ScalarType>(scaling_time + 0.00001));
     }
     // else {
     //     // Perform simulation with an increase in contacts.
@@ -295,8 +296,10 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType t0_ide, Scala
     // Set parameters.
     // If Seasonality=0, then cont_freq_eff is equal to the contact frequency as defined in contact_matrix.
     model_ode.parameters.set<mio::osecir::Seasonality<ScalarType>>(simulation_parameter["Seasonality"]);
-    mio::ContactMatrixGroup& contact_matrix = model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, simulation_parameter["cont_freq"]));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
+    contact_matrix[0] =
+        mio::ContactMatrix<ScalarType>(Eigen::MatrixXd::Constant(1, 1, simulation_parameter["cont_freq"]));
     model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>() = scale_contact_matrix(damping, scaling_time);
     // mio::UncertainContactMatrix(contact_matrix);
 
@@ -335,7 +338,7 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType t0_ide, Scala
     model_ode.parameters.get<mio::osecir::ICUCapacity<ScalarType>>() = std::numeric_limits<ScalarType>::max();
 
     auto integrator =
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>();
+        std::make_unique<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>();
     // Choose dt_min = dt_max so that we have a fixed time step and can compare to IDE.
     integrator->set_dt_min(dt_ode);
     integrator->set_dt_max(dt_ode);
@@ -348,7 +351,7 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType t0_ide, Scala
     // Vector that contains ODE simulation results. First entry contains values for compartments, second entry contains
     // values for cumulative flows.
     std::vector<mio::TimeSeries<ScalarType>> results_ode =
-        mio::osecir::simulate_flows<ScalarType>(t0, tmax, dt_ode, model_ode, integrator);
+        mio::osecir::simulate_flows<ScalarType>(t0, tmax, dt_ode, model_ode, std::move(integrator));
 
     if (!save_dir.empty() && save_exponent > 0) {
         // Create result directory if not existent yet.
@@ -399,9 +402,9 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType t0_ide, Scala
         // To compare with the ODE model we use ExponentialSurvivalFunctions functions as TransitionDistributions.
         // We set the parameters so that they correspond to the above ODE model.
         mio::ExponentialSurvivalFunction exponential(10.0);
-        mio::StateAgeFunctionWrapper delaydistribution(exponential);
-        std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib((int)mio::isecir::InfectionTransition::Count,
-                                                                   delaydistribution);
+        mio::StateAgeFunctionWrapper<ScalarType> delaydistribution(exponential);
+        std::vector<mio::StateAgeFunctionWrapper<ScalarType>> vec_delaydistrib(
+            (int)mio::isecir::InfectionTransition::Count, delaydistribution);
         // ExposedToInfectedNoSymptoms
         vec_delaydistrib[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms].set_distribution_parameter(
             1. / model_ode.parameters.get<mio::osecir::TimeExposed<ScalarType>>()[(mio::AgeGroup)0]);
@@ -460,19 +463,19 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType t0_ide, Scala
         model_ide.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
 
         // Set further parameters.
-        mio::ConstantFunction constfunc_proboncontact(
+        mio::ConstantFunction<ScalarType> constfunc_proboncontact(
             model_ode.parameters.get<mio::osecir::TransmissionProbabilityOnContact<ScalarType>>()[(mio::AgeGroup)0]);
-        mio::StateAgeFunctionWrapper proboncontact(constfunc_proboncontact);
+        mio::StateAgeFunctionWrapper<ScalarType> proboncontact(constfunc_proboncontact);
         model_ide.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(proboncontact);
 
-        mio::ConstantFunction constfunc_reltransnosympt(
+        mio::ConstantFunction<ScalarType> constfunc_reltransnosympt(
             model_ode.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<ScalarType>>()[(mio::AgeGroup)0]);
-        mio::StateAgeFunctionWrapper reltransnosympt(constfunc_reltransnosympt);
+        mio::StateAgeFunctionWrapper<ScalarType> reltransnosympt(constfunc_reltransnosympt);
         model_ide.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(reltransnosympt);
 
-        mio::ConstantFunction constfunc_riskofinf(
+        mio::ConstantFunction<ScalarType> constfunc_riskofinf(
             model_ode.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[(mio::AgeGroup)0]);
-        mio::StateAgeFunctionWrapper riskofinf(constfunc_riskofinf);
+        mio::StateAgeFunctionWrapper<ScalarType> riskofinf(constfunc_riskofinf);
         model_ide.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(riskofinf);
 
         // Compute initial flows and simulate for each ide_exponent.

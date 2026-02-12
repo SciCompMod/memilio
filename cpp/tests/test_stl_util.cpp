@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -107,22 +107,6 @@ TEST(TestInsertSortedReplace, normal)
     mio::insert_sorted_replace(v, 2);
 
     EXPECT_THAT(v, testing::ElementsAre(1, 2, 5, 6, 7));
-}
-
-TEST(TestInsertSortedReplace, returnsValidIterator)
-{
-    std::vector<int> v;
-    int x;
-
-    //There is no GTEST_NO_DEATH macro so we just let the test crash.
-    //If this test crashes, the function does not return a valid iterator.
-    //Dereferencing an invalid iterator is undefined behavior so the test
-    //may behave unexpectedly (pass, fail, or something else) if the iterator is invalid.
-    x = *mio::insert_sorted_replace(v, 5);
-    x = *mio::insert_sorted_replace(v, 1);
-    x = *mio::insert_sorted_replace(v, 4);
-    x = *mio::insert_sorted_replace(v, 7);
-    ASSERT_EQ(x, 7);
 }
 
 TEST(TestInsertSortedReplace, reverse)

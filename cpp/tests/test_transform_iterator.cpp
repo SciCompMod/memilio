@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -32,8 +32,7 @@ TEST(TestTransformIterator, produce_lvalue)
         int i;
     };
     auto v     = std::vector<Foo>{{1}, {2}};
-    auto get_i = [](auto&& foo) -> auto&
-    {
+    auto get_i = [](auto&& foo) -> auto& {
         return foo.get_i();
     };
     auto b     = mio::make_transform_iterator(v.begin(), get_i);

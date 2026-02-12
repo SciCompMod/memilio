@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Maximilian Betz, Henrik Zunker
 *
@@ -35,8 +35,8 @@ template <class FlowSimulation>
 void bind_Flow_Simulation(pybind11::module_& m, std::string const& name)
 {
     bind_class<FlowSimulation, EnablePickling::IfAvailable>(m, name.c_str())
-        .def(pybind11::init<const typename FlowSimulation::Model&, double, double>(), pybind11::arg("model"), pybind11::arg("t0") = 0,
-             pybind11::arg("dt") = 0.1)
+        .def(pybind11::init<const typename FlowSimulation::Model&, double, double>(), pybind11::arg("model"),
+             pybind11::arg("t0") = 0, pybind11::arg("dt") = 0.1)
         .def_property_readonly("result", pybind11::overload_cast<>(&FlowSimulation::get_result, pybind11::const_),
                                pybind11::return_value_policy::reference_internal)
         .def_property_readonly("flows", pybind11::overload_cast<>(&FlowSimulation::get_flows, pybind11::const_),
@@ -45,8 +45,8 @@ void bind_Flow_Simulation(pybind11::module_& m, std::string const& name)
                                pybind11::return_value_policy::reference_internal)
         .def_property_readonly("dt", pybind11::overload_cast<>(&FlowSimulation::get_dt, pybind11::const_),
                                pybind11::return_value_policy::reference_internal)
-        .def_property("integrator", pybind11::overload_cast<>(&FlowSimulation::get_integrator, pybind11::const_),
-                               &FlowSimulation::set_integrator, pybind11::return_value_policy::reference_internal)
+        .def_property("integrator", pybind11::overload_cast<>(&FlowSimulation::get_integrator_core, pybind11::const_),
+                      &FlowSimulation::set_integrator_core, pybind11::return_value_policy::reference_internal)
         .def("advance", &FlowSimulation::advance, pybind11::arg("tmax"))
         .doc() = "A class for the simulation of a flow model.";
 }

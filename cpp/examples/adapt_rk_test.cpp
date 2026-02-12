@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <vector>
 #include <cmath>
+#include <numbers>
 
 void init_vectors(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>& sol, size_t n)
 {
@@ -77,7 +78,7 @@ int main()
     std::vector<Eigen::VectorXd> y;
     std::vector<Eigen::VectorXd> sol;
 
-    const double pi = std::acos(-1);
+    const double pi = std::numbers::pi_v<double>;
 
     size_t n    = 10;
     double t0   = 0;

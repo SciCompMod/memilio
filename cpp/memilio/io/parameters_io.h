@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Henrik Zunker
 *
@@ -63,7 +63,7 @@ int get_region_id(const EpiDataEntry& data_entry)
  *
  * @return An IOResult indicating success or failure.
  */
-template <typename FP = double>
+template <typename FP = ScalarType>
 IOResult<void> compute_divi_data(const std::vector<DiviEntry>& divi_data, const std::vector<int>& vregion, Date date,
                                  std::vector<FP>& vnum_icu)
 {
@@ -106,7 +106,7 @@ IOResult<void> compute_divi_data(const std::vector<DiviEntry>& divi_data, const 
  *
  * @return An IOResult indicating success or failure.
  */
-template <typename FP = double>
+template <typename FP = ScalarType>
 IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& vregion, Date date,
                               std::vector<FP>& vnum_icu)
 {
@@ -122,8 +122,8 @@ IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& v
  * @return An IOResult containing a vector of vectors, where each inner vector represents the population
  *         distribution across age groups for a specific region, or an error if the function fails.
  */
-IOResult<std::vector<std::vector<double>>> read_population_data(const std::vector<PopulationDataEntry>& population_data,
-                                                                const std::vector<int>& vregion);
+IOResult<std::vector<std::vector<ScalarType>>>
+read_population_data(const std::vector<PopulationDataEntry>& population_data, const std::vector<int>& vregion);
 
 /**
  * @brief Reads population data from census data.
@@ -133,8 +133,8 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::vecto
  * @return An IOResult containing a vector of vectors, where each inner vector represents the population
  *         distribution across age groups for a specific region, or an error if the function fails.
  */
-IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path,
-                                                                const std::vector<int>& vregion);
+IOResult<std::vector<std::vector<ScalarType>>> read_population_data(const std::string& path,
+                                                                    const std::vector<int>& vregion);
 
 } // namespace mio
 

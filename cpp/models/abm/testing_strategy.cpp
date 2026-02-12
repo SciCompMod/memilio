@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen
 *
@@ -51,7 +51,7 @@ bool TestingCriteria::evaluate(const Person& p, TimePoint t) const
 }
 
 TestingScheme::TestingScheme(const TestingCriteria& testing_criteria, TimeSpan validity_period, TimePoint start_date,
-                             TimePoint end_date, TestParameters test_parameters, double probability)
+                             TimePoint end_date, TestParameters test_parameters, ScalarType probability)
     : m_testing_criteria(testing_criteria)
     , m_validity_period(validity_period)
     , m_start_date(start_date)
@@ -97,7 +97,7 @@ bool TestingScheme::run_and_test(PersonalRandomNumberGenerator& rng, Person& per
     }
     // Otherwise, the time_of_testing in the past (i.e. the agent has already performed it).
     if (m_testing_criteria.evaluate(person, t - m_test_parameters.required_time)) {
-        double random = UniformDistribution<double>::get_instance()(rng);
+        ScalarType random = UniformDistribution<ScalarType>::get_instance()(rng);
         if (random < m_probability) {
             bool result = person.get_tested(rng, t - m_test_parameters.required_time, m_test_parameters);
             person.add_test_result(t, m_test_parameters.type, result);

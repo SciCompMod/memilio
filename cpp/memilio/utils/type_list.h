@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: René Schmieding
 *
@@ -59,6 +59,12 @@ struct type_at_index<Index, TypeList<Types...>> : public type_at_index<Index, Ty
 /// Specialization of index_of_type for TypeList. @see index_of_type.
 template <class Type, class... Types>
 struct index_of_type<Type, TypeList<Types...>> : public index_of_type<Type, Types...> {
+};
+
+/// Specialization of index_of_type for TypeList. Resolves ambiguity when using TypeLists as items. @see index_of_type.
+template <class... Types>
+struct index_of_type<TypeList<Types...>, TypeList<Types...>> {
+    static constexpr std::size_t value = 0;
 };
 
 } // namespace mio

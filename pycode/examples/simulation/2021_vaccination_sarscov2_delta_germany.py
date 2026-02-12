@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2025 MEmilio
+# Copyright (C) 2020-2026 MEmilio
 #
 # Authors: Maximilian Betz
 #
@@ -659,7 +659,7 @@ class Simulation:
                 os.makedirs(path_graph)
             osecirvvs.write_graph(graph, path_graph)
 
-        study = osecirvvs.ParameterStudy(
+        study = osecirvvs.GraphParameterStudy(
             graph, 0., num_days_sim, 0.5, num_runs)
         ensemble = study.run(self.high)
 

@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Henrik Zunker
 *
@@ -32,7 +32,7 @@ namespace mio
 {
 /**
  * @brief Daily local ICU occupancy per age group.
- * 
+ *
  * This parameter stores all historic (local) ICU occupancy values normalized per 100,000 inhabitants.
  * The values are extracted from the simulation results based on the provided ICU compartment indices
  * and are updated at each feedback step.
@@ -89,7 +89,7 @@ struct GammaCutOff {
     using Type = size_t;
     static Type get_default(AgeGroup)
     {
-        return 45;
+        return Type(45);
     }
     static std::string name()
     {
@@ -137,7 +137,7 @@ struct SoftPlusCurvatureParameter {
     using Type = FP;
     static Type get_default(AgeGroup)
     {
-        return FP(0.1);
+        return Type(0.1);
     }
     static std::string name()
     {
@@ -153,7 +153,7 @@ struct NominalICUCapacity {
     using Type = FP;
     static Type get_default(AgeGroup)
     {
-        return FP(9.0);
+        return Type(9.0);
     }
     static std::string name()
     {
@@ -239,7 +239,7 @@ public:
      *
      * The simulation is advanced in steps of dt_feedback. At each step, feedback
      * is applied, then the simulation is advanced, and afterwards the current ICU occupancy is stored.
-     * 
+     *
      * Note that the simulation may make additional substeps depending on its own
      * timestep dt. When using fixed-step integrators, dt_feedback should be an integer multiple of
      * the simulation timestep dt.
@@ -250,9 +250,10 @@ public:
      */
     auto advance(const FP tmax, const FP dt_feedback = 1.0)
     {
+        using std::min;
         FP t = m_simulation.get_result().get_last_time();
         while (t < tmax) {
-            FP dt_eff = std::min(dt_feedback, tmax - t);
+            FP dt_eff = min<FP>(dt_feedback, tmax - t);
             apply_feedback(t + dt_eff);
             m_simulation.advance(t + dt_eff);
             add_icu_occupancy(t + dt_eff);
@@ -365,7 +366,7 @@ public:
         auto& model             = m_simulation.get_model();
         size_t num_groups       = static_cast<size_t>(model.parameters.get_num_groups());
         const auto& last_values = m_simulation.get_result().get_last_value();
-        Eigen::VectorXd icu_occ(num_groups);
+        Eigen::VectorX<FP> icu_occ(num_groups);
         for (size_t i = 0; i < m_icu_indices.size(); ++i) {
             icu_occ[i] = last_values[m_icu_indices[i]];
         }
@@ -405,6 +406,10 @@ public:
      */
     void apply_feedback(FP t)
     {
+        using std::exp;
+        using std::log;
+        using std::min;
+
         // get model parameters
         auto& params          = m_simulation.get_model().parameters;
         const auto num_groups = (size_t)params.get_num_groups();
@@ -420,14 +425,14 @@ public:
         FP perceived_risk = calc_risk_perceived();
 
         // add the perceived risk to the time series
-        m_perceived_risk.add_time_point(t, Eigen::VectorXd::Constant(num_groups, perceived_risk));
+        m_perceived_risk.add_time_point(t, Eigen::VectorX<FP>::Constant(num_groups, perceived_risk));
 
-        auto group_weights_all = Eigen::VectorXd::Constant(num_groups, 1.0);
+        auto group_weights_all = Eigen::VectorX<FP>::Constant(num_groups, 1.0);
 
         // define a lambda function to create a damping sampling object given a reduction factor and location
         auto set_contact_reduction = [=](FP val, size_t location) {
-            auto v = mio::UncertainValue(val);
-            return mio::DampingSampling(v, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(t),
+            auto v = mio::UncertainValue<FP>(val);
+            return mio::DampingSampling(v, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime<FP>(t),
                                         std::vector<size_t>{location}, group_weights_all);
         };
 
@@ -438,11 +443,11 @@ public:
 
             // compute the effective reduction factor using a softplus function.
             FP reduc_fac = (contactReductionMax[loc] - contactReductionMin[loc]) * epsilon *
-                               std::log(std::exp(perceived_risk / epsilon) + 1.0) +
+                               log(exp(perceived_risk / epsilon) + 1.0) +
                            contactReductionMin[loc];
 
             // clamp the reduction factor to the maximum allowed value.
-            reduc_fac = std::min(reduc_fac, contactReductionMax[loc]);
+            reduc_fac = min<FP>(reduc_fac, contactReductionMax[loc]);
 
             // generate the damping for the current location.
             auto damping = set_contact_reduction(reduc_fac, loc);

@@ -111,12 +111,13 @@ Please see the individual package documentation for more details on the function
 Installation
 ------------
 
-Each package provides a `setup.py` script that installs the package and its dependencies. 
-The installation can be run with the following command (from the directory containing the `setup.py`)
+Each package provides a ``pyproject.toml`` that installs the package and its dependencies with pip.
+The dependencies of the individual packages are denoted in their documentation.
+The installation can be run with the following command (from the directory containing the ``pyproject.toml`` file)
 
 .. code-block:: console 
     
-    pip install .
+    python -m pip install .
 
 This copies the package and the required dependencies to your site-packages.
 
@@ -124,19 +125,27 @@ For development of code use this command instead
 
 .. code-block:: console 
     
-    pip install -e .[dev]
+    python -m pip install -e .[dev]
 
 This command allows you to work on the code without having to reinstall the package after a change. It also installs all additional dependencies required for development and maintenance.
-The dependencies are denoted in the documentation of each package.
+
+.. dropdown:: :fa:`gears` Build files for skbuild
+
+    The simulaion and generation packages use skbuild to compile python bindings or parts of the C++ library.
+    By default, the cmake build files are put into ``pycode/build/memilio-{package_name}`` to save on time during
+    package development. If you get unexpected cmake errors, you can try and delete the respective build directory. If
+    you do not want to store the build files at all, you can remove the ``build_dir`` entry from the section
+    ``[tool.scikit-build]`` in the ``pyproject.toml``. Then skbuild will use a temporary directory instead.
 
 Testing
 -------
 
-Each package provides a test suite under ``pycode/memilio-{package_name}/memilio/{package_name}_test``. 
+Each package provides a test suite under ``pycode/memilio-{package_name}/tests``. 
 To run the tests, simply use the following command inside the package folder after installation:
 
 .. code-block:: console 
 
+    cd tests
     python -m unittest
 
 Coverage Report
@@ -157,7 +166,7 @@ To get the coverage report do in the package folder
 
 Coverage report for actual master:
 
-`Coverage Report <https://scicompmod.github.io/memilio/coverage/python/>`_
+`Coverage Report <https://scicompmod.github.io/memilio/coverage/python/>`__
 
 Inspection via pylint
 ---------------------
@@ -171,9 +180,12 @@ Run pylint with the commands in the package folder
 
 .. code-block:: console
 
-    python setup.py pylint
+    python ../run_pylint.py
     pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
+
+From the repository root you can also target a package explicitly, for example
+``python pycode/run_pylint.py --package-dir memilio-plot``.
 
 Pylint report for actual master:
 
-`Pylint Report <https://dlr-sc.github.io/memilio/pylint/>`_
+`Pylint Report <https://dlr-sc.github.io/memilio/pylint/>`__
