@@ -169,10 +169,6 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                     return model.parameters.template get<DeathsPerInfectedCritical>()[{virus_variant, age_group}];
                 });
 
-                param_percentile(node, [age_group, virus_variant](auto&& model) -> auto& {
-                    return model.parameters.template get<DetectInfection>()[{virus_variant, age_group}];
-                });
-
                 param_percentile(node, [virus_variant](auto&& model) -> auto& {
                     return model.parameters.template get<AerosolTransmissionRates>()[{virus_variant}];
                 });
@@ -187,17 +183,17 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                         return dist1.viral_load_peak < dist2.viral_load_peak;
                     });
                 param_percentile_dist(
-                    node, std::vector<InfectivityDistributionsParameters>(num_runs),
+                    node, std::vector<ViralShedTuple>(num_runs),
                     [age_group, virus_variant](auto&& model) -> auto& {
-                        return model.parameters.template get<InfectivityDistributions>()[{virus_variant, age_group}];
+                        return model.parameters.template get<ViralShedParameters>()[{virus_variant, age_group}];
                     },
                     [](auto& dist1, auto& dist2) {
-                        return dist1.infectivity_alpha < dist2.infectivity_alpha;
+                        return dist1.viral_shed_alpha < dist2.viral_shed_alpha;
                     });
                 param_percentile_dist(
                     node, std::vector<mio::AbstractParameterDistribution>(num_runs),
                     [age_group, virus_variant](auto&& model) -> auto& {
-                        return model.parameters.template get<VirusShedFactor>()[{virus_variant, age_group}];
+                        return model.parameters.template get<ViralShedFactor>()[{virus_variant, age_group}];
                     },
                     [](auto& dist1, auto& dist2) {
                         return dist1 < dist2;

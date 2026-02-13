@@ -25,6 +25,7 @@
 #include "utils/custom_index_array.h"
 #include "utils/parameter_set.h"
 #include "epidemiology/populations.h"
+#include "data/analyze_result.h"
 
 //Includes from MEmilio
 #include "sde_sirs/model.h"
@@ -52,17 +53,7 @@ inline std::string pretty_name<mio::ssirs::InfectionState>()
 
 PYBIND11_MODULE(_simulation_ssirs, m)
 {
-    m.def("interpolate_simulation_result",
-          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
-              &mio::interpolate_simulation_result),
-          py::arg("ts"), py::arg("abs_tol") = 1e-14);
-
-    m.def("interpolate_simulation_result",
-          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const std::vector<double>&)>(
-              &mio::interpolate_simulation_result),
-          py::arg("ts"), py::arg("interpolation_times"));
-
-    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<double>>);
+    pymio::bind_interpolate_result_methods(m);
 
     pymio::iterable_enum<mio::ssirs::InfectionState>(m, "InfectionState")
         .value("Susceptible", mio::ssirs::InfectionState::Susceptible)

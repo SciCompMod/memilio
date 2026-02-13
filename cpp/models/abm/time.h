@@ -130,6 +130,17 @@ public:
     {
         return TimeSpan{m_seconds * f};
     }
+
+    /**
+     * @brief Multiplication with double and rounding down afterwards to whole seconds
+     * @param[in] f Factor to multiply with.
+     * @return New TimeSpan after multiplication.
+     */
+    TimeSpan multiply(double f) const
+    {
+        return TimeSpan{int(m_seconds * f)};
+    }
+
     TimeSpan& operator*=(int f)
     {
         m_seconds *= f;

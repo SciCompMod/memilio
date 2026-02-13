@@ -188,11 +188,12 @@ public:
         using std::fabs;
         using std::max;
         using std::min;
-        const FP t0 = results.get_last_time();
+        const FP t0  = results.get_last_time();
+        const FP eps = Limits<FP>::zero_tolerance();
         assert(tmax > t0);
         assert(dt > 0);
 
-        const size_t num_steps =
+        const auto num_steps =
             static_cast<size_t>(ceil((tmax - t0) / dt)); // estimated number of time steps (if equidistant)
 
         results.reserve(results.get_num_time_points() + num_steps);
@@ -204,7 +205,7 @@ public:
         FP dt_min_restore = m_core->get_dt_min(); // used to restore dt_min, if it was decreased to reach tmax
         FP t              = t0;
 
-        for (size_t i = results.get_num_time_points() - 1; fabs((tmax - t) / (tmax - t0)) > 1e-10; ++i) {
+        for (size_t i = results.get_num_time_points() - 1; fabs((tmax - t) / (tmax - t0)) > eps; ++i) {
             // We don't make time steps too small as the error estimator of an adaptive integrator
             //may not be able to handle it. this is very conservative and maybe unnecessary,
             //but also unlikely to happen. may need to be reevaluated.
@@ -225,7 +226,7 @@ public:
             results.get_last_time() = t;
 
             // if dt has been changed by step, register the current m_core as adaptive.
-            m_is_adaptive |= !floating_point_equal<FP>(dt, dt_copy, Limits<FP>::zero_tolerance());
+            m_is_adaptive |= !floating_point_equal<FP>(dt, dt_copy, eps);
         }
         m_core->get_dt_min() = dt_min_restore; // restore dt_min
         // if dt was decreased to reach tmax in the last time iteration,
@@ -236,7 +237,7 @@ public:
             if (!step_okay) {
                 log_warning("Adaptive step sizing failed. Forcing an integration step of size dt_min.");
             }
-            else if (fabs((tmax - t) / (tmax - t0)) > 1e-14) {
+            else if (fabs((tmax - t) / (tmax - t0)) > eps) {
                 log_warning("Last time step too small. Could not reach tmax exactly.");
             }
             else {
