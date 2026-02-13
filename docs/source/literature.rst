@@ -18,9 +18,9 @@
 .. |Hybrid_metapopulation_agent-based_DOI| replace:: DOI:10.1016/j.idm.2024.12.015
 .. _Hybrid_metapopulation_agent-based_DOI: https://doi.org/10.1016/j.idm.2024.12.015
 
-.. |Graph_Neural_Network_Surrogates| replace:: Schmidt A, Zunker H, Heinlein A, Kühn MJ. (2025). *Graph Neural Network Surrogates to leverage Mechanistic Expert Knowledge towards Reliable and Immediate Pandemic Response*. Submitted for publication. |Graph_Neural_Network_Surrogates_DOI|_
-.. |Graph_Neural_Network_Surrogates_DOI| replace:: arXiv:2411.06500
-.. _Graph_Neural_Network_Surrogates_DOI: https://arxiv.org/abs/2411.06500
+.. |Graph_Neural_Network_Surrogates| replace:: Schmidt A, Zunker H, Heinlein A, Kühn MJ. (2026). *Graph neural network surrogates to leverage mechanistic expert knowledge towards reliable and immediate pandemic response*. *Scientific Reports*. |Graph_Neural_Network_Surrogates_DOI|_
+.. |Graph_Neural_Network_Surrogates_DOI| replace:: DOI:10.1038/s41598-026-39431-5
+.. _Graph_Neural_Network_Surrogates_DOI: https://doi.org/10.1038/s41598-026-39431-5
 
 .. |Revisiting_the_Linear_Chain| replace:: Plötzke L, Wendler A, Schmieding R, Kühn MJ. (2024). *Revisiting the Linear Chain Trick in epidemiological models: Implications of underlying assumptions for numerical solutions*. Mathematics and Computers in Simulation 239, pp. 823-844 (2026). |Revisiting_the_Linear_Chain_DOI|_
 .. |Revisiting_the_Linear_Chain_DOI| replace:: DOI:10.1016/j.matcom.2025.07.045
