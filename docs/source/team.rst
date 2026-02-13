@@ -208,9 +208,9 @@ for Mathematical Life Sciences as a PhD student to work on infectious disease mo
    * |MEmilio_citation|
 
 .. dropdown:: Links
-:animate: fade-in-slide-down
+   :animate: fade-in-slide-down
 
-* `ORCID Profile: 0009-0008-9861-0216 <https://orcid.org/0009-0008-9861-0216>`__
+   * `ORCID Profile: 0009-0008-9861-0216 <https://orcid.org/0009-0008-9861-0216>`__
 
 Maximilian Betz
 ^^^^^^^^^^^^^^^
