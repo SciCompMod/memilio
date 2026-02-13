@@ -211,22 +211,21 @@ TEST(IdeSecir, checkStartTime)
 }
 
 // Check results of our simulation with an example calculated by hand,
-// for calculations see internal Overleaf document.
-// TODO: Add link to material when published.
+// see https://doi.org/10.1016/j.amc.2025.129636 for the used formulas.
 TEST(IdeSecir, checkSimulationFunctions)
 {
     using Vec            = mio::TimeSeries<ScalarType>::Vector;
     size_t num_agegroups = 1;
     ScalarType tmax      = 0.5;
+    ScalarType dt        = 0.5;
+
     mio::CustomIndexArray<ScalarType, mio::AgeGroup> N =
         mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 10000.);
     mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths =
         mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 10.);
-    ScalarType dt = 0.5;
-
-    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
     // Create TimeSeries with num_transitions elements where transitions needed for simulation will be stored.
+    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
     mio::TimeSeries<ScalarType> init(num_transitions * num_agegroups);
 
     // Add time points for initialization for transitions and death.
@@ -274,26 +273,26 @@ TEST(IdeSecir, checkSimulationFunctions)
     mio::TimeSeries<ScalarType> secihurd_simulated    = sim.get_result();
     mio::TimeSeries<ScalarType> transitions_simulated = sim.get_transitions();
 
-    // Define vectors for compartments and transitions with values from example
-    // (calculated by hand, see internal Overleaf document).
-    // TODO: Add link to material when published.
-    Vec secihurd0((int)mio::isecir::InfectionState::Count);
-    Vec secihurd1((int)mio::isecir::InfectionState::Count);
-    Vec transitions1(num_transitions);
-    secihurd0 << 4995, 0.5, 0, 4, 0, 0, 4990.5, 10;
-    secihurd1 << 4994.00020016, 0.49989992, 0.49994996, 0.12498749, 1.03124687, 0.25781172, 4993.45699802, 10.12890586;
-    transitions1 << 0.99979984, 0.99989992, 0.24997498, 0.24997498, 2.06249374, 2.06249374, 0.51562344, 0.51562344,
+    // Define vectors for compartments and transitions at t0 and t1 with values from example
+    // (calculated by hand, see https://doi.org/10.1016/j.amc.2025.129636 for the used formulas).
+    Vec secihurd_t0((int)mio::isecir::InfectionState::Count);
+    Vec secihurd_t1((int)mio::isecir::InfectionState::Count);
+    Vec transitions_t1(num_transitions);
+    secihurd_t0 << 4995, 0.5, 0, 4, 0, 0, 4990.5, 10;
+    secihurd_t1 << 4994.00020016, 0.49989992, 0.49994996, 0.12498749, 1.03124687, 0.25781172, 4993.45699802,
+        10.12890586;
+    transitions_t1 << 0.99979984, 0.99989992, 0.24997498, 0.24997498, 2.06249374, 2.06249374, 0.51562344, 0.51562344,
         0.12890586, 0.12890586;
 
-    // Compare SECIHURD compartments at times 0 and 1.
+    // Compare simulated compartments at time points t0 and t1.
     for (Eigen::Index i = 0; i < (Eigen::Index)mio::isecir::InfectionState::Count; i++) {
-        EXPECT_NEAR(secihurd_simulated[0][i], secihurd0[i], 1e-8);
-        EXPECT_NEAR(secihurd_simulated[1][i], secihurd1[i], 1e-8);
+        EXPECT_NEAR(secihurd_simulated[0][i], secihurd_t0[i], 1e-8);
+        EXPECT_NEAR(secihurd_simulated[1][i], secihurd_t1[i], 1e-8);
     }
 
-    // Compare transitions at time 1.
+    // Compare simulated transitions with expected results at time point t1.
     for (Eigen::Index i = 0; i < num_transitions; i++) {
-        EXPECT_NEAR(transitions_simulated[transitions_simulated.get_num_time_points() - 1][i], transitions1[i], 1e-8);
+        EXPECT_NEAR(transitions_simulated[transitions_simulated.get_num_time_points() - 1][i], transitions_t1[i], 1e-8);
     }
 }
 

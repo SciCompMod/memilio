@@ -20,40 +20,45 @@
 #ifndef MEMILIO_DATA_ANALYZE_RESULT_H
 #define MEMILIO_DATA_ANALYZE_RESULT_H
 
+#include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/math/interpolation.h"
 #include "memilio/io/io.h"
 
-#include <functional>
+#include <cassert>
 #include <vector>
 
 namespace mio
 {
 
 /**
- * @brief interpolate time series with evenly spaced, integer time points that represent whole days.
- * time points [t0, t1, t2, ..., tmax] interpolated as days [ceil(t0), floor(t0) + 1,...,floor(tmax)].
- * tolerances in the first and last time point (t0 and t_max) are accounted for.
- * values at new time points are linearly interpolated from their immediate neighbors from the old time points.
+ * @brief Interpolate a given time series with evenly spaced, integer time points that represent whole days.
+ * We choose the time points for the interpolated time series using the first and last time points, t0 and tmax, as
+ * [ceil(t0 - abs_tol), floor(t0) + 1, ..., floor(tmax + abs_tol)].
+ * The tolerances in the first and last time point account for inaccuracies from the integration scheme or
+ * floating point arithmetic. Avoid using large(r) tolerances, as this function can not extrapolate results.
+ * The values at new time points are linearly interpolated from their immediate neighbors within the given time series.
  * @see interpolate_simulation_result
- * @param simulation_result time series to interpolate
- * @param abs_tol  absolute tolerance given for doubles t0 and tmax to account for small deviations from whole days.
- * @return interpolated time series
- */
-template <typename FP>
-TimeSeries<FP> interpolate_simulation_result(const TimeSeries<FP>& simulation_result, const FP abs_tol = 1e-14);
-
-/**
- * @brief interpolate time series with freely chosen time points that lie in between the time points of the given time series up to a given tolerance.
- * values at new time points are linearly interpolated from their immediate neighbors from the old time points.
- * @param simulation_result time series to interpolate
- * @param interpolations_times std::vector of time points at which simulation results are interpolated.
- * @return interpolated time series at given interpolation points
+ * @param simulation_result A time series to interpolate.
+ * @param abs_tol Optional parameter to set the absolute tolerance used to account for small deviations from whole days.
+ *   Must be less then 1. The default tolerance is chosen to minimize the chances of "loosing" days due to rounding.
+ * @return An interpolated time series with integer valued times.
  */
 template <typename FP>
 TimeSeries<FP> interpolate_simulation_result(const TimeSeries<FP>& simulation_result,
+                                             const FP abs_tol = FP{100.} * Limits<FP>::zero_tolerance());
 
+/**
+ * @brief Interpolate a time series at the given time points.
+ * New time points must be monotonic increasing, and lie in between time points of the given time series.
+ * The values at new time points are linearly interpolated from their immediate neighbors within the given time series.
+ * @param simulation_result The time series to interpolate.
+ * @param interpolation_times An std::vector of time points at which simulation results are interpolated.
+ * @return The interpolated time series at given interpolation points.
+ */
+template <typename FP>
+TimeSeries<FP> interpolate_simulation_result(const TimeSeries<FP>& simulation_result,
                                              const std::vector<FP>& interpolation_times);
 
 /**
@@ -180,14 +185,15 @@ FP result_distance_2norm(const std::vector<mio::TimeSeries<FP>>& result1,
 template <typename FP>
 TimeSeries<FP> interpolate_simulation_result(const TimeSeries<FP>& simulation_result, const FP abs_tol)
 {
+    assert(abs_tol < 1);
     using std::ceil;
     using std::floor;
     const auto t0    = simulation_result.get_time(0);
     const auto t_max = simulation_result.get_last_time();
-    // add another day if the first time point is equal to day_0 up to absolute tolerance tol
-    const auto day0 = (t0 - abs_tol < ceil(t0) - 1) ? floor(t0) : ceil(t0);
-    // add another day if the last time point is equal to day_max up to absolute tolerance tol
-    const auto day_max = (t_max + abs_tol > floor(t_max) + 1) ? ceil(t_max) : floor(t_max);
+    // add an additional day, if the first time point is within tolerance of floor(t0)
+    const auto day0 = ceil(t0 - abs_tol);
+    // add an additional day, if the last time point is within tolerance of ceil(tmax)
+    const auto day_max = floor(t_max + abs_tol);
 
     // create interpolation_times vector with all days between day0 and day_max
     std::vector<FP> tps(static_cast<int>(day_max) - static_cast<int>(day0) + 1);
