@@ -245,8 +245,8 @@ private:
                     node.set_date_confirmation(Base::m_t + 2.0);
                 }
             }
-            // If production period is over
-            if (Base::m_t - node.get_population_date() + 1 > m_duration[3]) {
+            // If production period is over and node is not sheduled for culling
+            if (Base::m_t - node.get_population_date() + 1 > m_duration[3] && !node.is_quarantined()) {
                 // mio::log_info("Farm Type: {}, In HRZ: {}, Population Date: {}, Slaughter Date: {}, Current Time: {}",
                 //   node.get_farm_type(), node.get_in_hrz(), node.get_population_date(),
                 //   node.get_slaughter_date(), Base::m_t);
@@ -332,7 +332,7 @@ private:
         }
         const auto d0 = 96460.0;
         for (auto& d : distances) {
-            d = std::exp(d / d0);
+            d = std::exp(-d / d0);
         }
         mio::log_debug("Number of possible farms: {}", distances.size());
         return ids[mio::DiscreteDistribution<size_t>::get_instance()(m_rng, distances)];
