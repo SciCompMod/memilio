@@ -363,6 +363,7 @@ private:
     {
         auto capacity = m_culling_capacity_per_day * dt;
         capacity      = cull_queue(m_culling_queue, capacity);
+        // preventive culling starts on 2026-01-01, which is day 20 in the simulation
         if (Base::m_t > 20) {
             capacity = cull_queue(m_prev_culling_queue, capacity);
         }
