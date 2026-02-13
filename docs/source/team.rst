@@ -29,6 +29,7 @@ Martin Kühn studied at University of Cologne, Germany, and Université de Montr
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
+   * |MEmilio_citation|
    * |Graph_Neural_Network_Surrogates|
    * |A_nonstandard_numerical_scheme|
    * |Revisiting_the_Linear_Chain|
@@ -64,6 +65,7 @@ Henrik Zunker is a PhD student at the Institute of Software Technology at the Ge
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
+   * |MEmilio_citation|
    * |Risk-mediated_dynamic_regulation|
    * |Graph_Neural_Network_Surrogates|
    * |Novel_travel_time_aware_metapopulation_models|
@@ -94,6 +96,7 @@ His background is in numerical mathematics, where he studied at the University o
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
+   * |MEmilio_citation|
    * |Agent-based_modeling_for|
    * |Integrating_Human_Mobility_Models|
    * |Missing_Transmission_Chains|
@@ -120,6 +123,7 @@ Julia Bicker is a PhD student at the Institute of Software Technology at the Ger
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
+   * |MEmilio_citation|
    * |Hybrid_metapopulation_agent-based|
    * |Integrative_Modeling_of_the|
 
@@ -145,6 +149,7 @@ Anna Wendler is a PhD student at the Institute of Software Technology at the Ger
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
+   * |MEmilio_citation|
    * |A_nonstandard_numerical_scheme|
    * |Revisiting_the_Linear_Chain|
 
@@ -172,6 +177,7 @@ Carlotta Gerstein completed her Bachelor's degree in Mathematics at the Universi
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
+   * |MEmilio_citation|
    * |Agent-based_modeling_for|
 
 .. dropdown:: Links
@@ -196,7 +202,15 @@ assistant in the group of Prof. Kevin Thurley and wrote his thesis on modeling i
 2024 he joined the group of Prof. Jan Hasenauer at the Life and Medical Sciences Institute and the Bonn Center 
 for Mathematical Life Sciences as a PhD student to work on infectious disease modeling.
 
+.. dropdown:: Selected Publications
+   :animate: fade-in-slide-down
 
+   * |MEmilio_citation|
+
+.. dropdown:: Links
+:animate: fade-in-slide-down
+
+* `ORCID Profile: 0009-0008-9861-0216 <https://orcid.org/0009-0008-9861-0216>`__
 
 Maximilian Betz
 ^^^^^^^^^^^^^^^
@@ -210,6 +224,12 @@ Maximilian Betz
 **Research Focus:** Epidemiological modeling, Machine Learning, Automatic generation of Python bindings
 
 Maximilian Betz completed his Bachelor's degree in Computer Science at the DHBW Mannheim as an integrated degree program with the Department of High-Performance Computing at the German Aerospace Center (DLR). Afterwards, he continued with a Master's in Computer Science at the University of Cologne, where he focused on Machine Learning and High Performance Computing. During the Master's, he kept working at the DLR as a student assistant with a focus on automatic generation of Python bindings, metapopulation models to simulate the spatial spread of infectious diseases and Machine Learning based parameter inference.
+
+.. dropdown:: Selected Publications
+   :animate: fade-in-slide-down
+
+   * |MEmilio_citation|
+
 
 René Schmieding
 ^^^^^^^^^^^^^^^
@@ -230,6 +250,7 @@ equation-based models.
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
+   * |MEmilio_citation|
    * |Novel_travel_time_aware_metapopulation_models|
    * |Hybrid_metapopulation_agent-based|
    * |Integrating_Human_Mobility_Models|
@@ -258,6 +279,7 @@ He is interested in the development of agent-based models for infectious disease
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
+   * |MEmilio_citation|
    * |Agent-based_modeling_for|
    * |Novel_travel_time_aware_metapopulation_models|
    * |Integrative_Modeling_of_the|
@@ -283,6 +305,7 @@ Daniel Abele is a research software engineer at the Institute of Software Techno
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
+   * |MEmilio_citation|
    * |Assessment_of_effective_mitigation|
 
 .. dropdown:: Links
@@ -344,6 +367,7 @@ Agatha Schmidt completed her Master's degree at the University of Cologne in col
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
+   * |MEmilio_citation|
    * |Graph_Neural_Network_Surrogates|
 
 .. dropdown:: Links

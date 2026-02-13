@@ -1,8 +1,6 @@
-.. |MEmilio_citation| replace:: Bicker J, Kerkmann D, Korf S, Ploetzke L, Schmieding R, Wendler AC, Zunker H, Nguyen K, Abele D, Gerstein C, Lenz P, Betz M, Schmidt A, Hannemann-Tamas R, Volmer K, Waßmuth N, Tritzschak H, Richter D, Heger M, Basermann A, Meyer-Hermann M, Hasenauer J, Kühn MJ. (2025). *MEmilio - a High Performance Modular Epidemics Simulation Software*. Available at |MEmilio_github|_ and |MEmilio_elib|_.
-.. |MEmilio_github| replace:: https://github.com/SciCompMod/memilio
-.. _MEmilio_github: https://github.com/SciCompMod/memilio
-.. |MEmilio_elib| replace:: https://elib.dlr.de/213614/
-.. _MEmilio_elib: https://elib.dlr.de/213614/
+.. |MEmilio_citation| replace:: Bicker J, Gerstein C, Kerkmann D, Korf S, Schmieding R, Wendler A, Zunker H, Abele D, Betz M, Nguyen K, Plötzke L, Volmer K, SchmidtA,  Waßmuth N, Lenz P, Richter D, Tritzschak H, Hannemann-Tamas R, Litz J, Johannssen P, Borges M, Jungklaus A, Heger M, Lange A, Kluth E, Rack K, Wieland V, Arruda J, Binder S, Klitz M, Siggel M, Dahmen M, Basermann A, Meyer-Hermann M, Hasenauer J, Kühn MJ.. (2026). *MEmilio -- A high performance Modular EpideMIcs simuLatIOn software for multi-scale and comparative simulations of infectious disease dynamics*. Submitted for publication. |MEmilio_DOI|_
+.. |MEmilio_DOI| replace:: DOI:10.48550/arXiv.2602.11381
+.. _MEmilio_github: https://doi.org/10.48550/arXiv.2602.11381
 
 .. |Novel_travel_time_aware_metapopulation_models| replace:: Zunker H, Schmieding R, Kerkmann D, Schengen A, Diexer S, Mikolajczyk R, Meyer-Hermann M, Kühn MJ. (2024). *Novel travel time aware metapopulation models and multi-layer waning immunity for late-phase epidemic and endemic scenarios*. *PLOS Computational Biology* 20(12): e1012630. |Novel_travel_time_aware_metapopulation_models_DOI|_
 .. |Novel_travel_time_aware_metapopulation_models_DOI| replace:: DOI:10.1371/journal.pcbi.1012630 
