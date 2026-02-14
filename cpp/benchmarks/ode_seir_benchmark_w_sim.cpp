@@ -25,6 +25,7 @@
 #include "memilio/math/eigen.h"
 #include "ode_seir/model.h"
 #include "examples/state_estimators.h"
+#include "examples/standard_lagrangian.h"
 
 namespace mio
 {
@@ -363,7 +364,7 @@ void setup_explicit_model_benchmark(mio::examples::ExplicitModel& model_explicit
 }
 
 const ScalarType t0    = 0.0;
-const ScalarType t_max = 10.0;
+const ScalarType t_max = 50.0;
 const ScalarType dt    = 0.5;
 
 // Define the number of commuter groups for the benchmark
@@ -658,9 +659,9 @@ static void bench_standard_lagrangian_rk4(::benchmark::State& state)
     for (auto _ : state) {
         for (auto patch = 0; patch < num_patches; patch++) {
             state.PauseTiming();
-            mio::examples::ExplicitModel model_explicit(num_age_groups, num_commuter_groups);
+            mio::examples::StandardModelLagrangian model_explicit(num_age_groups, num_commuter_groups);
             setup_explicit_model_benchmark(model_explicit, num_age_groups, num_commuter_groups);
-            mio::examples::ExplicitSim sim_explicit(model_explicit, t0, dt);
+            mio::examples::StandardLagrangianSim sim_explicit(model_explicit, t0, dt);
             auto integrator_rk =
                 std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta4>>();
             sim_explicit.set_integrator(integrator_rk);
@@ -682,9 +683,9 @@ static void bench_standard_lagrangian_euler(::benchmark::State& state)
     for (auto _ : state) {
         for (auto patch = 0; patch < num_patches; patch++) {
             state.PauseTiming();
-            mio::examples::ExplicitModel model_explicit(num_age_groups, num_commuter_groups);
+            mio::examples::StandardModelLagrangian model_explicit(num_age_groups, num_commuter_groups);
             setup_explicit_model_benchmark(model_explicit, num_age_groups, num_commuter_groups);
-            mio::examples::ExplicitSim sim_explicit(model_explicit, t0, dt);
+            mio::examples::StandardLagrangianSim sim_explicit(model_explicit, t0, dt);
             auto integrator_euler = std::make_shared<mio::EulerIntegratorCore<ScalarType>>();
             sim_explicit.set_integrator(integrator_euler);
             state.ResumeTiming();
