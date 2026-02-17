@@ -574,7 +574,7 @@ def save_persons(trip_file):
 
 
 def map_traffic_cell_to_wastewater_area(mapping_path, wastewater_path, new_file, new_file2):
-    random.seed(30)
+    rng = np.random.default_rng(30)
     with open(mapping_path) as f:
         d = dict(x.rstrip().split(None, 1) for x in f)
     areas = geopandas.read_file(wastewater_path)
@@ -883,10 +883,10 @@ if __name__ == "__main__":
     args = arg_parser.parse_args()
     # set LogLevel
     mio.abm.set_log_level_warn()
-    num_sims = 10
-    parameter_to_vary = "T_E"
+    num_sims = 100
+    parameter_to_vary = "vl_peak"
     input_path = '/hpc_data/bick_ju/INSIDeMunichPaper/IScienceRebuttal/Input/'
     output_path = '/hpc_data/bick_ju/INSIDeMunichPaper/IScienceRebuttal/sensitivity_analysis/' + parameter_to_vary + '/'
     run_settings = pd.read_csv(input_path + 'pop8_sel_particles.csv', sep=',')
-    for p in [0.8]:
+    for p in [0.8, 0.9, 1.0, 1.1, 1.2]:
         run_sensitivity(num_sims, run_settings, input_path, output_path, parameter_to_vary, p, **args.__dict__)
