@@ -88,32 +88,31 @@ void calculate_agents_per_area_inhabitants_commuters(std::string output_file, st
 
 int main()
 {
-    int sim_num                     = 0;
-    std::string output_file_loctype = "/hpc_data/bick_ju/OnlyMovement/" + std::to_string(sim_num) + "_output_v5.h5";
-    std::string output_file_ww_area = "/hpc_data/bick_ju/OnlyMovement/" + std::to_string(sim_num) + "_output_v4.h5";
-    std::string save_file_loctype =
-        "/hpc_data/bick_ju/OnlyMovement/" + std::to_string(sim_num) + "_num_agents_loc_type.txt";
-    std::string save_file_area = "/hpc_data/bick_ju/OnlyMovement/" + std::to_string(sim_num) + "_num_agents_area.txt";
+    int num_sims                    = 1;
+    int start_sim                   = 1;
+    std::string sim_result_folder   = "/hpc_data/bick_ju/INSIDeMunichPaper/IScienceRebuttal/OnlyMovement/";
+    std::string output_file_loctype = sim_result_folder + std::to_string(start_sim) + "_output_v5.h5";
+    std::string output_file_ww_area = sim_result_folder + std::to_string(start_sim) + "_output_v4.h5";
+    std::string save_file_loctype   = sim_result_folder + std::to_string(start_sim) + "_num_agents_loc_type.txt";
+    std::string save_file_area      = sim_result_folder + std::to_string(start_sim) + "_num_agents_area.txt";
     std::string save_file_area2 =
-        "/hpc_data/bick_ju/OnlyMovement/" + std::to_string(sim_num) + "_num_agents_area_inhabitants_commuters.txt";
-    //calculate_agents_per_area_inhabitants_commuters(output_file_ww_area, save_file_area2);
-    // calculate_agents_per_quantity(output_file_loctype, save_file_loctype, "locType");
-    // calculate_agents_per_quantity(output_file_ww_area, save_file_area, "area");
+        sim_result_folder + std::to_string(start_sim) + "_num_agents_area_inhabitants_commuters.txt";
+    calculate_agents_per_area_inhabitants_commuters(output_file_ww_area, save_file_area2);
+    calculate_agents_per_quantity(sim_result_folder, save_file_loctype, num_sims, start_sim, "locType", "v5");
+    calculate_agents_per_quantity(sim_result_folder, save_file_area, num_sims, start_sim, "area", "v4");
     std::string output_dir_infections           = "/hpc_data/bick_ju/1000000/";
     std::string save_file_loctype_infections    = output_dir_infections + "num_agents_infections_loctype.txt";
     std::string save_file_ww_area_infections    = output_dir_infections + "num_agents_infections_area.txt";
     std::string save_file_hh_size_ag_infections = output_dir_infections + "num_agents_infections_hh_size_ag.txt";
-    std::string person_file                     = "/home/bick_ju/Documents/INSIDe/persons/persons_final_corr.csv";
-    int num_sims                                = 10;
+    std::string person_file = "/hpc_data/bick_ju/INSIDeMunichPaper/IScienceRebuttal/Input/persons_scaled.csv";
     //calculate_infections_per_hh_size(output_dir_infections, person_file, save_file_hh_size_ag_infections, num_sims);
     // calculate_infections_per_quantity(output_dir_infections, save_file_loctype_infections, "locType", "v5", num_sims);
     // calculate_infections_per_quantity(output_dir_infections, save_file_ww_area_infections, "area", "v4", num_sims);
-    std::string save_file_loctype_ag =
-        "/hpc_data/bick_ju/OnlyMovement/new_060725/" + std::to_string(sim_num) + "_num_agents_loc_type_ag.txt";
-    std::string save_file_area_ag =
-        "/hpc_data/bick_ju/OnlyMovement/new_060725/" + std::to_string(sim_num) + "_num_agents_area_ag.txt";
-    //std::string person_file = "/home/bick_ju/Documents/INSIDe/persons/persons_scaled.csv";
-    // calculate_agents_per_quantity_age_groups(output_file_loctype, save_file_loctype_ag, "locType", person_file);
-    // calculate_agents_per_quantity_age_groups(output_file_ww_area, save_file_area_ag, "area", person_file);
+    std::string save_file_loctype_ag = sim_result_folder + std::to_string(start_sim) + "_num_agents_loc_type_ag.txt";
+    std::string save_file_area_ag    = sim_result_folder + std::to_string(start_sim) + "_num_agents_area_ag.txt";
+    calculate_agents_per_quantity_age_groups(sim_result_folder, save_file_loctype_ag, "locType", person_file, num_sims,
+                                             start_sim, "v5");
+    calculate_agents_per_quantity_age_groups(sim_result_folder, save_file_area_ag, "area", person_file, num_sims,
+                                             start_sim, "v4");
     return 0;
 }
