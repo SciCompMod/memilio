@@ -204,15 +204,17 @@ if(sbml_FOUND)
     set(MEMILIO_HAS_SBML ON)
     message(STATUS "Found libSBML: ${libsbml_INCLUDE_DIRS}")
 else()
-    message(WARNING "LibSBML was not found. The SBML importer will not be build.")
+    message(NOTICE "LibSBML was not found. The SBML importer will not be build.")
 endif()
 
 if(MEMILIO_ENABLE_MPI)
     find_package(MPI REQUIRED COMPONENTS CXX)
+    message(STATUS "Enabled MPI ${MPI_CXX_VERSION}")
 endif()
 
 if(MEMILIO_ENABLE_OPENMP)
     find_package(OpenMP REQUIRED COMPONENTS CXX)
+    message(STATUS "Enabled OpenMP ${OpenMP_CXX_VERSION}")
 endif()
 
 # Random123 library for random number generators
