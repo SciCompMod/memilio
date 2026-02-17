@@ -1739,6 +1739,17 @@ PYBIND11_MODULE(_simulation_abm, m)
                                                      num_sims, start_sim, "v4");
         },
         py::return_value_policy::reference_internal);
+
+    m.def(
+        "calculate_agents_per_quantity",
+        [](std::string sim_result_folder, std::string save_folder, int num_sims, int start_sim,
+           std::string person_file) {
+            std::string save_file_loctype = save_folder + "num_agents_loctype.txt";
+            std::string save_file_ww_area = save_folder + "num_agents_area.txt";
+            calculate_agents_per_quantity(sim_result_folder, save_file_loctype, num_sims, start_sim, "locType", "v5");
+            calculate_agents_per_quantity(sim_result_folder, save_file_ww_area, num_sims, start_sim, "area", "v4");
+        },
+        py::return_value_policy::reference_internal);
 #endif
 
     m.attr("__version__") = "dev";

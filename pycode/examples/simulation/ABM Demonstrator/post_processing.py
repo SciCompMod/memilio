@@ -13,3 +13,5 @@ if __name__ == "__main__":
         sim_result_file, save_folder, num_sims, start_sim, person_file)
     abm.calculate_agents_per_quantity_age_groups(
         sim_result_file, save_folder, num_sims, start_sim, person_file)
+    abm.calculate_agents_per_quantity(
+        sim_result_file, save_folder, num_sims, start_sim, person_file)
