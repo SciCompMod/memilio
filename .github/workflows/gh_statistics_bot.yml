@@ -1,0 +1,477 @@
+name: Monthly Repository Statistics
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate-report:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate Enhanced Monthly Statistics
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Enhanced stats with additional metrics - main branch focused
+            async function getSimpleMonthStats(since, until) {
+              console.log(`Getting stats for ${since} to ${until}`);
+              
+              const commits = await github.paginate(github.rest.repos.listCommits, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                since,
+                until,
+                per_page: 100,
+              });
+              
+              console.log(`Found ${commits.length} commits on main branch`);
+              
+              const contributors = new Set();
+              let totalLinesAdded = 0;
+              let totalLinesDeleted = 0;
+              let filesChanged = 0;
+              
+              commits.forEach(commit => {
+                if (commit.author && commit.author.login) {
+                  contributors.add(commit.author.login);
+                }
+                if (commit.committer && commit.committer.login && commit.committer.login !== commit.author?.login && commit.committer.login !== 'github-actions[bot]' && commit.committer.login !== 'dependabot[bot]' && commit.committer.login !== 'web-flow') {
+                  contributors.add(commit.committer.login);
+                }
+              });
+              
+              for (const commit of commits.slice(0, 50)) {
+                try {
+                  const commitDetail = await github.rest.repos.getCommit({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    ref: commit.sha,
+                  });
+                  
+                  totalLinesAdded += commitDetail.data.stats?.additions || 0;
+                  totalLinesDeleted += commitDetail.data.stats?.deletions || 0;
+                  filesChanged += commitDetail.data.files?.length || 0;
+                  
+                  if (commitDetail.data.commit && commitDetail.data.commit.message) {
+                    const message = commitDetail.data.commit.message;
+                    const coAuthorRegex = /Co-authored-by:\s*([^<]+)\s*<([^>]+)>/gi;
+                    let match;
+                    
+                    while ((match = coAuthorRegex.exec(message)) !== null) {
+                      const coAuthorName = match[1].trim();
+                      if (coAuthorName && coAuthorName.length > 0) {
+                        contributors.add(coAuthorName);
+                        console.log(`Found co-author: ${coAuthorName}`);
+                      }
+                    }
+                  }
+                  
+                  if (commitDetail.data.author && commitDetail.data.author.login) {
+                    contributors.add(commitDetail.data.author.login);
+                  }
+                  
+                } catch (error) {
+                  console.log(`Error getting commit detail: ${error.message}`);
+                }
+              }
+              
+              console.log(`Total contributors: ${contributors.size}`);
+              console.log(`Contributors: ${Array.from(contributors).join(', ')}`);
+              
+              return {
+                totalCommits: commits.length,
+                activeContributors: contributors.size,
+                linesAdded: totalLinesAdded,
+                linesDeleted: totalLinesDeleted,
+                totalLinesChanged: totalLinesAdded + totalLinesDeleted,
+                filesChanged: filesChanged,
+                contributorsList: Array.from(contributors)
+              };
+            }
+
+            async function getPRStats(since, until) {
+              const prs = await github.paginate(github.rest.pulls.list, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'all',
+                sort: 'updated',
+                direction: 'desc',
+                per_page: 100,
+              });
+
+              const mergedPRs = prs.filter(pr => 
+                pr.merged_at && 
+                new Date(pr.merged_at) >= new Date(since) && 
+                new Date(pr.merged_at) <= new Date(until)
+              );
+
+              const openedPRs = prs.filter(pr => 
+                new Date(pr.created_at) >= new Date(since) && 
+                new Date(pr.created_at) <= new Date(until)
+              );
+
+              const closedPRs = prs.filter(pr => 
+                pr.closed_at && !pr.merged_at &&
+                new Date(pr.closed_at) >= new Date(since) && 
+                new Date(pr.closed_at) <= new Date(until)
+              );
+
+              return { 
+                merged: mergedPRs.length,
+                opened: openedPRs.length,
+                closed: closedPRs.length
+              };
+            }
+
+            async function getIssueStats(since, until) {
+              const issues = await github.paginate(github.rest.issues.listForRepo, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'all',
+                sort: 'updated',
+                direction: 'desc',
+                per_page: 100,
+              });
+
+              // Filter out pull requests (GitHub API includes PRs in issues)
+              const actualIssues = issues.filter(issue => !issue.pull_request);
+
+              const openedIssues = actualIssues.filter(issue => 
+                new Date(issue.created_at) >= new Date(since) && 
+                new Date(issue.created_at) <= new Date(until)
+              );
+
+              const closedIssues = actualIssues.filter(issue => 
+                issue.closed_at &&
+                new Date(issue.closed_at) >= new Date(since) && 
+                new Date(issue.closed_at) <= new Date(until)
+              );
+
+              return {
+                opened: openedIssues.length,
+                closed: closedIssues.length
+              };
+            }
+
+            async function getReleaseStats(since, until) {
+              try {
+                const releases = await github.paginate(github.rest.repos.listReleases, {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  per_page: 100,
+                });
+
+                const monthlyReleases = releases.filter(release => 
+                  new Date(release.created_at) >= new Date(since) && 
+                  new Date(release.created_at) <= new Date(until)
+                );
+
+                return {
+                  total: monthlyReleases.length,
+                  preReleases: monthlyReleases.filter(r => r.prerelease).length,
+                  latestRelease: monthlyReleases.length > 0 ? monthlyReleases[0].tag_name : null
+                };
+              } catch (error) {
+                console.log(`Error getting releases: ${error.message}`);
+                return { total: 0, preReleases: 0, latestRelease: null };
+              }
+            }
+
+            async function getLanguageStats() {
+              try {
+                const languages = await github.rest.repos.listLanguages({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                });
+
+                const total = Object.values(languages.data).reduce((sum, bytes) => sum + bytes, 0);
+                return Object.entries(languages.data)
+                  .map(([lang, bytes]) => ({
+                    language: lang,
+                    percentage: ((bytes / total) * 100).toFixed(1)
+                  }))
+                  .sort((a, b) => parseFloat(b.percentage) - parseFloat(a.percentage))
+                  .slice(0, 3);
+              } catch (error) {
+                return [];
+              }
+            }
+
+            function createSVGChart(data, title, color, monthLabels) {
+              const width = 600;
+              const height = 200;
+              const padding = 40;
+              const chartWidth = width - 2 * padding;
+              const chartHeight = height - 2 * padding - 20;
+              
+              const maxValue = Math.max(...data);
+              const minValue = Math.max(1, Math.min(...data) - Math.max(...data) * 0.1);
+              const range = maxValue - minValue || 1;
+              
+              const points = data.map((value, index) => {
+                const x = padding + (index / (data.length - 1)) * chartWidth;
+                const y = padding + chartHeight - ((value - minValue) / range) * chartHeight;
+                return `${x},${y}`;
+              }).join(' L');
+              
+              const areaPoints = `M${padding},${padding + chartHeight} L${points} L${padding + chartWidth},${padding + chartHeight} Z`;
+              
+              const monthLabelElements = monthLabels.map((month, index) => {
+                if (index % 3 === 0) {
+                  const x = padding + (index / (data.length - 1)) * chartWidth;
+                  const y = padding + chartHeight + 15;
+                  return `<text x="${x}" y="${y}" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">${month}</text>`;
+                }
+                return '';
+              }).join('');
+              
+              return `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:${color};stop-opacity:0.3" />
+                    <stop offset="100%" style="stop-color:${color};stop-opacity:0.1" />
+                  </linearGradient>
+                </defs>
+                
+                <rect width="${width}" height="${height}" fill="#ffffff"/>
+                
+                ${[0, 0.25, 0.5, 0.75, 1].map(ratio => 
+                  `<line x1="${padding}" y1="${padding + chartHeight * ratio}" x2="${padding + chartWidth}" y2="${padding + chartHeight * ratio}" stroke="#e5e7eb" stroke-width="1"/>`
+                ).join('')}
+                
+                <path d="${areaPoints}" fill="url(#gradient)"/>
+                <path d="M${points}" stroke="${color}" stroke-width="2" fill="none"/>
+                
+                ${data.map((value, index) => {
+                  const x = padding + (index / (data.length - 1)) * chartWidth;
+                  const y = padding + chartHeight - ((value - minValue) / range) * chartHeight;
+                  return `<circle cx="${x}" cy="${y}" r="3" fill="${color}"/>`;
+                }).join('')}
+                
+                ${monthLabelElements}
+                
+                <text x="${width/2}" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#374151">${title}</text>
+                <text x="15" y="${padding + 5}" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">${maxValue}</text>
+                <text x="15" y="${padding + chartHeight + 5}" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">${minValue}</text>
+              </svg>`;
+            }
+
+            function createCSVFile(monthlyData) {
+              // CSV headers
+              const headers = [
+                'Month',
+                'Total Commits',
+                'Active Contributors',
+                'Lines Added',
+                'Lines Deleted',
+                'Total Lines Changed',
+                'Files Changed',
+                'PRs Merged',
+                'PRs Opened',
+                'PRs Closed',
+                'Issues Opened',
+                'Issues Closed',
+                'Releases',
+                'Pre-Releases',
+                'Latest Release',
+                'Contributors'
+              ];
+              
+              // Escape CSV value (handle commas and quotes)
+              const escapeCSV = (value) => {
+                if (value === null || value === undefined) return '';
+                const str = String(value);
+                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                  return `"${str.replace(/"/g, '""')}"`;
+                }
+                return str;
+              };
+              
+              // Build CSV rows
+              const rows = monthlyData.map(d => [
+                d.month,
+                d.stats.totalCommits,
+                d.stats.activeContributors,
+                d.stats.linesAdded,
+                d.stats.linesDeleted,
+                d.stats.totalLinesChanged,
+                d.stats.filesChanged,
+                d.prStats.merged,
+                d.prStats.opened,
+                d.prStats.closed,
+                d.issueStats.opened,
+                d.issueStats.closed,
+                d.releaseStats.total,
+                d.releaseStats.preReleases,
+                d.releaseStats.latestRelease || 'N/A',
+                d.stats.contributorsList.join('; ')
+              ].map(escapeCSV).join(','));
+              
+              // Combine headers and rows
+              const csvContent = [headers.join(','), ...rows].join('\n');
+              
+              return csvContent;
+            }
+
+            async function createChartsOnBranch(monthlyData) {
+              const totalCommits = monthlyData.map(d => d.stats.totalCommits);
+              const mergedPRs = monthlyData.map(d => d.prStats.merged);
+              const linesAdded = monthlyData.map(d => d.stats.linesAdded);
+              const activeContributors = monthlyData.map(d => d.stats.activeContributors);
+              const issuesClosed = monthlyData.map(d => d.issueStats.closed);
+              const totalLinesChanged = monthlyData.map(d => d.stats.totalLinesChanged);
+              const monthLabels = monthlyData.map(d => d.month);
+              
+              const charts = [
+                { path: 'docs/stats/total-commits-chart.svg', content: createSVGChart(totalCommits, 'Total Commits', '#3b82f6', monthLabels) },
+                { path: 'docs/stats/merged-prs-chart.svg', content: createSVGChart(mergedPRs, 'Merged Pull Requests', '#10b981', monthLabels) },
+                { path: 'docs/stats/lines-added-chart.svg', content: createSVGChart(linesAdded, 'Lines Added', '#22c55e', monthLabels) },
+                { path: 'docs/stats/total-lines-changed-chart.svg', content: createSVGChart(totalLinesChanged, 'Total Lines Changed', '#f59e0b', monthLabels) },
+                { path: 'docs/stats/active-contributors-chart.svg', content: createSVGChart(activeContributors, 'Active Contributors', '#8b5cf6', monthLabels) },
+                { path: 'docs/stats/issues-closed-chart.svg', content: createSVGChart(issuesClosed, 'Issues Closed', '#ef4444', monthLabels) }
+              ];
+              
+              // Create CSV file
+              const csvContent = createCSVFile(monthlyData);
+              const csvNow = new Date();
+              const csvFileName = `monthly-statistics-${csvNow.getFullYear()}-${(csvNow.getMonth()).toString().padStart(2, '0')}.csv`;
+              
+              charts.push({
+                path: `docs/stats/${csvFileName}`,
+                content: csvContent,
+                isBase64: false
+              });
+              
+              // Get repo info
+              const repoInfo = await github.rest.repos.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              });
+              
+              // Create new branch
+              const branchName = 'monthly-stats';
+              
+              try {
+                const mainRef = await github.rest.git.getRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: `heads/${repoInfo.data.default_branch}`,
+                });
+                
+                await github.rest.git.createRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: `refs/heads/${branchName}`,
+                  sha: mainRef.data.object.sha,
+                });
+                
+                console.log(`Created branch: ${branchName}`);
+              } catch (error) {
+                if (error.message.includes('Reference already exists')) {
+                  console.log(`Branch ${branchName} already exists, using existing branch`);
+                } else {
+                  throw error;
+                }
+              }
+              
+              // Commit charts to the new branch only
+              for (const chart of charts) {
+                try {
+                  let existingFileSha = null;
+                  try {
+                    const existing = await github.rest.repos.getContent({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      path: chart.path,
+                      ref: branchName
+                    });
+                    existingFileSha = existing.data.sha;
+                  } catch (e) {
+                    console.log(`File ${chart.path} doesn't exist on branch, creating new file`);
+                  }
+                  
+                  const params = {
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    path: chart.path,
+                    message: `Update ${chart.path}`,
+                    content: chart.isBase64 ? chart.content : Buffer.from(chart.content).toString('base64'),
+                    branch: branchName
+                  };
+                  
+                  if (existingFileSha) params.sha = existingFileSha;
+                  
+                  await github.rest.repos.createOrUpdateFileContents(params);
+                  console.log(`Updated on branch: ${chart.path}`);
+                } catch (error) {
+                  console.log(`Error updating ${chart.path} on branch: ${error.message}`);
+                }
+              }
+              
+              const latestMonth = monthlyData[monthlyData.length - 1];
+              
+              return {
+                branchName: branchName,
+                message: `Charts updated on branch ${branchName} for ${latestMonth.month}`,
+                branchUrl: `https://github.com/${context.repo.owner}/${context.repo.repo}/tree/${branchName}`,
+                csvUrl: `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${branchName}/docs/stats/${csvFileName}`,
+                csvFileName: csvFileName
+              };
+            }
+
+            try {
+              console.log('Starting monthly report generation...');
+              
+              const monthlyData = [];
+              const now = new Date();
+              
+              for (let i = 12; i >= 1; i--) {
+                const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+                
+                console.log(`Month ${i}: ${monthStart.toLocaleDateString()} to ${monthEnd.toLocaleDateString()}`);
+                
+                const since = monthStart.toISOString();
+                const until = monthEnd.toISOString();
+                const monthName = monthStart.toLocaleString('default', { month: 'short', year: 'numeric' });
+                
+                console.log(`Processing ${monthName} (${since} to ${until})...`);
+                
+                const [stats, prStats, issueStats, releaseStats] = await Promise.all([
+                  getSimpleMonthStats(since, until),
+                  getPRStats(since, until),
+                  getIssueStats(since, until),
+                  getReleaseStats(since, until)
+                ]);
+                
+                monthlyData.push({ month: monthName, stats, prStats, issueStats, releaseStats });
+              }
+              
+              const branchResult = await createChartsOnBranch(monthlyData);
+              const languages = await getLanguageStats();
+              
+              const latest = monthlyData[monthlyData.length - 1];
+              
+              console.log('Monthly report completed successfully');
+              console.log(`Branch: ${branchResult.branchName}`);
+              console.log(`Branch URL: ${branchResult.branchUrl}`);
+              console.log(`CSV URL: ${branchResult.csvUrl}`);
+              console.log(`CSV Filename: ${branchResult.csvFileName}`);
+              console.log(`Contributors: ${latest.stats.contributorsList.join(', ')}`);
+              console.log(`Generated stats for ${latest.month}:`);
+              console.log(`- Commits: ${latest.stats.totalCommits}`);
+              console.log(`- Contributors: ${latest.stats.activeContributors}`);
+              console.log(`- Issues closed: ${latest.issueStats.closed}`);
+              console.log(`- PRs merged: ${latest.prStats.merged}`);
+              console.log(`- Releases: ${latest.releaseStats.total}`);
+
+            } catch (error) {
+              console.error('Error:', error);
+              core.setFailed(`Report generation failed: ${error.message}`);
+            }
