@@ -573,7 +573,7 @@ def save_persons(trip_file):
 
 
 def map_traffic_cell_to_wastewater_area(mapping_path, wastewater_path, new_file, new_file2):
-    random.seed(30)
+    rng = np.random.default_rng(30)
     with open(mapping_path) as f:
         d = dict(x.rstrip().split(None, 1) for x in f)
     areas = geopandas.read_file(wastewater_path)
@@ -596,7 +596,6 @@ def map_traffic_cell_to_wastewater_area(mapping_path, wastewater_path, new_file,
                 'ID_TAN', 'area']]
             weights = Id_tan['area'] / Id_tan['area'].sum()
             for loc in d[traffic_cell_id].split(' '):
-                rng = np.random.default_rng(30)
                 ww_area = rng.choice(
                     Id_tan['ID_TAN'].to_numpy(), p=weights.to_numpy())
                 new_key = str(ww_area)
