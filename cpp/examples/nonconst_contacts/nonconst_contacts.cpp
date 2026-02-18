@@ -43,8 +43,8 @@ ScalarType RiskOfInfectionFromSymptomatic   = 1.;
 ScalarType Seasonality                      = 0.;
 
 ScalarType cont_freq    = 1.;
-ScalarType damping      = 0.2;
-ScalarType scaling_time = 15.;
+ScalarType damping      = 0.1;
+ScalarType scaling_time = 25.;
 
 ScalarType S0               = 999000.;
 ScalarType I0               = 1000.;
@@ -124,8 +124,7 @@ mio::IOResult<void> simulate_ide(ScalarType ide_exponent, size_t gregory_order, 
                                  ScalarType t0_ode, ScalarType t0_ide, ScalarType tmax, ScalarType TimeInfected,
                                  std::string save_dir = "",
                                  mio::TimeSeries<ScalarType> result_groundtruth =
-                                     mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
-                                 bool backwards_fd = true)
+                                     mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count))
 {
     using namespace params;
     using Vec = mio::TimeSeries<ScalarType>::Vector;
@@ -193,7 +192,7 @@ mio::IOResult<void> simulate_ide(ScalarType ide_exponent, size_t gregory_order, 
 
     // Carry out simulation.
     mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide);
-    sim.advance(tmax, backwards_fd);
+    sim.advance(tmax);
 
     if (!save_dir.empty()) {
         // Save compartments.
@@ -223,16 +222,13 @@ int main()
     ScalarType time_infected = 4.;
 
     ScalarType t0_ode = 0.;
-    ScalarType t0_ide = 20.;
+    ScalarType t0_ide = 0.;
     ScalarType tmax   = 30.;
 
     size_t finite_difference_order = 4;
 
     ScalarType ide_exponent = 1.;
     size_t gregory_order    = 3;
-
-    // true means that a backwards_fd scheme is used, false means that a central fd scheme is used
-    bool backwards_fd = true;
 
     std::string save_dir = fmt::format("../../simulation_results/2026-02-10/test/");
 
@@ -246,5 +242,5 @@ int main()
     std::cout << std::endl;
     std::cout << "Gregory order: " << gregory_order << std::endl;
     mio::IOResult<void> result_ide = simulate_ide(ide_exponent, gregory_order, finite_difference_order, t0_ode, t0_ide,
-                                                  tmax, time_infected, save_dir, result_ode, backwards_fd);
+                                                  tmax, time_infected, save_dir, result_ode);
 }

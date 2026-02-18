@@ -182,9 +182,7 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
             }
 
             // For each index, the corresponding summand is computed here.
-            sum += gregory_weight *
-
-                   m_transmissionproboncontact_vector[current_time_index - j] *
+            sum += gregory_weight * m_transmissionproboncontact_vector[current_time_index - j] *
                    m_riskofinffromsymptomatic_vector[current_time_index - j] *
                    (1. - m_transitiondistribution_vector[current_time_index - j]) *
                    (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
@@ -413,11 +411,14 @@ void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t tim
                 populations.get_value(0)[(Eigen::Index)InfectionState::Infected] +
             dt * sum_infected;
 
+        // // Old discretization
         // populations[time_point_index][(Eigen::Index)InfectionState::Recovered] =
         //     populations.get_value(0)[(Eigen::Index)InfectionState::Recovered] +
         //     (1. - m_transitiondistribution_vector[time_point_index]) *
         //         populations.get_value(0)[(Eigen::Index)InfectionState::Infected] +
-        //     populations[0][(Eigen::Index)InfectionState::Infected] + dt * sum_recovered;
+        //     dt * sum_recovered;
+
+        // New discretization
         populations[time_point_index][(Eigen::Index)InfectionState::Recovered] =
             populations.get_value(0)[(Eigen::Index)InfectionState::Recovered] +
             (1. - m_transitiondistribution_vector[time_point_index]) *

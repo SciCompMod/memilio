@@ -101,7 +101,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
                                  ScalarType TimeInfected, std::string save_dir = "",
                                  mio::TimeSeries<ScalarType> result_groundtruth =
                                      mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
-                                 bool backwards_fd = true, bool use_complement = false)
+                                 bool use_complement = false)
 {
     using namespace params;
     using Vec = mio::TimeSeries<ScalarType>::Vector;
@@ -183,7 +183,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 
         // Carry out simulation.
         mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide);
-        sim.advance(tmax, backwards_fd, use_complement);
+        sim.advance(tmax, use_complement);
 
         if (!save_dir.empty()) {
             // Save compartments.
@@ -228,9 +228,6 @@ int main()
     std::vector<ScalarType> ide_exponents = {0, 1, 2, 3};
     std::vector<size_t> gregory_orders    = {1, 2, 3};
 
-    // true means that a backwards_fd scheme is used, false means that a central fd scheme is used
-    bool backwards_fd = true;
-
     for (int time_infected : time_infected_values) {
 
         for (ScalarType t0_ide : t0_ide_values) {
@@ -253,7 +250,7 @@ int main()
                     std::cout << "Gregory order: " << gregory_order << std::endl;
                     mio::IOResult<void> result_ide =
                         simulate_ide(ide_exponents, gregory_order, finite_difference_order, t0_ode, t0_ide, tmax,
-                                     time_infected, save_dir, result_ode, backwards_fd, use_complement);
+                                     time_infected, save_dir, result_ode, use_complement);
                 }
             }
         }

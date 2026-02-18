@@ -33,7 +33,7 @@ namespace isir
 
 using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool backwards_fd, bool use_complement)
+void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool use_complement)
 {
     // Get index of t0, i.e. index of last time point of given initial values.
     size_t t0_index = m_model->populations.get_num_time_points() - 1;
@@ -58,14 +58,7 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool backwa
         m_model->compute_S_deriv(m_dt, i);
     }
 
-    size_t num_additional_time_points = 0;
-    // If we use central finite difference scheme we need to compute some additional time points of S so that we can
-    // compute I and R up to tmax. This number depends on the chosen order.
-    if (!backwards_fd) {
-        num_additional_time_points = floor((ScalarType)m_model->get_finite_difference_order() / 2.);
-    }
-
-    while (m_model->populations.get_last_time() < tmax + num_additional_time_points * m_dt - 1e-10) {
+    while (m_model->populations.get_last_time() < tmax - 1e-10) {
 
         // Print time.
         if (floating_point_equal(std::remainder(10 * m_model->populations.get_last_time(), tmax), 0., 1e-7)) {
@@ -99,7 +92,6 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool backwa
                                       Vec::Constant((size_t)InfectionTransition::Count, 0.));
 
         // Compute S'.
-
         m_model->compute_S_deriv(m_dt);
 
         // Compute I and R.
@@ -110,17 +102,28 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool backwa
               << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Infected] << ", "
               << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] << std::endl;
 
-    std::cout << "Total population at start of simulation is "
+    // std::cout << "Total population at start of simulation is "
+    //           << m_model->populations.get_value(t0_index)[(Eigen::Index)InfectionState::Susceptible] +
+    //                  m_model->populations.get_value(t0_index)[(Eigen::Index)InfectionState::Infected] +
+    //                  m_model->populations.get_value(t0_index)[(Eigen::Index)InfectionState::Recovered]
+    //           << " and at end "
+    //           << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] +
+    //                  m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Infected] +
+    //                  m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Recovered]
+    //           << std::endl;
+
+    std::cout << "Difference in total population: "
               << m_model->populations.get_value(t0_index)[(Eigen::Index)InfectionState::Susceptible] +
                      m_model->populations.get_value(t0_index)[(Eigen::Index)InfectionState::Infected] +
-                     m_model->populations.get_value(t0_index)[(Eigen::Index)InfectionState::Recovered]
-              << " and at end "
-              << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] +
-                     m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Infected] +
-                     m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Recovered]
+                     m_model->populations.get_value(t0_index)[(Eigen::Index)InfectionState::Recovered] -
+                     (m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] +
+                      m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Infected] +
+                      m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Recovered])
               << std::endl;
 
     std::cout << "Max number of iterations throughout simulation was " << m_max_number_iterations << std::endl;
+
+    // std::cout << "t0_index: " << t0_index << std::endl;
 
     auto file = m_model->populations.export_csv("populations_ide.csv");
     std::cout << std::endl;

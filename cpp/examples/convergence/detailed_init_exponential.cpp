@@ -101,8 +101,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
                                  size_t finite_difference_order, ScalarType t0, ScalarType t_init, ScalarType tmax,
                                  ScalarType TimeInfected, std::string save_dir = "",
                                  mio::TimeSeries<ScalarType> result_groundtruth =
-                                     mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
-                                 bool backwards_fd = true)
+                                     mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count))
 {
     using namespace params;
     using Vec = mio::TimeSeries<ScalarType>::Vector;
@@ -173,7 +172,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 
         // Carry out simulation.
         mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide);
-        sim.advance(tmax, backwards_fd);
+        sim.advance(tmax);
 
         if (!save_dir.empty()) {
             // Save compartments.
@@ -214,15 +213,12 @@ int main()
     std::vector<ScalarType> t_init_values = {50.};
     ScalarType tmax                       = 55.;
 
-    std::vector<size_t> num_days_vec = {10};
+    std::vector<ScalarType> num_days_vec = {10};
 
-    std::vector<size_t> finite_difference_orders = {4};
+    std::vector<size_t> finite_difference_orders = {1, 2, 3, 4};
 
-    std::vector<ScalarType> ide_exponents = {0, 1, 2, 3};
+    std::vector<ScalarType> ide_exponents = {0, 1, 2};
     std::vector<size_t> gregory_orders    = {1, 2, 3};
-
-    // true means that a backwards_fd scheme is used, false means that a central fd scheme is used
-    bool backwards_fd = true;
 
     for (int time_infected : time_infected_values) {
 
@@ -232,8 +228,9 @@ int main()
             // ScalarType tmax = t0_ide + num_days;
 
             for (size_t finite_difference_order : finite_difference_orders) {
+                std::cout << "FD order: " << finite_difference_order << std::endl;
 
-                std::string save_dir = fmt::format("../../simulation_results/2026-01-29/test/"
+                std::string save_dir = fmt::format("../../simulation_results/2026-02-18/test_old_discretization_R/"
                                                    "detailed_init_exponential_t0={}_tinit={}_tmax={}_finite_diff={}/",
                                                    t0, t_init, tmax, finite_difference_order);
 
@@ -249,7 +246,7 @@ int main()
                     std::cout << "Gregory order: " << gregory_order << std::endl;
                     mio::IOResult<void> result_ide =
                         simulate_ide(ide_exponents, gregory_order, finite_difference_order, t0, t_init, tmax,
-                                     time_infected, save_dir, result_ode, backwards_fd);
+                                     time_infected, save_dir, result_ode);
                 }
             }
         }
