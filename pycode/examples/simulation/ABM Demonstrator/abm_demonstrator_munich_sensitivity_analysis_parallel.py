@@ -578,6 +578,8 @@ def map_traffic_cell_to_wastewater_area(mapping_path, wastewater_path, new_file,
     with open(mapping_path) as f:
         d = dict(x.rstrip().split(None, 1) for x in f)
     areas = geopandas.read_file(wastewater_path)
+    areas.to_crs(epsg=32632)
+    areas["area"] = areas.geometry.area / 1_000_000
     new_dict = {}
     new_dict2 = {}
     for traffic_cell_id in d.keys():
@@ -591,10 +593,13 @@ def map_traffic_cell_to_wastewater_area(mapping_path, wastewater_path, new_file,
             # new_key = 'x' + traffic_cell_id
             # new_dict[new_key] = d[traffic_cell_id].split(' ')
         else:
-            Id_tan = np.unique(
-                areas[areas['id_n'] == int(traffic_cell_id)]['ID_TAN'])
+            Id_tan = areas[areas['id_n'] == int(traffic_cell_id)][[
+                'ID_TAN', 'area']]
+            weights = Id_tan['area'] / Id_tan['area'].sum()
             for loc in d[traffic_cell_id].split(' '):
-                new_key = str(random.choice(Id_tan))
+                ww_area = rng.choice(
+                    Id_tan['ID_TAN'].to_numpy(), p=weights.to_numpy())
+                new_key = str(ww_area)
                 if (new_key in new_dict):
                     new_dict[new_key].append(loc)
                 else:
