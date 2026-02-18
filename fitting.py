@@ -36,7 +36,7 @@ def model(parameter):
         dt=dt,
         suspicion_threshold=parameter["suspicion_threshold"],
         sensitivity=parameter["sensitivity"],
-        h0=parameter["h0"],
+        h0=1.0,
         r0=parameter["r0"],
         alpha=parameter["alpha"],
         A0_SEI=sei_duck,
@@ -79,9 +79,9 @@ def model(parameter):
 prior = pyabc.Distribution(
     suspicion_threshold=pyabc.RV("uniform", 0.1, 0.5),
     sensitivity=pyabc.RV("uniform", 0.95, 1),
-    h0=pyabc.RV("uniform", 0, 100),
+    # h0=pyabc.RV("uniform", 0, 100),
     r0=pyabc.RV("lognorm", s=sigma, scale=np.exp(mu)),
-    alpha=pyabc.RV("uniform", 0, 20),
+    alpha=pyabc.RV("uniform", 0, 40),
     # A0_SEI = pyabc.RV("uniform", 0,1),
     # A0_EI = pyabc.RV("uniform", 0,1),
     # A0_ID = pyabc.RV("uniform", 0,1),
@@ -102,15 +102,15 @@ prior = pyabc.Distribution(
     # A4_EI = pyabc.RV("uniform", 0,1),
     # A4_ID = pyabc.RV("uniform", 0,1),
     # A4_DeathRate = pyabc.RV("uniform", 0,1),
-    foi_inner_factor0=pyabc.RV("uniform", 0, 1),
+    foi_inner_factor0=pyabc.RV("uniform", 0, 100),
     foi_outer_factor0=pyabc.RV("uniform", 0, 1),
-    foi_inner_factor1=pyabc.RV("uniform", 0, 1),
+    foi_inner_factor1=pyabc.RV("uniform", 0, 100),
     foi_outer_factor1=pyabc.RV("uniform", 0, 1),
-    foi_inner_factor2=pyabc.RV("uniform", 0, 1),
+    foi_inner_factor2=pyabc.RV("uniform", 0, 100),
     foi_outer_factor2=pyabc.RV("uniform", 0, 1),
-    foi_inner_factor3=pyabc.RV("uniform", 0, 1),
+    foi_inner_factor3=pyabc.RV("uniform", 0, 100),
     foi_outer_factor3=pyabc.RV("uniform", 0, 1),
-    foi_inner_factor4=pyabc.RV("uniform", 0, 1),
+    foi_inner_factor4=pyabc.RV("uniform", 0, 100),
     foi_outer_factor4=pyabc.RV("uniform", 0, 1),
     first_infection_day=pyabc.RV("uniform", 0, 12),
     second_infection_day=pyabc.RV("uniform", 0, 14),
@@ -143,7 +143,7 @@ distance = pyabc.AdaptiveAggregatedDistance(
 
 abc = pyabc.ABCSMC(model, prior, distance, population_size=100,
                    transitions=pyabc.transition.LocalTransition(20, 5))
-db_path = "sqlite:///" + os.path.join(tempfile.gettempdir(), "tmp2.db")
+db_path = "sqlite:///" + os.path.join(tempfile.gettempdir(), "tmp3.db")
 abc.new(db_path, obs_data)
 history = abc.run(max_nr_populations=6, minimum_epsilon=0.1)
 
