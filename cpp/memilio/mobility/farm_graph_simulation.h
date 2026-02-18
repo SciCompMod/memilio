@@ -220,73 +220,77 @@ private:
             }
         }
         // broiler 1
-        else if (node.get_result().get_last_value().sum() > 0) { // else if structure?
-            //Testing five days before transport for farms in HRZ
-            if (Base::m_t - node.get_population_date() + 1 > m_duration[3] - 5 && node.get_in_hrz()) {
-                bool positive_test                   = false;
-                const std::vector<ScalarType> values = {node.get_result().get_last_value().begin(),
-                                                        node.get_result().get_last_value().end() - 1};
-                for (size_t test = 0; test < 20; test++) {
-                    const auto test_compartment = mio::DiscreteDistribution<size_t>::get_instance()(m_rng, values);
-                    // Test infected animals
-                    if (test_compartment == 3 &&
-                        mio::UniformDistribution<ScalarType>::get_instance()(m_rng, 0.0, 1.0) < m_sensitivity) {
-                        positive_test = true;
-                        break;
-                    }
-                    // Test non-infected animals
-                    else if (mio::UniformDistribution<ScalarType>::get_instance()(m_rng, 0.0, 1.0) > m_specificity) {
-                        positive_test = true;
-                        break;
-                    }
-                }
-                if (positive_test) {
-                    node.set_date_suspicion(Base::m_t);
-                    node.set_date_confirmation(Base::m_t + 2.0);
-                }
-            }
-            // If production period is over and node is not sheduled for culling
-            if (Base::m_t - node.get_population_date() + 1 > m_duration[3] && !node.is_quarantined()) {
-                // mio::log_info("Farm Type: {}, In HRZ: {}, Population Date: {}, Slaughter Date: {}, Current Time: {}",
-                //   node.get_farm_type(), node.get_in_hrz(), node.get_population_date(),
-                //   node.get_slaughter_date(), Base::m_t);
-
-                // If farm in regulation zone, only slaughter is allowed
-                if (node.get_reg_zone_day() < Base::m_t && node.get_reg_zone_day() > Base::m_t - 28) {
-                    for (auto& val : node.get_result().get_last_value()) {
-                        val = 0;
-                    }
-                    node.set_slaughter_date(Base::m_t);
-                    node.set_infection_status(false);
-                }
-                // Otherwise move animals to broiler 2 farms
-                else {
-#ifndef JOLLY_BINDINGS_SKIP_MAIN
-                    mio::timing::AutoTimer<"Farm Simulation Shipment"> localtimer;
-#endif
-                    const std::vector<ScalarType> splitting_probs{0.135, 0.44, 0.425};
-                    auto num_destinations = mio::DiscreteDistribution<int>::get_instance()(m_rng, splitting_probs) + 1;
-                    mio::log_debug("Destinations: {}", num_destinations);
-                    // Move fraction of animals to destination farm
-                    while (num_destinations > 0) {
-                        auto destination_node = find_destination_farm(node);
-                        auto destination_result =
-                            Base::m_graph.nodes()[destination_node].property.get_result().get_last_value();
-                        // Only move living animals
-                        for (size_t index = 0; index < 3; index++) {
-                            const auto num_animals =
-                                std::ceil(node.get_result().get_last_value()[index] / num_destinations);
-                            destination_result[index] = num_animals;
-                            node.get_result().get_last_value()[index] -= num_animals;
+        else if (node.get_type() == 3) {
+            if (node.get_result().get_last_value().sum() > 0) { // else if structure?
+                //Testing five days before transport for farms in HRZ
+                if (Base::m_t - node.get_population_date() + 1 > m_duration[3] - 5 && node.get_in_hrz()) {
+                    bool positive_test                   = false;
+                    const std::vector<ScalarType> values = {node.get_result().get_last_value().begin(),
+                                                            node.get_result().get_last_value().end() - 1};
+                    for (size_t test = 0; test < 20; test++) {
+                        const auto test_compartment = mio::DiscreteDistribution<size_t>::get_instance()(m_rng, values);
+                        // Test infected animals
+                        if (test_compartment == 3 &&
+                            mio::UniformDistribution<ScalarType>::get_instance()(m_rng, 0.0, 1.0) < m_sensitivity) {
+                            positive_test = true;
+                            break;
                         }
-                        Base::m_graph.nodes()[destination_node].property.set_population_date(Base::m_t);
-                        num_destinations--;
-                        mio::log_debug("{}, {}, {}", id, destination_node, Base::m_t);
+                        // Test non-infected animals
+                        else if (mio::UniformDistribution<ScalarType>::get_instance()(m_rng, 0.0, 1.0) >
+                                 m_specificity) {
+                            positive_test = true;
+                            break;
+                        }
                     }
-                    // Dead animals are not traded, but anyways removed
-                    node.get_result().get_last_value()[3] = 0;
-                    node.set_slaughter_date(Base::m_t);
-                    node.set_infection_status(false);
+                    if (positive_test) {
+                        node.set_date_suspicion(Base::m_t);
+                        node.set_date_confirmation(Base::m_t + 2.0);
+                    }
+                }
+                // If production period is over and node is not sheduled for culling
+                if (Base::m_t - node.get_population_date() + 1 > m_duration[3] && !node.is_quarantined()) {
+                    // mio::log_info("Farm Type: {}, In HRZ: {}, Population Date: {}, Slaughter Date: {}, Current Time: {}",
+                    //   node.get_farm_type(), node.get_in_hrz(), node.get_population_date(),
+                    //   node.get_slaughter_date(), Base::m_t);
+
+                    // If farm in regulation zone, only slaughter is allowed
+                    if (node.get_reg_zone_day() < Base::m_t && node.get_reg_zone_day() > Base::m_t - 28) {
+                        for (auto& val : node.get_result().get_last_value()) {
+                            val = 0;
+                        }
+                        node.set_slaughter_date(Base::m_t);
+                        node.set_infection_status(false);
+                    }
+                    // Otherwise move animals to broiler 2 farms
+                    else {
+#ifndef JOLLY_BINDINGS_SKIP_MAIN
+                        mio::timing::AutoTimer<"Farm Simulation Shipment"> localtimer;
+#endif
+                        const std::vector<ScalarType> splitting_probs{0.135, 0.44, 0.425};
+                        auto num_destinations =
+                            mio::DiscreteDistribution<int>::get_instance()(m_rng, splitting_probs) + 1;
+                        mio::log_debug("Destinations: {}", num_destinations);
+                        // Move fraction of animals to destination farm
+                        while (num_destinations > 0) {
+                            auto destination_node = find_destination_farm(node);
+                            auto destination_result =
+                                Base::m_graph.nodes()[destination_node].property.get_result().get_last_value();
+                            // Only move living animals
+                            for (size_t index = 0; index < 3; index++) {
+                                const auto num_animals =
+                                    std::ceil(node.get_result().get_last_value()[index] / num_destinations);
+                                destination_result[index] = num_animals;
+                                node.get_result().get_last_value()[index] -= num_animals;
+                            }
+                            Base::m_graph.nodes()[destination_node].property.set_population_date(Base::m_t);
+                            num_destinations--;
+                            mio::log_debug("{}, {}, {}", id, destination_node, Base::m_t);
+                        }
+                        // Dead animals are not traded, but anyways removed
+                        node.get_result().get_last_value()[3] = 0;
+                        node.set_slaughter_date(Base::m_t);
+                        node.set_infection_status(false);
+                    }
                 }
             }
             // Check for possible repopulation
