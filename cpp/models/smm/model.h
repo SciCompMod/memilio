@@ -86,8 +86,10 @@ public:
         }
         else { // second order adoption
             FP N = 0;
-            for (auto status : make_index_range(reduce_index<Status>(this->populations.size()))) {
-                N += x[pop.get_flat_index({rate.region, status})];
+            for (auto status : make_index_range(reduce_index<Status>(pop.size()))) {
+                if (pop.get_flat_index({rate.region, status}) != 3) {
+                    N += x[pop.get_flat_index({rate.region, status})];
+                }
             }
             // accumulate influences
             FP influences = 0.0;
