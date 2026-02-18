@@ -70,11 +70,11 @@ public:
      */
     auto get_thresholds() const
     {
-        return make_range(m_thresholds.begin(), m_thresholds.end());
+        return Range(m_thresholds);
     }
     auto get_thresholds()
     {
-        return make_range(m_thresholds.begin(), m_thresholds.end());
+        return Range(m_thresholds);
     }
     /** @} */
 

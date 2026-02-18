@@ -186,7 +186,7 @@ TYPED_TEST(TestTimeSeries, data)
     ts.add_time_point(2.0, v2);
     ts.add_time_point(3.0, v3);
 
-    auto data_range = mio::make_range(ts.data(), ts.data() + 8);
+    auto data_range = mio::Range(ts.data(), ts.data() + 8);
     ASSERT_THAT(data_range, testing::ElementsAre(TypeParam(0.0), TypeParam(0.5), TypeParam(1.0), TypeParam(1.5),
                                                  TypeParam(2.0), TypeParam(2.5), TypeParam(3.0), TypeParam(3.5)));
 }
@@ -216,13 +216,13 @@ TYPED_TEST(TestTimeSeries, iteratorsRange)
         ++i;
     }
     i = 3;
-    for (auto&& v : mio::make_range(ts.rbegin(), ts.rend())) {
+    for (auto&& v : mio::Range(ts.rbegin(), ts.rend())) {
         ASSERT_EQ(print_wrap(v), print_wrap(ts[i]));
         --i;
     }
     ASSERT_THAT(ts, testing::ElementsAre(v0, v1, v2, v3));
     ASSERT_THAT(ts_constref, testing::ElementsAre(v0, v1, v2, v3));
-    ASSERT_THAT(mio::make_range(ts.rbegin(), ts.rend()), testing::ElementsAre(v3, v2, v1, v0));
+    ASSERT_THAT(mio::Range(ts.rbegin(), ts.rend()), testing::ElementsAre(v3, v2, v1, v0));
 }
 
 TYPED_TEST(TestTimeSeries, timeIteratorsRange)

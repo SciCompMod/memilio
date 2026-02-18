@@ -89,11 +89,11 @@ TEST(TestUtils, extend_index)
     EXPECT_EQ(result_j, reference_j);
 }
 
-TEST(TestUtils, IndexRange)
+TEST(TestUtils, index_range)
 {
     using I = mio::Index<CategoryTag<1>, CategoryTag<2>, CategoryTag<3>>;
     I dims{CategoryTag<1>(2), CategoryTag<2>(3), CategoryTag<3>(5)};
-    mio::IndexRange<I> range(dims);
+    auto range = mio::make_index_range(dims);
 
     I reference_begin{CategoryTag<1>(0), CategoryTag<2>(0), CategoryTag<3>(0)};
     I reference_end{CategoryTag<1>(2), CategoryTag<2>(0), CategoryTag<3>(0)};

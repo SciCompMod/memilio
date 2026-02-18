@@ -117,7 +117,7 @@ public:
             get_rhs_impl(flows, dydt, Index<>{});
         }
         else {
-            for (FlowIndex I : make_index_range(reduce_index<FlowIndex>(this->populations.size()))) {
+            for (FlowIndex I : reduce_index<FlowIndex>(this->populations.size())) {
                 get_rhs_impl(flows, dydt, I);
             }
         }

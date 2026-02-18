@@ -344,33 +344,33 @@ void Model::begin_step(TimePoint t, TimeSpan dt)
     m_are_exposure_caches_valid = true;
 }
 
-auto Model::get_locations() const -> Range<std::pair<ConstLocationIterator, ConstLocationIterator>>
+auto Model::get_locations() const -> Range<ConstLocationIterator>
 {
-    return std::make_pair(m_locations.cbegin(), m_locations.cend());
+    return {m_locations};
 }
-auto Model::get_locations() -> Range<std::pair<LocationIterator, LocationIterator>>
+auto Model::get_locations() -> Range<LocationIterator>
 {
-    return std::make_pair(m_locations.begin(), m_locations.end());
-}
-
-auto Model::get_persons() const -> Range<std::pair<ConstPersonIterator, ConstPersonIterator>>
-{
-    return std::make_pair(m_persons.cbegin(), m_persons.cend());
+    return {m_locations};
 }
 
-auto Model::get_persons() -> Range<std::pair<PersonIterator, PersonIterator>>
+auto Model::get_persons() const -> Range<ConstPersonIterator>
 {
-    return std::make_pair(m_persons.begin(), m_persons.end());
+    return {m_persons};
 }
 
-auto Model::get_activeness_statuses() const -> Range<std::pair<ConstActivenessIterator, ConstActivenessIterator>>
+auto Model::get_persons() -> Range<PersonIterator>
 {
-    return std::make_pair(m_activeness_statuses.cbegin(), m_activeness_statuses.cend());
+    return {m_persons};
 }
 
-auto Model::get_activeness_statuses() -> Range<std::pair<ActivenessIterator, ActivenessIterator>>
+auto Model::get_activeness_statuses() const -> Range<ConstActivenessIterator>
 {
-    return std::make_pair(m_activeness_statuses.begin(), m_activeness_statuses.end());
+    return {m_activeness_statuses};
+}
+
+auto Model::get_activeness_statuses() -> Range<ActivenessIterator>
+{
+    return {m_activeness_statuses};
 }
 
 LocationId Model::find_location(LocationType type, const PersonId person) const

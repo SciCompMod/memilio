@@ -250,7 +250,7 @@ public:
      */
     auto nodes()
     {
-        return make_range(begin(m_nodes), end(m_nodes));
+        return Range(m_nodes);
     }
 
     /**
@@ -258,7 +258,7 @@ public:
      */
     auto nodes() const
     {
-        return make_range(begin(m_nodes), end(m_nodes));
+        return Range(m_nodes);
     };
 
     /**
@@ -266,7 +266,7 @@ public:
      */
     auto edges()
     {
-        return make_range(begin(m_edges), end(m_edges));
+        return Range(m_edges);
     }
 
     /**
@@ -274,7 +274,7 @@ public:
      */
     auto edges() const
     {
-        return make_range(begin(m_edges), end(m_edges));
+        return Range(m_edges);
     }
 
     /**
@@ -297,7 +297,7 @@ private:
     template <typename Iter>
     static auto out_edges(Iter b, Iter e, size_t idx)
     {
-        return make_range(std::equal_range(b, e, OutEdgeBase(idx), [](auto&& e1, auto&& e2) {
+        return Range(std::equal_range(b, e, OutEdgeBase(idx), [](auto&& e1, auto&& e2) {
             return e1.start_node_idx < e2.start_node_idx;
         }));
     }

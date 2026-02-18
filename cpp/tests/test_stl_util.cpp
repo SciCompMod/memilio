@@ -25,7 +25,7 @@
 TEST(TestRange, index_operator)
 {
     auto v = std::vector<int>{0, 1, 2, 3, 4, 5, 6};
-    auto r = mio::make_range(begin(v), end(v));
+    auto r = mio::Range(begin(v), end(v));
 
     EXPECT_EQ(v.size(), r.size());
     for (size_t i = 0; i < r.size(); ++i) {
@@ -36,7 +36,7 @@ TEST(TestRange, index_operator)
 TEST(TestRange, iterators)
 {
     auto v = std::vector<int>{0, 1, 2, 3, 4, 5, 6};
-    auto r = mio::make_range(begin(v), end(v));
+    auto r = mio::Range(begin(v), end(v));
 
     EXPECT_THAT(r, testing::ElementsAreArray(v));
 }
@@ -44,7 +44,7 @@ TEST(TestRange, iterators)
 TEST(TestRange, reverse_iterators)
 {
     auto v  = std::vector<int>{0, 1, 2, 3, 4, 5};
-    auto r  = mio::make_range(begin(v), end(v));
+    auto r  = mio::Range(begin(v), end(v));
     auto v2 = std::vector<int>(r.rbegin(), r.rend());
 
     EXPECT_THAT(v2, testing::ElementsAre(5, 4, 3, 2, 1, 0));
@@ -53,7 +53,7 @@ TEST(TestRange, reverse_iterators)
 TEST(TestRange, c_array)
 {
     int v[] = {1, 2, 3, 4, 5, 6};
-    auto r  = mio::make_range(std::begin(v), std::end(v));
+    auto r  = mio::Range(std::begin(v), std::end(v));
 
     EXPECT_THAT(r, testing::ElementsAreArray(v));
 }
@@ -61,7 +61,7 @@ TEST(TestRange, c_array)
 TEST(TestRange, reference_semantics)
 {
     auto v = std::vector<int>{3, 4, 1, 2, 6, 7};
-    auto r = mio::make_range(begin(v), end(v));
+    auto r = mio::Range(begin(v), end(v));
     std::sort(begin(v), end(v));
 
     EXPECT_THAT(r, testing::ElementsAreArray(v));
@@ -70,7 +70,7 @@ TEST(TestRange, reference_semantics)
 TEST(TestRange, partial_view)
 {
     auto v = std::vector<int>{0, 1, 2, 3, 4, 5, 6};
-    auto r = mio::make_range(begin(v) + 2, end(v) - 1);
+    auto r = mio::Range(begin(v) + 2, end(v) - 1);
 
     EXPECT_THAT(r, testing::ElementsAre(2, 3, 4, 5));
 }

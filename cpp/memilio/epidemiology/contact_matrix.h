@@ -121,11 +121,11 @@ public:
      */
     auto get_dampings() const
     {
-        return make_range(m_dampings.begin(), m_dampings.end());
+        return Range(m_dampings.begin(), m_dampings.end());
     }
     auto get_dampings()
     {
-        return make_range(m_dampings.begin(), m_dampings.end());
+        return Range(m_dampings.begin(), m_dampings.end());
     }
 
     /**

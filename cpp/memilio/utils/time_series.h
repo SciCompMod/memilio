@@ -450,37 +450,36 @@ public:
      * time at point 0 -> time at point 1 -> ...
      * 
      *********************/
-    Range<std::pair<time_iterator, time_iterator>> get_times()
+    Range<time_iterator> get_times()
     {
-        return make_range(time_iterator{&m_data, 0}, time_iterator{&m_data, m_num_time_points});
+        return {time_iterator{&m_data, 0}, time_iterator{&m_data, m_num_time_points}};
     }
 
-    Range<std::pair<const_time_iterator, const_time_iterator>> get_times() const
+    Range<const_time_iterator> get_times() const
     {
         return get_const_times();
     }
 
-    Range<std::pair<const_time_iterator, const_time_iterator>> get_const_times() const
+    Range<const_time_iterator> get_const_times() const
     {
-        return make_range(const_time_iterator{&m_data, 0}, const_time_iterator{&m_data, m_num_time_points});
+        return {const_time_iterator{&m_data, 0}, const_time_iterator{&m_data, m_num_time_points}};
     }
 
-    Range<std::pair<reverse_time_iterator, reverse_time_iterator>> get_reverse_times()
+    Range<reverse_time_iterator> get_reverse_times()
     {
         auto time_range = get_times();
-        return make_range(reverse_time_iterator{time_range.end()}, reverse_time_iterator{time_range.begin()});
+        return {reverse_time_iterator{time_range.end()}, reverse_time_iterator{time_range.begin()}};
     }
 
-    Range<std::pair<const_reverse_time_iterator, const_reverse_time_iterator>> get_reverse_times() const
+    Range<const_reverse_time_iterator> get_reverse_times() const
     {
         return get_const_reverse_times();
     }
 
-    Range<std::pair<const_reverse_time_iterator, const_reverse_time_iterator>> get_const_reverse_times() const
+    Range<const_reverse_time_iterator> get_const_reverse_times() const
     {
         auto time_range = get_const_times();
-        return make_range(const_reverse_time_iterator{time_range.end()},
-                          const_reverse_time_iterator{time_range.begin()});
+        return {const_reverse_time_iterator{time_range.end()}, const_reverse_time_iterator{time_range.begin()}};
     }
 
     /**

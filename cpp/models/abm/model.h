@@ -219,8 +219,8 @@ public:
      * @return A range of all Location%s.
      * @{
      */
-    Range<std::pair<ConstLocationIterator, ConstLocationIterator>> get_locations() const;
-    Range<std::pair<LocationIterator, LocationIterator>> get_locations();
+    Range<ConstLocationIterator> get_locations() const;
+    Range<LocationIterator> get_locations();
     /** @} */
 
     /**
@@ -228,8 +228,8 @@ public:
      * @return A range of all Person%s.
      * @{
      */
-    Range<std::pair<ConstPersonIterator, ConstPersonIterator>> get_persons() const;
-    Range<std::pair<PersonIterator, PersonIterator>> get_persons();
+    Range<ConstPersonIterator> get_persons() const;
+    Range<PersonIterator> get_persons();
     /** @} */
 
     /**
@@ -237,8 +237,8 @@ public:
      * @return A range of all Person%s activeness statuses.
      * @{
      */
-    Range<std::pair<ConstActivenessIterator, ConstActivenessIterator>> get_activeness_statuses() const;
-    Range<std::pair<ActivenessIterator, ActivenessIterator>> get_activeness_statuses();
+    Range<ConstActivenessIterator> get_activeness_statuses() const;
+    Range<ActivenessIterator> get_activeness_statuses();
     /** @} */
 
     /**
