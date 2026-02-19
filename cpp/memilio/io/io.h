@@ -103,11 +103,11 @@ struct is_error_code_enum<mio::StatusCode> : true_type {
 namespace mio
 {
 
-namespace detail
+namespace details
 {
 /**
-     * category that describes StatusCode in std::error_code
-     */
+ * category that describes StatusCode in std::error_code
+ */
 class StatusCodeCategory : public std::error_category
 {
 public:
@@ -166,14 +166,14 @@ public:
         }
     }
 };
-} // namespace detail
+} // namespace details
 
 /**
  * singleton StatusCodeCategory instance.
  */
-inline const detail::StatusCodeCategory& status_code_category()
+inline const details::StatusCodeCategory& status_code_category()
 {
-    static detail::StatusCodeCategory c;
+    static details::StatusCodeCategory c;
     return c;
 }
 
