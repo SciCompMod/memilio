@@ -719,7 +719,7 @@ private:
     bool m_standstill                          = false;
     ScalarType m_suspicion_threshold           = 0.2;
     ScalarType m_sensitivity                   = 0.95;
-    ScalarType m_specificity                   = 0.99;
+    ScalarType m_specificity                   = 1.0;
     std::vector<ScalarType> m_duration         = {77.0, 52.0, 400.0, 21.0, 28.0};
     std::vector<ScalarType> m_downtime         = {23.6, 23.9, 23.6, 31.1, 21.0};
     std::vector<ScalarType> m_foi_inner_factor = {1.0, 1.0, 1.0, 1.0, 1.0};
