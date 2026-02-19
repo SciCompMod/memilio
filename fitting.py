@@ -77,8 +77,8 @@ def model(parameter):
 
 
 prior = pyabc.Distribution(
-    suspicion_threshold=pyabc.RV("uniform", 0.1, 0.5),
-    sensitivity=pyabc.RV("uniform", 0.95, 1),
+    suspicion_threshold=pyabc.RV("uniform", 0.1, 0.4),
+    sensitivity=pyabc.RV("uniform", 0.95, 0.05),
     # h0=pyabc.RV("uniform", 0, 100),
     r0=pyabc.RV("lognorm", s=sigma, scale=np.exp(mu)),
     alpha=pyabc.RV("uniform", 0, 40),
