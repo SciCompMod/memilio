@@ -273,18 +273,26 @@ private:
                         // Move fraction of animals to destination farm
                         while (num_destinations > 0) {
                             auto destination_node = find_destination_farm(node);
-                            auto destination_result =
-                                Base::m_graph.nodes()[destination_node].property.get_result().get_last_value();
-                            // Only move living animals
-                            for (size_t index = 0; index < 3; index++) {
-                                const auto num_animals =
-                                    std::ceil(node.get_result().get_last_value()[index] / num_destinations);
-                                destination_result[index] = num_animals;
-                                node.get_result().get_last_value()[index] -= num_animals;
+                            if (destination_node == -1) {
+                                for (auto& num_animals : node.get_result().get_last_value()) {
+                                    num_animals = 0;
+                                }
+                                num_destinations = 0;
                             }
-                            Base::m_graph.nodes()[destination_node].property.set_population_date(Base::m_t);
-                            num_destinations--;
-                            mio::log_debug("{}, {}, {}", id, destination_node, Base::m_t);
+                            else {
+                                auto destination_result =
+                                    Base::m_graph.nodes()[destination_node].property.get_result().get_last_value();
+                                // Only move living animals
+                                for (size_t index = 0; index < 3; index++) {
+                                    const auto num_animals =
+                                        std::ceil(node.get_result().get_last_value()[index] / num_destinations);
+                                    destination_result[index] = num_animals;
+                                    node.get_result().get_last_value()[index] -= num_animals;
+                                }
+                                Base::m_graph.nodes()[destination_node].property.set_population_date(Base::m_t);
+                                num_destinations--;
+                                mio::log_debug("{}, {}, {}", id, destination_node, Base::m_t);
+                            }
                         }
                         // Dead animals are not traded, but anyways removed
                         node.get_result().get_last_value()[3] = 0;
@@ -321,7 +329,7 @@ private:
         }
     }
 
-    size_t find_destination_farm(const Node& node)
+    int find_destination_farm(const Node& node)
     {
         std::vector<ScalarType> distances;
         std::vector<size_t> ids;
@@ -332,7 +340,8 @@ private:
             }
         }
         if (distances.size() == 0) {
-            mio::log_warning("No open broiler 2 farms found. Segmentation fault follows:");
+            mio::log_warning("No open broiler 2 farms found.");
+            return -1;
         }
         const auto d0 = 96460.0;
         for (auto& d : distances) {
