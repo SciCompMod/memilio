@@ -42,21 +42,9 @@ add_executable(ode_seir_error_compare_stress ode_seir_error_compare_stress.cpp)
 target_link_libraries(ode_seir_error_compare_stress PRIVATE memilio ode_seir)
 target_compile_options(ode_seir_error_compare_stress PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-add_executable(ode_seir_analytical ode_seir_analytical.cpp)
-target_link_libraries(ode_seir_analytical PRIVATE memilio ode_seir)
-target_compile_options(ode_seir_analytical PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
-
-add_executable(ode_seir_memory_benchmark ode_seir_memory_benchmark.cpp)
-target_link_libraries(ode_seir_memory_benchmark PRIVATE memilio ode_seir)
-target_compile_options(ode_seir_memory_benchmark PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
-
 add_executable(ode_seir_flow_explicit_comp_example ode_seir_flow_explicit_comp.cpp)
 target_link_libraries(ode_seir_flow_explicit_comp_example PRIVATE memilio ode_seir)
 target_compile_options(ode_seir_flow_explicit_comp_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
-
-add_executable(ode_seir_flow_convergence_test ode_seir_flow_convergence_test.cpp)
-target_link_libraries(ode_seir_flow_convergence_test PRIVATE memilio ode_seir)
-target_compile_options(ode_seir_flow_convergence_test PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(ode_sir_example ode_sir.cpp)
 target_link_libraries(ode_sir_example PRIVATE memilio ode_sir)
@@ -220,3 +208,7 @@ target_compile_options(ode_seir_flow_convergence_euler_euler PRIVATE ${MEMILIO_C
 add_executable(ode_seir_flow_convergence_all_methods ode_seir_flow_convergence_all_methods.cpp)
 target_link_libraries(ode_seir_flow_convergence_all_methods PRIVATE memilio ode_seir)
 target_compile_options(ode_seir_flow_convergence_all_methods PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(ode_seir_adaptive_steps ode_seir_adaptive_steps.cpp)
+target_link_libraries(ode_seir_adaptive_steps PRIVATE memilio ode_seir)
+target_compile_options(ode_seir_adaptive_steps PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})

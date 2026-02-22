@@ -8,6 +8,7 @@
 #include "memilio/math/stepper_wrapper.h"
 #include "memilio/utils/type_list.h"
 #include "state_estimators.h"
+#include "memilio/data/analyze_result.h"
 #include <iomanip>
 #include <vector>
 #include <cmath>
@@ -19,14 +20,14 @@ int main()
 {
     mio::set_log_level(mio::LogLevel::warn);
 
-    std::vector<ScalarType> dts = {2.0, 1.0, 0.5, 0.25, 0.125};
+    std::vector<ScalarType> dts = {2.0, 1.0, 0.5, 0.25, 0.125, 0.0001}; // 0.001 for reference solution
 
     for (auto curr_dt : dts) {
 
         // Time parameters
         ScalarType t0   = 0.;
         ScalarType dt   = curr_dt; // use the current dt from the loop
-        ScalarType tmax = 150.;
+        ScalarType tmax = 100.;
 
         // Initialize flow-based SEIR model
         mio::oseir::Model<ScalarType> model_flow(1); // one age group
@@ -49,7 +50,7 @@ int main()
             std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta4>>();
 
         // Run flow-based simulation (aggregate model)
-        FlowSim sim_flow(model_flow, t0, dt); // dt here is the desired output step, integrator might use smaller steps
+        FlowSim sim_flow(model_flow, t0, dt);
         sim_flow.set_integrator(integrator_flow);
         sim_flow.advance(tmax);
         const auto& seir_res = sim_flow.get_result();
@@ -80,10 +81,12 @@ int main()
 
             const auto& total_pop_at_t = seir_res.get_value(i_res); // Population at the start of the interval
 
-            // Use flow_based_mobility_returns
-            // It modifies mobile_pop_current in place
-            mio::examples::flow_based_mobility_returns(mobile_pop_current, sim_flow, total_pop_at_t, current_t_res,
-                                                       current_dt_res);
+            // flow_based_mobility_returns_exact(commuter, totals, model, t, dt)
+            Eigen::VectorXd totals_step = total_pop_at_t; // mutable copy for in-place update of totals
+            mio::examples::flow_based_mobility_returns_rk4(mobile_pop_current, totals_step, model_flow, current_t_res,
+                                                           current_dt_res);
+            // mio::examples::flow_based_mobility_returns(mobile_pop_current, sim_flow, total_pop_at_t, current_t_res,
+            //                                            current_dt_res);
 
             flow_commuter_results.add_time_point(next_t_res, mobile_pop_current);
         }
@@ -132,7 +135,7 @@ int main()
         ExplicitSim sim_explicit(model_explicit, t0, dt); // dt is the desired output step
         sim_explicit.set_integrator(integrator_explicit);
         sim_explicit.advance(tmax);
-        const auto& explicit_results_full = sim_explicit.get_result();
+        const auto& explicit_results_full = mio::interpolate_simulation_result(sim_explicit.get_result());
 
         // print results to CSV file
         const std::string save_dir                        = "/localdata1/code/memilio/saves";
@@ -147,7 +150,9 @@ int main()
 
         explicit_results_full.export_csv(save_dir + "/explicit_commuter_compare_sol" + dt_suffix + ".csv",
                                          compartment_labels, ',', precision_csv);
-        flow_commuter_results.export_csv(save_dir + "/flow_commuter_compare_sol" + dt_suffix + ".csv",
+        // flow_commuter_results.export_csv(save_dir + "/flow_commuter_compare_sol" + dt_suffix + ".csv",
+        //                                  compartment_labels, ',', precision_csv);
+        flow_commuter_results.export_csv(save_dir + "/flow_exact_commuter_compare_sol" + dt_suffix + ".csv",
                                          compartment_labels, ',', precision_csv);
     }
     return 0;

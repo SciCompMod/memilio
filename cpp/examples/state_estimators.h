@@ -8,7 +8,11 @@
 #include "memilio/utils/type_list.h"
 #include "memilio/math/eigen.h"
 #include "memilio/math/stepper_wrapper.h"
+#include <vector>
 #include "ode_seir/model.h"
+#include <vector>
+#include <boost/numeric/odeint.hpp>
+#include <boost/numeric/odeint/stepper/runge_kutta4.hpp>
 
 namespace mio
 {
@@ -66,7 +70,7 @@ public:
     using typename Base::Populations;
     using CommuterIndex = CommuterType;
 
-private:
+protected:
     int m_num_commuter_groups;
 
 public:
@@ -97,7 +101,6 @@ public:
 
         // Calculate and apply flows for each age group and commuter type
         for (mio::AgeGroup g(0); g < mio::AgeGroup(params.get_num_groups()); ++g) {
-            // Process E->I and I->R flows for non-commuter group first
             {
                 CommuterType commuter_type = CommuterType::NonCommuter;
                 const size_t E_idx = this->populations.get_flat_index({g, commuter_type, InfectionStateExplicit::E});
@@ -130,6 +133,34 @@ public:
             }
         }
 
+        const size_t num_age_groups = static_cast<size_t>(params.get_num_groups());
+        std::vector<FP> N_per_age(num_age_groups, 0.0);
+        std::vector<FP> I_per_age(num_age_groups, 0.0);
+
+        for (mio::AgeGroup j(0); j < mio::AgeGroup(params.get_num_groups()); ++j) {
+            size_t j_idx = static_cast<size_t>(j.get());
+
+            // Add non-commuter population
+            for (size_t state = 0; state < static_cast<size_t>(InfectionStateExplicit::Count); ++state) {
+                N_per_age[j_idx] += pop[this->populations.get_flat_index(
+                    {j, CommuterType::NonCommuter, static_cast<InfectionStateExplicit>(state)})];
+            }
+            I_per_age[j_idx] =
+                pop[this->populations.get_flat_index({j, CommuterType::NonCommuter, InfectionStateExplicit::I})];
+
+            // Add commuter populations
+            for (int c = 0; c < m_num_commuter_groups; ++c) {
+                CommuterType commuter_type_j =
+                    static_cast<CommuterType>(static_cast<int>(CommuterType::CommuterBase) + c);
+                for (size_t state = 0; state < static_cast<size_t>(InfectionStateExplicit::Count); ++state) {
+                    N_per_age[j_idx] += pop[this->populations.get_flat_index(
+                        {j, commuter_type_j, static_cast<InfectionStateExplicit>(state)})];
+                }
+                I_per_age[j_idx] +=
+                    pop[this->populations.get_flat_index({j, commuter_type_j, InfectionStateExplicit::I})];
+            }
+        }
+
         for (mio::AgeGroup i(0); i < mio::AgeGroup(params.get_num_groups()); ++i) {
             // For each commuter type of age group i
             // First non-commuter
@@ -144,26 +175,10 @@ public:
 
             // Sum up contributions from all age groups j
             for (mio::AgeGroup j(0); j < mio::AgeGroup(params.get_num_groups()); ++j) {
-                // Calculate total N_j for group j (across all commuter types)
-                FP N_j = 0;
+                size_t j_idx              = static_cast<size_t>(j.get());
+                const FP N_j              = N_per_age[j_idx];
+                const FP total_infected_j = I_per_age[j_idx];
 
-                // Add non-commuter population for group j
-                for (size_t state = 0; state < static_cast<size_t>(InfectionStateExplicit::Count); ++state) {
-                    N_j += pop[this->populations.get_flat_index(
-                        {j, CommuterType::NonCommuter, static_cast<InfectionStateExplicit>(state)})];
-                }
-
-                // Add commuter populations for group j
-                for (int c = 0; c < m_num_commuter_groups; ++c) {
-                    CommuterType commuter_type_j =
-                        static_cast<CommuterType>(static_cast<int>(CommuterType::CommuterBase) + c);
-                    for (size_t state = 0; state < static_cast<size_t>(InfectionStateExplicit::Count); ++state) {
-                        N_j += pop[this->populations.get_flat_index(
-                            {j, commuter_type_j, static_cast<InfectionStateExplicit>(state)})];
-                    }
-                }
-
-                // Calculate divN_j (1/N_j) with safety check
                 const FP divN_j = (N_j < mio::Limits<FP>::zero_tolerance()) ? 0.0 : FP(1.0) / N_j;
 
                 // Get transmission coefficient
@@ -171,16 +186,6 @@ public:
                     params.template get<mio::oseir::ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t)(
                         i.get(), j.get()) *
                     params.template get<mio::oseir::TransmissionProbabilityOnContact<FP>>()[i] * divN_j;
-
-                // Sum up infected from all commuter types in group j
-                FP total_infected_j =
-                    pop[this->populations.get_flat_index({j, CommuterType::NonCommuter, InfectionStateExplicit::I})];
-                for (int c = 0; c < m_num_commuter_groups; ++c) {
-                    CommuterType commuter_type_j =
-                        static_cast<CommuterType>(static_cast<int>(CommuterType::CommuterBase) + c);
-                    total_infected_j +=
-                        pop[this->populations.get_flat_index({j, commuter_type_j, InfectionStateExplicit::I})];
-                }
 
                 // Add contribution to S->E flow
                 flows[S_to_E_flow_idx] += coeffStoE * y[Si] * total_infected_j;
@@ -199,26 +204,10 @@ public:
                 // Initialize flow to zero
                 flows[S_to_E_flow_idx_inner] = 0;
 
-                // Sum up contributions from all age groups j
                 for (mio::AgeGroup j(0); j < mio::AgeGroup(params.get_num_groups()); ++j) {
-                    // Calculate total N_j for group j (across all commuter types)
-                    FP N_j = 0;
-
-                    // Add non-commuter population for group j
-                    for (size_t state = 0; state < static_cast<size_t>(InfectionStateExplicit::Count); ++state) {
-                        N_j += pop[this->populations.get_flat_index(
-                            {j, CommuterType::NonCommuter, static_cast<InfectionStateExplicit>(state)})];
-                    }
-
-                    // Add commuter populations for group j
-                    for (int c2 = 0; c2 < m_num_commuter_groups; ++c2) {
-                        CommuterType commuter_type_j =
-                            static_cast<CommuterType>(static_cast<int>(CommuterType::CommuterBase) + c2);
-                        for (size_t state = 0; state < static_cast<size_t>(InfectionStateExplicit::Count); ++state) {
-                            N_j += pop[this->populations.get_flat_index(
-                                {j, commuter_type_j, static_cast<InfectionStateExplicit>(state)})];
-                        }
-                    }
+                    size_t j_idx              = static_cast<size_t>(j.get());
+                    const FP N_j              = N_per_age[j_idx];
+                    const FP total_infected_j = I_per_age[j_idx];
 
                     const FP divN_j = (N_j < mio::Limits<FP>::zero_tolerance()) ? 0.0 : FP(1.0) / N_j;
 
@@ -226,16 +215,6 @@ public:
                         params.template get<mio::oseir::ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t)(
                             i.get(), j.get()) *
                         params.template get<mio::oseir::TransmissionProbabilityOnContact<FP>>()[i] * divN_j;
-
-                    // Sum up infected from all commuter types in group j
-                    FP total_infected_j = pop[this->populations.get_flat_index(
-                        {j, CommuterType::NonCommuter, InfectionStateExplicit::I})];
-                    for (int c2 = 0; c2 < m_num_commuter_groups; ++c2) {
-                        CommuterType commuter_type_j =
-                            static_cast<CommuterType>(static_cast<int>(CommuterType::CommuterBase) + c2);
-                        total_infected_j +=
-                            pop[this->populations.get_flat_index({j, commuter_type_j, InfectionStateExplicit::I})];
-                    }
 
                     // Add contribution to S->E flow
                     flows[S_to_E_flow_idx_inner] += coeffStoE * y[Si_inner] * total_infected_j;
@@ -468,7 +447,6 @@ flow_based_mobility_returns_rk4(Eigen::Ref<Eigen::VectorXd> commuter, // in/out:
     // ------- lambdas for totals derivatives & flows -------
     auto totals_rhs = [&](const Eigen::VectorXd& y, double tt, Eigen::VectorXd& dy) {
         dy.resize(NC);
-        // In the SEIR integrators in MEmilio: get_derivatives(pop, y, t, dy)
         // Here, locals+commuters are already aggregated in y.
         model.get_derivatives(y, y, tt, dy);
     };
@@ -511,7 +489,7 @@ flow_based_mobility_returns_rk4(Eigen::Ref<Eigen::VectorXd> commuter, // in/out:
         }
     };
 
-    // ------- share vector ξ = Xc / Xt  (safe division, clamped to [0,1]) -------
+    // ------- share vector ξ = Xc / Xt  -------
     auto compute_shares = [&](const Eigen::VectorXd& Xc, const Eigen::VectorXd& Xt, Eigen::VectorXd& xi) {
         xi.resize(NC);
         for (int i = 0; i < (int)NC; ++i) {
@@ -544,8 +522,7 @@ flow_based_mobility_returns_rk4(Eigen::Ref<Eigen::VectorXd> commuter, // in/out:
     commuter_rhs_from_shares(f1, xi1, k1_com);
 
     // --- Stage 2 (t + dt/2) ---
-    Eigen::VectorXd y2 = y1 + (dt * 0.5) * k1_tot;
-    // commuter stage-2 state via RK4 relation (NO rhs eval for Xc needed here)
+    Eigen::VectorXd y2  = y1 + (dt * 0.5) * k1_tot;
     Eigen::VectorXd Xc2 = Xc0 + (dt * 0.5) * k1_com;
     totals_rhs(y2, t + 0.5 * dt, k2_tot);
     totals_flows(y2, t + 0.5 * dt, f2);
@@ -568,21 +545,21 @@ flow_based_mobility_returns_rk4(Eigen::Ref<Eigen::VectorXd> commuter, // in/out:
     compute_shares(Xc4, y4, xi4);
     commuter_rhs_from_shares(f4, xi4, k4_com);
 
-    // --- Combine (classical RK4 weights) ---
+    // --- Combine (RK4 weights) ---
     totals = y1 + (dt / 6.0) * (k1_tot + 2.0 * k2_tot + 2.0 * k3_tot + k4_tot);
 
     Eigen::VectorXd Xc_next = Xc0 + (dt / 6.0) * (k1_com + 2.0 * k2_com + 2.0 * k3_com + k4_com);
 
     // Numerical guards: non-negativity and commuter <= totals (component-wise)
-    for (int i = 0; i < (int)NC; ++i) {
-        if (Xc_next[i] < 0.0)
-            Xc_next[i] = 0.0;
-        // enforce Xc <= totals (avoid tiny drifts)
-        if (totals[i] < 0.0)
-            totals[i] = 0.0; // paranoid clamp for totals as well
-        if (Xc_next[i] > totals[i])
-            Xc_next[i] = totals[i];
-    }
+    // for (int i = 0; i < (int)NC; ++i) {
+    //     if (Xc_next[i] < 0.0)
+    //         Xc_next[i] = 0.0;
+    //     // enforce Xc <= totals (avoid tiny drifts)
+    //     if (totals[i] < 0.0)
+    //         totals[i] = 0.0; // paranoid clamp for totals as well
+    //     if (Xc_next[i] > totals[i])
+    //         Xc_next[i] = totals[i];
+    // }
 
     commuter = Xc_next;
 }
@@ -670,13 +647,13 @@ flow_based_mobility_returns_rk2(Eigen::Ref<Eigen::VectorXd> commuter, // in/out:
         }
     };
 
-    // ------- share vector ξ = Xc / Xt  (safe division, clamped to [0,1]) -------
+    // ------- share vector ξ = Xc / Xt -------
     auto compute_shares = [&](const Eigen::VectorXd& Xc, const Eigen::VectorXd& Xt, Eigen::VectorXd& xi) {
         xi.resize(NC);
         for (int i = 0; i < (int)NC; ++i) {
             const double denom = Xt[i];
             double v           = (denom > 0.0) ? (Xc[i] / denom) : 0.0;
-            // numerical safety: clamp to [0,1]
+            // clamp to [0,1]
             if (v < 0.0)
                 v = 0.0;
             if (v > 1.0)
@@ -719,14 +696,14 @@ flow_based_mobility_returns_rk2(Eigen::Ref<Eigen::VectorXd> commuter, // in/out:
     Eigen::VectorXd Xc_next = Xc0 + dt * k2_com;
 
     // Numerical guards: non-negativity and commuter <= totals (component-wise)
-    for (int i = 0; i < (int)NC; ++i) {
-        if (Xc_next[i] < 0.0)
-            Xc_next[i] = 0.0;
-        if (totals[i] < 0.0)
-            totals[i] = 0.0;
-        if (Xc_next[i] > totals[i])
-            Xc_next[i] = totals[i];
-    }
+    // for (int i = 0; i < (int)NC; ++i) {
+    //     if (Xc_next[i] < 0.0)
+    //         Xc_next[i] = 0.0;
+    //     if (totals[i] < 0.0)
+    //         totals[i] = 0.0;
+    //     if (Xc_next[i] > totals[i])
+    //         Xc_next[i] = totals[i];
+    // }
 
     commuter = Xc_next;
 }
@@ -872,16 +849,293 @@ flow_based_mobility_returns_rk3(Eigen::Ref<Eigen::VectorXd> commuter, // in/out:
     Eigen::VectorXd Xc_next = Xc0 + (dt / 6.0) * (k1_com + 4.0 * k2_com + k3_com);
 
     // Numerical guards: non-negativity and commuter <= totals (component-wise)
-    for (int i = 0; i < (int)NC; ++i) {
-        if (Xc_next[i] < 0.0)
-            Xc_next[i] = 0.0;
-        if (totals[i] < 0.0)
-            totals[i] = 0.0;
-        if (Xc_next[i] > totals[i])
-            Xc_next[i] = totals[i];
-    }
+    // for (int i = 0; i < (int)NC; ++i) {
+    //     if (Xc_next[i] < 0.0)
+    //         Xc_next[i] = 0.0;
+    //     if (totals[i] < 0.0)
+    //         totals[i] = 0.0;
+    //     if (Xc_next[i] > totals[i])
+    //         Xc_next[i] = totals[i];
+    // }
 
     commuter = Xc_next;
+}
+
+// ============================================================================
+// Fundamental Matrix (Phi) Methods
+// ============================================================================
+
+/**
+ * @brief Builds the Jacobian matrix A(z,t) for the SEIR model.
+ * Block-diagonal form per age group g:
+ * [ -lambda_g     0         0     0 ]
+ * [  lambda_g  -1/T_E       0     0 ]
+ * [     0       1/T_E   -1/T_I    0 ]
+ * [     0         0      1/T_I    0 ]
+ *
+ * @param A     NC x NC output matrix (written by this function)
+ * @param model SEIR model (provides parameters and population indices)
+ * @param z     current total population vector (length NC = 4*num_groups)
+ * @param t     current time
+ */
+inline void build_seir_matrix_A(Eigen::MatrixXd& A, const mio::oseir::Model<double>& model, const Eigen::VectorXd& z,
+                                double t)
+{
+    using IS                = mio::oseir::InfectionState;
+    const size_t num_groups = static_cast<size_t>(model.parameters.get_num_groups());
+
+    // 1. Compute force of infection lambda_i for each age group i
+    Eigen::VectorXd force_of_infection = Eigen::VectorXd::Zero(num_groups);
+    for (size_t j = 0; j < num_groups; ++j) {
+        const size_t Sj = model.populations.get_flat_index({mio::AgeGroup(static_cast<int>(j)), IS::Susceptible});
+        const size_t Ej = model.populations.get_flat_index({mio::AgeGroup(static_cast<int>(j)), IS::Exposed});
+        const size_t Ij = model.populations.get_flat_index({mio::AgeGroup(static_cast<int>(j)), IS::Infected});
+        const size_t Rj = model.populations.get_flat_index({mio::AgeGroup(static_cast<int>(j)), IS::Recovered});
+
+        const double Nj    = z[Sj] + z[Ej] + z[Ij] + z[Rj];
+        const double divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
+
+        for (size_t i = 0; i < num_groups; ++i) {
+            const double coeffStoE =
+                model.parameters.template get<mio::oseir::ContactPatterns<ScalarType>>()
+                    .get_cont_freq_mat()
+                    .get_matrix_at(t)(static_cast<Eigen::Index>(i), static_cast<Eigen::Index>(j)) *
+                model.parameters.template get<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>()[mio::AgeGroup(
+                    static_cast<int>(i))] *
+                divNj;
+            force_of_infection[i] += coeffStoE * z[Ij];
+        }
+    }
+
+    A.setZero();
+
+    // 2. Fill matrix A blockwise (one 4x4 block per age group)
+    for (size_t g = 0; g < num_groups; ++g) {
+        const double time_exposed  = model.parameters.get<mio::oseir::TimeExposed<ScalarType>>()[mio::AgeGroup(g)];
+        const double time_infected = model.parameters.get<mio::oseir::TimeInfected<ScalarType>>()[mio::AgeGroup(g)];
+
+        const double sigma  = (time_exposed > 1e-10) ? (1.0 / time_exposed) : 0.0;
+        const double gamma  = (time_infected > 1e-10) ? (1.0 / time_infected) : 0.0;
+        const double lambda = force_of_infection[g];
+
+        const size_t iS = model.populations.get_flat_index({mio::AgeGroup(g), IS::Susceptible});
+        const size_t iE = model.populations.get_flat_index({mio::AgeGroup(g), IS::Exposed});
+        const size_t iI = model.populations.get_flat_index({mio::AgeGroup(g), IS::Infected});
+        const size_t iR = model.populations.get_flat_index({mio::AgeGroup(g), IS::Recovered});
+
+        // S -> E
+        A(iS, iS) = -lambda;
+        A(iE, iS) = lambda;
+        // E -> I
+        A(iE, iE) = -sigma;
+        A(iI, iE) = sigma;
+        // I -> R
+        A(iI, iI) = -gamma;
+        A(iR, iI) = gamma;
+    }
+}
+
+/**
+ * @brief Augmented ODE system coupling total population dynamics z with the fundamental matrix Phi.
+ *
+ * State vector: y = [z (NC), vec(Phi) (NC*NC)].
+ * Phi satisfies dPhi/dt = A(z,t)*Phi with Phi(t0,t0) = I.
+ * Once integrated to time t: X_c(t) = Phi(t, t0) * X_c(t0).
+ */
+struct AugmentedPhiSystem {
+    const mio::oseir::Model<ScalarType>& model;
+    size_t NC;
+    Eigen::MatrixXd A_mem;
+
+    explicit AugmentedPhiSystem(const mio::oseir::Model<ScalarType>& m)
+        : model(m)
+        , NC(static_cast<size_t>(m.populations.get_num_compartments()))
+    {
+        A_mem = Eigen::MatrixXd::Zero(NC, NC);
+    }
+
+    void operator()(const Eigen::VectorXd& y, Eigen::VectorXd& dydt, double t)
+    {
+        const auto z = y.head(NC);
+
+        // dz/dt (standard SEIR RHS)
+        Eigen::VectorXd dz(NC);
+        model.get_derivatives(z, z, t, dz);
+        dydt.head(NC) = dz;
+
+        // Build A(z,t) and compute dPhi/dt = A * Phi
+        build_seir_matrix_A(A_mem, model, z, t);
+        const auto Phi       = Eigen::Map<const Eigen::MatrixXd>(y.tail(NC * NC).data(), NC, NC);
+        Eigen::MatrixXd dPhi = A_mem * Phi;
+        dydt.tail(NC * NC)   = Eigen::Map<const Eigen::VectorXd>(dPhi.data(), NC * NC);
+    }
+};
+
+/**
+ * @brief Commuter update via fundamental matrix Phi (single RK4 step on augmented system).
+ *
+ * Integrates the coupled system (z, Phi) from t to t+dt with a single classical RK4 step,
+ * then applies the linear map: X_c(t+dt) = Phi(t+dt, t) * X_c(t).
+ *
+ * @param commuter  in/out: commuter population X_c(t) -> X_c(t+dt)
+ * @param totals    in/out: total population z(t) -> z(t+dt)
+ * @param model     SEIR model (provides RHS and parameters)
+ * @param t         current time
+ * @param dt        step size
+ */
+inline void flow_based_mobility_returns_phi_rk4(Eigen::Ref<Eigen::VectorXd> commuter,
+                                                Eigen::Ref<Eigen::VectorXd> totals,
+                                                const mio::oseir::Model<double>& model, double t, double dt)
+{
+    const std::size_t NC      = static_cast<std::size_t>(model.populations.get_num_compartments());
+    const std::size_t sys_dim = NC + NC * NC;
+
+    // Augmented initial state: y = [z(t), vec(I_NC)]
+    Eigen::VectorXd y(sys_dim);
+    y.head(NC)               = totals;
+    const Eigen::MatrixXd Id = Eigen::MatrixXd::Identity(NC, NC);
+    y.tail(NC * NC)          = Eigen::Map<const Eigen::VectorXd>(Id.data(), NC * NC);
+
+    // Single classical RK4 step on the augmented system
+    AugmentedPhiSystem sys(model);
+    boost::numeric::odeint::runge_kutta4<Eigen::VectorXd, double, Eigen::VectorXd, double,
+                                         boost::numeric::odeint::vector_space_algebra>
+        stepper;
+    stepper.do_step(sys, y, t, dt);
+
+    // Extract updated totals z(t+dt)
+    Eigen::VectorXd z_next = y.head(NC);
+
+    // Apply fundamental matrix: X_c(t+dt) = Phi * X_c(t)
+    const auto Phi            = Eigen::Map<const Eigen::MatrixXd>(y.tail(NC * NC).data(), NC, NC);
+    const Eigen::VectorXd Xc0 = commuter;
+    Eigen::VectorXd Xc_next   = Phi * Xc0;
+
+    // Numerical guards: non-negativity and commuter <= totals
+    for (int i = 0; i < (int)NC; ++i) {
+        if (z_next[i] < 0.0)
+            z_next[i] = 0.0;
+        if (Xc_next[i] < 0.0)
+            Xc_next[i] = 0.0;
+        if (Xc_next[i] > z_next[i])
+            Xc_next[i] = z_next[i];
+    }
+
+    totals   = z_next;
+    commuter = Xc_next;
+}
+
+/**
+ * @brief Helper: extract totals and apply Phi-map with numerical guards.
+ * Internal use by phi_euler/rk2/rk3.
+ */
+inline void phi_apply_and_guard(Eigen::Ref<Eigen::VectorXd> commuter, Eigen::Ref<Eigen::VectorXd> totals,
+                                const Eigen::VectorXd& y_next, std::size_t NC)
+{
+    Eigen::VectorXd z_next    = y_next.head(NC);
+    const auto Phi            = Eigen::Map<const Eigen::MatrixXd>(y_next.tail(NC * NC).data(), NC, NC);
+    const Eigen::VectorXd Xc0 = commuter;
+    Eigen::VectorXd Xc_next   = Phi * Xc0;
+
+    for (int i = 0; i < (int)NC; ++i) {
+        if (z_next[i] < 0.0)
+            z_next[i] = 0.0;
+        if (Xc_next[i] < 0.0)
+            Xc_next[i] = 0.0;
+        if (Xc_next[i] > z_next[i])
+            Xc_next[i] = z_next[i];
+    }
+    totals   = z_next;
+    commuter = Xc_next;
+}
+
+/**
+ * @brief Commuter update via fundamental matrix Phi – explicit Euler step.
+ *
+ * Integrates the augmented system (z, Phi) with a single explicit Euler step,
+ * then applies X_c(t+dt) = Phi(t+dt, t) * X_c(t).
+ */
+inline void flow_based_mobility_returns_phi_euler(Eigen::Ref<Eigen::VectorXd> commuter,
+                                                  Eigen::Ref<Eigen::VectorXd> totals,
+                                                  const mio::oseir::Model<double>& model, double t, double dt)
+{
+    const std::size_t NC      = static_cast<std::size_t>(model.populations.get_num_compartments());
+    const std::size_t sys_dim = NC + NC * NC;
+
+    Eigen::VectorXd y(sys_dim);
+    y.head(NC)         = totals;
+    Eigen::MatrixXd Id = Eigen::MatrixXd::Identity(NC, NC);
+    y.tail(NC * NC)    = Eigen::Map<const Eigen::VectorXd>(Id.data(), NC * NC);
+
+    AugmentedPhiSystem sys(model);
+    Eigen::VectorXd k1(sys_dim);
+    sys(y, k1, t);
+    Eigen::VectorXd y_next = y + dt * k1;
+
+    phi_apply_and_guard(commuter, totals, y_next, NC);
+}
+
+/**
+ * @brief Commuter update via fundamental matrix Phi – RK2 (midpoint) step.
+ *
+ * Integrates the augmented system (z, Phi) with a single classical midpoint step,
+ * then applies X_c(t+dt) = Phi(t+dt, t) * X_c(t).
+ */
+inline void flow_based_mobility_returns_phi_rk2(Eigen::Ref<Eigen::VectorXd> commuter,
+                                                Eigen::Ref<Eigen::VectorXd> totals,
+                                                const mio::oseir::Model<double>& model, double t, double dt)
+{
+    const std::size_t NC      = static_cast<std::size_t>(model.populations.get_num_compartments());
+    const std::size_t sys_dim = NC + NC * NC;
+
+    Eigen::VectorXd y(sys_dim);
+    y.head(NC)         = totals;
+    Eigen::MatrixXd Id = Eigen::MatrixXd::Identity(NC, NC);
+    y.tail(NC * NC)    = Eigen::Map<const Eigen::VectorXd>(Id.data(), NC * NC);
+
+    AugmentedPhiSystem sys(model);
+    Eigen::VectorXd k1(sys_dim), k2(sys_dim);
+
+    sys(y, k1, t);
+    sys(y + (dt * 0.5) * k1, k2, t + 0.5 * dt);
+
+    Eigen::VectorXd y_next = y + dt * k2;
+
+    phi_apply_and_guard(commuter, totals, y_next, NC);
+}
+
+/**
+ * @brief Commuter update via fundamental matrix Phi – RK3 (Kutta) step.
+ *
+ * Integrates the augmented system (z, Phi) with Kutta's classical 3rd-order method:
+ *   k1 = f(t, y)
+ *   k2 = f(t + dt/2, y + dt/2 * k1)
+ *   k3 = f(t + dt,   y - dt*k1 + 2*dt*k2)
+ *   y_{n+1} = y + dt/6*(k1 + 4*k2 + k3)
+ * then applies X_c(t+dt) = Phi(t+dt, t) * X_c(t).
+ */
+inline void flow_based_mobility_returns_phi_rk3(Eigen::Ref<Eigen::VectorXd> commuter,
+                                                Eigen::Ref<Eigen::VectorXd> totals,
+                                                const mio::oseir::Model<double>& model, double t, double dt)
+{
+    const std::size_t NC      = static_cast<std::size_t>(model.populations.get_num_compartments());
+    const std::size_t sys_dim = NC + NC * NC;
+
+    Eigen::VectorXd y(sys_dim);
+    y.head(NC)         = totals;
+    Eigen::MatrixXd Id = Eigen::MatrixXd::Identity(NC, NC);
+    y.tail(NC * NC)    = Eigen::Map<const Eigen::VectorXd>(Id.data(), NC * NC);
+
+    AugmentedPhiSystem sys(model);
+    Eigen::VectorXd k1(sys_dim), k2(sys_dim), k3(sys_dim);
+
+    sys(y, k1, t);
+    sys(y + (dt * 0.5) * k1, k2, t + 0.5 * dt);
+    sys(y + dt * (-k1 + 2.0 * k2), k3, t + dt);
+
+    Eigen::VectorXd y_next = y + (dt / 6.0) * (k1 + 4.0 * k2 + k3);
+
+    phi_apply_and_guard(commuter, totals, y_next, NC);
 }
 
 } // namespace examples

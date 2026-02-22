@@ -30,8 +30,9 @@ int main()
     // Reference solution with very small fixed dt
     const ScalarType dt_ref = 1e-5;
 
-    // Methods to test: Euler, RK2, RK3, RK4
-    std::vector<std::string> method_names = {"euler", "rk2", "rk3", "rk4"};
+    // Methods to test: Euler, RK2, RK3, RK4, Phi-Euler, Phi-RK2, Phi-RK3, Phi-RK4
+    std::vector<std::string> method_names = {"euler",     "rk2",     "rk3",     "rk4",
+                                             "phi_euler", "phi_rk2", "phi_rk3", "phi_rk4"};
 
     // Common setup
     ScalarType t0   = 0.;
@@ -120,6 +121,19 @@ int main()
                 integrator =
                     std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta4>>();
             }
+            else if (method_name == "phi_rk4") {
+                integrator =
+                    std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta4>>();
+            }
+            else if (method_name == "phi_euler") {
+                integrator = std::make_shared<mio::EulerIntegratorCore<ScalarType>>();
+            }
+            else if (method_name == "phi_rk2") {
+                integrator = std::make_shared<mio::RK2IntegratorCore<ScalarType>>();
+            }
+            else if (method_name == "phi_rk3") {
+                integrator = std::make_shared<mio::RK3IntegratorCore<ScalarType>>();
+            }
 
             FlowSim sim(model, t0, dt);
             sim.set_integrator(integrator);
@@ -163,6 +177,23 @@ int main()
                     // RK4 integrates totals internally - use and update totals_current
                     mio::examples::flow_based_mobility_returns_rk4(commuter_current, totals_current, model, t_curr,
                                                                    dt_step);
+                }
+                else if (method_name == "phi_rk4") {
+                    // Fundamental matrix approach: X_c(t+dt) = Phi(t+dt,t) * X_c(t)
+                    mio::examples::flow_based_mobility_returns_phi_rk4(commuter_current, totals_current, model, t_curr,
+                                                                       dt_step);
+                }
+                else if (method_name == "phi_euler") {
+                    mio::examples::flow_based_mobility_returns_phi_euler(commuter_current, totals_current, model,
+                                                                         t_curr, dt_step);
+                }
+                else if (method_name == "phi_rk2") {
+                    mio::examples::flow_based_mobility_returns_phi_rk2(commuter_current, totals_current, model, t_curr,
+                                                                       dt_step);
+                }
+                else if (method_name == "phi_rk3") {
+                    mio::examples::flow_based_mobility_returns_phi_rk3(commuter_current, totals_current, model, t_curr,
+                                                                       dt_step);
                 }
 
                 commuter_results.add_time_point(t_next, commuter_current);
