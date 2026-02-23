@@ -1,4 +1,4 @@
-name: Build wheels
+name: Build wheels 
 
 on: [pull_request, release]
 
