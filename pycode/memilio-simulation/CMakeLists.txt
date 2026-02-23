@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.13)
-project(memilio-python)
-
-set(CMAKE_CXX_STANDARD "20")
-set(CMAKE_CXX_STANDARD_REQUIRED "20")
-
 option(MEMILIO_USE_BUNDLED_PYBIND11 "Use pybind11 bundled with this library." ON)
 mark_as_advanced(MEMILIO_USE_BUNDLED_PYBIND11)
 
@@ -51,9 +45,6 @@ if(MEMILIO_USE_BUNDLED_PYBIND11)
 else()
     find_package(pybind11 REQUIRED)
 endif()
-
-# add in C++ library
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../cpp ${CMAKE_CURRENT_BINARY_DIR}/cpp EXCLUDE_FROM_ALL)
 
 # a list of all "LINKED_LIBRARIES" that are given to add_pymio_module. will contain duplicates
 # used for wheel installation
