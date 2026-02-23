@@ -540,7 +540,6 @@ private:
         return sum;
     }
 
-private:
     std::vector<value_type> m_dampings;
     Shape m_shape;
     std::vector<std::tuple<Matrix, SimulationTime<FP>>> m_accumulated_dampings_cached;
