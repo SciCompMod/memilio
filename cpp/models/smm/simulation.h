@@ -87,8 +87,15 @@ public:
         FP last_result_time = current_time;
         // iterate over time
         while (current_time + m_waiting_times[next_event] < tmax) {
-            if (current_time >= last_result_time) {
-                last_result_time = std::min(tmax, current_time + m_dt);
+            if (current_time + m_waiting_times[next_event] >= last_result_time) {
+                auto num_dt = std::floor((current_time + m_waiting_times[next_event] - last_result_time) / m_dt);
+                if (num_dt > 0) {
+                    last_result_time = last_result_time + num_dt * m_dt;
+                    m_result.add_time_point(last_result_time);
+                    // copy from the previous last value
+                    m_result.get_last_value() = m_result[m_result.get_num_time_points() - 2];
+                }
+                last_result_time = std::min(tmax, last_result_time + m_dt);
                 m_result.add_time_point(last_result_time);
                 // copy from the previous last value
                 m_result.get_last_value() = m_result[m_result.get_num_time_points() - 2];
