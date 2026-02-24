@@ -171,7 +171,7 @@ void setup_explicit_model_benchmark(mio::examples::ExplicitModel& model_explicit
 }
 
 const ScalarType t0    = 0.0;
-const ScalarType t_max = 0.5;
+const ScalarType t_max = 0.2;
 const ScalarType dt    = 0.1;
 
 // const ScalarType t_max = 50.0;
@@ -737,6 +737,190 @@ static void bench_matrix_phi_reconstruction(::benchmark::State& state)
 
 } // namespace benchmark_mio
 } // namespace mio
+
+namespace mio
+{
+namespace benchmark_mio
+{
+
+/**
+ * @brief Block-diagonal Augmented ODE system for Phi.
+ * * Exploits the fact that the fundamental matrix Phi is completely decoupled between age groups.
+ * State vector: y = [z (NC), vec(Phi_0) (16), vec(Phi_1) (16), ..., vec(Phi_G-1) (16)].
+ * ODE size drops from NC + NC^2 to NC + 16 * G.
+ */
+struct AugmentedPhiSystemBlockDiag {
+    const mio::oseir::Model<ScalarType>& model;
+    size_t G;
+    size_t NC;
+
+    explicit AugmentedPhiSystemBlockDiag(const mio::oseir::Model<ScalarType>& m)
+        : model(m)
+        , G(static_cast<size_t>(m.parameters.get_num_groups()))
+        , NC(static_cast<size_t>(m.populations.get_num_compartments()))
+    {
+    }
+
+    void operator()(const Eigen::VectorXd& y, Eigen::VectorXd& dydt, double t)
+    {
+        const auto z = y.head(NC);
+
+        // 1. dz/dt (standard SEIR RHS)
+        Eigen::VectorXd dz(NC);
+        model.get_derivatives(z, z, t, dz);
+        dydt.head(NC) = dz;
+
+        // 2. Compute force of infection for each age group
+        using IS            = mio::oseir::InfectionState;
+        Eigen::VectorXd foi = Eigen::VectorXd::Zero(G);
+        for (size_t j = 0; j < G; ++j) {
+            const size_t Sj = model.populations.get_flat_index({mio::AgeGroup(static_cast<int>(j)), IS::Susceptible});
+            const size_t Ej = model.populations.get_flat_index({mio::AgeGroup(static_cast<int>(j)), IS::Exposed});
+            const size_t Ij = model.populations.get_flat_index({mio::AgeGroup(static_cast<int>(j)), IS::Infected});
+            const size_t Rj = model.populations.get_flat_index({mio::AgeGroup(static_cast<int>(j)), IS::Recovered});
+
+            const double Nj    = z[Sj] + z[Ej] + z[Ij] + z[Rj];
+            const double divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
+
+            for (size_t i = 0; i < G; ++i) {
+                const double coeff =
+                    model.parameters.template get<mio::oseir::ContactPatterns<ScalarType>>()
+                        .get_cont_freq_mat()
+                        .get_matrix_at(t)(static_cast<Eigen::Index>(i), static_cast<Eigen::Index>(j)) *
+                    model.parameters
+                        .template get<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>()[mio::AgeGroup(
+                            static_cast<int>(i))] *
+                    divNj;
+                foi[i] += coeff * z[Ij];
+            }
+        }
+
+        // 3. Compute dPhi_g/dt for each isolated age group block
+        for (size_t g = 0; g < G; ++g) {
+            const double time_exposed =
+                model.parameters.get<mio::oseir::TimeExposed<ScalarType>>()[mio::AgeGroup(static_cast<int>(g))];
+            const double time_infected =
+                model.parameters.get<mio::oseir::TimeInfected<ScalarType>>()[mio::AgeGroup(static_cast<int>(g))];
+
+            const double sigma  = (time_exposed > 1e-10) ? (1.0 / time_exposed) : 0.0;
+            const double gamma  = (time_infected > 1e-10) ? (1.0 / time_infected) : 0.0;
+            const double lambda = foi[g];
+
+            // Build 4x4 transition matrix A_g for this age group
+            Eigen::Matrix4d Ag = Eigen::Matrix4d::Zero();
+            Ag(0, 0)           = -lambda;
+            Ag(1, 0)           = lambda;
+            Ag(1, 1)           = -sigma;
+            Ag(2, 1)           = sigma;
+            Ag(2, 2)           = -gamma;
+            Ag(3, 2)           = gamma;
+
+            // Extract current 4x4 Phi block from the state vector
+            const auto Phi_g = Eigen::Map<const Eigen::Matrix4d>(y.data() + NC + g * 16);
+
+            // Compute derivative and map directly to dydt
+            Eigen::Map<Eigen::Matrix4d>(dydt.data() + NC + g * 16) = Ag * Phi_g;
+        }
+    }
+};
+
+template <class Integrator>
+static void bench_matrix_phi_reconstruction_blockdiag(::benchmark::State& state)
+{
+    const int num_commuter_groups = commuter_group_counts[state.range(0)];
+    const size_t num_age_groups   = static_cast<size_t>(state.range(1));
+    const auto num_patches        = num_commuter_groups + 1;
+    mio::set_log_level(mio::LogLevel::critical);
+
+    for (auto _ : state) {
+        for (auto patch = 0; patch < num_patches; patch++) {
+            state.PauseTiming();
+            ModelType model(num_age_groups);
+            setup_model_benchmark(model);
+
+            size_t G  = num_age_groups;
+            size_t NC = 4 * G;
+
+            // NC + G * 16
+            size_t system_size = NC + G * 16;
+
+            Eigen::VectorXd y0(system_size);
+            y0.head(NC) = model.populations.get_compartments();
+
+            // Initialize the diagonal blocks with Identity
+            for (size_t g = 0; g < G; ++g) {
+                Eigen::Map<Eigen::Matrix4d>(y0.data() + NC + g * 16) = Eigen::Matrix4d::Identity();
+            }
+
+            Integrator stepper;
+            AugmentedPhiSystemBlockDiag sys(model);
+
+            double mobile_fraction = 0.1 * num_commuter_groups;
+            Eigen::VectorXd initial_mobile_pop =
+                y0.head(NC) * (num_commuter_groups > 0 ? (mobile_fraction / num_commuter_groups) : 0.0);
+
+            Eigen::MatrixXd X0(NC, num_commuter_groups);
+            for (int cg = 0; cg < num_commuter_groups; ++cg) {
+                X0.col(cg) = initial_mobile_pop;
+            }
+            Eigen::MatrixXd Xt(NC, num_commuter_groups);
+
+            state.ResumeTiming();
+
+            // 1. Integrate over the entire period t_max
+            double t          = t0;
+            Eigen::VectorXd y = y0;
+            while (t < t_max_phi - 1e-10) {
+                double dt_eff = std::min(dt_phi, t_max_phi - t);
+                stepper.do_step(sys, y, t, dt_eff);
+                t += dt_eff;
+            }
+
+            // 2. Block-Diagonal Reconstruction
+            for (size_t g = 0; g < G; ++g) {
+                const auto Phi_g = Eigen::Map<const Eigen::Matrix4d>(y.data() + NC + g * 16);
+                // MEmilio stores age groups sequentially: S_g, E_g, I_g, R_g are contiguous (size 4)
+                Xt.block(4 * g, 0, 4, num_commuter_groups).noalias() =
+                    Phi_g * X0.block(4 * g, 0, 4, num_commuter_groups);
+            }
+
+            benchmark::DoNotOptimize(Xt);
+        }
+    }
+}
+
+} // namespace benchmark_mio
+} // namespace mio
+
+static void bench_matrix_phi_reconstruction_blockdiag_rk4(benchmark::State& state)
+{
+    mio::benchmark_mio::bench_matrix_phi_reconstruction_blockdiag<boost::numeric::odeint::runge_kutta4<
+        Eigen::VectorXd, double, Eigen::VectorXd, double, boost::numeric::odeint::vector_space_algebra>>(state);
+}
+
+BENCHMARK(bench_matrix_phi_reconstruction_blockdiag_rk4)
+    ->Apply([](auto* b) {
+        for (int i = 0; i < static_cast<int>(mio::benchmark_mio::commuter_group_counts.size()); ++i) {
+            for (int g : mio::benchmark_mio::age_group_counts) {
+                b->Args({i, g});
+            }
+        }
+    }) -> Name("matrix_phi_blockdiag(RK4)") -> Unit(::benchmark::kMicrosecond);
+
+static void bench_matrix_phi_reconstruction_blockdiag_euler(benchmark::State& state)
+{
+    mio::benchmark_mio::bench_matrix_phi_reconstruction_blockdiag<boost::numeric::odeint::euler<
+        Eigen::VectorXd, double, Eigen::VectorXd, double, boost::numeric::odeint::vector_space_algebra>>(state);
+}
+
+BENCHMARK(bench_matrix_phi_reconstruction_blockdiag_euler)
+    ->Apply([](auto* b) {
+        for (int i = 0; i < static_cast<int>(mio::benchmark_mio::commuter_group_counts.size()); ++i) {
+            for (int g : mio::benchmark_mio::age_group_counts) {
+                b->Args({i, g});
+            }
+        }
+    }) -> Name("matrix_phi_blockdiag(Euler)") -> Unit(::benchmark::kMicrosecond);
 
 static void bench_matrix_phi_reconstruction_rk4(benchmark::State& state)
 {
