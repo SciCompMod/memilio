@@ -3,6 +3,7 @@ add_library(ode_seir
     model.h
     model.cpp
     parameters.h
+    state_estimators.h
 )
 target_link_libraries(ode_seir PUBLIC memilio)
 target_include_directories(ode_seir PUBLIC

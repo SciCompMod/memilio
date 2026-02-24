@@ -1,6 +1,7 @@
 #include "ode_seir/model.h"
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
+#include "ode_seir/state_estimators.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/time_series.h"
@@ -10,14 +11,12 @@
 #include "memilio/math/rk2.h"
 #include "memilio/math/rk3.h"
 #include "memilio/utils/type_list.h"
-#include "state_estimators.h"
 #include "memilio/data/analyze_result.h"
 #include <iomanip>
 #include <vector>
 #include <cmath>
 #include <string>
 
-using namespace mio::examples;
 using FlowSim = mio::FlowSimulation<ScalarType, mio::oseir::Model<ScalarType>>;
 
 int main()
@@ -89,7 +88,7 @@ int main()
             break;
 
         // RK4 updates both commuter_ref and totals_ref
-        mio::examples::flow_based_mobility_returns_rk4(commuter_ref, totals_ref, model, t_curr, dt_step);
+        mio::oseir::flow_based_mobility_returns_rk4(commuter_ref, totals_ref, model, t_curr, dt_step);
         ref_commuter_results.add_time_point(t_next, commuter_ref);
     }
 
@@ -160,40 +159,40 @@ int main()
                 // Apply the appropriate method
                 if (method_name == "euler") {
                     // Euler uses flows from simulator
-                    mio::examples::flow_based_mobility_returns(commuter_current, sim, totals_result.get_value(i),
-                                                               t_curr, dt_step);
+                    mio::oseir::flow_based_mobility_returns(commuter_current, sim, totals_result.get_value(i), t_curr,
+                                                            dt_step);
                 }
                 else if (method_name == "rk2") {
                     // RK2 integrates totals internally - use and update totals_current
-                    mio::examples::flow_based_mobility_returns_rk2(commuter_current, totals_current, model, t_curr,
-                                                                   dt_step);
+                    mio::oseir::flow_based_mobility_returns_rk2(commuter_current, totals_current, model, t_curr,
+                                                                dt_step);
                 }
                 else if (method_name == "rk3") {
                     // RK3 integrates totals internally - use and update totals_current
-                    mio::examples::flow_based_mobility_returns_rk3(commuter_current, totals_current, model, t_curr,
-                                                                   dt_step);
+                    mio::oseir::flow_based_mobility_returns_rk3(commuter_current, totals_current, model, t_curr,
+                                                                dt_step);
                 }
                 else if (method_name == "rk4") {
                     // RK4 integrates totals internally - use and update totals_current
-                    mio::examples::flow_based_mobility_returns_rk4(commuter_current, totals_current, model, t_curr,
-                                                                   dt_step);
+                    mio::oseir::flow_based_mobility_returns_rk4(commuter_current, totals_current, model, t_curr,
+                                                                dt_step);
                 }
                 else if (method_name == "phi_rk4") {
                     // Fundamental matrix approach: X_c(t+dt) = Phi(t+dt,t) * X_c(t)
-                    mio::examples::flow_based_mobility_returns_phi_rk4(commuter_current, totals_current, model, t_curr,
-                                                                       dt_step);
+                    mio::oseir::flow_based_mobility_returns_phi_rk4(commuter_current, totals_current, model, t_curr,
+                                                                    dt_step);
                 }
                 else if (method_name == "phi_euler") {
-                    mio::examples::flow_based_mobility_returns_phi_euler(commuter_current, totals_current, model,
-                                                                         t_curr, dt_step);
+                    mio::oseir::flow_based_mobility_returns_phi_euler(commuter_current, totals_current, model, t_curr,
+                                                                      dt_step);
                 }
                 else if (method_name == "phi_rk2") {
-                    mio::examples::flow_based_mobility_returns_phi_rk2(commuter_current, totals_current, model, t_curr,
-                                                                       dt_step);
+                    mio::oseir::flow_based_mobility_returns_phi_rk2(commuter_current, totals_current, model, t_curr,
+                                                                    dt_step);
                 }
                 else if (method_name == "phi_rk3") {
-                    mio::examples::flow_based_mobility_returns_phi_rk3(commuter_current, totals_current, model, t_curr,
-                                                                       dt_step);
+                    mio::oseir::flow_based_mobility_returns_phi_rk3(commuter_current, totals_current, model, t_curr,
+                                                                    dt_step);
                 }
 
                 commuter_results.add_time_point(t_next, commuter_current);

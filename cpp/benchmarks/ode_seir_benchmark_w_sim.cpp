@@ -179,8 +179,10 @@ const ScalarType dt    = 0.1;
 
 const ScalarType t_max_phi = 0.5;
 const ScalarType dt_phi    = 0.1;
-
 // Define the number of commuter groups for the benchmark
+// const std::vector<int> commuter_group_counts = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
+// const std::vector<int> age_group_counts      = {1, 2, 3, 4, 5, 6};
+
 const std::vector<int> commuter_group_counts = {16, 32, 64, 128, 256, 512, 1024};
 const std::vector<int> age_group_counts      = {1, 2, 3, 4, 5, 6, 8, 12, 16};
 
@@ -233,206 +235,7 @@ static void bench_auxiliary_euler(::benchmark::State& state)
     }
 }
 
-static void bench_stage_aligned_rk4_neu(::benchmark::State& state)
-{
-    const int num_commuter_groups = commuter_group_counts[state.range(0)];
-    const size_t num_age_groups   = static_cast<size_t>(state.range(1));
-    const auto num_patches        = num_commuter_groups + 1;
-    mio::set_log_level(mio::LogLevel::critical);
-
-    struct RK4StageCache {
-        // Totals at stages: y1(t), y2(t+h/2), y3(t+h/2), y4(t+h)
-        std::vector<Eigen::VectorXd> y;
-        // Flows at stages: f1, f2, f3, f4
-        std::vector<Eigen::VectorXd> flows;
-        // Totals derivatives (k_tot): k1, k2, k3, k4
-        std::vector<Eigen::VectorXd> k_tot;
-
-        void resize(size_t nc, size_t flow_dim)
-        {
-            y.resize(4, Eigen::VectorXd(nc));
-            flows.resize(4, Eigen::VectorXd(flow_dim));
-            k_tot.resize(4, Eigen::VectorXd(nc));
-        }
-    };
-
-    for (auto _ : state) {
-        for (auto patch = 0; patch < num_patches; patch++) {
-            state.PauseTiming();
-            ModelType model(num_age_groups);
-            setup_model_benchmark(model);
-
-            Eigen::VectorXd current_totals = model.populations.get_compartments();
-
-            double mobile_fraction = 0.1 * num_commuter_groups;
-            Eigen::VectorXd initial_mobile =
-                current_totals * (num_commuter_groups > 0 ? (mobile_fraction / num_commuter_groups) : 0.0);
-            std::vector<Eigen::VectorXd> mobile_pops(num_commuter_groups, initial_mobile);
-
-            const size_t NC       = current_totals.size();
-            const size_t flow_dim = 3 * num_age_groups;
-            RK4StageCache cache;
-            cache.resize(NC, flow_dim);
-
-            auto ic = mio::examples::make_seir_index_cache(model);
-
-            Eigen::VectorXd k1_com(NC), k2_com(NC), k3_com(NC), k4_com(NC);
-            Eigen::VectorXd Xc2(NC), Xc3(NC), Xc4(NC);
-
-            state.ResumeTiming();
-
-            for (ScalarType t = t0; t < t_max; t += dt) {
-
-                // Stage 1
-                cache.y[0] = current_totals;
-                model.get_derivatives(cache.y[0], cache.y[0], t, cache.k_tot[0]);
-                model.get_flows(cache.y[0], cache.y[0], t, cache.flows[0]);
-
-                // Stage 2
-                cache.y[1] = cache.y[0] + (dt * 0.5) * cache.k_tot[0];
-                model.get_derivatives(cache.y[1], cache.y[1], t + 0.5 * dt, cache.k_tot[1]);
-                model.get_flows(cache.y[1], cache.y[1], t + 0.5 * dt, cache.flows[1]);
-
-                // Stage 3
-                cache.y[2] = cache.y[0] + (dt * 0.5) * cache.k_tot[1];
-                model.get_derivatives(cache.y[2], cache.y[2], t + 0.5 * dt, cache.k_tot[2]);
-                model.get_flows(cache.y[2], cache.y[2], t + 0.5 * dt, cache.flows[2]);
-
-                // Stage 4
-                cache.y[3] = cache.y[0] + dt * cache.k_tot[2];
-                model.get_derivatives(cache.y[3], cache.y[3], t + dt, cache.k_tot[3]);
-                model.get_flows(cache.y[3], cache.y[3], t + dt, cache.flows[3]);
-
-                Eigen::VectorXd next_totals = current_totals + (dt / 6.0) * (cache.k_tot[0] + 2 * cache.k_tot[1] +
-                                                                             2 * cache.k_tot[2] + cache.k_tot[3]);
-
-                // reconstruction
-
-                for (int cg = 0; cg < num_commuter_groups; ++cg) {
-                    Eigen::Ref<Eigen::VectorXd> Xc = mobile_pops[cg];
-
-                    // stage 1 shares & commuter rhs
-                    for (size_t g = 0; g < num_age_groups; ++g) {
-                        int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
-                        int off      = 3 * (int)g;
-                        double S_tot = cache.y[0][iS];
-                        double xiS   = (S_tot > 1e-10) ? (Xc[iS] / S_tot) : 0.0;
-                        double E_tot = cache.y[0][iE];
-                        double xiE   = (E_tot > 1e-10) ? (Xc[iE] / E_tot) : 0.0;
-                        double I_tot = cache.y[0][iI];
-                        double xiI   = (I_tot > 1e-10) ? (Xc[iI] / I_tot) : 0.0;
-
-                        k1_com[iS] = -xiS * cache.flows[0][off];
-                        k1_com[iE] = xiS * cache.flows[0][off] - xiE * cache.flows[0][off + 1];
-                        k1_com[iI] = xiE * cache.flows[0][off + 1] - xiI * cache.flows[0][off + 2];
-                        k1_com[iR] = xiI * cache.flows[0][off + 2];
-                    }
-
-                    // stage 2 shares & commuter rhs
-                    Xc2 = Xc + (dt * 0.5) * k1_com;
-                    for (size_t g = 0; g < num_age_groups; ++g) {
-                        int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
-                        int off    = 3 * (int)g;
-                        double xiS = (cache.y[1][iS] > 1e-10) ? (Xc2[iS] / cache.y[1][iS]) : 0.0;
-                        double xiE = (cache.y[1][iE] > 1e-10) ? (Xc2[iE] / cache.y[1][iE]) : 0.0;
-                        double xiI = (cache.y[1][iI] > 1e-10) ? (Xc2[iI] / cache.y[1][iI]) : 0.0;
-
-                        k2_com[iS] = -xiS * cache.flows[1][off];
-                        k2_com[iE] = xiS * cache.flows[1][off] - xiE * cache.flows[1][off + 1];
-                        k2_com[iI] = xiE * cache.flows[1][off + 1] - xiI * cache.flows[1][off + 2];
-                        k2_com[iR] = xiI * cache.flows[1][off + 2];
-                    }
-
-                    // stage 3 shares & commuter rhs
-                    Xc3 = Xc + (dt * 0.5) * k2_com;
-                    for (size_t g = 0; g < num_age_groups; ++g) {
-                        int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
-                        int off    = 3 * (int)g;
-                        double xiS = (cache.y[2][iS] > 1e-10) ? (Xc3[iS] / cache.y[2][iS]) : 0.0;
-                        double xiE = (cache.y[2][iE] > 1e-10) ? (Xc3[iE] / cache.y[2][iE]) : 0.0;
-                        double xiI = (cache.y[2][iI] > 1e-10) ? (Xc3[iI] / cache.y[2][iI]) : 0.0;
-
-                        k3_com[iS] = -xiS * cache.flows[2][off];
-                        k3_com[iE] = xiS * cache.flows[2][off] - xiE * cache.flows[2][off + 1];
-                        k3_com[iI] = xiE * cache.flows[2][off + 1] - xiI * cache.flows[2][off + 2];
-                        k3_com[iR] = xiI * cache.flows[2][off + 2];
-                    }
-
-                    // stage 4 shares & commuter rhs
-                    Xc4 = Xc + dt * k3_com;
-                    for (size_t g = 0; g < num_age_groups; ++g) {
-                        int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
-                        int off    = 3 * (int)g;
-                        double xiS = (cache.y[3][iS] > 1e-10) ? (Xc4[iS] / cache.y[3][iS]) : 0.0;
-                        double xiE = (cache.y[3][iE] > 1e-10) ? (Xc4[iE] / cache.y[3][iE]) : 0.0;
-                        double xiI = (cache.y[3][iI] > 1e-10) ? (Xc4[iI] / cache.y[3][iI]) : 0.0;
-
-                        k4_com[iS] = -xiS * cache.flows[3][off];
-                        k4_com[iE] = xiS * cache.flows[3][off] - xiE * cache.flows[3][off + 1];
-                        k4_com[iI] = xiE * cache.flows[3][off + 1] - xiI * cache.flows[3][off + 2];
-                        k4_com[iR] = xiI * cache.flows[3][off + 2];
-                    }
-
-                    // Final Update Commuter
-                    Xc = Xc + (dt / 6.0) * (k1_com + 2.0 * k2_com + 2.0 * k3_com + k4_com);
-                }
-
-                // Advance Totals
-                current_totals = next_totals;
-            }
-            benchmark::DoNotOptimize(mobile_pops);
-        }
-    }
-}
-
 static void bench_stage_aligned_rk4(::benchmark::State& state)
-{
-    const int num_commuter_groups = commuter_group_counts[state.range(0)];
-    const size_t num_age_groups   = static_cast<size_t>(state.range(1));
-    const auto num_patches        = num_commuter_groups + 1;
-    mio::set_log_level(mio::LogLevel::critical);
-
-    for (auto _ : state) {
-        for (auto patch = 0; patch < num_patches; patch++) {
-            state.PauseTiming();
-            ModelType model(num_age_groups);
-            setup_model_benchmark(model);
-            SimType sim(model, t0, dt);
-            auto integrator_rk =
-                std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta4>>();
-            sim.set_integrator(integrator_rk);
-            const auto& seir_res              = sim.get_result();
-            double mobile_population_fraction = 0.1 * num_commuter_groups;
-            Eigen::VectorXd initial_mobile_pop =
-                seir_res.get_value(0) * (mobile_population_fraction / num_commuter_groups);
-            const auto step_size_ref = seir_res.get_time(1) - seir_res.get_time(0);
-
-            std::vector<Eigen::VectorXd> mobile_pops(num_commuter_groups, initial_mobile_pop);
-            state.ResumeTiming();
-
-            for (ScalarType t = t0; t < t_max; t += dt) {
-                if (t + dt > t_max + 1e-10)
-                    break;
-
-                const auto closest_idx_total = static_cast<size_t>(std::round(t / step_size_ref));
-                if (closest_idx_total >= static_cast<size_t>(seir_res.get_num_time_points()))
-                    break;
-
-                const auto& total_pop_const = seir_res.get_value(closest_idx_total);
-                const auto& flows           = sim.get_flows().get_value(closest_idx_total);
-
-                Eigen::VectorXd totals = total_pop_const;
-
-                for (int i = 0; i < num_commuter_groups; ++i) {
-                    mio::examples::flow_based_mobility_returns_rk4(mobile_pops[i], totals, sim.get_model(), t, dt);
-                }
-            }
-            benchmark::DoNotOptimize(mobile_pops);
-        }
-    }
-}
-
-static void bench_stage_aligned_rk4_optimized(::benchmark::State& state)
 {
     const int num_commuter_groups = commuter_group_counts[state.range(0)];
     const size_t num_age_groups   = static_cast<size_t>(state.range(1));
@@ -649,102 +452,6 @@ static void bench_stage_aligned_euler(::benchmark::State& state)
 
     for (auto _ : state) {
         for (auto patch = 0; patch < num_patches; patch++) {
-
-            state.PauseTiming();
-            ModelType model(num_age_groups);
-            setup_model_benchmark(model);
-            SimType sim(model, t0, dt);
-            auto integrator_euler = std::make_shared<mio::EulerIntegratorCore<ScalarType>>();
-            sim.set_integrator(integrator_euler);
-            state.ResumeTiming();
-
-            sim.advance(t_max);
-
-            state.PauseTiming();
-
-            const auto& seir_res = sim.get_result();
-            const auto& flows_ts = sim.get_flows();
-            const size_t n_steps = static_cast<size_t>(seir_res.get_num_time_points()) > 0
-                                       ? static_cast<size_t>(seir_res.get_num_time_points()) - 1
-                                       : 0;
-
-            double mobile_fraction = 0.1 * num_commuter_groups;
-            Eigen::VectorXd initial_mobile =
-                seir_res.get_value(0) * (num_commuter_groups > 0 ? (mobile_fraction / num_commuter_groups) : 0.0);
-            std::vector<Eigen::VectorXd> mobile_pops(static_cast<size_t>(num_commuter_groups), initial_mobile);
-
-            using IS = mio::oseir::InfectionState;
-            std::vector<size_t> idxS(num_age_groups), idxE(num_age_groups), idxI(num_age_groups), idxR(num_age_groups);
-            for (size_t g = 0; g < num_age_groups; ++g) {
-                auto G  = mio::AgeGroup(static_cast<int>(g));
-                idxS[g] = model.populations.get_flat_index({G, IS::Susceptible});
-                idxE[g] = model.populations.get_flat_index({G, IS::Exposed});
-                idxI[g] = model.populations.get_flat_index({G, IS::Infected});
-                idxR[g] = model.populations.get_flat_index({G, IS::Recovered});
-            }
-
-            state.ResumeTiming();
-
-            // reconstruction
-            for (size_t s = 0; s < n_steps; ++s) {
-                const Eigen::VectorXd& tot_t = seir_res.get_value(s);
-
-                const Eigen::VectorXd& F0 = flows_ts.get_value(s);
-                const Eigen::VectorXd& F1 = flows_ts.get_value(s + 1);
-
-                std::vector<double> invS(num_age_groups), invE(num_age_groups), invI(num_age_groups);
-                for (size_t g = 0; g < num_age_groups; ++g) {
-                    const double sTot = tot_t[idxS[g]], eTot = tot_t[idxE[g]], iTot = tot_t[idxI[g]];
-                    invS[g] = (sTot > 0.0) ? 1.0 / sTot : 0.0;
-                    invE[g] = (eTot > 0.0) ? 1.0 / eTot : 0.0;
-                    invI[g] = (iTot > 0.0) ? 1.0 / iTot : 0.0;
-                }
-
-                for (int cg = 0; cg < num_commuter_groups; ++cg) {
-                    Eigen::VectorXd& x = mobile_pops[static_cast<size_t>(cg)];
-
-                    for (size_t g = 0; g < num_age_groups; ++g) {
-                        const size_t base = g * 3;
-                        const double dSE =
-                            F1[static_cast<Eigen::Index>(base + 0)] - F0[static_cast<Eigen::Index>(base + 0)];
-                        const double dEI =
-                            F1[static_cast<Eigen::Index>(base + 1)] - F0[static_cast<Eigen::Index>(base + 1)];
-                        const double dIR =
-                            F1[static_cast<Eigen::Index>(base + 2)] - F0[static_cast<Eigen::Index>(base + 2)];
-
-                        const size_t iS = idxS[g], iE = idxE[g], iI = idxI[g], iR = idxR[g];
-
-                        // xi = X_commuter / X_total
-                        const double xiS = (invS[g] > 0.0) ? x[static_cast<Eigen::Index>(iS)] * invS[g] : 0.0;
-                        const double xiE = (invE[g] > 0.0) ? x[static_cast<Eigen::Index>(iE)] * invE[g] : 0.0;
-                        const double xiI = (invI[g] > 0.0) ? x[static_cast<Eigen::Index>(iI)] * invI[g] : 0.0;
-
-                        const double fSE = dSE * xiS;
-                        const double fEI = dEI * xiE;
-                        const double fIR = dIR * xiI;
-
-                        x[static_cast<Eigen::Index>(iS)] -= fSE;
-                        x[static_cast<Eigen::Index>(iE)] += fSE - fEI;
-                        x[static_cast<Eigen::Index>(iI)] += fEI - fIR;
-                        x[static_cast<Eigen::Index>(iR)] += fIR;
-                    }
-                }
-            }
-
-            benchmark::DoNotOptimize(mobile_pops);
-        }
-    }
-}
-
-static void bench_stage_aligned_euler_optimized(::benchmark::State& state)
-{
-    const int num_commuter_groups = commuter_group_counts[state.range(0)];
-    const size_t num_age_groups   = static_cast<size_t>(state.range(1));
-    const auto num_patches        = num_commuter_groups + 1;
-    mio::set_log_level(mio::LogLevel::critical);
-
-    for (auto _ : state) {
-        for (auto patch = 0; patch < num_patches; patch++) {
             state.PauseTiming();
             ModelType model(num_age_groups);
             setup_model_benchmark(model);
@@ -825,103 +532,6 @@ static void bench_stage_aligned_euler_optimized(::benchmark::State& state)
 }
 
 static void bench_stage_aligned_hybrid(::benchmark::State& state)
-{
-    const int num_commuter_groups = commuter_group_counts[state.range(0)];
-    const size_t num_age_groups   = static_cast<size_t>(state.range(1));
-    const auto num_patches        = num_commuter_groups + 1;
-    mio::set_log_level(mio::LogLevel::critical);
-
-    for (auto _ : state) {
-        for (auto patch = 0; patch < num_patches; patch++) {
-
-            state.PauseTiming();
-            ModelType model(num_age_groups);
-            setup_model_benchmark(model);
-            SimType sim(model, t0, dt);
-            auto integrator_rk =
-                std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta4>>();
-            sim.set_integrator(integrator_rk);
-            state.ResumeTiming();
-
-            sim.advance(t_max);
-
-            state.PauseTiming();
-
-            const auto& seir_res = sim.get_result();
-            const auto& flows_ts = sim.get_flows();
-            const size_t n_steps = static_cast<size_t>(seir_res.get_num_time_points()) > 0
-                                       ? static_cast<size_t>(seir_res.get_num_time_points()) - 1
-                                       : 0;
-
-            double mobile_fraction = 0.1 * num_commuter_groups;
-            Eigen::VectorXd initial_mobile =
-                seir_res.get_value(0) * (num_commuter_groups > 0 ? (mobile_fraction / num_commuter_groups) : 0.0);
-            std::vector<Eigen::VectorXd> mobile_pops(static_cast<size_t>(num_commuter_groups), initial_mobile);
-
-            using IS = mio::oseir::InfectionState;
-            std::vector<size_t> idxS(num_age_groups), idxE(num_age_groups), idxI(num_age_groups), idxR(num_age_groups);
-            for (size_t g = 0; g < num_age_groups; ++g) {
-                auto G  = mio::AgeGroup(static_cast<int>(g));
-                idxS[g] = model.populations.get_flat_index({G, IS::Susceptible});
-                idxE[g] = model.populations.get_flat_index({G, IS::Exposed});
-                idxI[g] = model.populations.get_flat_index({G, IS::Infected});
-                idxR[g] = model.populations.get_flat_index({G, IS::Recovered});
-            }
-
-            state.ResumeTiming();
-
-            // reconstruction
-            for (size_t s = 0; s < n_steps; ++s) {
-                const Eigen::VectorXd& tot_t = seir_res.get_value(s);
-
-                const Eigen::VectorXd& F0 = flows_ts.get_value(s);
-                const Eigen::VectorXd& F1 = flows_ts.get_value(s + 1);
-
-                std::vector<double> invS(num_age_groups), invE(num_age_groups), invI(num_age_groups);
-                for (size_t g = 0; g < num_age_groups; ++g) {
-                    const double sTot = tot_t[idxS[g]], eTot = tot_t[idxE[g]], iTot = tot_t[idxI[g]];
-                    invS[g] = (sTot > 0.0) ? 1.0 / sTot : 0.0;
-                    invE[g] = (eTot > 0.0) ? 1.0 / eTot : 0.0;
-                    invI[g] = (iTot > 0.0) ? 1.0 / iTot : 0.0;
-                }
-
-                for (int cg = 0; cg < num_commuter_groups; ++cg) {
-                    Eigen::VectorXd& x = mobile_pops[static_cast<size_t>(cg)];
-
-                    for (size_t g = 0; g < num_age_groups; ++g) {
-                        const size_t base = g * 3;
-                        const double dSE =
-                            F1[static_cast<Eigen::Index>(base + 0)] - F0[static_cast<Eigen::Index>(base + 0)];
-                        const double dEI =
-                            F1[static_cast<Eigen::Index>(base + 1)] - F0[static_cast<Eigen::Index>(base + 1)];
-                        const double dIR =
-                            F1[static_cast<Eigen::Index>(base + 2)] - F0[static_cast<Eigen::Index>(base + 2)];
-
-                        const size_t iS = idxS[g], iE = idxE[g], iI = idxI[g], iR = idxR[g];
-
-                        // Anteile am linken Rand (ta): xi = X_commuter / X_total
-                        const double xiS = (invS[g] > 0.0) ? x[static_cast<Eigen::Index>(iS)] * invS[g] : 0.0;
-                        const double xiE = (invE[g] > 0.0) ? x[static_cast<Eigen::Index>(iE)] * invE[g] : 0.0;
-                        const double xiI = (invI[g] > 0.0) ? x[static_cast<Eigen::Index>(iI)] * invI[g] : 0.0;
-
-                        const double fSE = dSE * xiS;
-                        const double fEI = dEI * xiE;
-                        const double fIR = dIR * xiI;
-
-                        x[static_cast<Eigen::Index>(iS)] -= fSE;
-                        x[static_cast<Eigen::Index>(iE)] += fSE - fEI;
-                        x[static_cast<Eigen::Index>(iI)] += fEI - fIR;
-                        x[static_cast<Eigen::Index>(iR)] += fIR;
-                    }
-                }
-            }
-
-            benchmark::DoNotOptimize(mobile_pops);
-        }
-    }
-}
-
-static void bench_stage_aligned_hybrid_optimized(::benchmark::State& state)
 {
     const int num_commuter_groups = commuter_group_counts[state.range(0)];
     const size_t num_age_groups   = static_cast<size_t>(state.range(1));
@@ -1305,16 +915,7 @@ BENCHMARK(bench_matrix_phi_reconstruction_euler)
         }
     }) -> Name("matrix_phi_reconstruction(Euler)") -> Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(mio::benchmark_mio::bench_stage_aligned_rk4_neu)
-    ->Apply([](auto* b) {
-        for (int i = 0; i < static_cast<int>(mio::benchmark_mio::commuter_group_counts.size()); ++i) {
-            for (int g : mio::benchmark_mio::age_group_counts) {
-                b->Args({i, g});
-            }
-        }
-    }) -> Name("stage-aligned(RK4)") -> Unit(::benchmark::kMicrosecond);
-
-BENCHMARK(mio::benchmark_mio::bench_stage_aligned_rk4_optimized)
+BENCHMARK(mio::benchmark_mio::bench_stage_aligned_rk4)
     ->Apply([](auto* b) {
         for (int i = 0; i < static_cast<int>(mio::benchmark_mio::commuter_group_counts.size()); ++i) {
             for (int g : mio::benchmark_mio::age_group_counts) {
@@ -1323,7 +924,7 @@ BENCHMARK(mio::benchmark_mio::bench_stage_aligned_rk4_optimized)
         }
     }) -> Name("stage-aligned(RK4_optimized)") -> Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(mio::benchmark_mio::bench_stage_aligned_euler_optimized)
+BENCHMARK(mio::benchmark_mio::bench_stage_aligned_euler)
     ->Apply([](auto* b) {
         for (int i = 0; i < static_cast<int>(mio::benchmark_mio::commuter_group_counts.size()); ++i) {
             for (int g : mio::benchmark_mio::age_group_counts) {
@@ -1341,25 +942,7 @@ BENCHMARK(mio::benchmark_mio::bench_auxiliary_euler)
         }
     }) -> Name("auxiliary_Euler") -> Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(mio::benchmark_mio::bench_stage_aligned_euler)
-    ->Apply([](auto* b) {
-        for (int i = 0; i < static_cast<int>(mio::benchmark_mio::commuter_group_counts.size()); ++i) {
-            for (int g : mio::benchmark_mio::age_group_counts) {
-                b->Args({i, g});
-            }
-        }
-    }) -> Name("stage-aligned(Euler)") -> Unit(::benchmark::kMicrosecond);
-
 BENCHMARK(mio::benchmark_mio::bench_stage_aligned_hybrid)
-    ->Apply([](auto* b) {
-        for (int i = 0; i < static_cast<int>(mio::benchmark_mio::commuter_group_counts.size()); ++i) {
-            for (int g : mio::benchmark_mio::age_group_counts) {
-                b->Args({i, g});
-            }
-        }
-    }) -> Name("stage-aligned(hybrid)") -> Unit(::benchmark::kMicrosecond);
-
-BENCHMARK(mio::benchmark_mio::bench_stage_aligned_hybrid_optimized)
     ->Apply([](auto* b) {
         for (int i = 0; i < static_cast<int>(mio::benchmark_mio::commuter_group_counts.size()); ++i) {
             for (int g : mio::benchmark_mio::age_group_counts) {
