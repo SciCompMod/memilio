@@ -60,6 +60,18 @@ void finalize();
 */
 bool is_root();
 
+/**
+ * @brief Return the rank of the calling process on the given communicator.
+ * @param comm An MPI communicator.
+ */
+int rank(Comm comm);
+
+/**
+ * @brief Return the size of the given communicator.
+ * @param comm An MPI communicator.
+ */
+int size(Comm comm);
+
 } // namespace mpi
 } // namespace mio
 
