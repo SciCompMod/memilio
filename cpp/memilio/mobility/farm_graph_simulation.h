@@ -318,9 +318,17 @@ private:
     void check_for_cases(Node& node, Timepoint t, size_t id)
     {
         const auto& current_state = node.get_result().get_last_value();
-        if (current_state[3] / current_state.sum() > m_suspicion_threshold) {
+        // mio::log_info("S: {},E: {},I: {},D: {}, Time: {}, ID: {}", current_state[0], current_state[1], current_state[2],
+        //   current_state[3], t, id);
+        auto last_state_deaths = 0.0;
+        if (node.get_result().get_num_time_points() >= 2) {
+            last_state_deaths = node.get_result()[node.get_result().get_num_time_points() - 2][3];
+            // mio::log_info("Time: {}, Deaths: {}, Time: {}, Deaths: {}, Time: {}, Deaths: {}", node.get_result().get_times()[node.get_result().get_num_time_points() - 3], node.get_result()[node.get_result().get_num_time_points() - 3][3], node.get_result().get_times()[node.get_result().get_num_time_points() - 2], node.get_result()[node.get_result().get_num_time_points() - 2][3], node.get_result().get_times()[node.get_result().get_num_time_points() - 1], node.get_result()[node.get_result().get_num_time_points() - 1][3]);
+        }
+        if ((current_state[3] - last_state_deaths) / current_state.sum() > m_suspicion_threshold) {
             mio::log_debug("Suspicious farm found: {}, Number dead: {}, number overall: {}, Time: {}", id,
-                           current_state[3], std::accumulate(current_state.begin(), current_state.end(), 0.0), t);
+                          current_state[3] - last_state_deaths,
+                          std::accumulate(current_state.begin(), current_state.end(), 0.0), t);
             node.set_date_suspicion(t);
             // if (mio::UniformDistribution<ScalarType>::get_instance()(m_rng, 0.0, 1.0) <
             //     1 - std::pow((1 - m_sensitivity), 20)) {
