@@ -83,10 +83,11 @@ public:
         update_current_rates_and_waiting_times();
         size_t next_event = determine_next_event(); // index of the next event
         FP current_time   = m_result.get_last_time();
-        // set in the past to add a new time point immediately
+        // set current time to add next time point in the future
         FP last_result_time = current_time;
         // iterate over time
         while (current_time + m_waiting_times[next_event] < tmax) {
+            // If the next event happens further in the future than the next stored time point, add a new one.
             if (current_time + m_waiting_times[next_event] >= last_result_time) {
                 auto num_dt      = std::ceil((current_time + m_waiting_times[next_event] - last_result_time) / m_dt);
                 last_result_time = std::min(tmax, last_result_time + num_dt * m_dt);
