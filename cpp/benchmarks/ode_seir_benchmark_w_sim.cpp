@@ -921,6 +921,108 @@ static void bench_stage_aligned_hybrid(::benchmark::State& state)
     }
 }
 
+static void bench_stage_aligned_hybrid_optimized(::benchmark::State& state)
+{
+    const int num_commuter_groups = commuter_group_counts[state.range(0)];
+    const size_t num_age_groups   = static_cast<size_t>(state.range(1));
+    const auto num_patches        = num_commuter_groups + 1;
+    mio::set_log_level(mio::LogLevel::critical);
+
+    for (auto _ : state) {
+        for (auto patch = 0; patch < num_patches; patch++) {
+
+            state.PauseTiming();
+            ModelType model(num_age_groups);
+            setup_model_benchmark(model);
+            SimType sim(model, t0, dt);
+
+            auto integrator_rk =
+                std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta4>>();
+            sim.set_integrator(integrator_rk);
+            state.ResumeTiming();
+
+            // 1. Totals mit RK-4 integrieren (MEmilio sim.advance)
+            sim.advance(t_max);
+
+            state.PauseTiming();
+
+            const auto& seir_res = sim.get_result();
+            const size_t n_steps = static_cast<size_t>(seir_res.get_num_time_points()) > 0
+                                       ? static_cast<size_t>(seir_res.get_num_time_points()) - 1
+                                       : 0;
+
+            double mobile_fraction = 0.1 * num_commuter_groups;
+            Eigen::VectorXd initial_mobile =
+                seir_res.get_value(0) * (num_commuter_groups > 0 ? (mobile_fraction / num_commuter_groups) : 0.0);
+            std::vector<Eigen::VectorXd> mobile_pops(static_cast<size_t>(num_commuter_groups), initial_mobile);
+
+            auto ic = mio::examples::make_seir_index_cache(model);
+
+            std::vector<double> rate_E(num_age_groups, 0.0), rate_I(num_age_groups, 0.0);
+            for (size_t g = 0; g < num_age_groups; ++g) {
+                double t_E =
+                    model.parameters.get<mio::oseir::TimeExposed<ScalarType>>()[mio::AgeGroup(static_cast<int>(g))];
+                double t_I =
+                    model.parameters.get<mio::oseir::TimeInfected<ScalarType>>()[mio::AgeGroup(static_cast<int>(g))];
+                rate_E[g] = (t_E > 1e-10) ? (1.0 / t_E) : 0.0;
+                rate_I[g] = (t_I > 1e-10) ? (1.0 / t_I) : 0.0;
+            }
+
+            auto compute_lambda = [&](const Eigen::VectorXd& y, double tt, std::vector<double>& lambda_out) {
+                lambda_out.assign(num_age_groups, 0.0);
+                for (size_t j = 0; j < num_age_groups; ++j) {
+                    const double Nj    = y[ic.S[j]] + y[ic.E[j]] + y[ic.I[j]] + y[ic.R[j]];
+                    const double divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
+                    for (size_t i = 0; i < num_age_groups; ++i) {
+                        const double coeff =
+                            model.parameters.get<mio::oseir::ContactPatterns<ScalarType>>()
+                                .get_cont_freq_mat()
+                                .get_matrix_at(tt)(i, j) *
+                            model.parameters
+                                .get<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>()[mio::AgeGroup(
+                                    static_cast<int>(i))] *
+                            divNj;
+                        lambda_out[i] += coeff * y[ic.I[j]];
+                    }
+                }
+            };
+
+            std::vector<double> current_lambda(num_age_groups, 0.0);
+
+            state.ResumeTiming();
+
+            // 2. Reconstruction (Euler Update)
+            for (size_t s = 0; s < n_steps; ++s) {
+                const Eigen::VectorXd& tot_t = seir_res.get_value(s);
+
+                double current_t  = seir_res.get_time(s);
+                double current_dt = seir_res.get_time(s + 1) - current_t;
+
+                compute_lambda(tot_t, current_t, current_lambda);
+
+                for (int cg = 0; cg < num_commuter_groups; ++cg) {
+                    Eigen::VectorXd& x = mobile_pops[static_cast<size_t>(cg)];
+
+                    for (size_t g = 0; g < num_age_groups; ++g) {
+                        const size_t iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
+
+                        const double fSE = current_lambda[g] * x[static_cast<Eigen::Index>(iS)];
+                        const double fEI = rate_E[g] * x[static_cast<Eigen::Index>(iE)];
+                        const double fIR = rate_I[g] * x[static_cast<Eigen::Index>(iI)];
+
+                        x[static_cast<Eigen::Index>(iS)] += current_dt * (-fSE);
+                        x[static_cast<Eigen::Index>(iE)] += current_dt * (fSE - fEI);
+                        x[static_cast<Eigen::Index>(iI)] += current_dt * (fEI - fIR);
+                        x[static_cast<Eigen::Index>(iR)] += current_dt * (fIR);
+                    }
+                }
+            }
+
+            benchmark::DoNotOptimize(mobile_pops);
+        }
+    }
+}
+
 template <class Integrator>
 static void bench_matrix_phi_reconstruction(::benchmark::State& state)
 {
@@ -1221,6 +1323,15 @@ BENCHMARK(mio::benchmark_mio::bench_stage_aligned_rk4_optimized)
         }
     }) -> Name("stage-aligned(RK4_optimized)") -> Unit(::benchmark::kMicrosecond);
 
+BENCHMARK(mio::benchmark_mio::bench_stage_aligned_euler_optimized)
+    ->Apply([](auto* b) {
+        for (int i = 0; i < static_cast<int>(mio::benchmark_mio::commuter_group_counts.size()); ++i) {
+            for (int g : mio::benchmark_mio::age_group_counts) {
+                b->Args({i, g});
+            }
+        }
+    }) -> Name("stage-aligned(Euler_optimized)") -> Unit(::benchmark::kMicrosecond);
+
 BENCHMARK(mio::benchmark_mio::bench_auxiliary_euler)
     ->Apply([](auto* b) {
         for (int i = 0; i < static_cast<int>(mio::benchmark_mio::commuter_group_counts.size()); ++i) {
@@ -1247,6 +1358,15 @@ BENCHMARK(mio::benchmark_mio::bench_stage_aligned_hybrid)
             }
         }
     }) -> Name("stage-aligned(hybrid)") -> Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(mio::benchmark_mio::bench_stage_aligned_hybrid_optimized)
+    ->Apply([](auto* b) {
+        for (int i = 0; i < static_cast<int>(mio::benchmark_mio::commuter_group_counts.size()); ++i) {
+            for (int g : mio::benchmark_mio::age_group_counts) {
+                b->Args({i, g});
+            }
+        }
+    }) -> Name("stage-aligned(hybrid_optimized)") -> Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(mio::benchmark_mio::bench_standard_lagrangian_rk4)
     ->Apply([](auto* b) {
