@@ -439,43 +439,156 @@ static void bench_stage_aligned_rk4_optimized(::benchmark::State& state)
     const auto num_patches        = num_commuter_groups + 1;
     mio::set_log_level(mio::LogLevel::critical);
 
+    struct RK4StageCache {
+        std::vector<Eigen::VectorXd> y;
+        std::vector<Eigen::VectorXd> k_tot;
+        std::vector<std::vector<double>> lambda;
+
+        void resize(size_t nc, size_t num_age_groups)
+        {
+            y.resize(4, Eigen::VectorXd(nc));
+            k_tot.resize(4, Eigen::VectorXd(nc));
+            lambda.resize(4, std::vector<double>(num_age_groups, 0.0));
+        }
+    };
+
     for (auto _ : state) {
         for (auto patch = 0; patch < num_patches; patch++) {
             state.PauseTiming();
             ModelType model(num_age_groups);
             setup_model_benchmark(model);
-            SimType sim(model, t0, dt);
-            auto integrator_rk =
-                std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta4>>();
-            sim.set_integrator(integrator_rk);
-            const auto& seir_res              = sim.get_result();
-            double mobile_population_fraction = 0.1 * num_commuter_groups;
 
-            Eigen::VectorXd initial_mobile_pop =
-                seir_res.get_value(0) *
-                (num_commuter_groups > 0 ? (mobile_population_fraction / num_commuter_groups) : 0.0);
+            Eigen::VectorXd current_totals = model.populations.get_compartments();
 
-            const auto step_size_ref = seir_res.get_time(1) - seir_res.get_time(0);
+            double mobile_fraction = 0.1 * num_commuter_groups;
+            Eigen::VectorXd initial_mobile =
+                current_totals * (num_commuter_groups > 0 ? (mobile_fraction / num_commuter_groups) : 0.0);
+            std::vector<Eigen::VectorXd> mobile_pops(num_commuter_groups, initial_mobile);
 
-            std::vector<Eigen::VectorXd> mobile_pops(num_commuter_groups, initial_mobile_pop);
+            const size_t NC = current_totals.size();
+            RK4StageCache cache;
+            cache.resize(NC, num_age_groups);
+
+            auto ic = mio::examples::make_seir_index_cache(model);
+
+            std::vector<double> rate_E(num_age_groups, 0.0), rate_I(num_age_groups, 0.0);
+            for (size_t g = 0; g < num_age_groups; ++g) {
+                double t_E =
+                    model.parameters.get<mio::oseir::TimeExposed<ScalarType>>()[mio::AgeGroup(static_cast<int>(g))];
+                double t_I =
+                    model.parameters.get<mio::oseir::TimeInfected<ScalarType>>()[mio::AgeGroup(static_cast<int>(g))];
+                rate_E[g] = (t_E > 1e-10) ? (1.0 / t_E) : 0.0;
+                rate_I[g] = (t_I > 1e-10) ? (1.0 / t_I) : 0.0;
+            }
+
+            auto compute_lambda = [&](const Eigen::VectorXd& y, double tt, std::vector<double>& lambda_out) {
+                lambda_out.assign(num_age_groups, 0.0);
+                for (size_t j = 0; j < num_age_groups; ++j) {
+                    const double Nj    = y[ic.S[j]] + y[ic.E[j]] + y[ic.I[j]] + y[ic.R[j]];
+                    const double divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
+                    for (size_t i = 0; i < num_age_groups; ++i) {
+                        const double coeff =
+                            model.parameters.get<mio::oseir::ContactPatterns<ScalarType>>()
+                                .get_cont_freq_mat()
+                                .get_matrix_at(tt)(i, j) *
+                            model.parameters
+                                .get<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>()[mio::AgeGroup(
+                                    static_cast<int>(i))] *
+                            divNj;
+                        lambda_out[i] += coeff * y[ic.I[j]];
+                    }
+                }
+            };
+
+            Eigen::VectorXd k1_com(NC), k2_com(NC), k3_com(NC), k4_com(NC);
+            Eigen::VectorXd Xc2(NC), Xc3(NC), Xc4(NC);
+
             state.ResumeTiming();
 
             for (ScalarType t = t0; t < t_max; t += dt) {
-                if (t + dt > t_max + 1e-10)
-                    break;
 
-                const auto closest_idx_total = static_cast<size_t>(std::round(t / step_size_ref));
-                if (closest_idx_total >= static_cast<size_t>(seir_res.get_num_time_points()))
-                    break;
+                // Integrate totals
+                // Stage 1
+                cache.y[0] = current_totals;
+                model.get_derivatives(cache.y[0], cache.y[0], t, cache.k_tot[0]);
+                compute_lambda(cache.y[0], t, cache.lambda[0]);
 
-                const auto& total_pop_const = seir_res.get_value(closest_idx_total);
+                // Stage 2
+                cache.y[1] = cache.y[0] + (dt * 0.5) * cache.k_tot[0];
+                model.get_derivatives(cache.y[1], cache.y[1], t + 0.5 * dt, cache.k_tot[1]);
+                compute_lambda(cache.y[1], t + 0.5 * dt, cache.lambda[1]);
 
-                Eigen::VectorXd totals = total_pop_const;
+                // Stage 3
+                cache.y[2] = cache.y[0] + (dt * 0.5) * cache.k_tot[1];
+                model.get_derivatives(cache.y[2], cache.y[2], t + 0.5 * dt, cache.k_tot[2]);
+                compute_lambda(cache.y[2], t + 0.5 * dt, cache.lambda[2]);
 
-                for (int i = 0; i < num_commuter_groups; ++i) {
-                    mio::examples::flow_based_mobility_returns_rk4_optimized(mobile_pops[i], totals, sim.get_model(), t,
-                                                                             dt);
+                // Stage 4
+                cache.y[3] = cache.y[0] + dt * cache.k_tot[2];
+                model.get_derivatives(cache.y[3], cache.y[3], t + dt, cache.k_tot[3]);
+                compute_lambda(cache.y[3], t + dt, cache.lambda[3]);
+
+                Eigen::VectorXd next_totals = current_totals + (dt / 6.0) * (cache.k_tot[0] + 2 * cache.k_tot[1] +
+                                                                             2 * cache.k_tot[2] + cache.k_tot[3]);
+
+                // Reconstruction
+                for (int cg = 0; cg < num_commuter_groups; ++cg) {
+                    Eigen::Ref<Eigen::VectorXd> Xc = mobile_pops[cg];
+
+                    // Stage 1
+                    for (size_t g = 0; g < num_age_groups; ++g) {
+                        int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
+                        double fSE = cache.lambda[0][g] * Xc[iS];
+                        double fEI = rate_E[g] * Xc[iE];
+                        double fIR = rate_I[g] * Xc[iI];
+                        k1_com[iS] = -fSE;
+                        k1_com[iE] = fSE - fEI;
+                        k1_com[iI] = fEI - fIR;
+                        k1_com[iR] = fIR;
+                    }
+
+                    // Stage 2
+                    Xc2 = Xc + (dt * 0.5) * k1_com;
+                    for (size_t g = 0; g < num_age_groups; ++g) {
+                        int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
+                        double fSE = cache.lambda[1][g] * Xc2[iS];
+                        double fEI = rate_E[g] * Xc2[iE];
+                        double fIR = rate_I[g] * Xc2[iI];
+                        k2_com[iS] = -fSE;
+                        k2_com[iE] = fSE - fEI;
+                        k2_com[iI] = fEI - fIR;
+                        k2_com[iR] = fIR;
+                    }
+
+                    // Stage 3
+                    Xc3 = Xc + (dt * 0.5) * k2_com;
+                    for (size_t g = 0; g < num_age_groups; ++g) {
+                        int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
+                        double fSE = cache.lambda[2][g] * Xc3[iS];
+                        double fEI = rate_E[g] * Xc3[iE];
+                        double fIR = rate_I[g] * Xc3[iI];
+                        k3_com[iS] = -fSE;
+                        k3_com[iE] = fSE - fEI;
+                        k3_com[iI] = fEI - fIR;
+                        k3_com[iR] = fIR;
+                    }
+
+                    // Stage 4
+                    Xc4 = Xc + dt * k3_com;
+                    for (size_t g = 0; g < num_age_groups; ++g) {
+                        int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
+                        double fSE = cache.lambda[3][g] * Xc4[iS];
+                        double fEI = rate_E[g] * Xc4[iE];
+                        double fIR = rate_I[g] * Xc4[iI];
+                        k4_com[iS] = -fSE;
+                        k4_com[iE] = fSE - fEI;
+                        k4_com[iI] = fEI - fIR;
+                        k4_com[iR] = fIR;
+                    }
+
+                    Xc += (dt / 6.0) * (k1_com + 2.0 * k2_com + 2.0 * k3_com + k4_com);
                 }
+                current_totals = next_totals;
             }
             benchmark::DoNotOptimize(mobile_pops);
         }
@@ -618,6 +731,94 @@ static void bench_stage_aligned_euler(::benchmark::State& state)
                 }
             }
 
+            benchmark::DoNotOptimize(mobile_pops);
+        }
+    }
+}
+
+static void bench_stage_aligned_euler_optimized(::benchmark::State& state)
+{
+    const int num_commuter_groups = commuter_group_counts[state.range(0)];
+    const size_t num_age_groups   = static_cast<size_t>(state.range(1));
+    const auto num_patches        = num_commuter_groups + 1;
+    mio::set_log_level(mio::LogLevel::critical);
+
+    for (auto _ : state) {
+        for (auto patch = 0; patch < num_patches; patch++) {
+            state.PauseTiming();
+            ModelType model(num_age_groups);
+            setup_model_benchmark(model);
+
+            Eigen::VectorXd current_totals = model.populations.get_compartments();
+
+            double mobile_fraction = 0.1 * num_commuter_groups;
+            Eigen::VectorXd initial_mobile =
+                current_totals * (num_commuter_groups > 0 ? (mobile_fraction / num_commuter_groups) : 0.0);
+            std::vector<Eigen::VectorXd> mobile_pops(num_commuter_groups, initial_mobile);
+
+            const size_t NC = current_totals.size();
+            auto ic         = mio::examples::make_seir_index_cache(model);
+
+            std::vector<double> rate_E(num_age_groups, 0.0), rate_I(num_age_groups, 0.0);
+            for (size_t g = 0; g < num_age_groups; ++g) {
+                double t_E =
+                    model.parameters.get<mio::oseir::TimeExposed<ScalarType>>()[mio::AgeGroup(static_cast<int>(g))];
+                double t_I =
+                    model.parameters.get<mio::oseir::TimeInfected<ScalarType>>()[mio::AgeGroup(static_cast<int>(g))];
+                rate_E[g] = (t_E > 1e-10) ? (1.0 / t_E) : 0.0;
+                rate_I[g] = (t_I > 1e-10) ? (1.0 / t_I) : 0.0;
+            }
+
+            auto compute_lambda = [&](const Eigen::VectorXd& y, double tt, std::vector<double>& lambda_out) {
+                lambda_out.assign(num_age_groups, 0.0);
+                for (size_t j = 0; j < num_age_groups; ++j) {
+                    const double Nj    = y[ic.S[j]] + y[ic.E[j]] + y[ic.I[j]] + y[ic.R[j]];
+                    const double divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
+                    for (size_t i = 0; i < num_age_groups; ++i) {
+                        const double coeff =
+                            model.parameters.get<mio::oseir::ContactPatterns<ScalarType>>()
+                                .get_cont_freq_mat()
+                                .get_matrix_at(tt)(i, j) *
+                            model.parameters
+                                .get<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>()[mio::AgeGroup(
+                                    static_cast<int>(i))] *
+                            divNj;
+                        lambda_out[i] += coeff * y[ic.I[j]];
+                    }
+                }
+            };
+
+            Eigen::VectorXd k_tot(NC);
+            std::vector<double> current_lambda(num_age_groups, 0.0);
+
+            state.ResumeTiming();
+
+            for (ScalarType t = t0; t < t_max; t += dt) {
+
+                // Solve totals with Euler
+                model.get_derivatives(current_totals, current_totals, t, k_tot);
+                compute_lambda(current_totals, t, current_lambda);
+                Eigen::VectorXd next_totals = current_totals + dt * k_tot;
+
+                // reconstruction commuter groups
+                for (int cg = 0; cg < num_commuter_groups; ++cg) {
+                    Eigen::Ref<Eigen::VectorXd> Xc = mobile_pops[cg];
+
+                    for (size_t g = 0; g < num_age_groups; ++g) {
+                        int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
+
+                        double fSE = current_lambda[g] * Xc[iS];
+                        double fEI = rate_E[g] * Xc[iE];
+                        double fIR = rate_I[g] * Xc[iI];
+
+                        Xc[iS] += dt * (-fSE);
+                        Xc[iE] += dt * (fSE - fEI);
+                        Xc[iI] += dt * (fEI - fIR);
+                        Xc[iR] += dt * (fIR);
+                    }
+                }
+                current_totals = next_totals;
+            }
             benchmark::DoNotOptimize(mobile_pops);
         }
     }
@@ -852,18 +1053,18 @@ struct AugmentedPhiSystemBlockDiag {
             const double time_infected =
                 model.parameters.get<mio::oseir::TimeInfected<ScalarType>>()[mio::AgeGroup(static_cast<int>(g))];
 
-            const double sigma  = (time_exposed > 1e-10) ? (1.0 / time_exposed) : 0.0;
-            const double gamma  = (time_infected > 1e-10) ? (1.0 / time_infected) : 0.0;
+            const double rate_E = (time_exposed > 1e-10) ? (1.0 / time_exposed) : 0.0;
+            const double rate_I = (time_infected > 1e-10) ? (1.0 / time_infected) : 0.0;
             const double lambda = foi[g];
 
             // Build 4x4 transition matrix A_g for this age group
             Eigen::Matrix4d Ag = Eigen::Matrix4d::Zero();
             Ag(0, 0)           = -lambda;
             Ag(1, 0)           = lambda;
-            Ag(1, 1)           = -sigma;
-            Ag(2, 1)           = sigma;
-            Ag(2, 2)           = -gamma;
-            Ag(3, 2)           = gamma;
+            Ag(1, 1)           = -rate_E;
+            Ag(2, 1)           = rate_E;
+            Ag(2, 2)           = -rate_I;
+            Ag(3, 2)           = rate_I;
 
             // Extract current 4x4 Phi block from the state vector
             const auto Phi_g = Eigen::Map<const Eigen::Matrix4d>(y.data() + NC + g * 16);
