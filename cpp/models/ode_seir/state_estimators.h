@@ -214,8 +214,8 @@ public:
     }
 };
 
-using StandardModelLagrangian    = ModelExplicit<ScalarType>;
-using StandardModelLagrangianSim = mio::FlowSimulation<ScalarType, StandardModelLagrangian>;
+using StandardModelLagrangian = ModelExplicit<ScalarType>;
+using StandardLagrangianSim   = mio::FlowSimulation<ScalarType, StandardModelLagrangian>;
 
 using StandardModel = mio::oseir::Model<ScalarType>;
 using StandardSim   = mio::FlowSimulation<ScalarType, StandardModel>;

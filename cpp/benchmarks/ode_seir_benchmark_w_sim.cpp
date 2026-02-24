@@ -24,8 +24,7 @@
 #include "memilio/utils/time_series.h"
 #include "memilio/math/eigen.h"
 #include "ode_seir/model.h"
-#include "examples/state_estimators.h"
-#include "examples/standard_lagrangian.h"
+#include "ode_seir/state_estimators.h"
 #include <boost/numeric/odeint.hpp>
 #include <boost/numeric/odeint/stepper/euler.hpp>
 #include <boost/numeric/odeint/stepper/runge_kutta4.hpp>
@@ -35,7 +34,7 @@
 
 namespace mio
 {
-namespace examples
+namespace oseir
 {
 
 struct SEIRIndexCache {
@@ -62,7 +61,7 @@ inline SEIRIndexCache make_seir_index_cache(const mio::oseir::Model<ScalarType>&
     return ic;
 }
 
-} // namespace examples
+} // namespace oseir
 
 namespace benchmark_mio
 {
@@ -91,72 +90,72 @@ void setup_model_benchmark(ModelType& model, size_t num_agegroups = 6)
     model.apply_constraints();
 }
 
-void setup_explicit_model_benchmark(mio::examples::ExplicitModel& model_explicit, size_t num_age_groups,
+void setup_explicit_model_benchmark(mio::oseir::StandardModelLagrangian& model_explicit, size_t num_age_groups,
                                     int num_commuter_groups, const double total_population = 10000.0)
 {
 
-    // Start with non commuting pop (50%)
+    // Start with non commuting pop
     for (auto i = 0; i < static_cast<int>(num_age_groups); i++) {
         model_explicit
-            .populations[mio::Index<mio::AgeGroup, mio::examples::CommuterType, mio::examples::InfectionStateExplicit>{
-                mio::AgeGroup(i), mio::examples::CommuterType::NonCommuter, mio::examples::InfectionStateExplicit::E}] =
+            .populations[mio::Index<mio::AgeGroup, mio::oseir::CommuterType, mio::oseir::InfectionStateExplicit>{
+                mio::AgeGroup(i), mio::oseir::CommuterType::NonCommuter, mio::oseir::InfectionStateExplicit::E}] =
             50.0 / static_cast<double>(num_age_groups);
         model_explicit
-            .populations[mio::Index<mio::AgeGroup, mio::examples::CommuterType, mio::examples::InfectionStateExplicit>{
-                mio::AgeGroup(i), mio::examples::CommuterType::NonCommuter, mio::examples::InfectionStateExplicit::I}] =
+            .populations[mio::Index<mio::AgeGroup, mio::oseir::CommuterType, mio::oseir::InfectionStateExplicit>{
+                mio::AgeGroup(i), mio::oseir::CommuterType::NonCommuter, mio::oseir::InfectionStateExplicit::I}] =
             50.0 / static_cast<double>(num_age_groups);
         model_explicit
-            .populations[mio::Index<mio::AgeGroup, mio::examples::CommuterType, mio::examples::InfectionStateExplicit>{
-                mio::AgeGroup(i), mio::examples::CommuterType::NonCommuter, mio::examples::InfectionStateExplicit::R}] =
+            .populations[mio::Index<mio::AgeGroup, mio::oseir::CommuterType, mio::oseir::InfectionStateExplicit>{
+                mio::AgeGroup(i), mio::oseir::CommuterType::NonCommuter, mio::oseir::InfectionStateExplicit::R}] =
             50.0 / static_cast<double>(num_age_groups);
         model_explicit
-            .populations[mio::Index<mio::AgeGroup, mio::examples::CommuterType, mio::examples::InfectionStateExplicit>{
-                mio::AgeGroup(i), mio::examples::CommuterType::NonCommuter, mio::examples::InfectionStateExplicit::S}] =
+            .populations[mio::Index<mio::AgeGroup, mio::oseir::CommuterType, mio::oseir::InfectionStateExplicit>{
+                mio::AgeGroup(i), mio::oseir::CommuterType::NonCommuter, mio::oseir::InfectionStateExplicit::S}] =
             (total_population * 0.5) / static_cast<double>(num_age_groups) -
-            model_explicit.populations[mio::Index<mio::AgeGroup, mio::examples::CommuterType,
-                                                  mio::examples::InfectionStateExplicit>{
-                mio::AgeGroup(i), mio::examples::CommuterType::NonCommuter, mio::examples::InfectionStateExplicit::E}] -
-            model_explicit.populations[mio::Index<mio::AgeGroup, mio::examples::CommuterType,
-                                                  mio::examples::InfectionStateExplicit>{
-                mio::AgeGroup(i), mio::examples::CommuterType::NonCommuter, mio::examples::InfectionStateExplicit::I}] -
-            model_explicit.populations[mio::Index<mio::AgeGroup, mio::examples::CommuterType,
-                                                  mio::examples::InfectionStateExplicit>{
-                mio::AgeGroup(i), mio::examples::CommuterType::NonCommuter, mio::examples::InfectionStateExplicit::R}];
+            model_explicit
+                .populations[mio::Index<mio::AgeGroup, mio::oseir::CommuterType, mio::oseir::InfectionStateExplicit>{
+                    mio::AgeGroup(i), mio::oseir::CommuterType::NonCommuter, mio::oseir::InfectionStateExplicit::E}] -
+            model_explicit
+                .populations[mio::Index<mio::AgeGroup, mio::oseir::CommuterType, mio::oseir::InfectionStateExplicit>{
+                    mio::AgeGroup(i), mio::oseir::CommuterType::NonCommuter, mio::oseir::InfectionStateExplicit::I}] -
+            model_explicit
+                .populations[mio::Index<mio::AgeGroup, mio::oseir::CommuterType, mio::oseir::InfectionStateExplicit>{
+                    mio::AgeGroup(i), mio::oseir::CommuterType::NonCommuter, mio::oseir::InfectionStateExplicit::R}];
     }
 
     // Then the remaining commuting pop
     for (int c = 0; c < num_commuter_groups; c++) {
         auto commuter_type =
-            static_cast<mio::examples::CommuterType>(static_cast<int>(mio::examples::CommuterType::CommuterBase) + c);
+            static_cast<mio::oseir::CommuterType>(static_cast<int>(mio::oseir::CommuterType::CommuterBase) + c);
         double commuter_fraction = 0.5 / static_cast<double>(num_commuter_groups);
 
         for (auto i = 0; i < static_cast<int>(num_age_groups); i++) {
-            model_explicit.populations[mio::Index<mio::AgeGroup, mio::examples::CommuterType,
-                                                  mio::examples::InfectionStateExplicit>{
-                mio::AgeGroup(i), commuter_type, mio::examples::InfectionStateExplicit::E}] =
+            model_explicit
+                .populations[mio::Index<mio::AgeGroup, mio::oseir::CommuterType, mio::oseir::InfectionStateExplicit>{
+                    mio::AgeGroup(i), commuter_type, mio::oseir::InfectionStateExplicit::E}] =
                 50.0 / static_cast<double>(num_age_groups * num_commuter_groups);
-            model_explicit.populations[mio::Index<mio::AgeGroup, mio::examples::CommuterType,
-                                                  mio::examples::InfectionStateExplicit>{
-                mio::AgeGroup(i), commuter_type, mio::examples::InfectionStateExplicit::I}] =
+            model_explicit
+                .populations[mio::Index<mio::AgeGroup, mio::oseir::CommuterType, mio::oseir::InfectionStateExplicit>{
+                    mio::AgeGroup(i), commuter_type, mio::oseir::InfectionStateExplicit::I}] =
                 50.0 / static_cast<double>(num_age_groups * num_commuter_groups);
-            model_explicit.populations[mio::Index<mio::AgeGroup, mio::examples::CommuterType,
-                                                  mio::examples::InfectionStateExplicit>{
-                mio::AgeGroup(i), commuter_type, mio::examples::InfectionStateExplicit::R}] =
+            model_explicit
+                .populations[mio::Index<mio::AgeGroup, mio::oseir::CommuterType, mio::oseir::InfectionStateExplicit>{
+                    mio::AgeGroup(i), commuter_type, mio::oseir::InfectionStateExplicit::R}] =
                 50.0 / static_cast<double>(num_age_groups * num_commuter_groups);
 
-            double exposed   = model_explicit.populations[mio::Index<mio::AgeGroup, mio::examples::CommuterType,
-                                                                   mio::examples::InfectionStateExplicit>{
-                mio::AgeGroup(i), commuter_type, mio::examples::InfectionStateExplicit::E}];
-            double infected  = model_explicit.populations[mio::Index<mio::AgeGroup, mio::examples::CommuterType,
-                                                                    mio::examples::InfectionStateExplicit>{
-                mio::AgeGroup(i), commuter_type, mio::examples::InfectionStateExplicit::I}];
-            double recovered = model_explicit.populations[mio::Index<mio::AgeGroup, mio::examples::CommuterType,
-                                                                     mio::examples::InfectionStateExplicit>{
-                mio::AgeGroup(i), commuter_type, mio::examples::InfectionStateExplicit::R}];
+            double exposed   = model_explicit.populations[mio::Index<mio::AgeGroup, mio::oseir::CommuterType,
+                                                                   mio::oseir::InfectionStateExplicit>{
+                mio::AgeGroup(i), commuter_type, mio::oseir::InfectionStateExplicit::E}];
+            double infected  = model_explicit.populations[mio::Index<mio::AgeGroup, mio::oseir::CommuterType,
+                                                                    mio::oseir::InfectionStateExplicit>{
+                mio::AgeGroup(i), commuter_type, mio::oseir::InfectionStateExplicit::I}];
+            double recovered = model_explicit.populations[mio::Index<mio::AgeGroup, mio::oseir::CommuterType,
+                                                                     mio::oseir::InfectionStateExplicit>{
+                mio::AgeGroup(i), commuter_type, mio::oseir::InfectionStateExplicit::R}];
 
-            model_explicit.populations[mio::Index<mio::AgeGroup, mio::examples::CommuterType,
-                                                  mio::examples::InfectionStateExplicit>{
-                mio::AgeGroup(i), commuter_type, mio::examples::InfectionStateExplicit::S}] =
+            model_explicit
+                .populations[mio::Index<mio::AgeGroup, mio::oseir::CommuterType, mio::oseir::InfectionStateExplicit>{
+                    mio::AgeGroup(i), commuter_type, mio::oseir::InfectionStateExplicit::S}] =
                 (total_population * commuter_fraction) / static_cast<double>(num_age_groups) - exposed - infected -
                 recovered;
         }
@@ -227,7 +226,7 @@ static void bench_auxiliary_euler(::benchmark::State& state)
                 const auto& total_pop = seir_res.get_value(closest_idx_total);
 
                 for (int i = 0; i < num_commuter_groups; ++i) {
-                    mio::examples::integrate_mobile_population_euler(mobile_pops[i], sim, total_pop, t, dt);
+                    mio::oseir::integrate_mobile_population_euler(mobile_pops[i], sim, total_pop, t, dt);
                 }
             }
             benchmark::DoNotOptimize(mobile_pops);
@@ -272,7 +271,7 @@ static void bench_stage_aligned_rk4(::benchmark::State& state)
             RK4StageCache cache;
             cache.resize(NC, num_age_groups);
 
-            auto ic = mio::examples::make_seir_index_cache(model);
+            auto ic = mio::oseir::make_seir_index_cache(model);
 
             std::vector<double> rate_E(num_age_groups, 0.0), rate_I(num_age_groups, 0.0);
             for (size_t g = 0; g < num_age_groups; ++g) {
@@ -408,9 +407,9 @@ static void bench_standard_lagrangian_rk4(::benchmark::State& state)
     for (auto _ : state) {
         for (auto patch = 0; patch < num_patches; patch++) {
             state.PauseTiming();
-            mio::examples::StandardModelLagrangian model_explicit(num_age_groups, num_commuter_groups);
+            mio::oseir::StandardModelLagrangian model_explicit(num_age_groups, num_commuter_groups);
             setup_explicit_model_benchmark(model_explicit, num_age_groups, num_commuter_groups);
-            mio::examples::StandardLagrangianSim sim_explicit(model_explicit, t0, dt);
+            mio::oseir::StandardLagrangianSim sim_explicit(model_explicit, t0, dt);
             auto integrator_rk =
                 std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta4>>();
             sim_explicit.set_integrator(integrator_rk);
@@ -431,9 +430,9 @@ static void bench_standard_lagrangian_euler(::benchmark::State& state)
     for (auto _ : state) {
         for (auto patch = 0; patch < num_patches; patch++) {
             state.PauseTiming();
-            mio::examples::StandardModelLagrangian model_explicit(num_age_groups, num_commuter_groups);
+            mio::oseir::StandardModelLagrangian model_explicit(num_age_groups, num_commuter_groups);
             setup_explicit_model_benchmark(model_explicit, num_age_groups, num_commuter_groups);
-            mio::examples::StandardLagrangianSim sim_explicit(model_explicit, t0, dt);
+            mio::oseir::StandardLagrangianSim sim_explicit(model_explicit, t0, dt);
             auto integrator_euler = std::make_shared<mio::EulerIntegratorCore<ScalarType>>();
             sim_explicit.set_integrator(integrator_euler);
             state.ResumeTiming();
@@ -464,7 +463,7 @@ static void bench_stage_aligned_euler(::benchmark::State& state)
             std::vector<Eigen::VectorXd> mobile_pops(num_commuter_groups, initial_mobile);
 
             const size_t NC = current_totals.size();
-            auto ic         = mio::examples::make_seir_index_cache(model);
+            auto ic         = mio::oseir::make_seir_index_cache(model);
 
             std::vector<double> rate_E(num_age_groups, 0.0), rate_I(num_age_groups, 0.0);
             for (size_t g = 0; g < num_age_groups; ++g) {
@@ -566,7 +565,7 @@ static void bench_stage_aligned_hybrid(::benchmark::State& state)
                 seir_res.get_value(0) * (num_commuter_groups > 0 ? (mobile_fraction / num_commuter_groups) : 0.0);
             std::vector<Eigen::VectorXd> mobile_pops(static_cast<size_t>(num_commuter_groups), initial_mobile);
 
-            auto ic = mio::examples::make_seir_index_cache(model);
+            auto ic = mio::oseir::make_seir_index_cache(model);
 
             std::vector<double> rate_E(num_age_groups, 0.0), rate_I(num_age_groups, 0.0);
             for (size_t g = 0; g < num_age_groups; ++g) {
@@ -660,7 +659,7 @@ static void bench_matrix_phi_reconstruction(::benchmark::State& state)
 
             // Integrator Setup
             Integrator stepper;
-            mio::examples::AugmentedPhiSystem sys(model);
+            mio::oseir::AugmentedPhiSystem sys(model);
 
             // Commuter initialization (as a matrix)
             double mobile_fraction = 0.1 * num_commuter_groups;
