@@ -432,6 +432,56 @@ static void bench_stage_aligned_rk4(::benchmark::State& state)
     }
 }
 
+static void bench_stage_aligned_rk4_optimized(::benchmark::State& state)
+{
+    const int num_commuter_groups = commuter_group_counts[state.range(0)];
+    const size_t num_age_groups   = static_cast<size_t>(state.range(1));
+    const auto num_patches        = num_commuter_groups + 1;
+    mio::set_log_level(mio::LogLevel::critical);
+
+    for (auto _ : state) {
+        for (auto patch = 0; patch < num_patches; patch++) {
+            state.PauseTiming();
+            ModelType model(num_age_groups);
+            setup_model_benchmark(model);
+            SimType sim(model, t0, dt);
+            auto integrator_rk =
+                std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta4>>();
+            sim.set_integrator(integrator_rk);
+            const auto& seir_res              = sim.get_result();
+            double mobile_population_fraction = 0.1 * num_commuter_groups;
+
+            Eigen::VectorXd initial_mobile_pop =
+                seir_res.get_value(0) *
+                (num_commuter_groups > 0 ? (mobile_population_fraction / num_commuter_groups) : 0.0);
+
+            const auto step_size_ref = seir_res.get_time(1) - seir_res.get_time(0);
+
+            std::vector<Eigen::VectorXd> mobile_pops(num_commuter_groups, initial_mobile_pop);
+            state.ResumeTiming();
+
+            for (ScalarType t = t0; t < t_max; t += dt) {
+                if (t + dt > t_max + 1e-10)
+                    break;
+
+                const auto closest_idx_total = static_cast<size_t>(std::round(t / step_size_ref));
+                if (closest_idx_total >= static_cast<size_t>(seir_res.get_num_time_points()))
+                    break;
+
+                const auto& total_pop_const = seir_res.get_value(closest_idx_total);
+
+                Eigen::VectorXd totals = total_pop_const;
+
+                for (int i = 0; i < num_commuter_groups; ++i) {
+                    mio::examples::flow_based_mobility_returns_rk4_optimized(mobile_pops[i], totals, sim.get_model(), t,
+                                                                             dt);
+                }
+            }
+            benchmark::DoNotOptimize(mobile_pops);
+        }
+    }
+}
+
 static void bench_standard_lagrangian_rk4(::benchmark::State& state)
 {
     const int num_commuter_groups = commuter_group_counts[state.range(0)];
@@ -960,6 +1010,15 @@ BENCHMARK(mio::benchmark_mio::bench_stage_aligned_rk4_neu)
             }
         }
     }) -> Name("stage-aligned(RK4)") -> Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(mio::benchmark_mio::bench_stage_aligned_rk4_optimized)
+    ->Apply([](auto* b) {
+        for (int i = 0; i < static_cast<int>(mio::benchmark_mio::commuter_group_counts.size()); ++i) {
+            for (int g : mio::benchmark_mio::age_group_counts) {
+                b->Args({i, g});
+            }
+        }
+    }) -> Name("stage-aligned(RK4_optimized)") -> Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(mio::benchmark_mio::bench_auxiliary_euler)
     ->Apply([](auto* b) {

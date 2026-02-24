@@ -564,6 +564,118 @@ flow_based_mobility_returns_rk4(Eigen::Ref<Eigen::VectorXd> commuter, // in/out:
     commuter = Xc_next;
 }
 
+inline void flow_based_mobility_returns_rk4_optimized(Eigen::Ref<Eigen::VectorXd> commuter,
+                                                      Eigen::Ref<Eigen::VectorXd> totals,
+                                                      const mio::oseir::Model<double>& model, double t, double dt)
+{
+    using IS             = mio::oseir::InfectionState;
+    const std::size_t G  = static_cast<std::size_t>(model.parameters.get_num_groups());
+    const std::size_t NC = 4 * G;
+
+    // ------- Helpers: index maps -------
+    auto idxS = [&](std::size_t g) {
+        return (int)model.populations.get_flat_index({mio::AgeGroup(g), IS::Susceptible});
+    };
+    auto idxE = [&](std::size_t g) {
+        return (int)model.populations.get_flat_index({mio::AgeGroup(g), IS::Exposed});
+    };
+    auto idxI = [&](std::size_t g) {
+        return (int)model.populations.get_flat_index({mio::AgeGroup(g), IS::Infected});
+    };
+    auto idxR = [&](std::size_t g) {
+        return (int)model.populations.get_flat_index({mio::AgeGroup(g), IS::Recovered});
+    };
+
+    // ------- Precompute constants -------
+    std::vector<double> rate_E(G, 0.0), rate_I(G, 0.0);
+    for (std::size_t g = 0; g < G; ++g) {
+        double t_E = model.parameters.get<mio::oseir::TimeExposed<double>>()[mio::AgeGroup(g)];
+        double t_I = model.parameters.get<mio::oseir::TimeInfected<double>>()[mio::AgeGroup(g)];
+        rate_E[g]  = (t_E > 1e-10) ? (1.0 / t_E) : 0.0;
+        rate_I[g]  = (t_I > 1e-10) ? (1.0 / t_I) : 0.0;
+    }
+
+    // ------- Lambda: Totals RHS -------
+    auto totals_rhs = [&](const Eigen::VectorXd& y, double tt, Eigen::VectorXd& dy) {
+        dy.resize(NC);
+        model.get_derivatives(y, y, tt, dy);
+    };
+
+    // ------- Lambda: Compute Force of Infection (Intensities) -------
+    auto compute_lambda = [&](const Eigen::VectorXd& y, double tt, std::vector<double>& lambda) {
+        lambda.assign(G, 0.0);
+        for (std::size_t j = 0; j < G; ++j) {
+            const double Nj    = y[idxS(j)] + y[idxE(j)] + y[idxI(j)] + y[idxR(j)];
+            const double divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
+
+            for (std::size_t i = 0; i < G; ++i) {
+                const double coeff =
+                    model.parameters.get<mio::oseir::ContactPatterns<double>>().get_cont_freq_mat().get_matrix_at(tt)(
+                        i, j) *
+                    model.parameters.get<mio::oseir::TransmissionProbabilityOnContact<double>>()[mio::AgeGroup(i)] *
+                    divNj;
+                lambda[i] += coeff * y[idxI(j)];
+            }
+        }
+    };
+
+    // ------- Lambda: Commuter RHS directly from Intensities -------
+    auto commuter_rhs = [&](const std::vector<double>& lambda, const Eigen::VectorXd& Xc, Eigen::VectorXd& dxc) {
+        dxc.setZero(NC);
+        for (std::size_t g = 0; g < G; ++g) {
+            const int oS = idxS(g), oE = idxE(g), oI = idxI(g), oR = idxR(g);
+
+            // Intensities directly multiplied by commuter state
+            const double fSE = lambda[g] * Xc[oS];
+            const double fEI = rate_E[g] * Xc[oE];
+            const double fIR = rate_I[g] * Xc[oI];
+
+            dxc[oS] = -fSE;
+            dxc[oE] = fSE - fEI;
+            dxc[oI] = fEI - fIR;
+            dxc[oR] = fIR;
+        }
+    };
+
+    // ------- Storage for RK4 stages -------
+    Eigen::VectorXd k1_tot(NC), k2_tot(NC), k3_tot(NC), k4_tot(NC);
+    Eigen::VectorXd k1_com(NC), k2_com(NC), k3_com(NC), k4_com(NC);
+    std::vector<double> lambda_stage(G);
+
+    Eigen::VectorXd y1  = totals;
+    Eigen::VectorXd Xc0 = commuter;
+
+    // --- Stage 1 ---
+    totals_rhs(y1, t, k1_tot);
+    compute_lambda(y1, t, lambda_stage);
+    commuter_rhs(lambda_stage, Xc0, k1_com);
+
+    // --- Stage 2 ---
+    Eigen::VectorXd y2  = y1 + (dt * 0.5) * k1_tot;
+    Eigen::VectorXd Xc2 = Xc0 + (dt * 0.5) * k1_com;
+    totals_rhs(y2, t + 0.5 * dt, k2_tot);
+    compute_lambda(y2, t + 0.5 * dt, lambda_stage);
+    commuter_rhs(lambda_stage, Xc2, k2_com);
+
+    // --- Stage 3 ---
+    Eigen::VectorXd y3  = y1 + (dt * 0.5) * k2_tot;
+    Eigen::VectorXd Xc3 = Xc0 + (dt * 0.5) * k2_com;
+    totals_rhs(y3, t + 0.5 * dt, k3_tot);
+    compute_lambda(y3, t + 0.5 * dt, lambda_stage);
+    commuter_rhs(lambda_stage, Xc3, k3_com);
+
+    // --- Stage 4 ---
+    Eigen::VectorXd y4  = y1 + dt * k3_tot;
+    Eigen::VectorXd Xc4 = Xc0 + dt * k3_com;
+    totals_rhs(y4, t + dt, k4_tot);
+    compute_lambda(y4, t + dt, lambda_stage);
+    commuter_rhs(lambda_stage, Xc4, k4_com);
+
+    // --- Final Update ---
+    totals   = y1 + (dt / 6.0) * (k1_tot + 2.0 * k2_tot + 2.0 * k3_tot + k4_tot);
+    commuter = Xc0 + (dt / 6.0) * (k1_com + 2.0 * k2_com + 2.0 * k3_com + k4_com);
+}
+
 // ============================================================================
 // RK2 Implementation
 // ============================================================================
@@ -914,8 +1026,8 @@ inline void build_seir_matrix_A(Eigen::MatrixXd& A, const mio::oseir::Model<doub
         const double time_exposed  = model.parameters.get<mio::oseir::TimeExposed<ScalarType>>()[mio::AgeGroup(g)];
         const double time_infected = model.parameters.get<mio::oseir::TimeInfected<ScalarType>>()[mio::AgeGroup(g)];
 
-        const double sigma  = (time_exposed > 1e-10) ? (1.0 / time_exposed) : 0.0;
-        const double gamma  = (time_infected > 1e-10) ? (1.0 / time_infected) : 0.0;
+        const double rate_E = (time_exposed > 1e-10) ? (1.0 / time_exposed) : 0.0;
+        const double rate_I = (time_infected > 1e-10) ? (1.0 / time_infected) : 0.0;
         const double lambda = force_of_infection[g];
 
         const size_t iS = model.populations.get_flat_index({mio::AgeGroup(g), IS::Susceptible});
@@ -927,11 +1039,11 @@ inline void build_seir_matrix_A(Eigen::MatrixXd& A, const mio::oseir::Model<doub
         A(iS, iS) = -lambda;
         A(iE, iS) = lambda;
         // E -> I
-        A(iE, iE) = -sigma;
-        A(iI, iE) = sigma;
+        A(iE, iE) = -rate_E;
+        A(iI, iE) = rate_E;
         // I -> R
-        A(iI, iI) = -gamma;
-        A(iR, iI) = gamma;
+        A(iI, iI) = -rate_I;
+        A(iR, iI) = rate_I;
     }
 }
 
