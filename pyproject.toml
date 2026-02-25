@@ -9,8 +9,7 @@ exclude = ["pycode/memilio-simulation"]
 requires = [
   "scikit-build-core>=0.9.0",
   "setuptools>=68",
-  "wheel",
-  "pybind11>=2.11.2"
+  "wheel"
 ]
 build-backend = "scikit_build_core.build"
 
@@ -51,4 +50,4 @@ packages = ["pycode/memilio-simulation"]
 
 [tool.cibuildwheel]
 # Disable building PyPy wheels on all platforms
-skip = ["pp*", "*musllinux*", "*_i686"] # "*_i686" works, skip for now for further testing
+skip = ["pp*", "*musllinux*", "*_i686", "*-win32"] # "*_i686" works, skip for now for further testing
