@@ -190,7 +190,7 @@ simulate(std::string farm_file, ScalarType tmax = 40, ScalarType dt = 1.0, Scala
 
     sim.advance(tmax);
 
-    return sim.get_confirmation_dates();
+    return sim.get_confirmation_dates(tmax);
 }
 
 #ifndef JOLLY_BINDINGS_SKIP_MAIN

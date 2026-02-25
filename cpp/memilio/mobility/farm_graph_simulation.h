@@ -622,17 +622,24 @@ public:
     }
 
     /**
-     * @brief Get the confirmation dates
+     * @brief Get the confirmation dates if they are earlier that tmax
      * 
      * Lists for all notes the date of confirmation value (-1 if no confirmation)
+     * @param tmax Maximum time for which confirmations are counted.
      * @return std::vector<int> 
      */
-    std::vector<int> get_confirmation_dates()
+    std::vector<int> get_confirmation_dates(ScalarType tmax = std::numeric_limits<ScalarType>::max())
     {
         std::vector<int> result;
         result.reserve(Base::m_graph.nodes().size());
         for (auto& n : Base::m_graph.nodes()) {
-            result.push_back(n.property.get_date_confirmation());
+            // ignore outbreaks that are already suspected, but not yet confirmed at tmax
+            if (n.property.get_date_confirmation() > tmax) {
+                result.push_back(-1);
+            }
+            else {
+                result.push_back(n.property.get_date_confirmation());
+            }
         }
         return result;
     }
