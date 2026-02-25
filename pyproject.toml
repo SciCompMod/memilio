@@ -50,5 +50,5 @@ build-dir = "../build/memilio-simulation"
 packages = ["pycode/memilio-simulation"]
 
 [tool.cibuildwheel]
-# Disable building PyPy 3.8 and 3.9 wheels on all platforms
-skip = ["pp38-*", "pp39-*"]
+# Disable building PyPy wheels on all platforms
+skip = ["pp*"]
