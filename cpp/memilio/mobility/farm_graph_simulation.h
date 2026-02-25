@@ -138,16 +138,16 @@ private:
     void seed_infections(Graph& graph, Timepoint t)
     {
         if (t == m_infection_dates[0]) {
-            graph.nodes()[7658].property.get_result().get_last_value()[2] = 100;
-            graph.nodes()[7658].property.get_result().get_last_value()[0] -= 100;
+            graph.nodes()[7658].property.get_result().get_last_value()[2] = 10;
+            graph.nodes()[7658].property.get_result().get_last_value()[0] -= 10;
         }
         if (t == m_infection_dates[1]) {
-            graph.nodes()[4117].property.get_result().get_last_value()[2] = 100;
-            graph.nodes()[4117].property.get_result().get_last_value()[0] -= 100;
+            graph.nodes()[4117].property.get_result().get_last_value()[2] = 10;
+            graph.nodes()[4117].property.get_result().get_last_value()[0] -= 10;
         }
         if (t == m_infection_dates[2]) {
-            graph.nodes()[5369].property.get_result().get_last_value()[2] = 100;
-            graph.nodes()[5369].property.get_result().get_last_value()[0] -= 100;
+            graph.nodes()[5369].property.get_result().get_last_value()[2] = 10;
+            graph.nodes()[5369].property.get_result().get_last_value()[0] -= 10;
         }
     }
     /**
@@ -325,7 +325,7 @@ private:
             last_state_deaths = node.get_result()[node.get_result().get_num_time_points() - 2][3];
             // mio::log_info("Time: {}, Deaths: {}, Time: {}, Deaths: {}, Time: {}, Deaths: {}", node.get_result().get_times()[node.get_result().get_num_time_points() - 3], node.get_result()[node.get_result().get_num_time_points() - 3][3], node.get_result().get_times()[node.get_result().get_num_time_points() - 2], node.get_result()[node.get_result().get_num_time_points() - 2][3], node.get_result().get_times()[node.get_result().get_num_time_points() - 1], node.get_result()[node.get_result().get_num_time_points() - 1][3]);
         }
-        if ((current_state[3] - last_state_deaths) / current_state.sum() > m_suspicion_threshold) {
+        if ((current_state[3] - last_state_deaths) > m_suspicion_threshold) {
             mio::log_debug("Suspicious farm found: {}, Number dead: {}, number overall: {}, Time: {}", id,
                           current_state[3] - last_state_deaths,
                           std::accumulate(current_state.begin(), current_state.end(), 0.0), t);
