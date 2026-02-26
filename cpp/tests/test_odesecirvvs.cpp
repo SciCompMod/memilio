@@ -44,6 +44,7 @@
 #include "ode_secirvvs/parameters.h"
 #include "ode_secirvvs/parameters_io.h"
 #include "ode_secirvvs/analyze_result.h"
+#include "utils.h"
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -423,14 +424,13 @@ mio::osecirvvs::Model<double> make_model(int num_age_groups, bool set_invalid_in
     set_synthetic_population_data(model.populations, set_invalid_initial_value);
     set_demographic_parameters(model.parameters, set_invalid_initial_value);
     set_contact_parameters(model.parameters, set_invalid_initial_value);
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     model.parameters.apply_constraints();
     return model;
 }
 
 TEST(TestOdeSECIRVVS, draw_sample)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> graph;
 
     auto num_age_groups = 6;
@@ -1169,8 +1169,6 @@ TEST(TestOdeSECIRVVS, set_vaccination_data_min_date_not_avail)
 
 TEST(TestOdeSECIRVVS, parameter_percentiles)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     //build small graph
     auto model = make_model(5);
     auto graph = mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>();

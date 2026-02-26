@@ -35,10 +35,13 @@
 #include "matchers.h"
 #include "temp_file_register.h"
 #include "memilio/utils/stl_util.h"
+#include "utils.h"
 #include "gmock/gmock-matchers.h"
+#include "gmock/gmock.h"
 #include <cstddef>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <sys/types.h>
 #include <type_traits>
 #include <string>
 
@@ -373,7 +376,11 @@ TEST(TestGraphBuilder, Build_unique)
     builder.add_edge(1, 2, 200);
     builder.add_edge(2, 1, 300);
 
+    mio::RedirectLogger logger;
+    logger.capture();
     auto g = std::move(builder).build(true);
+    EXPECT_THAT(logger.read(), testing::HasSubstr("[warning] Removed duplicate edge(s)"));
+    logger.release();
 
     EXPECT_EQ(g.nodes().size(), 3);
     EXPECT_EQ(g.edges().size(), 3);

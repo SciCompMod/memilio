@@ -28,6 +28,7 @@
 #include "ode_seirv/model.h"
 #include "ode_seirv/infection_state.h"
 #include "ode_seirv/parameters.h"
+#include "utils.h"
 
 #include <gtest/gtest.h>
 
@@ -86,6 +87,7 @@ TEST(TestOdeSeirv, populationConservation)
 
 TEST(TestOdeSeirv, applyConstraints)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off); // hide contstraint warnings/errors
     mio::oseirv::Model<double> model(1);
     // First: defaults should need no correction
     EXPECT_FALSE(model.parameters.apply_constraints());
@@ -105,6 +107,7 @@ TEST(TestOdeSeirv, applyConstraints)
 
 TEST(TestOdeSeirv, checkConstraints)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off); // hide contstraint warnings/errors
     mio::oseirv::Model<double> model(1);
     EXPECT_FALSE(model.parameters.check_constraints());
 

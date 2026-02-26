@@ -30,6 +30,7 @@
 #include "memilio/data/analyze_result.h"
 #include "memilio/math/adapt_rk.h"
 #include "memilio/geography/regions.h"
+#include "utils.h"
 
 #include <numbers>
 
@@ -43,7 +44,7 @@ TEST(TestOdeSecir, compareWithPreviousRun)
     */
     double t0   = 0;
     double tmax = 50;
-    double dt   = 0.1;
+    double dt   = 0.3;
 
     double cont_freq = 10;
 
@@ -674,8 +675,8 @@ TEST(TestOdeSecir, testDamping)
 
 TEST(TestOdeSecir, testModelConstraints)
 {
-    mio::set_log_level(
-        mio::LogLevel::err); //as many random things are drawn, warnings are inevitable and cluster output
+    // as many random things are drawn, warnings are inevitable and cluster output
+    mio::LogLevelOverride llo(mio::LogLevel::err);
     double t0   = 0;
     double tmax = 57; // after 57 days with cont_freq 10 and winter, the virus would already decline
     double dt   = 0.1;
@@ -762,7 +763,6 @@ TEST(TestOdeSecir, testModelConstraints)
             EXPECT_LE(secihurd.get_value(i)[5], 9000) << " at row " << i;
         }
     }
-    mio::set_log_level(mio::LogLevel::warn);
 }
 
 TEST(TestOdeSecir, testAndTraceCapacity)
@@ -1072,10 +1072,11 @@ TEST(TestOdeSecir, test_commuters)
 
 TEST(TestOdeSecir, check_constraints_parameters)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
+
     auto model = mio::osecir::Model<double>(1);
     EXPECT_EQ(model.parameters.check_constraints(), 0);
 
-    mio::set_log_level(mio::LogLevel::off);
     model.parameters.set<mio::osecir::Seasonality<double>>(-0.5);
     EXPECT_EQ(model.parameters.check_constraints(), 1);
 
@@ -1145,18 +1146,18 @@ TEST(TestOdeSecir, check_constraints_parameters)
 
     model.parameters.set<mio::osecir::DynamicNPIsImplementationDelay<double>>(3);
     EXPECT_EQ(model.parameters.check_constraints(), 0);
-    mio::set_log_level(mio::LogLevel::warn);
 }
 
 TEST(TestOdeSecir, apply_constraints_parameters)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
+
     auto model             = mio::osecir::Model<double>(1);
     auto indx_agegroup     = mio::AgeGroup(0);
     const double tol_times = 1e-1;
 
     EXPECT_EQ(model.parameters.apply_constraints(), 0);
 
-    mio::set_log_level(mio::LogLevel::off);
     model.parameters.set<mio::osecir::Seasonality<double>>(-0.5);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecir::Seasonality<double>>(), 0);
@@ -1227,7 +1228,6 @@ TEST(TestOdeSecir, apply_constraints_parameters)
     EXPECT_EQ(model.parameters.get<mio::osecir::DynamicNPIsImplementationDelay<double>>(), 0);
 
     EXPECT_EQ(model.parameters.apply_constraints(), 0);
-    mio::set_log_level(mio::LogLevel::warn);
 }
 
 #if defined(MEMILIO_HAS_JSONCPP)
@@ -1343,7 +1343,8 @@ TEST_F(ModelTestOdeSecir, export_time_series_init)
 // Test the output of the function for a day way in the past. The model should be initialized with the population data since no Case data is available there.
 TEST_F(ModelTestOdeSecir, export_time_series_init_old_date)
 {
-    mio::set_log_level(mio::LogLevel::off);
+    mio::LogLevelOverride llo(mio::LogLevel::off);
+
     TempFileRegister temp_file_register;
     auto tmp_results_dir = temp_file_register.get_unique_path();
     EXPECT_THAT(mio::create_directory(tmp_results_dir), IsSuccess());
@@ -1375,7 +1376,6 @@ TEST_F(ModelTestOdeSecir, export_time_series_init_old_date)
     // sum of all compartments should be equal to the population
     EXPECT_NEAR(results_extrapolated.sum(), std::accumulate(population_data[0].begin(), population_data[0].end(), 0.0),
                 1e-8);
-    mio::set_log_level(mio::LogLevel::warn);
 }
 
 // // Model initialization should return same start values as export time series on that day
@@ -1407,7 +1407,7 @@ TEST_F(ModelTestOdeSecir, model_initialization)
 // Calling the model initialization with a date way in the past should only initialize the model with the population data.
 TEST_F(ModelTestOdeSecir, model_initialization_old_date)
 {
-    mio::set_log_level(mio::LogLevel::off);
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     // Vector assignment necessary as read_input_data_county changes model
     auto model_vector             = std::vector<mio::osecir::Model<double>>{model};
     const auto pydata_dir_Germany = mio::path_join(TEST_DATA_DIR, "Germany", "pydata");
@@ -1438,12 +1438,12 @@ TEST_F(ModelTestOdeSecir, model_initialization_old_date)
     }
     // sum of all compartments should be equal to the population
     EXPECT_EQ(results_extrapolated.sum(), std::accumulate(population_data[0].begin(), population_data[0].end(), 0.0));
-    mio::set_log_level(mio::LogLevel::warn);
 }
 
 TEST(TestOdeSecir, set_divi_data_invalid_dates)
 {
-    mio::set_log_level(mio::LogLevel::off);
+    mio::LogLevelOverride llo(mio::LogLevel::off);
+
     auto model = mio::osecir::Model<double>(1);
     model.populations.array().setConstant(1);
     auto model_vector = std::vector<mio::osecir::Model<double>>{model};
@@ -1453,8 +1453,6 @@ TEST(TestOdeSecir, set_divi_data_invalid_dates)
     // Assure that populations is the same as before.
     EXPECT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
                 MatrixNear(print_wrap(model.populations.array().cast<double>()), 1e-10, 1e-10));
-
-    mio::set_log_level(mio::LogLevel::warn);
 }
 
 TEST(TestOdeSecir, set_divi_data_empty_data)
