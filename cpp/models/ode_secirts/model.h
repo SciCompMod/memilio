@@ -54,7 +54,6 @@ using Flows = TypeList<
     Flow<InfectionState::InfectedSevereNaive,                         InfectionState::DeadNaive>,
     Flow<InfectionState::InfectedCriticalNaive,                       InfectionState::DeadNaive>,
     Flow<InfectionState::InfectedCriticalNaive,                       InfectionState::TemporaryImmunePartialImmunity>,
-    Flow<InfectionState::TemporaryImmunePartialImmunity,              InfectionState::SusceptiblePartialImmunity>,
     //partial immunity
     Flow<InfectionState::SusceptiblePartialImmunity,                  InfectionState::ExposedPartialImmunity>,
     Flow<InfectionState::SusceptiblePartialImmunity,                  InfectionState::TemporaryImmuneImprovedImmunity>,
