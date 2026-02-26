@@ -1017,5 +1017,400 @@ inline void flow_based_mobility_returns_secirts_rk4(Eigen::Ref<Eigen::VectorXd> 
     commuter += (dt / 6.0) * (k1_com + 2.0 * k2_com + 2.0 * k3_com + k4_com);
 }
 
+// ============================================================================
+// Fundamental Matrix (Phi) methods for SECIRTS
+// ============================================================================
+
+/**
+ * @brief Builds the Jacobian-like matrix A(z,t) for the SECIRTS model.
+ * Uses the precomputed intensities (including FoI and vaccination rates) from the evaluator.
+ * @param A     NC x NC Output-Matrix
+ * @param model SECIRTS model
+ * @param z     Current total population (Totals)
+ * @param t     Current simulation time
+ */
+inline void build_secirts_matrix_A(Eigen::MatrixXd& A, const mio::osecirts::Model<double>& model,
+                                   const Eigen::VectorXd& z, double t)
+{
+    A.setZero();
+
+    mio::osecirts::ModelEvaluatorSecirts eval(model);
+    mio::osecirts::SecirtsIntensities intensities;
+    eval.get_intensities(z, t, intensities);
+
+    const auto& params = model.parameters;
+    size_t NG          = eval.NG;
+    using IS           = mio::osecirts::InfectionState;
+
+    auto add_rate = [&](size_t src, size_t tgt, double rate) {
+        A(src, src) -= rate;
+        A(tgt, src) += rate;
+    };
+
+    for (size_t i = 0; i < NG; ++i) {
+        auto ag = mio::AgeGroup(static_cast<int>(i));
+
+        size_t SNi    = model.populations.get_flat_index({ag, IS::SusceptibleNaive});
+        size_t ENi    = model.populations.get_flat_index({ag, IS::ExposedNaive});
+        size_t INSNi  = model.populations.get_flat_index({ag, IS::InfectedNoSymptomsNaive});
+        size_t ISyNi  = model.populations.get_flat_index({ag, IS::InfectedSymptomsNaive});
+        size_t ISevNi = model.populations.get_flat_index({ag, IS::InfectedSevereNaive});
+        size_t ICrNi  = model.populations.get_flat_index({ag, IS::InfectedCriticalNaive});
+        size_t INSNCi = model.populations.get_flat_index({ag, IS::InfectedNoSymptomsNaiveConfirmed});
+        size_t ISyNCi = model.populations.get_flat_index({ag, IS::InfectedSymptomsNaiveConfirmed});
+        size_t DNi    = model.populations.get_flat_index({ag, IS::DeadNaive});
+
+        size_t SPIi    = model.populations.get_flat_index({ag, IS::SusceptiblePartialImmunity});
+        size_t EPIi    = model.populations.get_flat_index({ag, IS::ExposedPartialImmunity});
+        size_t INSPIi  = model.populations.get_flat_index({ag, IS::InfectedNoSymptomsPartialImmunity});
+        size_t ISyPIi  = model.populations.get_flat_index({ag, IS::InfectedSymptomsPartialImmunity});
+        size_t ISevPIi = model.populations.get_flat_index({ag, IS::InfectedSeverePartialImmunity});
+        size_t ICrPIi  = model.populations.get_flat_index({ag, IS::InfectedCriticalPartialImmunity});
+        size_t INSPICi = model.populations.get_flat_index({ag, IS::InfectedNoSymptomsPartialImmunityConfirmed});
+        size_t ISyPICi = model.populations.get_flat_index({ag, IS::InfectedSymptomsPartialImmunityConfirmed});
+        size_t DPIi    = model.populations.get_flat_index({ag, IS::DeadPartialImmunity});
+
+        size_t EIIi    = model.populations.get_flat_index({ag, IS::ExposedImprovedImmunity});
+        size_t INSIIi  = model.populations.get_flat_index({ag, IS::InfectedNoSymptomsImprovedImmunity});
+        size_t ISyIIi  = model.populations.get_flat_index({ag, IS::InfectedSymptomsImprovedImmunity});
+        size_t ISevIIi = model.populations.get_flat_index({ag, IS::InfectedSevereImprovedImmunity});
+        size_t ICrIIi  = model.populations.get_flat_index({ag, IS::InfectedCriticalImprovedImmunity});
+        size_t INSIICi = model.populations.get_flat_index({ag, IS::InfectedNoSymptomsImprovedImmunityConfirmed});
+        size_t ISyIICi = model.populations.get_flat_index({ag, IS::InfectedSymptomsImprovedImmunityConfirmed});
+        size_t DIIi    = model.populations.get_flat_index({ag, IS::DeadImprovedImmunity});
+
+        size_t TImm1 = model.populations.get_flat_index({ag, IS::TemporaryImmunePartialImmunity});
+        size_t TImm2 = model.populations.get_flat_index({ag, IS::TemporaryImmuneImprovedImmunity});
+        size_t SIIi  = model.populations.get_flat_index({ag, IS::SusceptibleImprovedImmunity});
+
+        double rEPI  = params.template get<mio::osecirts::ReducExposedPartialImmunity<double>>()[ag];
+        double rEII  = params.template get<mio::osecirts::ReducExposedImprovedImmunity<double>>()[ag];
+        double rISPI = params.template get<mio::osecirts::ReducInfectedSymptomsPartialImmunity<double>>()[ag];
+        double rISII = params.template get<mio::osecirts::ReducInfectedSymptomsImprovedImmunity<double>>()[ag];
+        double rSevPI =
+            params.template get<mio::osecirts::ReducInfectedSevereCriticalDeadPartialImmunity<double>>()[ag];
+        double rSevII =
+            params.template get<mio::osecirts::ReducInfectedSevereCriticalDeadImprovedImmunity<double>>()[ag];
+        double rTimeM = params.template get<mio::osecirts::ReducTimeInfectedMild<double>>()[ag];
+
+        double timeE    = params.template get<mio::osecirts::TimeExposed<double>>()[ag];
+        double timeINS  = params.template get<mio::osecirts::TimeInfectedNoSymptoms<double>>()[ag];
+        double timeISy  = params.template get<mio::osecirts::TimeInfectedSymptoms<double>>()[ag];
+        double timeISev = params.template get<mio::osecirts::TimeInfectedSevere<double>>()[ag];
+        double timeICr  = params.template get<mio::osecirts::TimeInfectedCritical<double>>()[ag];
+        double timeWPI  = params.template get<mio::osecirts::TimeWaningPartialImmunity<double>>()[ag];
+        double timeWII  = params.template get<mio::osecirts::TimeWaningImprovedImmunity<double>>()[ag];
+        double timeTPI  = params.template get<mio::osecirts::TimeTemporaryImmunityPI<double>>()[ag];
+        double timeTII  = params.template get<mio::osecirts::TimeTemporaryImmunityII<double>>()[ag];
+
+        double recINS  = params.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<double>>()[ag];
+        double sevISy  = params.template get<mio::osecirts::SeverePerInfectedSymptoms<double>>()[ag];
+        double deadICr = params.template get<mio::osecirts::DeathsPerCritical<double>>()[ag];
+        double critSev = params.template get<mio::osecirts::CriticalPerSevere<double>>()[ag];
+
+        add_rate(SNi, ENi, intensities.foi[i]);
+        add_rate(SPIi, EPIi, intensities.foi[i] * rEPI);
+        add_rate(SIIi, EIIi, intensities.foi[i] * rEII);
+
+        add_rate(SNi, TImm1, intensities.vac_rate_naive[i]);
+        add_rate(SPIi, TImm2, intensities.vac_rate_pi[i]);
+        add_rate(SIIi, TImm2, intensities.vac_rate_ii[i]);
+
+        add_rate(ENi, INSNi, 1.0 / timeE);
+        add_rate(INSNi, TImm1, recINS / timeINS);
+        add_rate(INSNi, ISyNi, (1.0 - recINS) / timeINS);
+        add_rate(INSNCi, ISyNCi, (1.0 - recINS) / timeINS);
+        add_rate(INSNCi, TImm1, recINS / timeINS);
+
+        add_rate(ISyNi, ISevNi, sevISy / timeISy);
+        add_rate(ISyNi, TImm1, (1.0 - sevISy) / timeISy);
+        add_rate(ISyNCi, ISevNi, sevISy / timeISy);
+        add_rate(ISyNCi, TImm1, (1.0 - sevISy) / timeISy);
+
+        add_rate(ISevNi, ICrNi, intensities.crit_per_sev[i] / timeISev);
+        add_rate(ISevNi, TImm1, (1.0 - critSev) / timeISev);
+        add_rate(ISevNi, DNi, intensities.dead_per_sev[i] / timeISev);
+
+        add_rate(ICrNi, DNi, deadICr / timeICr);
+        add_rate(ICrNi, TImm1, (1.0 - deadICr) / timeICr);
+
+        add_rate(SPIi, SNi, 1.0 / timeWPI);
+        add_rate(TImm1, SPIi, 1.0 / timeTPI);
+
+        add_rate(EPIi, INSPIi, 1.0 / timeE);
+        double pi_TImm = (1.0 - (rISPI / rEPI) * (1.0 - recINS)) / (timeINS * rTimeM);
+        double pi_ISy  = (rISPI / rEPI) * (1.0 - recINS) / (timeINS * rTimeM);
+        add_rate(INSPIi, TImm2, pi_TImm);
+        add_rate(INSPIi, ISyPIi, pi_ISy);
+        add_rate(INSPICi, ISyPICi, pi_ISy);
+        add_rate(INSPICi, TImm2, pi_TImm);
+
+        double pi_ISev     = (rSevPI / rISPI) * sevISy / (timeISy * rTimeM);
+        double pi_ISy_TImm = (1.0 - (rSevPI / rISPI) * sevISy) / (timeISy * rTimeM);
+        add_rate(ISyPIi, ISevPIi, pi_ISev);
+        add_rate(ISyPIi, TImm2, pi_ISy_TImm);
+        add_rate(ISyPICi, ISevPIi, pi_ISev);
+        add_rate(ISyPICi, TImm2, pi_ISy_TImm);
+
+        add_rate(ISevPIi, ICrPIi, intensities.crit_per_sev[i] / timeISev);
+        add_rate(ISevPIi, TImm2, (1.0 - critSev) / timeISev);
+        add_rate(ISevPIi, DPIi, intensities.dead_per_sev[i] / timeISev);
+
+        add_rate(ICrPIi, DPIi, deadICr / timeICr);
+        add_rate(ICrPIi, TImm2, (1.0 - deadICr) / timeICr);
+
+        add_rate(EIIi, INSIIi, 1.0 / timeE);
+        double ii_TImm = (1.0 - (rISII / rEII) * (1.0 - recINS)) / (timeINS * rTimeM);
+        double ii_ISy  = (rISII / rEII) * (1.0 - recINS) / (timeINS * rTimeM);
+        add_rate(INSIIi, TImm2, ii_TImm);
+        add_rate(INSIIi, ISyIIi, ii_ISy);
+        add_rate(INSIICi, ISyIICi, ii_ISy);
+        add_rate(INSIICi, TImm2, ii_TImm);
+
+        double ii_ISev     = (rSevII / rISII) * sevISy / (timeISy * rTimeM);
+        double ii_ISy_TImm = (1.0 - (rSevII / rISII) * sevISy) / (timeISy * rTimeM);
+        add_rate(ISyIIi, ISevIIi, ii_ISev);
+        add_rate(ISyIIi, TImm2, ii_ISy_TImm);
+        add_rate(ISyIICi, ISevIIi, ii_ISev);
+        add_rate(ISyIICi, TImm2, ii_ISy_TImm);
+
+        add_rate(ISevIIi, ICrIIi, intensities.crit_per_sev[i] / timeISev);
+        add_rate(ISevIIi, TImm2, (1.0 - critSev) / timeISev);
+        add_rate(ISevIIi, DIIi, intensities.dead_per_sev[i] / timeISev);
+
+        add_rate(ICrIIi, DIIi, deadICr / timeICr);
+        add_rate(ICrIIi, TImm2, (1.0 - deadICr) / timeICr);
+
+        add_rate(TImm2, SIIi, 1.0 / timeTII);
+        add_rate(SIIi, SPIi, 1.0 / timeWII);
+    }
+}
+
+/**
+ * @brief Extended ODE system (z and Phi) that can be passed to odeint.
+ * Integrates simultaneously the standard total population and the fundamental data matrix Phi.
+ */
+struct AugmentedPhiSystemSecirts {
+    const mio::osecirts::Model<double>& model;
+    size_t NC;
+    Eigen::MatrixXd A_mem;
+
+    explicit AugmentedPhiSystemSecirts(const mio::osecirts::Model<double>& m)
+        : model(m)
+        , NC(static_cast<size_t>(m.populations.get_num_compartments()))
+    {
+        A_mem = Eigen::MatrixXd::Zero(NC, NC);
+    }
+
+    void operator()(const Eigen::VectorXd& y, Eigen::VectorXd& dydt, double t)
+    {
+        // 1. Extract totals
+        const auto z = y.head(NC);
+
+        // 2. Compute dz/dt
+        Eigen::VectorXd dz(NC);
+        model.get_derivatives(z, z, t, dz);
+        dydt.head(NC) = dz;
+
+        // 3. Build matrix A(z,t) and compute dPhi/dt = A * Phi
+        build_secirts_matrix_A(A_mem, model, z, t);
+        const auto Phi       = Eigen::Map<const Eigen::MatrixXd>(y.tail(NC * NC).data(), NC, NC);
+        Eigen::MatrixXd dPhi = A_mem * Phi;
+        dydt.tail(NC * NC)   = Eigen::Map<const Eigen::VectorXd>(dPhi.data(), NC * NC);
+    }
+};
+
+/**
+ * @brief Block diagonal extended ODE system (z and Phi_g) for SECIRTS.
+ * Exploits the fact that there are no direct flows between age groups.
+ * State vector: y = [z (NC), vec(Phi_0) (841), vec(Phi_1) (841), ..., vec(Phi_G-1) (841)].
+ * ODE size drastically reduces from NC + NC^2 to NC + G * 841, where G is the number
+ * of age groups (e.g., 6) and 841 = 29*29 (compartments per group).
+ */
+struct AugmentedPhiSystemSecirtsBlockDiag {
+    const mio::osecirts::Model<double>& model;
+    size_t G;
+    size_t NC;
+    static constexpr size_t block_size     = 29;
+    static constexpr size_t block_elements = 29 * 29; // 841
+
+    explicit AugmentedPhiSystemSecirtsBlockDiag(const mio::osecirts::Model<double>& m)
+        : model(m)
+        , G(static_cast<size_t>(m.parameters.get_num_groups()))
+        , NC(static_cast<size_t>(m.populations.get_num_compartments()))
+    {
+    }
+
+    void operator()(const Eigen::VectorXd& y, Eigen::VectorXd& dydt, double t)
+    {
+        const auto z = y.head(NC);
+
+        // Extract totals and Phi_g blocks
+        Eigen::VectorXd dz(NC);
+        model.get_derivatives(z, z, t, dz);
+        dydt.head(NC) = dz;
+
+        // Calculate intensities once
+        mio::osecirts::ModelEvaluatorSecirts eval(model);
+        mio::osecirts::SecirtsIntensities intensities;
+        eval.get_intensities(z, t, intensities);
+
+        auto const& params = model.parameters;
+        using IS           = mio::osecirts::InfectionState;
+
+        // 3. dPhi_g/dt = A_g * Phi_g for each age group g
+        for (size_t g = 0; g < G; ++g) {
+            auto ag = mio::AgeGroup(static_cast<int>(g));
+
+            Eigen::MatrixXd Ag = Eigen::MatrixXd::Zero(block_size, block_size);
+
+            auto add_rate = [&](size_t src, size_t tgt, double rate) {
+                Ag(src, src) -= rate;
+                Ag(tgt, src) += rate;
+            };
+
+            size_t SNi    = (size_t)IS::SusceptibleNaive;
+            size_t ENi    = (size_t)IS::ExposedNaive;
+            size_t INSNi  = (size_t)IS::InfectedNoSymptomsNaive;
+            size_t ISyNi  = (size_t)IS::InfectedSymptomsNaive;
+            size_t ISevNi = (size_t)IS::InfectedSevereNaive;
+            size_t ICrNi  = (size_t)IS::InfectedCriticalNaive;
+            size_t INSNCi = (size_t)IS::InfectedNoSymptomsNaiveConfirmed;
+            size_t ISyNCi = (size_t)IS::InfectedSymptomsNaiveConfirmed;
+            size_t DNi    = (size_t)IS::DeadNaive;
+
+            size_t SPIi    = (size_t)IS::SusceptiblePartialImmunity;
+            size_t EPIi    = (size_t)IS::ExposedPartialImmunity;
+            size_t INSPIi  = (size_t)IS::InfectedNoSymptomsPartialImmunity;
+            size_t ISyPIi  = (size_t)IS::InfectedSymptomsPartialImmunity;
+            size_t ISevPIi = (size_t)IS::InfectedSeverePartialImmunity;
+            size_t ICrPIi  = (size_t)IS::InfectedCriticalPartialImmunity;
+            size_t INSPICi = (size_t)IS::InfectedNoSymptomsPartialImmunityConfirmed;
+            size_t ISyPICi = (size_t)IS::InfectedSymptomsPartialImmunityConfirmed;
+            size_t DPIi    = (size_t)IS::DeadPartialImmunity;
+
+            size_t EIIi    = (size_t)IS::ExposedImprovedImmunity;
+            size_t INSIIi  = (size_t)IS::InfectedNoSymptomsImprovedImmunity;
+            size_t ISyIIi  = (size_t)IS::InfectedSymptomsImprovedImmunity;
+            size_t ISevIIi = (size_t)IS::InfectedSevereImprovedImmunity;
+            size_t ICrIIi  = (size_t)IS::InfectedCriticalImprovedImmunity;
+            size_t INSIICi = (size_t)IS::InfectedNoSymptomsImprovedImmunityConfirmed;
+            size_t ISyIICi = (size_t)IS::InfectedSymptomsImprovedImmunityConfirmed;
+            size_t DIIi    = (size_t)IS::DeadImprovedImmunity;
+
+            size_t TImm1 = (size_t)IS::TemporaryImmunePartialImmunity;
+            size_t TImm2 = (size_t)IS::TemporaryImmuneImprovedImmunity;
+            size_t SIIi  = (size_t)IS::SusceptibleImprovedImmunity;
+
+            double rEPI  = params.template get<mio::osecirts::ReducExposedPartialImmunity<double>>()[ag];
+            double rEII  = params.template get<mio::osecirts::ReducExposedImprovedImmunity<double>>()[ag];
+            double rISPI = params.template get<mio::osecirts::ReducInfectedSymptomsPartialImmunity<double>>()[ag];
+            double rISII = params.template get<mio::osecirts::ReducInfectedSymptomsImprovedImmunity<double>>()[ag];
+            double rSevPI =
+                params.template get<mio::osecirts::ReducInfectedSevereCriticalDeadPartialImmunity<double>>()[ag];
+            double rSevII =
+                params.template get<mio::osecirts::ReducInfectedSevereCriticalDeadImprovedImmunity<double>>()[ag];
+            double rTimeM = params.template get<mio::osecirts::ReducTimeInfectedMild<double>>()[ag];
+
+            double timeE    = params.template get<mio::osecirts::TimeExposed<double>>()[ag];
+            double timeINS  = params.template get<mio::osecirts::TimeInfectedNoSymptoms<double>>()[ag];
+            double timeISy  = params.template get<mio::osecirts::TimeInfectedSymptoms<double>>()[ag];
+            double timeISev = params.template get<mio::osecirts::TimeInfectedSevere<double>>()[ag];
+            double timeICr  = params.template get<mio::osecirts::TimeInfectedCritical<double>>()[ag];
+            double timeWPI  = params.template get<mio::osecirts::TimeWaningPartialImmunity<double>>()[ag];
+            double timeWII  = params.template get<mio::osecirts::TimeWaningImprovedImmunity<double>>()[ag];
+            double timeTPI  = params.template get<mio::osecirts::TimeTemporaryImmunityPI<double>>()[ag];
+            double timeTII  = params.template get<mio::osecirts::TimeTemporaryImmunityII<double>>()[ag];
+
+            double recINS  = params.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<double>>()[ag];
+            double sevISy  = params.template get<mio::osecirts::SeverePerInfectedSymptoms<double>>()[ag];
+            double deadICr = params.template get<mio::osecirts::DeathsPerCritical<double>>()[ag];
+            double critSev = params.template get<mio::osecirts::CriticalPerSevere<double>>()[ag];
+
+            add_rate(SNi, ENi, intensities.foi[g]);
+            add_rate(SPIi, EPIi, intensities.foi[g] * rEPI);
+            add_rate(SIIi, EIIi, intensities.foi[g] * rEII);
+
+            add_rate(SNi, TImm1, intensities.vac_rate_naive[g]);
+            add_rate(SPIi, TImm2, intensities.vac_rate_pi[g]);
+            add_rate(SIIi, TImm2, intensities.vac_rate_ii[g]);
+
+            add_rate(ENi, INSNi, 1.0 / timeE);
+            add_rate(INSNi, TImm1, recINS / timeINS);
+            add_rate(INSNi, ISyNi, (1.0 - recINS) / timeINS);
+            add_rate(INSNCi, ISyNCi, (1.0 - recINS) / timeINS);
+            add_rate(INSNCi, TImm1, recINS / timeINS);
+
+            add_rate(ISyNi, ISevNi, sevISy / timeISy);
+            add_rate(ISyNi, TImm1, (1.0 - sevISy) / timeISy);
+            add_rate(ISyNCi, ISevNi, sevISy / timeISy);
+            add_rate(ISyNCi, TImm1, (1.0 - sevISy) / timeISy);
+
+            add_rate(ISevNi, ICrNi, intensities.crit_per_sev[g] / timeISev);
+            add_rate(ISevNi, TImm1, (1.0 - critSev) / timeISev);
+            add_rate(ISevNi, DNi, intensities.dead_per_sev[g] / timeISev);
+
+            add_rate(ICrNi, DNi, deadICr / timeICr);
+            add_rate(ICrNi, TImm1, (1.0 - deadICr) / timeICr);
+
+            add_rate(SPIi, SNi, 1.0 / timeWPI);
+            add_rate(TImm1, SPIi, 1.0 / timeTPI);
+
+            add_rate(EPIi, INSPIi, 1.0 / timeE);
+            double pi_TImm = (1.0 - (rISPI / rEPI) * (1.0 - recINS)) / (timeINS * rTimeM);
+            double pi_ISy  = (rISPI / rEPI) * (1.0 - recINS) / (timeINS * rTimeM);
+            add_rate(INSPIi, TImm2, pi_TImm);
+            add_rate(INSPIi, ISyPIi, pi_ISy);
+            add_rate(INSPICi, ISyPICi, pi_ISy);
+            add_rate(INSPICi, TImm2, pi_TImm);
+
+            double pi_ISev     = (rSevPI / rISPI) * sevISy / (timeISy * rTimeM);
+            double pi_ISy_TImm = (1.0 - (rSevPI / rISPI) * sevISy) / (timeISy * rTimeM);
+            add_rate(ISyPIi, ISevPIi, pi_ISev);
+            add_rate(ISyPIi, TImm2, pi_ISy_TImm);
+            add_rate(ISyPICi, ISevPIi, pi_ISev);
+            add_rate(ISyPICi, TImm2, pi_ISy_TImm);
+
+            add_rate(ISevPIi, ICrPIi, intensities.crit_per_sev[g] / timeISev);
+            add_rate(ISevPIi, TImm2, (1.0 - critSev) / timeISev);
+            add_rate(ISevPIi, DPIi, intensities.dead_per_sev[g] / timeISev);
+
+            add_rate(ICrPIi, DPIi, deadICr / timeICr);
+            add_rate(ICrPIi, TImm2, (1.0 - deadICr) / timeICr);
+
+            add_rate(EIIi, INSIIi, 1.0 / timeE);
+            double ii_TImm = (1.0 - (rISII / rEII) * (1.0 - recINS)) / (timeINS * rTimeM);
+            double ii_ISy  = (rISII / rEII) * (1.0 - recINS) / (timeINS * rTimeM);
+            add_rate(INSIIi, TImm2, ii_TImm);
+            add_rate(INSIIi, ISyIIi, ii_ISy);
+            add_rate(INSIICi, ISyIICi, ii_ISy);
+            add_rate(INSIICi, TImm2, ii_TImm);
+
+            double ii_ISev     = (rSevII / rISII) * sevISy / (timeISy * rTimeM);
+            double ii_ISy_TImm = (1.0 - (rSevII / rISII) * sevISy) / (timeISy * rTimeM);
+            add_rate(ISyIIi, ISevIIi, ii_ISev);
+            add_rate(ISyIIi, TImm2, ii_ISy_TImm);
+            add_rate(ISyIICi, ISevIIi, ii_ISev);
+            add_rate(ISyIICi, TImm2, ii_ISy_TImm);
+
+            add_rate(ISevIIi, ICrIIi, intensities.crit_per_sev[g] / timeISev);
+            add_rate(ISevIIi, TImm2, (1.0 - critSev) / timeISev);
+            add_rate(ISevIIi, DIIi, intensities.dead_per_sev[g] / timeISev);
+
+            add_rate(ICrIIi, DIIi, deadICr / timeICr);
+            add_rate(ICrIIi, TImm2, (1.0 - deadICr) / timeICr);
+
+            add_rate(TImm2, SIIi, 1.0 / timeTII);
+            add_rate(SIIi, SPIi, 1.0 / timeWII);
+
+            const auto Phi_g =
+                Eigen::Map<const Eigen::MatrixXd>(y.data() + NC + g * block_elements, block_size, block_size);
+
+            // calculate dPhi_g/dt = Ag * Phi_g and directly map it into the derivative vector (dydt)
+            Eigen::Map<Eigen::MatrixXd>(dydt.data() + NC + g * block_elements, block_size, block_size) = Ag * Phi_g;
+        }
+    }
+};
+
 } // namespace osecirts
 } // namespace mio

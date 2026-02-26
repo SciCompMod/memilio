@@ -384,6 +384,175 @@ static void bench_standard_lagrangian_euler(::benchmark::State& state)
     }
 }
 
+// ==============================================================================
+// 5. MATRIX PHI RECONSTRUCTION
+// ==============================================================================
+template <class Integrator>
+static void bench_matrix_phi_reconstruction(::benchmark::State& state)
+{
+    const int num_commuter_groups = state.range(0);
+    const size_t num_age_groups   = static_cast<size_t>(state.range(1));
+    const auto num_patches        = num_commuter_groups + 1;
+    mio::set_log_level(mio::LogLevel::critical);
+
+    for (auto _ : state) {
+        for (auto patch = 0; patch < num_patches; patch++) {
+            state.PauseTiming();
+
+            mio::osecirts::Model<ScalarType> model(num_age_groups);
+            setup_parameters(model, num_age_groups);
+
+            auto base_pop        = get_base_population();
+            double frac_commuter = 0.3 / num_commuter_groups;
+
+            size_t NC       = 29 * num_age_groups;
+            size_t sys_size = NC + NC * NC;
+
+            Eigen::VectorXd initial_totals = Eigen::VectorXd::Zero(NC);
+            Eigen::MatrixXd X0             = Eigen::MatrixXd::Zero(NC, num_commuter_groups);
+
+            for (size_t g = 0; g < num_age_groups; ++g) {
+                for (size_t state_idx = 0; state_idx < 29; ++state_idx) {
+                    model.populations[{mio::AgeGroup(g), (mio::osecirts::InfectionState)state_idx}] =
+                        base_pop[state_idx];
+                    size_t flat_idx =
+                        model.populations.get_flat_index({mio::AgeGroup(g), (mio::osecirts::InfectionState)state_idx});
+                    initial_totals[flat_idx] = base_pop[state_idx];
+                    for (int cg = 0; cg < num_commuter_groups; ++cg) {
+                        X0(flat_idx, cg) = base_pop[state_idx] * frac_commuter;
+                    }
+                }
+            }
+
+            Eigen::VectorXd y0(sys_size);
+            y0.head(NC)        = initial_totals;
+            Eigen::MatrixXd Id = Eigen::MatrixXd::Identity(NC, NC);
+            y0.tail(NC * NC)   = Eigen::Map<Eigen::VectorXd>(Id.data(), NC * NC);
+
+            Integrator stepper;
+            mio::osecirts::AugmentedPhiSystemSecirts sys(model);
+
+            Eigen::MatrixXd Xt(NC, num_commuter_groups);
+
+            state.ResumeTiming();
+
+            double t          = t0;
+            Eigen::VectorXd y = y0;
+            while (t < t_max - 1e-10) {
+                double dt_eff = std::min(dt, t_max - t);
+                stepper.do_step(sys, y, t, dt_eff);
+                t += dt_eff;
+            }
+
+            const auto Phi_final = Eigen::Map<const Eigen::MatrixXd>(y.tail(NC * NC).data(), NC, NC);
+            Xt.noalias()         = Phi_final * X0;
+
+            benchmark::DoNotOptimize(Xt);
+        }
+    }
+}
+
+// ==============================================================================
+// 6. MATRIX PHI RECONSTRUCTION (Block-Diagonal)
+// ==============================================================================
+template <class Integrator>
+static void bench_matrix_phi_reconstruction_blockdiag(::benchmark::State& state)
+{
+    const int num_commuter_groups = state.range(0);
+    const size_t num_age_groups   = static_cast<size_t>(state.range(1));
+    const auto num_patches        = num_commuter_groups + 1;
+    mio::set_log_level(mio::LogLevel::critical);
+
+    for (auto _ : state) {
+        for (auto patch = 0; patch < num_patches; patch++) {
+            state.PauseTiming();
+
+            mio::osecirts::Model<ScalarType> model(num_age_groups);
+            setup_parameters(model, num_age_groups);
+
+            auto base_pop        = get_base_population();
+            double frac_commuter = 0.3 / num_commuter_groups;
+
+            size_t G              = num_age_groups;
+            size_t block_size     = 29;
+            size_t block_elements = block_size * block_size;
+            size_t NC             = block_size * G;
+            size_t sys_size       = NC + G * block_elements;
+
+            Eigen::VectorXd initial_totals = Eigen::VectorXd::Zero(NC);
+            Eigen::MatrixXd X0             = Eigen::MatrixXd::Zero(NC, num_commuter_groups);
+
+            for (size_t g = 0; g < G; ++g) {
+                for (size_t state_idx = 0; state_idx < block_size; ++state_idx) {
+                    model.populations[{mio::AgeGroup(g), (mio::osecirts::InfectionState)state_idx}] =
+                        base_pop[state_idx];
+                    size_t flat_idx =
+                        model.populations.get_flat_index({mio::AgeGroup(g), (mio::osecirts::InfectionState)state_idx});
+                    initial_totals[flat_idx] = base_pop[state_idx];
+                    for (int cg = 0; cg < num_commuter_groups; ++cg) {
+                        X0(flat_idx, cg) = base_pop[state_idx] * frac_commuter;
+                    }
+                }
+            }
+
+            Eigen::VectorXd y0(sys_size);
+            y0.head(NC) = initial_totals;
+            for (size_t g = 0; g < G; ++g) {
+                Eigen::Map<Eigen::MatrixXd>(y0.data() + NC + g * block_elements, block_size, block_size) =
+                    Eigen::MatrixXd::Identity(block_size, block_size);
+            }
+
+            Integrator stepper;
+            mio::osecirts::AugmentedPhiSystemSecirtsBlockDiag sys(model);
+
+            Eigen::MatrixXd Xt(NC, num_commuter_groups);
+
+            state.ResumeTiming();
+
+            double t          = t0;
+            Eigen::VectorXd y = y0;
+            while (t < t_max - 1e-10) {
+                double dt_eff = std::min(dt, t_max - t);
+                stepper.do_step(sys, y, t, dt_eff);
+                t += dt_eff;
+            }
+
+            for (size_t g = 0; g < G; ++g) {
+                const auto Phi_g =
+                    Eigen::Map<const Eigen::MatrixXd>(y.data() + NC + g * block_elements, block_size, block_size);
+                Xt.block(block_size * g, 0, block_size, num_commuter_groups).noalias() =
+                    Phi_g * X0.block(block_size * g, 0, block_size, num_commuter_groups);
+            }
+
+            benchmark::DoNotOptimize(Xt);
+        }
+    }
+}
+
+static void bench_matrix_phi_rk4(benchmark::State& state)
+{
+    bench_matrix_phi_reconstruction<boost::numeric::odeint::runge_kutta4<
+        Eigen::VectorXd, double, Eigen::VectorXd, double, boost::numeric::odeint::vector_space_algebra>>(state);
+}
+
+static void bench_matrix_phi_euler(benchmark::State& state)
+{
+    bench_matrix_phi_reconstruction<boost::numeric::odeint::euler<Eigen::VectorXd, double, Eigen::VectorXd, double,
+                                                                  boost::numeric::odeint::vector_space_algebra>>(state);
+}
+
+static void bench_matrix_phi_blockdiag_rk4(benchmark::State& state)
+{
+    bench_matrix_phi_reconstruction_blockdiag<boost::numeric::odeint::runge_kutta4<
+        Eigen::VectorXd, double, Eigen::VectorXd, double, boost::numeric::odeint::vector_space_algebra>>(state);
+}
+
+static void bench_matrix_phi_blockdiag_euler(benchmark::State& state)
+{
+    bench_matrix_phi_reconstruction_blockdiag<boost::numeric::odeint::euler<
+        Eigen::VectorXd, double, Eigen::VectorXd, double, boost::numeric::odeint::vector_space_algebra>>(state);
+}
+
 } // namespace benchmark_mio
 } // namespace mio
 
@@ -422,6 +591,42 @@ BENCHMARK(mio::benchmark_mio::bench_standard_lagrangian_euler)
             }
         }
     }) -> Name("lagrange_euler") -> Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(mio::benchmark_mio::bench_matrix_phi_rk4)
+    ->Apply([](auto* b) {
+        for (int i : mio::benchmark_mio::commuter_group_counts) {
+            for (int g : mio::benchmark_mio::age_group_counts) {
+                b->Args({i, g});
+            }
+        }
+    }) -> Name("matrix_phi(RK4)") -> Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(mio::benchmark_mio::bench_matrix_phi_euler)
+    ->Apply([](auto* b) {
+        for (int i : mio::benchmark_mio::commuter_group_counts) {
+            for (int g : mio::benchmark_mio::age_group_counts) {
+                b->Args({i, g});
+            }
+        }
+    }) -> Name("matrix_phi(Euler)") -> Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(mio::benchmark_mio::bench_matrix_phi_blockdiag_rk4)
+    ->Apply([](auto* b) {
+        for (int i : mio::benchmark_mio::commuter_group_counts) {
+            for (int g : mio::benchmark_mio::age_group_counts) {
+                b->Args({i, g});
+            }
+        }
+    }) -> Name("matrix_phi_blockdiag(RK4)") -> Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(mio::benchmark_mio::bench_matrix_phi_blockdiag_euler)
+    ->Apply([](auto* b) {
+        for (int i : mio::benchmark_mio::commuter_group_counts) {
+            for (int g : mio::benchmark_mio::age_group_counts) {
+                b->Args({i, g});
+            }
+        }
+    }) -> Name("matrix_phi_blockdiag(Euler)") -> Unit(::benchmark::kMicrosecond);
 
 // run all benchmarks
 BENCHMARK_MAIN();
