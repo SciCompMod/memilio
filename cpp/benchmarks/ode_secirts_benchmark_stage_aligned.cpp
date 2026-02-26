@@ -45,7 +45,7 @@ struct BenchSetupPrinterSecirts {
 static BenchSetupPrinterSecirts bench_setup_printer_secirts;
 } // namespace
 
-const std::vector<int> commuter_group_counts = {16, 32, 64, 128, 256, 512, 1024};
+const std::vector<int> commuter_group_counts = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
 const std::vector<int> age_group_counts      = {1, 2, 3, 4, 5, 6};
 
 template <class ModelType>
