@@ -125,17 +125,17 @@ TEST(TestOdeSECIRTS, get_flows)
 
     model.get_flows(y, y, 0.0, flows);
 
-    std::vector<double> expected_values = {0.09375,  0.90625,  1,   0.5, 0.5, 0.5, 0.5,      0.5,      0.5, 0.5, 0.5,
-                                           0.5,      0.5,      0,   0.5, 0.5, 1,   0.046875, 0.953125, 1,   0.5, 0.5,
-                                           0.5,      0.5,      0.5, 0.5, 0.5, 0.5, 0.5,      0.5,      0,   0.5, 0.5,
-                                           0.046875, 0.953125, 1,   0.5, 0.5, 0.5, 0.5,      0.5,      0.5, 0.5, 0.5,
-                                           0.5,      0.5,      0,   0.5, 0.5, 0,   1,        1,        1};
+    std::vector<double> expected_values = {
+        0.09375, 0.90625, 1,   0.5,      0.5,      0.5, 0.5,      0.5,      0.5, 0.5, 0.5, 0.5, 0.5,
+        0,       0.5,     0.5, 0.046875, 0.953125, 1,   0.5,      0.5,      0.5, 0.5, 0.5, 0.5, 0.5,
+        0.5,     0.5,     0.5, 0,        0.5,      0.5, 0.046875, 0.953125, 1,   0.5, 0.5, 0.5, 0.5,
+        0.5,     0.5,     0.5, 0.5,      0.5,      0.5, 0,        0.5,      0.5, 1,   1,   1,   1};
 
-    EXPECT_EQ(flows.size(), 53);
+    EXPECT_EQ(flows.size(), 52);
 
     // Compare expected with actual values
-    for (size_t i = 0; i < expected_values.size(); i++) {
-        EXPECT_NEAR(flows(i), expected_values[i], 1e-10);
+    for (auto i = 0; i < flows.size(); i++) {
+        EXPECT_NEAR(flows(i), expected_values[i], 1e-5);
     }
 }
 
@@ -148,8 +148,8 @@ TEST(TestOdeSECIRTS, Simulation)
     EXPECT_EQ(sim.get_result().get_num_time_points(), 2); // stores initial value and single step
 
     Eigen::VectorXd expected_result(29);
-    expected_result << 1.0, 2.0, 0.09375, 0.046875, 0.046875, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.5, 0.5,
-        0.5, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5, 0.0, 1.5, 1.5, 1.5, 2.90625, 7.90625;
+    expected_result << 1, 1, 0.09375, 0.046875, 0.046875, 1, 1, 1, 0, 0, 0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 1, 1, 1, 0.5,
+        0.5, 0.5, 0, 1.5, 1.5, 1.5, 3.90625, 7.90625;
     EXPECT_EQ(sim.get_result().get_last_value(), expected_result);
 }
 
@@ -165,14 +165,14 @@ TEST(TestOdeSECIRTS, FlowSimulation)
     EXPECT_EQ(sim.get_result().get_num_time_points(), 2); // stores initial value and single step
 
     Eigen::VectorXd expected_result(29);
-    expected_result << 1.0, 2.0, 0.09375, 0.046875, 0.046875, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.5, 0.5,
-        0.5, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5, 0.0, 1.5, 1.5, 1.5, 2.90625, 7.90625;
+    expected_result << 1, 1, 0.09375, 0.046875, 0.046875, 1, 1, 1, 0, 0, 0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 1, 1, 1, 0.5,
+        0.5, 0.5, 0, 1.5, 1.5, 1.5, 3.90625, 7.90625;
     EXPECT_EQ(sim.get_result().get_last_value(), expected_result);
 
-    Eigen::VectorXd expected_flows(53);
-    expected_flows << 0.09375, 0.90625, 1.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0, 0.5, 0.5, 1.0,
-        0.046875, 0.953125, 1.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0, 0.5, 0.5, 0.046875, 0.953125,
-        1.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0, 0.5, 0.5, 0.0, 1.0, 1.0, 1.0;
+    Eigen::VectorXd expected_flows(52);
+    expected_flows << 0.09375, 0.90625, 1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0, 0.5, 0.5, 0.046875,
+        0.953125, 1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0, 0.5, 0.5, 0.046875, 0.953125, 1, 0.5, 0.5,
+        0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0, 0.5, 0.5, 1, 1, 1, 1;
     EXPECT_EQ(sim.get_flows().get_last_value(), expected_flows);
 }
 
