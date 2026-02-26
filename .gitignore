@@ -286,4 +286,6 @@ docs/source/generated
 # VS Code
 .vscode/
 
+redis-stable
+
 # End of https://www.gitignore.io/api/c++,node,python
