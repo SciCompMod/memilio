@@ -572,13 +572,17 @@ def save_persons(trip_file):
     print(f'Time to create and save person df: {end - start} seconds')
 
 
-def map_traffic_cell_to_wastewater_area(mapping_path, wastewater_path, new_file, new_file2):
+def map_traffic_cell_to_wastewater_area(mapping_path, wastewater_path, new_file, new_file2, type="shp"):
     rng = np.random.default_rng(30)
     with open(mapping_path) as f:
         d = dict(x.rstrip().split(None, 1) for x in f)
-    areas = geopandas.read_file(wastewater_path)
-    areas.to_crs(epsg=32632)
-    areas["area"] = areas.geometry.area / 1_000_000
+    if (type == "csv"):
+        areas = pd.read_csv(wastewater_path)
+        areas["area"] = 1
+    else:
+        areas = geopandas.read_file(wastewater_path)
+        areas.to_crs(epsg=32632)
+        areas["area"] = areas.geometry.area / 1_000_000
     new_dict = {}
     new_dict2 = {}
     for traffic_cell_id in d.keys():
@@ -787,7 +791,7 @@ def run_abm_simulation(sim_num):
     tan_map = map_traffic_cell_to_wastewater_area(os.path.join(
         output_path, str(sim_num) + '_mapping.txt'), os.path.join(input_path, 'Munich_shape250319/Verschnitt_DLR_TAN_Rep.shp'), os.path.join(
         output_path, str(sim_num) + '_mapping_tan.txt'), os.path.join(
-        output_path, str(sim_num) + '_mapping_tan_locs.txt'))
+        output_path, str(sim_num) + '_mapping_tan_locs.txt'), "shp")
     end_map = time.time()
     print(
         f'Time for mapping locations to TAN areas: {end_map - start_map} seconds')
@@ -919,7 +923,7 @@ if __name__ == "__main__":
     init_times = []
     sim_times = []
     output_times = []
-    for i in range(1, 41):
+    for i in range(1, 2):
         o = run_abm_simulation(i, **args.__dict__)
     #     sim_nums.append(o[0])
     #     init_times.append(o[1])
