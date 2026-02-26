@@ -82,6 +82,7 @@ class FlowModel : public CompartmentalModel<FP, Comp, Pop, Params>
     // Enforce that Comp is a unique Category of PopIndex, since we use Flows (via their source/target) to provide
     // Comp indices for the population.
     static_assert(FlowIndex::size == PopIndex::size - 1, "Compartments must be used exactly once as population index.");
+    static_assert(!Flows::has_duplicates, "Flow duplicates detected. Flows must be unique.");
 
 public:
     using Base = CompartmentalModel<FP, Comp, Pop, Params>;
