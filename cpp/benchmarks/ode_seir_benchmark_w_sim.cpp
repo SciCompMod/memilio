@@ -31,6 +31,7 @@
 #include <boost/numeric/odeint.hpp>
 #include <boost/numeric/odeint/stepper/euler.hpp>
 #include <boost/numeric/odeint/stepper/runge_kutta4.hpp>
+#include <iostream>
 
 namespace mio
 {
@@ -178,6 +179,22 @@ const ScalarType dt    = 0.1;
 
 const ScalarType t_max_phi = 0.5;
 const ScalarType dt_phi    = 0.1;
+
+namespace
+{
+struct BenchSetupPrinter {
+    BenchSetupPrinter()
+    {
+        std::cout << "Benchmark setup:\n";
+        std::cout << "  t_max (normal)    = " << t_max << "\n";
+        std::cout << "  dt (normal)       = " << dt << "\n";
+        std::cout << "  t_max_phi (phi)   = " << t_max_phi << "\n";
+        std::cout << "  dt_phi (phi)      = " << dt_phi << "\n";
+        std::cout << std::flush;
+    }
+};
+static BenchSetupPrinter bench_setup_printer;
+} // namespace
 // Define the number of commuter groups for the benchmark
 // const std::vector<int> commuter_group_counts = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
 // const std::vector<int> age_group_counts      = {1, 2, 3, 4, 5, 6};

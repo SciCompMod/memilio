@@ -13,6 +13,7 @@
 #include <boost/numeric/odeint/stepper/euler.hpp>
 #include <boost/numeric/odeint/stepper/runge_kutta4.hpp>
 #include <vector>
+#include <iostream>
 
 using ScalarType = double;
 
@@ -24,6 +25,25 @@ namespace benchmark_mio
 const ScalarType t0    = 0.0;
 const ScalarType t_max = 0.5;
 const ScalarType dt    = 0.1;
+
+const ScalarType t_max_phi = 0.5;
+const ScalarType dt_phi    = 0.1;
+
+namespace
+{
+struct BenchSetupPrinterSecirts {
+    BenchSetupPrinterSecirts()
+    {
+        std::cout << "SECIRTS benchmark setup:\n";
+        std::cout << "  t_max = " << t_max << "\n";
+        std::cout << "  dt    = " << dt << "\n";
+        std::cout << "  t_max_phi = " << t_max_phi << "\n";
+        std::cout << "  dt_phi    = " << dt_phi << "\n";
+        std::cout << std::flush;
+    }
+};
+static BenchSetupPrinterSecirts bench_setup_printer_secirts;
+} // namespace
 
 const std::vector<int> commuter_group_counts = {16, 32, 64, 128, 256, 512, 1024};
 const std::vector<int> age_group_counts      = {1, 2, 3, 4, 5, 6};
@@ -438,8 +458,8 @@ static void bench_matrix_phi_reconstruction(::benchmark::State& state)
 
             double t          = t0;
             Eigen::VectorXd y = y0;
-            while (t < t_max - 1e-10) {
-                double dt_eff = std::min(dt, t_max - t);
+            while (t < t_max_phi - 1e-10) {
+                double dt_eff = std::min(dt_phi, t_max_phi - t);
                 stepper.do_step(sys, y, t, dt_eff);
                 t += dt_eff;
             }
@@ -511,8 +531,8 @@ static void bench_matrix_phi_reconstruction_blockdiag(::benchmark::State& state)
 
             double t          = t0;
             Eigen::VectorXd y = y0;
-            while (t < t_max - 1e-10) {
-                double dt_eff = std::min(dt, t_max - t);
+            while (t < t_max_phi - 1e-10) {
+                double dt_eff = std::min(dt_phi, t_max_phi - t);
                 stepper.do_step(sys, y, t, dt_eff);
                 t += dt_eff;
             }
