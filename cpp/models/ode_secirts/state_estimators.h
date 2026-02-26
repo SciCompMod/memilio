@@ -112,44 +112,6 @@ public:
         mio::AgeGroup n_agegroups                     = params.get_num_groups();
         mio::ContactMatrixGroup const& contact_matrix = params.template get<mio::osecirts::ContactPatterns<FP>>();
 
-        FP test_and_trace_required = 0.0;
-        FP icu_occupancy           = 0.0;
-
-        for (auto i = mio::AgeGroup(0); i < n_agegroups; ++i) {
-            for (int c = 0; c <= m_num_commuter_groups; ++c) {
-                auto c_type = static_cast<CommuterType>(c);
-                using IS    = mio::osecirts::InfectionState;
-
-                test_and_trace_required +=
-                    (1.0 - params.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<FP>>()[i]) /
-                    params.template get<mio::osecirts::TimeInfectedNoSymptoms<FP>>()[i] *
-                    (y[this->populations.get_flat_index({i, c_type, IS::InfectedNoSymptomsNaive})] +
-                     y[this->populations.get_flat_index({i, c_type, IS::InfectedNoSymptomsNaiveConfirmed})]);
-
-                test_and_trace_required +=
-                    (params.template get<mio::osecirts::ReducInfectedSymptomsPartialImmunity<FP>>()[i] /
-                     params.template get<mio::osecirts::ReducExposedPartialImmunity<FP>>()[i]) *
-                    (1.0 - params.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<FP>>()[i]) /
-                    (params.template get<mio::osecirts::TimeInfectedNoSymptoms<FP>>()[i] *
-                     params.template get<mio::osecirts::ReducTimeInfectedMild<FP>>()[i]) *
-                    (y[this->populations.get_flat_index({i, c_type, IS::InfectedNoSymptomsPartialImmunity})] +
-                     y[this->populations.get_flat_index({i, c_type, IS::InfectedNoSymptomsPartialImmunityConfirmed})]);
-
-                test_and_trace_required +=
-                    (params.template get<mio::osecirts::ReducInfectedSymptomsImprovedImmunity<FP>>()[i] /
-                     params.template get<mio::osecirts::ReducExposedImprovedImmunity<FP>>()[i]) *
-                    (1.0 - params.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<FP>>()[i]) /
-                    (params.template get<mio::osecirts::TimeInfectedNoSymptoms<FP>>()[i] *
-                     params.template get<mio::osecirts::ReducTimeInfectedMild<FP>>()[i]) *
-                    (y[this->populations.get_flat_index({i, c_type, IS::InfectedNoSymptomsImprovedImmunity})] +
-                     y[this->populations.get_flat_index({i, c_type, IS::InfectedNoSymptomsImprovedImmunityConfirmed})]);
-
-                icu_occupancy += y[this->populations.get_flat_index({i, c_type, IS::InfectedCriticalNaive})] +
-                                 y[this->populations.get_flat_index({i, c_type, IS::InfectedCriticalPartialImmunity})] +
-                                 y[this->populations.get_flat_index({i, c_type, IS::InfectedCriticalImprovedImmunity})];
-            }
-        }
-
         auto const partial_vaccination =
             vaccinations_at(t, params.template get<mio::osecirts::DailyPartialVaccinations<FP>>());
         auto const full_vaccination =
@@ -157,78 +119,195 @@ public:
         auto const booster_vaccination =
             vaccinations_at(t, params.template get<mio::osecirts::DailyBoosterVaccinations<FP>>());
 
-        // calculate force of infection and flows for each age group
-        for (auto i = mio::AgeGroup(0); i < n_agegroups; i++) {
+        for (auto i = mio::AgeGroup(0); i < n_agegroups; ++i) {
 
-            FP criticalPerSevereAdjusted =
-                mio::smoother_cosine(icu_occupancy, 0.90 * params.template get<mio::osecirts::ICUCapacity<FP>>(),
-                                     params.template get<mio::osecirts::ICUCapacity<FP>>(),
-                                     params.template get<mio::osecirts::CriticalPerSevere<FP>>()[i], 0.0);
-            FP deathsPerSevereAdjusted =
-                params.template get<mio::osecirts::CriticalPerSevere<FP>>()[i] - criticalPerSevereAdjusted;
+            std::vector<FP> N_per_age_local(static_cast<size_t>(n_agegroups));
+            std::vector<FP> I_no_sympt_local(static_cast<size_t>(n_agegroups));
+            std::vector<FP> I_sympt_local(static_cast<size_t>(n_agegroups));
+            FP test_and_trace_required = 0.0;
+            FP icu_occupancy           = 0.0;
 
-            auto riskFromInfectedSymptomatic = mio::smoother_cosine(
-                test_and_trace_required, params.template get<mio::osecirts::TestAndTraceCapacity<FP>>(),
-                params.template get<mio::osecirts::TestAndTraceCapacity<FP>>() *
-                    params.template get<mio::osecirts::TestAndTraceCapacityMaxRiskSymptoms<FP>>(),
-                params.template get<mio::osecirts::RiskOfInfectionFromSymptomatic<FP>>()[i],
-                params.template get<mio::osecirts::MaxRiskOfInfectionFromSymptomatic<FP>>()[i]);
-
-            auto riskFromInfectedNoSymptoms = mio::smoother_cosine(
-                test_and_trace_required, params.template get<mio::osecirts::TestAndTraceCapacity<FP>>(),
-                params.template get<mio::osecirts::TestAndTraceCapacity<FP>>() *
-                    params.template get<mio::osecirts::TestAndTraceCapacityMaxRiskNoSymptoms<FP>>(),
-                params.template get<mio::osecirts::RelativeTransmissionNoSymptoms<FP>>()[i], 1.0);
-
-            FP ext_inf_force_dummy = 0.0;
-            for (auto j = mio::AgeGroup(0); j < n_agegroups; j++) {
-                FP Nj_total    = 0.0;
-                FP Ij_no_sympt = 0.0;
-                FP Ij_sympt    = 0.0;
+            for (auto j = mio::AgeGroup(0); j < n_agegroups; ++j) {
+                FP N_j          = 0;
+                FP I_no_sympt_j = 0;
+                FP I_sympt_j    = 0;
 
                 using IS = mio::osecirts::InfectionState;
-                for (int c2 = 0; c2 <= m_num_commuter_groups; ++c2) {
-                    auto c_type_j = static_cast<CommuterType>(c2);
+
+                // NonCommuter
+                {
+                    CommuterType ct_j = CommuterType::NonCommuter;
+
+                    test_and_trace_required +=
+                        (1.0 - params.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<FP>>()[j]) /
+                        params.template get<mio::osecirts::TimeInfectedNoSymptoms<FP>>()[j] *
+                        (y[this->populations.get_flat_index({j, ct_j, IS::InfectedNoSymptomsNaive})] +
+                         y[this->populations.get_flat_index({j, ct_j, IS::InfectedNoSymptomsNaiveConfirmed})]);
+
+                    test_and_trace_required +=
+                        (params.template get<mio::osecirts::ReducInfectedSymptomsPartialImmunity<FP>>()[j] /
+                         params.template get<mio::osecirts::ReducExposedPartialImmunity<FP>>()[j]) *
+                        (1.0 - params.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<FP>>()[j]) /
+                        (params.template get<mio::osecirts::TimeInfectedNoSymptoms<FP>>()[j] *
+                         params.template get<mio::osecirts::ReducTimeInfectedMild<FP>>()[j]) *
+                        (y[this->populations.get_flat_index({j, ct_j, IS::InfectedNoSymptomsPartialImmunity})] +
+                         y[this->populations.get_flat_index(
+                             {j, ct_j, IS::InfectedNoSymptomsPartialImmunityConfirmed})]);
+
+                    test_and_trace_required +=
+                        (params.template get<mio::osecirts::ReducInfectedSymptomsImprovedImmunity<FP>>()[j] /
+                         params.template get<mio::osecirts::ReducExposedImprovedImmunity<FP>>()[j]) *
+                        (1.0 - params.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<FP>>()[j]) /
+                        (params.template get<mio::osecirts::TimeInfectedNoSymptoms<FP>>()[j] *
+                         params.template get<mio::osecirts::ReducTimeInfectedMild<FP>>()[j]) *
+                        (y[this->populations.get_flat_index({j, ct_j, IS::InfectedNoSymptomsImprovedImmunity})] +
+                         y[this->populations.get_flat_index(
+                             {j, ct_j, IS::InfectedNoSymptomsImprovedImmunityConfirmed})]);
+
+                    icu_occupancy +=
+                        y[this->populations.get_flat_index({j, ct_j, IS::InfectedCriticalNaive})] +
+                        y[this->populations.get_flat_index({j, ct_j, IS::InfectedCriticalPartialImmunity})] +
+                        y[this->populations.get_flat_index({j, ct_j, IS::InfectedCriticalImprovedImmunity})];
+
                     for (size_t state = 0; state < static_cast<size_t>(IS::Count); ++state) {
                         if (state != static_cast<size_t>(IS::DeadNaive) &&
                             state != static_cast<size_t>(IS::DeadPartialImmunity) &&
                             state != static_cast<size_t>(IS::DeadImprovedImmunity) &&
                             state != static_cast<size_t>(IS::TemporaryImmunePartialImmunity) &&
                             state != static_cast<size_t>(IS::TemporaryImmuneImprovedImmunity)) {
-                            // WICHTIG: Nutze 'y'
-                            Nj_total += y[this->populations.get_flat_index({j, c_type_j, static_cast<IS>(state)})];
+                            N_j += y[this->populations.get_flat_index({j, ct_j, static_cast<IS>(state)})];
                         }
                     }
-                    Ij_no_sympt +=
-                        y[this->populations.get_flat_index({j, c_type_j, IS::InfectedNoSymptomsNaive})] +
-                        y[this->populations.get_flat_index({j, c_type_j, IS::InfectedNoSymptomsPartialImmunity})] +
-                        y[this->populations.get_flat_index({j, c_type_j, IS::InfectedNoSymptomsImprovedImmunity})];
 
-                    Ij_sympt +=
-                        y[this->populations.get_flat_index({j, c_type_j, IS::InfectedSymptomsNaive})] +
-                        y[this->populations.get_flat_index({j, c_type_j, IS::InfectedSymptomsPartialImmunity})] +
-                        y[this->populations.get_flat_index({j, c_type_j, IS::InfectedSymptomsImprovedImmunity})];
+                    I_no_sympt_j +=
+                        y[this->populations.get_flat_index({j, ct_j, IS::InfectedNoSymptomsNaive})] +
+                        y[this->populations.get_flat_index({j, ct_j, IS::InfectedNoSymptomsPartialImmunity})] +
+                        y[this->populations.get_flat_index({j, ct_j, IS::InfectedNoSymptomsImprovedImmunity})];
+
+                    I_sympt_j += y[this->populations.get_flat_index({j, ct_j, IS::InfectedSymptomsNaive})] +
+                                 y[this->populations.get_flat_index({j, ct_j, IS::InfectedSymptomsPartialImmunity})] +
+                                 y[this->populations.get_flat_index({j, ct_j, IS::InfectedSymptomsImprovedImmunity})];
                 }
 
-                FP season_val =
-                    (1.0 +
-                     params.template get<mio::osecirts::Seasonality<FP>>() *
-                         sin(3.141592653589793 *
-                             (std::fmod((params.template get<mio::osecirts::StartDay>() + t), 365.0) / 182.5 + 0.5)));
-                FP cont_freq_eff = season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
-                                                                                static_cast<Eigen::Index>((size_t)j));
-                const FP divNj   = (Nj_total < 1e-12) ? 0.0 : 1.0 / Nj_total;
+                // Commuters
+                for (int c2 = 0; c2 < this->m_num_commuter_groups; ++c2) {
+                    CommuterType ct_j = static_cast<CommuterType>(static_cast<int>(CommuterType::CommuterBase) + c2);
 
-                ext_inf_force_dummy +=
-                    cont_freq_eff * divNj *
-                    params.template get<mio::osecirts::TransmissionProbabilityOnContact<FP>>()[i] *
-                    (riskFromInfectedNoSymptoms * Ij_no_sympt + riskFromInfectedSymptomatic * Ij_sympt);
+                    test_and_trace_required +=
+                        (1.0 - params.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<FP>>()[j]) /
+                        params.template get<mio::osecirts::TimeInfectedNoSymptoms<FP>>()[j] *
+                        (y[this->populations.get_flat_index({j, ct_j, IS::InfectedNoSymptomsNaive})] +
+                         y[this->populations.get_flat_index({j, ct_j, IS::InfectedNoSymptomsNaiveConfirmed})]);
+
+                    test_and_trace_required +=
+                        (params.template get<mio::osecirts::ReducInfectedSymptomsPartialImmunity<FP>>()[j] /
+                         params.template get<mio::osecirts::ReducExposedPartialImmunity<FP>>()[j]) *
+                        (1.0 - params.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<FP>>()[j]) /
+                        (params.template get<mio::osecirts::TimeInfectedNoSymptoms<FP>>()[j] *
+                         params.template get<mio::osecirts::ReducTimeInfectedMild<FP>>()[j]) *
+                        (y[this->populations.get_flat_index({j, ct_j, IS::InfectedNoSymptomsPartialImmunity})] +
+                         y[this->populations.get_flat_index(
+                             {j, ct_j, IS::InfectedNoSymptomsPartialImmunityConfirmed})]);
+
+                    test_and_trace_required +=
+                        (params.template get<mio::osecirts::ReducInfectedSymptomsImprovedImmunity<FP>>()[j] /
+                         params.template get<mio::osecirts::ReducExposedImprovedImmunity<FP>>()[j]) *
+                        (1.0 - params.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<FP>>()[j]) /
+                        (params.template get<mio::osecirts::TimeInfectedNoSymptoms<FP>>()[j] *
+                         params.template get<mio::osecirts::ReducTimeInfectedMild<FP>>()[j]) *
+                        (y[this->populations.get_flat_index({j, ct_j, IS::InfectedNoSymptomsImprovedImmunity})] +
+                         y[this->populations.get_flat_index(
+                             {j, ct_j, IS::InfectedNoSymptomsImprovedImmunityConfirmed})]);
+
+                    icu_occupancy +=
+                        y[this->populations.get_flat_index({j, ct_j, IS::InfectedCriticalNaive})] +
+                        y[this->populations.get_flat_index({j, ct_j, IS::InfectedCriticalPartialImmunity})] +
+                        y[this->populations.get_flat_index({j, ct_j, IS::InfectedCriticalImprovedImmunity})];
+
+                    for (size_t state = 0; state < static_cast<size_t>(IS::Count); ++state) {
+                        if (state != static_cast<size_t>(IS::DeadNaive) &&
+                            state != static_cast<size_t>(IS::DeadPartialImmunity) &&
+                            state != static_cast<size_t>(IS::DeadImprovedImmunity) &&
+                            state != static_cast<size_t>(IS::TemporaryImmunePartialImmunity) &&
+                            state != static_cast<size_t>(IS::TemporaryImmuneImprovedImmunity)) {
+                            N_j += y[this->populations.get_flat_index({j, ct_j, static_cast<IS>(state)})];
+                        }
+                    }
+
+                    I_no_sympt_j +=
+                        y[this->populations.get_flat_index({j, ct_j, IS::InfectedNoSymptomsNaive})] +
+                        y[this->populations.get_flat_index({j, ct_j, IS::InfectedNoSymptomsPartialImmunity})] +
+                        y[this->populations.get_flat_index({j, ct_j, IS::InfectedNoSymptomsImprovedImmunity})];
+
+                    I_sympt_j += y[this->populations.get_flat_index({j, ct_j, IS::InfectedSymptomsNaive})] +
+                                 y[this->populations.get_flat_index({j, ct_j, IS::InfectedSymptomsPartialImmunity})] +
+                                 y[this->populations.get_flat_index({j, ct_j, IS::InfectedSymptomsImprovedImmunity})];
+                }
+
+                N_per_age_local[j.get()]  = N_j;
+                I_no_sympt_local[j.get()] = I_no_sympt_j;
+                I_sympt_local[j.get()]    = I_sympt_j;
             }
 
-            // flows for each commuter group
-            for (int c = 0; c <= m_num_commuter_groups; ++c) {
-                auto c_type = static_cast<CommuterType>(c);
-                using IS    = mio::osecirts::InfectionState;
+            // ==========================================================
+            // Non-commuter flow
+            // ==========================================================
+            {
+                CommuterType c_type = CommuterType::NonCommuter;
+                using IS            = mio::osecirts::InfectionState;
+
+                FP criticalPerSevereAdjusted =
+                    mio::smoother_cosine(icu_occupancy, 0.90 * params.template get<mio::osecirts::ICUCapacity<FP>>(),
+                                         params.template get<mio::osecirts::ICUCapacity<FP>>(),
+                                         params.template get<mio::osecirts::CriticalPerSevere<FP>>()[i], 0.0);
+                FP deathsPerSevereAdjusted =
+                    params.template get<mio::osecirts::CriticalPerSevere<FP>>()[i] - criticalPerSevereAdjusted;
+
+                auto riskFromInfectedSymptomatic = mio::smoother_cosine(
+                    test_and_trace_required, params.template get<mio::osecirts::TestAndTraceCapacity<FP>>(),
+                    params.template get<mio::osecirts::TestAndTraceCapacity<FP>>() *
+                        params.template get<mio::osecirts::TestAndTraceCapacityMaxRiskSymptoms<FP>>(),
+                    params.template get<mio::osecirts::RiskOfInfectionFromSymptomatic<FP>>()[i],
+                    params.template get<mio::osecirts::MaxRiskOfInfectionFromSymptomatic<FP>>()[i]);
+
+                auto riskFromInfectedNoSymptoms = mio::smoother_cosine(
+                    test_and_trace_required, params.template get<mio::osecirts::TestAndTraceCapacity<FP>>(),
+                    params.template get<mio::osecirts::TestAndTraceCapacity<FP>>() *
+                        params.template get<mio::osecirts::TestAndTraceCapacityMaxRiskNoSymptoms<FP>>(),
+                    params.template get<mio::osecirts::RelativeTransmissionNoSymptoms<FP>>()[i], 1.0);
+
+                FP ext_inf_force_dummy = 0.0;
+                for (auto j = mio::AgeGroup(0); j < n_agegroups; j++) {
+                    FP season_val =
+                        (1.0 + params.template get<mio::osecirts::Seasonality<FP>>() *
+                                   sin(3.141592653589793 *
+                                       (std::fmod((params.template get<mio::osecirts::StartDay>() + t), 365.0) / 182.5 +
+                                        0.5)));
+                    FP cont_freq_eff =
+                        season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
+                                                                     static_cast<Eigen::Index>((size_t)j));
+                    const FP divNj = (N_per_age_local[static_cast<size_t>(j)] < 1e-12)
+                                         ? 0.0
+                                         : 1.0 / N_per_age_local[static_cast<size_t>(j)];
+
+                    ext_inf_force_dummy +=
+                        cont_freq_eff * divNj *
+                        params.template get<mio::osecirts::TransmissionProbabilityOnContact<FP>>()[i] *
+                        (riskFromInfectedNoSymptoms * I_no_sympt_local[static_cast<size_t>(j)] +
+                         riskFromInfectedSymptomatic * I_sympt_local[static_cast<size_t>(j)]);
+                }
+
+                FP total_SN = y[this->populations.get_flat_index({i, CommuterType::NonCommuter, IS::SusceptibleNaive})];
+                FP total_SPI =
+                    y[this->populations.get_flat_index({i, CommuterType::NonCommuter, IS::SusceptiblePartialImmunity})];
+                FP total_SII = y[this->populations.get_flat_index(
+                    {i, CommuterType::NonCommuter, IS::SusceptibleImprovedImmunity})];
+                for (int c_all = 0; c_all < this->m_num_commuter_groups; ++c_all) {
+                    auto ct_all = static_cast<CommuterType>(static_cast<int>(CommuterType::CommuterBase) + c_all);
+                    total_SN += y[this->populations.get_flat_index({i, ct_all, IS::SusceptibleNaive})];
+                    total_SPI += y[this->populations.get_flat_index({i, ct_all, IS::SusceptiblePartialImmunity})];
+                    total_SII += y[this->populations.get_flat_index({i, ct_all, IS::SusceptibleImprovedImmunity})];
+                }
 
                 size_t SNi    = this->populations.get_flat_index({i, c_type, IS::SusceptibleNaive});
                 size_t ENi    = this->populations.get_flat_index({i, c_type, IS::ExposedNaive});
@@ -285,13 +364,337 @@ public:
                 flows[this->template get_flat_flow_index<IS::SusceptibleImprovedImmunity, IS::ExposedImprovedImmunity>(
                     {i, c_type})] = dummy_SII;
 
-                FP total_SN = 0.0, total_SPI = 0.0, total_SII = 0.0;
-                for (int c_all = 0; c_all <= m_num_commuter_groups; ++c_all) {
-                    auto ct_all = static_cast<CommuterType>(c_all);
+                FP frac_SN  = (total_SN > 1e-12) ? (y[SNi] / total_SN) : 0.0;
+                FP frac_SPI = (total_SPI > 1e-12) ? (y[SPIi] / total_SPI) : 0.0;
+                FP frac_SII = (total_SII > 1e-12) ? (y[SIIi] / total_SII) : 0.0;
+
+                flows[this->template get_flat_flow_index<IS::SusceptibleNaive, IS::TemporaryImmunePartialImmunity>(
+                    {i, c_type})] =
+                    std::min(std::max(0.0, y[SNi] - dummy_SN), partial_vaccination[static_cast<size_t>(i)] * frac_SN);
+                flows[this->template get_flat_flow_index<IS::SusceptiblePartialImmunity,
+                                                         IS::TemporaryImmuneImprovedImmunity>({i, c_type})] =
+                    std::min(std::max(0.0, y[SPIi] - dummy_SPI), full_vaccination[static_cast<size_t>(i)] * frac_SPI);
+                flows[this->template get_flat_flow_index<IS::SusceptibleImprovedImmunity,
+                                                         IS::TemporaryImmuneImprovedImmunity>({i, c_type})] =
+                    std::min(std::max(0.0, y[SIIi] - dummy_SII),
+                             booster_vaccination[static_cast<size_t>(i)] * frac_SII);
+
+                flows[this->template get_flat_flow_index<IS::ExposedNaive, IS::InfectedNoSymptomsNaive>({i, c_type})] =
+                    y[ENi] / params.template get<mio::osecirts::TimeExposed<FP>>()[i];
+
+                flows[this->template get_flat_flow_index<IS::InfectedNoSymptomsNaive,
+                                                         IS::TemporaryImmunePartialImmunity>({i, c_type})] =
+                    params.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<FP>>()[i] *
+                    (1.0 / params.template get<mio::osecirts::TimeInfectedNoSymptoms<FP>>()[i]) * y[INSNi];
+                flows[this->template get_flat_flow_index<IS::InfectedNoSymptomsNaive, IS::InfectedSymptomsNaive>(
+                    {i, c_type})] =
+                    (1.0 - params.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<FP>>()[i]) /
+                    params.template get<mio::osecirts::TimeInfectedNoSymptoms<FP>>()[i] * y[INSNi];
+
+                flows[this->template get_flat_flow_index<IS::InfectedNoSymptomsNaiveConfirmed,
+                                                         IS::InfectedSymptomsNaiveConfirmed>({i, c_type})] =
+                    (1.0 - params.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<FP>>()[i]) /
+                    params.template get<mio::osecirts::TimeInfectedNoSymptoms<FP>>()[i] * y[INSNCi];
+                flows[this->template get_flat_flow_index<IS::InfectedNoSymptomsNaiveConfirmed,
+                                                         IS::TemporaryImmunePartialImmunity>({i, c_type})] =
+                    params.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<FP>>()[i] *
+                    (1.0 / params.template get<mio::osecirts::TimeInfectedNoSymptoms<FP>>()[i]) * y[INSNCi];
+
+                flows[this->template get_flat_flow_index<IS::InfectedSymptomsNaive, IS::InfectedSevereNaive>(
+                    {i, c_type})] = params.template get<mio::osecirts::SeverePerInfectedSymptoms<FP>>()[i] /
+                                    params.template get<mio::osecirts::TimeInfectedSymptoms<FP>>()[i] * y[ISyNi];
+                flows[this->template get_flat_flow_index<IS::InfectedSymptomsNaive, IS::TemporaryImmunePartialImmunity>(
+                    {i, c_type})] = (1.0 - params.template get<mio::osecirts::SeverePerInfectedSymptoms<FP>>()[i]) /
+                                    params.template get<mio::osecirts::TimeInfectedSymptoms<FP>>()[i] * y[ISyNi];
+
+                flows[this->template get_flat_flow_index<IS::InfectedSymptomsNaiveConfirmed, IS::InfectedSevereNaive>(
+                    {i, c_type})] = params.template get<mio::osecirts::SeverePerInfectedSymptoms<FP>>()[i] /
+                                    params.template get<mio::osecirts::TimeInfectedSymptoms<FP>>()[i] * y[ISyNCi];
+                flows[this->template get_flat_flow_index<IS::InfectedSymptomsNaiveConfirmed,
+                                                         IS::TemporaryImmunePartialImmunity>({i, c_type})] =
+                    (1.0 - params.template get<mio::osecirts::SeverePerInfectedSymptoms<FP>>()[i]) /
+                    params.template get<mio::osecirts::TimeInfectedSymptoms<FP>>()[i] * y[ISyNCi];
+
+                flows[this->template get_flat_flow_index<IS::InfectedSevereNaive, IS::InfectedCriticalNaive>(
+                    {i, c_type})] = criticalPerSevereAdjusted /
+                                    params.template get<mio::osecirts::TimeInfectedSevere<FP>>()[i] * y[ISevNi];
+                flows[this->template get_flat_flow_index<IS::InfectedSevereNaive, IS::TemporaryImmunePartialImmunity>(
+                    {i, c_type})] = (1.0 - params.template get<mio::osecirts::CriticalPerSevere<FP>>()[i]) /
+                                    params.template get<mio::osecirts::TimeInfectedSevere<FP>>()[i] * y[ISevNi];
+                flows[this->template get_flat_flow_index<IS::InfectedSevereNaive, IS::DeadNaive>({i, c_type})] =
+                    deathsPerSevereAdjusted / params.template get<mio::osecirts::TimeInfectedSevere<FP>>()[i] *
+                    y[ISevNi];
+
+                flows[this->template get_flat_flow_index<IS::InfectedCriticalNaive, IS::DeadNaive>({i, c_type})] =
+                    params.template get<mio::osecirts::DeathsPerCritical<FP>>()[i] /
+                    params.template get<mio::osecirts::TimeInfectedCritical<FP>>()[i] * y[ICrNi];
+                flows[this->template get_flat_flow_index<IS::InfectedCriticalNaive, IS::TemporaryImmunePartialImmunity>(
+                    {i, c_type})] = (1.0 - params.template get<mio::osecirts::DeathsPerCritical<FP>>()[i]) /
+                                    params.template get<mio::osecirts::TimeInfectedCritical<FP>>()[i] * y[ICrNi];
+
+                flows[this->template get_flat_flow_index<IS::SusceptiblePartialImmunity, IS::SusceptibleNaive>(
+                    {i, c_type})] =
+                    1.0 / params.template get<mio::osecirts::TimeWaningPartialImmunity<FP>>()[i] * y[SPIi];
+                flows[this->template get_flat_flow_index<IS::TemporaryImmunePartialImmunity,
+                                                         IS::SusceptiblePartialImmunity>({i, c_type})] =
+                    1.0 / params.template get<mio::osecirts::TimeTemporaryImmunityPI<FP>>()[i] * y[TImm1];
+
+                flows[this->template get_flat_flow_index<IS::ExposedPartialImmunity,
+                                                         IS::InfectedNoSymptomsPartialImmunity>({i, c_type})] =
+                    y[EPIi] / params.template get<mio::osecirts::TimeExposed<FP>>()[i];
+
+                flows[this->template get_flat_flow_index<IS::InfectedNoSymptomsPartialImmunity,
+                                                         IS::TemporaryImmuneImprovedImmunity>({i, c_type})] =
+                    (1.0 - (reducISyPI / reducEPI) *
+                               (1.0 - params.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<FP>>()[i])) /
+                    (params.template get<mio::osecirts::TimeInfectedNoSymptoms<FP>>()[i] * reducTimeM) * y[INSPIi];
+                flows[this->template get_flat_flow_index<IS::InfectedNoSymptomsPartialImmunity,
+                                                         IS::InfectedSymptomsPartialImmunity>({i, c_type})] =
+                    (reducISyPI / reducEPI) *
+                    (1.0 - params.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<FP>>()[i]) /
+                    (params.template get<mio::osecirts::TimeInfectedNoSymptoms<FP>>()[i] * reducTimeM) * y[INSPIi];
+
+                flows[this->template get_flat_flow_index<IS::InfectedNoSymptomsPartialImmunityConfirmed,
+                                                         IS::InfectedSymptomsPartialImmunityConfirmed>({i, c_type})] =
+                    (reducISyPI / reducEPI) *
+                    (1.0 - params.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<FP>>()[i]) /
+                    (params.template get<mio::osecirts::TimeInfectedNoSymptoms<FP>>()[i] * reducTimeM) * y[INSPICi];
+                flows[this->template get_flat_flow_index<IS::InfectedNoSymptomsPartialImmunityConfirmed,
+                                                         IS::TemporaryImmuneImprovedImmunity>({i, c_type})] =
+                    (1.0 - (reducISyPI / reducEPI) *
+                               (1.0 - params.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<FP>>()[i])) /
+                    (params.template get<mio::osecirts::TimeInfectedNoSymptoms<FP>>()[i] * reducTimeM) * y[INSPICi];
+
+                flows[this->template get_flat_flow_index<IS::InfectedSymptomsPartialImmunity,
+                                                         IS::InfectedSeverePartialImmunity>({i, c_type})] =
+                    reducSevPI / reducISyPI * params.template get<mio::osecirts::SeverePerInfectedSymptoms<FP>>()[i] /
+                    (params.template get<mio::osecirts::TimeInfectedSymptoms<FP>>()[i] * reducTimeM) * y[ISyPIi];
+                flows[this->template get_flat_flow_index<IS::InfectedSymptomsPartialImmunity,
+                                                         IS::TemporaryImmuneImprovedImmunity>({i, c_type})] =
+                    (1.0 - (reducSevPI / reducISyPI) *
+                               params.template get<mio::osecirts::SeverePerInfectedSymptoms<FP>>()[i]) /
+                    (params.template get<mio::osecirts::TimeInfectedSymptoms<FP>>()[i] * reducTimeM) * y[ISyPIi];
+
+                flows[this->template get_flat_flow_index<IS::InfectedSymptomsPartialImmunityConfirmed,
+                                                         IS::InfectedSeverePartialImmunity>({i, c_type})] =
+                    reducSevPI / reducISyPI * params.template get<mio::osecirts::SeverePerInfectedSymptoms<FP>>()[i] /
+                    (params.template get<mio::osecirts::TimeInfectedSymptoms<FP>>()[i] * reducTimeM) * y[ISyPICi];
+                flows[this->template get_flat_flow_index<IS::InfectedSymptomsPartialImmunityConfirmed,
+                                                         IS::TemporaryImmuneImprovedImmunity>({i, c_type})] =
+                    (1.0 - (reducSevPI / reducISyPI) *
+                               params.template get<mio::osecirts::SeverePerInfectedSymptoms<FP>>()[i]) /
+                    (params.template get<mio::osecirts::TimeInfectedSymptoms<FP>>()[i] * reducTimeM) * y[ISyPICi];
+
+                flows[this->template get_flat_flow_index<IS::InfectedSeverePartialImmunity,
+                                                         IS::InfectedCriticalPartialImmunity>({i, c_type})] =
+                    (reducSevPI / reducSevPI) * criticalPerSevereAdjusted /
+                    params.template get<mio::osecirts::TimeInfectedSevere<FP>>()[i] * y[ISevPIi];
+                flows[this->template get_flat_flow_index<IS::InfectedSeverePartialImmunity,
+                                                         IS::TemporaryImmuneImprovedImmunity>({i, c_type})] =
+                    (1.0 - (reducSevPI / reducSevPI) * params.template get<mio::osecirts::CriticalPerSevere<FP>>()[i]) /
+                    params.template get<mio::osecirts::TimeInfectedSevere<FP>>()[i] * y[ISevPIi];
+                flows[this->template get_flat_flow_index<IS::InfectedSeverePartialImmunity, IS::DeadPartialImmunity>(
+                    {i, c_type})] = (reducSevPI / reducSevPI) * deathsPerSevereAdjusted /
+                                    params.template get<mio::osecirts::TimeInfectedSevere<FP>>()[i] * y[ISevPIi];
+
+                flows[this->template get_flat_flow_index<IS::InfectedCriticalPartialImmunity, IS::DeadPartialImmunity>(
+                    {i, c_type})] = (reducSevPI / reducSevPI) *
+                                    params.template get<mio::osecirts::DeathsPerCritical<FP>>()[i] /
+                                    params.template get<mio::osecirts::TimeInfectedCritical<FP>>()[i] * y[ICrPIi];
+                flows[this->template get_flat_flow_index<IS::InfectedCriticalPartialImmunity,
+                                                         IS::TemporaryImmuneImprovedImmunity>({i, c_type})] =
+                    (1.0 - (reducSevPI / reducSevPI) * params.template get<mio::osecirts::DeathsPerCritical<FP>>()[i]) /
+                    params.template get<mio::osecirts::TimeInfectedCritical<FP>>()[i] * y[ICrPIi];
+
+                flows[this->template get_flat_flow_index<IS::ExposedImprovedImmunity,
+                                                         IS::InfectedNoSymptomsImprovedImmunity>({i, c_type})] =
+                    y[EIIi] / params.template get<mio::osecirts::TimeExposed<FP>>()[i];
+
+                flows[this->template get_flat_flow_index<IS::InfectedNoSymptomsImprovedImmunity,
+                                                         IS::TemporaryImmuneImprovedImmunity>({i, c_type})] =
+                    (1.0 - (reducISyII / reducEII) *
+                               (1.0 - params.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<FP>>()[i])) /
+                    (params.template get<mio::osecirts::TimeInfectedNoSymptoms<FP>>()[i] * reducTimeM) * y[INSIIi];
+                flows[this->template get_flat_flow_index<IS::InfectedNoSymptomsImprovedImmunity,
+                                                         IS::InfectedSymptomsImprovedImmunity>({i, c_type})] =
+                    (reducISyII / reducEII) *
+                    (1.0 - params.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<FP>>()[i]) /
+                    (params.template get<mio::osecirts::TimeInfectedNoSymptoms<FP>>()[i] * reducTimeM) * y[INSIIi];
+
+                flows[this->template get_flat_flow_index<IS::InfectedNoSymptomsImprovedImmunityConfirmed,
+                                                         IS::InfectedSymptomsImprovedImmunityConfirmed>({i, c_type})] =
+                    (reducISyII / reducEII) *
+                    (1.0 - params.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<FP>>()[i]) /
+                    (params.template get<mio::osecirts::TimeInfectedNoSymptoms<FP>>()[i] * reducTimeM) * y[INSIICi];
+                flows[this->template get_flat_flow_index<IS::InfectedNoSymptomsImprovedImmunityConfirmed,
+                                                         IS::TemporaryImmuneImprovedImmunity>({i, c_type})] =
+                    (1.0 - (reducISyII / reducEII) *
+                               (1.0 - params.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<FP>>()[i])) /
+                    (params.template get<mio::osecirts::TimeInfectedNoSymptoms<FP>>()[i] * reducTimeM) * y[INSIICi];
+
+                flows[this->template get_flat_flow_index<IS::InfectedSymptomsImprovedImmunity,
+                                                         IS::InfectedSevereImprovedImmunity>({i, c_type})] =
+                    reducSevII / reducISyII * params.template get<mio::osecirts::SeverePerInfectedSymptoms<FP>>()[i] /
+                    (params.template get<mio::osecirts::TimeInfectedSymptoms<FP>>()[i] * reducTimeM) * y[ISyIIi];
+                flows[this->template get_flat_flow_index<IS::InfectedSymptomsImprovedImmunity,
+                                                         IS::TemporaryImmuneImprovedImmunity>({i, c_type})] =
+                    (1.0 - (reducSevII / reducISyII) *
+                               params.template get<mio::osecirts::SeverePerInfectedSymptoms<FP>>()[i]) /
+                    (params.template get<mio::osecirts::TimeInfectedSymptoms<FP>>()[i] * reducTimeM) * y[ISyIIi];
+
+                flows[this->template get_flat_flow_index<IS::InfectedSymptomsImprovedImmunityConfirmed,
+                                                         IS::InfectedSevereImprovedImmunity>({i, c_type})] =
+                    reducSevII / reducISyII * params.template get<mio::osecirts::SeverePerInfectedSymptoms<FP>>()[i] /
+                    (params.template get<mio::osecirts::TimeInfectedSymptoms<FP>>()[i] * reducTimeM) * y[ISyIICi];
+                flows[this->template get_flat_flow_index<IS::InfectedSymptomsImprovedImmunityConfirmed,
+                                                         IS::TemporaryImmuneImprovedImmunity>({i, c_type})] =
+                    (1.0 - (reducSevII / reducISyII) *
+                               params.template get<mio::osecirts::SeverePerInfectedSymptoms<FP>>()[i]) /
+                    (params.template get<mio::osecirts::TimeInfectedSymptoms<FP>>()[i] * reducTimeM) * y[ISyIICi];
+
+                flows[this->template get_flat_flow_index<IS::InfectedSevereImprovedImmunity,
+                                                         IS::InfectedCriticalImprovedImmunity>({i, c_type})] =
+                    (reducSevII / reducSevII) * criticalPerSevereAdjusted /
+                    params.template get<mio::osecirts::TimeInfectedSevere<FP>>()[i] * y[ISevIIi];
+                flows[this->template get_flat_flow_index<IS::InfectedSevereImprovedImmunity,
+                                                         IS::TemporaryImmuneImprovedImmunity>({i, c_type})] =
+                    (1.0 - (reducSevII / reducSevII) * params.template get<mio::osecirts::CriticalPerSevere<FP>>()[i]) /
+                    params.template get<mio::osecirts::TimeInfectedSevere<FP>>()[i] * y[ISevIIi];
+                flows[this->template get_flat_flow_index<IS::InfectedSevereImprovedImmunity, IS::DeadImprovedImmunity>(
+                    {i, c_type})] = (reducSevII / reducSevII) * deathsPerSevereAdjusted /
+                                    params.template get<mio::osecirts::TimeInfectedSevere<FP>>()[i] * y[ISevIIi];
+
+                flows[this->template get_flat_flow_index<IS::InfectedCriticalImprovedImmunity,
+                                                         IS::DeadImprovedImmunity>({i, c_type})] =
+                    (reducSevII / reducSevII) * params.template get<mio::osecirts::DeathsPerCritical<FP>>()[i] /
+                    params.template get<mio::osecirts::TimeInfectedCritical<FP>>()[i] * y[ICrIIi];
+                flows[this->template get_flat_flow_index<IS::InfectedCriticalImprovedImmunity,
+                                                         IS::TemporaryImmuneImprovedImmunity>({i, c_type})] =
+                    (1.0 - (reducSevII / reducSevII) * params.template get<mio::osecirts::DeathsPerCritical<FP>>()[i]) /
+                    params.template get<mio::osecirts::TimeInfectedCritical<FP>>()[i] * y[ICrIIi];
+
+                flows[this->template get_flat_flow_index<IS::TemporaryImmuneImprovedImmunity,
+                                                         IS::SusceptibleImprovedImmunity>({i, c_type})] =
+                    1.0 / params.template get<mio::osecirts::TimeTemporaryImmunityII<FP>>()[i] * y[TImm2];
+                flows[this->template get_flat_flow_index<IS::SusceptibleImprovedImmunity,
+                                                         IS::SusceptiblePartialImmunity>({i, c_type})] =
+                    1.0 / params.template get<mio::osecirts::TimeWaningImprovedImmunity<FP>>()[i] * y[SIIi];
+            }
+
+            // ==========================================================
+            // Commuter flows
+            // ==========================================================
+            for (int c = 0; c < this->m_num_commuter_groups; ++c) {
+                CommuterType c_type = static_cast<CommuterType>(static_cast<int>(CommuterType::CommuterBase) + c);
+                using IS            = mio::osecirts::InfectionState;
+
+                FP criticalPerSevereAdjusted =
+                    mio::smoother_cosine(icu_occupancy, 0.90 * params.template get<mio::osecirts::ICUCapacity<FP>>(),
+                                         params.template get<mio::osecirts::ICUCapacity<FP>>(),
+                                         params.template get<mio::osecirts::CriticalPerSevere<FP>>()[i], 0.0);
+                FP deathsPerSevereAdjusted =
+                    params.template get<mio::osecirts::CriticalPerSevere<FP>>()[i] - criticalPerSevereAdjusted;
+
+                auto riskFromInfectedSymptomatic = mio::smoother_cosine(
+                    test_and_trace_required, params.template get<mio::osecirts::TestAndTraceCapacity<FP>>(),
+                    params.template get<mio::osecirts::TestAndTraceCapacity<FP>>() *
+                        params.template get<mio::osecirts::TestAndTraceCapacityMaxRiskSymptoms<FP>>(),
+                    params.template get<mio::osecirts::RiskOfInfectionFromSymptomatic<FP>>()[i],
+                    params.template get<mio::osecirts::MaxRiskOfInfectionFromSymptomatic<FP>>()[i]);
+
+                auto riskFromInfectedNoSymptoms = mio::smoother_cosine(
+                    test_and_trace_required, params.template get<mio::osecirts::TestAndTraceCapacity<FP>>(),
+                    params.template get<mio::osecirts::TestAndTraceCapacity<FP>>() *
+                        params.template get<mio::osecirts::TestAndTraceCapacityMaxRiskNoSymptoms<FP>>(),
+                    params.template get<mio::osecirts::RelativeTransmissionNoSymptoms<FP>>()[i], 1.0);
+
+                FP ext_inf_force_dummy = 0.0;
+                for (auto j = mio::AgeGroup(0); j < n_agegroups; j++) {
+                    FP season_val =
+                        (1.0 + params.template get<mio::osecirts::Seasonality<FP>>() *
+                                   sin(3.141592653589793 *
+                                       (std::fmod((params.template get<mio::osecirts::StartDay>() + t), 365.0) / 182.5 +
+                                        0.5)));
+                    FP cont_freq_eff =
+                        season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
+                                                                     static_cast<Eigen::Index>((size_t)j));
+                    const FP divNj = (N_per_age_local[static_cast<size_t>(j)] < 1e-12)
+                                         ? 0.0
+                                         : 1.0 / N_per_age_local[static_cast<size_t>(j)];
+
+                    ext_inf_force_dummy +=
+                        cont_freq_eff * divNj *
+                        params.template get<mio::osecirts::TransmissionProbabilityOnContact<FP>>()[i] *
+                        (riskFromInfectedNoSymptoms * I_no_sympt_local[static_cast<size_t>(j)] +
+                         riskFromInfectedSymptomatic * I_sympt_local[static_cast<size_t>(j)]);
+                }
+
+                FP total_SN = y[this->populations.get_flat_index({i, CommuterType::NonCommuter, IS::SusceptibleNaive})];
+                FP total_SPI =
+                    y[this->populations.get_flat_index({i, CommuterType::NonCommuter, IS::SusceptiblePartialImmunity})];
+                FP total_SII = y[this->populations.get_flat_index(
+                    {i, CommuterType::NonCommuter, IS::SusceptibleImprovedImmunity})];
+                for (int c_all = 0; c_all < this->m_num_commuter_groups; ++c_all) {
+                    auto ct_all = static_cast<CommuterType>(static_cast<int>(CommuterType::CommuterBase) + c_all);
                     total_SN += y[this->populations.get_flat_index({i, ct_all, IS::SusceptibleNaive})];
                     total_SPI += y[this->populations.get_flat_index({i, ct_all, IS::SusceptiblePartialImmunity})];
                     total_SII += y[this->populations.get_flat_index({i, ct_all, IS::SusceptibleImprovedImmunity})];
                 }
+
+                size_t SNi    = this->populations.get_flat_index({i, c_type, IS::SusceptibleNaive});
+                size_t ENi    = this->populations.get_flat_index({i, c_type, IS::ExposedNaive});
+                size_t INSNi  = this->populations.get_flat_index({i, c_type, IS::InfectedNoSymptomsNaive});
+                size_t ISyNi  = this->populations.get_flat_index({i, c_type, IS::InfectedSymptomsNaive});
+                size_t ISevNi = this->populations.get_flat_index({i, c_type, IS::InfectedSevereNaive});
+                size_t ICrNi  = this->populations.get_flat_index({i, c_type, IS::InfectedCriticalNaive});
+                size_t INSNCi = this->populations.get_flat_index({i, c_type, IS::InfectedNoSymptomsNaiveConfirmed});
+                size_t ISyNCi = this->populations.get_flat_index({i, c_type, IS::InfectedSymptomsNaiveConfirmed});
+
+                size_t SPIi    = this->populations.get_flat_index({i, c_type, IS::SusceptiblePartialImmunity});
+                size_t EPIi    = this->populations.get_flat_index({i, c_type, IS::ExposedPartialImmunity});
+                size_t INSPIi  = this->populations.get_flat_index({i, c_type, IS::InfectedNoSymptomsPartialImmunity});
+                size_t ISyPIi  = this->populations.get_flat_index({i, c_type, IS::InfectedSymptomsPartialImmunity});
+                size_t ISevPIi = this->populations.get_flat_index({i, c_type, IS::InfectedSeverePartialImmunity});
+                size_t ICrPIi  = this->populations.get_flat_index({i, c_type, IS::InfectedCriticalPartialImmunity});
+                size_t INSPICi =
+                    this->populations.get_flat_index({i, c_type, IS::InfectedNoSymptomsPartialImmunityConfirmed});
+                size_t ISyPICi =
+                    this->populations.get_flat_index({i, c_type, IS::InfectedSymptomsPartialImmunityConfirmed});
+
+                size_t EIIi    = this->populations.get_flat_index({i, c_type, IS::ExposedImprovedImmunity});
+                size_t INSIIi  = this->populations.get_flat_index({i, c_type, IS::InfectedNoSymptomsImprovedImmunity});
+                size_t ISyIIi  = this->populations.get_flat_index({i, c_type, IS::InfectedSymptomsImprovedImmunity});
+                size_t ISevIIi = this->populations.get_flat_index({i, c_type, IS::InfectedSevereImprovedImmunity});
+                size_t ICrIIi  = this->populations.get_flat_index({i, c_type, IS::InfectedCriticalImprovedImmunity});
+                size_t INSIICi =
+                    this->populations.get_flat_index({i, c_type, IS::InfectedNoSymptomsImprovedImmunityConfirmed});
+                size_t ISyIICi =
+                    this->populations.get_flat_index({i, c_type, IS::InfectedSymptomsImprovedImmunityConfirmed});
+
+                size_t TImm1 = this->populations.get_flat_index({i, c_type, IS::TemporaryImmunePartialImmunity});
+                size_t TImm2 = this->populations.get_flat_index({i, c_type, IS::TemporaryImmuneImprovedImmunity});
+                size_t SIIi  = this->populations.get_flat_index({i, c_type, IS::SusceptibleImprovedImmunity});
+
+                FP reducEPI   = params.template get<mio::osecirts::ReducExposedPartialImmunity<FP>>()[i];
+                FP reducEII   = params.template get<mio::osecirts::ReducExposedImprovedImmunity<FP>>()[i];
+                FP reducISyPI = params.template get<mio::osecirts::ReducInfectedSymptomsPartialImmunity<FP>>()[i];
+                FP reducISyII = params.template get<mio::osecirts::ReducInfectedSymptomsImprovedImmunity<FP>>()[i];
+                FP reducSevPI =
+                    params.template get<mio::osecirts::ReducInfectedSevereCriticalDeadPartialImmunity<FP>>()[i];
+                FP reducSevII =
+                    params.template get<mio::osecirts::ReducInfectedSevereCriticalDeadImprovedImmunity<FP>>()[i];
+                FP reducTimeM = params.template get<mio::osecirts::ReducTimeInfectedMild<FP>>()[i];
+
+                FP dummy_SN  = y[SNi] * ext_inf_force_dummy;
+                FP dummy_SPI = y[SPIi] * reducEPI * ext_inf_force_dummy;
+                FP dummy_SII = y[SIIi] * reducEII * ext_inf_force_dummy;
+
+                flows[this->template get_flat_flow_index<IS::SusceptibleNaive, IS::ExposedNaive>({i, c_type})] =
+                    dummy_SN;
+                flows[this->template get_flat_flow_index<IS::SusceptiblePartialImmunity, IS::ExposedPartialImmunity>(
+                    {i, c_type})] = dummy_SPI;
+                flows[this->template get_flat_flow_index<IS::SusceptibleImprovedImmunity, IS::ExposedImprovedImmunity>(
+                    {i, c_type})] = dummy_SII;
 
                 FP frac_SN  = (total_SN > 1e-12) ? (y[SNi] / total_SN) : 0.0;
                 FP frac_SPI = (total_SPI > 1e-12) ? (y[SPIi] / total_SPI) : 0.0;
@@ -300,11 +703,9 @@ public:
                 flows[this->template get_flat_flow_index<IS::SusceptibleNaive, IS::TemporaryImmunePartialImmunity>(
                     {i, c_type})] =
                     std::min(std::max(0.0, y[SNi] - dummy_SN), partial_vaccination[static_cast<size_t>(i)] * frac_SN);
-
                 flows[this->template get_flat_flow_index<IS::SusceptiblePartialImmunity,
                                                          IS::TemporaryImmuneImprovedImmunity>({i, c_type})] =
                     std::min(std::max(0.0, y[SPIi] - dummy_SPI), full_vaccination[static_cast<size_t>(i)] * frac_SPI);
-
                 flows[this->template get_flat_flow_index<IS::SusceptibleImprovedImmunity,
                                                          IS::TemporaryImmuneImprovedImmunity>({i, c_type})] =
                     std::min(std::max(0.0, y[SIIi] - dummy_SII),

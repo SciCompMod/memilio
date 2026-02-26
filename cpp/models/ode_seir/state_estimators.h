@@ -99,7 +99,7 @@ public:
     {
         const auto& params = this->parameters;
 
-        // E->I and I->R flows (same as optimized version)
+        // E->I and I->R flows
         for (mio::AgeGroup g(0); g < mio::AgeGroup(params.get_num_groups()); ++g) {
             {
                 CommuterType commuter_type = CommuterType::NonCommuter;

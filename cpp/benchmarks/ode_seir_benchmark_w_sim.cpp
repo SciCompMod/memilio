@@ -938,7 +938,7 @@ BENCHMARK(mio::benchmark_mio::bench_stage_aligned_rk4)
                 b->Args({i, g});
             }
         }
-    }) -> Name("stage-aligned(RK4_optimized)") -> Unit(::benchmark::kMicrosecond);
+    }) -> Name("stage-aligned(RK4)") -> Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(mio::benchmark_mio::bench_stage_aligned_euler)
     ->Apply([](auto* b) {
@@ -947,7 +947,7 @@ BENCHMARK(mio::benchmark_mio::bench_stage_aligned_euler)
                 b->Args({i, g});
             }
         }
-    }) -> Name("stage-aligned(Euler_optimized)") -> Unit(::benchmark::kMicrosecond);
+    }) -> Name("stage-aligned(Euler)") -> Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(mio::benchmark_mio::bench_auxiliary_euler)
     ->Apply([](auto* b) {
@@ -965,7 +965,7 @@ BENCHMARK(mio::benchmark_mio::bench_stage_aligned_hybrid)
                 b->Args({i, g});
             }
         }
-    }) -> Name("stage-aligned(hybrid_optimized)") -> Unit(::benchmark::kMicrosecond);
+    }) -> Name("stage-aligned(hybrid)") -> Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(mio::benchmark_mio::bench_standard_lagrangian_rk4)
     ->Apply([](auto* b) {
