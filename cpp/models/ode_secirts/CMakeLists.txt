@@ -9,6 +9,7 @@ add_library(ode_secirts
     parameters_io.cpp
     model.h
     model.cpp
+    state_estimators.h
 )
 target_link_libraries(ode_secirts PUBLIC memilio)
 target_include_directories(ode_secirts PUBLIC

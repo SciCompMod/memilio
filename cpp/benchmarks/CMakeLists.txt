@@ -42,3 +42,6 @@ target_link_libraries(graph_simulation_benchmark PRIVATE memilio ode_secirvvs be
 
 add_executable(abm_benchmark abm.cpp)
 target_link_libraries(abm_benchmark PRIVATE abm benchmark::benchmark)
+
+add_executable(ode_secirts_benchmark_stage_aligned ode_secirts_benchmark_stage_aligned.cpp)
+target_link_libraries(ode_secirts_benchmark_stage_aligned PRIVATE memilio ode_secirts benchmark::benchmark)

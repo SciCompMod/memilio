@@ -52,7 +52,6 @@ using Flows = TypeList<
     Flow<InfectionState::InfectedSevereNaive,                         InfectionState::DeadNaive>,
     Flow<InfectionState::InfectedCriticalNaive,                       InfectionState::DeadNaive>,
     Flow<InfectionState::InfectedCriticalNaive,                       InfectionState::TemporaryImmunePartialImmunity>,
-    Flow<InfectionState::TemporaryImmunePartialImmunity,              InfectionState::SusceptiblePartialImmunity>,
     //partial immunity
     Flow<InfectionState::SusceptiblePartialImmunity,                  InfectionState::ExposedPartialImmunity>,
     Flow<InfectionState::SusceptiblePartialImmunity,                  InfectionState::TemporaryImmuneImprovedImmunity>,
@@ -265,7 +264,7 @@ public:
                 // effective contact rate by contact rate between groups i and j and damping j
                 FP season_val    = (1 + params.template get<Seasonality<FP>>() *
                                          sin(3.141592653589793 *
-                                                (std::fmod((params.template get<StartDay>() + t), 365.0) / 182.5 + 0.5)));
+                                             (std::fmod((params.template get<StartDay>() + t), 365.0) / 182.5 + 0.5)));
                 FP cont_freq_eff = season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
                                                                                 static_cast<Eigen::Index>((size_t)j));
                 // without died people
