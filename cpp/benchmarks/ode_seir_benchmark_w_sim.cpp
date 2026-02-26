@@ -187,7 +187,7 @@ const std::vector<int> age_group_counts      = {1, 2, 3, 4, 5, 6, 8, 12, 16};
 
 static void bench_auxiliary_euler(::benchmark::State& state)
 {
-    const int num_commuter_groups = commuter_group_counts[state.range(0)];
+    const int num_commuter_groups = state.range(0);
     const size_t num_age_groups   = static_cast<size_t>(state.range(1));
     const auto num_patches        = num_commuter_groups + 1;
     mio::set_log_level(mio::LogLevel::critical);
@@ -236,7 +236,7 @@ static void bench_auxiliary_euler(::benchmark::State& state)
 
 static void bench_stage_aligned_rk4(::benchmark::State& state)
 {
-    const int num_commuter_groups = commuter_group_counts[state.range(0)];
+    const int num_commuter_groups = state.range(0);
     const size_t num_age_groups   = static_cast<size_t>(state.range(1));
     const auto num_patches        = num_commuter_groups + 1;
     mio::set_log_level(mio::LogLevel::critical);
@@ -399,7 +399,7 @@ static void bench_stage_aligned_rk4(::benchmark::State& state)
 
 static void bench_standard_lagrangian_rk4(::benchmark::State& state)
 {
-    const int num_commuter_groups = commuter_group_counts[state.range(0)];
+    const int num_commuter_groups = state.range(0);
     const size_t num_age_groups   = static_cast<size_t>(state.range(1));
     const auto num_patches        = num_commuter_groups + 1;
     mio::set_log_level(mio::LogLevel::critical);
@@ -422,7 +422,7 @@ static void bench_standard_lagrangian_rk4(::benchmark::State& state)
 
 static void bench_standard_lagrangian_euler(::benchmark::State& state)
 {
-    const int num_commuter_groups = commuter_group_counts[state.range(0)];
+    const int num_commuter_groups = state.range(0);
     const size_t num_age_groups   = static_cast<size_t>(state.range(1));
     const auto num_patches        = num_commuter_groups + 1;
     mio::set_log_level(mio::LogLevel::critical);
@@ -444,7 +444,7 @@ static void bench_standard_lagrangian_euler(::benchmark::State& state)
 
 static void bench_stage_aligned_euler(::benchmark::State& state)
 {
-    const int num_commuter_groups = commuter_group_counts[state.range(0)];
+    const int num_commuter_groups = state.range(0);
     const size_t num_age_groups   = static_cast<size_t>(state.range(1));
     const auto num_patches        = num_commuter_groups + 1;
     mio::set_log_level(mio::LogLevel::critical);
@@ -532,7 +532,7 @@ static void bench_stage_aligned_euler(::benchmark::State& state)
 
 static void bench_stage_aligned_hybrid(::benchmark::State& state)
 {
-    const int num_commuter_groups = commuter_group_counts[state.range(0)];
+    const int num_commuter_groups = state.range(0);
     const size_t num_age_groups   = static_cast<size_t>(state.range(1));
     const auto num_patches        = num_commuter_groups + 1;
     mio::set_log_level(mio::LogLevel::critical);
@@ -635,7 +635,7 @@ static void bench_stage_aligned_hybrid(::benchmark::State& state)
 template <class Integrator>
 static void bench_matrix_phi_reconstruction(::benchmark::State& state)
 {
-    const int num_commuter_groups = commuter_group_counts[state.range(0)];
+    const int num_commuter_groups = state.range(0);
     const size_t num_age_groups   = static_cast<size_t>(state.range(1));
     const auto num_patches        = num_commuter_groups + 1;
     mio::set_log_level(mio::LogLevel::critical);
@@ -789,7 +789,7 @@ struct AugmentedPhiSystemBlockDiag {
 template <class Integrator>
 static void bench_matrix_phi_reconstruction_blockdiag(::benchmark::State& state)
 {
-    const int num_commuter_groups = commuter_group_counts[state.range(0)];
+    const int num_commuter_groups = state.range(0);
     const size_t num_age_groups   = static_cast<size_t>(state.range(1));
     const auto num_patches        = num_commuter_groups + 1;
     mio::set_log_level(mio::LogLevel::critical);
@@ -862,7 +862,7 @@ static void bench_matrix_phi_reconstruction_blockdiag_rk4(benchmark::State& stat
 
 BENCHMARK(bench_matrix_phi_reconstruction_blockdiag_rk4)
     ->Apply([](auto* b) {
-        for (int i = 0; i < static_cast<int>(mio::benchmark_mio::commuter_group_counts.size()); ++i) {
+        for (int i : mio::benchmark_mio::commuter_group_counts) {
             for (int g : mio::benchmark_mio::age_group_counts) {
                 b->Args({i, g});
             }
@@ -877,7 +877,7 @@ static void bench_matrix_phi_reconstruction_blockdiag_euler(benchmark::State& st
 
 BENCHMARK(bench_matrix_phi_reconstruction_blockdiag_euler)
     ->Apply([](auto* b) {
-        for (int i = 0; i < static_cast<int>(mio::benchmark_mio::commuter_group_counts.size()); ++i) {
+        for (int i : mio::benchmark_mio::commuter_group_counts) {
             for (int g : mio::benchmark_mio::age_group_counts) {
                 b->Args({i, g});
             }
@@ -892,7 +892,7 @@ static void bench_matrix_phi_reconstruction_rk4(benchmark::State& state)
 
 BENCHMARK(bench_matrix_phi_reconstruction_rk4)
     ->Apply([](auto* b) {
-        for (int i = 0; i < static_cast<int>(mio::benchmark_mio::commuter_group_counts.size()); ++i) {
+        for (int i : mio::benchmark_mio::commuter_group_counts) {
             for (int g : mio::benchmark_mio::age_group_counts) {
                 b->Args({i, g});
             }
@@ -907,7 +907,7 @@ static void bench_matrix_phi_reconstruction_euler(benchmark::State& state)
 
 BENCHMARK(bench_matrix_phi_reconstruction_euler)
     ->Apply([](auto* b) {
-        for (int i = 0; i < static_cast<int>(mio::benchmark_mio::commuter_group_counts.size()); ++i) {
+        for (int i : mio::benchmark_mio::commuter_group_counts) {
             for (int g : mio::benchmark_mio::age_group_counts) {
                 b->Args({i, g});
             }
@@ -916,7 +916,7 @@ BENCHMARK(bench_matrix_phi_reconstruction_euler)
 
 BENCHMARK(mio::benchmark_mio::bench_stage_aligned_rk4)
     ->Apply([](auto* b) {
-        for (int i = 0; i < static_cast<int>(mio::benchmark_mio::commuter_group_counts.size()); ++i) {
+        for (int i : mio::benchmark_mio::commuter_group_counts) {
             for (int g : mio::benchmark_mio::age_group_counts) {
                 b->Args({i, g});
             }
@@ -925,7 +925,7 @@ BENCHMARK(mio::benchmark_mio::bench_stage_aligned_rk4)
 
 BENCHMARK(mio::benchmark_mio::bench_stage_aligned_euler)
     ->Apply([](auto* b) {
-        for (int i = 0; i < static_cast<int>(mio::benchmark_mio::commuter_group_counts.size()); ++i) {
+        for (int i : mio::benchmark_mio::commuter_group_counts) {
             for (int g : mio::benchmark_mio::age_group_counts) {
                 b->Args({i, g});
             }
@@ -934,7 +934,7 @@ BENCHMARK(mio::benchmark_mio::bench_stage_aligned_euler)
 
 BENCHMARK(mio::benchmark_mio::bench_auxiliary_euler)
     ->Apply([](auto* b) {
-        for (int i = 0; i < static_cast<int>(mio::benchmark_mio::commuter_group_counts.size()); ++i) {
+        for (int i : mio::benchmark_mio::commuter_group_counts) {
             for (int g : mio::benchmark_mio::age_group_counts) {
                 b->Args({i, g});
             }
@@ -943,7 +943,7 @@ BENCHMARK(mio::benchmark_mio::bench_auxiliary_euler)
 
 BENCHMARK(mio::benchmark_mio::bench_stage_aligned_hybrid)
     ->Apply([](auto* b) {
-        for (int i = 0; i < static_cast<int>(mio::benchmark_mio::commuter_group_counts.size()); ++i) {
+        for (int i : mio::benchmark_mio::commuter_group_counts) {
             for (int g : mio::benchmark_mio::age_group_counts) {
                 b->Args({i, g});
             }
@@ -952,7 +952,8 @@ BENCHMARK(mio::benchmark_mio::bench_stage_aligned_hybrid)
 
 BENCHMARK(mio::benchmark_mio::bench_standard_lagrangian_rk4)
     ->Apply([](auto* b) {
-        for (int i = 0; i < static_cast<int>(mio::benchmark_mio::commuter_group_counts.size()); ++i) {
+        for (int i : mio::benchmark_mio::commuter_group_counts) {
+
             for (int g : mio::benchmark_mio::age_group_counts) {
                 b->Args({i, g});
             }
@@ -961,7 +962,7 @@ BENCHMARK(mio::benchmark_mio::bench_standard_lagrangian_rk4)
 
 BENCHMARK(mio::benchmark_mio::bench_standard_lagrangian_euler)
     ->Apply([](auto* b) {
-        for (int i = 0; i < static_cast<int>(mio::benchmark_mio::commuter_group_counts.size()); ++i) {
+        for (int i : mio::benchmark_mio::commuter_group_counts) {
             for (int g : mio::benchmark_mio::age_group_counts) {
                 b->Args({i, g});
             }

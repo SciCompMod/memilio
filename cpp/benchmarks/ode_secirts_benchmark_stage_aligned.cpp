@@ -25,7 +25,7 @@ const ScalarType t0    = 0.0;
 const ScalarType t_max = 0.5;
 const ScalarType dt    = 0.1;
 
-const std::vector<int> commuter_group_counts = {1, 4, 16, 64, 128, 256, 512, 1024};
+const std::vector<int> commuter_group_counts = {16, 32, 64, 128, 256, 512, 1024};
 const std::vector<int> age_group_counts      = {1, 2, 3, 4, 5, 6};
 
 template <class ModelType>
