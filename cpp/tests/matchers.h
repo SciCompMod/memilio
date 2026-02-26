@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_TESTS_MATCHERS_H
-#define EPI_TESTS_MATCHERS_H
+#ifndef MIO_TESTS_MATCHERS_H
+#define MIO_TESTS_MATCHERS_H
 
 #include "memilio/config.h"
 #include "memilio/utils/compiler_diagnostics.h"
@@ -238,4 +238,4 @@ auto ElementsAreLinspace(T b, T e, size_t num_points)
     return testing::ElementsAreArray(values);
 }
 
-#endif //EPI_TESTS_MATCHERS_H
+#endif // MIO_TESTS_MATCHERS_H

@@ -20,21 +20,15 @@
 #ifndef METAPOPULATION_MOBILITY_INSTANT_H
 #define METAPOPULATION_MOBILITY_INSTANT_H
 
-#include "memilio/mobility/graph_simulation.h"
-#include "memilio/utils/time_series.h"
-#include "memilio/math/eigen.h"
-#include "memilio/math/eigen_util.h"
-#include "memilio/utils/metaprogramming.h"
-#include "memilio/utils/compiler_diagnostics.h"
-#include "memilio/math/euler.h"
+#include "memilio/compartments/simulation.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/epidemiology/dynamic_npis.h"
-#include "memilio/compartments/simulation.h"
-#include "memilio/utils/date.h"
-
-#include "boost/filesystem.hpp"
-
-#include <cassert>
+#include "memilio/math/eigen.h"
+#include "memilio/math/euler.h"
+#include "memilio/math/eigen_util.h"
+#include "memilio/mobility/graph_simulation.h"
+#include "memilio/utils/compiler_diagnostics.h"
+#include "memilio/utils/time_series.h"
 
 namespace mio
 {
@@ -48,7 +42,8 @@ class SimulationNode
 public:
     using Simulation = Sim;
 
-    template <class... Args, typename = std::enable_if_t<std::is_constructible<Sim, Args...>::value, void>>
+    template <class... Args>
+        requires std::is_constructible_v<Sim, Args...>
     SimulationNode(Args&&... args)
         : m_simulation(std::forward<Args>(args)...)
         , m_last_state(m_simulation.get_result().get_last_value())
@@ -463,7 +458,7 @@ void MobilityEdge<FP>::add_mobility_result_time_point(const FP t)
  * @param t time of mobility
  * @param dt time between mobility and return
  */
-template <typename FP, class Sim, class = std::enable_if_t<is_compartment_model_simulation<FP, Sim>::value>>
+template <typename FP, IsCompartmentalModelSimulation<FP> Sim>
 void calculate_mobility_returns(Eigen::Ref<typename TimeSeries<FP>::Vector> mobile_population, const Sim& sim,
                                 Eigen::Ref<const typename TimeSeries<FP>::Vector> total, FP t, FP dt)
 {
@@ -477,13 +472,6 @@ void calculate_mobility_returns(Eigen::Ref<typename TimeSeries<FP>::Vector> mobi
 }
 
 /**
- * detect a get_infections_relative function for the Model type.
- */
-template <typename FP, class Sim>
-using get_infections_relative_expr_t = decltype(get_infections_relative<FP>(
-    std::declval<const Sim&>(), std::declval<FP>(), std::declval<const Eigen::Ref<const Eigen::VectorX<FP>>&>()));
-
-/**
  * get the percantage of infected people of the total population in the node
  * If dynamic NPIs are enabled, there needs to be an overload of get_infections_relative(model, y)
  * for the Model type that can be found with argument-dependent lookup. Ideally define get_infections_relative
@@ -495,7 +483,7 @@ using get_infections_relative_expr_t = decltype(get_infections_relative<FP>(
 template <typename FP, class Sim>
 FP get_infections_relative(const SimulationNode<FP, Sim>& node, FP t, const Eigen::Ref<const Eigen::VectorX<FP>>& y)
 {
-    if constexpr (is_expression_valid<get_infections_relative_expr_t, FP, Sim>::value) {
+    if constexpr (requires { get_infections_relative<FP>(node.get_simulation(), t, y); }) {
         return get_infections_relative<FP>(node.get_simulation(), t, y);
     }
     else {
@@ -505,13 +493,6 @@ FP get_infections_relative(const SimulationNode<FP, Sim>& node, FP t, const Eige
         return FP{0};
     }
 }
-
-/**
- * detect a get_mobility_factors function for the Model type.
- */
-template <typename FP, class Sim>
-using get_mobility_factors_expr_t = decltype(get_mobility_factors<FP>(
-    std::declval<const Sim&>(), std::declval<FP>(), std::declval<const Eigen::Ref<const Eigen::VectorX<FP>>&>()));
 
 /**
  * Get an additional mobility factor.
@@ -527,7 +508,7 @@ using get_mobility_factors_expr_t = decltype(get_mobility_factors<FP>(
 template <typename FP, class Sim>
 auto get_mobility_factors(const SimulationNode<FP, Sim>& node, FP t, const Eigen::Ref<const Eigen::VectorX<FP>>& y)
 {
-    if constexpr (is_expression_valid<get_mobility_factors_expr_t, FP, Sim>::value) {
+    if constexpr (requires { get_mobility_factors<FP>(node.get_simulation(), t, y); }) {
         return get_mobility_factors<FP>(node.get_simulation(), t, y);
     }
     else {
@@ -537,13 +518,6 @@ auto get_mobility_factors(const SimulationNode<FP, Sim>& node, FP t, const Eigen
         return Eigen::VectorX<FP>::Ones(y.rows());
     }
 }
-
-/**
- * detect a get_mobility_factors function for the Model type.
- */
-template <typename FP, class Sim>
-using test_commuters_expr_t = decltype(test_commuters<FP>(
-    std::declval<Sim&>(), std::declval<Eigen::Ref<Eigen::VectorX<FP>>>(), std::declval<FP>()));
 
 /**
  * Test persons when moving from their source node.
@@ -558,7 +532,7 @@ using test_commuters_expr_t = decltype(test_commuters<FP>(
 template <typename FP, class Sim>
 void test_commuters(SimulationNode<FP, Sim>& node, Eigen::Ref<Eigen::VectorX<FP>> mobile_population, FP time)
 {
-    if constexpr (is_expression_valid<test_commuters_expr_t, FP, Sim>::value) {
+    if constexpr (requires { test_commuters<FP>(node.get_simulation(), mobile_population, time); }) {
         test_commuters<FP>(node.get_simulation(), mobile_population, time);
     }
     else {

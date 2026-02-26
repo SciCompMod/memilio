@@ -21,11 +21,8 @@
 #define MIO_IO_DEFAULT_SERIALIZE_H_
 
 #include "memilio/io/io.h"
-#include "memilio/utils/metaprogramming.h"
 
 #include <tuple>
-#include <type_traits>
-#include <utility>
 
 namespace mio
 {
@@ -59,15 +56,6 @@ struct NamedRef {
 
 namespace details
 {
-
-/**
- * @brief Helper type to detect whether T has a default_serialize member function.
- * Use has_default_serialize.
- * @tparam T Any type.
- */
-template <class T>
-using default_serialize_expr_t = decltype(std::declval<T>().default_serialize());
-
 /// Add a name-value pair to an io object.
 template <class IOObject, class Member>
 void add_named_ref(IOObject& obj, const NamedRef<Member> named_ref)
@@ -191,11 +179,26 @@ struct DefaultFactory {
 };
 
 /**
- * @brief Detect whether T has a default_serialize member function.
+ * @brief Detect whether T has a default_serialize member function, but no serialize member. 
  * @tparam T Any type.
+ * @tparam IOContext Any context, e.g. JsonContext.
  */
-template <class T>
-using has_default_serialize = is_expression_valid<details::default_serialize_expr_t, T>;
+template <class T, class IOContext>
+concept IsDefaultSerializable = requires(T t) {
+    t.default_serialize();
+    !HasSerialize<T, IOContext>;
+};
+
+/**
+ * @brief Detect whether T has a default_serialize member function, but no deserialize member. 
+ * @tparam T Any type.
+ * @tparam IOContext Any context, e.g. JsonContext.
+ */
+template <class T, class IOContext>
+concept IsDefaultDeserializable = requires(T t) {
+    t.default_serialize();
+    !HasDeserialize<T, IOContext>;
+};
 
 /**
  * @brief Serialization implementation for the default serialization feature.
@@ -206,14 +209,11 @@ using has_default_serialize = is_expression_valid<details::default_serialize_exp
  * @param io An IO context.
  * @param a An instance of DefaultSerializable to be serialized.
  */
-template <class IOContext, class DefaultSerializable,
-          std::enable_if_t<has_default_serialize<DefaultSerializable>::value &&
-                               !has_serialize<IOContext, DefaultSerializable>::value,
-                           DefaultSerializable*> = nullptr>
-void serialize_internal(IOContext& io, const DefaultSerializable& a)
+template <class IOContext, IsDefaultSerializable<IOContext> T>
+void serialize_internal(IOContext& io, const T& a)
 {
-    // Note that the following cons_cast is only safe if we do not modify members.
-    const auto members = const_cast<DefaultSerializable&>(a).default_serialize();
+    // Note that the following cons_cast is safe as long as we do not modify members.
+    const auto members = const_cast<T&>(a).default_serialize();
     // unpack members and serialize
     std::apply(
         [&io, &members](auto... named_refs) {
@@ -224,7 +224,7 @@ void serialize_internal(IOContext& io, const DefaultSerializable& a)
 
 /**
  * @brief Deserialization implementation for the default serialization feature.
- * Disables itself (SFINAE) if there is no default_serialize member or if a deserialize meember is present.
+ * Disables itself (SFINAE) if there is no default_serialize member or if a deserialize member is present.
  * Generates the deserialize method depending on the NamedRefs given by default_serialize.
  * @tparam IOContext A type that models the IOContext concept.
  * @tparam DefaultSerializable A type that can be default serialized.
@@ -232,15 +232,12 @@ void serialize_internal(IOContext& io, const DefaultSerializable& a)
  * @param tag Defines the type of the object that is to be deserialized (i.e. DefaultSerializble).
  * @return The restored object if successful, an error otherwise.
  */
-template <class IOContext, class DefaultSerializable,
-          std::enable_if_t<has_default_serialize<DefaultSerializable>::value &&
-                               !has_deserialize<IOContext, DefaultSerializable>::value,
-                           DefaultSerializable*> = nullptr>
-IOResult<DefaultSerializable> deserialize_internal(IOContext& io, Tag<DefaultSerializable> tag)
+template <class IOContext, IsDefaultDeserializable<IOContext> T>
+IOResult<T> deserialize_internal(IOContext& io, Tag<T> tag)
 {
     mio::unused(tag);
-    DefaultSerializable a = DefaultFactory<DefaultSerializable>::create();
-    auto members          = a.default_serialize();
+    T a          = DefaultFactory<T>::create();
+    auto members = a.default_serialize();
     // unpack members and deserialize
     return std::apply(
         [&io, &members, &a](auto... named_refs) {

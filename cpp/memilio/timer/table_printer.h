@@ -25,10 +25,12 @@
 #include "memilio/utils/logging.h" // included for fmt
 
 #include <algorithm>
+#include <iomanip>
+#include <iostream>
 #include <limits>
-#include <ostream>
 #include <list>
 #include <map>
+#include <ostream>
 #include <string>
 #include <vector>
 

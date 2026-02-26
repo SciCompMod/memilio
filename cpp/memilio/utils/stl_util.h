@@ -17,12 +17,11 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef STL_UTIL_H
-#define STL_UTIL_H
-
-#include "memilio/utils/metaprogramming.h"
+#ifndef MIO_UTIL_STL_UTIL_H
+#define MIO_UTIL_STL_UTIL_H
 
 #include <array>
+#include <concepts>
 #include <numeric>
 #include <vector>
 #include <algorithm>
@@ -87,127 +86,140 @@ void insert_sorted_replace(std::vector<T>& vec, T const& item)
 }
 
 /**
- * @brief immutable random access range, e.g. a piece of a vector, represented by a pair of iterators
- * immutable means no elements can be added or removed. the elements themselves 
- * can be modified if the iterators that make up the range allow it.
+ * @brief A range of items defined by two iterators.
+ * Models an immutable random access range, e.g. a piece of a vector. Immutable means that elements can not be added or
+ * removed, while the elements themselves can be modified, if the iterators that make up the range allow it.
+ * @tparam Iterator An iterator to the beginning of the range.
+ * @tparam Sentinel A sentinel to the end of the range. Defaults to the same type as Iterator.
  */
-template <class IterPair>
+template <class Iterator, class Sentinel = Iterator>
+    requires std::input_or_output_iterator<Iterator> && std::input_or_output_iterator<Sentinel> &&
+             std::equality_comparable_with<Iterator, Sentinel>
 class Range
 {
+    // TODO: Make this a thin wrapper for std::ranges::subrange, once we have the ranges library (min libc++ version 16)
 public:
-    using Iterators              = IterPair;
-    using iterator               = typename IterPair::first_type;
-    using const_iterator         = typename IterPair::first_type;
+    // Type definitions for STL compatible containers.
+    using iterator               = Iterator;
+    using const_iterator         = iterator;
     using reverse_iterator       = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
     using value_type             = typename std::iterator_traits<iterator>::value_type;
     using reference              = typename std::iterator_traits<iterator>::reference;
 
-    Range(IterPair iter_pair)
-        : m_iter_pair(iter_pair)
+    /// @brief Directly construct a Range from two iterators.
+    Range(Iterator begin, Sentinel end)
+        : m_iterator(std::move(begin))
+        , m_sentinel(std::move(end))
+    {
+    }
+    /// @brief Construct a Range from another range.
+    template <class T>
+    Range(T&& range)
+        : m_iterator(std::forward<T>(range).begin())
+        , m_sentinel(std::forward<T>(range).end())
+    {
+    }
+    /// @brief Construct a Range from an std::pair of iterators.
+    template <class I, class S>
+    Range(std::pair<I, S> iterator_pair)
+        : m_iterator(std::move(iterator_pair).first)
+        , m_sentinel(std::move(iterator_pair).second)
     {
     }
 
-    /** @brief index operator.
-     * constant complexity if random access iterator, linear otherwise
-     */
-    reference operator[](size_t idx) const
+    /// @brief Get an iterator to the start of the range, pointing at the first element of the range.
+    Iterator begin() const
     {
-        auto it = begin();
-        std::advance(it, idx);
-        return *it;
+        return m_iterator;
+    }
+    /// @brief Get an iterator at the end of the range, pointing to one element after the last in the range.
+    Sentinel end() const
+    {
+        return m_sentinel;
     }
 
+    /// @brief Get a reference to the first element in the range.
+    reference front() const
+        requires std::forward_iterator<iterator>
+    {
+        return *(begin());
+    }
+    /// @brief Get a reference to the last element in the range.
     reference back() const
+        requires std::bidirectional_iterator<iterator>
     {
         return *(--end());
     }
 
+    /// @brief Obtains the size of the range.
     size_t size() const
     {
         return static_cast<size_t>(std::distance(begin(), end()));
     }
-
-    auto begin() const
+    /// @brief Checks whether the range is empty.
+    bool empty() const
     {
-        return m_iter_pair.first;
+        return size() == 0;
     }
 
-    auto end() const
+    /**
+     * @brief Access operator.
+     * @param[in] index An index into the range.
+     * @return Returns a reference to the element at the given index.
+     * Has constant complexity if random access iterator, linear otherwise
+     */
+    reference operator[](size_t index) const
     {
-        return m_iter_pair.second;
+        assert(index < size());
+        auto it = begin();
+        std::advance(it, index);
+        return *it;
     }
 
-    template <class T = typename std::iterator_traits<iterator>::iterator_category,
-              class   = std::enable_if_t<std::is_base_of<std::bidirectional_iterator_tag, T>::value>>
-    auto rbegin() const
+    /// @brief Get a reverse iterator, starting at the end of the range.
+    decltype(auto) rbegin() const
+        requires std::bidirectional_iterator<iterator>
     {
         return std::make_reverse_iterator(end());
     }
-
-    template <class T = typename std::iterator_traits<iterator>::iterator_category,
-              class   = std::enable_if_t<std::is_base_of<std::bidirectional_iterator_tag, T>::value>>
-    auto rend() const
+    /// @brief Get a reverse iterator, ending at the start of the range.
+    decltype(auto) rend() const
+        requires std::bidirectional_iterator<iterator>
     {
         return std::make_reverse_iterator(begin());
     }
 
 private:
-    IterPair m_iter_pair;
+    Iterator m_iterator;
+    Sentinel m_sentinel;
 };
 
-/**
- * @brief factories for template argument deduction
- */
-template <class IterPair>
-auto make_range(IterPair&& p)
-{
-    return Range<std::remove_reference_t<std::remove_cv_t<IterPair>>>{p};
-}
+/// @brief Deduction guide to correctly deduce range type when constructed from a pair.
+template <class I, class S>
+Range(std::pair<I, S> iterator_pair) -> Range<I, S>;
 
-template <class Iter1, class Iter2>
-auto make_range(Iter1&& iter1, Iter2&& iter2)
-{
-    return make_range(std::make_pair(iter1, iter2));
-}
+/// @brief Deduction guide to correctly deduce range type when constructed from another range.
+template <class T>
+Range(T&& range) -> Range<decltype(range.begin()), decltype(range.end())>;
 
-/**
- * meta function to check type T for an existing stream output operator "<<"
- */
+/// @brief Concept to check if type T has an existing stream output operator "<<".
 template <class T>
-using ostream_op_expr_t = decltype(std::declval<std::ostream&>() << std::declval<T>());
-template <class T>
-using has_ostream_op = is_expression_valid<ostream_op_expr_t, T>;
-
-/**
- * meta function to check type T for an existing equality comparison operator
- */
-template <class T>
-using eq_op_t = decltype(std::declval<T>() == std::declval<T>());
-template <class T>
-using has_eq_op = is_expression_valid<eq_op_t, T>;
-
-/**
- * meta function to check type T for beeing an iterator
- */
-template <class T>
-using is_iterator_expr_t = typename std::iterator_traits<T>::iterator_category;
-template <class T>
-using is_iterator = is_expression_valid<is_iterator_expr_t, T>;
+concept HasOstreamOperator = requires(std::ostream os, T t) { os << t; };
 
 namespace details
 {
 /**
-     * length of a null terminated C string
-     */
+ * length of a null terminated C string
+ */
 inline size_t string_length(const char* str)
 {
     return std::strlen(str);
 }
 
 /**
-     * length of a string (e.g std::string)
-     */
+ * length of a string (e.g std::string)
+ */
 template <class String>
 size_t string_length(String&& str)
 {
@@ -215,19 +227,19 @@ size_t string_length(String&& str)
 }
 
 /**
-     * breaks the recursion of path_join_rec.
-     */
+ * breaks the recursion of path_join_rec.
+ */
 inline void path_join_rec(std::stringstream&, bool)
 {
 }
 
 /**
-     * recursive template helper function to join paths
-     * @param ss stream that collects the result
-     * @param writeSeparator add separator before adding the next part of the path
-     * @param head next part of the path to add
-     * @param tail remaining parts of the path
-     */
+ * recursive template helper function to join paths
+ * @param ss stream that collects the result
+ * @param writeSeparator add separator before adding the next part of the path
+ * @param head next part of the path to add
+ * @param tail remaining parts of the path
+ */
 template <class Head, class... Tail>
 void path_join_rec(std::stringstream& ss, bool writeSeparator, Head&& head, Tail&&... tail)
 {
@@ -325,11 +337,9 @@ constexpr std::array<T, size_t(T::Count)> enum_members()
 template <class T>
 using VectorRange =
     std::conditional_t<std::is_const_v<T>,
-                       typename mio::Range<std::pair<typename std::vector<std::remove_const_t<T>>::const_iterator,
-                                                     typename std::vector<std::remove_const_t<T>>::const_iterator>>,
-                       typename mio::Range<std::pair<typename std::vector<std::remove_const_t<T>>::iterator,
-                                                     typename std::vector<std::remove_const_t<T>>::iterator>>>;
+                       typename mio::Range<typename std::vector<std::remove_const_t<T>>::const_iterator>,
+                       typename mio::Range<typename std::vector<std::remove_const_t<T>>::iterator>>;
 
 } // namespace mio
 
-#endif //STL_UTIL_H
+#endif // MIO_UTIL_STL_UTIL_H

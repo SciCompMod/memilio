@@ -20,8 +20,9 @@
 #ifndef MIO_COMPARTMENTS_COMPARTMENTAL_MODEL_H
 #define MIO_COMPARTMENTS_COMPARTMENTAL_MODEL_H
 
-#include "memilio/config.h"
-#include "memilio/math/eigen.h"
+#include "memilio/config.h" // IWYU pragma: keep
+#include "memilio/math/eigen.h" // IWYU pragma: keep
+
 #include <concepts>
 
 namespace mio

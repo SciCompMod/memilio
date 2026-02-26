@@ -27,6 +27,26 @@
 #include <cmath>
 #include <limits>
 
+namespace ad
+{
+namespace internal
+{
+
+/**
+ * @brief Format AD types (like ad::gt1s<double>::type) using their value for logging with spdlog.
+ *
+ * If derivative information is needed as well, use `ad::derivative(...)` or define a `fmt::formatter<...>`.
+ */
+template <class FP, class DataHandler>
+const FP& format_as(const active_type<FP, DataHandler>& ad_type)
+{
+    // Note: the format_as function needs to be in the same namespace as the value it takes
+    return value(ad_type);
+}
+
+} // namespace internal
+} // namespace ad
+
 // Allow std::numeric_limits to work with AD types.
 template <class FP, class DataHandler>
 struct std::numeric_limits<ad::internal::active_type<FP, DataHandler>> : public numeric_limits<FP> {

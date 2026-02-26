@@ -20,14 +20,16 @@
 #ifndef MIO_GEOGRAPHY_RTREE_H
 #define MIO_GEOGRAPHY_RTREE_H
 
-#include "memilio/utils/back_inserter_second_element.h"
 #include "memilio/geography/distance.h"
+#include "memilio/utils/back_inserter_second_element.h"
+
 #include <boost/geometry/geometries/multi_polygon.hpp>
+#include <boost/geometry/geometry.hpp>
 #include <boost/geometry/index/rtree.hpp>
 #include <boost/geometry/strategies/cartesian/buffer_side_straight.hpp>
 #include <boost/geometry/strategies/geographic/buffer_point_circle.hpp>
-#include <boost/geometry/geometry.hpp>
-#include <math.h>
+
+#include <cmath>
 #include <iterator>
 #include <type_traits>
 #include <vector>
@@ -71,11 +73,11 @@ public:
      */
     template <IsSphericalLocation Location>
     RTree(const std::vector<Location>& locations)
-        : rtree{}
+        : m_rtree{}
     {
         for (size_t index = 0; index < locations.size(); index++) {
             Point point(locations[index].get_longitude(), locations[index].get_latitude());
-            rtree.insert(Node(point, index));
+            m_rtree.insert(Node(point, index));
         }
     }
 
@@ -86,7 +88,7 @@ public:
      */
     auto size() const
     {
-        return rtree.size();
+        return m_rtree.size();
     }
 
     /**
@@ -103,7 +105,7 @@ public:
 
         Point point(location.get_longitude(), location.get_latitude());
         std::vector<size_t> indices;
-        query(rtree, nearest(point, number), mio::back_inserter_second_element<std::vector<size_t>, Node>{indices});
+        query(m_rtree, nearest(point, number), mio::back_inserter_second_element<std::vector<size_t>, Node>{indices});
         return indices;
     }
 
@@ -121,7 +123,7 @@ public:
 
         auto circle = create_circle_approximation(location, radius);
         std::vector<size_t> indices;
-        query(rtree, covered_by(circle), mio::back_inserter_second_element<std::vector<size_t>, Node>{indices});
+        query(m_rtree, covered_by(circle), mio::back_inserter_second_element<std::vector<size_t>, Node>{indices});
         return indices;
     }
 
@@ -142,7 +144,7 @@ public:
         auto max_radius = std::max_element(radii.begin(), radii.end());
         auto circle     = create_circle_approximation(location, *max_radius);
         std::vector<Node> nodes;
-        query(rtree, covered_by(circle), std::back_inserter(nodes));
+        query(m_rtree, covered_by(circle), std::back_inserter(nodes));
         auto midpoint = Point(location.get_longitude(), location.get_latitude());
         std::vector<std::vector<size_t>> result;
         for (const auto& radius : radii) {
@@ -177,7 +179,7 @@ public:
         auto circle = create_circle_approximation(location, radius);
 
         std::vector<Node> nodes;
-        query(rtree, covered_by(circle), std::back_inserter(nodes));
+        query(m_rtree, covered_by(circle), std::back_inserter(nodes));
         auto midpoint = Point(location.get_longitude(), location.get_latitude());
         std::vector<size_t> indices;
         indices.reserve(nodes.size());
@@ -224,8 +226,8 @@ private:
     }
 
     // Arbitrarily chosen value - can be changed for better performance in different use cases.
-    constexpr static size_t max_number_of_elements_per_tree_node = 16;
-    boost::geometry::index::rtree<Node, boost::geometry::index::rstar<max_number_of_elements_per_tree_node>> rtree;
+    constexpr static size_t m_max_number_of_elements_per_tree_node = 16;
+    boost::geometry::index::rtree<Node, boost::geometry::index::rstar<m_max_number_of_elements_per_tree_node>> m_rtree;
 };
 
 } // namespace geo

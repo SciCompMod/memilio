@@ -20,8 +20,8 @@
 #ifndef DAMPING_H
 #define DAMPING_H
 
-#include "memilio/config.h"
-#include "memilio/math/eigen.h"
+#include "memilio/config.h" // IWYU pragma: keep
+#include "memilio/math/eigen.h" // IWYU pragma: keep
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/type_safe.h"
 #include "memilio/utils/stl_util.h"
@@ -80,7 +80,8 @@ public:
      * @param shape_args arguments to construct the shape of the damping matrix (can be Shape itself, copy ctor)
      * @tparam T constructor arguments of Damping::Shape.
      */
-    template <class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, int>>
+    template <class... T>
+        requires std::is_constructible_v<Shape, T...>
     explicit Damping(T... shape_args)
         : Base(Matrix::Zero(Shape(shape_args...).rows(), Shape(shape_args...).cols()), {}, {}, {})
     {
@@ -110,7 +111,8 @@ public:
      * @param t time at which the damping becomes active
      * @tparam T Shape constructor arguments.
      */
-    template <class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, void>>
+    template <class... T>
+        requires std::is_constructible_v<Shape, T...>
     Damping(FP d, DampingLevel level, DampingType type, SimulationTime<FP> t, T... shape_args)
         : Damping(Matrix::Constant(Shape(shape_args...).rows(), Shape(shape_args...).cols(), d), level, type, t)
     {
@@ -135,7 +137,8 @@ public:
      * @param t time at which the damping becomes active
      * @tparam T Shape constructor arguments.
      */
-    template <class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, void>>
+    template <class... T>
+        requires std::is_constructible_v<Shape, T...>
     Damping(FP d, SimulationTime<FP> t, T... shape_args)
         : Damping(d, DampingLevel(0), DampingType(0), t, shape_args...)
     {
@@ -267,7 +270,8 @@ public:
      * @param num_dampings number of initial elements in the collection
      * @tparam T Shape constructor arguments.
      */
-    template <class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, void>>
+    template <class... T>
+        requires std::is_constructible_v<Shape, T...>
     explicit Dampings(T... shape_args)
         : m_dampings()
         , m_shape(shape_args...)
@@ -536,7 +540,6 @@ private:
         return sum;
     }
 
-private:
     std::vector<value_type> m_dampings;
     Shape m_shape;
     std::vector<std::tuple<Matrix, SimulationTime<FP>>> m_accumulated_dampings_cached;

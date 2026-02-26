@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef EPI_UTILS_IO_H
-#define EPI_UTILS_IO_H
+#ifndef MIO_IO_IO_H
+#define MIO_IO_IO_H
 
 #include "memilio/utils/metaprogramming.h"
 #include "memilio/utils/compiler_diagnostics.h"
@@ -29,9 +29,13 @@
 #include "boost/optional.hpp"
 
 #include <bitset>
+#include <concepts>
+#include <cstddef>
 #include <string>
 #include <tuple>
 #include <iostream>
+#include <type_traits>
+#include <utility>
 
 namespace mio
 {
@@ -99,11 +103,11 @@ struct is_error_code_enum<mio::StatusCode> : true_type {
 namespace mio
 {
 
-namespace detail
+namespace details
 {
 /**
-     * category that describes StatusCode in std::error_code
-     */
+ * category that describes StatusCode in std::error_code
+ */
 class StatusCodeCategory : public std::error_category
 {
 public:
@@ -162,14 +166,14 @@ public:
         }
     }
 };
-} // namespace detail
+} // namespace details
 
 /**
  * singleton StatusCodeCategory instance.
  */
-inline const detail::StatusCodeCategory& status_code_category()
+inline const details::StatusCodeCategory& status_code_category()
 {
-    static detail::StatusCodeCategory c;
+    static details::StatusCodeCategory c;
     return c;
 }
 
@@ -202,9 +206,9 @@ public:
      * @param ec error code
      * @param msg optional message with additional information about the error, default empty.
      */
-    IOStatus(std::error_code ec, const std::string& msg = {})
+    IOStatus(std::error_code ec, std::string msg = {})
         : m_ec(ec)
-        , m_msg(msg)
+        , m_msg(std::move(msg))
     {
     }
 
@@ -439,19 +443,20 @@ struct IsIOResult<IOResult<T>> : std::true_type {
 template <class F, class... T>
 using ApplyResultT = FlattenIOResultT<std::invoke_result_t<F, T...>>;
 
-//evaluates the function f using the values of the given IOResults as arguments, assumes all IOResults are succesful
-//overload for functions that do internal validation, so return an IOResult
-template <class F, class... T, std::enable_if_t<IsIOResult<std::invoke_result_t<F, T...>>::value, void*> = nullptr>
+/// @brief Evaluates a function f using values of the given IOResults as arguments, assumes all IOResults are succesful.
+template <class F, class... T>
 ApplyResultT<F, T...> eval(F f, const IOResult<T>&... rs)
 {
-    return f(rs.value()...);
+    if constexpr (IsIOResult<std::invoke_result_t<F, T...>>::value) {
+        // case for functions that do internal validation
+        return f(rs.value()...);
+    }
+    else {
+        // case for functions that can't fail, because all values are acceptable
+        return success(f(rs.value()...));
+    }
 }
-//overload for functions that can't fail because all values are acceptable, so return some other type
-template <class F, class... T, std::enable_if_t<!IsIOResult<std::invoke_result_t<F, T...>>::value, void*> = nullptr>
-ApplyResultT<F, T...> eval(F f, const IOResult<T>&... rs)
-{
-    return success(f(rs.value()...));
-}
+
 } // namespace details
 
 /**
@@ -483,8 +488,8 @@ details::ApplyResultT<F, T...> apply(IOContext& io, F f, const IOResult<T>&... r
     //and slightly worse performance in the case of an error is probably acceptable.
 
     //check for errors in the arguments
-    IOStatus status[] = {(rs ? IOStatus{} : rs.error())...};
-    auto iter_err     = std::find_if(std::begin(status), std::end(status), [](auto& s) {
+    auto status   = std::array{(rs ? IOStatus{} : rs.error())...};
+    auto iter_err = std::find_if(std::begin(status), std::end(status), [](auto& s) {
         return s.is_error();
     });
 
@@ -512,6 +517,16 @@ details::ApplyResultT<F, T...> apply(IOContext& io, F f, const std::tuple<IOResu
 }
 /** @} */
 
+//detect a serialize member function
+template <class T, class IOContext>
+concept HasSerialize = requires(IOContext& ctxt, const T& t) { t.serialize(ctxt); };
+
+//detect a static deserialize member function
+template <class T, class IOContext>
+concept HasDeserialize = requires(IOContext& ctxt) {
+    { T::deserialize(ctxt) } -> std::same_as<IOResult<T>>;
+};
+
 //utility for (de-)serializing tuple-like objects
 namespace details
 {
@@ -524,49 +539,42 @@ std::string make_tuple_element_name()
 //recursive tuple serialization for each tuple element
 //store one tuple element after the other in the IOObject
 template <size_t Idx, class IOObj, class Tup>
-std::enable_if_t<(Idx >= std::tuple_size<Tup>::value)> serialize_tuple_element(IOObj&, const Tup&)
+void serialize_tuple_element(IOObj& obj, const Tup& tup)
 {
-    //end of recursion, no more elements to serialize
-}
-template <size_t Idx, class IOObj, class Tup>
-std::enable_if_t<(Idx < std::tuple_size<Tup>::value)> serialize_tuple_element(IOObj& obj, const Tup& tup)
-{
-    //serialize one element, then recurse
-    obj.add_element(make_tuple_element_name<Idx>(), std::get<Idx>(tup));
-    serialize_tuple_element<Idx + 1>(obj, tup);
+    if constexpr (Idx < std::tuple_size_v<Tup>) {
+        //serialize one element, then recurse
+        obj.add_element(make_tuple_element_name<Idx>(), std::get<Idx>(tup));
+        serialize_tuple_element<Idx + 1>(obj, tup);
+    }
+    // else: end of recursion, no more elements to serialize
 }
 
 //recursive tuple deserialization for each tuple element
 //read one tuple element after the other from the IOObject
 //argument pack rs contains the elements that have been read already
 template <class IOObj, class Tup, class... Ts>
-std::enable_if_t<(sizeof...(Ts) == std::tuple_size<Tup>::value), IOResult<Tup>>
-deserialize_tuple_element(IOObj& o, Tag<Tup>, const IOResult<Ts>&... rs)
+IOResult<Tup> deserialize_tuple_element(IOObj& obj, Tag<Tup> tag, const IOResult<Ts>&... rs)
 {
-    //end of recursion
-    //number of arguments in rs is the same as the size of the tuple
-    //no more elements to read, so finalize the object
-    return mio::apply(
-        o,
-        [](const Ts&... ts) {
-            return Tup(ts...);
-        },
-        rs...);
-}
-template <class IOObj, class Tup, class... Ts>
-std::enable_if_t<(sizeof...(Ts) < std::tuple_size<Tup>::value), IOResult<Tup>>
-deserialize_tuple_element(IOObj& obj, Tag<Tup> tag, const IOResult<Ts>&... rs)
-{
-    //get the next element of the tuple from the IO object
-    const size_t Idx = sizeof...(Ts);
-    auto r           = obj.expect_element(make_tuple_element_name<Idx>(), Tag<std::tuple_element_t<Idx, Tup>>{});
-    //recurse, append the new element to the pack of arguments
-    return deserialize_tuple_element(obj, tag, rs..., r);
+    if constexpr (sizeof...(Ts) < std::tuple_size_v<Tup>) {
+        //get the next element of the tuple from the IO object
+        const size_t Idx = sizeof...(Ts);
+        auto r           = obj.expect_element(make_tuple_element_name<Idx>(), Tag<std::tuple_element_t<Idx, Tup>>{});
+        //recurse, append the new element to the pack of arguments
+        return deserialize_tuple_element(obj, tag, rs..., r);
+    }
+    else {
+        //end of recursion
+        //number of arguments in rs is the same as the size of the tuple
+        //no more elements to read, so finalize the object
+        return mio::apply(
+            obj,
+            [](const Ts&... ts) {
+                return Tup(ts...);
+            },
+            rs...);
+    }
 }
 
-//detect tuple-like types, e.g. std::tuple or std::pair
-template <class Tup>
-using tuple_size_value_t = decltype(std::tuple_size<Tup>::value);
 } // namespace details
 
 /**
@@ -576,9 +584,9 @@ using tuple_size_value_t = decltype(std::tuple_size<Tup>::value);
  * @param io an IO context.
  * @param tup a tuple-like object to be serialized.
  */
-template <class IOContext, class Tup,
-          class = std::enable_if_t<is_expression_valid<details::tuple_size_value_t, Tup>::value>>
-void serialize_internal(IOContext& io, const Tup& tup)
+template <class IOContext, template <class...> class Tup, class... T>
+    requires std::same_as<Tup<T...>, std::pair<T...>> || std::same_as<Tup<T...>, std::tuple<T...>>
+void serialize_internal(IOContext& io, const Tup<T...>& tup)
 {
     auto obj = io.create_object("Tuple");
     details::serialize_tuple_element<0>(obj, tup);
@@ -592,9 +600,9 @@ void serialize_internal(IOContext& io, const Tup& tup)
  * @param tag define the type of the object to be deserialized.
  * @return a restored tuple
  */
-template <class IOContext, class Tup,
-          class = std::enable_if_t<is_expression_valid<details::tuple_size_value_t, Tup>::value>>
-IOResult<Tup> deserialize_internal(IOContext& io, Tag<Tup> tag)
+template <class IOContext, template <class...> class Tup, class... T>
+    requires std::same_as<Tup<T...>, std::pair<T...>> || std::same_as<Tup<T...>, std::tuple<T...>>
+IOResult<Tup<T...>> deserialize_internal(IOContext& io, Tag<Tup<T...>> tag)
 {
     auto obj = io.expect_object("Tuple");
     return details::deserialize_tuple_element(obj, tag);
@@ -626,7 +634,7 @@ void serialize_internal(IOContext& io, const Eigen::EigenBase<M>& mat)
  * @param io an IO context.
  * @param tag defines the type of the matrix to be serialized.
  */
-template <class IOContext, class M, std::enable_if_t<std::is_base_of<Eigen::EigenBase<M>, M>::value, void*> = nullptr>
+template <class IOContext, IsMatrixExpression M>
 IOResult<M> deserialize_internal(IOContext& io, Tag<M> /*tag*/)
 {
     auto obj      = io.expect_object("Matrix");
@@ -704,7 +712,8 @@ IOResult<std::bitset<N>> deserialize_internal(IOContext& io, Tag<std::bitset<N>>
  * @param io an IO context
  * @param e an enum value to be serialized.
  */
-template <class IOContext, class E, std::enable_if_t<std::is_enum<E>::value, void*> = nullptr>
+template <class IOContext, class E>
+    requires std::is_enum_v<E>
 void serialize_internal(IOContext& io, E e)
 {
     mio::serialize(io, std::underlying_type_t<E>(e));
@@ -720,19 +729,13 @@ void serialize_internal(IOContext& io, E e)
  * @param tag defines the type of the enum to be deserialized
  * @return an enum value if succesful, an error otherwise.
  */
-template <class IOContext, class E, std::enable_if_t<std::is_enum<E>::value, void*> = nullptr>
+template <class IOContext, class E>
+    requires std::is_enum_v<E>
 IOResult<E> deserialize_internal(IOContext& io, Tag<E> /*tag*/)
 {
     BOOST_OUTCOME_TRY(auto&& i, mio::deserialize(io, mio::Tag<std::underlying_type_t<E>>{}));
     return success(E(i));
 }
-
-//detect a serialize member function
-template <class IOContext, class T>
-using serialize_t = decltype(std::declval<T>().serialize(std::declval<IOContext&>()));
-
-template <class IOContext, class T>
-using has_serialize = is_expression_valid<serialize_t, IOContext, T>;
 
 /**
  * serialize an object that has a serialize(io) member function.
@@ -741,19 +744,11 @@ using has_serialize = is_expression_valid<serialize_t, IOContext, T>;
  * @param io an IO context
  * @param t the object to be serialized.
  */
-template <class IOContext, class T,
-          std::enable_if_t<is_expression_valid<serialize_t, IOContext, T>::value, void*> = nullptr>
+template <class IOContext, HasSerialize<IOContext> T>
 void serialize_internal(IOContext& io, const T& t)
 {
     t.serialize(io);
 }
-
-//detect a static deserialize member function
-template <class IOContext, class T>
-using deserialize_t = decltype(T::deserialize(std::declval<IOContext&>()));
-
-template <class IOContext, class T>
-using has_deserialize = is_expression_valid<deserialize_t, IOContext, T>;
 
 /**
  * deserialize an object that has a deserialize(io) static member function.
@@ -763,35 +758,25 @@ using has_deserialize = is_expression_valid<deserialize_t, IOContext, T>;
  * @param tag defines the type of the object for overload resolution.
  * @return the restored object if succesful, an error otherwise.
  */
-template <class IOContext, class T, std::enable_if_t<has_deserialize<IOContext, T>::value, void*> = nullptr>
+template <class IOContext, HasDeserialize<IOContext> T>
 IOResult<T> deserialize_internal(IOContext& io, Tag<T> /*tag*/)
 {
     return T::deserialize(io);
 }
 
-//utilities for (de-)serializing STL containers
-namespace details
-{
-//detect stl container.
-//don't check all requirements, since there are too many. Instead assume that if begin and end
-//iterators are available, the other requirements are met as well, as they should be in any
-//proper implementation.
-template <class C>
-using compare_iterators_t = decltype(std::declval<const C&>().begin() != std::declval<const C&>().end());
-} // namespace details
-
 /**
- * Is std::true_type if C is a STL compatible container.
- * Is std::false_type otherwise.
+ * Concept to check whether C is a STL compatible container.
  * See https://en.cppreference.com/w/cpp/named_req/Container.
  * @tparam C any type.
  */
 template <class C>
-using is_container =
-    conjunction<is_expression_valid<details::compare_iterators_t, C>,
-                std::is_constructible<C, decltype(std::declval<C>().begin()), decltype(std::declval<C>().end())>,
-                // Eigen types may pass as container, but we want to handle them separately
-                negation<std::is_base_of<Eigen::EigenBase<C>, C>>>;
+concept IsContainer =
+    requires(C c, const C& cc) {
+        cc.begin() != cc.end();
+        C(c.begin(), c.end());
+    }
+    // Eigen types may pass as container, but we want to handle them separately
+    && !std::is_base_of_v<Eigen::EigenBase<C>, C>;
 
 /**
  * serialize an STL compatible container.
@@ -800,14 +785,13 @@ using is_container =
  * @param io an IO context.
  * @param container a container to be serialized.
  */
-template <class IOContext, class Container,
-          std::enable_if_t<conjunction_v<is_container<Container>, negation<has_serialize<IOContext, Container>>>,
-                           void*> = nullptr>
+template <class IOContext, IsContainer Container>
+    requires(!HasSerialize<IOContext, Container>)
 void serialize_internal(IOContext& io, const Container& container)
 {
     auto obj = io.create_object("List");
     obj.add_list("Items", container.begin(), container.end());
-}
+} // namespace mio
 
 /**
  * deserialize an STL compatible container.
@@ -817,10 +801,8 @@ void serialize_internal(IOContext& io, const Container& container)
  * @param tag defines the type of the container to be serialized for overload resolution.
  * @return restored container if successful, error otherwise.
  */
-template <
-    class IOContext, class Container,
-    std::enable_if_t<(is_container<Container>::value && !is_expression_valid<serialize_t, IOContext, Container>::value),
-                     void*> = nullptr>
+template <class IOContext, IsContainer Container>
+    requires(!HasSerialize<IOContext, Container>)
 IOResult<Container> deserialize_internal(IOContext& io, Tag<Container> /*tag*/)
 {
     auto obj = io.expect_object("List");
@@ -912,4 +894,4 @@ bool file_exists(std::string const& rel_path, std::string& abs_path);
 
 } // namespace mio
 
-#endif
+#endif // MIO_IO_IO_H

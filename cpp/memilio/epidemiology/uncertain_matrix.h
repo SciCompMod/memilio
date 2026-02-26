@@ -20,7 +20,6 @@
 #ifndef MIO_EPI_ODE_UNCERTAINMATRIX_H
 #define MIO_EPI_ODE_UNCERTAINMATRIX_H
 
-#include "memilio/utils/date.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/epidemiology/damping_sampling.h"
 
@@ -191,12 +190,12 @@ public:
             //enable damping at the start of the period
             auto damping = m_school_holiday_damping;
             damping.set_time(h.first);
-            mio::apply_dampings(m_cont_freq, make_range(&damping, &damping + 1), make_matrix);
+            mio::apply_dampings(m_cont_freq, Range(&damping, &damping + 1), make_matrix);
 
             //disable damping at the end of the period
             damping.get_value() = 0.0;
             damping.set_time(h.second);
-            mio::apply_dampings(m_cont_freq, make_range(&damping, &damping + 1), make_matrix);
+            mio::apply_dampings(m_cont_freq, Range(&damping, &damping + 1), make_matrix);
         }
 
         return m_cont_freq;

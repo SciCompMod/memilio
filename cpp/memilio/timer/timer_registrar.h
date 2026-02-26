@@ -72,7 +72,7 @@ public:
     void add_timer(TimerRegistration&& registration)
     {
         m_registration_lock.lock();
-        m_register.emplace_back(registration);
+        m_register.emplace_back(std::move(registration));
         m_registration_lock.unlock();
     }
 
@@ -143,9 +143,6 @@ public:
         // old value of m_printer (now stored in printer) is deleted at end of scope
     }
 
-private:
-    /// @brief Instead of constructing a TimerRegistrar, use its static method `TimerRegistrar::get_instance()`.
-    TimerRegistrar() = default;
     /**
      * @brief TimerRegistrar must not be copied or moved, use `TimerRegistrar::get_instance()` to access it.
      * @{
@@ -155,6 +152,10 @@ private:
     void operator=(TimerRegistrar&)  = delete;
     void operator=(TimerRegistrar&&) = delete;
     /** @} */
+
+private:
+    /// @brief Instead of constructing a TimerRegistrar, use its static method `TimerRegistrar::get_instance()`.
+    TimerRegistrar() = default;
 
     /// @brief Specify a destructor to allow printing all timers after exit from main.
     ~TimerRegistrar()

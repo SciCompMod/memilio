@@ -24,10 +24,11 @@
 #include "memilio/io/default_serialize.h"
 #include "memilio/geography/distance.h"
 #include "memilio/config.h"
-#include "memilio/utils/logging.h"
+
 #include <cassert>
 #include <cmath>
 #include <numbers>
+
 namespace mio
 {
 namespace geo

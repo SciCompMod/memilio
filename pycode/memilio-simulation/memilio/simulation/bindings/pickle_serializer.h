@@ -50,9 +50,6 @@ template <>
 struct PickleType<bool> : std::true_type {
 };
 
-template <class T>
-using is_small_integral = std::integral_constant<bool, (std::is_integral<T>::value && sizeof(T) <= 4)>;
-
 //small ints
 template <class T>
 struct PickleType<T, std::enable_if_t<is_small_integral<T>::value>> : std::true_type {
