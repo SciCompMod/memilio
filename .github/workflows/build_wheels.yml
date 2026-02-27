@@ -3,11 +3,25 @@ name: Build wheels
 on: [pull_request, release]
 
 jobs:
+
+  build_sdist: 
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - run: pipx run build --sdist
+
+    - uses: actions/upload-artifact@v4
+      with:
+        path: dist/*.tar.gz
+
+
   build_wheels:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest]
+        os: [ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v4
