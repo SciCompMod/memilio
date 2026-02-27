@@ -50,5 +50,7 @@ packages = ["pycode/memilio-simulation"]
 
 [tool.cibuildwheel]
 # Disable building PyPy wheels on all platforms
-build = ["*-macosx_x86_64", "*-macosx_universal2"]
+build-verbosity = 3
 skip = ["pp*", "*musllinux*", "*_i686", "*-win32"] # "*_i686" works, skip for now for further testing
+
+
