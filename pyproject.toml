@@ -1,20 +1,5 @@
-[tool.autopep8]
-max-line-length = 79
-
-[tool.pyright]
-include = ["pycode"]
-exclude = ["pycode/memilio-simulation"]
-
-[build-system]
-requires = [
-  "scikit-build-core>=0.9.0",
-  "setuptools>=68",
-  "wheel"
-]
-build-backend = "scikit_build_core.build"
-
 [project]
-name = "memilio-simulation"
+name = "memilio"
 version = "1.0.0"
 description = "Part of MEmilio project, python bindings to the C++ libraries that contain the models and simulations."
 readme = "README.md"
@@ -38,6 +23,14 @@ dev = []
 Homepage = "https://github.com/SciCompMod/memilio"
 Team = "https://memilio.readthedocs.io/en/latest/team.html"
 
+[build-system]
+requires = [
+  "scikit-build-core>=0.9.0",
+  "setuptools>=68",
+  "wheel"
+]
+build-backend = "scikit_build_core.build"
+
 [tool.scikit-build]
 cmake.version = ">=3.13"
 cmake.args = ["-DMEMILIO_BUILD_SHARED_LIBS:BOOL=ON"]
@@ -46,10 +39,17 @@ wheel.install-dir = "memilio/simulation"
 build-dir = "../build/memilio-simulation"
 
 [tool.setuptools]
-packages = ["pycode/memilio-simulation"]
+packages = ["pycode/memilio-epidata","pycode/memilio-generation","pycode/memilio-plot","pycode/memilio-simulation","pycode/memilio-surrogatemodel"]
 
 [tool.cibuildwheel]
 # Disable some wheels
 skip = ["pp*", "*musllinux*", "*_i686", "*-win32"] # "*_i686" works, skip for now for further testing
+
+[tool.autopep8]
+max-line-length = 79
+
+[tool.pyright]
+include = ["pycode"]
+exclude = ["pycode/memilio-simulation"]
 
 
