@@ -1,7 +1,7 @@
 [project]
-name = "memilio"
+name = "memilio-simulation"
 version = "1.0.0"
-description = "Part of MEmilio project, python bindings to the C++ libraries that contain the models and simulations."
+description = "Part of MEmilio project, Python bindings to the C++ libraries that contain the models and simulations."
 readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "Apache-2.0" }
@@ -39,11 +39,11 @@ wheel.install-dir = "memilio/simulation"
 build-dir = "../build/memilio-simulation"
 
 [tool.setuptools]
-packages = ["pycode/memilio-epidata","pycode/memilio-generation","pycode/memilio-plot","pycode/memilio-simulation","pycode/memilio-surrogatemodel"]
+packages = ["pycode/memilio-simulation"]
 
 [tool.cibuildwheel]
 # Disable some wheels
-skip = ["pp*", "*musllinux*", "*_i686", "*-win32"] # "*_i686" works, skip for now for further testing
+skip = ["pp*", "*musllinux*", "*-win32"] 
 
 [tool.autopep8]
 max-line-length = 79
