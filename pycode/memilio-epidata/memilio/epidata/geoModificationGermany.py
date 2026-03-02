@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2025 MEmilio
+# Copyright (C) 2020-2026 MEmilio
 #
 # Authors: Martin J. Kuehn, Kathrin Rack
 #
@@ -341,20 +341,22 @@ def get_official_county_table():
         file = gd.download_file(url_counties, 1024, None,
                                 p.set_progress, verify=False)
     county_table = pd.read_excel(
-        file, sheet_name=1, header=5, engine=gd.Conf.excel_engine)
+        file, sheet_name=1, header=1, engine=gd.Conf.excel_engine)
     rename_kreise_deu_dict = {
         1: dd.EngEng['idCounty'],
-        '2': "type",  # name not important, column not used so far
-        3: dd.EngEng['county'],
-        4: dd.EngEng['nuts3'],
-        5: dd.EngEng['area'],
-        6: dd.EngEng['population'],
-        7: "population_male",  # name not important, column not used so far
-        8: "population_female",  # name not important, column not used so far
-        9: "population_per_km2"  # name not important, column not used so far
+        2: dd.EngEng['county'],
+        3: dd.EngEng['nuts3'],
+        4: dd.EngEng['area'],
+        5: dd.EngEng['population'],
+        6: "population_male",  # name not important, column not used so far
+        7: "population_female",  # name not important, column not used so far
+        8: "population_per_km2"  # name not important, column not used so far
     }
     # rename columns
-    county_table.rename(columns=rename_kreise_deu_dict, inplace=True)
+    county_table.columns = [
+        rename_kreise_deu_dict.get(i + 1, old_name)
+        for i, old_name in enumerate(county_table.columns)
+    ]
 
     return county_table
 
@@ -371,7 +373,7 @@ def get_nuts3_county_id_map():
     county_table = get_official_county_table()
     # delete rows with nuts3 = NaN
     # take just columns with name dd.EngEng['idCounty'] and dd.EngEng['nuts3']
-    key_nuts3 = county_table.dropna(subset=[dd.EngEng['nuts3']])[
+    key_nuts3 = county_table.dropna(subset=[dd.EngEng['nuts3'], dd.EngEng['idCounty']])[
         [dd.EngEng['idCounty'], dd.EngEng['nuts3']]]
     # convert ID data types
     key_nuts3 = key_nuts3.astype({dd.EngEng['idCounty']: int})

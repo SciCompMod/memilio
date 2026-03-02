@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2025 MEmilio
+# Copyright (C) 2020-2026 MEmilio
 #
 # Authors: Maximilian Betz
 #
@@ -337,7 +337,7 @@ def includes(intermed_repr: IntermediateRepresentation) -> str:
     if intermed_repr.is_compartmentalmodel:
         substitution_string += (
             "#include \"compartments/simulation.h\"\n"
-            "#include \"compartments/compartmentalmodel.h\"\n"
+            "#include \"compartments/compartmental_model.h\"\n"
             "#include \"epidemiology/populations.h\"\n"
         )
 

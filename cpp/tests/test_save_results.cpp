@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Wadim Koslow, Henrik Zunker
 *
@@ -41,7 +41,7 @@ TEST(TestSaveResult, save_result)
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    mio::osecir::Model model(1);
+    mio::osecir::Model<double> model(1);
     auto& params            = model.parameters;
     mio::AgeGroup nb_groups = params.get_num_groups();
     ;
@@ -71,11 +71,12 @@ TEST(TestSaveResult, save_result)
         params.get<mio::osecir::DeathsPerCritical<double>>()[i]                = delta;
     }
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, cont_freq));
-    contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
+    mio::ContactMatrixGroup<double>& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
+    contact_matrix[0] =
+        mio::ContactMatrix<double>(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, cont_freq));
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime<double>(30.));
 
-    auto result_from_sim                                  = simulate(t0, tmax, dt, model);
+    auto result_from_sim                                  = mio::simulate<double>(t0, tmax, dt, model);
     std::vector<mio::TimeSeries<double>> results_from_sim = {result_from_sim, result_from_sim};
     std::vector<int> ids                                  = {1, 2};
 
@@ -122,7 +123,7 @@ TEST(TestSaveResult, save_result_with_params)
            num_rec_t0 = 10, num_dead_t0 = 0;
 
     size_t num_groups = 3;
-    mio::osecir::Model model((int)num_groups);
+    mio::osecir::Model<double> model((int)num_groups);
     double fact = 1.0 / (double)num_groups;
 
     auto& params = model.parameters;
@@ -157,18 +158,19 @@ TEST(TestSaveResult, save_result_with_params)
         params.get<mio::osecir::DeathsPerCritical<double>>()[i]                = 0.3;
     }
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
+    mio::ContactMatrixGroup<double>& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
+    contact_matrix[0] = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
 
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.);
 
     auto graph = mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>();
     graph.add_node(0, model);
     graph.add_node(1, model);
-    graph.add_edge(0, 1, mio::MobilityParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0)));
+    graph.add_edge(0, 1,
+                   mio::MobilityParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0)));
 
-    auto num_runs        = 3;
-    auto parameter_study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
+    auto num_runs = 3;
+    mio::ParameterStudy parameter_study(graph, 0.0, 2.0, 0.5, num_runs);
     mio::log_rng_seeds(parameter_study.get_rng(), mio::LogLevel::warn);
 
     TempFileRegister tmp_file_register;
@@ -181,10 +183,13 @@ TEST(TestSaveResult, save_result_with_params)
     ensemble_params.reserve(size_t(num_runs));
     auto save_result_status = mio::IOResult<void>(mio::success());
     parameter_study.run(
-        [](auto&& g) {
-            return draw_sample(g);
+        [](auto&& g, auto t0_, auto dt_, auto) {
+            auto copy = g;
+            return mio::make_sampled_graph_simulation<double, mio::osecir::Simulation<double>>(draw_sample(copy), t0_,
+                                                                                               dt_, dt_);
         },
-        [&](auto results_graph, auto run_idx) {
+        [&](auto&& results, auto run_idx) {
+            auto results_graph = results.get_graph();
             ensemble_results.push_back(mio::interpolate_simulation_result(results_graph));
 
             ensemble_params.emplace_back();
@@ -222,6 +227,44 @@ TEST(TestSaveResult, save_result_with_params)
               params.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[mio::Index<mio::AgeGroup>(1)]);
 }
 
+TEST(TestSaveResult, save_result_order)
+{
+    std::vector<mio::TimeSeries<double>> results{mio::TimeSeries<double>(0, Eigen::VectorX<double>::Constant(1, 0)),
+                                                 mio::TimeSeries<double>(0, Eigen::VectorX<double>::Constant(1, 1)),
+                                                 mio::TimeSeries<double>(0, Eigen::VectorX<double>::Constant(1, 2))};
+
+    // case: check order of results, where lexical ordering would rearrange the results;
+    // expect: order follows the ids
+    std::vector<int> ids = {1, 2, 10};
+
+    TempFileRegister file_register;
+    auto results_file_path  = file_register.get_unique_path("test_result-%%%%-%%%%.h5");
+    auto save_result_status = mio::save_result(results, ids, 1, results_file_path);
+    ASSERT_TRUE(save_result_status);
+
+    auto results_from_file = mio::read_result(results_file_path);
+    ASSERT_TRUE(results_from_file);
+
+    ASSERT_DOUBLE_EQ(results_from_file.value()[0].get_groups()[Eigen::Index(0)][Eigen::Index(0)], 0);
+    ASSERT_DOUBLE_EQ(results_from_file.value()[1].get_groups()[Eigen::Index(0)][Eigen::Index(0)], 1);
+    ASSERT_DOUBLE_EQ(results_from_file.value()[2].get_groups()[Eigen::Index(0)][Eigen::Index(0)], 2);
+
+    // case: check order of results;
+    // expect: order is changed due to ids not increasing
+    ids = {1, 10, 2};
+
+    results_file_path  = file_register.get_unique_path("test_result-%%%%-%%%%.h5");
+    save_result_status = mio::save_result(results, ids, 1, results_file_path);
+    ASSERT_TRUE(save_result_status);
+
+    results_from_file = mio::read_result(results_file_path);
+    ASSERT_TRUE(results_from_file);
+
+    ASSERT_DOUBLE_EQ(results_from_file.value()[0].get_groups()[Eigen::Index(0)][Eigen::Index(0)], 0);
+    ASSERT_DOUBLE_EQ(results_from_file.value()[1].get_groups()[Eigen::Index(0)][Eigen::Index(0)], 2);
+    ASSERT_DOUBLE_EQ(results_from_file.value()[2].get_groups()[Eigen::Index(0)][Eigen::Index(0)], 1);
+}
+
 TEST(TestSaveResult, save_percentiles_and_sums)
 {
     // set up parameter study
@@ -232,7 +275,7 @@ TEST(TestSaveResult, save_percentiles_and_sums)
            num_rec_t0 = 10, num_dead_t0 = 0;
 
     const size_t num_groups = 3;
-    mio::osecir::Model model((int)num_groups);
+    mio::osecir::Model<double> model((int)num_groups);
     double fact = 1.0 / (double)num_groups;
 
     auto& params = model.parameters;
@@ -267,8 +310,8 @@ TEST(TestSaveResult, save_percentiles_and_sums)
         params.get<mio::osecir::DeathsPerCritical<double>>()[i]                = 0.3;
     }
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
+    mio::ContactMatrixGroup<double>& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
+    contact_matrix[0] = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
 
     // get indices of INS and ISy compartments.
     std::vector<std::vector<size_t>> indices_save_edges(2);
@@ -300,8 +343,8 @@ TEST(TestSaveResult, save_percentiles_and_sums)
                    mio::MobilityParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0),
                                                    indices_save_edges));
 
-    auto num_runs        = 3;
-    auto parameter_study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
+    auto num_runs = 3;
+    mio::ParameterStudy parameter_study(graph, 0.0, 2.0, 0.5, num_runs);
     mio::log_rng_seeds(parameter_study.get_rng(), mio::LogLevel::warn);
 
     TempFileRegister tmp_file_register;
@@ -315,10 +358,13 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     auto ensemble_edges = std::vector<std::vector<mio::TimeSeries<double>>>{};
     ensemble_edges.reserve(size_t(num_runs));
     parameter_study.run(
-        [](auto&& g) {
-            return draw_sample(g);
+        [](auto&& g, auto t0_, auto dt_, auto) {
+            auto copy = g;
+            return mio::make_sampled_graph_simulation<double, mio::osecir::Simulation<double>>(draw_sample(copy), t0_,
+                                                                                               dt_, dt_);
         },
-        [&](auto results_graph, auto /*run_idx*/) {
+        [&](auto&& results, auto /*run_idx*/) {
+            auto results_graph = results.get_graph();
             ensemble_results.push_back(mio::interpolate_simulation_result(results_graph));
 
             ensemble_params.emplace_back();

@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin J. Kuehn, Daniel Abele
 *
@@ -32,7 +32,7 @@ namespace mio
  * represents non-pharmaceutical interventions (NPI) that are activated during the simulation if
  * some value (e.g. infections) exceeds specified thresholds.
  */
-template <typename FP = double>
+template <typename FP>
 class DynamicNPIs
 {
 public:
@@ -41,7 +41,7 @@ public:
      * @param threshold the threshold that may be exceeded.
      * @param dampings the NPIs
      */
-    void set_threshold(double threshold, const std::vector<DampingSampling<FP>>& dampings)
+    void set_threshold(FP threshold, const std::vector<DampingSampling<FP>>& dampings)
     {
         insert_sorted_replace(m_thresholds, std::make_pair(threshold, dampings), [](auto& t1, auto& t2) {
             return t1.first > t2.first;
@@ -54,7 +54,7 @@ public:
      * @return iterator (see get_thresholds()) to the exceeded threshold if found.
      *         get_thresholds().end() otherwise
      */
-    auto get_max_exceeded_threshold(double value)
+    auto get_max_exceeded_threshold(FP value)
     {
         //thresholds are sorted by value descending, so upper_bound returns the first threshold that is smaller using binary search
         auto iter_max_exceeded_threshold =
@@ -84,7 +84,7 @@ public:
      * get the duration of the NPIs.
      * @return the duration of the NPIs.
      */
-    SimulationTime get_duration() const
+    SimulationTime<FP> get_duration() const
     {
         return m_duration;
     }
@@ -93,7 +93,7 @@ public:
      * set the duration of the NPIs.
      * @param v the duration of the NPIs.
      */
-    void set_duration(SimulationTime v)
+    void set_duration(SimulationTime<FP> v)
     {
         m_duration = v;
     }
@@ -105,14 +105,14 @@ public:
     /**
      * @return the interval at which the NPIs are checked.
      */
-    SimulationTime get_interval() const
+    SimulationTime<FP> get_interval() const
     {
         return m_interval;
     }
     /**
      * @param interval The interval at which the NPIs are checked.
      */
-    void set_interval(SimulationTime interval)
+    void set_interval(SimulationTime<FP> interval)
     {
         m_interval = interval;
     }
@@ -121,20 +121,20 @@ public:
     /**
      * Get/Set the base value of the thresholds.
      * The base value determines the unit of the threshold values.
-     * E.g. If the base value is X, the thresholds should be interpreted as cases per X people. 
+     * E.g. If the base value is X, the thresholds should be interpreted as cases per X people.
      * @{
      */
     /**
      * @return The base value of the thresholds.
      */
-    double get_base_value() const
+    FP get_base_value() const
     {
         return m_base;
     }
     /**
      * @return The base value of the thresholds.
      */
-    void set_base_value(double v)
+    void set_base_value(FP v)
     {
         m_base = v;
     }
@@ -153,7 +153,7 @@ public:
     }
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>
@@ -174,10 +174,10 @@ public:
     static IOResult<DynamicNPIs> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("DynamicNPIs");
-        auto t   = obj.expect_list("Thresholds", Tag<std::pair<double, std::vector<DampingSampling<FP>>>>{});
-        auto d   = obj.expect_element("Duration", Tag<SimulationTime>{});
-        auto i   = obj.expect_element("Interval", Tag<SimulationTime>{});
-        auto b   = obj.expect_element("BaseValue", Tag<double>{});
+        auto t   = obj.expect_list("Thresholds", Tag<std::pair<FP, std::vector<DampingSampling<FP>>>>{});
+        auto d   = obj.expect_element("Duration", Tag<SimulationTime<FP>>{});
+        auto i   = obj.expect_element("Interval", Tag<SimulationTime<FP>>{});
+        auto b   = obj.expect_element("BaseValue", Tag<FP>{});
         return apply(
             io,
             [](auto&& t_, auto&& d_, auto&& i_, auto&& b_) {
@@ -194,16 +194,16 @@ public:
     }
 
 private:
-    std::vector<std::pair<double, std::vector<DampingSampling<FP>>>> m_thresholds;
-    SimulationTime m_duration{14.0};
-    SimulationTime m_interval{3.0};
-    double m_base{1.0};
+    std::vector<std::pair<FP, std::vector<DampingSampling<FP>>>> m_thresholds;
+    SimulationTime<FP> m_duration{14.0};
+    SimulationTime<FP> m_interval{3.0};
+    FP m_base{1.0};
 };
 
 /**
  * Get a list of indices of specified dampings.
- * Returns the indices of dampings that match the given type and level and that become active in the specified 
- * time span (excluding the particular interval boundaries, begin and end). 
+ * Returns the indices of dampings that match the given type and level and that become active in the specified
+ * time span (excluding the particular interval boundaries, begin and end).
  * Utility for implementation of dynamic NPIs.
  * @param damping_expr some matrix expression that contains dampings, e.g. a ContactMatrix.
  * @param lvl damping level to match
@@ -212,15 +212,14 @@ private:
  * @param end end of the time span that contains the dampings.
  * @return list of indices in range damping_expr.get_dampings()
  */
-template <class DampingExpr>
+template <typename FP, class DampingExpr>
 std::vector<size_t> get_damping_indices(const DampingExpr& damping_expr, DampingLevel lvl, DampingType type,
-                                        SimulationTime begin, SimulationTime end)
+                                        SimulationTime<FP> begin, SimulationTime<FP> end)
 {
     std::vector<size_t> indices;
     for (size_t i = 0; i < damping_expr.get_dampings().size(); ++i) {
         const auto d = damping_expr.get_dampings()[i];
-        if (d.get_level() == lvl && d.get_type() == type && double(d.get_time()) > double(begin) &&
-            double(d.get_time()) < double(end)) {
+        if (d.get_level() == lvl && d.get_type() == type && d.get_time() > begin && d.get_time() < end) {
             indices.push_back(i);
         }
     }
@@ -238,13 +237,13 @@ std::vector<size_t> get_damping_indices(const DampingExpr& damping_expr, Damping
  * @return matrix of damping coefficients if active damping is found.
  *         zero matrix otherwise.
  */
-template <class DampingExpr>
+template <typename FP, class DampingExpr>
 Eigen::Ref<const typename DampingExpr::Matrix> get_active_damping(const DampingExpr& damping_expr, DampingLevel lvl,
-                                                                  DampingType type, SimulationTime t)
+                                                                  DampingType type, SimulationTime<FP> t)
 {
     auto ub =
         std::find_if(damping_expr.get_dampings().rbegin(), damping_expr.get_dampings().rend(), [lvl, type, t](auto& d) {
-            return d.get_level() == lvl && d.get_type() == type && double(d.get_time()) <= double(t);
+            return d.get_level() == lvl && d.get_type() == type && d.get_time() <= t;
         });
     if (ub != damping_expr.get_dampings().rend()) {
         return ub->get_coeffs();
@@ -256,13 +255,13 @@ Eigen::Ref<const typename DampingExpr::Matrix> get_active_damping(const DampingE
  * implement dynamic NPIs for a time span.
  * Adds or removes dampings to ensure that the active dampings during the specified
  * time span is at least as big as the specified dynamic dampings.
- * If another damping of the same type and level is active at the beginning of the time span or 
+ * If another damping of the same type and level is active at the beginning of the time span or
  * becomes active during the time span, the coefficient wise maximum of the new damping and the existing damping
  * is used.
  * At the end of the time span, another set of dampings may be added that restores the dampings on each level and type as they
  * would have been without the dynamic npis that have just been implemented.
  * Examples:
- * a) no damping exists yet, dynamic npi of value `d`: 
+ * a) no damping exists yet, dynamic npi of value `d`:
  *     one damping is added at the beginning of the time span that has the value `d`,
  *     another damping is added at the end of the time span that has a value zero.
  * b) damping of value `a` is active before the beginning of the time span, dynamic npi of value `d` is added:
@@ -270,7 +269,7 @@ Eigen::Ref<const typename DampingExpr::Matrix> get_active_damping(const DampingE
  *     another damping is added at the end of the time span that has the value a
  * b) damping of value `a` becomes active at a time `t_a` between the beginning of the time span and the end, dynamic npi of value `d` is added:
  *     one damping is added at the beginning of the time span that has the value `d`,
- *     the value of the damping at time `t_a` is set to `max(d, a)`, 
+ *     the value of the damping at time `t_a` is set to `max(d, a)`,
  *     another damping is added at the end of the time span that has the value a
  * @param damping_expr_group a group of matrix expressions that contains dampings, e.g. a ContactMatrixGroup.
  * @param dynamic_npis the NPIs to be implemented
@@ -278,9 +277,9 @@ Eigen::Ref<const typename DampingExpr::Matrix> get_active_damping(const DampingE
  * @param end end of the time span that the NPIs will be active for.
  * @param make_matrix function to make a matrix of the same shape as the damping expression, see e.g. make_contact_damping_matrix
  */
-template <class DampingExprGroup, class MakeMatrix, typename FP = double>
+template <typename FP, class DampingExprGroup, class MakeMatrix>
 void implement_dynamic_npis(DampingExprGroup& damping_expr_group, const std::vector<DampingSampling<FP>>& npis,
-                            SimulationTime begin, SimulationTime end, MakeMatrix&& make_matrix)
+                            SimulationTime<FP> begin, SimulationTime<FP> end, MakeMatrix&& make_matrix)
 {
     for (auto& npi : npis) {
         for (auto& mat_idx : npi.get_matrix_indices()) {
@@ -288,10 +287,10 @@ void implement_dynamic_npis(DampingExprGroup& damping_expr_group, const std::vec
             auto level         = npi.get_level();
             auto& damping_expr = damping_expr_group[mat_idx];
 
-            auto active = get_active_damping(damping_expr, level, type, begin);
-            auto active_end =
-                get_active_damping(damping_expr, level, type, end).eval(); //copy because it may be removed or changed
-            auto value = make_matrix(double(npi.get_value()) * npi.get_group_weights());
+            auto active     = get_active_damping<FP>(damping_expr, level, type, begin);
+            auto active_end = get_active_damping<FP>(damping_expr, level, type, end)
+                                  .eval(); //copy because it may be removed or changed
+            auto value = make_matrix(npi.get_value().value() * npi.get_group_weights());
 
             auto npi_implemented = false;
 
@@ -302,7 +301,7 @@ void implement_dynamic_npis(DampingExprGroup& damping_expr_group, const std::vec
             }
 
             //replace dampings during the new npi
-            auto damping_indices = get_damping_indices(damping_expr, level, type, begin, end);
+            auto damping_indices = get_damping_indices<FP>(damping_expr, level, type, begin, end);
             for (auto& i : damping_indices) {
                 auto& d = damping_expr.get_dampings()[i];
                 damping_expr.add_damping(max(d.get_coeffs(), value), level, type, d.get_time());

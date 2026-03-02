@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen
 *
@@ -47,7 +47,7 @@ namespace abm
  * @param[in] p Percentage of Person%s that work in home office.
  * @param[in, out] params Simulation parameters that include Damping.
  */
-void set_home_office(TimePoint t_begin, double p, Parameters& params);
+void set_home_office(TimePoint t_begin, ScalarType p, Parameters& params);
 
 /**
  * @brief If schools are closed, students stay at home instead of going to school.
@@ -55,7 +55,7 @@ void set_home_office(TimePoint t_begin, double p, Parameters& params);
  * @param[in] p Percentage of Person%s that are homeschooled.
  * @param[in,out] params Simulation parameters.
  */
-void set_school_closure(TimePoint t_begin, double p, Parameters& params);
+void set_school_closure(TimePoint t_begin, ScalarType p, Parameters& params);
 
 /** 
  * @brief During lockdown Person%s join social events less often.
@@ -66,7 +66,7 @@ void set_school_closure(TimePoint t_begin, double p, Parameters& params);
  * @param[in] p Damping between 0 and 1 that changes the parameter of the exponential distribution.
  * @param[in,out] params Simulation parameters that include Damping.
  */
-void close_social_events(TimePoint t_begin, double p, Parameters& params);
+void close_social_events(TimePoint t_begin, ScalarType p, Parameters& params);
 
 } // namespace abm
 } //namespace mio

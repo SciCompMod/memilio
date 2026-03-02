@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: René Schmieding
 *
@@ -100,13 +100,13 @@ public:
         }
 
         /// Equality operator.
-        bool operator==(MultiIndexIterator& other) const
+        bool operator==(const MultiIndexIterator& other) const
         {
             return m_index == other.m_index;
         }
 
         /// Inequality operator.
-        bool operator!=(MultiIndexIterator& other) const
+        bool operator!=(const MultiIndexIterator& other) const
         {
             return !(*this == other);
         }

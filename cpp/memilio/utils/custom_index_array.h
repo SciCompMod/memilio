@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Khoa Nguyen
 *
@@ -23,6 +23,8 @@
 #include "memilio/math/eigen_util.h"
 #include "memilio/utils/index.h"
 #include "memilio/utils/stl_util.h"
+
+#include <concepts>
 
 namespace
 {
@@ -340,6 +342,21 @@ public:
         for (const auto& index : indices) {
             m_y[get_flat_index(index)] = value;
         }
+    }
+
+    /**
+     * @brief Convert internally stored data to OtherType and save into new CustomIndexArray.
+     * @tparam OtherType The type to convert into.
+     * @return New CustomIndexArray of OtherType with copy of internal data.
+     */
+    template <class OtherType>
+        requires std::convertible_to<Type, OtherType>
+    CustomIndexArray<OtherType, Tags...> convert() const
+    {
+        CustomIndexArray<OtherType, Tags...> other;
+        other.resize(m_dimensions);
+        other.array() = m_y.template cast<OtherType>();
+        return other;
     }
 
 private:

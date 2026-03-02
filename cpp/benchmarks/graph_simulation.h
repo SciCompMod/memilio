@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Henrik Zunker
 *
@@ -32,7 +32,7 @@ namespace benchmark
 /// @brief parameters for simulation benchmark
 struct GraphConfig {
     int num_agegroups, num_regions;
-    double t0, t_max, dt;
+    ScalarType t0, t_max, dt;
     /**
      * @brief creates configuration with default parameters for a secir model
      * @param num_agegroups number of agegroups
@@ -65,9 +65,9 @@ struct GraphConfig {
         auto obj              = io.expect_object("bench_graph_simulation");
         auto num_agegroups_io = obj.expect_element("num_agegroups", mio::Tag<int>{});
         auto num_regions_io   = obj.expect_element("num_regions", mio::Tag<int>{});
-        auto t_io             = obj.expect_element("t0", mio::Tag<double>{});
-        auto t_max_io         = obj.expect_element("t_max", mio::Tag<double>{});
-        auto dt_io            = obj.expect_element("dt", mio::Tag<double>{});
+        auto t_io             = obj.expect_element("t0", mio::Tag<ScalarType>{});
+        auto t_max_io         = obj.expect_element("t_max", mio::Tag<ScalarType>{});
+        auto dt_io            = obj.expect_element("dt", mio::Tag<ScalarType>{});
         return mio::apply(
             io,
             [](auto&& num_agegroups, auto&& num_regions, auto&& t0, auto&& t_max, auto&& dt) {

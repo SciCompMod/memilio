@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: René Schmieding
 *
@@ -20,9 +20,9 @@
 #ifndef MIO_UTILS_TYPE_LIST_H_
 #define MIO_UTILS_TYPE_LIST_H_
 
-#include "memilio/io/io.h"
-#include "memilio/utils/index.h"
+#include "memilio/utils/metaprogramming.h"
 
+#include <cstddef>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -49,6 +49,9 @@ struct TypeList {
     {
         return sizeof...(Types);
     }
+
+    /// @brief Checks whether TypeList contains any type multiple times.
+    static constexpr bool has_duplicates = has_duplicates_v<Types...>;
 };
 
 /// Specialization of type_at_index for TypeList. @see type_at_index.
@@ -59,6 +62,12 @@ struct type_at_index<Index, TypeList<Types...>> : public type_at_index<Index, Ty
 /// Specialization of index_of_type for TypeList. @see index_of_type.
 template <class Type, class... Types>
 struct index_of_type<Type, TypeList<Types...>> : public index_of_type<Type, Types...> {
+};
+
+/// Specialization of index_of_type for TypeList. Resolves ambiguity when using TypeLists as items. @see index_of_type.
+template <class... Types>
+struct index_of_type<TypeList<Types...>, TypeList<Types...>> {
+    static constexpr std::size_t value = 0;
 };
 
 } // namespace mio

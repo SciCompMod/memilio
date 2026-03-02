@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -30,7 +30,7 @@ namespace abm
  */
 const constexpr int MAX_NUM_AGE_GROUPS = 64;
 
-}
+} // namespace abm
 } // namespace mio
 
 #endif

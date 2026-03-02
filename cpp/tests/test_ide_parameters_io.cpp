@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Lena Ploetzke
 *
@@ -64,29 +64,31 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
     // Set the model parameters so that if the default values are changed, the test is still valid.
     mio::SmootherCosine smoothcos(2.0);
     mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
-    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib((int)mio::isecir::InfectionTransition::Count,
-                                                               delaydistribution);
+    std::vector<mio::StateAgeFunctionWrapper<ScalarType>> vec_delaydistrib((int)mio::isecir::InfectionTransition::Count,
+                                                                           delaydistribution);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]
         .set_distribution_parameter(1.7);
 
-    model.parameters.get<mio::isecir::TransitionDistributions>()[group] = vec_delaydistrib;
+    model.parameters.template get<mio::isecir::TransitionDistributions>()[group] = vec_delaydistrib;
 
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
 
-    model.parameters.get<mio::isecir::TransitionProbabilities>()[group] = vec_prob;
+    model.parameters.template get<mio::isecir::TransitionProbabilities>()[group] = vec_prob;
 
-    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, num_agegroups);
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, 10.));
-    model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+    mio::ContactMatrixGroup<ScalarType> contact_matrix = mio::ContactMatrixGroup<ScalarType>(1, num_agegroups);
+    contact_matrix[0] =
+        mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(num_agegroups, num_agegroups, 10.));
+    model.parameters.template get<mio::isecir::ContactPatterns>() =
+        mio::UncertainContactMatrix<ScalarType>(contact_matrix);
 
-    mio::ConstantFunction constfunc(1.0);
-    mio::StateAgeFunctionWrapper prob(constfunc);
+    mio::ConstantFunction<ScalarType> constfunc(1.0);
+    mio::StateAgeFunctionWrapper<ScalarType> prob(constfunc);
 
-    model.parameters.get<mio::isecir::TransmissionProbabilityOnContact>()[group] = prob;
-    model.parameters.get<mio::isecir::RelativeTransmissionNoSymptoms>()[group]   = prob;
-    model.parameters.get<mio::isecir::RiskOfInfectionFromSymptomatic>()[group]   = prob;
+    model.parameters.template get<mio::isecir::TransmissionProbabilityOnContact>()[group] = prob;
+    model.parameters.template get<mio::isecir::RelativeTransmissionNoSymptoms>()[group]   = prob;
+    model.parameters.template get<mio::isecir::RiskOfInfectionFromSymptomatic>()[group]   = prob;
 
     mio::CustomIndexArray<ScalarType, mio::AgeGroup> scale_confirmed_cases =
         mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 1.);
@@ -144,33 +146,35 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRunAgeRes)
         num_agegroups);
 
     // Set the model parameters so that if the default values are changed, the test is still valid.
-    mio::SmootherCosine smoothcos(2.0);
-    mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
-    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib((int)mio::isecir::InfectionTransition::Count,
-                                                               delaydistribution);
+    mio::SmootherCosine<ScalarType> smoothcos(2.0);
+    mio::StateAgeFunctionWrapper<ScalarType> delaydistribution(smoothcos);
+    std::vector<mio::StateAgeFunctionWrapper<ScalarType>> vec_delaydistrib((int)mio::isecir::InfectionTransition::Count,
+                                                                           delaydistribution);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]
         .set_distribution_parameter(1.7);
     for (mio::AgeGroup group = mio::AgeGroup(0); group < mio::AgeGroup(num_agegroups); ++group) {
-        model.parameters.get<mio::isecir::TransitionDistributions>()[group] = vec_delaydistrib;
+        model.parameters.template get<mio::isecir::TransitionDistributions>()[group] = vec_delaydistrib;
     }
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
 
     for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(num_agegroups); ++group) {
-        model.parameters.get<mio::isecir::TransitionProbabilities>()[group] = vec_prob;
+        model.parameters.template get<mio::isecir::TransitionProbabilities>()[group] = vec_prob;
     }
-    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, num_agegroups);
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, 10.));
-    model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+    mio::ContactMatrixGroup<ScalarType> contact_matrix = mio::ContactMatrixGroup<ScalarType>(1, num_agegroups);
+    contact_matrix[0] =
+        mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(num_agegroups, num_agegroups, 10.));
+    model.parameters.template get<mio::isecir::ContactPatterns>() =
+        mio::UncertainContactMatrix<ScalarType>(contact_matrix);
 
-    mio::ConstantFunction constfunc(1.0);
-    mio::StateAgeFunctionWrapper prob(constfunc);
+    mio::ConstantFunction<ScalarType> constfunc(1.0);
+    mio::StateAgeFunctionWrapper<ScalarType> prob(constfunc);
 
     for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(num_agegroups); ++group) {
-        model.parameters.get<mio::isecir::TransmissionProbabilityOnContact>()[group] = prob;
-        model.parameters.get<mio::isecir::RelativeTransmissionNoSymptoms>()[group]   = prob;
-        model.parameters.get<mio::isecir::RiskOfInfectionFromSymptomatic>()[group]   = prob;
+        model.parameters.template get<mio::isecir::TransmissionProbabilityOnContact>()[group] = prob;
+        model.parameters.template get<mio::isecir::RelativeTransmissionNoSymptoms>()[group]   = prob;
+        model.parameters.template get<mio::isecir::RiskOfInfectionFromSymptomatic>()[group]   = prob;
     }
 
     mio::CustomIndexArray<ScalarType, mio::AgeGroup> scale_confirmed_cases =
@@ -199,16 +203,16 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRunAgeRes)
 
     // Compare transitions at last time point with results from a previous run that are given here.
     Eigen::VectorX<ScalarType> compare(num_transitions * num_agegroups);
-    compare << 336.428571428600, 328.285714285701, 162.000000000000, 163.071428571425, 80.130989648839, 79.803571428575,
-        39.476374533415, 39.476374533415, 19.550404043081, 19.550404043081, 1105.714285714297, 1069.857142857200,
-        515.714285714250, 163.071428571425, 80.130989648839, 79.803571428575, 39.476374533415, 39.476374533415,
-        19.550404043081, 19.550404043081, 5819.000000000000, 5744.000000000000, 2806.428571428551, 163.071428571425,
-        80.130989648839, 79.803571428575, 39.476374533415, 39.476374533415, 19.550404043081, 19.550404043081,
-        6685.142857142899, 6572.857142857101, 3200.714285714304, 163.071428571425, 80.130989648839, 79.803571428575,
-        39.476374533415, 39.476374533415, 19.550404043081, 19.550404043081, 2376.000000000000, 2342.285714285696,
-        1142.571428571406, 163.071428571425, 80.130989648839, 79.803571428575, 39.476374533415, 39.476374533415,
-        19.550404043081, 19.550404043081, 966.714285714304, 946.142857142797, 457.214285714301, 163.071428571425,
-        80.130989648839, 79.803571428575, 39.476374533415, 39.476374533415, 19.550404043081, 19.550404043081;
+    compare << 336.4285714286, 328.2857142857, 162.0000000000, 163.0714285714, 80.1309896488, 79.8035714286,
+        39.4763745334, 39.4763745334, 19.5504040431, 19.5504040431, 1105.7142857143, 1069.8571428572, 515.7142857142,
+        525.3214285714, 254.4848638825, 253.2142857143, 124.6903391854, 124.6903391854, 61.1148381577, 61.1148381577,
+        5819.0000000000, 5744.0000000000, 2806.4285714286, 2839.2142857143, 1394.5112118989, 1391.2321428571,
+        689.6518098426, 689.6518098426, 340.5829657792, 340.5829657792, 6685.1428571429, 6572.8571428571,
+        3200.7142857143, 3243.5714285714, 1591.9783266355, 1588.8214285714, 787.5403666800, 787.5403666800,
+        388.5439635160, 388.5439635160, 2376.0000000000, 2342.2857142857, 1142.5714285714, 1156.8571428571,
+        566.0586818750, 564.0892857143, 277.9264675819, 277.9264675819, 136.1445518771, 136.1445518771, 966.7142857143,
+        946.1428571428, 457.2142857143, 465.1428571428, 226.4021912199, 225.5714285714, 110.8246575673, 110.8246575673,
+        54.0704051215, 54.0704051215;
 
     mio::isecir::Simulation sim(model, dt);
     ASSERT_EQ(compare.size(), model.transitions.get_last_value().size());

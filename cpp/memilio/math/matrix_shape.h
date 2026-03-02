@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -42,11 +42,11 @@ namespace mio
  * shape of a rectangular matrix.
  * variable rows and cols.
  */
+template <typename FP>
 class RectMatrixShape
 {
 public:
-    using Matrix = Eigen::MatrixXd;
-
+    using Matrix = Eigen::MatrixX<FP>;
     /**
      * construct the shape of a rectangular matrix.
      * @param r number of rows.
@@ -138,11 +138,11 @@ private:
  * shape of a square matrix.
  * rows() == cols()
  */
+template <typename FP>
 class SquareMatrixShape
 {
 public:
-    using Matrix = Eigen::MatrixXd;
-
+    using Matrix = Eigen::MatrixX<FP>;
     /**
      * construct a square matrix of dimensions r
      * @param r number of rows and columns
@@ -239,12 +239,12 @@ private:
  * shape of a column vector.
  * cols() == 1. 
  */
+template <typename FP>
 class ColumnVectorShape
 {
 
 public:
-    using Matrix = Eigen::VectorXd;
-
+    using Matrix = Eigen::VectorX<FP>;
     /**
      * construct the shape of a column vector.
      * @param r number of rows.

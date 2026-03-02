@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
@@ -33,15 +33,17 @@ namespace pymio
 {
 
 // Enum for controlling pickling support behavior
-enum class EnablePickling {
-    Never,      // Pickling support is disabled.
-    IfAvailable, // Pickling support is enabled if the class matches SFINEA-clause of `serialize_internal` 
-    Required    // Pickling support is required, and an error is raised if not available.
+enum class EnablePickling
+{
+    Never, // Pickling support is disabled.
+    IfAvailable, // Pickling support is enabled if the class matches SFINEA-clause of `serialize_internal`
+    Required // Pickling support is required, and an error is raised if not available.
 };
 
 // Tag dispatch to convert value into type
 template <EnablePickling F>
-struct PicklingTag {};
+struct PicklingTag {
+};
 
 // Detect serialization by matching a `serialize_internal` function
 template <class IOContext, class T>
@@ -101,18 +103,21 @@ void pybind_pickle_class(pybind11::class_<T, Args...>& cls)
  * 
  * @{
  */
-template<class T, EnablePickling F, class... Args>
-struct BindClassHelper
-{
+template <class T, EnablePickling F, class... Args>
+struct BindClassHelper {
 private:
     template <class... Options>
-    auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<EnablePickling::Never> /*tags*/, Options&&... options) const {
+    auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<EnablePickling::Never> /*tags*/,
+                     Options&&... options) const
+    {
         auto cls = pybind11::class_<T, Args...>(m, name.c_str(), std::forward<Options>(options)...);
         return cls;
     }
 
     template <class... Options>
-    auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<EnablePickling::IfAvailable> /*tags*/, Options&&... options) const {
+    auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<EnablePickling::IfAvailable> /*tags*/,
+                     Options&&... options) const
+    {
         auto cls = pybind11::class_<T, Args...>(m, name.c_str(), std::forward<Options>(options)...);
         // Bind the class depending on its features
         if constexpr (has_serialize_internal<mio::PickleSerializer, T>::value) {
@@ -122,7 +127,9 @@ private:
     }
 
     template <class... Options>
-    auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<EnablePickling::Required> /*tags*/, Options&&... options) const {
+    auto _bind_class(pybind11::module& m, std::string const& name, PicklingTag<EnablePickling::Required> /*tags*/,
+                     Options&&... options) const
+    {
         auto cls = pybind11::class_<T, Args...>(m, name.c_str(), std::forward<Options>(options)...);
         pybind_pickle_class<T, Args...>(cls);
         return cls;
@@ -130,7 +137,8 @@ private:
 
 public:
     template <class... Options>
-    auto operator()(pybind11::module& m, std::string const& name, Options&&... options) const {
+    auto operator()(pybind11::module& m, std::string const& name, Options&&... options) const
+    {
         return _bind_class(m, name, PicklingTag<F>{}, std::forward<Options>(options)...);
     }
 };
@@ -151,7 +159,7 @@ public:
  * @param options optional arguments for pybind11::class_.
  * @return instance of pybind class_.
  */
-template<class T, EnablePickling F, class... Args>
+template <class T, EnablePickling F, class... Args>
 constexpr BindClassHelper<T, F, Args...> bind_class;
 /**@}*/
 
@@ -162,10 +170,12 @@ T check_and_throw(mio::IOResult<T>& result)
         auto status = result.error();
         if (status.code() == std::errc::no_such_file_or_directory) {
             throw pybind11::value_error(status.message());
-        } else {
+        }
+        else {
             throw std::runtime_error(status.message());
         }
-    } else {
+    }
+    else {
         return result.value();
     }
 }
@@ -191,8 +201,8 @@ std::string pretty_name()
  *                   is a value of Type T, where T is the type of the argument.
  */
 template <class C, class... ArgTuples,
-          class = std::enable_if_t<(std::is_same<typename C::type::Shape, mio::SquareMatrixShape>::value ||
-                                    std::is_same<typename C::type::Shape, mio::ColumnVectorShape>::value),
+          class = std::enable_if_t<(std::is_same<typename C::type::Shape, mio::SquareMatrixShape<double>>::value ||
+                                    std::is_same<typename C::type::Shape, mio::ColumnVectorShape<double>>::value),
                                    void>>
 void bind_shape_constructor(C& cl, ArgTuples... arg_tuples)
 {
@@ -276,7 +286,7 @@ auto bind_Range(pybind11::module_& m, const std::string& class_name)
         using type_to_check_recursively = recursive_bottom;                                                            \
     };                                                                                                                 \
     }                                                                                                                  \
-}
+    }
 
 //bind an enum class that can be iterated over
 //requires the class to have a member `Count`
@@ -284,9 +294,9 @@ auto bind_Range(pybind11::module_& m, const std::string& class_name)
 template <class E, class... Args>
 auto iterable_enum(pybind11::module_& m, const std::string& name, Args&&... args)
 {
-    using T = std::underlying_type_t<E>;
+    using T         = std::underlying_type_t<E>;
     auto enum_class = pybind11::enum_<E>(m, name.c_str(), std::forward<Args>(args)...);
-    
+
     //dummy type that provides iteration of enums
     //not meant to be used directly by users, so name starts with _
     struct Values {

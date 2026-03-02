@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2025 MEmilio
+# Copyright (C) 2020-2026 MEmilio
 #
 # Authors: Maximilian Betz, Daniel Richter
 #
@@ -101,9 +101,8 @@ class AST:
         :returns: List of command-line arguments for Clang.
         """
         clang_cmd = [
-            "clang-16", self.config.source_file,
-            "-std=c++17", '-emit-ast', '-o', '-', '-x', 'c++'
-        ]
+            "clang-18", self.config.source_file,
+            "-std=c++20", '-emit-ast', '-o', '-']
         clang_cmd.extend(file_args)
         return clang_cmd
 
