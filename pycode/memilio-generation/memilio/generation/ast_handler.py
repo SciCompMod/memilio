@@ -18,6 +18,7 @@
 # limitations under the License.
 ##############################################################################
 
+
 from typing import TypeVar
 from memilio.generation import ScannerConfig, AST
 from clang.cindex import TranslationUnit, Index
@@ -135,12 +136,12 @@ class ASTHandler:
         """
         self.ast_list.remove(ast)
 
-    def get_ast_list(self: T) -> list:
+    def get_ast_list(self: T) -> str:
         """ Get list of ASTs.
 
         :returns: List of AST objects.
         """
-        return self.ast_list
+        return f"Hier ist die Liste aller erstellten ASTs:{self.ast_list}"
 
     def get_ast_by_id(self: T, id: int) -> AST:
         """ Get AST by id.

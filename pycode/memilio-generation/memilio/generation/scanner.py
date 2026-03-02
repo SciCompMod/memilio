@@ -24,12 +24,14 @@ Analyze the model and extract the needed information. Information get passed to 
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Any, Callable
+import warnings
+from typing import TYPE_CHECKING, Any, Callable, Union
 
 from clang.cindex import *
 from typing_extensions import Self
 
 from memilio.generation import IntermediateRepresentation, utility
+from memilio.generation.info_types import binding_type_info, method_type_info
 from memilio.generation.default_generation_dict import default_dict, general_bindings_dict
 
 
@@ -61,7 +63,6 @@ class Scanner:
         Call find_node to visit all nodes of abstract syntax tree and finalize to finish the extraction.
 
         :param root_cursor: Represents the root node of the abstract syntax tree as a Cursor object from libclang.
-        :param self: Self:
         :returns: Information extracted from the model saved as an IntermediateRepresentation.
 
         """
@@ -79,15 +80,20 @@ class Scanner:
                               intermed_repr: IntermediateRepresentation, namespace: str) -> list:
         """ Search for a binding target in the current node.
         If the node matches the binding, set the information in intermed_repr.
+
         :param binding_list: List of dictionaries containing the bindings.
         :param node: Represents the current node of the abstract syntax tree as a Cursor object from libclang.
         :param intermed_repr: Dataclass used for saving the extracted model features.
-        :param namespace: Namespace of the current node."""
+        :param namespace: Namespace of the current node.
+        :returns: List of found bindings."""
 
         for binding in binding_list:
-            kind_name = binding.get("cursorkind")  # name of the CursorKind
+            # name of the CursorKind
+            kind_name = binding.get("cursorkind")
+
             # name of the function or class that is going to be bound
             binding_name = binding.get("name")
+
             # type of the binding, e.g. "class", "function"
             binding_type = binding.get("type")
 
@@ -121,41 +127,89 @@ class Scanner:
 
     def handle_class_binding(self: Self, binding, node: Cursor, intermed_repr: IntermediateRepresentation, namespace: str):
         """ Handle the methods of a class.
+
         :param binding: The binding dictionary containing the class information
         :param node: Represents the current node of the abstract syntax tree as a Cursor object from libclang.
         :param intermed_repr: Dataclass used for saving the extracted model features.
         :param namespace: Namespace of the current node.
-        :param methods: List of methods to be handled for the class binding.
         """
 
-        current_entry: dict[str, Any] = intermed_repr.found_bindings[-1]
-        current_entry.setdefault("methods", [])
+        current_entry: binding_type_info = intermed_repr.found_bindings[-1]
         methods = binding.get("methods", [])
+        base_classes: list[str] = []
+        constructor_params = []
+        template_args = []
 
-        base_classes = []
         for child in node.get_children():
-            if child.kind == CursorKind.CXX_BASE_SPECIFIER:
-                base_type = child.type.spelling
-                base_classes.append(base_type)
 
-            if child.kind == CursorKind.CONSTRUCTOR:
-                constructor_params = []
-                for param in child.get_children():
-                    if param.kind == CursorKind.PARM_DECL:
-                        param_type = param.type.spelling
-                        param_name = param.spelling
-                        constructor_params.append(
-                            {"name": param_name, "type": param_type})
+            self.set_base_classes(child, base_classes)
 
-                current_entry["init"] = constructor_params
+            if self.set_constructor_params(child, constructor_params):
                 break
 
-        if base_classes:
-            current_entry["base_classes"] = base_classes
+            if child.kind == CursorKind.TEMPLATE_TYPE_PARAMETER:
+                template_args.append(child.spelling)
+
+        self.set_current_entry(
+            current_entry, base_classes, constructor_params, template_args)
+
+        current_entry.methods.extend(
+            self.set_methods(node, methods, namespace))
+
+    def set_base_classes(self: Self, child: Cursor, base_classes: list[str]) -> None:
+        """ Get the base classes of a class node.
+
+        :param child: Represents the current node of the abstract syntax tree as a Cursor object from libclang.
+        :param base_classes: List to store the base classes of the current node.
+        """
+        if child.kind == CursorKind.CXX_BASE_SPECIFIER:
+            base_classes.append(child.type.spelling)
+
+    def set_constructor_params(self: Self, child: Cursor, constructor_params: list[dict[str, str]]) -> bool:
+        """ Get the constructor parameters of a class node.
+
+        :param child: Represents the current node of the abstract syntax tree as a Cursor object from libclang.
+        :param constructor_params: List to store the constructor parameters of the current node.
+        :returns: True if the child is a constructor, False otherwise.
+        """
+        if child.kind != CursorKind.CONSTRUCTOR:
+            return False
+
+        for param in child.get_children():
+            if param.kind == CursorKind.PARM_DECL:
+                param_type = param.type.spelling
+                param_name = param.spelling
+                constructor_params.append(
+                    {"name": param_name, "type": param_type})
+        return True
+
+    def normalize_method_spec(self: Self, method: Union[str, dict]) -> dict:
+        """ Normalize the method specification in the binding dictionary.
+
+        :param method: The method dictionary containing the method information.
+        :returns: Normalized method dictionary with default values for missing keys.
+        """
+        if isinstance(method, str):
+            return {
+                "type": "method",
+                "name": method,
+                "cursorkind": "CXX_METHOD"
+            }
+        return method
+
+    def set_methods(self: Self, node: Cursor, methods: list[dict], namespace: str) -> list[method_type_info]:
+        """ Set the methods of a class node.
+
+        :param node: Represents the current node of the abstract syntax tree as a Cursor object from libclang.
+        :param methods: List of method dictionaries containing the method information.
+        :param namespace: Namespace of the current node.
+        :returns: List of method_type_info dataclasses containing the information of the methods of the current node.
+        """
+        out: list[method_type_info] = []
 
         for method in methods:
-            method_name = method.get("name")
-            method_kind = method.get("cursorkind")
+            method = self.normalize_method_spec(method)
+            method_name = method.get("name", "")
 
             matching_child = next(
                 (child for child in node.get_children()
@@ -168,76 +222,78 @@ class Scanner:
 
             method_args = self.get_function_arguments(matching_child)
 
-            key = (
-                method_name,
-                method_kind,
-                tuple(method_args.get("arg_types", [])),
-                tuple(method_args.get("arg_names", [])),
-                method_args.get("parent_name", "")
+            method_info = method_type_info(
+                type="method",
+                name=method_name,
+                cursorkind=matching_child.kind.name,
+                namespace=namespace,
+                return_type=matching_child.result_type.spelling if matching_child.kind.is_declaration() else "",
+                arg_types=method_args.get("arg_types", []),
+                arg_names=method_args.get("arg_names", []),
+                parent_name=method_args.get("parent_name", ""),
+                is_const=method_args.get("is_const", False),
+                is_member=method_args.get("is_member", False)
             )
+
+            key = method_info.signature_key()
 
             if key in self.handled_bindings:
                 continue
 
-            method_info = {
-                "type": "method",
-                "name": method_name,
-                "kind": matching_child.kind.name,
-                "namespace": namespace,
-                "return_type": matching_child.result_type.spelling if matching_child.kind.is_declaration() else "",
-                "arg_types": method_args.get("arg_types", []),
-                "arg_names": method_args.get("arg_names", []),
-                "parent_name": method_args.get("parent_name", ""),
-                "is_const": method_args.get("is_const", False),
-                "is_member": method_args.get("is_member", False)
-            }
+            out.append(method_info)
 
-            current_entry["methods"].append(method_info)
             self.handled_bindings.add(key)
+        return out
 
-    def get_base_specifier(self: Self, node: Cursor) -> str:
-        """ Get the base specifier of a class node.
-        :param node: Represents the current node of the abstract syntax tree as a Cursor object from libclang.
-        :returns: The base specifier of the class node as a string."""
-        for child in node.get_children():
-            if child.kind == CursorKind.CXX_BASE_SPECIFIER:
-                return child.type.spelling
-        return ""
+    def set_current_entry(self: Self, current_entry: binding_type_info, base_classes: list[str], constructor_params: list[dict[str, str]], template_args: list[str]) -> None:
+        """ Check if the current entry has base classes, constructor parameters or template arguments and add them to the current entry.
+
+        :param current_entry: The current entry in the found_bindings list to be updated.
+        :param base_classes: List of base classes of the current node.
+        :param constructor_params: List of constructor parameters of the current node.
+        :param template_args: List of template arguments of the current node.
+        """
+        if base_classes:
+            current_entry.base_classes = base_classes
+
+        if constructor_params:
+            current_entry.init = constructor_params
+
+        if template_args:
+            current_entry.template_args = template_args
 
     def set_info(self: Self, intermed_repr: IntermediateRepresentation, node: Cursor, binding_type, namespace: str, function_arguments: dict) -> None:
         """ Set the information of the current node into the intermed_repr.
 
         :param intermed_repr: Dataclass used for saving the extracted model features.
         :param node: Represents the current node of the abstract syntax tree as a Cursor object from libclang.
-        :param arg_types: List of argument types of the current node.
-        :param arg_names: List of argument names of the current node.
-        :param binding_type: Type of the binding, e.g. "class", "function", "extern_function".
+        :param binding_type: Type of the binding, e.g. "class", "function". 
         :param namespace: Namespace of the current node.
+        :param function_arguments: Dictionary containing the argument types and names of the current node if it is a function.
         """
 
-        found_info = {
-            "type": binding_type,
-            "name": node.spelling,
-            "kind": node.kind.name,
-            "namespace": namespace,
-            "return_type": node.result_type.spelling if node.kind.is_declaration() else "",
-            "arg_types": function_arguments.get("arg_types", []),
-            "arg_names": function_arguments.get("arg_names", []),
-            "parent_name": function_arguments.get("parent_name", ""),
-            "is_const": function_arguments.get("is_const", False),
-            "is_member": function_arguments.get("is_member", False),
+        found_info = binding_type_info(
+            type=binding_type,
+            name=node.spelling,
+            cursorkind=node.kind.name,
+            namespace=namespace,
+            return_type=node.result_type.spelling if node.kind.is_declaration() else "",
+            arg_types=function_arguments.get("arg_types", []),
+            arg_names=function_arguments.get("arg_names", []),
+            parent_name=function_arguments.get("parent_name", ""),
+            is_const=function_arguments.get("is_const", False),
+            is_member=function_arguments.get("is_member", False),
+            methods=[]
+        )
 
-            "methods": []
-
-        }
-        key = (node.spelling, node.kind.name, tuple(function_arguments.get("arg_types", [])), tuple(
-            function_arguments.get("arg_names", [])), function_arguments.get("parent_name", ""))
+        key = found_info.signature_key()
         if key not in self.handled_bindings:
             intermed_repr.found_bindings.append(found_info)
             self.handled_bindings.add(key)
 
     def get_function_arguments(self, node: Cursor) -> dict:
         """ Get the argument types and names of a function node.
+
         :param node: Represents the current node of the abstract syntax tree as a Cursor object from libclang.
         :returns: A tuple containing a list of argument types and a list of argument names."""
         arg_types = []
@@ -262,7 +318,8 @@ class Scanner:
         }
 
     def is_member(self, node: Cursor) -> tuple[bool, str]:
-        """Check if the node is a member function (also for function templates).
+        """Check if the node is a member function.
+
         :param node: Represents the current node of the abstract syntax tree as a Cursor object from libclang.
         :returns: True if the node is a member function, False otherwise.
         """
@@ -291,9 +348,9 @@ class Scanner:
         return False, ""
 
     def check_parameter_space(self: Self, intermed_repr: IntermediateRepresentation) -> None:
-        """! Checks for parameter_space.cpp in the model folder and set has_draw_sample
+        """Checks for parameter_space.cpp in the model folder and set has_draw_sample
 
-        @param intermed_repr: Dataclass used for saving the extracted model features.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
         """
         source_file = self.config.source_file
         model_folder = os.path.dirname(source_file)
@@ -310,14 +367,12 @@ class Scanner:
 
         :param node: Represents the current node of the abstract syntax tree as a Cursor object from libclang.
         :param intermed_repr: Dataclass used for saving the extracted model features.
-        :param namespace: Default = ""] Namespace of the current node.
-        :param self: Self:
-
+        :param namespace: Default = "" Namespace of the current node.
         """
         if node.kind == CursorKind.NAMESPACE:
             namespace = (namespace + node.spelling + "::")
 
-        elif namespace == self.namespace:
+        if namespace.startswith(self.namespace):
             self.search_binding_target(
                 binding_list, node, intermed_repr, namespace)
             self.switch_node_kind(node.kind)(node, intermed_repr)
@@ -372,8 +427,9 @@ class Scanner:
 
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
-
         """
+        warnings.warn("Funktion ist aus der alten Version, und wird ",
+                      DeprecationWarning, stacklevel=2)
         if node.semantic_parent.spelling in intermed_repr.enum_populations.keys():
             key = node.semantic_parent.spelling
             intermed_repr.enum_populations[key].append(node.spelling)

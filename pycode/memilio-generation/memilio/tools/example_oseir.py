@@ -27,6 +27,7 @@ import matplotlib.pyplot as plt
 import statistics
 import json
 import os
+from clang import cindex
 from clang.cindex import CursorKind
 
 if sys.version_info >= (3, 9):
@@ -56,35 +57,30 @@ def run_memilio_generation(print_ast=False):
 
     conf.source_file = os.path.abspath(os.path.join(
         file_path, "..", "..", "..", "..", "cpp", "models", "ode_secirvvs", "model.cpp"))
-    # Could be any target folder
     conf.target_folder = file_path
 
     scanner = Scanner(conf)
-    ast_instance = AST(conf)
     asts = ASTHandler(conf)
-    # asts.add_source_file("parameter_space.cpp")
+    asts.add_source_file("model.cpp")
+
     asts.handle_ast_creation()
 
     aviz = Visualization()
-
-    # Extract results of Scanner into a intermed_repr
 
     ast = asts.get_ast_by_id(0)
 
     intermed_repr = scanner.extract_results(ast.root_cursor)
 
-    # Generate code
     generator = Generator()
     generator.create_substitutions(intermed_repr)
     generator.generate_files(intermed_repr)
-    # gg = asts.val_to_id
-    # print(f"AST ID: {gg}")
 
     # Print the abstract syntax tree to a file
     if (print_ast):
-        print(f"ASTs {asts.ast_list}")
         aviz.output_ast_formatted(
             asts.get_ast_by_id(0), ast.get_node_by_index(0))
+        # aviz.output_ast_terminal(asts.get_ast_by_id(0), ast.get_node_by_index(2))
+        # aviz.output_ast_png(ast.get_node_by_index(1), 1)
 
 
 if __name__ == "__main__":

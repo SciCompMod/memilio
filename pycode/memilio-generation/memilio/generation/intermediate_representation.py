@@ -26,6 +26,7 @@ from typing import Any, Dict, Union
 
 from typing_extensions import Self
 from memilio.generation import Generator
+from memilio.generation.info_types import binding_type_info
 
 
 @dataclass
@@ -54,7 +55,8 @@ class IntermediateRepresentation:
     population_groups: list = field(default_factory=list)
     include_list: list = field(default_factory=list)
     age_group: dict = field(default_factory=dict)
-    found_bindings: list[dict[str, str]] = field(default_factory=list)
+    found_bindings: list[binding_type_info] = field(
+        default_factory=list)
 
     def set_attribute(self: Self, attribute_name: str, value: Any) -> None:
         """Setter for the attributes of this class.

@@ -101,7 +101,7 @@ class AST:
         :returns: List of command-line arguments for Clang.
         """
         clang_cmd = [
-            "clang-14", self.config.source_file,
+            "clang-16", self.config.source_file,
             "-std=c++17", '-emit-ast', '-o', '-', '-x', 'c++'
         ]
         clang_cmd.extend(file_args)

@@ -44,6 +44,7 @@ PYBIND11_MODULE(_simulation_${python_module_name}, m)
     ${simulation}
     ${draw_sample}
     ------Generalized_Functions----------
+    ${handle_all_bindings}
     ${bind_functions}
     ------Extern_Functions---------------
     ${bind_extern_functions}

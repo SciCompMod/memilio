@@ -28,59 +28,115 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from memilio.generation import IntermediateRepresentation
+    from memilio.generation.info_types import binding_type_info, method_type_info
 
 
 def handle_all_bindings(intermed_repr: IntermediateRepresentation) -> str:
+    """Generate the bindings for all found classes and functions in the intermediate representation.
+
+    :param intermed_repr: Dataclass holding the model features.
+    """
     result = ""
-    print(intermed_repr.found_bindings)
     for bindings in intermed_repr.found_bindings:
-        if bindings.get("type") == "class":
-            result += bind_classes(intermed_repr, bindings)
-        elif bindings.get("type") == "function":
+        if bindings.type == "class":
+            if bindings.cursorkind == "CLASS_TEMPLATE":
+                result += template_class_wrapper(intermed_repr, bindings)
+            else:
+                result += bind_classes(intermed_repr, bindings)
+
+        elif bindings.type == "function":
             result += bind_functions(intermed_repr, bindings)
     return result.strip()
 
 
-def bind_classes(intermed_repr: IntermediateRepresentation, bindings: dict) -> str:
+def template_class_wrapper(intermed_repr: IntermediateRepresentation, bindings: binding_type_info) -> str:
+    """ Generate the template class wrapper for the bindings.
+
+    :param intermed_repr: Dataclass holding the model features.
+    :param bindings: A dataclass entry representing a class node from the AST.
+    :return: Formatted string representing a part of the bindings.
+    """
+
+    template_class_block = ""
+    template_args = bindings.template_args
+    template_string = ", ".join(
+        f"typename {arg}" for arg in template_args)
+    class_name = bindings.name
+    if template_string:
+        full_template = f"class {class_name}, {template_string}"
+    else:
+        full_template = f"class {class_name}"
+
+    template_class_block += (
+
+        f'template <{full_template}>\n\t'
+        f'void bind_{class_name}(py::module& m, const std::string& name)\n\t'
+        f'{{\n\t')
+    template_class_block += f'\t' + bind_classes(intermed_repr, bindings)
+    template_class_block += (
+        '\t}\n')
+
+    return template_class_block
+
+
+def bind_classes(intermed_repr: IntermediateRepresentation, bindings: binding_type_info) -> str:
+    """ Bind the classes found in the intermediate representation.
+
+    :param intermed_repr: Dataclass holding the model features.
+    :param bindings: A dataclass entry representing a class node from the AST.
+    :return: Formatted string representing a part of the bindings.
+    """
 
     class_block = ""
     scalarType = ScalarType(intermed_repr)
-    class_namespace = bindings.get("namespace", "")
-    class_name = bindings.get("name", "")
-    base_classes = bindings.get("base_classes", "")
+    class_namespace = bindings.namespace
+    class_name = bindings.name
+    base_classes = bindings.base_classes
 
     template_params = f"{class_namespace}{class_name}<{scalarType}>"
-    if base_classes:
 
-        base_template = ", ".join(
-            f"{class_namespace}{base_class.replace('FP', scalarType)}" for base_class in ensure_list(base_classes))
-        class_block += f'\tpy::class_<{template_params}, {base_template}>(m, "{class_name}")\n'
+    if bindings.cursorkind == "CLASS_TEMPLATE":
+        if base_classes:
+            base_template = ", ".join(
+                f"{class_namespace}{base_class.replace('FP', scalarType)}" for base_class in ensure_list(base_classes))
+            class_block += (
+                f'py::class_<{template_params}, {base_template}>(m, name.c_str());\n')
+        else:
+            class_block += (
+                f'py::class_<{template_params}>(m, name.c_str());\n')
     else:
-        class_block += f'\tpy::class_<{template_params}>(m, "{class_name}")\n'
+        if base_classes:
+            base_template = ", ".join(
+                f"{class_namespace}{base_class.replace('FP', scalarType)}" for base_class in ensure_list(base_classes))
+            class_block += f'\tpy::class_<{template_params}, {base_template}>(m, "{class_name}")\n'
+        else:
+            class_block += f'\tpy::class_<{template_params}>(m, "{class_name}")\n'
 
-    init_params = bindings.get("init", [])
+    init_params = bindings.init
     class_block += generate_constructor(init_params)
 
-    methods = bindings.get("methods", [])
+    methods = bindings.methods
     for method in methods:
-        class_block += (f'\t' + bind_functions(intermed_repr, method))
-    return class_block + '\t;\n'
+        class_block += (f'\t' + bind_functions(intermed_repr,
+                        method, class_name))
+    return class_block + '\t;\n\n'
 
 
-def bind_functions(intermed_repr: IntermediateRepresentation, bindings: dict) -> str:
+def bind_functions(intermed_repr: IntermediateRepresentation, bindings: binding_type_info, class_name: str = "") -> str:
     """ Bind the functions found in the intermediate representation.
+
     :param intermed_repr: Dataclass holding the model features.
+    :param bindings: A dataclass entry representing a function or method node from the AST.
     :return: Formatted string representing a part of the bindings."""
 
     result = ""
-    name = bindings.get("name", "")
-    namespace = bindings.get("namespace", "")
-    arg_types = ensure_list(bindings.get("arg_types", []))
-    arg_names = ensure_list(bindings.get("arg_names", []))
-    call_args = ", ".join(arg_names)
+    name = bindings.name
+    namespace = bindings.namespace
+    arg_types = ensure_list(bindings.arg_types)
+    arg_names = ensure_list(bindings.arg_names)
     py_args = ", ".join(f'py::arg("{n}")' for n in arg_names)
-    is_member = bindings.get("is_member", False)
-    parent_name = bindings.get("parent_name", "")
+    is_member = bindings.is_member
+    parent_name = bindings.parent_name
     scalartype = ScalarType(intermed_repr)
     prefix = set_prefix(bindings)
 
@@ -91,11 +147,7 @@ def bind_functions(intermed_repr: IntermediateRepresentation, bindings: dict) ->
 
     elif needs_lambda_binding(bindings):
 
-        lambda_args = generate_lambda_args(
-            namespace, scalartype, arg_types, arg_names)
-
-        result += lambda_binding(name, namespace, lambda_args,
-                                 call_args, py_args, prefix)
+        result += lambda_binding(name, namespace, scalartype, class_name)
     else:
         result += direct_binding(
             name, namespace, scalartype, py_args, prefix, bool(is_member), parent_name)
@@ -105,6 +157,7 @@ def bind_functions(intermed_repr: IntermediateRepresentation, bindings: dict) ->
 
 def generate_constructor(init_params: list) -> str:
     """ Generate the constructor for a class.
+
     :param init_params: List of initialization parameters for the constructor.
     :return: Formatted string representing the constructor.
     """
@@ -118,75 +171,69 @@ def generate_constructor(init_params: list) -> str:
     return f'\t\t.def(py::init<{types_list}>(), {args_list})\n'
 
 
-def generate_lambda_args(namespace: str, scalartype: str, arg_types: list, arg_names: list) -> str:
-    """ Generate the arguments for a lambda function.
-    :param namespace: Namespace of the function.
-    :param scalartype: Scalar type used in the function.
-    :param arg_types: List of argument types for the function.
-    :param arg_names: List of argument names for the function.
-    :return: Formatted string representing the lambda arguments.
-    """
-
-    return ", ".join(
-        f"{namespace}{t.replace('FP', scalartype)} {n}"
-        for t, n in zip(arg_types, arg_names)
-    )
-
-
-def set_prefix(bindings: dict) -> str:
+def set_prefix(bindings: binding_type_info) -> str:
     """ Set the prefix for the bindings.
+
     :param bindings: A dictionary representing a function or method node from the AST.
     :return: Formatted string representing a part of the bindings.
     """
-    is_member = bindings.get("is_member", False)
-    if not is_member:
-        prefix = "m"
-    else:
-        prefix = ""
-
-    return prefix
+    return "m" if not bindings.is_member else ""
 
 
-def needs_lambda_binding(bindings: dict) -> bool:
-    """
-    Determines whether a lambda binding is necessary for the given function or method.
-    :param bindings: A dictionary representing a function or method node from the AST.
+def needs_lambda_binding(bindings: binding_type_info) -> bool:
+    """ Determines whether a lambda binding is necessary for the given function or method.
+
+    :param bindings: A dataclass entry representing a function or method node from the AST.
     :return: True if a lambda binding should be generated, False otherwise.
     """
-
-    arg_types = ensure_list(bindings.get("arg_types", []))
-    if arg_types and "Model" in arg_types[0]:
-        return True
-
-    return False
+    name = bindings.name
+    return bool(bindings.is_member and name.startswith("get") or name.startswith("set"))
 
 
-def lambda_binding(name: str, namespace: str, lambda_args: str, call_args: str, py_args: str, prefix: str) -> str:
+def lambda_binding(name: str, namespace: str, scalartype: str, class_name: str = "") -> str:
     """ Generate a lambda binding for a function.
+
     :param name: Name of the function.
     :param namespace: Namespace of the function.
-    :param lambda_args: Arguments for the lambda function.
-    :param call_args: Arguments to call the function.
-    :param py_args: Python arguments for the function.
+    :param scalartype: Scalar type used in the function.
+    :class_name: Name of the class if the function is a member function.
     :return: Formatted string representing a part of the bindings."""
 
+    qualified_class = f"{namespace}{class_name}<{scalartype}>"
+    property_name = name[4:]
+    getter = (
+        f'\t\t[]({qualified_class} const& self) -> {scalartype} {{\n'
+        f'\t\t\treturn self.{name}();\n'
+        f'\t\t\t}}'
+    )
+
+    if name.startswith("set"):
+        setter = (
+            f',\n'
+            f'\t\t[]({qualified_class}& self, {scalartype} value) {{\n'
+            f'\t\t\tself.{name}() = value;\n'
+            f'\t\t\t}}'
+        )
+    else:
+        setter = ''
+
     return (
-        f'\t{prefix}.def(\n'
-        f'\t\t"{name}",\n'
-        f'\t\t[]({lambda_args}) {{\n'
-        f'\t\treturn {namespace}{name}({call_args});\n'
-        f'\t\t}},\n'
-        f'\t\t{py_args}\n'
-        f'\t);\n\n'
+        f'\t.def_property(\n'
+        f'\t\t\t"{property_name}",\n'
+        f'\t{getter}{setter})\n'
     )
 
 
 def direct_binding(name: str, namespace: str, scalartype: str, py_args: str, prefix: str, is_member: bool, parent_name: str) -> str:
     """ Generate a direct binding for a function.
+
     :param name: Name of the function.
     :param namespace: Namespace of the function.
     :param scalartype: Scalar type used in the function.
     :param py_args: Python arguments for the function.
+    :param prefix: Prefix for the binding (e.g., "m" for module-level functions).
+    :param is_member: Boolean indicating whether the function is a member function.
+    :param parent_name: Name of the parent class if the function is a member function.
     :return: Formatted string representing a part of the bindings.
     """
     if not is_member:
@@ -203,29 +250,29 @@ def direct_binding(name: str, namespace: str, scalartype: str, py_args: str, pre
         )
 
 
-def is_overloaded_function(binding: dict, found_bindings: list) -> bool:
+def is_overloaded_function(binding: binding_type_info, found_bindings: list[binding_type_info]) -> bool:
     """ Check if a function binding is overloaded.
-    :param binding: The binding dictionary containing function details.
+
+    :param binding: A dataclass entry representing a function or method node from the AST.
     :param found_bindings: List of all found bindings.
     :return: True if the function is overloaded, False otherwise."""
 
-    name = binding.get("name", "")
-    namespace = binding.get("namespace", "")
     count = sum(
         1 for b in found_bindings
-        if b.get("name", "") == name and b.get("namespace", "") == namespace
+        if b.name == binding.name and b.namespace == binding.namespace
     )
     return count > 1
 
 
-def overloaded_function_bindings(name: str, namespace: str, scalartype: str, arg_types: list, py_args: str, bindings: dict, prefix: str) -> str:
+def overloaded_function_bindings(name: str, namespace: str, scalartype: str, arg_types: list, py_args: str, bindings: binding_type_info, prefix: str) -> str:
     """ Generate bindings for overloaded functions.
+
     :param name: Name of the function.
     :param namespace: Namespace of the function.
     :param scalartype: Scalar type used in the function.
     :param arg_types: List of argument types for the function.
     :param py_args: Python arguments for the function.
-    :param bindings: The binding dictionary containing function details.
+    :param bindings: A dataclass entry representing a overloaded function or method node from the AST.
     :return: Formatted string representing a part of the bindings."""
 
     formatted_arg_types = [
@@ -233,7 +280,7 @@ def overloaded_function_bindings(name: str, namespace: str, scalartype: str, arg
     return_type = bindings.get(
         "return_type", "void").replace("FP", scalartype)
 
-    is_const = bindings.get("is_const", False)
+    is_const = bindings.is_const
 
     func_ptr = f"{return_type} ({namespace}*)({', '.join(formatted_arg_types)})"
 
@@ -243,8 +290,7 @@ def overloaded_function_bindings(name: str, namespace: str, scalartype: str, arg
     return (
         f'\t{prefix}.def(\n'
         f'\t\t"{name}",\n'
-        # overload_cast helps generate the correct function pointer type from the template arguments
-        f'\t\tpy::overload_cast<{", ".join(formatted_arg_types)}>(static_cast<{func_ptr}>(&{namespace}{name})),'
+        f'\t\tpy::overload_cast<{", ".join(formatted_arg_types)}>(&{namespace}{name})),'
         f'\t\t{"py::const_," if is_const else ""}\n'
         f'\t\t{py_args}\n'
         f'\t);\n\n'
@@ -253,6 +299,7 @@ def overloaded_function_bindings(name: str, namespace: str, scalartype: str, arg
 
 def ensure_list(value) -> list:
     """ Ensure the value is a list. If not, wrap it in a list.
+
     :param value: The input value, possibly a list.
     :return: A list containing the value(s).
     """
@@ -266,7 +313,7 @@ def ensure_list(value) -> list:
 
 def ScalarType(intermed_repr: IntermediateRepresentation) -> str:
     """ Set the datatype for the bindings via. intermediate_representation.
-    @return string from intermediate_representation
+    :return: String from intermediate_representation
     """
     scalartypestr = intermed_repr.scalartype
     return scalartypestr
