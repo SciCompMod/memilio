@@ -20,7 +20,7 @@ class method_type_info:
             self.cursorkind,
             tuple(self.arg_types),
             tuple(self.arg_names),
-            self.parent_name,
+            self.parent_name
         )
 
 
@@ -47,5 +47,5 @@ class binding_type_info:
             self.cursorkind,
             tuple(self.arg_types),
             tuple(self.arg_names),
-            self.parent_name,
+            self.parent_name
         )

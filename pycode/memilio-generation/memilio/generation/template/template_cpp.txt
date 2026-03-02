@@ -45,9 +45,6 @@ PYBIND11_MODULE(_simulation_${python_module_name}, m)
     ${draw_sample}
     ------Generalized_Functions----------
     ${handle_all_bindings}
-    ${bind_functions}
-    ------Extern_Functions---------------
-    ${bind_extern_functions}
     -------------------------------------
     m.def("interpolate_simulation_result",
         static_cast<mio::TimeSeries<${ScalarType}> (*)(const mio::TimeSeries<${ScalarType}>&, const ${ScalarType})>(
