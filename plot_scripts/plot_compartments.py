@@ -95,7 +95,7 @@ def plot_susceptibles(files, fileending, save_dir=""):
     if save_dir != "":
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir)
-        plt.savefig(save_dir + f"compare_compartments_{fileending}.png",
+        plt.savefig(save_dir + f"compare_compartments{fileending}.png",
                     bbox_inches='tight', dpi=500)
 
     plt.close()
@@ -113,28 +113,28 @@ if __name__ == '__main__':
     # dir_name = "detailed_init_exponential_t0ide=50_tmax=51_finite_diff=1_tolexp=8"
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
-    main_dir = "2025-11-07/time_infected=2"
+    main_dir = "2026-03-01/damped_iteration_alpha=0.95_smoother=1"
     relevant_dir = os.path.join(root_dir, main_dir)
 
     sub_dirs = subfolders_scandir(relevant_dir)
+    # sub_dirs = [
+    #     "nonconst_contacts_t0=0_tinit=20_tmax=30_scalingtime=25_damping=0.5"]
 
-    for dir_name in sub_dirs:
-        print(main_dir + "/" + dir_name)
+    for sub_dir in sub_dirs:
+        print(main_dir + "/" + sub_dir)
 
         # Path where simulation results are stored.
         result_dir = os.path.join(os.path.dirname(
-            __file__),  f"../simulation_results/{main_dir}/{dir_name}/")
+            __file__),  f"../simulation_results/{main_dir}/{sub_dir}")
         # Path where plots will be stored.
         plot_dir = os.path.join(os.path.dirname(
-            __file__),  f"../plots/{main_dir}/{dir_name}/")
+            __file__),  f"../plots/{main_dir}/{sub_dir}/")
 
-        gregory_orders = ["3"]
-        ide_exponent = "2"
+        files = os.listdir(result_dir)
+        for exponent in range(3):
+            if f'result_{"ide"}_dt=1e-{exponent}.h5' in files:
+                ide_exponent = exponent
 
-        # for ODE
-
-        groundtruth_exponent = "6"
-        for gregory_order in gregory_orders:
-            plot_susceptibles([os.path.join(result_dir, f"result_ode_dt=1e-{groundtruth_exponent}"),
-                               os.path.join(result_dir, f"result_ide_dt=1e-{ide_exponent}_gregoryorder={gregory_order}")],
-                              fileending=f"dt=1e-{ide_exponent}_gregory={gregory_order}", save_dir=plot_dir)
+                plot_susceptibles([os.path.join(result_dir, f"result_ode"),
+                                   os.path.join(result_dir, f"result_ide_dt=1e-{ide_exponent}")],
+                                  fileending=f"_dt=1e-{ide_exponent}", save_dir=plot_dir)

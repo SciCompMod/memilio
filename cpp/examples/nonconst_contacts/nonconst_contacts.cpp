@@ -22,6 +22,7 @@
 #include "ide_sir/infection_state.h"
 #include "ide_sir/parameters.h"
 #include "ide_sir/simulation.h"
+#include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
@@ -44,7 +45,7 @@ ScalarType Seasonality                      = 0.;
 
 ScalarType cont_freq    = 1.;
 ScalarType damping      = 0.1;
-ScalarType scaling_time = 25.;
+ScalarType scaling_time = 15.;
 
 ScalarType S0               = 999000.;
 ScalarType I0               = 1000.;
@@ -57,19 +58,11 @@ mio::UncertainContactMatrix<ScalarType> scale_contact_matrix(ScalarType damping,
     using namespace params;
 
     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup<ScalarType>(1, 1);
-    if (damping <= 1.) {
-        // Perform simulation with a decrease in contacts.
-        contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixXd::Constant(1, 1, cont_freq));
-        contact_matrix[0].add_damping(0., mio::SimulationTime<ScalarType>(scaling_time));
-        contact_matrix[0].add_damping(damping, mio::SimulationTime<ScalarType>(scaling_time + 0.00001));
-    }
-    // else {
-    //     // Perform simulation with an increase in contacts.
-    //     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, damping * cont_freq));
-    //     contact_matrix[0].add_damping(1 - 1. / damping, mio::SimulationTime(-100.));
-    //     contact_matrix[0].add_damping(1 - 1. / damping, mio::SimulationTime(scaling_time));
-    //     contact_matrix[0].add_damping(0., mio::SimulationTime(scaling_time + 0.1));
-    // }
+
+    // Perform simulation with a decrease in contacts.
+    contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    // contact_matrix[0].add_damping(0., mio::SimulationTime<ScalarType>(0.));
+    contact_matrix[0].add_damping(damping, mio::SimulationTime<ScalarType>(scaling_time));
 
     return mio::UncertainContactMatrix(contact_matrix);
 }
@@ -122,7 +115,7 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent,
 
 mio::IOResult<void> simulate_ide(ScalarType ide_exponent, size_t gregory_order, size_t finite_difference_order,
                                  ScalarType t0_ode, ScalarType t0_ide, ScalarType tmax, ScalarType TimeInfected,
-                                 std::string save_dir = "",
+                                 ScalarType alpha, std::string save_dir = "",
                                  mio::TimeSeries<ScalarType> result_groundtruth =
                                      mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count))
 {
@@ -192,13 +185,14 @@ mio::IOResult<void> simulate_ide(ScalarType ide_exponent, size_t gregory_order, 
 
     // Carry out simulation.
     mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide);
-    sim.advance(tmax);
+    sim.advance(tmax, alpha);
 
     if (!save_dir.empty()) {
         // Save compartments.
         mio::TimeSeries<ScalarType> compartments = sim.get_result();
         auto save_result_status_ide =
-            mio::save_result({compartments}, {0}, num_agegroups, save_dir + "result_ide" + ".h5");
+            mio::save_result({compartments}, {0}, num_agegroups,
+                             save_dir + "result_ide_dt=1e-" + fmt::format("{:.0f}", ide_exponent) + ".h5");
 
         if (!save_result_status_ide) {
             return mio::failure(mio::StatusCode::InvalidValue,
@@ -211,26 +205,26 @@ mio::IOResult<void> simulate_ide(ScalarType ide_exponent, size_t gregory_order, 
 
 int main()
 {
-    /* In this example we want to examine the convergence behavior under the assumption of exponential stay time 
-    distributions. In this case, we can compare the solution of the IDE simulation with a corresponding ODE solution. */
-
     using namespace params;
-
-    // Compute groundtruth with ODE model.
-    ScalarType ode_exponent = 4;
 
     ScalarType time_infected = 4.;
 
     ScalarType t0_ode = 0.;
-    ScalarType t0_ide = 0.;
-    ScalarType tmax   = 30.;
+    ScalarType t0_ide = 10.;
+    ScalarType tmax   = 20.;
 
+    size_t gregory_order           = 3;
     size_t finite_difference_order = 4;
 
-    ScalarType ide_exponent = 1.;
-    size_t gregory_order    = 3;
+    ScalarType alpha = 0.5;
 
-    std::string save_dir = fmt::format("../../simulation_results/2026-02-10/test/");
+    // Compute groundtruth with ODE model.
+    ScalarType ode_exponent = 4.;
+    ScalarType ide_exponent = 1.;
+
+    std::string save_dir = fmt::format("../../simulation_results/2026-03-01/damped_iteration_alpha={}_smoother=1/"
+                                       "nonconst_contacts_t0={}_tinit={}_tmax={}_scalingtime={}_damping={}/",
+                                       alpha, t0_ode, t0_ide, tmax, scaling_time, damping);
 
     // Make folder if not existent yet.
     boost::filesystem::path dir(save_dir);
@@ -242,5 +236,5 @@ int main()
     std::cout << std::endl;
     std::cout << "Gregory order: " << gregory_order << std::endl;
     mio::IOResult<void> result_ide = simulate_ide(ide_exponent, gregory_order, finite_difference_order, t0_ode, t0_ide,
-                                                  tmax, time_infected, save_dir, result_ode);
+                                                  tmax, time_infected, alpha, save_dir, result_ode);
 }

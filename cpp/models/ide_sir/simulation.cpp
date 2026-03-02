@@ -33,7 +33,7 @@ namespace isir
 
 using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool use_complement)
+void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, ScalarType alpha, bool use_complement)
 {
     // Get index of t0, i.e. index of last time point of given initial values.
     size_t t0_index = m_model->populations.get_num_time_points() - 1;
@@ -74,7 +74,7 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool use_co
 
         size_t num_iterations =
             m_model->compute_S(m_model->populations.get_value(num_time_points - 2)[(size_t)InfectionState::Susceptible],
-                               m_dt, t0_index, use_complement);
+                               m_dt, t0_index, alpha, use_complement);
 
         if (num_iterations > m_max_number_iterations) {
             m_max_number_iterations = num_iterations;

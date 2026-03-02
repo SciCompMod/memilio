@@ -73,11 +73,6 @@ void SimulationAnalyticalSDeriv::advance(ScalarType tmax)
         m_model->compute_S_deriv(m_dt);
     }
 
-    // for (size_t i = 0; i < m_model->get_finite_difference_order() + 1; i++) {
-    //     m_model->populations.remove_time_point(i);
-    //     m_model->flows.remove_time_point(i);
-    // }
-
     for (size_t i = 0; i < (size_t)m_model->populations.get_num_time_points(); i++) {
         // Compute I and R.
         m_model->compute_I_and_R(m_dt, i);
