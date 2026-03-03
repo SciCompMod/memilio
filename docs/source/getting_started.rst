@@ -195,6 +195,12 @@ you can use the ``-j`` flag (e.g., using 4 cores):
 
         cmake --build cpp/build
 
+If you want to build a specific example, you can specify it with the ``--target`` flag:
+
+.. code-block:: console
+
+   cmake --build . --target <example_name>
+
 If you experience errors, feel free to contact martin.kuehn@dlr.de or open a `discussion on GitHub <https://github.com/SciCompMod/memilio/discussions>`_!
 
 Running simulations
