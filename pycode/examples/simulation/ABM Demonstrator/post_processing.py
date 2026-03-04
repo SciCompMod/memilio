@@ -15,3 +15,12 @@ if __name__ == "__main__":
         sim_result_file, save_folder, num_sims, start_sim, person_file)
     abm.calculate_agents_per_quantity(
         sim_result_file, save_folder, num_sims, start_sim, person_file)
+
+    sim_num = 1
+    abm.calculate_agents_per_area_inhabitants_commuters(
+        sim_result_file, sim_num)
+    time_point = 15 * 24
+    station_name = "S_M4"
+    area_to_station_file = "tandler_upstream_gebiete.json"
+    abm.calculate_infected_per_measurement_station(
+        area_to_station_file, sim_result_file, sim_num, time_point, station_name)

@@ -1,5 +1,7 @@
+#include "json/reader.h"
 #include <cstddef>
 #include <cstdio>
+#include <iostream>
 #include <string>
 #include <chrono>
 #include <vector>
@@ -9,6 +11,7 @@
 #include "boost/filesystem.hpp"
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <json/value.h>
 
 int stringToMinutes(const std::string& input)
 {
@@ -536,4 +539,237 @@ void calculate_agents_per_quantity_age_groups(std::string output_path, std::stri
                   << ": Time to calculate agents per quantity age groups: " << duration.count() << "[s]" << std::endl;
     }
     fclose(file);
+}
+
+double get_viral_load(int infection_age, double time_infected_in_days, double T_E, double T_INS, double T_symptoms)
+{
+    double peak           = 8.1;
+    double t_peak_in_days = (T_E + T_INS) / 24.;
+    double incline        = std::abs(peak / t_peak_in_days);
+    double end_date       = time_infected_in_days;
+    if (T_symptoms < 1) {
+        t_peak_in_days = 0.5 * time_infected_in_days;
+        peak           = incline * t_peak_in_days;
+    }
+    double decline = -peak / (end_date - t_peak_in_days);
+    if (infection_age > 0 && infection_age / 24. <= end_date) {
+        if (infection_age / 24. <= peak / incline) {
+            return incline * (infection_age / 24.);
+        }
+        else {
+            return peak + decline * (infection_age / 24. - peak / incline);
+        }
+    }
+    else {
+        return 0.;
+    }
+}
+
+double get_infectivity(double T_E, double T_INS, double T_ISy, double T_ISev, double T_ICri, int infection_age)
+{
+    double time_shift            = 0.6 * T_E;
+    double time_infected_in_days = (T_E + T_INS + T_ISy + T_ISev + T_ICri) / 24.;
+    if (time_shift >= infection_age)
+        return 0;
+    ScalarType infectivity = 1 / (1 + exp(-(-7 + 1 * get_viral_load(infection_age - time_shift, time_infected_in_days,
+                                                                    T_E, T_INS, T_ISy + T_ISev + T_ICri))));
+    if ((infectivity < 0) || (infectivity > (1.0 / (1 + exp(-(-7 + 1 * 8.1)))))) {
+        mio::log_error("Error: Infectivity smaller zero or above peak value.");
+    }
+    return 0.75 * infectivity;
+}
+
+void calculate_infected_per_measurement_station(std::string area_to_station_file, std::string infection_paths_file,
+                                                std::string hdf5_output_file, std::string save_file, int timepoint,
+                                                std::string station_name)
+{
+    // Get areas corresponding to measurement stations
+    std::ifstream area_to_station_stream(area_to_station_file);
+    if (!area_to_station_stream) {
+        std::cerr << "Failed to open file\n";
+        return;
+    }
+
+    Json::Value area_to_station;
+    Json::CharReaderBuilder builder;
+    JSONCPP_STRING errs;
+
+    bool ok = Json::parseFromStream(builder, area_to_station_stream, &area_to_station, &errs);
+
+    std::vector<int> areas;
+
+    if (area_to_station.isMember(station_name)) {
+        const Json::Value& arr = area_to_station[station_name];
+
+        for (const auto& v : arr) {
+            areas.push_back(std::stoi(v.asString()));
+        }
+    }
+
+    // Get infected agent ids influencing the measurement station
+    //Load H5 file
+    mio::H5File sim_output{H5Fopen(hdf5_output_file.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT)};
+    std::string group_name = "data";
+    //Open group
+    mio::H5Group h5group{H5Gopen(sim_output.id, group_name.c_str(), H5P_DEFAULT)};
+
+    //WW areas dataset
+    //Open dataset
+    mio::H5DataSet dset_loc_ids{H5Dopen(h5group.id, "loc_ids", H5P_DEFAULT)};
+    //Open dataspace
+    mio::H5DataSpace dataspace{H5Dget_space(dset_loc_ids.id)};
+    //Get dimensions
+    int ndims1     = H5Sget_simple_extent_ndims(dataspace.id);
+    hsize_t* dims1 = (hsize_t*)malloc(ndims1 * sizeof(hsize_t));
+    H5Sget_simple_extent_dims(dataspace.id, dims1, NULL);
+    hsize_t rows1 = dims1[0];
+    hsize_t cols1 = dims1[1];
+    int* data1    = (int*)malloc(rows1 * cols1 * sizeof(int));
+    //Read data to vector
+    herr_t status1 = H5Dread(dset_loc_ids.id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, data1);
+
+    //Transmission recovery tp dataset
+    //Open dataset
+    mio::H5DataSet dset_transm_rec_tp{H5Dopen(h5group.id, "transm_recovery_tp", H5P_DEFAULT)};
+    //Open dataspace
+    mio::H5DataSpace dataspace2{H5Dget_space(dset_transm_rec_tp.id)};
+    //Get dimensions
+    int ndims2     = H5Sget_simple_extent_ndims(dataspace2.id);
+    hsize_t* dims2 = (hsize_t*)malloc(ndims2 * sizeof(hsize_t));
+    H5Sget_simple_extent_dims(dataspace2.id, dims2, NULL);
+    hsize_t rows2 = dims2[0];
+    hsize_t cols2 = dims2[1];
+    int* data2    = (int*)malloc(rows2 * cols2 * sizeof(int));
+    //Read data to vector
+    herr_t status2 = H5Dread(dset_transm_rec_tp.id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, data2);
+
+    std::vector<size_t> infected_agent_ids_at_station;
+    std::vector<int> infection_ages;
+
+    for (size_t agent = 0; agent < dims1[0]; ++agent) {
+        int ww_area_at_t = data1[agent * dims1[1] + timepoint];
+        if (std::find(areas.begin(), areas.end(), ww_area_at_t) != areas.end()) {
+            int t_transm   = data2[agent * dims2[1]];
+            int t_recovery = data2[agent * dims2[1] + 1];
+            if (t_transm <= timepoint && t_recovery > timepoint) {
+                infected_agent_ids_at_station.push_back(agent);
+                infection_ages.push_back(timepoint - t_transm);
+            }
+        }
+    }
+
+    std::vector<double> shedding_values;
+
+    // Read in infection paths
+    int agent_id;
+    double S, E, I_ns, I_sy, I_sev, I_cri, R, D;
+
+    std::ifstream file(infection_paths_file);
+    std::string header;
+    std::getline(file, header);
+    std::string line;
+
+    size_t current_id = 0;
+
+    while (std::getline(file, line)) {
+        std::istringstream iss(line);
+        if (iss >> agent_id >> S >> E >> I_ns >> I_sy >> I_sev >> I_cri >> R >> D) {
+            if (static_cast<size_t>(agent_id) == infected_agent_ids_at_station[current_id]) {
+                shedding_values.push_back(get_infectivity(E, I_ns, I_sy, I_sev, I_cri, infection_ages[current_id]));
+                current_id += 1;
+            }
+        }
+    }
+
+    if (infected_agent_ids_at_station.size() != infection_ages.size() ||
+        infected_agent_ids_at_station.size() != shedding_values.size()) {
+        std::cerr << "Vector sizes do not match\n";
+        return;
+    }
+
+    // Write results to file
+    std::ofstream out(save_file);
+    if (!out) {
+        std::cerr << "Failed to open output file\n";
+        return;
+    }
+
+    out << "Id,infection_age,shedding\n";
+
+    for (size_t i = 0; i < infected_agent_ids_at_station.size(); ++i) {
+        out << infected_agent_ids_at_station[i] << "," << infection_ages[i] << "," << shedding_values[i] << "\n";
+    }
+
+    std::cout << "\n";
+}
+
+void calculate_agents_per_area_inhabitants_commuters(std::string output_file, std::string save_file)
+{
+    auto start = std::chrono::high_resolution_clock::now();
+    //Load H5 file
+    mio::H5File sim_output{H5Fopen(output_file.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT)};
+    std::string group_name = "data";
+    //Open group
+    mio::H5Group h5group{H5Gopen(sim_output.id, group_name.c_str(), H5P_DEFAULT)};
+    //Open dataset
+    mio::H5DataSet dset_loc_ids{H5Dopen(h5group.id, "loc_ids", H5P_DEFAULT)};
+    //Open dataspace
+    mio::H5DataSpace dataspace{H5Dget_space(dset_loc_ids.id)};
+    //Get dimensions
+    int ndims     = H5Sget_simple_extent_ndims(dataspace.id);
+    hsize_t* dims = (hsize_t*)malloc(ndims * sizeof(hsize_t));
+    H5Sget_simple_extent_dims(dataspace.id, dims, NULL);
+
+    hsize_t rows = dims[0];
+    hsize_t cols = dims[1];
+    std::cout << "Num agents: " << rows << std::endl;
+    int* data = (int*)malloc(rows * cols * sizeof(int));
+    std::cout << "Starting reading dataset...\n";
+    herr_t status = H5Dread(dset_loc_ids.id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+    std::cout << "Finished reading dataset!\n";
+    std::vector<int> data1(data, data + dims[0] * dims[1]);
+    std::cout << "Starting getting max area...\n";
+    int max_area = *std::max_element(data1.begin(), data1.end());
+    std::cout << "Got max area!\n";
+    //Save data in matrix
+    // Matrix has tuple with (NumAgents, NumInhabitants, NumCommuters)
+    std::vector<std::vector<std::tuple<int, int, int>>> matrix(
+        dims[1], std::vector<std::tuple<int, int, int>>(max_area + 1, {0, 0, 0}));
+    for (size_t i = 0; i < dims[0]; ++i) {
+        for (size_t j = 0; j < dims[1]; ++j) {
+            int area = data[i * dims[1] + j];
+            // First tuple element is the number of agents
+            std::get<0>(matrix[j][area]) += 1;
+            if (area == data[i * dims[1]]) {
+                std::get<1>(matrix[j][area]) += 1;
+            }
+            else {
+                std::get<2>(matrix[j][area]) += 1;
+            }
+        }
+    }
+    std::cout << "Created matrix!\n";
+
+    auto file = fopen(save_file.c_str(), "w");
+    if (file == NULL) {
+        mio::log(mio::LogLevel::warn, "Could not open file {}", save_file);
+    }
+    else {
+        fprintf(file, "t,Area,NumAgents, NumInhabitants, NumCommuters");
+        fprintf(file, "\n");
+        for (size_t i = 0; i < matrix.size(); ++i) {
+            for (size_t j = 0; j < matrix[0].size(); ++j) {
+                fprintf(file, "%d,", static_cast<int>(i));
+                fprintf(file, "%d,", static_cast<int>(j));
+                fprintf(file, "%d,", std::get<0>(matrix[i][j]));
+                fprintf(file, "%d,", std::get<1>(matrix[i][j]));
+                fprintf(file, "%d,", std::get<2>(matrix[i][j]));
+                fprintf(file, "\n");
+            }
+        }
+        fclose(file);
+    }
+    auto stop     = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
+    std::cout << "Time to calculate agents per quantity: " << duration.count() << "[s]" << std::endl;
 }

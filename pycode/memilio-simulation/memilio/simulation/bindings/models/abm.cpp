@@ -1750,6 +1750,28 @@ PYBIND11_MODULE(_simulation_abm, m)
             calculate_agents_per_quantity(sim_result_folder, save_file_ww_area, num_sims, start_sim, "area", "v4");
         },
         py::return_value_policy::reference_internal);
+
+    m.def(
+        "calculate_agents_per_area_inhabitants_commuters",
+        [](std::string sim_result_folder, int sim_num) {
+            std::string output_file_ww_area = sim_result_folder + std::to_string(sim_num) + "_output_v4.h5";
+            std::string save_file =
+                sim_result_folder + std::to_string(sim_num) + "_num_agents_area_inhabitants_commuters.txt";
+            calculate_agents_per_area_inhabitants_commuters(output_file_ww_area, save_file);
+        },
+        py::return_value_policy::reference_internal);
+    m.def(
+        "calculate_infected_per_measurement_station",
+        [](std::string area_to_station_file, std::string sim_result_folder, int sim_num, int timepoint,
+           std::string station_name) {
+            std::string infection_paths_file = sim_result_folder + std::to_string(sim_num) + "_infection_paths.txt";
+            std::string hdf5_output_file     = sim_result_folder + std::to_string(sim_num) + "_output_v4.h5";
+            std::string save_file = sim_result_folder + std::to_string(sim_num) + "_infection_age_shedding_" +
+                                    std::to_string(timepoint) + "_" + station_name + ".csv";
+            calculate_infected_per_measurement_station(area_to_station_file, infection_paths_file, hdf5_output_file,
+                                                       save_file, timepoint, station_name);
+        },
+        py::return_value_policy::reference_internal);
 #endif
 
     m.attr("__version__") = "dev";
