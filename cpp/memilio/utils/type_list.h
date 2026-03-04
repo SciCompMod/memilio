@@ -49,6 +49,9 @@ struct TypeList {
     {
         return sizeof...(Types);
     }
+
+    /// @brief Checks whether TypeList contains any type multiple times.
+    static constexpr bool has_duplicates = has_duplicates_v<Types...>;
 };
 
 /// Specialization of type_at_index for TypeList. @see type_at_index.
