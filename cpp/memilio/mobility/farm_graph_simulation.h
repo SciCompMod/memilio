@@ -106,13 +106,13 @@ public:
                     else {
                         if (n.property.get_date_confirmation() < Base::m_t + dt && !n.property.is_quarantined()) {
                             cull_node(n.id);
-                            for (size_t index = 0; index < n.property.get_regional_neighbors()[1].size(); ++index) {
-                                auto& neighbor = graph.nodes()[n.property.get_regional_neighbors()[1][index]];
+                            for (size_t index = 0;
+                                 index < n.property.get_regional_neighbors()[m_ten_km_radius_index].size(); ++index) {
+                                auto& neighbor =
+                                    graph.nodes()[n.property.get_regional_neighbors()[m_ten_km_radius_index][index]];
                                 neighbor.property.set_reg_zone_day(Base::m_t);
                             }
-                            for (size_t index = 0; index < n.property.get_regional_neighbors()[0].size(); ++index) {
-                                prev_cull_node(n.property.get_regional_neighbors()[0][index]);
-                            }
+                            prev_cull_neighbours(n.property, Base::m_t);
                         }
                     }
                 }
@@ -167,8 +167,8 @@ private:
             auto infection_pressure = 0.0;
             auto neighbors          = node.property.get_regional_neighbors();
             // Iterate over all neighbours in third neighbourhood layer
-            for (size_t index = 0; index < neighbors[2].size(); ++index) {
-                auto& neighbour = graph.nodes()[neighbors[2][index]];
+            for (size_t index = 0; index < neighbors[m_twentyfive_km_radius_index].size(); ++index) {
+                auto& neighbour = graph.nodes()[neighbors[m_twentyfive_km_radius_index][index]];
                 // Only count infected neighbours
                 if (neighbour.id != node.id && neighbour.property.get_infection_status()) {
                     infection_pressure +=
@@ -357,6 +357,23 @@ private:
         }
         mio::log_debug("Number of possible farms: {}", distances.size());
         return ids[mio::DiscreteDistribution<size_t>::get_instance()(m_rng, distances)];
+    }
+
+    void prev_cull_neighbours(const Node& node, Timepoint t)
+    {
+        if (t < m_new_regulations_day) {
+            for (size_t index = 0; index < node.get_regional_neighbors()[m_one_km_radius_index].size(); ++index) {
+                prev_cull_node(node.get_regional_neighbors()[m_one_km_radius_index][index]);
+            }
+        }
+        else {
+            for (size_t index = 0; index < node.get_regional_neighbors()[m_three_km_radius_index].size(); ++index) {
+                if (Base::m_graph.nodes()[node.get_regional_neighbors()[m_three_km_radius_index][index]]
+                        .property.get_farm_type() > 1) {
+                    prev_cull_node(node.get_regional_neighbors()[m_three_km_radius_index][index]);
+                }
+            }
+        }
     }
 
     /**
@@ -752,6 +769,12 @@ private:
     ScalarType m_r0                            = 4000;
     ScalarType m_alpha                         = 10;
     std::vector<Timepoint> m_infection_dates   = {0, 2, 2};
+    std::vector<std::vector<bool>> infected{};
+    ScalarType m_new_regulations_day    = 32.0;
+    size_t m_one_km_radius_index        = 0;
+    size_t m_three_km_radius_index      = 1;
+    size_t m_ten_km_radius_index        = 2;
+    size_t m_twentyfive_km_radius_index = 3;
 };
 
 /**
