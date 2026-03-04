@@ -212,7 +212,7 @@ concept IsDefaultDeserializable = requires(T t) {
 template <class IOContext, IsDefaultSerializable<IOContext> T>
 void serialize_internal(IOContext& io, const T& a)
 {
-    // Note that the following cons_cast is safe as long as we do not modify members.
+    // Note that the following const_cast is safe as long as we do not modify members.
     const auto members = const_cast<T&>(a).default_serialize();
     // unpack members and serialize
     std::apply(
