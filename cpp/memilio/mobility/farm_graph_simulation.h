@@ -159,6 +159,10 @@ private:
     {
         using Model        = std::decay_t<decltype(Base::m_graph.nodes()[0].property.get_simulation().get_model())>;
         using AdoptionRate = mio::smm::AdoptionRates<ScalarType, typename Model::Status, mio::regions::Region>;
+        std::vector<ScalarType> dampings = {1.0, 1.0, 1.0, 1.0, 1.0};
+        if (Base::m_t > m_new_regulations_day) {
+            dampings = m_dampings;
+        }
         for (auto& node : graph.nodes()) {
             // Skip calculation for nodes without animals
             if (node.property.get_result().get_last_value().sum() == 0) {
@@ -172,7 +176,7 @@ private:
                 // Only count infected neighbours
                 if (neighbour.id != node.id && neighbour.property.get_infection_status()) {
                     infection_pressure +=
-                        m_foi_inner_factor[neighbour.property.get_type()] *
+                        m_foi_inner_factor[neighbour.property.get_type()] * dampings[neighbour.property.get_type()] *
                         (m_h0 /
                          (1 +
                           pow(node.property.get_location().distance(neighbour.property.get_location()).meters() / m_r0,
@@ -399,12 +403,19 @@ private:
      */
     void cull(Timespan dt)
     {
-        auto capacity = m_culling_capacity_per_day * dt;
+        auto capacity = determine_culling_capacity(Base::m_t) * dt;
         capacity      = cull_queue(m_culling_queue, capacity);
         // preventive culling starts on 2026-01-01, which is day 20 in the simulation
         if (Base::m_t > 20) {
             capacity = cull_queue(m_prev_culling_queue, capacity);
         }
+    }
+
+    ScalarType determine_culling_capacity(ScalarType time){
+        if (time < m_new_regulations_day) {
+            return m_culling_capacity_per_day;
+        }
+        return m_culling_capacity_per_day * 2;
     }
 
     /**
@@ -736,7 +747,8 @@ public:
      */
     void set_parameters(ScalarType suspicion_threshold, ScalarType sensitivity, ScalarType h0, ScalarType r0,
                         ScalarType alpha, std::vector<Timepoint> infection_dates,
-                        std::vector<ScalarType> foi_inner_factors, std::vector<ScalarType> foi_outer_factors)
+                        std::vector<ScalarType> foi_inner_factors, std::vector<ScalarType> foi_outer_factors,
+                        std::vector<ScalarType> dampings = {1.0, 1.0, 1.0, 1.0, 1.0})
     {
         m_suspicion_threshold = suspicion_threshold;
         m_sensitivity         = sensitivity;
@@ -746,6 +758,7 @@ public:
         m_infection_dates     = infection_dates;
         m_foi_inner_factor    = foi_inner_factors;
         m_foi_outer_factor    = foi_outer_factors;
+        m_dampings            = dampings;
     }
 
 private:
@@ -775,6 +788,7 @@ private:
     size_t m_three_km_radius_index      = 1;
     size_t m_ten_km_radius_index        = 2;
     size_t m_twentyfive_km_radius_index = 3;
+    std::vector<ScalarType> m_dampings  = {1.0, 0.5, 1.0, 1.0, 0.5};
 };
 
 /**
