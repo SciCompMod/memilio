@@ -145,9 +145,7 @@ else()
 endif()
 
 # ## HDF5
-option(MEMILIO_USE_HDF5 "Build memilio with HDF5." ON)
-
-if(MEMILIO_USE_HDF5)
+if(MEMILIO_ENABLE_HDF5)
     find_package(HDF5 COMPONENTS C)
 
     if(HDF5_FOUND)
