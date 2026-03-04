@@ -148,6 +148,8 @@ Additional options can be specified by appending one or more ``-D<OPTION>=<VALUE
       - Build the SBML importer and imported models, i.e. everything in the folder ``sbml_model_generation``, ON or OFF, default ON. You may need to set ``sbml_DIR``
     * - ``MEMILIO_USE_BUNDLED_SPDLOG/_BOOST/_EIGEN/_JSONCPP``:
       - Use the corresponding dependency bundled with this project, ON or OFF, default ON.
+    * - ``MEMILIO_USE_HDF5``
+      - Build MEmilio with HDF5 IO support, ON or OFF, default ON. If OFF, HDF5 is not searched for and features like ``save_result``/``read_result`` are disabled.
     * - ``MEMILIO_BUILD_BENCHMARKS``
       - Build the benchmarks for this project, ON or OFF, default OFF.
     * - ``MEMILIO_SANITIZE_ADDRESS/_UNDEFINED``

@@ -20,6 +20,10 @@ inputs:
     description: "Enabled Multithreading with OpenMP (ON or OFF, default OFF). If ON, adds `-omp` to the name of the artifact."
     required: false
     default: "OFF"
+  hdf5:
+    description: "Build with HDF5 (ON or OFF, default ON). If OFF, adds `-nohdf5` to the artifact name. If no optional dependencies are built, HDF5 is also not built, even if this option is set to ON."
+    required: false
+    default: "ON"
 runs:
   using: "composite"
   steps:
@@ -27,12 +31,16 @@ runs:
       shell: bash
       run: |
         sudo apt-get -qq update
-        sudo apt-get -qq -y install libhdf5-10* wget gnupg lcov
+        HDF5_PACKAGES=""
+        if [[ "${{ inputs.optional-deps }}" == "ON" && "${{ inputs.hdf5 }}" == "ON" ]]; then
+          HDF5_PACKAGES="libhdf5-10*"
+        fi
+        sudo apt-get -qq -y install wget gnupg lcov $HDF5_PACKAGES
         sudo apt-get -qq update
     - name: Download built test directory
       uses: actions/download-artifact@v4
       with:
-        name: build-cpp-linux-${{ inputs.artifact-pattern }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
+        name: build-cpp-linux-${{ inputs.artifact-pattern }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}${{ inputs.hdf5 == 'OFF' && '-nohdf5' || ''}}
         path: cpp
     - name: extract build archive
       shell: bash
@@ -58,14 +66,14 @@ runs:
     - name: Upload test report
       uses: actions/upload-artifact@v4
       with:
-        name: test-cpp-linux-report-${{ inputs.artifact-pattern }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
+        name: test-cpp-linux-report-${{ inputs.artifact-pattern }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}${{ inputs.hdf5 == 'OFF' && '-nohdf5' || ''}}
         path: cpp/build/bin/report.xml
         if-no-files-found: error
         retention-days: 1
     - name: Upload coverage reports
       uses: actions/upload-artifact@v4
       with:
-        name: test-cpp-coverage-reports-${{ inputs.artifact-pattern }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
+        name: test-cpp-coverage-reports-${{ inputs.artifact-pattern }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}${{ inputs.hdf5 == 'OFF' && '-nohdf5' || ''}}
         path: |
           cpp/build/coverage.info
           cpp/build/coverage
