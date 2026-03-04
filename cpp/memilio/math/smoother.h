@@ -17,11 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_MATH_SMOOTHER_H
-#define EPI_MATH_SMOOTHER_H
+#ifndef MIO_MATH_SMOOTHER_H
+#define MIO_MATH_SMOOTHER_H
 
 #include "memilio/config.h"
 #include "memilio/math/eigen.h"
+
 #include <cmath>
 #include <numbers>
 
@@ -78,4 +79,4 @@ auto smoother_cosine(FP x, FP xleft, FP xright, const Eigen::MatrixBase<LeftExpr
 
 } // namespace mio
 
-#endif //EPI_MATH_SMOOTHER_H
+#endif // MIO_MATH_SMOOTHER_H

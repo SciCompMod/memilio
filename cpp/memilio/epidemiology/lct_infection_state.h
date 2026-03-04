@@ -20,8 +20,8 @@
 #ifndef MIO_EPI_LCT_INFECTION_STATE_H
 #define MIO_EPI_LCT_INFECTION_STATE_H
 
-#include "memilio/config.h"
-#include "memilio/math/eigen.h"
+#include "memilio/config.h" // IWYU pragma: keep
+#include "memilio/math/eigen.h" // IWYU pragma: keep
 
 #include <array>
 
@@ -97,7 +97,7 @@ public:
         Eigen::VectorX<FP> compartments((Eigen::Index)InfectionState::Count);
         // Use segment of the vector subcompartments of each InfectionState and sum up the values of subcompartments.
         for (int i = 0; i < (Eigen::Index)InfectionState::Count; i++) {
-            InfectionState State = static_cast<InfectionState>(i);
+            auto State = static_cast<InfectionState>(i);
             // first index of first subcompartment:
             size_t index = 0;
             for (size_t j = 0; j < (size_t)(State); j++) {

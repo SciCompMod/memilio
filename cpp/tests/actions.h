@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_TESTS_ACTIONS_H
-#define EPI_TESTS_ACTIONS_H
+#ifndef MIO_TESTS_ACTIONS_H
+#define MIO_TESTS_ACTIONS_H
 
 #include <gmock/gmock.h>
 
@@ -61,4 +61,4 @@ ACTION(AssignUnsafe)
     const_cast<std::decay_t<arg0_type>&>(arg0) = arg1;
 }
 
-#endif //EPI_TESTS_ACTIONS_H
+#endif // MIO_TESTS_ACTIONS_H

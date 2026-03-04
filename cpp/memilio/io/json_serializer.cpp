@@ -18,7 +18,3 @@
 * limitations under the License.
 */
 #include "memilio/io/json_serializer.h"
-
-#ifdef MEMILIO_HAS_JSONCPP
-
-#endif //MEMILIO_HAS_JSONCPP
