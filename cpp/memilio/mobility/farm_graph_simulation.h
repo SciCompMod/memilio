@@ -331,8 +331,8 @@ private:
         }
         if ((current_state[3] - last_state_deaths) > m_suspicion_threshold * node.get_capacity()) {
             mio::log_debug("Suspicious farm found: {}, Number dead: {}, number overall: {}, Time: {}", id,
-                          current_state[3] - last_state_deaths,
-                          std::accumulate(current_state.begin(), current_state.end(), 0.0), t);
+                           current_state[3] - last_state_deaths,
+                           std::accumulate(current_state.begin(), current_state.end(), 0.0), t);
             node.set_date_suspicion(t);
             // if (mio::UniformDistribution<ScalarType>::get_instance()(m_rng, 0.0, 1.0) <
             //     1 - std::pow((1 - m_sensitivity), 20)) {
@@ -616,6 +616,8 @@ public:
         std::vector<TimeSeries<ScalarType>> all_time_series;
         for (auto& n : Base::m_graph.nodes()) {
             all_time_series.push_back(n.property.get_result());
+            // mio::unused(
+            //     n.property.get_result().export_csv("node_" + std::to_string(n.id) + ".csv", {"S", "E", "I", "D"}));
         }
         return all_time_series;
     }
@@ -685,11 +687,11 @@ public:
     //     // Set quarantine
     //     // for (auto& n : Base::m_graph.nodes()) {
     //     //     if (n.property.get_result().get_last_value()[2] > 40) {
-    //     //         mio::log_debug("Node {} is quarantined at time {}.", n.id, Base::m_t);
+    //     //         mio::log_info("Node {} is quarantined at time {}.", n.id, Base::m_t);
     //     //         n.property.set_quarantined(true);
     //     //     }
     //     //     else {
-    //     //         mio::log_debug("Node {} is not quarantined at time {}.", n.id, Base::m_t);
+    //     //         mio::log_info("Node {} is not quarantined at time {}.", n.id, Base::m_t);
     //     //         n.property.set_quarantined(false);
     //     //     }
     //     // }
@@ -717,7 +719,7 @@ public:
     //             if (m_first_detection > Base::m_t) {
     //                 m_first_detection = Base::m_t;
     //             }
-    //             mio::log_debug("Node {} is culled at time {} because there are {} total infections.", n.id, Base::m_t,
+    //             mio::log_info("Node {} is culled at time {} because there are {} total infections.", n.id, Base::m_t,
     //                            total_infections);
     //             cull_node(n.id);
     //             for (size_t index = 0; index < n.property.get_regional_neighbors()[0].size(); ++index) {
@@ -763,6 +765,22 @@ public:
         m_foi_inner_factor    = foi_inner_factors;
         m_foi_outer_factor    = foi_outer_factors;
         m_dampings            = dampings;
+    }
+
+    /**
+     * @brief Return the number of nodes in quarantine, i.e. the number of nodes culled or sheduled for culling
+     * 
+     * @return ScalarType 
+     */
+    ScalarType planned_cullings()
+    {
+        ScalarType counter = 0;
+        for (auto& node : Base::m_graph.nodes()) {
+            if (node.propery.is_quarantined()) {
+                counter += 1;
+            }
+        }
+        return counter;
     }
 
 private:
