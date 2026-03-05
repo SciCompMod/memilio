@@ -787,12 +787,12 @@ private:
     ScalarType m_alpha                         = 10;
     std::vector<Timepoint> m_infection_dates   = {0, 2, 2};
     std::vector<std::vector<bool>> infected{};
-    ScalarType m_new_regulations_day    = 32.0;
-    size_t m_one_km_radius_index        = 0;
-    size_t m_three_km_radius_index      = 1;
-    size_t m_ten_km_radius_index        = 2;
-    size_t m_twentyfive_km_radius_index = 3;
-    std::vector<ScalarType> m_dampings  = {1.0, 0.5, 1.0, 1.0, 0.5};
+    ScalarType m_new_regulations_day                           = 32.0;
+    static const constexpr size_t m_one_km_radius_index        = 0;
+    static const constexpr size_t m_three_km_radius_index      = 1;
+    static const constexpr size_t m_ten_km_radius_index        = 2;
+    static const constexpr size_t m_twentyfive_km_radius_index = 3;
+    std::vector<ScalarType> m_dampings                         = {0.5, 1.0, 1.0, 1.0, 0.5};
 };
 
 /**
