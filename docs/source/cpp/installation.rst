@@ -148,8 +148,6 @@ Additional options can be specified by appending one or more ``-D<OPTION>=<VALUE
       - Build the SBML importer and imported models, i.e. everything in the folder ``sbml_model_generation``, ON or OFF, default ON. You may need to set ``sbml_DIR``
     * - ``MEMILIO_USE_BUNDLED_SPDLOG/_BOOST/_EIGEN/_JSONCPP``:
       - Use the corresponding dependency bundled with this project, ON or OFF, default ON.
-    * - ``MEMILIO_ENABLE_HDF5``
-      - Build MEmilio with HDF5 IO support, ON or OFF, default ON. If OFF, HDF5 is not searched for and features like ``save_result``/``read_result`` are disabled.
     * - ``MEMILIO_BUILD_BENCHMARKS``
       - Build the benchmarks for this project, ON or OFF, default OFF.
     * - ``MEMILIO_SANITIZE_ADDRESS/_UNDEFINED``
@@ -158,6 +156,8 @@ Additional options can be specified by appending one or more ``-D<OPTION>=<VALUE
       - Compile MEmilio with multithreading using OpenMP, ON or OFF, default OFF.
     * - ``MEMILIO_ENABLE_MPI``
       - Compile MEmilio with distributed memory parallelization using MPI. ON or OFF, default OFF. Requires an MPI implementation to be installed on the system. 
+    * - ``MEMILIO_ENABLE_HDF5``
+      - Build MEmilio with HDF5 IO support, ON or OFF, default ON. If OFF, HDF5 is not searched for and features like ``save_result``/``read_result`` are disabled.
     * - ``MEMILIO_ENABLE_WARNINGS``
       - Enable compilation warnings (beyond those enabled in the compiler by default). ON or OFF, default ON.
     * - ``MEMILIO_ENABLE_WARNINGS_AS_ERRORS``

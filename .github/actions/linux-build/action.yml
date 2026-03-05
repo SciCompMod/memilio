@@ -38,11 +38,10 @@ runs:
       shell: bash
       run: |
         sudo apt-get -qq update
-        HDF5_PACKAGES=""
+        sudo apt-get -qq -y install lcov ccache
         if [[ "${{ inputs.optional-dependencies }}" == "ON" ]]; then
-          HDF5_PACKAGES="libhdf5-dev"
+          sudo apt-get -qq -y install libhdf5-dev
         fi
-        sudo apt-get -qq -y install lcov ccache $HDF5_PACKAGES
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
             sudo apt-get -qq -y install gcc-11
