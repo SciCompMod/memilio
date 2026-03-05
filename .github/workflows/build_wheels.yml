@@ -4,6 +4,22 @@ on: [pull_request, release]
 
 jobs:
 
+  build_wheels:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows_latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pypa/cibuildwheel@v2.16
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: ./wheelhouse/*.whl
+
   build_sdist: 
     runs-on: ubuntu-latest
 
@@ -16,20 +32,3 @@ jobs:
       with:
         name: sdist
         path: dist/*.tar.gz
-
-
-  build_wheels:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows_latest]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pypa/cibuildwheel@v2.16
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: wheels-${{ matrix.os }}
-          path: ./wheelhouse/*.whl
