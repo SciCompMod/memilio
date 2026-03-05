@@ -112,7 +112,7 @@ public:
                                     graph.nodes()[n.property.get_regional_neighbors()[m_ten_km_radius_index][index]];
                                 neighbor.property.set_reg_zone_day(Base::m_t);
                             }
-                            prev_cull_neighbours(n.property, Base::m_t);
+                            prev_cull_neighbours(n.property, Base::m_t, graph);
                         }
                     }
                 }
@@ -363,7 +363,7 @@ private:
         return ids[mio::DiscreteDistribution<size_t>::get_instance()(m_rng, distances)];
     }
 
-    void prev_cull_neighbours(const Node& node, Timepoint t)
+    void prev_cull_neighbours(const Node& node, Timepoint t, Graph& graph)
     {
         if (t < m_new_regulations_day) {
             for (size_t index = 0; index < node.get_regional_neighbors()[m_one_km_radius_index].size(); ++index) {
@@ -372,7 +372,7 @@ private:
         }
         else {
             for (size_t index = 0; index < node.get_regional_neighbors()[m_three_km_radius_index].size(); ++index) {
-                if (Base::m_graph.nodes()[node.get_regional_neighbors()[m_three_km_radius_index][index]]
+                if (graph.nodes()[node.get_regional_neighbors()[m_three_km_radius_index][index]]
                         .property.get_farm_type() > 1) {
                     prev_cull_node(node.get_regional_neighbors()[m_three_km_radius_index][index]);
                 }
@@ -411,11 +411,15 @@ private:
         }
     }
 
-    ScalarType determine_culling_capacity(ScalarType time){
+    ScalarType determine_culling_capacity(ScalarType time)
+    {
         if (time < m_new_regulations_day) {
             return m_culling_capacity_per_day;
         }
-        return m_culling_capacity_per_day * 2;
+        else if (time < m_new_regulations_day + 8) {
+            return m_culling_capacity_per_day * 4;
+        }
+        return m_culling_capacity_per_day * 7;
     }
 
     /**
