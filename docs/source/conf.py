@@ -39,7 +39,7 @@ extensions = [
     'sphinx_design',
     'hoverxref.extension',
     'sphinxcontrib.doxylink',
-    #    'sphinx_remove_toctrees'
+#    'sphinx_remove_toctrees'
 ]
 
 intersphinx_mapping = {
@@ -65,7 +65,7 @@ hoverxref_role_types = {
 }
 
 doxylink = {
-    "C++ API": ("source/cppapi/html/tagfile.xml", 
+    "CPP-API": ("source/cppapi/html/tagfile.xml", 
                 "source/cppapi/html")
 }
 
