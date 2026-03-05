@@ -65,8 +65,8 @@ hoverxref_role_types = {
 }
 
 doxylink = {
-    "CPP-API": ("/html/source/cppapi/html/tagfile.xml", 
-                "/html/source/cppapi/html")
+    "CPP-API": ("source/cppapi/html/tagfile.xml", 
+                "source/cppapi/html")
 }
 
 # remove_from_toctrees = ["api/*"]
