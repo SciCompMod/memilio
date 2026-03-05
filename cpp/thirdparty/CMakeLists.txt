@@ -145,12 +145,14 @@ else()
 endif()
 
 # ## HDF5
-find_package(HDF5 COMPONENTS C)
+if(MEMILIO_ENABLE_HDF5)
+    find_package(HDF5 COMPONENTS C)
 
-if(HDF5_FOUND)
-    set(MEMILIO_HAS_HDF5 ON)
-else()
-    message(WARNING "HDF5 was not found. Memilio will be built without some IO features. Install HDF5 Libraries and set the HDF5_DIR cmake variable to the directory containing the hdf5-config.cmake file to build with HDF5.")
+    if(HDF5_FOUND)
+        set(MEMILIO_HAS_HDF5 ON)
+    else()
+        message(WARNING "HDF5 was not found. Memilio will be built without some IO features. Install HDF5 Libraries and set the HDF5_DIR cmake variable to the directory containing the hdf5-config.cmake file to build with HDF5.")
+    endif()
 endif()
 
 # ## JSONCPP

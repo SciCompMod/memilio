@@ -59,6 +59,7 @@ Options can be specified with `cmake .. -D<OPTION>=<VALUE>` or by editing the `b
 - `MEMILIO_SANITIZE_ADDRESS/_UNDEFINED`: compile with specified sanitizers to check correctness, ON or OFF, default OFF.
 - `MEMILIO_ENABLE_OPENMP`: compile MEmilio with multithreading using OpenMP, ON or OFF, default OFF.
 - `MEMILIO_ENABLE_MPI`: compile MEmilio with distributed memory parallelization using MPI. ON or OFF, default OFF. Requires an MPI implementation to be installed on the system. 
+- `MEMILIO_ENABLE_HDF5`: build MEmilio with HDF5 IO support, ON or OFF, default ON. If OFF, HDF5 is not searched for and features like `save_result`/`read_result` are disabled.
 - `MEMILIO_ENABLE_WARNINGS`: enable compilation warnings (beyond those enabled in the compiler by default). ON or OFF, default ON.
 - `MEMILIO_ENABLE_WARNINGS_AS_ERRORS`: compilation warnings are treated as compilation errors. ON or OFF, default ON.
 - `MEMILIO_ENABLE_PROFILING`: compile with runtime profiling support. ON or OFF, default OFF. See [here](benchmarks/profiling.md) for information.

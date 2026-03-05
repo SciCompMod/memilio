@@ -156,6 +156,8 @@ Additional options can be specified by appending one or more ``-D<OPTION>=<VALUE
       - Compile MEmilio with multithreading using OpenMP, ON or OFF, default OFF.
     * - ``MEMILIO_ENABLE_MPI``
       - Compile MEmilio with distributed memory parallelization using MPI. ON or OFF, default OFF. Requires an MPI implementation to be installed on the system. 
+    * - ``MEMILIO_ENABLE_HDF5``
+      - Build MEmilio with HDF5 IO support, ON or OFF, default ON. If OFF, HDF5 is not searched for and features like ``save_result``/``read_result`` are disabled.
     * - ``MEMILIO_ENABLE_WARNINGS``
       - Enable compilation warnings (beyond those enabled in the compiler by default). ON or OFF, default ON.
     * - ``MEMILIO_ENABLE_WARNINGS_AS_ERRORS``
