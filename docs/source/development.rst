@@ -1,5 +1,5 @@
 Developer workflow
-========================
+==================
 
 We are always happy about contributions to the project! Here you can find more information on our coding guidelines, our git workflow, benchmarking our models and writing documentation. 
 
@@ -352,12 +352,25 @@ The full list of labels that should be used to identify issues can be found at: 
 Documentation
 --------------------
 
-The documentation uses `Sphinx <https://www.sphinx-doc.org/en/master/>`_ and is written in reStructuredText, that uses a 
+The documentation uses `Sphinx <https://www.sphinx-doc.org/en/master/>`_ and is written in reStructuredText (rst), that uses a 
 slightly different syntax than Markdown. A documentation can be found `here <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_.
 This online documentation is generated using `ReadTheDocs <https://readthedocs.org/>`_ and is automatically updated when 
 a pull request is merged into the main branch. Thus, we require you to build the documentation locally to test changes.
 Literature is centrally collected in `literature.rst` and `substitutions <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html#substitutions>`_ 
 are used to print it wherever needed.
+
+The C++ Code documentation is generated using `doxygen <https://doxygen.nl/>`_, visually improved by `doxygen-awesome-css <https://github.com/jothepro/doxygen-awesome-css>`_ 
+and included using `doxysphinx <https://github.com/boschglobal/doxysphinx>`_ . Links to the C++ docs from within the 
+rst files can be generated as in the following examples:
+
+.. code-block:: rst
+
+    :CPP-API:`mio::osir`
+    :CPP-API:`mio::geo::Distance::kilometers`
+    :CPP-API:`Graph Constructor <mio::Graph::Graph>`
+    .. opening angle brackets in the function defintion need to be escaped, the following line is also sensitive to the space between the closing brackets
+    :CPP-API:`mio::details::SimulationBase\< FP, M, SystemIntegrator\< FP, Integrands... > >`
+
 
 Please make sure to have a working python environment with a python version that is compatible with 
 our :doc:`memilio-python packages <python/python_packages>` as well as 
@@ -371,8 +384,8 @@ First generate the doxygen output by running
     doxygen
 
 
-In the ``docs/Doxyfile`` (line 736), you can change for which folders the doxygen output should be generated. For faster 
-build times while testing we recommend to only use e.g. ``../cpp/models/abm``. **Don't commit this change!**
+To test links to the C++ documentation, you need to point sphinx to the correct files. These are given in the `conf.py` 
+file as the `doxylink = ... ` settings. **Don't commit this change!**
 
 Then sphinx can be used to build the documentation:
 
