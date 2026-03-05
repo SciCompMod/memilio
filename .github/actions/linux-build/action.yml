@@ -31,10 +31,6 @@ inputs:
     description: "Enable Multithreading with OpenMP (ON or OFF, default OFF). If ON, adds `-omp` to the name of the artifact."
     required: false
     default: "OFF"
-  hdf5:
-    description: "Build with HDF5 (ON or OFF, default ON). If OFF, adds `-nohdf5` to the artifact name. If no optional dependencies are built, HDF5 is also not built, even if this option is set to ON."
-    required: false
-    default: "ON"
 runs:
   using: "composite"
   steps:
@@ -43,7 +39,7 @@ runs:
       run: |
         sudo apt-get -qq update
         HDF5_PACKAGES=""
-        if [[ "${{ inputs.optional-dependencies }}" == "ON" && "${{ inputs.hdf5 }}" == "ON" ]]; then
+        if [[ "${{ inputs.optional-dependencies }}" == "ON" ]]; then
           HDF5_PACKAGES="libhdf5-dev"
         fi
         sudo apt-get -qq -y install lcov ccache $HDF5_PACKAGES
@@ -102,7 +98,7 @@ runs:
           exit 1
         fi
         mkdir -p build && cd build
-        cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=ON -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitizers }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitizers }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DMEMILIO_ENABLE_OPENMP=${{ inputs.openmp }} -DMEMILIO_ENABLE_HDF5=${{ inputs.hdf5 }} ..
+        cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=ON -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitizers }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitizers }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DMEMILIO_ENABLE_OPENMP=${{ inputs.openmp }} -DMEMILIO_ENABLE_HDF5=${{ inputs.optional-dependencies }} ..
         make -j4
     - name: create build dir archive
       shell: bash
@@ -113,6 +109,6 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         #artifacts in one pipeline must have a different name, so options must add a suffix to the artifact name if different values are used in the same pipeline
-        name: build-cpp-linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}${{ inputs.hdf5 == 'OFF' && '-nohdf5' || ''}}
+        name: build-cpp-linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
         path: cpp/build.tar.gz
         retention-days: 1
