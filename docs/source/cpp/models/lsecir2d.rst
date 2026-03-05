@@ -16,7 +16,7 @@ so the full model is given by the combination of infections :math:`1a`, :math:`2
 
 Below is a visualization of the infection states split into LCT-states and transitions without a stratification according to sociodemographic groups.
 
-.. image:: "http://martinkuehn.eu/research/images/lct_2d.png"
+.. image:: http://martinkuehn.eu/research/images/lct_2d.png
    :alt: tikz_lct-2d
 
 With infection states for :math:`i \in \{1,2\}, x \in \{a,b\}`:
