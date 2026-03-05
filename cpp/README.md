@@ -53,13 +53,13 @@ Options can be specified with `cmake .. -D<OPTION>=<VALUE>` or by editing the `b
 - `MEMILIO_BUILD_EXAMPLES`: build the example applications in the examples directory, ON or OFF, default ON.
 - `MEMILIO_BUILD_MODELS`: build the separate model libraries in the models directory, ON or OFF, default ON.
 - `MEMILIO_BUILD_SIMULATIONS`: build the simulation applications in the simulations directory, ON or OFF, default ON.
-- `MEMILIO_BUILD_SBML_MODELS`: build the SBML importer and imported models, i.e. everythin in the folder `sbml_model_generation`, ON or OFF, default ON.
 - `MEMILIO_USE_BUNDLED_SPDLOG/_BOOST/_EIGEN/_JSONCPP`: use the corresponding dependency bundled with this project, ON or OFF, default ON.
 - `MEMILIO_BUILD_BENCHMARKS`: build the benchmarks for this project, ON or OFF, default OFF.
 - `MEMILIO_SANITIZE_ADDRESS/_UNDEFINED`: compile with specified sanitizers to check correctness, ON or OFF, default OFF.
 - `MEMILIO_ENABLE_OPENMP`: compile MEmilio with multithreading using OpenMP, ON or OFF, default OFF.
 - `MEMILIO_ENABLE_MPI`: compile MEmilio with distributed memory parallelization using MPI. ON or OFF, default OFF. Requires an MPI implementation to be installed on the system. 
 - `MEMILIO_ENABLE_HDF5`: build MEmilio with HDF5 IO support, ON or OFF, default ON. If OFF, HDF5 is not searched for and features like `save_result`/`read_result` are disabled.
+- `MEMILIO_ENABLE_SBML`: build the SBML importer and imported models, i.e. everythin in the folder `sbml_model_generation`, ON or OFF, default OFF.
 - `MEMILIO_ENABLE_WARNINGS`: enable compilation warnings (beyond those enabled in the compiler by default). ON or OFF, default ON.
 - `MEMILIO_ENABLE_WARNINGS_AS_ERRORS`: compilation warnings are treated as compilation errors. ON or OFF, default ON.
 - `MEMILIO_ENABLE_PROFILING`: compile with runtime profiling support. ON or OFF, default OFF. See [here](benchmarks/profiling.md) for information.

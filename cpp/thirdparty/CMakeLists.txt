@@ -200,13 +200,10 @@ else()
         to the directory containing the jsoncppConfig.cmake file to build with JsonCpp.")
 endif()
 
-find_package(sbml ${MEMILIO_SBML_VERSION} CONFIG)
 
-if(sbml_FOUND)
-    set(MEMILIO_HAS_SBML ON)
+if(MEMILIO_ENABLE_SBML)
+    find_package(sbml REQUIRED ${MEMILIO_SBML_VERSION} CONFIG)
     message(STATUS "Found libSBML: ${libsbml_INCLUDE_DIRS}")
-else()
-    message(NOTICE "LibSBML was not found. The SBML importer will not be build.")
 endif()
 
 if(MEMILIO_ENABLE_MPI)
