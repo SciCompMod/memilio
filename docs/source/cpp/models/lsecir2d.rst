@@ -460,7 +460,4 @@ An example can be found at:
 - `examples/lct_secir_2_diseases.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/lct_secir_2_diseases.cpp>`_ 
 
 
-Overview of the ``lsecir2d`` namespace:
------------------------------------------
-
-.. doxygennamespace:: mio::lsecir2d
+The code documentation for the model can be found at :CPP-API:`mio::lsecir2d` .

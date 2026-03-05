@@ -474,8 +474,4 @@ An example can be found at:
 
 - `examples/glct_secir.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/glct_secir.cpp>`_ 
 
-
-Overview of the ``glsecir`` namespace:
---------------------------------------
-
-.. doxygennamespace:: mio::glsecir
+and the code documentation for the model at :CPP-API:`mio::glsecir` .

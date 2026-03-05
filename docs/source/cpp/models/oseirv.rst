@@ -238,7 +238,4 @@ Literature
 * Weidemann, F., Remschmidt, C., Buda, S. et al. *Is the impact of childhood influenza vaccination less than expected: a transmission modelling study.* BMC Infectious Diseases 17, 258 (2017). https://doi.org/10.1186/s12879-017-2344-6
 
 
-Overview of the ``oseirv`` namespace:
--------------------------------------
-
-.. doxygennamespace:: mio::oseirv
+The code documentation for the model can be found at :CPP-API:`mio::oseirv` .
