@@ -385,7 +385,7 @@ First generate the doxygen output by running
 
 
 To test links to the C++ documentation, you need to point sphinx to the correct files. These are given in the ``conf.py`` 
-file as the ``doxylink = ... `` settings. **Don't commit this change!**
+file as the ``doxylink = ...`` settings. **Don't commit this change!**
 
 Then sphinx can be used to build the documentation:
 
