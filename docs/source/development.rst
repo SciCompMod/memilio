@@ -350,12 +350,13 @@ The full list of labels that should be used to identify issues can be found at: 
 
 
 Documentation
---------------------
+-------------
 
 The documentation uses `Sphinx <https://www.sphinx-doc.org/en/master/>`_ and is written in reStructuredText (rst), that uses a 
 slightly different syntax than Markdown. A documentation can be found `here <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_.
 This online documentation is generated using `ReadTheDocs <https://readthedocs.org/>`_ and is automatically updated when 
-a pull request is merged into the main branch. Thus, we require you to build the documentation locally to test changes.
+a pull request is merged into the main branch. For Pull Requests, a new version of the documentation is built on a second
+server by ReadTheDocs. The checks include the build status and a link to the new documentation.
 Literature is centrally collected in `literature.rst` and `substitutions <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html#substitutions>`_ 
 are used to print it wherever needed.
 
@@ -372,7 +373,7 @@ rst files can be generated as in the following examples:
     :CPP-API:`mio::details::SimulationBase\< FP, M, SystemIntegrator\< FP, Integrands... > >`
 
 
-Please make sure to have a working python environment with a python version that is compatible with 
+For a local build, please make sure to have a working python environment with a python version that is compatible with 
 our :doc:`memilio-python packages <python/python_packages>` as well as 
 all packages listed in ``docs/requirements.txt`` and `doxygen <https://doxygen.nl/>`_ installed.
 
