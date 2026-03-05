@@ -64,10 +64,16 @@ hoverxref_role_types = {
     "class": "tooltip",
 }
 
+# doxylink readthedocs setup:
 doxylink = {
     "CPP-API": ("cppapi/html/tagfile.xml", 
                 "cppapi/html")
 }
+#doxylink local setup:
+# doxylink = {
+#     "CPP-API": ("source/cppapi/html/tagfile.xml", 
+#                 "../../source/cppapi/html")
+# }
 
 # remove_from_toctrees = ["api/*"]
 
