@@ -22,7 +22,7 @@
 
 #include "memilio/config.h"
 #include "memilio/io/io.h"
-#include "memilio/math/eigen.h"
+#include "memilio/math/eigen.h" // IWYU pragma: keep
 
 namespace mio
 {
@@ -81,7 +81,7 @@ inline auto evaluate_intermediate(Intermediate&& x)
         return static_cast<Type>(x);
     }
     else {
-        return x;
+        return std::forward<Intermediate>(x);
     }
 }
 

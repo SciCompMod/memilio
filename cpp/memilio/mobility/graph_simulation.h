@@ -145,7 +145,7 @@ public:
     }
 
     GraphSimulationStochastic(FP t0, FP dt, Graph&& g, const node_function& node_func, const edge_function&& edge_func)
-        : Base(t0, dt, std::forward<Graph>(g), node_func, std::move(edge_func))
+        : Base(t0, dt, std::move(g), node_func, std::move(edge_func))
         , m_rates(Base::m_graph.edges().size() *
                   Base::m_graph.edges()[0].property.get_parameters().get_coefficients().get_shape().rows())
     {

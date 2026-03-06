@@ -21,6 +21,7 @@
 #define MEMILIO_DATA_ANALYZE_RESULT_H
 
 #include "memilio/config.h"
+#include "memilio/utils/logging.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/math/interpolation.h"
@@ -376,80 +377,50 @@ template <class FP>
 IOResult<TimeSeries<FP>> merge_time_series(const TimeSeries<FP>& ts1, const TimeSeries<FP>& ts2,
                                            bool add_values = false)
 {
-    TimeSeries<FP> merged_ts(ts1.get_num_elements());
     if (ts1.get_num_elements() != ts2.get_num_elements()) {
         log_error("TimeSeries have a different number of elements.");
         return failure(mio::StatusCode::InvalidValue);
     }
-    else {
-        Eigen::Index t1_iterator = 0;
-        Eigen::Index t2_iterator = 0;
-        bool t1_finished         = false;
-        bool t2_finished         = false;
-        while (!t1_finished || !t2_finished) {
-            if (!t1_finished) {
-                if (ts1.get_time(t1_iterator) < ts2.get_time(t2_iterator) ||
-                    t2_finished) { // Current time point of first TimeSeries is smaller than current time point of second TimeSeries or second TimeSeries has already been copied entirely
-                    merged_ts.add_time_point(ts1.get_time(t1_iterator), ts1.get_value(t1_iterator));
-                    t1_iterator += 1;
-                }
-                else if (!t2_finished && ts1.get_time(t1_iterator) ==
-                                             ts2.get_time(t2_iterator)) { // Both TimeSeries have the current time point
-                    if (add_values) {
-                        merged_ts.add_time_point(ts1.get_time(t1_iterator),
-                                                 ts1.get_value(t1_iterator) + ts2.get_value(t2_iterator));
-                    }
-                    else {
-                        merged_ts.add_time_point(ts1.get_time(t1_iterator), ts1.get_value(t1_iterator));
-                        log_warning("Both TimeSeries have values for t={}. The value of the first TimeSeries is used",
-                                    ts1.get_time(t1_iterator));
-                    }
-                    t1_iterator += 1;
-                    t2_iterator += 1;
-                    if (t2_iterator >=
-                        ts2.get_num_time_points()) { // Check if all values of second TimeSeries have been copied
-                        t2_finished = true;
-                        t2_iterator = ts2.get_num_time_points() - 1;
-                    }
-                }
-                if (t1_iterator >=
-                    ts1.get_num_time_points()) { // Check if all values of first TimeSeries have been copied
-                    t1_finished = true;
-                    t1_iterator = ts1.get_num_time_points() - 1;
-                }
-            }
-            if (!t2_finished) {
-                if (ts2.get_time(t2_iterator) < ts1.get_time(t1_iterator) ||
-                    t1_finished) { // Current time point of second TimeSeries is smaller than current time point of first TimeSeries or first TimeSeries has already been copied entirely
-                    merged_ts.add_time_point(ts2.get_time(t2_iterator), ts2.get_value(t2_iterator));
-                    t2_iterator += 1;
-                }
-                else if (!t1_finished && ts2.get_time(t2_iterator) ==
-                                             ts1.get_time(t1_iterator)) { // Both TimeSeries have the current time point
-                    if (add_values) {
-                        merged_ts.add_time_point(ts1.get_time(t1_iterator),
-                                                 ts1.get_value(t1_iterator) + ts2.get_value(t2_iterator));
-                    }
-                    else {
-                        merged_ts.add_time_point(ts1.get_time(t1_iterator), ts1.get_value(t1_iterator));
-                        log_warning("Both TimeSeries have values for t={}. The value of the first TimeSeries is used",
-                                    ts1.get_time(t1_iterator));
-                    }
-                    t1_iterator += 1;
-                    t2_iterator += 1;
-                    if (t1_iterator >=
-                        ts1.get_num_time_points()) { // Check if all values of first TimeSeries have been copied
-                        t1_finished = true;
-                        t1_iterator = ts1.get_num_time_points() - 1;
-                    }
-                }
-                if (t2_iterator >=
-                    ts2.get_num_time_points()) { // Check if all values of second TimeSeries have been copied
-                    t2_finished = true;
-                    t2_iterator = ts2.get_num_time_points() - 1;
-                }
-            }
+    if (!ts1.is_strictly_monotonic() || !ts2.is_strictly_monotonic()) {
+        log_error("TimeSeries need to have strictly monotonic time points to be merged.");
+        return failure(mio::StatusCode::InvalidValue);
+    }
+    Eigen::Index t1_iterator   = 0;
+    Eigen::Index t2_iterator   = 0;
+    const Eigen::Index t1_size = ts1.get_num_time_points();
+    const Eigen::Index t2_size = ts2.get_num_time_points();
+    TimeSeries<FP> merged_ts(ts1.get_num_elements());
+    merged_ts.reserve(t1_size + t2_size);
+    // merge entries of both time series until one finishes
+    while (t1_iterator < t1_size && t2_iterator < t2_size) {
+        // check which ts has the smaller time at the current iterator, and merge it
+        if (ts1.get_time(t1_iterator) < ts2.get_time(t2_iterator)) {
+            merged_ts.add_time_point(ts1.get_time(t1_iterator), ts1.get_value(t1_iterator));
+            ++t1_iterator;
         }
+        else if (ts1.get_time(t1_iterator) == ts2.get_time(t2_iterator)) {
+            merged_ts.add_time_point(ts1.get_time(t1_iterator), ts1.get_value(t1_iterator));
+            if (add_values) {
+                merged_ts.get_last_value() += ts2.get_value(t2_iterator);
+            }
+            else {
+                log_warning("Both TimeSeries have values for t={}. The value of the first TimeSeries is used",
+                            ts1.get_time(t1_iterator));
+            }
+            ++t1_iterator;
+            ++t2_iterator;
+        }
+        else { // " > "
+            merged_ts.add_time_point(ts2.get_time(t2_iterator), ts2.get_value(t2_iterator));
+            ++t2_iterator;
+        }
+    }
+    // append remaining entries. at most one of the following for loops will be executed
+    for (; t1_iterator < t1_size; ++t1_iterator) {
+        merged_ts.add_time_point(ts1.get_time(t1_iterator), ts1.get_value(t1_iterator));
+    }
+    for (; t2_iterator < t2_size; ++t2_iterator) {
+        merged_ts.add_time_point(ts2.get_time(t2_iterator), ts2.get_value(t2_iterator));
     }
     return success(merged_ts);
 }

@@ -23,13 +23,12 @@
 
 #include "memilio/config.h"
 #include "memilio/utils/compiler_diagnostics.h"
-#include "memilio/utils/parameter_set.h"
 #include "memilio/math/smoother.h"
 #include "memilio/math/floating_point.h"
-#include "memilio/epidemiology/uncertain_matrix.h"
 
 #include "boost/math/distributions/gamma.hpp"
 #include "boost/math/distributions/lognormal.hpp"
+#include "memilio/utils/logging.h"
 
 namespace mio
 {
