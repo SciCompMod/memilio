@@ -438,7 +438,7 @@ private:
      */
     ScalarType cull_queue(std::queue<std::pair<size_t, ScalarType>> queue, ScalarType capacity)
     {
-        while (!queue.empty() && capacity > 0) {
+        while (!queue.empty() && capacity > 0 && queue.front().second < Base::m_t - 1) {
             auto [node_id, day]     = queue.front();
             auto animals            = Base::m_graph.nodes()[node_id].property.get_result().get_last_value();
             auto num_living_animals = std::accumulate(animals.begin(), animals.end() - 1, 0);
