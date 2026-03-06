@@ -423,10 +423,8 @@ private:
         if (time < m_new_regulations_day) {
             return m_culling_capacity_per_day;
         }
-        else if (time < m_new_regulations_day + 8) {
-            return m_culling_capacity_per_day * 4;
-        }
-        return m_culling_capacity_per_day * 7;
+        else
+            return m_culling_capacity_per_day * (2 + (std::min(16.0, (time - m_new_regulations_day)) * 0.33));
     }
 
     /**
