@@ -51,18 +51,20 @@ enum class InfectionState
 };
 
 std::vector<int>
-simulate(std::string farm_file, ScalarType tmax = 40, ScalarType dt = 1.0, ScalarType suspicion_threshold = 0.05,
+simulate(std::string farm_file, ScalarType tmax = 80, ScalarType dt = 1.0, ScalarType suspicion_threshold = 15,
          ScalarType sensitivity = 0.95, ScalarType h0 = 0.001, ScalarType r0 = 1000, ScalarType alpha = 2,
-         ScalarType A0_SEI = 0.2, ScalarType A0_EI = 0.2, ScalarType A0_ID = 0.2, ScalarType A0_DeathRate = 0.000128,
-         ScalarType A1_SEI = 0.2, ScalarType A1_EI = 0.2, ScalarType A1_ID = 0.2, ScalarType A1_DeathRate = 0.000128,
-         ScalarType A2_SEI = 0.2, ScalarType A2_EI = 0.2, ScalarType A2_ID = 0.2, ScalarType A2_DeathRate = 0.000588,
-         ScalarType A3_SEI = 0.2, ScalarType A3_EI = 0.2, ScalarType A3_ID = 0.2, ScalarType A3_DeathRate = 0.000588,
-         ScalarType A4_SEI = 0.2, ScalarType A4_EI = 0.2, ScalarType A4_ID = 0.2, ScalarType A4_DeathRate = 0.000588,
-         ScalarType foi_inner_factor0 = 1.0, ScalarType foi_outer_factor0 = 1.0, ScalarType foi_inner_factor1 = 1.0,
-         ScalarType foi_outer_factor1 = 1.0, ScalarType foi_inner_factor2 = 1.0, ScalarType foi_outer_factor2 = 1.0,
-         ScalarType foi_inner_factor3 = 1.0, ScalarType foi_outer_factor3 = 1.0, ScalarType foi_inner_factor4 = 1.0,
-         ScalarType foi_outer_factor4 = 1.0, ScalarType first_infection_day = 0, ScalarType second_infection_day = 2,
-         ScalarType third_infection_day = 2, u_int seed = 42)
+         ScalarType infection_baseline = 0.0001, ScalarType A0_SEI = 0.002, ScalarType A0_EI = 0.1,
+         ScalarType A0_ID = 0.1, ScalarType A0_DeathRate = 0.000128, ScalarType A1_SEI = 0.002, ScalarType A1_EI = 0.1,
+         ScalarType A1_ID = 0.1, ScalarType A1_DeathRate = 0.000128, ScalarType A2_SEI = 0.002, ScalarType A2_EI = 0.1,
+         ScalarType A2_ID = 0.1, ScalarType A2_DeathRate = 0.000588, ScalarType A3_SEI = 0.002, ScalarType A3_EI = 0.1,
+         ScalarType A3_ID = 0.1, ScalarType A3_DeathRate = 0.000588, ScalarType A4_SEI = 0.002, ScalarType A4_EI = 0.1,
+         ScalarType A4_ID = 0.1, ScalarType A4_DeathRate = 0.000588, ScalarType foi_inner_factor0 = 0.5,
+         ScalarType foi_outer_factor0 = 0.5, ScalarType foi_inner_factor1 = 0.5, ScalarType foi_outer_factor1 = 0.5,
+         ScalarType foi_inner_factor2 = 0.5, ScalarType foi_outer_factor2 = 0.5, ScalarType foi_inner_factor3 = 0.5,
+         ScalarType foi_outer_factor3 = 0.5, ScalarType foi_inner_factor4 = 0.5, ScalarType foi_outer_factor4 = 0.5,
+         ScalarType damping0 = 1.0, ScalarType damping1 = 1.0, ScalarType damping2 = 1.0, ScalarType damping3 = 1.0,
+         ScalarType damping4 = 1.0, ScalarType first_infection_day = 0, ScalarType second_infection_day = 2,
+         ScalarType third_infection_day = 2, u_int seed = 434)
 {
     const auto t0 = 0.;
 
@@ -168,8 +170,7 @@ simulate(std::string farm_file, ScalarType tmax = 40, ScalarType dt = 1.0, Scala
     interesting_indices.push_back({curr_model.populations.get_flat_index({home, InfectionState::E})});
     interesting_indices.push_back({curr_model.populations.get_flat_index({home, InfectionState::I})});
 
-    auto graph                                                    = std::move(builder).build();
-    graph.nodes()[7658].property.get_result().get_last_value()[1] = 1;
+    auto graph = std::move(builder).build();
 
     auto nodes = graph.nodes() | std::views::transform([](const auto& node) {
                      return &node.property;
@@ -177,16 +178,17 @@ simulate(std::string farm_file, ScalarType tmax = 40, ScalarType dt = 1.0, Scala
     auto tree  = mio::geo::RTree(nodes.begin(), nodes.end());
 
     for (auto& node : graph.nodes()) {
-        node.property.set_regional_neighbors(
-            tree.in_range_indices_query(node.property.get_location(),
-                                        {mio::geo::kilometers(1), mio::geo::kilometers(10), mio::geo::kilometers(25)}));
+        node.property.set_regional_neighbors(tree.in_range_indices_query(
+            node.property.get_location(),
+            {mio::geo::kilometers(1), mio::geo::kilometers(3), mio::geo::kilometers(10), mio::geo::kilometers(25)}));
     }
 
     auto sim = mio::make_farm_sim(t0, dt, std::move(graph), rng);
-    sim.set_parameters(suspicion_threshold, sensitivity, h0, r0, alpha,
+    sim.set_parameters(suspicion_threshold, sensitivity, h0, r0, alpha, infection_baseline,
                        {first_infection_day, second_infection_day, third_infection_day},
                        {foi_inner_factor0, foi_inner_factor1, foi_inner_factor2, foi_inner_factor3, foi_inner_factor4},
-                       {foi_outer_factor0, foi_outer_factor1, foi_outer_factor2, foi_outer_factor3, foi_outer_factor4});
+                       {foi_outer_factor0, foi_outer_factor1, foi_outer_factor2, foi_outer_factor3, foi_outer_factor4},
+                       {damping0, damping1, damping2, damping3, damping4});
 
     sim.advance(tmax);
 

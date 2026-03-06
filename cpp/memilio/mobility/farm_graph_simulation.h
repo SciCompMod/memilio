@@ -160,8 +160,10 @@ private:
         using Model        = std::decay_t<decltype(Base::m_graph.nodes()[0].property.get_simulation().get_model())>;
         using AdoptionRate = mio::smm::AdoptionRates<ScalarType, typename Model::Status, mio::regions::Region>;
         std::vector<ScalarType> dampings = {1.0, 1.0, 1.0, 1.0, 1.0};
+        ScalarType baseline              = m_infection_baseline;
         if (Base::m_t > m_new_regulations_day) {
             dampings = m_dampings;
+            baseline = 0.0;
         }
         for (auto& node : graph.nodes()) {
             // Skip calculation for nodes without animals
@@ -183,8 +185,13 @@ private:
                               m_alpha)));
                 }
             }
+            infection_pressure *= m_foi_outer_factor[node.property.get_type()] * dampings[node.property.get_type()];
+            // If in HRZ and if broiler 2 or organic (4 or 0) then add baseline infections
+            if (node.property.get_in_hrz() && node.property.get_type() % 4 == 0) {
+                infection_pressure += baseline;
+            }
             node.property.get_simulation().get_model().parameters.template get<AdoptionRate>()[3].factor =
-                m_foi_outer_factor[node.property.get_type()] * infection_pressure;
+                infection_pressure;
         }
     }
 
@@ -752,7 +759,7 @@ public:
      * @param foi_outer_factors
      */
     void set_parameters(ScalarType suspicion_threshold, ScalarType sensitivity, ScalarType h0, ScalarType r0,
-                        ScalarType alpha, std::vector<Timepoint> infection_dates,
+                        ScalarType alpha, ScalarType infection_baseline, std::vector<Timepoint> infection_dates,
                         std::vector<ScalarType> foi_inner_factors, std::vector<ScalarType> foi_outer_factors,
                         std::vector<ScalarType> dampings = {1.0, 1.0, 1.0, 1.0, 1.0})
     {
@@ -761,6 +768,7 @@ public:
         m_h0                  = h0;
         m_r0                  = r0;
         m_alpha               = alpha;
+        m_infection_baseline  = infection_baseline;
         m_infection_dates     = infection_dates;
         m_foi_inner_factor    = foi_inner_factors;
         m_foi_outer_factor    = foi_outer_factors;
@@ -811,6 +819,7 @@ private:
     static const constexpr size_t m_ten_km_radius_index        = 2;
     static const constexpr size_t m_twentyfive_km_radius_index = 3;
     std::vector<ScalarType> m_dampings                         = {0.5, 1.0, 1.0, 1.0, 0.5};
+    ScalarType m_infection_baseline                            = 0.0001;
 };
 
 /**
