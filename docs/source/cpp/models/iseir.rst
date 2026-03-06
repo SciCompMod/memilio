@@ -178,8 +178,4 @@ An example can be found at:
 
 - `examples/ide_seir.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ide_seir.cpp>`_
 
-
-Overview of the ``iseir`` namespace:
------------------------------------------
-
-.. doxygennamespace:: mio::iseir
+The code documentation for the model can be found at :CPP-API:`mio::iseir` .

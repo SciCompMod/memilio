@@ -265,9 +265,4 @@ Examples
 A full example with ``Status`` including ``InfectionState``, ``Age`` and ``Species`` can be found at 
 `examples/smm.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/smm.cpp>`_
 
-
-
-Overview of the ``smm`` namespace:
------------------------------------
-
-.. doxygennamespace:: mio::smm
+The code documentation for the model can be found at :CPP-API:`mio::smm` .
