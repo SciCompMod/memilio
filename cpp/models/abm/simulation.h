@@ -46,6 +46,7 @@ public:
     Simulation(TimePoint t0, Model&& model)
         : m_model(std::move(model))
         , m_t(t0)
+        , m_t_prev(t0-hours(1))
         , m_dt(hours(1))
     {
     }
@@ -86,6 +87,15 @@ public:
     }
 
     /**
+     * @brief Get the previous time of the Simulation.
+     */
+    TimePoint get_prev_time() const
+    {
+        return m_t_prev;
+    }
+
+
+    /**
      * @brief Get the Model that this Simulation evolves.
      */
     Model& get_model()
@@ -103,11 +113,14 @@ private:
     {
         auto dt = std::min(m_dt, tmax - m_t);
         m_model.evolve(m_t, dt);
+        m_t_prev = m_t;
         m_t += m_dt;
+
     }
 
     Model m_model; ///< The Model to simulate.
     TimePoint m_t; ///< The current TimePoint of the Simulation.
+    TimePoint m_t_prev; ///< The previous  TimePoint of the Simulation.
     TimeSpan m_dt; ///< The length of the time steps.
 };
 

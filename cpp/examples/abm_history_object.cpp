@@ -25,6 +25,7 @@
 #include "memilio/utils/abstract_parameter_distribution.h"
 #include "memilio/io/history.h"
 #include "memilio/utils/parameter_distributions.h"
+#include "abm/common_abm_loggers.h"
 
 #include <fstream>
 #include <string>
@@ -196,7 +197,7 @@ int main()
         }
     };
 
-    mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds> history;
+    mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds, mio::abm::LogInfectionStatePerAgeGroup, mio::abm::LogInfectionPerLocationTypePerAgeGroup> history;
 
     sim.advance(tmax, history);
 
