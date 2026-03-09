@@ -69,7 +69,7 @@ public:
         Eigen::Index(InfectionState::Count)}; 
 
     mio::History<TimeSeriesWriter, LogInfectionPerLocationTypePerAgeGroup> history_detailed{
-        Eigen::Index(InfectionState::Count) * this->get_model().parameters.get_num_groups()};
+        Eigen::Index(LocationType::Count) * this->get_model().parameters.get_num_groups()};
 
     
 };

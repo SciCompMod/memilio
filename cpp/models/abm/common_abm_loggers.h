@@ -240,7 +240,7 @@ struct LogInfectionPerLocationTypePerAgeGroup : mio::LogAlways {
             if ((p.get_infection_state(prev_time) != mio::abm::InfectionState::Exposed) &&
                 (p.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed)) {
                 auto index = (((size_t)(mio::abm::LocationType::Count)) * ((uint32_t)p.get_age().get())) +
-                                ((uint32_t)p.get_location());
+                                ((uint32_t)p.get_location_type());
                 sum[index] += 1;
 
             }
