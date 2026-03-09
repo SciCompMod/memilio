@@ -195,9 +195,9 @@ int main()
         return 1;
     }
 
-    const std::string result_dir_new = mio::path_join(result_dir, "new");
-    if (!mio::create_directory(result_dir_new)) {
-        mio::log_error("Could not create result directory \"{}\".", result_dir_new);
+    const std::string result_directory_standard = mio::path_join(result_dir, "standart_results");
+    if (!mio::create_directory(result_directory_standard)) {
+        mio::log_error("Could not create result directory \"{}\".", result_directory_standard);
         return 1;
     }
 
@@ -220,15 +220,16 @@ int main()
             sim.get_result().print_table(outfile_run, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4);
 
             std::cout << "Results written to " << outpath << std::endl;
-            return std::make_pair(std::vector{interpolated_result}, std::vector{interpolated_result_detailed});
+
+            return std::vector<mio::TimeSeries<double>>{interpolated_result, interpolated_result_detailed};
         });
 
     if (ensemble_results.size() > 0) {
-        // Split the pairs into two separate ensemble vectors
+
         std::vector<std::vector<mio::TimeSeries<double>>> ensemble_new, ensemble_detailed;
-        for (auto& [res_new, res_det] : ensemble_results) {
-            ensemble_new.push_back(std::move(res_new));
-            ensemble_detailed.push_back(std::move(res_det));
+        for (auto& run : ensemble_results) {
+            ensemble_new.push_back({std::move(run[0])});
+            ensemble_detailed.push_back({std::move(run[1])});
         }
 
         // Percentiles for aggregated results
@@ -238,11 +239,11 @@ int main()
         auto new_p75 = ensemble_percentile(ensemble_new, 0.75);
         auto new_p95 = ensemble_percentile(ensemble_new, 0.95);
 
-        mio::unused(save_result(new_p05, {0}, num_age_groups, mio::path_join(result_dir_new, "Results_p05.h5")));
-        mio::unused(save_result(new_p25, {0}, num_age_groups, mio::path_join(result_dir_new, "Results_p25.h5")));
-        mio::unused(save_result(new_p50, {0}, num_age_groups, mio::path_join(result_dir_new, "Results_p50.h5")));
-        mio::unused(save_result(new_p75, {0}, num_age_groups, mio::path_join(result_dir_new, "Results_p75.h5")));
-        mio::unused(save_result(new_p95, {0}, num_age_groups, mio::path_join(result_dir_new, "Results_p95.h5")));
+        mio::unused(save_result(new_p05, {0}, num_age_groups, mio::path_join(result_directory_standard, "Results_p05.h5")));
+        mio::unused(save_result(new_p25, {0}, num_age_groups, mio::path_join(result_directory_standard, "Results_p25.h5")));
+        mio::unused(save_result(new_p50, {0}, num_age_groups, mio::path_join(result_directory_standard, "Results_p50.h5")));
+        mio::unused(save_result(new_p75, {0}, num_age_groups, mio::path_join(result_directory_standard, "Results_p75.h5")));
+        mio::unused(save_result(new_p95, {0}, num_age_groups, mio::path_join(result_directory_standard, "Results_p95.h5")));
 
         // Percentiles for detailed results
         auto det_p05 = ensemble_percentile(ensemble_detailed, 0.05);
