@@ -34,66 +34,10 @@ from scipy.ndimage import gaussian_filter1d
 # This module provides functions to load and visualize infection states and
 # location types from simulation results of the agent-based model (ABM) stored in HDF5 format.
 
-# The used  Loggers are:
-# struct LogInfectionStatePerAgeGroup : mio::LogAlways {
-#     using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
-#     /**
-#      * @brief Log the TimeSeries of the number of Person%s in an #InfectionState for every age group.
-#      * @param[in] sim The simulation of the abm.
-#      * @return A pair of the TimePoint and the TimeSeries of the number of Person%s in an #InfectionState for every age group.
-#      */
-#     static Type log(const mio::abm::Simulation& sim)
-#     {
-#
-#         Eigen::VectorXd sum = Eigen::VectorXd::Zero(
-#             Eigen::Index((size_t)mio::abm::InfectionState::Count * sim.get_world().parameters.get_num_groups()));
-#         const auto curr_time = sim.get_time();
-#         const auto persons   = sim.get_world().get_persons();
-#
-#         // PRAGMA_OMP(parallel for)
-#         for (auto i = size_t(0); i < persons.size(); ++i) {
-#             auto& p = persons[i];
-#             auto index = (((size_t)(mio::abm::InfectionState::Count)) * ((uint32_t)p.get_age().get())) +
-#                 ((uint32_t)p.get_infection_state(curr_time));
-# // PRAGMA_OMP(atomic)
-#              sum[index] += 1;
-#         }
-#         return std::make_pair(curr_time, sum);
-#     }
-# };
-#
-# struct LogInfectionPerLocationTypePerAgeGroup : mio::LogAlways {
-#     using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
-#     /**
-#      * @brief Log the TimeSeries of the number of newly infected Person%s for each Location Type and each age.
-#      * @param[in] sim The simulation of the abm.
-#      * @return A pair of the TimePoint and the TimeSeries of newly infected Person%s for each Location Type and each age.
-#      */
-#     static Type log(const mio::abm::Simulation& sim)
-#     {
-#
-#         Eigen::VectorXd sum = Eigen::VectorXd::Zero(
-#             Eigen::Index((size_t)mio::abm::LocationType::Count * sim.get_world().parameters.get_num_groups()));
-#         auto curr_time     = sim.get_time();
-#         auto prev_time     = sim.get_prev_time();
-#         const auto persons = sim.get_world().get_persons();
-#
-#         // PRAGMA_OMP(parallel for)
-#         for (auto i = size_t(0); i < persons.size(); ++i) {
-#             auto& p = persons[i];
-#                 // PRAGMA_OMP(atomic)
-#                 if ((p.get_infection_state(prev_time) != mio::abm::InfectionState::Exposed) &&
-#                     (p.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed)) {
-#                     auto index = (((size_t)(mio::abm::LocationType::Count)) * ((uint32_t)p.get_age().get())) +
-#                                  ((uint32_t)p.get_location().get_type());
-#                     sum[index] += 1;
-#                 }
-#         }
-#         return std::make_pair(curr_time, sum);
-#     }
-# };
-#
-# The output of the loggers of several runs is stored in HDF5 files using mio::save_results in mio/io/result_io.h.
+# The used Loggers are:
+# LogInfectionStatePerAgeGroup 
+# LogInfectionPerLocationTypePerAgeGroup 
+# The output of the loggers of several runs is stored in HDF5 files using mio::save_results in mio/io/result_io.h, see abm_history_object.cpp.
 
 # Adjust these as needed.
 state_labels = {
@@ -138,7 +82,37 @@ def load_h5_results(base_path, percentile):
             (e.g., 'Time', 'Total', age group names like 'Group1', 'Group2', etc.).
             Values are numpy arrays containing the corresponding time series data.
     """
-    file_path = os.path.join(base_path, percentile, "Results.h5")
+    # Try flat structure first (e.g., Results_p50.h5)
+    file_path_flat = os.path.join(base_path, f"Results_{percentile}.h5")
+    # Try subdirectory structure (e.g., p50/Results.h5)
+    file_path_nested = os.path.join(base_path, percentile, "Results.h5")
+    
+    # Determine which file exists
+    if os.path.exists(file_path_flat):
+        file_path = file_path_flat
+    elif os.path.exists(file_path_nested):
+        file_path = file_path_nested
+    else:
+        raise FileNotFoundError(
+            f"Could not find percentile results file. Tried:\n"
+            f"  - {file_path_flat}\n"
+            f"  - {file_path_nested}\n\n"
+            f"Expected directory structure (option 1):\n"
+            f"  {base_path}/\n"
+            f"    Results_p05.h5\n"
+            f"    Results_p25.h5\n"
+            f"    Results_p50.h5\n"
+            f"    Results_p75.h5\n"
+            f"    Results_p95.h5\n\n"
+            f"Or (option 2):\n"
+            f"  {base_path}/\n"
+            f"    p05/Results.h5\n"
+            f"    p25/Results.h5\n"
+            f"    p50/Results.h5\n"
+            f"    p75/Results.h5\n"
+            f"    p95/Results.h5\n"
+        )
+    
     with h5py.File(file_path, 'r') as f:
         data = {k: v[()] for k, v in f['0'].items()}
     return data
@@ -170,7 +144,17 @@ def plot_infections_loc_types_average(
         'Number of new infections per location type for the median run, rolling sum over 24 hours')
     color_plot = matplotlib.colormaps.get_cmap(colormap).colors
 
+    # Check if data dimensions match expected location types
+    num_cols = total_50.shape[1] if len(total_50.shape) > 1 else 1
+    num_location_types = len(location_type_labels)
+    
+    if num_cols < num_location_types:
+        print(f"Warning: Data has {num_cols} columns but {num_location_types} location types defined.")
+        print(f"Only plotting first {num_cols} location types.")
+    
     for idx, i in enumerate(location_type_labels.keys()):
+        if i >= num_cols:
+            break  # Skip if we don't have data for this location type
         color = color_plot[i % len(color_plot)] if i < len(
             color_plot) else "black"
         # Sum up every 24 hours, then smooth
@@ -180,13 +164,12 @@ def plot_infections_loc_types_average(
             window=indexer, min_periods=1).sum().to_numpy()
         y = y[0::rolling_window].flatten()
         y = gaussian_filter1d(y, sigma=smooth_sigma, mode='nearest')
-        plt.plot(time[0::rolling_window], y, color=color, linewidth=2.5)
+        plt.plot(time[0::rolling_window], y, color=color, linewidth=2.5, label=location_type_labels[i])
 
-    plt.legend(list(location_type_labels.values()))
+    plt.legend()  # Auto-generate legend from plot labels
     _format_x_axis(time, start_date, xtick_step)
     plt.xlabel('Date')
     plt.ylabel('Number of individuals')
-    plt.show()
 
 
 def plot_infection_states_results(
@@ -287,7 +270,6 @@ def plot_infection_states(
     _format_x_axis(x, start_date, xtick_step)
     plt.xlabel('Date')
     plt.ylabel('Number of individuals')
-    plt.show()
 
 
 def plot_infection_states_by_age_group(
@@ -306,22 +288,31 @@ def plot_infection_states_by_age_group(
     @param[in] show90 If True, plot 90% percentile bands in addition to 50% percentile.
     """
 
+    # Dynamically detect available age groups from the data
+    available_groups = [key for key in p50_bs.keys() if key.startswith('Group') or key == 'Total']
+    # Sort to ensure Group1, Group2, ..., Total order
+    available_groups = sorted(available_groups, key=lambda x: (x != 'Total', x))
+    
     color_plot = matplotlib.colormaps.get_cmap(colormap).colors
     n_states = len(state_labels)
     fig, ax = plt.subplots(
-        n_states, len(age_groups), constrained_layout=True, figsize=(20, 3 * n_states))
+        n_states, len(available_groups), constrained_layout=True, figsize=(20, 3 * n_states))
 
-    for col_idx, group in enumerate(age_groups):
+    for col_idx, group in enumerate(available_groups):
         y50 = p50_bs[group]
         y25 = p25_bs[group]
         y75 = p75_bs[group]
         y05 = p05_bs[group] if (show90 and p05_bs is not None) else None
         y95 = p95_bs[group] if (show90 and p95_bs is not None) else None
+        
+        # Get group label, using default if not in predefined dict
+        group_label = age_groups_dict.get(group, group)
+        
         for row_idx, (state_idx, label) in enumerate(state_labels.items()):
             _plot_state(
                 ax[row_idx, col_idx], x, y50[:, state_idx], y25[:,
                                                                 state_idx], y75[:, state_idx],
-                color_plot[col_idx], f'#{label}, {age_groups_dict[group]}',
+                color_plot[col_idx], f'#{label}, {group_label}',
                 y05=y05[:, state_idx] if y05 is not None else None,
                 y95=y95[:, state_idx] if y95 is not None else None,
                 show90=show90
@@ -344,8 +335,6 @@ def plot_infection_states_by_age_group(
     fig.suptitle(
         'Infection states per age group with 50%' + string_short + ' percentile',
         fontsize=16)
-
-    plt.show()
 
 
 def _plot_state(ax, x, y50, y25, y75, color, title, y05=None, y95=None, show90=False):
@@ -390,21 +379,25 @@ def main():
                         help="If set, plot 90% percentile as well")
     args = parser.parse_args()
 
-    plot_infection_states_results(
-        path_to_infection_states=args.path_to_infection_states,
-        start_date=args.start_date,
-        colormap=args.colormap,
-        xtick_step=args.xtick_step,
-        show90=True
-    )
-    plot_infections_loc_types_average(
-        path_to_loc_types=args.path_to_loc_types,
-        start_date=args.start_date,
-        colormap=args.colormap,
-        xtick_step=args.xtick_step)
-
     if not args.path_to_infection_states and not args.path_to_loc_types:
         print("Please provide a path to infection states or location types results.")
+        return
+
+    if args.path_to_infection_states:
+        plot_infection_states_results(
+            path_to_infection_states=args.path_to_infection_states,
+            start_date=args.start_date,
+            colormap=args.colormap,
+            xtick_step=args.xtick_step,
+            show90=True
+        )
+    
+    if args.path_to_loc_types:
+        plot_infections_loc_types_average(
+            path_to_loc_types=args.path_to_loc_types,
+            start_date=args.start_date,
+            colormap=args.colormap,
+            xtick_step=args.xtick_step)
 
     plt.show()
 
