@@ -188,7 +188,6 @@ int main()
     // study.get_rng().seed({12341234, 53456, 63451, 5232576, 84586, 52345});
 
     const std::string result_dir = mio::path_join(mio::base_dir(), "example_results");
-    // Remove old results to avoid HDF5 "name already exists" errors
     std::filesystem::remove_all(result_dir);
     if (!mio::create_directory(result_dir)) {
         mio::log_error("Could not create result directory \"{}\".", result_dir);
