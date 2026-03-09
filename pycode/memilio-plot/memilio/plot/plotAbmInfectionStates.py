@@ -34,7 +34,7 @@ from scipy.ndimage import gaussian_filter1d
 # This module provides functions to load and visualize infection states and
 # location types from simulation results of the agent-based model (ABM) stored in HDF5 format.
 
-# The used  Loggers are:
+# The used Loggers are:
 # LogInfectionStatePerAgeGroup 
 # LogInfectionPerLocationTypePerAgeGroup 
 # The output of the loggers of several runs is stored in HDF5 files using mio::save_results in mio/io/result_io.h, see abm_history_object.cpp.
