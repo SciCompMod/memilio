@@ -1,0 +1,134 @@
+# .github/workflows/discussion-monitor.yml
+name: Discussion Monitor
+
+on:
+  schedule:
+    - cron: '0 9 * * *'
+
+
+jobs:
+  check-discussions:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      discussions: read
+    steps:
+    - name: Check for new discussions
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        MATTERMOST_WEBHOOK_URL: ${{ secrets.MATTERMOST_WEBHOOK_URL }}
+      run: |
+        npm install @octokit/rest
+        cat > check.js << 'EOF'
+        const { Octokit } = require('@octokit/rest');
+
+        const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+
+        async function check() {
+          const since = new Date();
+          since.setHours(since.getHours() - 25);
+          
+          const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+          console.log(`Checking discussions for ${owner}/${repo}`);
+          
+          try {
+            const response = await octokit.graphql(`
+              query { 
+                repository(owner: "${owner}", name: "${repo}") {
+                  discussions(first: 10, orderBy: {field: CREATED_AT, direction: DESC}) {
+                    nodes { 
+                      createdAt
+                      title
+                      url
+                      number
+                      author {
+                        login
+                      }
+                      category {
+                        name
+                        emoji
+                      }
+                    }
+                  }
+                }
+              }
+            `);
+            
+            console.log('Full GraphQL response:', JSON.stringify(response, null, 2));
+            
+            if (!response || !response.repository) {
+              console.log('Repository not found or discussions not enabled');
+              console.log('Response keys:', Object.keys(response || {}));
+              return;
+            }
+
+            if (!response.repository.discussions) {
+              console.log('Discussions not available for this repository');
+              return;
+            }
+            
+            const newDiscussions = response.repository.discussions.nodes.filter(
+              d => new Date(d.createdAt) > since
+            );
+            
+            console.log(`Found ${newDiscussions.length} new discussions`);
+            
+            if (newDiscussions.length > 0) {
+              let message;
+              
+              if (newDiscussions.length === 1) {
+                const discussion = newDiscussions[0];
+                message = {
+                  text: `${discussion.category.emoji || '💬'} New Discussion on ${owner}/${repo}
+
+        **[${discussion.title}](${discussion.url})**
+
+        👤 **Author:** ${discussion.author.login}
+        📂 **Category:** ${discussion.category.name}
+        🔢 **Discussion #${discussion.number}**`,
+                  username: "GitHub Discussion Bot",
+                  icon_emoji: ":github:"
+                };
+              } else {
+                const discussionList = newDiscussions.map(d => 
+                  `- ${d.category.emoji || '💬'} **[${d.title}](${d.url})** by ${d.author.login}`
+                ).join('\n');
+                
+                message = {
+                  text: `🎉 ${newDiscussions.length} New Discussions on ${owner}/${repo}
+
+        ${discussionList}
+
+        ---
+        *Check out the latest discussions above!*`,
+                  username: "GitHub Discussion Bot",
+                  icon_emoji: ":github:"
+                };
+              }
+              
+              const response = await fetch(process.env.MATTERMOST_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(message)
+              });
+              console.log('Mattermost notification sent');
+            }
+          } catch (error) {
+            console.error('Error details:', error);
+            if (process.env.MATTERMOST_WEBHOOK_URL) {
+              await fetch(process.env.MATTERMOST_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                  text: '⚠️ **GitHub Discussion Bot Error**\nThere was an error checking discussions. Please check the workflow logs.',
+                  username: "GitHub Discussion Bot",
+                  icon_emoji: ":warning:"
+                })
+              });
+            }
+          }
+        }
+
+        check().catch(console.error);
+        EOF
+        node check.js

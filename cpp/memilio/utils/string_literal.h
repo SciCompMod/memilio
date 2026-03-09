@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Rene Schmieding
 *
@@ -112,6 +112,25 @@ struct StringLiteral {
     {
         auto l = StringLiteral<N - 1>(left);
         return l + right;
+    }
+    /** @} */
+
+    /**
+     * @brief Compare two literals.
+     * @param[in] left, right The strings to compare. Operands can be StringLiteral%s or regular string literals.
+     * @return Whether both strings are the same.
+     * @{
+     */
+    template <size_type N>
+    friend constexpr auto operator==(const StringLiteral& left, const StringLiteral<N>& right)
+    {
+        return left.string_view() == right.string_view();
+    }
+    template <size_type N>
+    friend constexpr auto operator==(const StringLiteral& left, const value_type (&right)[N])
+    {
+        auto r = StringLiteral<N - 1>(right);
+        return left == r;
     }
     /** @} */
 

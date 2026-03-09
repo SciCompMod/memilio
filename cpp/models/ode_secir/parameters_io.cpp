@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, Martin J. Kuehn, Lena Ploetzke
 *
@@ -82,12 +82,11 @@ IOResult<void> read_confirmed_cases_data(
     });
 
     for (auto region_idx = size_t(0); region_idx < vregion.size(); ++region_idx) {
-        auto region_entry_range_it =
+        Range region_entry_range(
             std::equal_range(rki_data.begin(), rki_data.end(), vregion[region_idx], [](auto&& a, auto&& b) {
                 return get_region_id(a) < get_region_id(b);
-            });
-        auto region_entry_range = make_range(region_entry_range_it);
-        if (region_entry_range.begin() == region_entry_range.end()) {
+            }));
+        if (region_entry_range.empty()) {
             log_error("No entries found for region {}", vregion[region_idx]);
             return failure(StatusCode::InvalidFileFormat,
                            "No entries found for region " + std::to_string(vregion[region_idx]));
@@ -117,6 +116,9 @@ IOResult<void> read_confirmed_cases_data(
 
             if (date_df == offset_date_by_days(date, 0)) {
                 num_InfectedSymptoms[age] += scaling_factor_inf[age] * region_entry.num_confirmed;
+                // We intentionally do NOT multiply recovered with the scaling_factor_inf here.
+                // If we apply the scaling factor to recovered as well, we would implicitly
+                // assume that this factor holds for the entire historical period up to t0, which is not valid.
                 num_rec[age] += region_entry.num_confirmed;
             }
             if (date_df == offset_date_by_days(date, days_surplus)) {
@@ -159,6 +161,17 @@ IOResult<void> read_confirmed_cases_data(
         auto& num_icu                = vnum_icu[region_idx];
 
         for (size_t i = 0; i < ConfirmedCasesDataEntry::age_group_names.size(); i++) {
+            // R(t0) = ΣC(t0) − I(t0) − H(t0) − U(t0) − D(t0)
+            // subtract currently infectious/hospitalized/ICU/dead
+            // Note: We divide I/H/U/D by scaling_factor_inf to "unscale" these contributions back to the
+            // reported level before subtracting from recovered. If we also applied the scaling factor to
+            // recovered, we would implicitly assume that the same underreporting applies to the entire
+            // history up to t0, which would be wrong. The scaling factor should reflect underreporting
+            // around t0 only.
+            num_rec[i] -=
+                (num_InfectedSymptoms[i] / scaling_factor_inf[i] + num_InfectedSevere[i] / scaling_factor_inf[i] +
+                 num_icu[i] / scaling_factor_inf[i] + num_death[i] / scaling_factor_inf[i]);
+
             auto try_fix_constraints = [region, i](double& value, double error, auto str) {
                 if (value < error) {
                     //this should probably return a failure

@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Lena Ploetzke
 *
@@ -35,67 +35,65 @@ namespace iseir
 
 /**
  * @brief The time of latency used in the IDE SEIR model.
- * 
+ *
  * Latency time is the average time from infection to the onset of infectivity used in the model.
  * Latency time is measured in days.
  */
 struct LatencyTime {
-    using Type = double;
+    using Type = ScalarType;
     static constexpr Type get_default()
     {
-        return 3.3;
+        return Type(3.3);
     }
 };
 
 /**
  * @brief The infectious time used in the IDE SEIR model.
- * 
+ *
  * Infectious time is the average time from onset of infectivity to recovery used in the model.
  * Infectious time is measured in days.
  */
 struct InfectiousTime {
-    using Type = double;
+    using Type = ScalarType;
     static constexpr Type get_default()
     {
-        return 8.2;
+        return Type(8.2);
     }
 };
 
 /**
  * @brief The risk of transmission in the event of a contact used in the IDE SEIR model.
- * 
- * The transmission risk is the average risk to get infected in the event of a contact, 
+ *
+ * The transmission risk is the average risk to get infected in the event of a contact,
  * given that the contact takes place between a susceptible and an infected person.
  */
 struct TransmissionRisk {
-    using Type = double;
+    using Type = ScalarType;
     static constexpr Type get_default()
     {
-        return 0.1;
+        return Type(0.1);
     }
 };
 
 /**
  * @brief The contact frequency is modeled using an UncertainContactMatrix.
- * 
+ *
  * The contact frequency is the average number of contact of an individual per day.
  * We use the type UncertainContactMatrix, because of the Randomness in this variable.
  * Via this parameter, dampings can be included to simulate non-pharmaceutical interventions.
  */
-template <typename FP = double>
 struct ContactFrequency {
-    using Type = UncertainContactMatrix<FP>;
+    using Type = UncertainContactMatrix<ScalarType>;
     static Type get_default()
     {
-        ContactMatrixGroup contact_matrix = ContactMatrixGroup(1, 1);
-        contact_matrix[0]                 = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
+        ContactMatrixGroup<ScalarType> contact_matrix = ContactMatrixGroup<ScalarType>(1, 1);
+        contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, 10.));
         return Type(contact_matrix);
     }
 };
 
 // Define Parameterset for IDE SEIR model.
-template <typename FP = double>
-using ParametersBase = ParameterSet<TransmissionRisk, LatencyTime, InfectiousTime, ContactFrequency<FP>>;
+using ParametersBase = ParameterSet<TransmissionRisk, LatencyTime, InfectiousTime, ContactFrequency>;
 
 } // namespace iseir
 } // namespace mio

@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Rene Schmieding, Henrik Zunker
 *
@@ -18,13 +18,13 @@
 * limitations under the License.
 */
 
-#ifndef MIO_FLOW_MODEL_H_
-#define MIO_FLOW_MODEL_H_
+#ifndef MIO_COMPARTMENTS_FLOW_MODEL_H
+#define MIO_COMPARTMENTS_FLOW_MODEL_H
 
-#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/compartments/compartmental_model.h"
 #include "memilio/utils/index_range.h"
 #include "memilio/utils/flow.h"
-#include "memilio/utils/type_list.h"
+#include "memilio/utils/type_list.h" // IWYU pragma: keep for easier flow definitions
 
 namespace mio
 {
@@ -37,8 +37,8 @@ namespace details
 // First a list of tuples is generated for each Tag in Tags, where the tuple is either of type tuple<Tag>, or if
 // Tag == OmittedTag, of type tuple<>. This list is then concatenated, effectively removing OmittedTag.
 template <class OmittedTag, class... Tags>
-decltype(std::tuple_cat(std::declval<typename std::conditional<std::is_same<OmittedTag, Tags>::value, std::tuple<>,
-                                                               std::tuple<Tags>>::type>()...))
+decltype(std::tuple_cat(
+    std::declval<std::conditional_t<std::is_same_v<OmittedTag, Tags>, std::tuple<>, std::tuple<Tags>>>()...))
     filter_tuple(std::tuple<Tags...>);
 
 // Function declaration used to replace type T by std::tuple.
@@ -61,7 +61,7 @@ using filtered_index_t = decltype(as_index<IndexTemplate>(
 } //namespace details
 
 /**
- * @brief A FlowModel is a CompartmentalModel defined by the flows between compartments. 
+ * @brief A FlowModel is a CompartmentalModel defined by the flows between compartments.
  *
  * Inherits from  @see CompartmentalModel, and defines the derivatives depending on the flows. Hence, a model implementing
  * FlowModel has to define the function get_flows, instead of get_derivatives.
@@ -82,6 +82,7 @@ class FlowModel : public CompartmentalModel<FP, Comp, Pop, Params>
     // Enforce that Comp is a unique Category of PopIndex, since we use Flows (via their source/target) to provide
     // Comp indices for the population.
     static_assert(FlowIndex::size == PopIndex::size - 1, "Compartments must be used exactly once as population index.");
+    static_assert(!Flows::has_duplicates, "Flow duplicates detected. Flows must be unique.");
 
 public:
     using Base = CompartmentalModel<FP, Comp, Pop, Params>;
@@ -117,7 +118,7 @@ public:
             get_rhs_impl(flows, dydt, Index<>{});
         }
         else {
-            for (FlowIndex I : make_index_range(reduce_index<FlowIndex>(this->populations.size()))) {
+            for (FlowIndex I : reduce_index<FlowIndex>(this->populations.size())) {
                 get_rhs_impl(flows, dydt, I);
             }
         }
@@ -135,7 +136,7 @@ public:
      * @param[out] dydt A reference to the calculated output.
      */
     void get_derivatives(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
-                         Eigen::Ref<Eigen::VectorX<FP>> dydt) const override final
+                         Eigen::Ref<Eigen::VectorX<FP>> dydt) const final
     {
         m_flow_values.setZero();
         get_flows(pop, y, t, m_flow_values);
@@ -159,13 +160,13 @@ public:
      * flat_index = ((((I_{1}) * D_{2} + I_{2}) * D_{3} + I_{3}) ... ) * D_{n} + I_{n}
      * = I_{n} + I_{n-1} * D_{n} + I_{n-2} * D_{n} * D_{n-1} + ... + I_{1} * D_{n} * ... * D_{2}
      * for indices (I_{1}, ... , I_{n}) and dimension (D_{1}, ... , D_{n}).
-     *   
+     *
      * The flows use their position in the TypeList Flows instead of the template argument Comp from the base class,
-     * hence they use the Population::Index type without Comp. The position is determined by the Source and Target 
+     * hence they use the Population::Index type without Comp. The position is determined by the Source and Target
      * template arguments instead. As this dimension (the number of flows) may be larger or smaller
      * (e.g. a S->I->R model has 3 Comp's, but 2 Flows) than Comp::Count, we cannot simply use
      * this->populations.get_flat_index.
-     *   
+     *
      * Instead, we omit Comp from PopIndex (getting FlowIndex), calculate the flat_index without the Comp index or
      * Dimension, i.e. we omit I_j and D_j corresponding to Comp from the formula above. We do this by calling
      * flatten_index with a FlowIndex, with dimensions derived from Pop via reduce_index.
@@ -199,7 +200,7 @@ public:
     template <Comp Source, Comp Target>
     constexpr size_t get_flat_flow_index() const
     {
-        static_assert(std::is_same<FlowIndex, Index<>>::value, "Other indices must be specified");
+        static_assert(std::is_same_v<FlowIndex, Index<>>, "Other indices must be specified");
         return index_of_type_v<Flow<Source, Target>, Flows>;
     }
 
@@ -235,42 +236,20 @@ private:
 };
 
 /**
- * Detect whether certain member functions (the name before '_expr_t') exist.
- * If the member function exists in the type M, this template when instatiated
- * will be equal to the return type of the function. Otherwise the template is invalid.
- * @tparam FP floating point type, e.g. double.
- * @tparam M Any class, e.g. FlowModel.
- * @{
- */
-template <typename FP, class M>
-using get_derivatives_expr_t = decltype(std::declval<const M&>().get_derivatives(
-    std::declval<Eigen::Ref<const Eigen::VectorX<FP>>>(), std::declval<Eigen::Ref<Eigen::VectorX<FP>>>()));
-
-template <typename FP, class M>
-using get_flows_expr_t =
-    decltype(std::declval<const M&>().get_flows(std::declval<Eigen::Ref<const Eigen::VectorX<FP>>>(),
-                                                std::declval<Eigen::Ref<const Eigen::VectorX<FP>>>(),
-                                                std::declval<FP>(), std::declval<Eigen::Ref<Eigen::VectorX<FP>>>()));
-
-template <typename FP, class M>
-using get_initial_flows_expr_t =
-    decltype(std::declval<Eigen::VectorX<FP>>() = std::declval<const M&>().get_initial_flows());
-/** @} */
-
-/**
- * Template meta function to check if a type is a valid flow model. 
- * Defines a static constant of name `value`. 
- * The constant `value` will be equal to true if M is a valid flow model type.
- * Otherwise, `value` will be equal to false.
- * @tparam FP floating point type, e.g. double.
+ * @brief Concept to check if a type is a valid flow model.
+ * Note that Model must be the first template argument 
  * @tparam Model A type that may or may not be a flow model.
+ * @tparam FP A floating point type, e.g. double.
  */
-template <typename FP, class Model>
-using is_flow_model = std::integral_constant<bool, (is_expression_valid<get_derivatives_expr_t, FP, Model>::value &&
-                                                    is_expression_valid<get_flows_expr_t, FP, Model>::value &&
-                                                    is_expression_valid<get_initial_flows_expr_t, FP, Model>::value &&
-                                                    is_compartment_model<FP, Model>::value)>;
+template <class Model, typename FP>
+concept IsFlowModel =
+    requires(Model m, Eigen::Ref<const Eigen::VectorX<FP>> const_vref, Eigen::Ref<Eigen::VectorX<FP>> vref, FP t) {
+        requires IsCompartmentalModel<Model, FP>;
+        { m.get_initial_flows() } -> std::convertible_to<Eigen::VectorX<FP>>;
+        m.get_flows(const_vref, const_vref, t, vref);
+        m.get_derivatives(const_vref, vref);
+    };
 
 } // namespace mio
 
-#endif // MIO_FLOW_MODEL_H_
+#endif // MIO_COMPARTMENTS_FLOW_MODEL_H

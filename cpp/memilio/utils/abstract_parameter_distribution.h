@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Julia Bicker
 *
@@ -41,7 +41,7 @@ class AbstractParameterDistribution
 
 public:
     /**
-     * The implementation handed to the constructor should have get_sample function 
+     * The implementation handed to the constructor should have get_sample function
      * overloaded with mio::RandomNumberGenerator and mio::abm::PersonalRandomNumberGenerator as input arguments
      */
     template <class Impl>
@@ -112,18 +112,18 @@ public:
 
     /**
      * @brief Returns a value sampled with the given distribution.
-     * @param[in] rng RandomNumberGenerator used for sampling. 
+     * @param[in] rng RandomNumberGenerator used for sampling.
      */
-    double get(RandomNumberGenerator& rng) const
+    ScalarType get(RandomNumberGenerator& rng) const
     {
         return sample_impl1(m_dist.get(), rng);
     }
 
     /**
      * @brief Returns a value sampled with the given distribution.
-     * @param[in] rng abm::PersonalRandomNumberGenerator used for sampling. 
+     * @param[in] rng abm::PersonalRandomNumberGenerator used for sampling.
      */
-    double get(abm::PersonalRandomNumberGenerator& rng) const
+    ScalarType get(abm::PersonalRandomNumberGenerator& rng) const
     {
         return sample_impl2(m_dist.get(), rng);
     }
@@ -131,7 +131,7 @@ public:
     /**
      * @brief Get the parameters of the given distribution.
      */
-    std::vector<double> params() const
+    std::vector<ScalarType> params() const
     {
         return static_cast<ParameterDistribution*>(m_dist.get())->params();
     }
@@ -148,10 +148,10 @@ public:
 
 private:
     std::shared_ptr<void> m_dist; ///< Underlying distribtuion.
-    double (*sample_impl1)(
+    ScalarType (*sample_impl1)(
         void*,
         RandomNumberGenerator&); ///< Sample function of the distribution which gets a RandomNumberGenerator as rng.
-    double (*sample_impl2)(
+    ScalarType (*sample_impl2)(
         void*,
         abm::
             PersonalRandomNumberGenerator&); ///< Sample function of the distribution which gets a abm::PersonalRandomNumberGenerator as rng.

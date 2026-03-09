@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin J Kuehn, Anna Wendler, Lena Ploetzke
 *
@@ -127,7 +127,7 @@ private:
  * @param[in] model An instance of an IDE-SECIR model.
  * @return A TimeSeries to represent the final simulation result.
  */
-TimeSeries<ScalarType> simulate(double tmax, double dt, Model const& model);
+TimeSeries<ScalarType> simulate(ScalarType tmax, ScalarType dt, Model const& model);
 
 } // namespace isecir
 } // namespace mio

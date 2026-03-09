@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -119,10 +119,10 @@ TEST(TestUncertain, uncertain_matrix)
 {
     mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
 
-    mio::ContactMatrix contact_matrix(Eigen::MatrixXd::NullaryExpr(2, 2, [](auto i, auto j) -> double {
+    mio::ContactMatrix<double> contact_matrix(Eigen::MatrixXd::NullaryExpr(2, 2, [](auto i, auto j) -> double {
         return (i + 1) * (j + 1);
     }));
-    contact_matrix.add_damping(0.7, mio::SimulationTime(30.));
+    contact_matrix.add_damping(0.7, mio::SimulationTime<double>(30.));
 
     mio::UncertainContactMatrix<double> uncertain_mat{{contact_matrix}};
 
@@ -131,13 +131,13 @@ TEST(TestUncertain, uncertain_matrix)
     EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[0].get_coeffs()(1, 1), 0.7);
 
     uncertain_mat.get_dampings().emplace_back(mio::UncertainValue<double>(0.5), mio::DampingLevel(0),
-                                              mio::DampingType(0), mio::SimulationTime(3.0),
+                                              mio::DampingType(0), mio::SimulationTime<double>(3.0),
                                               std::vector<size_t>(1, size_t(0)), Eigen::VectorXd::Constant(2, 1.0));
 
     uncertain_mat.get_school_holiday_damping() = mio::DampingSampling<double>(
-        mio::UncertainValue<double>(1.), mio::DampingLevel(1), mio::DampingType(0), mio::SimulationTime(0.0),
+        mio::UncertainValue<double>(1.), mio::DampingLevel(1), mio::DampingType(0), mio::SimulationTime<double>(0.0),
         std::vector<size_t>(1, size_t(0)), (Eigen::VectorXd(2) << 1.0, 0.0).finished());
-    uncertain_mat.get_school_holidays().assign({{mio::SimulationTime(5.0), mio::SimulationTime(17.0)}});
+    uncertain_mat.get_school_holidays().assign({{mio::SimulationTime<double>(5.0), mio::SimulationTime<double>(17.0)}});
 
     uncertain_mat.draw_sample(true);
     EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings().size(), 4);
@@ -147,13 +147,13 @@ TEST(TestUncertain, uncertain_matrix)
 
     EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[0].get_level(), mio::DampingLevel(0));
     EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[0].get_coeffs()(0, 0), 0.5);
-    EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[0].get_time(), mio::SimulationTime(3.0));
+    EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[0].get_time(), mio::SimulationTime<double>(3.0));
 
     EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[1].get_level(), mio::DampingLevel(1));
     EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[1].get_coeffs()(0, 0), 1.0);
-    EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[1].get_time(), mio::SimulationTime(5.0));
+    EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[1].get_time(), mio::SimulationTime<double>(5.0));
 
     EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[2].get_level(), mio::DampingLevel(1));
     EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[2].get_coeffs()(0, 0), 0.0);
-    EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[2].get_time(), mio::SimulationTime(17.0));
+    EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[2].get_time(), mio::SimulationTime<double>(17.0));
 }

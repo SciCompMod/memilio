@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -17,13 +17,17 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "memilio/config.h"
+#include "memilio/utils/miompi.h"
 #include "memilio/utils/parameter_distributions.h"
 #include "ode_secir/model.h"
 #include "ode_secir/parameter_space.h"
 #include "memilio/compartments/parameter_studies.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/random_number_generator.h"
+#include <cstddef>
 #include <gtest/gtest.h>
+#include <numeric>
 #include <stdio.h>
 
 TEST(ParameterStudies, sample_from_secir_params)
@@ -74,9 +78,9 @@ TEST(ParameterStudies, sample_from_secir_params)
         params.get<mio::osecir::DeathsPerCritical<double>>()[i]                = 0.3;
     }
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
+    mio::ContactMatrixGroup<double>& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0] =
-        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
+        mio::ContactMatrix<double>(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
 
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
 
@@ -97,7 +101,7 @@ TEST(ParameterStudies, sample_from_secir_params)
         EXPECT_GE(params.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[i], 0);
     }
 
-    mio::ContactMatrixGroup& contact_matrix_sample = params.get<mio::osecir::ContactPatterns<double>>();
+    mio::ContactMatrixGroup<double>& contact_matrix_sample = params.get<mio::osecir::ContactPatterns<double>>();
     EXPECT_EQ(contact_matrix_sample[0].get_dampings().size(), 1);
 }
 
@@ -147,8 +151,8 @@ TEST(ParameterStudies, sample_graph)
         params.get<mio::osecir::DeathsPerCritical<double>>()[i]                = 0.3;
     }
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
+    mio::ContactMatrixGroup<double>& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
+    contact_matrix[0] = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
 
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
 
@@ -157,14 +161,17 @@ TEST(ParameterStudies, sample_graph)
     graph.add_node(1, model);
     graph.add_edge(0, 1, mio::MobilityParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
 
-    auto study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 0.0, 0.5, 1);
+    mio::ParameterStudy study(graph, 0.0, 0.0, 0.5, 1);
     mio::log_rng_seeds(study.get_rng(), mio::LogLevel::warn);
-    auto results = study.run([](auto&& g) {
-        return draw_sample(g);
+    auto ensemble_results = study.run_serial([](auto&& g, auto t0_, auto dt_, auto) {
+        auto copy = g;
+        return mio::make_sampled_graph_simulation<double, mio::osecir::Simulation<ScalarType>>(draw_sample(copy), t0_,
+                                                                                               dt_, dt_);
     });
 
-    EXPECT_EQ(results[0].edges()[0].property.get_parameters().get_coefficients()[0].get_dampings().size(), 1);
-    for (auto& node : results[0].nodes()) {
+    auto& results = ensemble_results.at(0);
+    EXPECT_EQ(results.get_graph().edges()[0].property.get_parameters().get_coefficients()[0].get_dampings().size(), 1);
+    for (auto& node : results.get_graph().nodes()) {
         auto& result_model = node.property.get_simulation().get_model();
         EXPECT_EQ(result_model.parameters.get<mio::osecir::ContactPatterns<double>>()
                       .get_cont_freq_mat()[0]
@@ -365,36 +372,95 @@ TEST(ParameterStudies, check_ensemble_run_result)
         params.get<mio::osecir::DeathsPerCritical<double>>()[i]                = 0.3;
     }
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
+    mio::ContactMatrixGroup<double>& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0] =
-        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
+        mio::ContactMatrix<double>(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
 
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
-    mio::ParameterStudy<mio::osecir::Simulation<>> parameter_study(model, t0, tmax, 1);
+    mio::ParameterStudy parameter_study(model, t0, tmax, 0.1, 1);
     mio::log_rng_seeds(parameter_study.get_rng(), mio::LogLevel::warn);
 
     // Run parameter study
-    parameter_study.set_num_runs(1);
-    auto graph_results = parameter_study.run([](auto&& g) {
-        return draw_sample(g);
+    auto ensemble_results = parameter_study.run_serial([](auto&& model_, auto t0_, auto dt_, auto) {
+        auto copy = model_;
+        draw_sample(copy);
+        return mio::osecir::Simulation<double>(copy, t0_, dt_);
     });
 
-    std::vector<mio::TimeSeries<double>> results;
-    for (size_t i = 0; i < graph_results.size(); i++) {
-        results.push_back(std::move(graph_results[i].nodes()[0].property.get_result()));
-    }
+    const mio::TimeSeries<double>& results = ensemble_results.at(0).get_result();
 
-    for (Eigen::Index i = 0; i < results[0].get_num_time_points(); i++) {
+    for (Eigen::Index i = 0; i < results.get_num_time_points(); i++) {
         std::vector<double> total_at_ti((size_t)mio::osecir::InfectionState::Count, 0);
 
-        for (Eigen::Index j = 0; j < results[0][i].size(); j++) { // number of compartments per time step
-            EXPECT_GE(results[0][i][j], 0.0) << " day " << results[0].get_time(i) << " group " << j;
-            total_at_ti[static_cast<size_t>(j) / (size_t)mio::osecir::InfectionState::Count] += results[0][i][j];
+        for (Eigen::Index j = 0; j < results[i].size(); j++) { // number of compartments per time step
+            EXPECT_GE(results[i][j], 0.0) << " day " << results.get_time(i) << " group " << j;
+            total_at_ti[static_cast<size_t>(j) / (size_t)mio::osecir::InfectionState::Count] += results[i][j];
         }
 
         for (auto j = mio::AgeGroup(0); j < params.get_num_groups(); j++) {
             EXPECT_NEAR(total_at_ti[(size_t)j], model.populations.get_group_total(j), 1e-3)
                 << " day " << i << " group " << j;
         }
+    }
+}
+
+namespace
+{
+
+struct MockStudyParams {
+    const int init, run;
+};
+
+struct MockStudySim {
+    MockStudySim(const MockStudyParams& p_, double t0_, double dt_)
+        : p(p_)
+        , t0(t0_)
+        , dt(dt_)
+    {
+    }
+    void advance(double t)
+    {
+        tmax = t;
+    }
+
+    MockStudyParams p;
+    double t0, dt;
+    double tmax = 0;
+};
+
+} // namespace
+
+TEST(ParameterStudies, mocked_run)
+{
+    // run a very simple study, that works with mpi
+    const double t0 = 20, tmax = 21, dt = 22;
+    const MockStudyParams params{23, -1};
+    const size_t num_runs = 5; // enough to notice MPI effects
+    const auto make_sim   = [&](auto&& params_, auto t0_, auto dt_, auto i_) {
+        MockStudyParams cp{params_.init, (int)i_};
+        return MockStudySim(cp, t0_, dt_);
+    };
+    const auto process_sim = [&](MockStudySim&& s, size_t i) {
+        return s.tmax + i;
+    };
+    const double process_sim_result = (num_runs * tmax) + num_runs * (num_runs - 1) / 2.;
+    mio::ParameterStudy study(params, t0, tmax, dt, num_runs);
+    // case: run_serial without processing; expect created simulations in order
+    auto result_serial = study.run_serial(make_sim);
+    EXPECT_EQ(result_serial.size(), num_runs);
+    for (int i = 0; const auto& sim : result_serial) {
+        EXPECT_EQ(sim.t0, t0);
+        EXPECT_EQ(sim.dt, dt);
+        EXPECT_EQ(sim.tmax, tmax);
+        EXPECT_EQ(sim.p.init, params.init);
+        EXPECT_EQ(sim.p.run, i++);
+    }
+    // case: run and run_serial with processing; expect the same (unordered) result for both, on all ranks
+    // Note: currently the tests do not make use of MPI, so we expect the same result from each rank
+    auto result_serial_processed = study.run_serial(make_sim, process_sim);
+    auto result_parallel         = study.run(make_sim, process_sim);
+    for (const auto& result : {result_serial_processed, result_parallel}) {
+        EXPECT_EQ(result.size(), num_runs);
+        EXPECT_EQ(std::accumulate(result.begin(), result.end(), 0.0), process_sim_result);
     }
 }

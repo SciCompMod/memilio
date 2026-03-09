@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "memilio/mobility/graph.h"
+#include "memilio/mobility/graph_builder.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/date.h"
@@ -146,7 +147,7 @@ TEST(TestGraph, graph_without_edges)
     std::vector<MockModel> models = {MockModel(), MockModel()};
     std::vector<int> ids          = {1, 2};
 
-    auto g = mio::create_graph_without_edges<MockModel, MockMobility>(models, ids);
+    mio::Graph<MockModel, MockMobility> g(ids, models);
 
     EXPECT_EQ(g.edges().size(), 0);
     EXPECT_EQ(g.nodes().size(), 2);
@@ -170,10 +171,10 @@ TEST(TestGraph, set_nodes_secir)
     const fs::path& dir = " ";
 
     auto result =
-        mio::set_nodes<mio::osecir::TestAndTraceCapacity<double>, mio::osecir::ContactPatterns<double>,
+        mio::set_nodes<double, mio::osecir::TestAndTraceCapacity<double>, mio::osecir::ContactPatterns<double>,
                        mio::osecir::Model<double>, mio::MobilityParameters<double>, mio::osecir::Parameters<double>,
                        decltype(read_function_nodes), decltype(node_id_function)>(
-            params, mio::Date(2020, 5, 10), mio::Date(2020, 5, 11), dir, " ", 0, params_graph, read_function_nodes,
+            params, mio::Date(2020, 5, 10), mio::Date(2020, 5, 11), dir, " ", false, params_graph, read_function_nodes,
             node_id_function, std::vector<double>(size_t(1), 1.0), 1.0, 0.01);
 
     EXPECT_EQ(params_graph.nodes().size(), 2);
@@ -196,10 +197,10 @@ TEST(TestGraph, set_nodes_secirvvs)
     const fs::path& dir = " ";
 
     auto result =
-        mio::set_nodes<mio::osecirvvs::TestAndTraceCapacity<double>, mio::osecirvvs::ContactPatterns<double>,
+        mio::set_nodes<double, mio::osecirvvs::TestAndTraceCapacity<double>, mio::osecirvvs::ContactPatterns<double>,
                        mio::osecirvvs::Model<double>, mio::MobilityParameters<double>,
                        mio::osecirvvs::Parameters<double>, decltype(read_function_nodes), decltype(node_id_function)>(
-            params, mio::Date(2020, 5, 10), mio::Date(2020, 5, 11), dir, " ", 0, params_graph, read_function_nodes,
+            params, mio::Date(2020, 5, 10), mio::Date(2020, 5, 11), dir, " ", false, params_graph, read_function_nodes,
             node_id_function, std::vector<double>(size_t(1), 1.0), 1.0, 0.01);
 
     EXPECT_EQ(params_graph.nodes().size(), 2);
@@ -228,11 +229,11 @@ TEST(TestGraph, set_edges)
 
     const auto& read_function_edges = mock_read_mobility;
 
-    auto result =
-        mio::set_edges<MockContactLocation, mio::osecir::Model<double>, mio::MobilityParameters<double>,
-                       mio::MobilityCoefficientGroup, mio::osecir::InfectionState, decltype(read_function_edges)>(
-            dir, params_graph, mobile_compartments, size_t(2), read_function_edges,
-            std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.});
+    auto result = mio::set_edges<double, MockContactLocation, mio::osecir::Model<double>,
+                                 mio::MobilityParameters<double>, mio::MobilityCoefficientGroup<double>,
+                                 mio::osecir::InfectionState, decltype(read_function_edges)>(
+        dir, params_graph, mobile_compartments, size_t(2), read_function_edges,
+        std::vector<double>{0., 0., 1.0, 1.0, 0.33, 0., 0.});
 
     auto e_work = (Eigen::ArrayXd(6 * Eigen::Index(mio::osecir::InfectionState::Count)) << 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 0, 2, 0, 0, 0, 2, 0, 2, 2, 2, 0, 2, 0, 0, 0, 2, 0, 0.66, 0.66,
@@ -274,7 +275,7 @@ TEST(TestGraph, set_edges)
 TEST(TestGraph, set_edges_saving_edges)
 {
     const size_t num_groups = 6;
-    mio::osecir::Model model(num_groups);
+    mio::osecir::Model<double> model(num_groups);
     model.populations[{mio::AgeGroup(3), mio::osecir::InfectionState::Exposed}] = 1;
     mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>> params_graph;
     TempFileRegister file_register;
@@ -310,11 +311,11 @@ TEST(TestGraph, set_edges_saving_edges)
 
     const auto& read_function_edges = mock_read_mobility;
 
-    auto result =
-        mio::set_edges<MockContactLocation, mio::osecir::Model<double>, mio::MobilityParameters<double>,
-                       mio::MobilityCoefficientGroup, mio::osecir::InfectionState, decltype(read_function_edges)>(
-            dir, params_graph, mobile_compartments, size_t(2), read_function_edges,
-            std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}, indices_save_edges);
+    auto result = mio::set_edges<double, MockContactLocation, mio::osecir::Model<double>,
+                                 mio::MobilityParameters<double>, mio::MobilityCoefficientGroup<double>,
+                                 mio::osecir::InfectionState, decltype(read_function_edges)>(
+        dir, params_graph, mobile_compartments, size_t(2), read_function_edges,
+        std::vector<double>{0., 0., 1.0, 1.0, 0.33, 0., 0.}, indices_save_edges);
 
     EXPECT_EQ(params_graph.edges().size(), 2);
 
@@ -325,7 +326,7 @@ TEST(TestGraph, set_edges_saving_edges)
     EXPECT_EQ(indices_edge1, indices_save_edges);
 }
 
-TEST(TestGraph, ot_edges)
+TEST(TestGraph, out_edges)
 {
     mio::Graph<int, int> g;
     g.add_node(0);
@@ -344,29 +345,62 @@ TEST(TestGraph, ot_edges)
     EXPECT_THAT(g.out_edges(1), testing::ElementsAreArray(v1));
 }
 
+TEST(TestGraphBuilder, Build)
+{
+    mio::GraphBuilder<int, int> builder(3, 3);
+    builder.add_node(0, 100);
+    builder.add_node(1, 100);
+    builder.add_node(2, 100);
+    builder.add_edge(0, 1, 100);
+    builder.add_edge(2, 1, 100);
+    builder.add_edge(1, 2, 100);
+
+    auto g = std::move(builder).build();
+
+    EXPECT_EQ(g.nodes().size(), 3);
+    EXPECT_EQ(g.edges().size(), 3);
+}
+
+TEST(TestGraphBuilder, Build_unique)
+{
+    mio::GraphBuilder<int, int> builder;
+    builder.add_node(0, 100);
+    builder.add_node(1, 100);
+    builder.add_node(2, 100);
+    builder.add_edge(1, 2, 100);
+    builder.add_edge(0, 1, 100);
+    builder.add_edge(2, 1, 100);
+    builder.add_edge(1, 2, 200);
+    builder.add_edge(2, 1, 300);
+
+    auto g = std::move(builder).build(true);
+
+    EXPECT_EQ(g.nodes().size(), 3);
+    EXPECT_EQ(g.edges().size(), 3);
+    // The last added edges are kept:
+    EXPECT_EQ(g.edges()[1].property, 200);
+    EXPECT_EQ(g.edges()[2].property, 300);
+}
+
 namespace
 {
 
 struct MoveOnly {
     MoveOnly();
-    MoveOnly(const MoveOnly&) = delete;
+    MoveOnly(const MoveOnly&)            = delete;
     MoveOnly& operator=(const MoveOnly&) = delete;
     MoveOnly(MoveOnly&&)                 = default;
-    MoveOnly& operator=(MoveOnly&&) = default;
+    MoveOnly& operator=(MoveOnly&&)      = default;
 };
 using MoveOnlyGraph = mio::Graph<MoveOnly, MoveOnly>;
 
-template <class G>
-using add_node_expr_t = decltype(std::declval<G>().add_node(int()));
-template <class G>
-using add_edge_expr_t = decltype(std::declval<G>().add_edge(size_t(), size_t()));
-
 } // namespace
 
-static_assert(std::is_constructible<MoveOnlyGraph>::value, "Graph should support move-only node and edge properties.");
-static_assert(std::is_move_constructible<MoveOnlyGraph>::value && std::is_move_assignable<MoveOnlyGraph>::value,
+static_assert(std::is_constructible_v<MoveOnlyGraph>, "Graph should support move-only node and edge properties.");
+static_assert(std::is_move_constructible_v<MoveOnlyGraph> && std::is_move_assignable_v<MoveOnlyGraph>,
               "Graph should support move-only node and edge properties.");
-static_assert(mio::is_expression_valid<add_node_expr_t, MoveOnlyGraph>::value,
-              "Graph should support move-only node and edge properties.");
-static_assert(mio::is_expression_valid<add_edge_expr_t, MoveOnlyGraph>::value,
-              "Graph should support move-only node and edge properties.");
+static_assert(
+    requires(MoveOnlyGraph g, int i) { g.add_node(i); }, "Graph should support move-only node and edge properties.");
+static_assert(
+    requires(MoveOnlyGraph g, size_t i) { g.add_edge(i, i); },
+    "Graph should support move-only node and edge properties.");

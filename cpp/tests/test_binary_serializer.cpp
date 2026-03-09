@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -181,7 +181,7 @@ TEST(BinarySerializer, model)
     //in a very complex object. correct serializing of single values is tested by other tests.
     mio::osecir::Model<double> model{5};
     mio::set_log_level(mio::LogLevel::err);
-    mio::osecir::set_params_distributions_normal(model, 0, 10, 0.01);
+    mio::osecir::set_params_distributions_normal<double>(model, 0, 10, 0.01);
     mio::set_log_level(mio::LogLevel::warn);
     auto stream = mio::serialize_binary(model);
     auto result = mio::deserialize_binary(stream, mio::Tag<mio::osecir::Model<double>>{});

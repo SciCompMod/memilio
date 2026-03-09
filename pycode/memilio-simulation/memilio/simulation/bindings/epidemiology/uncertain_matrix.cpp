@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
@@ -35,10 +35,10 @@ void bind_uncertain_contact_matrix(py::module_& m, std::string const& name)
 {
     bind_class<mio::UncertainContactMatrix<double>, EnablePickling::Required>(m, name.c_str())
         .def(py::init<>())
-        .def(py::init<const mio::ContactMatrixGroup&>())
+        .def(py::init<const mio::ContactMatrixGroup<double>&>())
         .def_property(
             "cont_freq_mat", py::overload_cast<>(&mio::UncertainContactMatrix<double>::get_cont_freq_mat),
-            [](mio::UncertainContactMatrix<double>& self, const mio::ContactMatrixGroup& c) {
+            [](mio::UncertainContactMatrix<double>& self, const mio::ContactMatrixGroup<double>& c) {
                 self.get_cont_freq_mat() = c;
             },
             py::return_value_policy::reference_internal)
@@ -61,7 +61,7 @@ void bind_uncertain_contact_matrix(py::module_& m, std::string const& name)
             [](mio::UncertainContactMatrix<double>& self, const std::vector<std::pair<double, double>>& v) {
                 self.get_school_holidays().resize(v.size());
                 std::transform(v.begin(), v.end(), self.get_school_holidays().begin(), [](auto& p) {
-                    return std::make_pair(mio::SimulationTime(p.first), mio::SimulationTime(p.second));
+                    return std::make_pair(mio::SimulationTime<double>(p.first), mio::SimulationTime<double>(p.second));
                 });
             })
         .def_property("school_holiday_damping",

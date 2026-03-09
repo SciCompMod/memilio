@@ -5,6 +5,7 @@ The MEmilio C++ library contains the implementation of the epidemiological model
 Directory structure:
 - memilio: framework for developing epidemiological models with, e.g., interregional mobility implementations, nonpharmaceutical interventions (NPIs), and  mathematical, programming, and IO utilities.
 - models: implementation of concrete models (ODE, IDE, LCT and ABM)
+- sbml_model_generation: Code for the SBML integration and models that were generated using it
 - simulations: simulation applications that were used to generate the scenarios and data for publications
 - examples: small applications that help with using the framework and models
 - tests: unit tests for framework and models.
@@ -33,6 +34,7 @@ The following table lists the dependencies that are used. Most of them are requi
 | JsonCpp | 1.9.6    | No       | Yes (git repo)        | https://github.com/open-source-parsers/jsoncpp |
 | HDF5    | 1.12.0   | No       | No                    | https://www.hdfgroup.org/, package libhdf5-dev on apt (Ubuntu) |
 | GoogleTest | 1.10  | For Tests only | Yes (git repo)  | https://github.com/google/googletest |
+| LibSBML | 5.20.2 | No | No |  https://sbml.org/software/libsbml/ (For SBML integration only) |
 
 See the [thirdparty](thirdparty/README.md) directory for more details.
 
@@ -56,9 +58,12 @@ Options can be specified with `cmake .. -D<OPTION>=<VALUE>` or by editing the `b
 - `MEMILIO_SANITIZE_ADDRESS/_UNDEFINED`: compile with specified sanitizers to check correctness, ON or OFF, default OFF.
 - `MEMILIO_ENABLE_OPENMP`: compile MEmilio with multithreading using OpenMP, ON or OFF, default OFF.
 - `MEMILIO_ENABLE_MPI`: compile MEmilio with distributed memory parallelization using MPI. ON or OFF, default OFF. Requires an MPI implementation to be installed on the system. 
+- `MEMILIO_ENABLE_HDF5`: build MEmilio with HDF5 IO support, ON or OFF, default ON. If OFF, HDF5 is not searched for and features like `save_result`/`read_result` are disabled.
+- `MEMILIO_ENABLE_SBML`: build the SBML importer and imported models, i.e. everythin in the folder `sbml_model_generation`, ON or OFF, default OFF.
 - `MEMILIO_ENABLE_WARNINGS`: enable compilation warnings (beyond those enabled in the compiler by default). ON or OFF, default ON.
 - `MEMILIO_ENABLE_WARNINGS_AS_ERRORS`: compilation warnings are treated as compilation errors. ON or OFF, default ON.
 - `MEMILIO_ENABLE_PROFILING`: compile with runtime profiling support. ON or OFF, default OFF. See [here](benchmarks/profiling.md) for information.
+- `MEMILIO_ENABLE_LIKWID_MARKER`: compile MEmilio with likwid markers. ON or OFF, default OFF.
 
 Other important options may need:
 - `CMAKE_BUILD_TYPE`: controls compiler optimizations and diagnostics, Debug, Release, or RelWithDebInfo; not available for Multi-Config CMake Generators like Visual Studio, set the build type in the IDE or when running the compiler.

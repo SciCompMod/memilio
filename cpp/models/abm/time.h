@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -20,6 +20,7 @@
 #ifndef MIO_ABM_TIME_H
 #define MIO_ABM_TIME_H
 
+#include "memilio/config.h"
 #include "memilio/io/default_serialize.h"
 
 namespace mio
@@ -51,17 +52,17 @@ public:
     /**
      * @brief Length of time in days.
      */
-    double days() const
+    ScalarType days() const
     {
-        return double(m_seconds) / (24 * 60 * 60);
+        return ScalarType(m_seconds) / (24 * 60 * 60);
     }
 
     /**
      * @brief Length of time in hours.
      */
-    double hours() const
+    ScalarType hours() const
     {
-        return double(m_seconds) / (60 * 60);
+        return ScalarType(m_seconds) / (60 * 60);
     };
 
     /**
@@ -129,6 +130,17 @@ public:
     {
         return TimeSpan{m_seconds * f};
     }
+
+    /**
+     * @brief Multiplication with double and rounding down afterwards to whole seconds
+     * @param[in] f Factor to multiply with.
+     * @return New TimeSpan after multiplication.
+     */
+    TimeSpan multiply(double f) const
+    {
+        return TimeSpan{int(m_seconds * f)};
+    }
+
     TimeSpan& operator*=(int f)
     {
         m_seconds *= f;
@@ -178,16 +190,16 @@ public:
     /**
      * @brief Time since the epoch in days.
      */
-    double days() const
+    ScalarType days() const
     {
-        return double(m_seconds) / (24 * 60 * 60);
+        return ScalarType(m_seconds) / (24 * 60 * 60);
     }
     /**
      * @brief Time since the epoch in hours.
      */
-    double hours() const
+    ScalarType hours() const
     {
-        return double(m_seconds) / (60 * 60);
+        return ScalarType(m_seconds) / (60 * 60);
     };
     /**
      * @brief Time since the epoch in seconds.
@@ -338,7 +350,7 @@ inline TimeSpan days(int days)
     return TimeSpan(days * 24 * 60 * 60);
 }
 
-inline TimeSpan days(double days)
+inline TimeSpan days(ScalarType days)
 {
     return TimeSpan((int)(days * 24 * 60 * 60));
 }
