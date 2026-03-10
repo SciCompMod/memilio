@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -95,16 +95,16 @@ TEST(TestRowMajorIterator, in_memory)
     auto m = Eigen::MatrixXd(3, 2);
     m << 0, 1, 2, 3, 4, 5;
 
-    EXPECT_THAT(mio::make_range(mio::begin(m), mio::end(m)), testing::ElementsAre(0.0, 1.0, 2., 3., 4., 5.));
-    EXPECT_THAT(mio::make_range(mio::cbegin(m), mio::cend(m)), testing::ElementsAre(0.0, 1.0, 2., 3., 4., 5.));
+    EXPECT_THAT(mio::Range(mio::begin(m), mio::end(m)), testing::ElementsAre(0.0, 1.0, 2., 3., 4., 5.));
+    EXPECT_THAT(mio::Range(mio::cbegin(m), mio::cend(m)), testing::ElementsAre(0.0, 1.0, 2., 3., 4., 5.));
 }
 
 TEST(TestRowMajorIterator, expression)
 {
     auto m = Eigen::MatrixXd::Constant(3, 2, 0.5);
 
-    EXPECT_THAT(mio::make_range(mio::begin(m), mio::end(m)), testing::ElementsAre(0.5, 0.5, 0.5, 0.5, 0.5, 0.5));
-    EXPECT_THAT(mio::make_range(mio::cbegin(m), mio::cend(m)), testing::ElementsAre(0.5, 0.5, 0.5, 0.5, 0.5, 0.5));
+    EXPECT_THAT(mio::Range(mio::begin(m), mio::end(m)), testing::ElementsAre(0.5, 0.5, 0.5, 0.5, 0.5, 0.5));
+    EXPECT_THAT(mio::Range(mio::cbegin(m), mio::cend(m)), testing::ElementsAre(0.5, 0.5, 0.5, 0.5, 0.5, 0.5));
 }
 
 TEST(TestRowMajorIterator, operators)

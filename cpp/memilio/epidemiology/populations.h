@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Jan Kleinert, Daniel Abele
 *
@@ -20,12 +20,13 @@
 #ifndef MIO_EPI_POPULATIONS_H
 #define MIO_EPI_POPULATIONS_H
 
-#include "memilio/config.h"
-#include "memilio/utils/uncertain_value.h"
-#include "memilio/utils/custom_index_array.h"
-#include "memilio/math/eigen.h"
+#include "memilio/config.h" // IWYU pragma: keep
+#include "memilio/math/eigen.h" // IWYU pragma: keep
 #include "memilio/math/math_utils.h"
+#include "memilio/utils/custom_index_array.h"
+#include "memilio/utils/uncertain_value.h"
 
+#include <concepts>
 #include <numeric>
 
 namespace mio
@@ -56,11 +57,30 @@ public:
     using Base  = CustomIndexArray<UncertainValue<FP>, Categories...>;
     using Index = typename Base::Index;
 
-    template <class... Ts,
-              typename std::enable_if_t<std::is_constructible<UncertainValue<FP>, Ts...>::value>* = nullptr>
+    template <class... Ts>
+        requires std::is_constructible_v<UncertainValue<FP>, Ts...>
     explicit Populations(Index const& sizes, Ts... args)
         : Base(sizes, args...)
     {
+    }
+
+    /// @brief Create populations by taking ownership of a CustomIndexArray.
+    explicit Populations(Base&& array)
+        : Base(std::move(array))
+    {
+    }
+
+    /**
+     * @brief Convert internally stored data to OtherType and save into new Populations.
+     * @tparam OtherType The type to convert into.
+     * @return New Populations of OtherType with copy of internal data.
+     */
+    template <class OtherType>
+        requires std::convertible_to<typename Base::Type::Type, OtherType>
+    Populations<OtherType, Categories...> convert() const
+    {
+        return Populations<OtherType, Categories...>(
+            Base::template convert<typename Base::Type::Type>().template convert<UncertainValue<OtherType>>());
     }
 
     /**
@@ -102,7 +122,7 @@ public:
     template <class Arr>
     decltype(auto) get_from(Arr&& y, Index const& cats) const
     {
-        static_assert(std::is_lvalue_reference<Arr>::value, "get_from is disabled for temporary arrays.");
+        static_assert(std::is_lvalue_reference_v<Arr>, "get_from is disabled for temporary arrays.");
         return y[this->get_flat_index(cats)];
     }
 
@@ -285,6 +305,18 @@ public:
     {
         return Base::deserialize(io, Tag<Populations>{});
     }
+};
+
+/**
+ * @brief Population template specialization, forwarding categories from a MultiIndex to the Population.
+ * 
+ * @tparam FP A floating point type, e.g., double.
+ * @tparam Categories Index categories.
+ */
+template <typename FP, class... Categories>
+class Populations<FP, Index<Categories...>> : public Populations<FP, Categories...>
+{
+    using Populations<FP, Categories...>::Populations;
 };
 
 } // namespace mio

@@ -7,7 +7,7 @@ The model assumes perfect immunity after recovery
 
 The infection states and the transitions are visualized in the following graph.
 
-.. image:: https://martinkuehn.eu/research/images/ode_seirdb.png
+.. image:: https://martinkuehn.eu/research/images/seirdb.png
    :alt: SEIRDB_model
 
 

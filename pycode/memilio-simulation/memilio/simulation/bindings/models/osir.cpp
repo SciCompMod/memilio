@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert
 *
@@ -28,6 +28,7 @@
 #include "compartments/compartmental_model.h"
 #include "epidemiology/age_group.h"
 #include "epidemiology/populations.h"
+#include "data/analyze_result.h"
 
 //Includes from MEmilio
 #include "ode_sir/model.h"
@@ -51,17 +52,7 @@ inline std::string pretty_name<mio::osir::InfectionState>()
 
 PYBIND11_MODULE(_simulation_osir, m)
 {
-    m.def("interpolate_simulation_result",
-          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
-              &mio::interpolate_simulation_result),
-          py::arg("ts"), py::arg("abs_tol") = 1e-14);
-
-    m.def("interpolate_simulation_result",
-          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const std::vector<double>&)>(
-              &mio::interpolate_simulation_result),
-          py::arg("ts"), py::arg("interpolation_times"));
-
-    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<double>>);
+    pymio::bind_interpolate_result_methods(m);
 
     pymio::iterable_enum<mio::osir::InfectionState>(m, "InfectionState")
         .value("Susceptible", mio::osir::InfectionState::Susceptible)
@@ -81,15 +72,14 @@ PYBIND11_MODULE(_simulation_osir, m)
                                    pymio::EnablePickling::Never>(m, "ModelBase");
     pymio::bind_class<
         mio::osir::Model<double>, pymio::EnablePickling::Required,
-        mio::CompartmentalModel<double, mio::osir::InfectionState, Populations, mio::osir::Parameters<double>>>(
-        m, "Model")
+        mio::CompartmentalModel<double, mio::osir::InfectionState, Populations, mio::osir::Parameters<double>>>(m,
+                                                                                                                "Model")
         .def(py::init<int>(), py::arg("num_agegroups"));
 
     pymio::bind_Simulation<mio::Simulation<double, mio::osir::Model<double>>>(m, "Simulation");
-    
-    m.def(
-        "simulate", &mio::simulate<double, mio::osir::Model<double>>, "Simulates an ODE SIR model from t0 to tmax.", 
-        py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());
+
+    m.def("simulate", &mio::simulate<double, mio::osir::Model<double>>, "Simulates an ODE SIR model from t0 to tmax.",
+          py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());
 
     m.attr("__version__") = "dev";
 }

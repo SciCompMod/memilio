@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin J. Kuehn, Daniel Abele, Julia Bicker
 *
@@ -17,10 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef PARAMETER_DISTRIBUTIONS_H
-#define PARAMETER_DISTRIBUTIONS_H
+#ifndef MIO_UTILS_PARAMETER_DISTRIBUTIONS_H
+#define MIO_UTILS_PARAMETER_DISTRIBUTIONS_H
 
-#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/visitor.h"
 #include "memilio/utils/random_number_generator.h"
@@ -965,4 +964,4 @@ IOResult<std::shared_ptr<ParameterDistribution>> deserialize_internal(IOContext&
 
 } // namespace mio
 
-#endif // PARAMETER_DISTRIBUTIONS_H
+#endif // MIO_UTILS_PARAMETER_DISTRIBUTIONS_H

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Henrik Zunker
 *
@@ -204,4 +204,51 @@ TEST(TestOdeMseirs4, Simulation)
     auto sim = mio::simulate(t0, tmax, dt, model, std::move(integrator));
 
     EXPECT_EQ(sim.get_num_time_points(), 2);
+}
+
+TEST(TestOdeMseirs4, normalized_transitions)
+{
+    // case: get derivative with isolated infection terms; expect derivative match computed values
+    mio::omseirs4::Model<double> model;
+    auto& params                                              = model.parameters;
+    params.get<mio::omseirs4::BaseTransmissionRate<double>>() = 0.4;
+
+    // disable other flows to isolate infection terms
+    params.get<mio::omseirs4::NaturalBirthDeathRate<double>>()    = 0.0;
+    params.get<mio::omseirs4::LossMaternalImmunityRate<double>>() = 0.0;
+    params.get<mio::omseirs4::ProgressionRate<double>>()          = 0.0;
+    params.get<mio::omseirs4::RecoveryRate<double>>()             = 0.0;
+    params.get<mio::omseirs4::ImmunityWaningRate<double>>()       = 0.0;
+    params.get<mio::omseirs4::SeasonalAmplitude<double>>()        = 0.0;
+
+    using IS                                    = mio::omseirs4::InfectionState;
+    model.populations[{mio::Index<IS>(IS::S1)}] = 500.0;
+    model.populations[{mio::Index<IS>(IS::S2)}] = 300.0;
+    model.populations[{mio::Index<IS>(IS::S3)}] = 200.0;
+    model.populations[{mio::Index<IS>(IS::S4)}] = 100.0;
+    model.populations[{mio::Index<IS>(IS::I1)}] = 10.0;
+    model.populations[{mio::Index<IS>(IS::I2)}] = 5.0;
+    model.populations[{mio::Index<IS>(IS::I3)}] = 2.0;
+    model.populations[{mio::Index<IS>(IS::I4)}] = 3.0;
+
+    auto y0   = model.get_initial_values();
+    auto dydt = Eigen::VectorXd((Eigen::Index)IS::Count);
+    model.get_derivatives(y0, y0, 0.0, dydt);
+
+    const double N       = 500.0 + 300.0 + 200.0 + 100.0 + 10.0 + 5.0 + 2.0 + 3.0;
+    const double I_total = 10.0 + 5.0 + 2.0 + 3.0;
+    const double lambda1 = 0.4 * (I_total / N);
+    const double lambda2 = 0.5 * lambda1;
+    const double lambda3 = 0.35 * lambda1;
+    const double lambda4 = 0.25 * lambda1;
+    const double tol     = 1e-12;
+
+    EXPECT_NEAR(dydt[(Eigen::Index)IS::S1], -lambda1 * 500.0, tol);
+    EXPECT_NEAR(dydt[(Eigen::Index)IS::E1], lambda1 * 500.0, tol);
+    EXPECT_NEAR(dydt[(Eigen::Index)IS::S2], -lambda2 * 300.0, tol);
+    EXPECT_NEAR(dydt[(Eigen::Index)IS::E2], lambda2 * 300.0, tol);
+    EXPECT_NEAR(dydt[(Eigen::Index)IS::S3], -lambda3 * 200.0, tol);
+    EXPECT_NEAR(dydt[(Eigen::Index)IS::E3], lambda3 * 200.0, tol);
+    EXPECT_NEAR(dydt[(Eigen::Index)IS::S4], -lambda4 * 100.0, tol);
+    EXPECT_NEAR(dydt[(Eigen::Index)IS::E4], lambda4 * 100.0, tol);
 }

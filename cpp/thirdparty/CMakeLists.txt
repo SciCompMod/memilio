@@ -37,6 +37,7 @@ if(MEMILIO_USE_BUNDLED_SPDLOG)
 
     if(NOT spdlog_POPULATED)
         FetchContent_Populate(spdlog)
+
         add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR} EXCLUDE_FROM_ALL)
     endif()
 
@@ -144,12 +145,14 @@ else()
 endif()
 
 # ## HDF5
-find_package(HDF5 COMPONENTS C)
+if(MEMILIO_ENABLE_HDF5)
+    find_package(HDF5 COMPONENTS C)
 
-if(HDF5_FOUND)
-    set(MEMILIO_HAS_HDF5 ON)
-else()
-    message(WARNING "HDF5 was not found. Memilio will be built without some IO features. Install HDF5 Libraries and set the HDF5_DIR cmake variable to the directory containing the hdf5-config.cmake file to build with HDF5.")
+    if(HDF5_FOUND)
+        set(MEMILIO_HAS_HDF5 ON)
+    else()
+        message(WARNING "HDF5 was not found. Memilio will be built without some IO features. Install HDF5 Libraries and set the HDF5_DIR cmake variable to the directory containing the hdf5-config.cmake file to build with HDF5.")
+    endif()
 endif()
 
 # ## JSONCPP
@@ -197,20 +200,20 @@ else()
         to the directory containing the jsoncppConfig.cmake file to build with JsonCpp.")
 endif()
 
-find_package(sbml ${MEMILIO_SBML_VERSION} CONFIG)
-if(sbml_FOUND)
-    set(MEMILIO_HAS_SBML ON)
+
+if(MEMILIO_ENABLE_SBML)
+    find_package(sbml REQUIRED ${MEMILIO_SBML_VERSION} CONFIG)
     message(STATUS "Found libSBML: ${libsbml_INCLUDE_DIRS}")
-else()
-    message(WARNING "LibSBML was not found. The SBML importer will not be build.")
 endif()
 
 if(MEMILIO_ENABLE_MPI)
     find_package(MPI REQUIRED COMPONENTS CXX)
+    message(STATUS "Enabled MPI ${MPI_CXX_VERSION}")
 endif()
 
 if(MEMILIO_ENABLE_OPENMP)
     find_package(OpenMP REQUIRED COMPONENTS CXX)
+    message(STATUS "Enabled OpenMP ${OpenMP_CXX_VERSION}")
 endif()
 
 # Random123 library for random number generators

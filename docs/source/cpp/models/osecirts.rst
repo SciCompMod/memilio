@@ -317,7 +317,7 @@ The model also supports dynamic NPIs based on epidemic thresholds:
     dynamic_npis.set_base_value(100'000);                // Per 100,000 population
     dynamic_npis.set_threshold(200.0, dampings);         // Trigger at 200 cases per 100,000
 
-For more complex scenarios, such as real-world venue closures or lockdown modeling, detailed NPIs with location-specific dampings can be implemented. For further details, see the documentation of the :doc:`ODE-SECIR model <cpp/osecir>`
+For more complex scenarios, such as real-world venue closures or lockdown modeling, detailed NPIs with location-specific dampings can be implemented. For further details, see the documentation of the :doc:`ODE-SECIR model <osecir>`
 
 Simulation
 ----------

@@ -1,0 +1,706 @@
+/* 
+* Copyright (C) 2020-2026 MEmilio
+*
+* Authors: Annika Jungklaus, Lena Ploetzke
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+
+#ifndef LCT_SECIR_2_DISEASES_PARAMS_H
+#define LCT_SECIR_2_DISEASES_PARAMS_H
+
+#include "memilio/config.h"
+#include "memilio/math/eigen.h"
+#include "memilio/utils/parameter_set.h"
+#include "memilio/utils/logging.h"
+#include "memilio/utils/uncertain_value.h"
+#include "memilio/epidemiology/uncertain_matrix.h"
+
+namespace mio
+{
+namespace lsecir2d
+{
+
+/*********************************************************
+* Define Parameters of the LCT-SECIHURD-2-DISEASES model *
+**********************************************************/
+
+// Each paramater is a vector with length equal to the number of groups
+// The contact patterns are given by a matrix with dimension (number of groups)*(number of groups)
+// The default number of groups is 1
+
+/**
+ * @brief Average time spent in the Exposed compartment for disease a in day unit for each group.
+ */
+template <typename FP>
+struct TimeExposed_a {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeExposed_a";
+    }
+};
+
+/**
+ * @brief Average time spent in the TimeInfectedNoSymptoms before developing 
+ *  symptoms or recovering for disease a in day unit for each group.
+ */
+template <typename FP>
+struct TimeInfectedNoSymptoms_a {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeInfectedNoSymptoms_a";
+    }
+};
+
+/**
+ * @brief Average time spent in the TimeInfectedSymptoms before going to hospital 
+ *  or recovering for disease a in day unit for each group.
+ */
+template <typename FP>
+struct TimeInfectedSymptoms_a {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeInfectedNoSymptoms_a";
+    }
+};
+
+/**
+ * @brief Average time being in the Hospital before treated by ICU or recovering for disease a in day unit for each group.
+ */
+template <typename FP>
+struct TimeInfectedSevere_a {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeInfectedSevere_a";
+    }
+};
+
+/**
+ * @brief Average time treated by ICU before dead or recovering for disease a in day unit for each group.
+ */
+template <typename FP>
+struct TimeInfectedCritical_a {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeInfectedCritical_a";
+    }
+};
+
+/**
+ * @brief Probability of getting infected from a contact for disease a for each group.
+ */
+template <typename FP>
+struct TransmissionProbabilityOnContact_a {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 1.);
+    }
+    static std::string name()
+    {
+        return "TransmissionProbabilityOnContact_a";
+    }
+};
+
+/**
+ * @brief Average time spent in the Exposed compartment for disease b in day unit for each group.
+ */
+template <typename FP>
+struct TimeExposed_b {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeExposed_b";
+    }
+};
+
+/**
+ * @brief Average time spent in the TimeInfectedNoSymptoms before developing 
+ *  symptoms or recovering for disease b in day unit for each group.
+ */
+template <typename FP>
+struct TimeInfectedNoSymptoms_b {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeInfectedNoSymptoms_b";
+    }
+};
+
+/**
+ * @brief Average time spent in the TimeInfectedSymptoms before going to hospital 
+ *  or recovering for disease b in day unit for each group.
+ */
+template <typename FP>
+struct TimeInfectedSymptoms_b {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeInfectedNoSymptoms_b";
+    }
+};
+
+/**
+ * @brief Average time being in the Hospital before treated by ICU or recovering for disease b in day unit for each group.
+ */
+template <typename FP>
+struct TimeInfectedSevere_b {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeInfectedSevere_b";
+    }
+};
+
+/**
+ * @brief Average time treated by ICU before dead or recovering for disease b in day unit for each group.
+ */
+template <typename FP>
+struct TimeInfectedCritical_b {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeInfectedCritical_b";
+    }
+};
+
+/**
+ * @brief Probability of getting infected from a contact for disease b for each group.
+ */
+template <typename FP>
+struct TransmissionProbabilityOnContact_b {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 1.);
+    }
+    static std::string name()
+    {
+        return "TransmissionProbabilityOnContact_b";
+    }
+};
+
+/**
+ * @brief The contact patterns within the society are modelled using an UncertainContactMatrix.
+ */
+template <typename FP>
+struct ContactPatterns {
+    using Type = UncertainContactMatrix<FP>;
+
+    static Type get_default(size_t size)
+    {
+        mio::ContactMatrixGroup<FP> contact_matrix(1, (Eigen::Index)size);
+        contact_matrix[0] =
+            mio::ContactMatrix<FP>(Eigen::MatrixX<FP>::Constant((Eigen::Index)size, (Eigen::Index)size, 10.));
+        return Type(contact_matrix);
+    }
+    static std::string name()
+    {
+        return "ContactPatterns";
+    }
+};
+
+/**
+ * @brief The relative InfectedNoSymptoms infectability for disease a for each group.
+ */
+template <typename FP>
+struct RelativeTransmissionNoSymptoms_a {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 1.);
+    }
+    static std::string name()
+    {
+        return "RelativeTransmissionNoSymptoms_a";
+    }
+};
+
+/**
+ * @brief The risk of infection from symptomatic cases for disease a for each group.
+ */
+template <typename FP>
+struct RiskOfInfectionFromSymptomatic_a {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 1.);
+    }
+    static std::string name()
+    {
+        return "RiskOfInfectionFromSymptomatic_a";
+    }
+};
+
+/**
+ * @brief The relative InfectedNoSymptoms infectability for disease b for each group.
+ */
+template <typename FP>
+struct RelativeTransmissionNoSymptoms_b {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 1.);
+    }
+    static std::string name()
+    {
+        return "RelativeTransmissionNoSymptoms_b";
+    }
+};
+
+/**
+ * @brief The risk of infection from symptomatic cases for disease b for each group.
+ */
+template <typename FP>
+struct RiskOfInfectionFromSymptomatic_b {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 1.);
+    }
+    static std::string name()
+    {
+        return "RiskOfInfectionFromSymptomatic_b";
+    }
+};
+
+/**
+ * @brief The percentage of asymptomatic cases for disease a for each group.
+ */
+template <typename FP>
+struct RecoveredPerInfectedNoSymptoms_a {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 0.5);
+    }
+    static std::string name()
+    {
+        return "RecoveredPerInfectedNoSymptoms_a";
+    }
+};
+
+/**
+ * @brief The percentage of hospitalized patients per infected patients for disease a for each group.
+ */
+template <typename FP>
+struct SeverePerInfectedSymptoms_a {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 0.5);
+    }
+    static std::string name()
+    {
+        return "SeverePerInfectedSymptoms_a";
+    }
+};
+
+/**
+ * @brief The percentage of ICU patients per hospitalized patients for disease a for each group.
+ */
+template <typename FP>
+struct CriticalPerSevere_a {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 0.5);
+    }
+    static std::string name()
+    {
+        return "CriticalPerSevere_a";
+    }
+};
+
+/**
+ * @brief The percentage of dead patients per ICU patients for disease a for each group.
+ */
+template <typename FP>
+struct DeathsPerCritical_a {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 0.1);
+    }
+    static std::string name()
+    {
+        return "DeathsPerCritical_a";
+    }
+};
+
+/**
+ * @brief The percentage of asymptomatic cases for disease b for each group.
+ */
+template <typename FP>
+struct RecoveredPerInfectedNoSymptoms_b {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 0.5);
+    }
+    static std::string name()
+    {
+        return "RecoveredPerInfectedNoSymptoms_b";
+    }
+};
+
+/**
+ * @brief The percentage of hospitalized patients per infected patients for disease b for each group.
+ */
+template <typename FP>
+struct SeverePerInfectedSymptoms_b {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 0.5);
+    }
+    static std::string name()
+    {
+        return "SeverePerInfectedSymptoms_b";
+    }
+};
+
+/**
+ * @brief The percentage of ICU patients per hospitalized patients for disease b for each group.
+ */
+template <typename FP>
+struct CriticalPerSevere_b {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 0.5);
+    }
+    static std::string name()
+    {
+        return "CriticalPerSevere_b";
+    }
+};
+
+/**
+ * @brief The percentage of dead patients per ICU patients for disease b for each group.
+ */
+template <typename FP>
+struct DeathsPerCritical_b {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 0.1);
+    }
+    static std::string name()
+    {
+        return "DeathsPerCritical_b";
+    }
+};
+
+/**
+ * @brief The start day in the LCT-SECIR-2-DISEASES model.
+ * The start day defines in which season the simulation is started.
+ * If the start day is 180 and simulation takes place from t0=0 to
+ * tmax=100 the days 180 to 280 of the year are simulated.
+ */
+template <typename FP>
+struct StartDay {
+    using Type = FP;
+    static Type get_default(size_t)
+    {
+        return 0.;
+    }
+    static std::string name()
+    {
+        return "StartDay";
+    }
+};
+
+/**
+ * @brief The seasonality in the LCT-SECIR-2-DISEASES model.
+ * The seasonality is given as (1+k*sin()) where the sine
+ * curve is below one in summer and above one in winter.
+ */
+template <typename FP>
+struct Seasonality {
+    using Type = FP;
+    static Type get_default(size_t)
+    {
+        return 0.;
+    }
+    static std::string name()
+    {
+        return "Seasonality";
+    }
+};
+
+template <typename FP>
+using ParametersBase =
+    ParameterSet<TimeExposed_a<FP>, TimeInfectedNoSymptoms_a<FP>, TimeInfectedSymptoms_a<FP>, TimeInfectedSevere_a<FP>,
+                 TimeInfectedCritical_a<FP>, TimeExposed_b<FP>, TimeInfectedNoSymptoms_b<FP>,
+                 TimeInfectedSymptoms_b<FP>, TimeInfectedSevere_b<FP>, TimeInfectedCritical_b<FP>,
+                 TransmissionProbabilityOnContact_a<FP>, TransmissionProbabilityOnContact_b<FP>, ContactPatterns<FP>,
+                 RelativeTransmissionNoSymptoms_a<FP>, RiskOfInfectionFromSymptomatic_a<FP>,
+                 RecoveredPerInfectedNoSymptoms_a<FP>, SeverePerInfectedSymptoms_a<FP>, CriticalPerSevere_a<FP>,
+                 DeathsPerCritical_a<FP>, RelativeTransmissionNoSymptoms_b<FP>, RiskOfInfectionFromSymptomatic_b<FP>,
+                 RecoveredPerInfectedNoSymptoms_b<FP>, SeverePerInfectedSymptoms_b<FP>, CriticalPerSevere_b<FP>,
+                 DeathsPerCritical_b<FP>, StartDay<FP>, Seasonality<FP>>;
+
+/**
+ * @brief Parameters of an LCT-SECIR-2-DISEASES model.
+ */
+template <typename FP>
+class Parameters : public ParametersBase<FP>
+{
+public:
+    /**
+     * @brief Constructor.
+     * @param num_groups The number of groups considered in the LCT2D model.
+     */
+    Parameters(size_t num_groups)
+        : ParametersBase<FP>(num_groups)
+        , m_num_groups{num_groups}
+    {
+    }
+
+    size_t get_num_groups() const
+    {
+        return m_num_groups;
+    }
+
+    /**
+     * @brief Checks whether all parameters satisfy their corresponding constraints and throws errors, if they do not.
+     * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false. 
+     */
+    bool check_constraints() const
+    {
+        for (size_t i = 0; i < m_num_groups; ++i) {
+            if (this->template get<Seasonality<FP>>() < 0.0 || this->template get<Seasonality<FP>>() > 0.5) {
+                log_warning("Constraint check: Parameter Seasonality should lie between {:0.4f} and {:.4f}", 0.0, 0.5);
+                return true;
+            }
+
+            if (this->template get<TimeExposed_a<FP>>()[i] < 1.0) {
+                log_error("Constraint check: Parameter TimeExposed_a is smaller than {:.4f}", 1.0);
+                return true;
+            }
+
+            if (this->template get<TimeExposed_b<FP>>()[i] < 1.0) {
+                log_error("Constraint check: Parameter TimeExposed_b is smaller than {:.4f}", 1.0);
+                return true;
+            }
+
+            if (this->template get<TimeInfectedNoSymptoms_a<FP>>()[i] < 1.0) {
+                log_error("Constraint check: Parameter TimeInfectedNoSymptoms_a is smaller than {:.4f}", 1.0);
+                return true;
+            }
+
+            if (this->template get<TimeInfectedNoSymptoms_b<FP>>()[i] < 1.0) {
+                log_error("Constraint check: Parameter TimeInfectedNoSymptoms_b is smaller than {:.4f}", 1.0);
+                return true;
+            }
+
+            if (this->template get<TimeInfectedSymptoms_a<FP>>()[i] < 1.0) {
+                log_error("Constraint check: Parameter TimeInfectedSymptoms_a is smaller than {:.4f}", 1.0);
+                return true;
+            }
+
+            if (this->template get<TimeInfectedSymptoms_b<FP>>()[i] < 1.0) {
+                log_error("Constraint check: Parameter TimeInfectedSymptoms_b is smaller than {:.4f}", 1.0);
+                return true;
+            }
+
+            if (this->template get<TimeInfectedSevere_a<FP>>()[i] < 1.0) {
+                log_error("Constraint check: Parameter TimeInfectedSevere_a is smaller than {:.4f}", 1.0);
+                return true;
+            }
+
+            if (this->template get<TimeInfectedSevere_b<FP>>()[i] < 1.0) {
+                log_error("Constraint check: Parameter TimeInfectedSevere_b is smaller than {:.4f}", 1.0);
+                return true;
+            }
+
+            if (this->template get<TimeInfectedCritical_a<FP>>()[i] < 1.0) {
+                log_error("Constraint check: Parameter TimeInfectedCritical_a is smaller than {:.4f}", 1.0);
+                return true;
+            }
+
+            if (this->template get<TimeInfectedCritical_b<FP>>()[i] < 1.0) {
+                log_error("Constraint check: Parameter TimeInfectedCritical_b is smaller than {:.4f}", 1.0);
+                return true;
+            }
+
+            if (this->template get<TransmissionProbabilityOnContact_a<FP>>()[i] < 0.0 ||
+                this->template get<TransmissionProbabilityOnContact_a<FP>>()[i] > 1.0) {
+                log_error("Constraint check: Parameter TransmissionProbabilityOnContact_a smaller {:d} or larger {:d}",
+                          0, 1);
+                return true;
+            }
+
+            if (this->template get<TransmissionProbabilityOnContact_b<FP>>()[i] < 0.0 ||
+                this->template get<TransmissionProbabilityOnContact_b<FP>>()[i] > 1.0) {
+                log_error("Constraint check: Parameter TransmissionProbabilityOnContact_b smaller {:d} or larger {:d}",
+                          0, 1);
+                return true;
+            }
+
+            if (this->template get<RelativeTransmissionNoSymptoms_a<FP>>()[i] < 0.0 ||
+                this->template get<RelativeTransmissionNoSymptoms_a<FP>>()[i] > 1.0) {
+                log_error("Constraint check: Parameter RelativeTransmissionNoSymptoms_a smaller {:d} or larger {:d}", 0,
+                          1);
+                return true;
+            }
+
+            if (this->template get<RelativeTransmissionNoSymptoms_b<FP>>()[i] < 0.0 ||
+                this->template get<RelativeTransmissionNoSymptoms_b<FP>>()[i] > 1.0) {
+                log_error("Constraint check: Parameter RelativeTransmissionNoSymptoms_b smaller {:d} or larger {:d}", 0,
+                          1);
+                return true;
+            }
+
+            if (this->template get<RiskOfInfectionFromSymptomatic_a<FP>>()[i] < 0.0 ||
+                this->template get<RiskOfInfectionFromSymptomatic_a<FP>>()[i] > 1.0) {
+                log_error("Constraint check: Parameter  RiskOfInfectionFromSymptomatic_a smaller {:d} or larger {:d}",
+                          0, 1);
+                return true;
+            }
+
+            if (this->template get<RiskOfInfectionFromSymptomatic_b<FP>>()[i] < 0.0 ||
+                this->template get<RiskOfInfectionFromSymptomatic_b<FP>>()[i] > 1.0) {
+                log_error("Constraint check: Parameter  RiskOfInfectionFromSymptomatic_b smaller {:d} or larger {:d}",
+                          0, 1);
+                return true;
+            }
+
+            if (this->template get<RecoveredPerInfectedNoSymptoms_a<FP>>()[i] < 0.0 ||
+                this->template get<RecoveredPerInfectedNoSymptoms_a<FP>>()[i] > 1.0) {
+                log_error("Constraint check: Parameter RecoveredPerInfectedNoSymptoms_a smaller {:d} or larger {:d}", 0,
+                          1);
+                return true;
+            }
+
+            if (this->template get<RecoveredPerInfectedNoSymptoms_b<FP>>()[i] < 0.0 ||
+                this->template get<RecoveredPerInfectedNoSymptoms_b<FP>>()[i] > 1.0) {
+                log_error("Constraint check: Parameter RecoveredPerInfectedNoSymptoms_b smaller {:d} or larger {:d}", 0,
+                          1);
+                return true;
+            }
+
+            if (this->template get<SeverePerInfectedSymptoms_a<FP>>()[i] < 0.0 ||
+                this->template get<SeverePerInfectedSymptoms_a<FP>>()[i] > 1.0) {
+                log_error("Constraint check: Parameter SeverePerInfectedSymptoms_a smaller {:d} or larger {:d}", 0, 1);
+                return true;
+            }
+
+            if (this->template get<SeverePerInfectedSymptoms_b<FP>>()[i] < 0.0 ||
+                this->template get<SeverePerInfectedSymptoms_b<FP>>()[i] > 1.0) {
+                log_error("Constraint check: Parameter SeverePerInfectedSymptoms_b smaller {:d} or larger {:d}", 0, 1);
+                return true;
+            }
+
+            if (this->template get<CriticalPerSevere_a<FP>>()[i] < 0.0 ||
+                this->template get<CriticalPerSevere_a<FP>>()[i] > 1.0) {
+                log_error("Constraint check: Parameter CriticalPerSevere_a smaller {:d} or larger {:d}", 0, 1);
+                return true;
+            }
+
+            if (this->template get<CriticalPerSevere_b<FP>>()[i] < 0.0 ||
+                this->template get<CriticalPerSevere_b<FP>>()[i] > 1.0) {
+                log_error("Constraint check: Parameter CriticalPerSevere_b smaller {:d} or larger {:d}", 0, 1);
+                return true;
+            }
+
+            if (this->template get<DeathsPerCritical_a<FP>>()[i] < 0.0 ||
+                this->template get<DeathsPerCritical_a<FP>>()[i] > 1.0) {
+                log_error("Constraint check: Parameter DeathsPerCritical_a smaller {:d} or larger {:d}", 0, 1);
+                return true;
+            }
+
+            if (this->template get<DeathsPerCritical_b<FP>>()[i] < 0.0 ||
+                this->template get<DeathsPerCritical_b<FP>>()[i] > 1.0) {
+                log_error("Constraint check: Parameter DeathsPerCritical_b smaller {:d} or larger {:d}", 0, 1);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+private:
+    Parameters(ParametersBase<FP>&& base)
+        : ParametersBase<FP>(std::move(base))
+        , m_num_groups(this->template get<ContactPatterns<FP>>().get_cont_freq_mat().get_num_groups())
+    {
+    }
+
+    size_t m_num_groups;
+
+public:
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<Parameters> deserialize(IOContext& io)
+    {
+        BOOST_OUTCOME_TRY(auto&& base, ParametersBase<FP>::deserialize(io));
+        return success(Parameters(std::move(base)));
+    }
+};
+
+} // namespace lsecir2d
+} // namespace mio
+
+#endif // LCT_SECIR_2_DISEASES_PARAMS_H

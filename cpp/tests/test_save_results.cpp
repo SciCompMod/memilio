@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Wadim Koslow, Henrik Zunker
 *
@@ -225,6 +225,44 @@ TEST(TestSaveResult, save_result_with_params)
                   .nodes()[0]
                   .property.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[mio::Index<mio::AgeGroup>(1)],
               params.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[mio::Index<mio::AgeGroup>(1)]);
+}
+
+TEST(TestSaveResult, save_result_order)
+{
+    std::vector<mio::TimeSeries<double>> results{mio::TimeSeries<double>(0, Eigen::VectorX<double>::Constant(1, 0)),
+                                                 mio::TimeSeries<double>(0, Eigen::VectorX<double>::Constant(1, 1)),
+                                                 mio::TimeSeries<double>(0, Eigen::VectorX<double>::Constant(1, 2))};
+
+    // case: check order of results, where lexical ordering would rearrange the results;
+    // expect: order follows the ids
+    std::vector<int> ids = {1, 2, 10};
+
+    TempFileRegister file_register;
+    auto results_file_path  = file_register.get_unique_path("test_result-%%%%-%%%%.h5");
+    auto save_result_status = mio::save_result(results, ids, 1, results_file_path);
+    ASSERT_TRUE(save_result_status);
+
+    auto results_from_file = mio::read_result(results_file_path);
+    ASSERT_TRUE(results_from_file);
+
+    ASSERT_DOUBLE_EQ(results_from_file.value()[0].get_groups()[Eigen::Index(0)][Eigen::Index(0)], 0);
+    ASSERT_DOUBLE_EQ(results_from_file.value()[1].get_groups()[Eigen::Index(0)][Eigen::Index(0)], 1);
+    ASSERT_DOUBLE_EQ(results_from_file.value()[2].get_groups()[Eigen::Index(0)][Eigen::Index(0)], 2);
+
+    // case: check order of results;
+    // expect: order is changed due to ids not increasing
+    ids = {1, 10, 2};
+
+    results_file_path  = file_register.get_unique_path("test_result-%%%%-%%%%.h5");
+    save_result_status = mio::save_result(results, ids, 1, results_file_path);
+    ASSERT_TRUE(save_result_status);
+
+    results_from_file = mio::read_result(results_file_path);
+    ASSERT_TRUE(results_from_file);
+
+    ASSERT_DOUBLE_EQ(results_from_file.value()[0].get_groups()[Eigen::Index(0)][Eigen::Index(0)], 0);
+    ASSERT_DOUBLE_EQ(results_from_file.value()[1].get_groups()[Eigen::Index(0)][Eigen::Index(0)], 2);
+    ASSERT_DOUBLE_EQ(results_from_file.value()[2].get_groups()[Eigen::Index(0)][Eigen::Index(0)], 1);
 }
 
 TEST(TestSaveResult, save_percentiles_and_sums)

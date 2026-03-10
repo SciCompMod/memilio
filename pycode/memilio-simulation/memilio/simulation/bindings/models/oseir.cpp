@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert
 *
@@ -28,6 +28,7 @@
 #include "compartments/compartmental_model.h"
 #include "epidemiology/age_group.h"
 #include "epidemiology/populations.h"
+#include "data/analyze_result.h"
 
 //Includes from MEmilio
 #include "ode_seir/model.h"
@@ -51,17 +52,7 @@ inline std::string pretty_name<mio::oseir::InfectionState>()
 
 PYBIND11_MODULE(_simulation_oseir, m)
 {
-    m.def("interpolate_simulation_result",
-          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
-              &mio::interpolate_simulation_result),
-          py::arg("ts"), py::arg("abs_tol") = 1e-14);
-
-    m.def("interpolate_simulation_result",
-          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const std::vector<double>&)>(
-              &mio::interpolate_simulation_result),
-          py::arg("ts"), py::arg("interpolation_times"));
-
-    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<double>>);
+    pymio::bind_interpolate_result_methods(m);
 
     pymio::iterable_enum<mio::oseir::InfectionState>(m, "InfectionState")
         .value("Susceptible", mio::oseir::InfectionState::Susceptible)
@@ -90,13 +81,12 @@ PYBIND11_MODULE(_simulation_oseir, m)
     pymio::bind_Simulation<mio::Simulation<double, mio::oseir::Model<double>>>(m, "Simulation");
     pymio::bind_Flow_Simulation<mio::FlowSimulation<double, mio::oseir::Model<double>>>(m, "FlowSimulation");
 
-    m.def(
-        "simulate", &mio::simulate<double, mio::oseir::Model<double>>, "Simulates an ODE SEIR from t0 to tmax.", 
-        py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());
+    m.def("simulate", &mio::simulate<double, mio::oseir::Model<double>>, "Simulates an ODE SEIR from t0 to tmax.",
+          py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());
 
-    m.def(
-        "simulate_flows", &mio::simulate_flows<double, mio::oseir::Model<double>>, "Simulates an ODE SEIR with flows from t0 to tmax.", 
-        py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());
+    m.def("simulate_flows", &mio::simulate_flows<double, mio::oseir::Model<double>>,
+          "Simulates an ODE SEIR with flows from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
+          py::arg("model"), py::arg("integrator") = py::none());
 
     m.attr("__version__") = "dev";
 }

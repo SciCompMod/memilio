@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Sascha Korf, Rene Schmieding
 *
@@ -23,7 +23,6 @@
 #include "memilio/utils/metaprogramming.h"
 #include <vector>
 #include <tuple>
-#include <iostream>
 
 namespace mio
 {
