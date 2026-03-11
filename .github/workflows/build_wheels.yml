@@ -50,9 +50,9 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - uses: pypa/gh-action-pypi-publish@release/v1
-        # To test uploads to TestPyPI, uncomment the following:
-        with:
-          skip-existing: true
-          # password: ${{ secrets.PYPI_TEST_TOKEN }}
-          repository-url: https://test.pypi.org/legacy/
+      # - uses: pypa/gh-action-pypi-publish@release/v1
+      #   # To test uploads to TestPyPI, uncomment the following:
+      #   with:
+      #     skip-existing: true
+      #     # password: ${{ secrets.PYPI_TEST_TOKEN }}
+      #     repository-url: https://test.pypi.org/legacy/
