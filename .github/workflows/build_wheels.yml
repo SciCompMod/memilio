@@ -17,7 +17,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ matrix.os }}
+          name: cibw-wheels-${{ matrix.os }}
           path: ./wheelhouse/*.whl
 
   build_sdist: 
@@ -30,7 +30,7 @@ jobs:
 
     - uses: actions/upload-artifact@v4
       with:
-        name: sdist
+        name: cibw-sdist
         path: dist/*.tar.gz
 
   upload_pypi:
@@ -54,5 +54,5 @@ jobs:
         # To test uploads to TestPyPI, uncomment the following:
         with:
           skip-existing: true
-          password: ${{ secrets.PYPI_TEST_TOKEN }}
+          # password: ${{ secrets.PYPI_TEST_TOKEN }}
           repository-url: https://test.pypi.org/legacy/
