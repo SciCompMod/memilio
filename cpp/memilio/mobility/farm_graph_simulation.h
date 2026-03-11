@@ -190,6 +190,7 @@ private:
             if (node.property.get_in_hrz() && node.property.get_type() % 4 == 0) {
                 infection_pressure += baseline;
             }
+            infection_pressure *= node.property.get_capacity();
             node.property.get_simulation().get_model().parameters.template get<AdoptionRate>()[3].factor =
                 infection_pressure;
         }
