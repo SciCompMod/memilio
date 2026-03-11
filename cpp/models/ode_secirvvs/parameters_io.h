@@ -21,6 +21,8 @@
 #define MIO_ODE_SECIRVVS_PARAMETERS_IO_H
 
 #include "memilio/config.h"
+#include <cstddef>
+#include <string>
 
 #ifdef MEMILIO_HAS_JSONCPP
 
@@ -881,6 +883,8 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::st
  */
 void split_line(std::string string, std::vector<std::string>* row);
 
+void split_line_comma(std::string string, std::vector<std::string>* row);
+
 /**
  * @brief Gets the index of the corresponding age group for a given age. 
  * 
@@ -898,12 +902,18 @@ size_t get_index_of_age_group(int age);
  * @param[in] lha_id ID of considered LHA.
  */
 template <typename FP>
-IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Model<FP>& model, int lha_id)
+IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Model<FP>& model, int lha_id,
+                             bool only_one_node, std::string lha_data_filename = "")
 {
     // Open file.
-    std::string filename =
-        fmt::format("lha_observations_{}-{}-{}.csv", std::to_string(current_date.year),
-                    fmt::format("{:02}", current_date.month), fmt::format("{:02}", current_date.day));
+    std::string filename;
+    if (lha_data_filename != "") {
+        filename = lha_data_filename;
+    }
+    else {
+        filename = fmt::format("lha_observations_{}-{}-{}.csv", std::to_string(current_date.year),
+                               fmt::format("{:02}", current_date.month), fmt::format("{:02}", current_date.day));
+    }
     const fs::path lha_data_path = path_join(data_dir, fmt::format("Germany/pydata/{}", lha_id), filename);
     std::cout << "LHA data path: " << lha_data_path << std::endl;
 
@@ -955,14 +965,33 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
     std::vector<double> counter_partial_immunity = std::vector<double>(num_age_groups, 0.);
     std::vector<double> counter_full_immunity    = std::vector<double>(num_age_groups, 0.);
 
+    // The same ID can occur multiple times within the same dataset. We only want to use the last entry per ID.
+    // For this, we reverse the dataset and store it in the vector lines_in_reverse and then use he first occurence
+    // of each ID in the reverted data set.
+    std::vector<std::string> lines_in_reverse;
     while (std::getline(fin, line)) {
+        // Store the lines in reverse order.
+        lines_in_reverse.insert(lines_in_reverse.begin(), line);
+    }
+
+    auto days_until_effective_partial_immunity = static_cast<size_t>(
+        static_cast<FP>(model.parameters.template get<DaysUntilEffectivePartialImmunity<FP>>()[AgeGroup(0)]));
+    auto days_until_effective_improved_immunity = static_cast<size_t>(
+        static_cast<FP>(model.parameters.template get<DaysUntilEffectiveImprovedImmunity<FP>>()[AgeGroup(0)]));
+
+    size_t line_idx = 0;
+    while (line_idx < lines_in_reverse.size()) {
+        line = lines_in_reverse[line_idx];
+        line_idx++;
+
         row.clear();
 
         // Read columns in this row.
         split_line(line, &row);
         line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 
-        // Only consider first row of for each id and ignore the remaining rows with same id.
+        // Only consider first row of reversed dataset for each id, i.e. we are using the last row of original data set
+        // for each id and ignore the remaining rows with same id.
         std::string person_id = row[index["0"]];
 
         // Check if id has already been used in some row before.
@@ -1018,11 +1047,6 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
         if (row[index["44"]] != "NULL") {
 
             size_t time_since_last_vaccination = get_offset_in_days(current_date, parse_date(row[index["44"]]).value());
-
-            auto days_until_effective_partial_immunity = static_cast<size_t>(
-                static_cast<FP>(model.parameters.template get<DaysUntilEffectivePartialImmunity<FP>>()[AgeGroup(0)]));
-            auto days_until_effective_improved_immunity = static_cast<size_t>(
-                static_cast<FP>(model.parameters.template get<DaysUntilEffectiveImprovedImmunity<FP>>()[AgeGroup(0)]));
 
             // Assume that VaccinationDate gives us the date of the last vaccination and that we don't know if it was
             // the first, second or ... vaccination.
@@ -1159,44 +1183,8 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
                       read_population_data(path_join(data_dir, "Germany/pydata", "county_current_population.json"),
                                            std::vector<int>(1, lha_id)));
 
-    // Use RKI case data to set Recovered to intialize S.
-    std::vector<std::vector<double>> vnum_rec(1, std::vector<double>(num_age_groups, 0.0));
-    BOOST_OUTCOME_TRY(auto&& case_data, mio::read_confirmed_cases_data(
-                                            path_join(data_dir, "Germany/pydata", "cases_all_county_age_ma7.json")));
-    BOOST_OUTCOME_TRY(
-        read_confirmed_cases_data_fix_recovered(case_data, std::vector<int>(1, lha_id), current_date, vnum_rec, 14.));
-
-    // Set populations per age group.
+    // Set populations of infected compartments per age group according to LHA data.
     for (auto i = AgeGroup(0); i < (AgeGroup)num_age_groups; i++) {
-
-        double S_v = std::min(counter_full_immunity[(size_t)i] + vnum_rec[0][size_t(i)], num_population[0][size_t(i)]);
-
-        double S_pv = std::max(counter_partial_immunity[(size_t)i] - counter_full_immunity[(size_t)i],
-                               0.0); // use std::max with 0
-
-        // Exposed
-        // double S;
-        // if (num_population[0][size_t(i)] - S_pv - S_v < 0.0) {
-        //     log_warning("Number of vaccinated persons greater than population in county {}, age group {}.", lha_id,
-        //                 size_t(i));
-        //     S   = 0.0;
-        //     S_v = num_population[0][size_t(i)] - S_pv;
-        // }
-        // else {
-        //     S = num_population[0][size_t(i)] - S_pv - S_v;
-        // }
-        // // Initialize Exposed as in other initialization for SECIRVVS model based on RKI data.
-        // double denom_E = 1 / (S + S_pv * model.parameters.template get<ReducExposedPartialImmunity<double>>()[i] +
-        //                       S_v * model.parameters.template get<ReducExposedImprovedImmunity<double>>()[i]);
-        // model.populations[{i, InfectionState::ExposedNaive}] =
-        //     S * model.populations[{i, InfectionState::ExposedNaive}] * denom_E;
-        // model.populations[{i, InfectionState::ExposedPartialImmunity}] =
-        //     S_pv * model.parameters.template get<ReducExposedPartialImmunity<double>>()[i] *
-        //     model.populations[{i, InfectionState::ExposedPartialImmunity}] * denom_E;
-        // model.populations[{i, InfectionState::ExposedImprovedImmunity}] =
-        //     S_v * model.parameters.template get<ReducExposedImprovedImmunity<double>>()[i] *
-        //     model.populations[{i, InfectionState::ExposedImprovedImmunity}] * denom_E;
-
         // InfectedNoSymptoms
         model.populations[{i, InfectionState::InfectedNoSymptomsNaive}] = num_InfectedNoSymptoms[(size_t)i][0];
         model.populations[{i, InfectionState::InfectedNoSymptomsPartialImmunity}] =
@@ -1223,57 +1211,226 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
         model.populations[{i, InfectionState::DeadNaive}]            = num_Deaths[(size_t)i][0];
         model.populations[{i, InfectionState::DeadPartialImmunity}]  = num_Deaths[(size_t)i][1];
         model.populations[{i, InfectionState::DeadImprovedImmunity}] = num_Deaths[(size_t)i][2];
-
-        // Recovered are written into Susceptible ImprovedImmunity
-        model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] += num_Recovered[(size_t)i][0];
-        model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] += num_Recovered[(size_t)i][1];
-        model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] += num_Recovered[(size_t)i][2];
-
-        // Susceptibles
-        model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] =
-            counter_full_immunity[(size_t)i] + model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] -
-            (model.populations[{i, InfectionState::InfectedSymptomsNaive}] +
-             model.populations[{i, InfectionState::InfectedSymptomsPartialImmunity}] +
-             model.populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] +
-             model.populations[{i, InfectionState::InfectedSymptomsNaiveConfirmed}] +
-             model.populations[{i, InfectionState::InfectedSymptomsPartialImmunityConfirmed}] +
-             model.populations[{i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] +
-             model.populations[{i, InfectionState::InfectedSevereNaive}] +
-             model.populations[{i, InfectionState::InfectedSeverePartialImmunity}] +
-             model.populations[{i, InfectionState::InfectedSevereImprovedImmunity}] +
-             model.populations[{i, InfectionState::InfectedCriticalNaive}] +
-             model.populations[{i, InfectionState::InfectedCriticalPartialImmunity}] +
-             model.populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] +
-             model.populations[{i, InfectionState::DeadNaive}] +
-             model.populations[{i, InfectionState::DeadPartialImmunity}] +
-             model.populations[{i, InfectionState::DeadImprovedImmunity}]);
-
-        model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] =
-            std::min(S_v - model.populations[{i, InfectionState::ExposedImprovedImmunity}] -
-                         model.populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunity}] -
-                         model.populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}] -
-                         model.populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] -
-                         model.populations[{i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] -
-                         model.populations[{i, InfectionState::InfectedSevereImprovedImmunity}] -
-                         model.populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] -
-                         model.populations[{i, InfectionState::DeadImprovedImmunity}],
-                     std::max(0.0, double(model.populations[{i, InfectionState::SusceptibleImprovedImmunity}])));
-
-        model.populations[{i, InfectionState::SusceptiblePartialImmunity}] =
-            std::max(0.0, S_pv - model.populations[{i, InfectionState::ExposedPartialImmunity}] -
-                              model.populations[{i, InfectionState::InfectedNoSymptomsPartialImmunity}] -
-                              model.populations[{i, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}] -
-                              model.populations[{i, InfectionState::InfectedSymptomsPartialImmunity}] -
-                              model.populations[{i, InfectionState::InfectedSymptomsPartialImmunityConfirmed}] -
-                              model.populations[{i, InfectionState::InfectedSeverePartialImmunity}] -
-                              model.populations[{i, InfectionState::InfectedCriticalPartialImmunity}] -
-                              model.populations[{i, InfectionState::DeadPartialImmunity}]);
-
-        // Evaluate num_population at index 0 because we only get population data for one county in this function.
-        model.populations.template set_difference_from_group_total<AgeGroup>({i, InfectionState::SusceptibleNaive},
-                                                                             num_population[0][size_t(i)]);
     }
 
+    // If we only have a model with one node for which LHA data is available as well as data on detected recovered and
+    // vaccinations, we use this data to initialize Susceptible compartments.
+    if (only_one_node) {
+        const fs::path vaccinations_path =
+            path_join(data_dir, fmt::format("Germany/pydata/{}", lha_id), "vaccinations.txt");
+        const fs::path recovered_detected_path =
+            path_join(data_dir, fmt::format("Germany/pydata/{}", lha_id), "recovered_detected.txt");
+
+        if (!fs::exists(vaccinations_path) || !fs::exists(recovered_detected_path)) {
+            mio::log_error("Cannot read in data. File does not exist.");
+        }
+        // File pointer.
+        std::fstream fin_vacc;
+        std::fstream fin_rec;
+
+        // Open an existing file.
+        fin_vacc.open(vaccinations_path, std::ios::in);
+        // Vector that will contain date and number of vaccinated per age group per immunity level.
+        std::vector<std::string> num_vaccinated;
+        std::string line_vacc;
+        mio::Date date_vacc;
+
+        std::getline(fin_vacc, line_vacc);
+        while (std::getline(fin_vacc, line_vacc)) {
+            num_vaccinated.clear();
+            std::getline(fin_vacc, line_vacc);
+            split_line_comma(line_vacc, &num_vaccinated);
+            // Check that row_vacc is split into 19 parts.
+            assert(num_vaccinated.size() == 19);
+            // Extract date that is equal to current date.
+            std::string date_rec_str = num_vaccinated[0].substr(0, 10);
+            date_vacc                = parse_date(date_rec_str).value();
+            // Check for correct date given by current_date minus days_until_effective_improved_immunity.
+            if (date_vacc == offset_date_by_days(current_date, -days_until_effective_improved_immunity)) {
+                break;
+            }
+        }
+
+        fin_rec.open(recovered_detected_path, std::ios::in);
+        std::string line_rec;
+        // Vector that will contain date and number of recovered per age group.
+        std::vector<std::string> num_recovered;
+        mio::Date date_rec;
+
+        std::getline(fin_rec, line_rec);
+        while (std::getline(fin_rec, line_rec)) {
+            num_recovered.clear();
+            std::getline(fin_rec, line_rec);
+            split_line_comma(line_rec, &num_recovered);
+            // Check that row_rec is split into 7 parts
+            assert(num_recovered.size() == 7);
+            // Extract date that is equal to current date.
+            std::string date_rec_str = num_recovered[0].substr(0, 10);
+            date_rec                 = parse_date(date_rec_str).value();
+            // Check for correct date.
+            if (date_rec == current_date) {
+                break;
+            }
+        }
+        std::cout << date_rec.year << date_rec.month << date_rec.day << std::endl;
+
+        for (auto i = AgeGroup(0); i < (AgeGroup)num_age_groups; i++) {
+
+            size_t current_immunity_level = 2;
+            double S_v = std::min(std::stod(num_vaccinated[1 + num_age_groups * current_immunity_level + (size_t)i]) +
+                                      std::stod(num_recovered[1 + size_t(i)]),
+                                  num_population[0][size_t(i)]);
+
+            current_immunity_level = 0;
+            double S_pv = std::max(std::stod(num_vaccinated[1 + num_age_groups * current_immunity_level + (size_t)i]) +
+                                       std::stod(num_recovered[1 + size_t(i)]),
+                                   0.0); // use std::max with 0
+            double S;
+            unused(S);
+            if (num_population[0][size_t(i)] - S_pv - S_v < 0.0) {
+                log_warning("Number of vaccinated persons greater than population in age group {}.", size_t(i));
+                S   = 0.0;
+                S_v = num_population[0][size_t(i)] - S_pv;
+            }
+            else {
+                S = num_population[0][size_t(i)] - S_pv - S_v;
+            }
+
+            model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] =
+                model.parameters.template get<DailyFullVaccinations<double>>()[{i, SimulationDay(0)}] +
+                model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] -
+                (model.populations[{i, InfectionState::InfectedSymptomsNaive}] +
+                 model.populations[{i, InfectionState::InfectedSymptomsPartialImmunity}] +
+                 model.populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] +
+                 model.populations[{i, InfectionState::InfectedSymptomsNaiveConfirmed}] +
+                 model.populations[{i, InfectionState::InfectedSymptomsPartialImmunityConfirmed}] +
+                 model.populations[{i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] +
+                 model.populations[{i, InfectionState::InfectedSevereNaive}] +
+                 model.populations[{i, InfectionState::InfectedSeverePartialImmunity}] +
+                 model.populations[{i, InfectionState::InfectedSevereImprovedImmunity}] +
+                 model.populations[{i, InfectionState::InfectedCriticalNaive}] +
+                 model.populations[{i, InfectionState::InfectedCriticalPartialImmunity}] +
+                 model.populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] +
+                 model.populations[{i, InfectionState::DeadNaive}] +
+                 model.populations[{i, InfectionState::DeadPartialImmunity}] +
+                 model.populations[{i, InfectionState::DeadImprovedImmunity}]);
+
+            model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] =
+                std::min(S_v - model.populations[{i, InfectionState::ExposedImprovedImmunity}] -
+                             model.populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunity}] -
+                             model.populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}] -
+                             model.populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] -
+                             model.populations[{i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] -
+                             model.populations[{i, InfectionState::InfectedSevereImprovedImmunity}] -
+                             model.populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] -
+                             model.populations[{i, InfectionState::DeadImprovedImmunity}],
+                         std::max(0.0, double(model.populations[{i, InfectionState::SusceptibleImprovedImmunity}])));
+
+            model.populations[{i, InfectionState::SusceptiblePartialImmunity}] =
+                std::max(0.0, S_pv - model.populations[{i, InfectionState::ExposedPartialImmunity}] -
+                                  model.populations[{i, InfectionState::InfectedNoSymptomsPartialImmunity}] -
+                                  model.populations[{i, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}] -
+                                  model.populations[{i, InfectionState::InfectedSymptomsPartialImmunity}] -
+                                  model.populations[{i, InfectionState::InfectedSymptomsPartialImmunityConfirmed}] -
+                                  model.populations[{i, InfectionState::InfectedSeverePartialImmunity}] -
+                                  model.populations[{i, InfectionState::InfectedCriticalPartialImmunity}] -
+                                  model.populations[{i, InfectionState::DeadPartialImmunity}]);
+
+            model.populations.template set_difference_from_group_total<AgeGroup>({i, InfectionState::SusceptibleNaive},
+                                                                                 num_population[0][size_t(i)]);
+        }
+    }
+
+    // Else we use RKI data to initialize the Susceptible compartments.
+    else {
+        std::vector<std::vector<double>> vnum_rec(1, std::vector<double>(num_age_groups, 0.0));
+        BOOST_OUTCOME_TRY(auto&& case_data, mio::read_confirmed_cases_data(path_join(data_dir, "Germany/pydata",
+                                                                                     "cases_all_county_age_ma7.json")));
+        BOOST_OUTCOME_TRY(read_confirmed_cases_data_fix_recovered(case_data, std::vector<int>(1, lha_id), current_date,
+                                                                  vnum_rec, 14.));
+        //T TODO: Use reported vaccination data to set counter_full_immunity and counter_partial_immunity.
+        // Set populations per age group.
+        for (auto i = AgeGroup(0); i < (AgeGroup)num_age_groups; i++) {
+
+            double S_v =
+                std::min(counter_full_immunity[(size_t)i] + vnum_rec[0][size_t(i)], num_population[0][size_t(i)]);
+
+            double S_pv = std::max(counter_partial_immunity[(size_t)i] - counter_full_immunity[(size_t)i],
+                                   0.0); // use std::max with 0
+
+            // Exposed
+            // double S;
+            // if (num_population[0][size_t(i)] - S_pv - S_v < 0.0) {
+            //     log_warning("Number of vaccinated persons greater than population in county {}, age group {}.", lha_id,
+            //                 size_t(i));
+            //     S   = 0.0;
+            //     S_v = num_population[0][size_t(i)] - S_pv;
+            // }
+            // else {
+            //     S = num_population[0][size_t(i)] - S_pv - S_v;
+            // }
+            // // Initialize Exposed as in other initialization for SECIRVVS model based on RKI data.
+            // double denom_E = 1 / (S + S_pv * model.parameters.template get<ReducExposedPartialImmunity<double>>()[i] +
+            //                       S_v * model.parameters.template get<ReducExposedImprovedImmunity<double>>()[i]);
+            // model.populations[{i, InfectionState::ExposedNaive}] =
+            //     S * model.populations[{i, InfectionState::ExposedNaive}] * denom_E;
+            // model.populations[{i, InfectionState::ExposedPartialImmunity}] =
+            //     S_pv * model.parameters.template get<ReducExposedPartialImmunity<double>>()[i] *
+            //     model.populations[{i, InfectionState::ExposedPartialImmunity}] * denom_E;
+            // model.populations[{i, InfectionState::ExposedImprovedImmunity}] =
+            //     S_v * model.parameters.template get<ReducExposedImprovedImmunity<double>>()[i] *
+            //     model.populations[{i, InfectionState::ExposedImprovedImmunity}] * denom_E;
+
+            // Recovered are written into Susceptible ImprovedImmunity
+            model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] += num_Recovered[(size_t)i][0];
+            model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] += num_Recovered[(size_t)i][1];
+            model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] += num_Recovered[(size_t)i][2];
+
+            // Susceptibles
+            model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] =
+                counter_full_immunity[(size_t)i] + model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] -
+                (model.populations[{i, InfectionState::InfectedSymptomsNaive}] +
+                 model.populations[{i, InfectionState::InfectedSymptomsPartialImmunity}] +
+                 model.populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] +
+                 model.populations[{i, InfectionState::InfectedSymptomsNaiveConfirmed}] +
+                 model.populations[{i, InfectionState::InfectedSymptomsPartialImmunityConfirmed}] +
+                 model.populations[{i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] +
+                 model.populations[{i, InfectionState::InfectedSevereNaive}] +
+                 model.populations[{i, InfectionState::InfectedSeverePartialImmunity}] +
+                 model.populations[{i, InfectionState::InfectedSevereImprovedImmunity}] +
+                 model.populations[{i, InfectionState::InfectedCriticalNaive}] +
+                 model.populations[{i, InfectionState::InfectedCriticalPartialImmunity}] +
+                 model.populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] +
+                 model.populations[{i, InfectionState::DeadNaive}] +
+                 model.populations[{i, InfectionState::DeadPartialImmunity}] +
+                 model.populations[{i, InfectionState::DeadImprovedImmunity}]);
+
+            model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] =
+                std::min(S_v - model.populations[{i, InfectionState::ExposedImprovedImmunity}] -
+                             model.populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunity}] -
+                             model.populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}] -
+                             model.populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] -
+                             model.populations[{i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] -
+                             model.populations[{i, InfectionState::InfectedSevereImprovedImmunity}] -
+                             model.populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] -
+                             model.populations[{i, InfectionState::DeadImprovedImmunity}],
+                         std::max(0.0, double(model.populations[{i, InfectionState::SusceptibleImprovedImmunity}])));
+
+            model.populations[{i, InfectionState::SusceptiblePartialImmunity}] =
+                std::max(0.0, S_pv - model.populations[{i, InfectionState::ExposedPartialImmunity}] -
+                                  model.populations[{i, InfectionState::InfectedNoSymptomsPartialImmunity}] -
+                                  model.populations[{i, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}] -
+                                  model.populations[{i, InfectionState::InfectedSymptomsPartialImmunity}] -
+                                  model.populations[{i, InfectionState::InfectedSymptomsPartialImmunityConfirmed}] -
+                                  model.populations[{i, InfectionState::InfectedSeverePartialImmunity}] -
+                                  model.populations[{i, InfectionState::InfectedCriticalPartialImmunity}] -
+                                  model.populations[{i, InfectionState::DeadPartialImmunity}]);
+
+            // Evaluate num_population at index 0 because we only get population data for one county in this function.
+            model.populations.template set_difference_from_group_total<AgeGroup>({i, InfectionState::SusceptibleNaive},
+                                                                                 num_population[0][size_t(i)]);
+        }
+    }
     return mio::success();
 }
 
@@ -1675,7 +1832,8 @@ IOResult<void> convert_model_data_type(mio::VectorRange<Node<Model<ScalarType>>>
  */
 template <typename FP>
 IOResult<void> set_lha_data(const Parameters<FP>& params, mio::Graph<Model<FP>, MobilityParameters<FP>>& graph_model,
-                            const std::string data_dir, const Date current_date, std::vector<int> lha_ids)
+                            const std::string data_dir, const Date current_date, std::vector<int> lha_ids,
+                            bool only_one_node = false, std::string lha_data_filename = "")
 {
     std::cout << "Setting LHA data  \n";
     using Model       = Model<FP>;
@@ -1685,7 +1843,15 @@ IOResult<void> set_lha_data(const Parameters<FP>& params, mio::Graph<Model<FP>, 
     const fs::path path(data_dir);
     std::string population_data_path =
         mio::path_join((path / "Germany" / "pydata").string(), "county_current_population.json");
-    BOOST_OUTCOME_TRY(std::vector<int> && node_ids, get_node_ids(population_data_path, true));
+
+    std::vector<int> node_ids{};
+    if (only_one_node && lha_ids.size() == 1) {
+        std::cout << "Getting one node \n";
+        node_ids.push_back(lha_ids[0]);
+    }
+    else {
+        BOOST_OUTCOME_TRY(node_ids, get_node_ids(population_data_path, true));
+    }
 
     std::vector<Model> nodes(node_ids.size(), Model(int(size_t(params.get_num_groups()))));
 
@@ -1711,7 +1877,8 @@ IOResult<void> set_lha_data(const Parameters<FP>& params, mio::Graph<Model<FP>, 
             size_t lha_idx = std::distance(node_ids.begin(), it);
 
             // Set populations based on LHA data for corrsponding node.
-            auto lha_result = details::read_lha_data<FP>(data_dir, current_date, nodes[lha_idx], lha_ids[lha_counter]);
+            auto lha_result = details::read_lha_data<FP>(data_dir, current_date, nodes[lha_idx], lha_ids[lha_counter],
+                                                         only_one_node, lha_data_filename);
 
             // Add node corresponding to considered LHA to graph_model.
             graph_model.add_node(node_ids[lha_idx], nodes[lha_idx]);
@@ -1728,20 +1895,21 @@ IOResult<void> set_lha_data(const Parameters<FP>& params, mio::Graph<Model<FP>, 
     }
 
     // Set populations based on RKI data for remaining counties/nodes.
+    if (nodes.size() > 0) {
+        // Set scaling_factor_inf and scaling_factor_icu to 1 here (for all age groups).
+        const std::vector<double>& scaling_factor_inf = std::vector(6, 1.);
+        double scaling_factor_icu                     = 1.;
+        int num_days                                  = 0;
 
-    // Set scaling_factor_inf and scaling_factor_icu to 1 here (for all age groups).
-    const std::vector<double>& scaling_factor_inf = std::vector(6, 1.);
-    double scaling_factor_icu                     = 1.;
-    int num_days                                  = 0;
+        std::string pydata_dir = mio::path_join((path / "Germany" / "pydata").string());
 
-    std::string pydata_dir = mio::path_join((path / "Germany" / "pydata").string());
+        auto result = read_input_data_county<Model>(nodes, current_date, node_ids, scaling_factor_inf,
+                                                    scaling_factor_icu, pydata_dir, num_days, false);
 
-    auto result = read_input_data_county<Model>(nodes, current_date, node_ids, scaling_factor_inf, scaling_factor_icu,
-                                                pydata_dir, num_days, false);
-
-    // Add nodes to graph_model.
-    for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
-        graph_model.add_node(node_ids[node_idx], nodes[node_idx]);
+        // Add nodes to graph_model.
+        for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
+            graph_model.add_node(node_ids[node_idx], nodes[node_idx]);
+        }
     }
 
     // std::cout << "Test other county: "

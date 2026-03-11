@@ -10,12 +10,13 @@ import concurrent.futures
 
 
 class LHASimulation:
-    def __init__(self, data_dir, results_dir, build_dir, run_data_url, headers):
+    def __init__(self, data_dir, results_dir, build_dir, run_data_url, headers, run_locally):
         self.data_dir = data_dir
         self.results_dir = results_dir
         self.build_dir = build_dir
         self.run_data_url = run_data_url
         self.headers = headers
+        self.run_locally = run_locally
         if not os.path.exists(self.results_dir):
             os.makedirs(self.results_dir)
 
@@ -39,7 +40,14 @@ class LHASimulation:
                     else:
                         raise
 
-            temp_dir = tempfile.TemporaryDirectory()
+            if self.run_locally:
+                temp_dir = "./temp_dir"
+                if not os.path.isdir(temp_dir):
+                    os.makedirs(temp_dir)
+                temp_dir_name = temp_dir
+            else:
+                temp_dir = tempfile.TemporaryDirectory()
+                temp_dir_name = temp_dir.name
 
             scenario_id = scenario["id"]
 
@@ -48,13 +56,13 @@ class LHASimulation:
             # Then we get the scenario data and save it as json.
             response_scenario = requests.get(
                 self.run_data_url + f"scenarios/{scenario_id}/", headers=self.headers)
-            with open(os.path.join(temp_dir.name, "scenario_data_run_lha.json"), 'w') as f:
+            with open(os.path.join(temp_dir_name, "scenario_data_run_lha.json"), 'w') as f:
                 json.dump(response_scenario.json(), f, ensure_ascii=False)
 
             # Get the parameter list. This is the same for all scenarios.
             response_params = requests.get(
                 self.run_data_url + f"parameterdefinitions/", headers=self.headers)
-            with open(os.path.join(temp_dir.name, "parameter_list_lha.json"), 'w') as f:
+            with open(os.path.join(temp_dir_name, "parameter_list_lha.json"), 'w') as f:
                 json.dump(response_params.json(), f, ensure_ascii=False)
 
             # Get start_date of scenario
@@ -86,9 +94,21 @@ class LHASimulation:
                 month = start_date.month
                 day = start_date.day
 
+                # run = subprocess.run(
+                #     [
+                #         f"{self.build_dir}/bin/simulate_lha_scenario {self.data_dir} {result_dir_lha} {temp_dir.name} {str(lha_id)} {str(year)} {str(month)} {str(day)} {str(num_days_sim)} {str(num_runs)}"
+                #     ],
+                #     shell=True,
+                #     check=True,
+                #     capture_output=True,
+                #     text=True,
+                # )
+
+                print(f"{self.build_dir}/bin/simulate_lha_scenario {self.data_dir} {result_dir_lha} {temp_dir_name} {str(lha_id)} {str(year)} {str(month)} {str(day)} {str(num_days_sim)} {str(num_runs)}")
+
                 run = subprocess.run(
                     [
-                        f"{self.build_dir}/bin/simulate_lha_scenario {self.data_dir} {result_dir_lha} {temp_dir.name} {str(lha_id)} {str(year)} {str(month)} {str(day)} {str(num_days_sim)} {str(num_runs)}"
+                        f"{self.build_dir}/bin/simulate_lha_scenario {self.data_dir} {result_dir_lha} {temp_dir_name} {str(lha_id)} {str(year)} {str(month)} {str(day)} {str(num_days_sim)} {str(num_runs)}"
                     ],
                     shell=True,
                     check=True,
@@ -106,7 +126,8 @@ class LHASimulation:
                 with open(out_path, "w", encoding="utf-8") as f:
                     f.write(run.stdout)
 
-                temp_dir.cleanup()
+                if not self.run_locally:
+                    temp_dir.cleanup()
 
         except Exception as e:
             print(
@@ -164,8 +185,10 @@ def main():
     # Set up headers with token.
     headers = {'Authorization': f'Bearer {token}', 'X-Realm': service_realm}
 
+    run_locally = True
+
     sim = LHASimulation(data_dir=os.path.join(cwd, "data"), results_dir=os.path.join(
-        cwd, "results_lhas"), build_dir=os.path.join(cwd, "build"), run_data_url=run_data_url, headers=headers)
+        cwd, "results_lhas"), build_dir=os.path.join(cwd, "build"), run_data_url=run_data_url, headers=headers, run_locally=run_locally)
     sim.run(num_runs=3, max_workers=1)
 
 

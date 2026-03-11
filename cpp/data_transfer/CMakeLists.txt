@@ -20,6 +20,10 @@ if(MEMILIO_HAS_JSONCPP AND MEMILIO_HAS_HDF5)
     endif()
     
     add_executable(simulate_lha_scenario simulate_lha_scenario.cpp)
-    target_link_libraries(simulate_lha_scenario PRIVATE memilio ode_secirvvs ) # Boost::filesystem ${HDF5_C_LIBRARIES}
+    target_link_libraries(simulate_lha_scenario PRIVATE memilio ode_secirvvs) # Boost::filesystem ${HDF5_C_LIBRARIES}
     target_compile_options(simulate_lha_scenario PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+    add_executable(simulate_lha_scenario_cologne simulate_lha_scenario_cologne.cpp)
+    target_link_libraries(simulate_lha_scenario_cologne PRIVATE memilio ode_secirvvs) # Boost::filesystem ${HDF5_C_LIBRARIES}
+    target_compile_options(simulate_lha_scenario_cologne PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()

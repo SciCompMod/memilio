@@ -279,6 +279,21 @@ void split_line(std::string string, std::vector<std::string>* row)
     });
 }
 
+void split_line_comma(std::string string, std::vector<std::string>* row)
+{
+    std::vector<std::string> strings;
+
+    std::string x = ",,", y = ",";
+    size_t pos;
+    while ((pos = string.find(x)) != std::string::npos) {
+        string.replace(pos, 2, y);
+    }
+    boost::split(strings, string, boost::is_any_of(","));
+    std::transform(strings.begin(), strings.end(), std::back_inserter(*row), [&](std::string s) {
+        return s;
+    });
+}
+
 size_t get_index_of_age_group(int age)
 {
     if (age <= 4) {

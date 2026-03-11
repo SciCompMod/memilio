@@ -80,39 +80,6 @@ void assign_uniform_distribution(mio::UncertainValue<double>& p, double min, dou
     p.set_distribution(mio::ParameterDistributionUniform(min, max));
 }
 
-// /**
-//  * Set a value and distribution of an array of UncertainValues.
-//  * Assigns average of min[i] and max[i] as a value and UNIFORM(min[i], max[i]) as a distribution for
-//  * each element i of the array.
-//  * @param array array of UncertainValues to set.
-//  * @param min minimum of distribution for each element of array.
-//  * @param max minimum of distribution for each element of array.
-//  */
-// template <size_t N>
-// void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>& array,
-//                                        const double (&min)[N], const double (&max)[N])
-// {
-//     assert(N == array.numel());
-//     for (auto i = mio::AgeGroup(0); i < mio::AgeGroup(N); ++i) {
-//         assign_uniform_distribution(array[i], min[size_t(i)], max[size_t(i)]);
-//     }
-// }
-
-// /**
-//  * Set a value and distribution of an array of UncertainValues.
-//  * Assigns average of min and max as a value and UNIFORM(min, max) as a distribution to every element of the array.
-//  * @param array array of UncertainValues to set.
-//  * @param min minimum of distribution.
-//  * @param max minimum of distribution.
-//  */
-// void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>& array,
-//                                        double min, double max)
-// {
-//     for (auto i = mio::AgeGroup(0); i < array.size<mio::AgeGroup>(); ++i) {
-//         assign_uniform_distribution(array[i], min, max);
-//     }
-// }
-
 template <typename FP, class Tag>
 void set_parameters(mio::osecirvvs::Parameters<FP>& params, const std::vector<FP>& parameter_values)
 {
@@ -238,7 +205,7 @@ mio::IOResult<void> set_covid_parameters(mio::Date start_date, mio::osecirvvs::P
 
 mio::IOResult<mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>>
 get_graph(mio::Date start_date, const int num_days_sim, std::vector<int> lha_ids, const fs::path& data_dir,
-          const fs::path& temp_dir)
+          const fs::path& temp_dir, bool only_one_node = false)
 {
     // global parameters
     const int num_age_groups = 6;
@@ -252,44 +219,21 @@ get_graph(mio::Date start_date, const int num_days_sim, std::vector<int> lha_ids
     // graph of counties with populations and local parameters
     // and mobility between counties
     mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> params_graph;
-    const auto& read_function_edges = mio::read_mobility_plain;
 
-    auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1.0);
-    auto mobile_compartments     = {mio::osecirvvs::InfectionState::SusceptibleNaive,
-                                    mio::osecirvvs::InfectionState::ExposedNaive,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
-                                    mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-                                    mio::osecirvvs::InfectionState::ExposedPartialImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
-                                    mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
-
-    const auto& set_edge_function =
-        mio::set_edges<double, ContactLocation, mio::osecirvvs::Model<double>, mio::MobilityParameters<double>,
-                       mio::MobilityCoefficientGroup<double>, mio::osecirvvs::InfectionState,
-                       decltype(read_function_edges)>;
-
-    BOOST_OUTCOME_TRY(
-        mio::osecirvvs::set_lha_data<double>(params, params_graph, data_dir.string(), start_date, lha_ids));
-    BOOST_OUTCOME_TRY(
-        set_edge_function(mio::path_join((data_dir / "Germany" / "mobility").string(), "commuter_mobility_2022.txt"),
-                          params_graph, mobile_compartments, contact_locations.size(), read_function_edges,
-                          std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}, std::vector<std::vector<size_t>>{}));
+    BOOST_OUTCOME_TRY(mio::osecirvvs::set_lha_data<double>(params, params_graph, data_dir.string(), start_date, lha_ids,
+                                                           only_one_node));
 
     return mio::success(params_graph);
 }
 
 mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, std::vector<int> lha_ids,
                         const std::string& data_dir, const std::string& result_dir, const std::string& temp_dir,
-                        bool save_single_runs, const int num_runs, bool save_non_aggregated_results = false)
+                        bool save_single_runs, const int num_runs, bool save_non_aggregated_results = false,
+                        bool only_one_node = false)
 {
     //create or load graph
     mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> params_graph;
-    BOOST_OUTCOME_TRY(auto&& created, get_graph(start_date, num_days_sim, lha_ids, data_dir, temp_dir));
+    BOOST_OUTCOME_TRY(auto&& created, get_graph(start_date, num_days_sim, lha_ids, data_dir, temp_dir, only_one_node));
     params_graph = created;
 
     std::vector<int> county_ids(params_graph.nodes().size());
@@ -364,8 +308,7 @@ mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, std::vecto
 
 int main(int argc, char** argv)
 {
-    // This example runs the simulation where one county provides LHA data and the others do not.
-    // For now, we assume that there are no active interventions during the simulation period.
+    // This example runs the simulation for one county where this county provides LHA data.
 
     mio::set_log_level(mio::LogLevel::warn);
     mio::mpi::init();
@@ -389,7 +332,11 @@ int main(int argc, char** argv)
         num_simulation_runs = std::atoi(argv[9]);
     }
 
-    bool save_non_aggregated_results = false;
+    bool save_non_aggregated_results = true;
+    // Run simulation for model with only one node, i.e. only for Cologne.
+    bool only_one_node = true;
+
+    std::string lha_data_filename = "lha_synthetic_data_altered_vaccinations_renamed.csv";
 
     //mio::thread_local_rng().seed(
     //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
@@ -410,7 +357,7 @@ int main(int argc, char** argv)
     printf("Saving results to \"%s\".\n", result_dir.c_str());
 
     auto result = run(num_days_sim, start_date, lha_ids, data_dir, result_dir, temp_dir, false, num_simulation_runs,
-                      save_non_aggregated_results);
+                      save_non_aggregated_results, only_one_node);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         mio::mpi::finalize();
