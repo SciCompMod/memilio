@@ -108,6 +108,33 @@ def get_population_by_age(country_name: str):
         raise RuntimeError(f"Error loading population data: {e}")
 
 
+def aggregate_pop_to_rki(population_dict: dict) -> dict:
+    """
+    Maps the population of the 16 original age groups 
+    to the 6 RKI age groups.
+    """
+    pop_values = list(population_dict.values())
+
+    groups = [
+        [0],                 # 0-4
+        [1, 2],              # 5-14
+        [3, 4, 5, 6],        # 15-34
+        [7, 8, 9, 10, 11],   # 35-59
+        [12, 13, 14],        # 60-79
+        [15],                # 80-99
+    ]
+
+    rki_labels = [
+        "0-4", "5-14", "15-34", "35-59", "60-79", "80-99"
+    ]
+
+    aggregated_pop = {}
+    for label, indices in zip(rki_labels, groups):
+        aggregated_pop[label] = sum(pop_values[i] for i in indices)
+
+    return aggregated_pop
+
+
 def build_country_seir_model(
         contact_matrix: np.ndarray,
         population_by_age: list,
@@ -171,23 +198,40 @@ def simulate_country_seir(
         transmission_probability: float = 0.15,
         exposed_share: float = 1e-5,
         infected_share: float = 5e-6,
-        interpolate: bool = True):
+        interpolate: bool = True,
+        use_rki_groups: bool = None):
     """
     Load contact matrix, population data, build the ODE SEIR model, and run
-    a simulation.
+    a simulation. In general, the contact matrix is of size 16x16, but if
+    `use_rki_groups` is True, it will be aggregated to 6x6 (RKI groups).
     """
-    # Validate country
-    available = get_available_countries()
-    if country not in available:
+    available_countries = get_available_countries()
+    if country not in available_countries:
         raise ValueError(
             f"Country '{country}' not available. "
-            f"Use get_available_countries() to see all {len(available)} supported countries.")
+            f"Use get_available_countries() to see all {len(available_countries)} supported countries.")
 
-    contacts = load_contact_matrix(country, reduce_to_rki_groups=False)
-    population = get_population_by_age(country)
+    # load population data
+    population_dict = get_population_by_age(country)
+    population_list = list(population_dict.values())
+
+    # load contact matrix with population weighting
+    contacts = load_contact_matrix(
+        country,
+        reduce_to_rki_groups=use_rki_groups,
+        population=population_list
+    )
+
+    # If we want to use the RKI groups, we also need to aggregate the pop data
+    if use_rki_groups:
+        population_for_model = aggregate_pop_to_rki(
+            population_dict)
+    else:
+        population_for_model = population_dict
+
     model = build_country_seir_model(
         contacts.values,
-        population_by_age=population,
+        population_by_age=population_for_model,
         transmission_probability=transmission_probability,
         exposed_share=exposed_share,
         infected_share=infected_share)

@@ -168,7 +168,8 @@ def _select_sheet_name(country: str, sheet_names: Iterable[str]):
 def load_contact_matrix(
         country: str,
         contact_path: Optional[str] = None,
-        reduce_to_rki_groups: bool = True):
+        reduce_to_rki_groups: bool = True,
+        population: Optional[Iterable[float]] = None):
     """
     Load the all-locations contact matrix for the given country. If
     ``contact_path`` is not provided, the function downloads the
@@ -178,6 +179,8 @@ def load_contact_matrix(
     :param contact_path: Optional path to ``MUestimates_all_locations_1.xlsx``.
     :param reduce_to_rki_groups: If True, aggregate to the six RKI age groups 
       (0-4, 5-14, 15-34, 35-59, 60-79, 80+ years). Default True.
+    :param population: An iterable of 16 float values representing the population 
+      size for each age group. Required if reduce_to_rki_groups is True.
     :returns: DataFrame indexed by age group with floats.
     """
     xls_bytes = _load_workbook_bytes(contact_path)
@@ -201,25 +204,35 @@ def load_contact_matrix(
             f"Contact matrix for '{country}' is not square: {matrix.shape}")
 
     if reduce_to_rki_groups:
-        matrix = _aggregate_to_rki_age_groups(matrix)
+        if population is None:
+            raise ValueError(
+                "To reduce to RKI groups, the population distribution "
+                "for the 16 original age groups must be provided via the "
+                "'population' argument."
+            )
+        matrix = _aggregate_to_rki_age_groups(matrix, population)
 
     return matrix
 
 
-def _aggregate_to_rki_age_groups(matrix: pd.DataFrame):
+def _aggregate_to_rki_age_groups(
+        matrix: pd.DataFrame, population: Iterable[float]):
     """
-    Aggregate a 16x16 age contact matrix to the 6-group RKI scheme.
-
+    Aggregate a 16x16 age contact matrix to the 6-group RKI scheme using 
+    population-weighted averages.
     Assumes the original columns/rows follow AGE_GROUP_LABELS order.
     Note: The source only provides data up to 70-74 and a 75+ group.
     We map 60-74 to the 60-79 RKI group and 75+ to the 80-99 RKI group.
 
     :param matrix: The 16x16 contact matrix to aggregate.
+    :param population: Population size for each age group, in the same order
+      as AGE_GROUP_LABELS.
     :returns: Aggregated 6x6 contact matrix.
     """
-    if matrix.shape != (len(AGE_GROUP_LABELS), len(AGE_GROUP_LABELS)):
+    pop_array = np.array(list(population), dtype=float)
+    if len(pop_array) != len(AGE_GROUP_LABELS):
         raise ValueError(
-            f"Expected a {len(AGE_GROUP_LABELS)}x{len(AGE_GROUP_LABELS)} matrix for aggregation.")
+            f"Population array must have {len(AGE_GROUP_LABELS)} elements.")
 
     groups = [
         [0],  # 0-4
@@ -233,9 +246,24 @@ def _aggregate_to_rki_age_groups(matrix: pd.DataFrame):
     aggregated = pd.DataFrame(
         index=AGE_GROUP_LABELS_RKI, columns=AGE_GROUP_LABELS_RKI, dtype=float)
 
-    for i, rows in enumerate(groups):
-        for j, cols in enumerate(groups):
-            block = matrix.values[np.ix_(rows, cols)]
-            aggregated.iat[i, j] = float(block.mean())
+    mat_values = matrix.values
+
+    for i, row_indices in enumerate(groups):
+        for j, col_indices in enumerate(groups):
+
+            # Summing over the columns to get total contacts from group i to
+            #  the new group j.
+            contacts_summed_over_cols = mat_values[row_indices][
+                :, col_indices].sum(
+                axis=1)
+
+            # Weight with the population of the original age groups in the new
+            #  group j.
+            pop_weights = pop_array[row_indices]
+            weighted_contacts = contacts_summed_over_cols * pop_weights
+
+            # Calculate the average: Sum of weighted contacts divided by the
+            #  new total population
+            aggregated.iat[i, j] = weighted_contacts.sum() / pop_weights.sum()
 
     return aggregated
