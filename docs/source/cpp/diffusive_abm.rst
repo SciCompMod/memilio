@@ -182,9 +182,4 @@ Examples
 
 An example of the diffusive ABM using the quadwell potential can be found at: `examples/d_abm.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/d_abm.cpp>`_
 
-
-Overview of the ``dabm`` namespace:
------------------------------------
-
-.. doxygennamespace:: mio::dabm
-
+The code documentation for the model can be found at :CPP-API:`mio::dabm` .
