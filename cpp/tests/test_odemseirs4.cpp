@@ -114,7 +114,7 @@ TEST_F(ModelTestOdeMseirs4, checkPopulationConservation)
 
 TEST(TestOdeMseirs4, apply_constraints_parameters)
 {
-    mio::LogLevelOverride llo(mio::LogLevel::off); // hide contstraint warnings/errors
+    mio::LogLevelOverride llo(mio::LogLevel::off); // hide constraint warnings/errors
     mio::omseirs4::Model<double> model;
 
     auto& params = model.parameters;
@@ -150,7 +150,7 @@ TEST(TestOdeMseirs4, apply_constraints_parameters)
 
 TEST(TestOdeMseirs4, check_constraints_parameters)
 {
-    mio::LogLevelOverride llo(mio::LogLevel::off); // hide contstraint warnings/errors
+    mio::LogLevelOverride llo(mio::LogLevel::off); // hide constraint warnings/errors
     mio::omseirs4::Model<double> model;
     auto& params = model.parameters;
 
