@@ -30,9 +30,11 @@ int main(int argc, char** argv)
 
 #ifndef NDEBUG
     // in debug builds:
-    // suppress output from successful tests, so output from failures is easy to find
+    // change the default values of the following gtest flags
+    // the flags can still be set through CLI arguments, which are processed by InitGoogleTest below
+    // - brief: suppress status output from successful tests, so output from failures is easy to find
     GTEST_FLAG_SET(brief, true);
-    // shuffle order of tests, to make sure they are not interdependant
+    // - shuffle: randomly change order of tests, to make sure they are not interdependant
     GTEST_FLAG_SET(shuffle, true);
 #endif
     ::testing::InitGoogleTest(&argc, argv);
@@ -42,3 +44,4 @@ int main(int argc, char** argv)
     mio::mpi::finalize();
     return retval;
 }
+
