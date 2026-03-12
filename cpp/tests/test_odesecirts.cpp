@@ -287,6 +287,7 @@ TEST(TestOdeSECIRTS, overflow_vaccinations)
 
 TEST(TestOdeSECIRTS, smooth_vaccination_rate)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     const ScalarType tmax = 2.;
 
     // init simple model
@@ -708,6 +709,7 @@ TEST(TestOdeSECIRTS, checkPopulationConservation)
 
 TEST(TestOdeSECIRTS, read_confirmed_cases)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     auto num_age_groups = 6; //reading data requires RKI data age groups
     auto model          = std::vector<mio::osecirts::Model<double>>({make_model(num_age_groups)});
     const std::vector<int> region{1002};
@@ -768,6 +770,7 @@ TEST(TestOdeSECIRTS, set_divi_data_invalid_dates)
 
 TEST(TestOdeSECIRTS, set_confirmed_cases_data_with_ICU)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     const auto num_age_groups = 6;
     auto model                = mio::osecirts::Model<double>(num_age_groups);
     model.populations.array().setConstant(1);
@@ -837,6 +840,7 @@ TEST(TestOdeSECIRTS, set_confirmed_cases_data_with_ICU)
 
 TEST(TestOdeSECIRTS, read_data)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     auto num_age_groups = 6; //reading data requires RKI data age groups
     auto model1         = std::vector<mio::osecirts::Model<double>>({make_model(num_age_groups)});
     auto model2         = std::vector<mio::osecirts::Model<double>>({make_model(num_age_groups)});
@@ -1071,6 +1075,7 @@ TEST(TestOdeSECIRTS, model_initialization)
 
 TEST(TestOdeSECIRTS, set_vaccination_data_not_avail)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     const auto num_age_groups = 2;
     const auto num_days       = 5;
     mio::osecirts::Model<double> model(num_age_groups);

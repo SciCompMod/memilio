@@ -589,6 +589,7 @@ TEST(TestOdeSECIRVVS, set_divi_data_invalid_dates)
 
 TEST(TestOdeSECIRVVS, set_confirmed_cases_data_with_ICU)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     const auto num_age_groups = 6;
     auto model                = mio::osecirvvs::Model<double>(num_age_groups);
     model.populations.array().setConstant(1);
@@ -1001,6 +1002,7 @@ TEST(TestOdeSECIRVVS, model_initialization_old_date_county)
 
 TEST(TestOdeSECIRVVS, set_population_data_overflow_vacc)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     auto num_age_groups = 6; // Data to be read requires RKI confirmed cases data age groups
     auto model          = make_model(num_age_groups);
     // set all compartments to zero
@@ -1040,6 +1042,7 @@ TEST(TestOdeSECIRVVS, set_population_data_overflow_vacc)
 
 TEST(TestOdeSECIRVVS, set_population_data_no_data_avail)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     auto num_age_groups = 6; // Data to be read requires RKI confirmed cases data age groups
     auto model          = make_model(num_age_groups);
     // set all compartments to zero
@@ -1086,6 +1089,7 @@ TEST(TestOdeSECIRVVS, run_simulation)
 
 TEST(TestOdeSECIRVVS, set_vaccination_data_not_avail)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     const auto num_age_groups = 2;
     const auto num_days       = 5;
     mio::osecirvvs::Model<double> model(num_age_groups);

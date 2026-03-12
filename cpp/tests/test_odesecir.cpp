@@ -1457,6 +1457,8 @@ TEST(TestOdeSecir, set_divi_data_invalid_dates)
 
 TEST(TestOdeSecir, set_divi_data_empty_data)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
+
     // Create an empty DIVI data vector
     std::vector<mio::DiviEntry> empty_data;
     std::vector<int> regions = {0, 1};
@@ -1473,6 +1475,7 @@ TEST(TestOdeSecir, set_divi_data_empty_data)
 
 TEST_F(ModelTestOdeSecir, set_confirmed_cases_data_with_ICU)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     // set params
     for (auto age_group = mio::AgeGroup(0); age_group < (mio::AgeGroup)num_age_groups; age_group++) {
         model.parameters.get<mio::osecir::CriticalPerSevere<double>>()[age_group]         = 1.0;
