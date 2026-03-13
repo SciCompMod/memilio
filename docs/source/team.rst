@@ -30,6 +30,8 @@ Martin Kühn studied at University of Cologne, Germany, and Université de Montr
    :animate: fade-in-slide-down
 
    * |MEmilio_citation|
+   * |Traveler_estimation|   
+   * |Missing_Transmission_Chains|
    * |Graph_Neural_Network_Surrogates|
    * |A_nonstandard_numerical_scheme|
    * |Revisiting_the_Linear_Chain|
@@ -66,6 +68,7 @@ Henrik Zunker is a PhD student at the Institute of Software Technology at the Ge
    :animate: fade-in-slide-down
 
    * |MEmilio_citation|
+   * |Traveler_estimation|     
    * |Risk-mediated_dynamic_regulation|
    * |Graph_Neural_Network_Surrogates|
    * |Novel_travel_time_aware_metapopulation_models|
@@ -97,9 +100,9 @@ His background is in numerical mathematics, where he studied at the University o
    :animate: fade-in-slide-down
 
    * |MEmilio_citation|
+   * |Missing_Transmission_Chains|
    * |Agent-based_modeling_for|
    * |Integrating_Human_Mobility_Models|
-   * |Missing_Transmission_Chains|
 
 .. dropdown:: Links
    :animate: fade-in-slide-down
@@ -251,6 +254,7 @@ equation-based models.
    :animate: fade-in-slide-down
 
    * |MEmilio_citation|
+   * |traveler_estimation|  
    * |Novel_travel_time_aware_metapopulation_models|
    * |Hybrid_metapopulation_agent-based|
    * |Integrating_Human_Mobility_Models|
@@ -390,6 +394,32 @@ Paul Johannssen studied mathematics at the University of Bonn. He worked on the 
 
 
 We thank all contributors, who have contributed to MEmilio. For a complete list of contributors, please see our `GitHub Contributors page <https://github.com/SciCompMod/memilio/graphs/contributors>`__.
+
+
+Vincent Wieland
+^^^^^^^^^^^^^^^^
+
+.. image:: https://martinkuehn.eu/research/images/vincent.png
+   :alt: Vincent Wieland
+   :width: 150px
+   :align: left
+   :class: developer-photo
+
+**Research Focus:** Stochastic Modeling, Bayesian Inference, Clinical Trajectory Analysis, Infectious Disease Modeling
+
+Vincent Wieland is a PhD student at the Center for Mathematical Life Sciences in Bonn since 2023. Vincent holds a B.Sc. and a M.Sc. in Mathematics from the University of Bonn. In his Masters he focused on stochastic analysis and joined the group of Prof. Jan Hasenauer for his Master thesis. After the completion, he continued his education as a PhD student in the group working on stochastic modelling of disease progression and application to clinical data. 
+
+.. dropdown:: Selected Publications
+   :animate: fade-in-slide-down
+
+   * |MEmilio_citation|
+
+.. dropdown:: Links
+   :animate: fade-in-slide-down
+
+   * `Google Scholar Profile <https://scholar.google.com/citations?user=24SwK1EAAAAJ&hl=en&oi=sra>`__
+   * `ORCID Profile: 0009-0003-9592-8871 <https://orcid.org/0009-0003-9592-8871>`__
+
 
 .. _collaboration:
 
