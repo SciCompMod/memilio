@@ -10,7 +10,7 @@ Recently submitted publications
 
 - |MEmilio_citation|
 
-- |Missing_Transmission_Chains|
+- |Traveler_estimation|
 
 - |Coupled_Epidemiological_and_Wastewater|
 
@@ -23,11 +23,13 @@ Peer-reviewed publications
 
 **2026**
 
+- |Missing_Transmission_Chains|
+
+- |Graph_Neural_Network_Surrogates|
+
 - |Revisiting_the_Linear_Chain|
 
 - |A_nonstandard_numerical_scheme|
-
-- |Graph_Neural_Network_Surrogates|
 
 **2025**
 
