@@ -87,4 +87,48 @@ There is also the option to output various HDF5 files that contain time-resolved
 
 - {sim_num}_output_v5.h5: This file only has one HDF5 group 'data' which contains two datasets. The first dataset is a matrix of size #agents x 2 where entry (i, 0) is the time point of transmission and entry (i,1) the time points of recovery or death of agent i. If an agent has not been infected the values are set to 100,000. The second dataset is a matrix of size #agent x #timepoints where entry (i,t) is the ABM LocationType (as integer) at time point t of agent i
 
+Contact output:
+
+- {sim_num}_contacts.csv: Output is a table with the mean and maximum number of agents at a location for each location type and each simulation time step. Output are only location types with at least one agent at a location of that type at the corresponding time step.
+
+Information for the paper: **Coupled Epidemiological and Wastewater Modeling at the Urban Scale: A Case Study for Munich**
+===========================================================================================================================
+
+The simulation code for the infection dynamics model is available at `abm_demonstrator_munich.py` and the code for the sensitivity analysis at `abm_demonstrator_munich_sensitivity_analysis_parallel.py`. To run the code the *memilio-simulation* package is required which can be accessed at `pycode/memilio-simulation`. Information on how to install and use the package are provided in the ReadMe file there. The input files needed for simulation are provided in the `input` folder; the person input file is provided on Zenodo at `https://doi.org/10.5281/zenodo.17096976`.
+Post-processing files for the simulation results are available at `post_processing.py`.
+
+The simulation script (abm_demonstrator_munich.py) provides various outputs. Below, a list of the output functions used for the paper including a description of how their outputs looks like is provided:
+
+| Function               | Description                                                                                       |
+|------------------------|---------------------------------------------------------------------------------------------------|
+| save_infection_paths   | Outputs a txt file with the number of simulation time steps an agent spent in an infection state for every agent and infection state ({sim_num}_infection_paths.txt). |
+| save_comp_output       | Outputs a csv file with the number of agents per infection state for every simulation time step ({sim_num}_comps.csv).  |
+| write_contacts         | Outputs a csv file with the mean and maximum number of agents at a location for each location type and each simulation time step. Output are only location types with at least one agent at a location of that type at the corresponding time step ({sim_num}_contacts.csv).                            |
+| write_h5_v4            | Outputs a h5 file with two datasets. The first dataset contains the time point of transmission (first column) and the time point of recovery or death (second column) for every agent (rows) and the second dataset contains the current wastewater area id for every agent (rows) and every simulation time point (columns) ({sim_num}_output_v4.h5). |
+| write_h5_v5            | Outputs a h5 file with two datasets. The first dataset contains the time point of transmission (first column) and the time point of recovery or death (second column) for every agent (rows) and the second dataset contains the current location type for every agent (rows) and every simulation time point (columns) ({sim_num}_output_v5.h5). |
+| write_time_to_file     | outputs a txt file with the runtime for model initialization, model simulation and output writing for each simulation. |
+
+Additionally to the different output functions, the post-processing script `post_processing.py` calculates aggregated outputs from the person.csv and the h5 output files. The outputs from the post-processing functions required to run the analysis and plot scripts are available on Zenodo `https://doi.org/10.5281/zenodo.17096976`. Find below a list of the post processing functions and a description of the outputs they generate:
+
+| Function                                 | Description                                                                     |
+|------------------------------------------|---------------------------------------------------------------------------------|
+| calculate_infections_per_quantity        | This function outputs three txt files:                                          |
+|                                          | 1. *num_agents_infections_loctype.txt* contains the total number of infected, the total number of agents, and the number of new transmissions resolved by time step and location type for every simulation. This file was used for Main Fig. 2d (see b_contacts_per_loctype.ipynb) and for Supplementary Fig. S3a (see transmissions_prevalence.ipynb).                                                                                    |
+|                                          | 2. *num_agents_infections_area.txt* contains the total number of infected, the total number of agents, and the number of new transmissions resolved by time step and wastewater area for every simulation.                                                |
+|                                          | 3. *num_agents_infections_hh_size_ag.txt* contains the total number of agents and the total number of infected resolved by time step, household size and age group for every simulation. This file was used for Main Fig. 2d (see d_prevalence_per_age_group.ipynb) and for Supplementary Fig. S3b (see transmissions_prevalence.ipynb).                                                                                             |
+| calculate_agents_per_quantity_age_groups | This function outputs two txt files:                                            |
+|                                          | 1. *num_agents_loctype_ag.txt* contains the total number of agents resolved by time step, age group and location type.                                                                                                                        |
+|                                          | 2. *num_agents_area_ag.txt* contains the total number of agents resolved by time step, age group and wastewater area.                                                                                                                        |
+| calculate_agents_per_quantity            | This function outputs two txt files:                                            |
+|                                          | 1. *num_agents_loctype.txt* contains the total number of agents resolved by time step and location type.                                                                                                                        |
+|                                          | 2. *num_agents_area.txt* contains the total number of agents resolved by time step and wastewater area. This file was used for Main Fig. 2e (e_mobility_visualization.ipynb).                                                                                    |
+| calculate_agents_per_area_inhabitants_commuters | This function outputs a file *{sim_num}_num_agents_area_inhabitants_commuters.txt* that contains the number of agents, the number of inhabitants and the number of commuters (agents that have their home location in another wastewater area) per wastewater area and time point.                                   |
+| calculate_infected_per_measurement_station | This function outputs a file *infection_age_shedding_{timepoint}_{measurement_station}.csv* that contains the infection age (in hours) and the shedding value for all infected agents at a given measurement station and time point. The function requires the mapping of wastewater areas to measurement station as input which can be found under `preprocessing/preprocesses_data/tandler_upstream_gebiete.json`. The output file was used for Supplementary Fig. S13 (see infections_per_measurement_station.ipynb).     |
+
+Sensitivity analysis
+--------------------
+
+The sensitivity analysis for the infection dynamics model is available under `abm_demonstrator_munich_sensitivity_analysis_parallel.py`. 
+It uses the output function `save_comp_output_sensitivity` which outputs a csv file *{sim_num}_ouput.csv* containing the compartment sizes, the number of new transmissions and the total respiratory shedding value for every simulation time point.
+
 
