@@ -452,6 +452,7 @@ private:
                 Base::m_graph.nodes()[node_id].property.set_infection_status(false);
             }
             else {
+                mio::log_debug("Culling capacity reached on day {}.", Base::m_t);
                 while (capacity > 0) {
                     mio::log_debug("Culling {} animals of node {} on day {}.", capacity, node_id, Base::m_t);
                     for (auto index = 0; index < animals.size(); index++) {
