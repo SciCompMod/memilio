@@ -114,7 +114,7 @@ The simulation script (abm_demonstrator_munich.py) provides various outputs. Bel
 +------------------------+---------------------------------------------------------------------------------------------------+
 | write_h5_v4            | Outputs a h5 file with two datasets. The first dataset contains the time point of transmission    | 
 |                        | (first column) and the time point of recovery or death (second column) for every agent (rows)     | 
-|                        |and the second dataset contains the current wastewater area id for every agent (rows) and every    |
+|                        | and the second dataset contains the current wastewater area id for every agent (rows) and every   |
 |                        | simulation time point (columns) ({sim_num}_output_v4.h5).                                         |
 +------------------------+---------------------------------------------------------------------------------------------------+
 | write_h5_v5            | Outputs a h5 file with two datasets. The first dataset contains the time point of transmission    |
@@ -157,7 +157,7 @@ Additionally to the different output functions, the post-processing script `post
 |                                                 | time step and wastewater area.                                           |
 +-------------------------------------------------+--------------------------------------------------------------------------+
 | calculate_agents_per_area_inhabitants_commuters | This function outputs a file                                             |
-|                                                 |*{sim_num}_num_agents_area_inhabitants_commuters.txt* that contains the   |
+|                                                 | *{sim_num}_num_agents_area_inhabitants_commuters.txt* that contains the  |
 |                                                 | number of agents, the number of inhabitants and the number of commuters  |
 |                                                 | (agents that have their home location in another wastewater area) per    |
 |                                                 | wastewater area and time point.                                          |
