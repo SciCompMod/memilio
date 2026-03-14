@@ -439,8 +439,13 @@ private:
     {
         while (!queue.empty() && capacity > 0 && queue.front().second < Base::m_t - 1) {
             auto [node_id, day]     = queue.front();
-            auto animals            = Base::m_graph.nodes()[node_id].property.get_result().get_last_value();
+            auto& node              = Base::m_graph.nodes()[node_id].property;
+            auto animals            = node.get_result().get_last_value();
             auto num_living_animals = std::accumulate(animals.begin(), animals.end() - 1, 0);
+            // Test preventively culled farms. Recognizable because n.property.get_date_confirmation() == -1
+            if (node.get_date_confirmation() == -1) {
+                post_culling_test(node);
+            }
             if (num_living_animals <= capacity) {
                 mio::log_debug("Culling {} animals at node {} starting on day {}.", num_living_animals, node_id,
                                Base::m_t);
@@ -449,7 +454,7 @@ private:
                 }
                 queue.pop();
                 capacity -= num_living_animals;
-                Base::m_graph.nodes()[node_id].property.set_infection_status(false);
+                node.set_infection_status(false);
             }
             else {
                 mio::log_debug("Culling capacity reached on day {}.", Base::m_t);
@@ -470,6 +475,31 @@ private:
             }
         }
         return capacity;
+    }
+
+    void post_culling_test(Node& node)
+    {
+        bool positive_test                   = false;
+        const std::vector<ScalarType> values = {node.get_result().get_last_value().begin(),
+                                                node.get_result().get_last_value().end() - 1};
+        for (size_t test = 0; test < 20; test++) {
+            const auto test_compartment = mio::DiscreteDistribution<size_t>::get_instance()(m_rng, values);
+            // Test infected animals
+            if (test_compartment == 3 &&
+                mio::UniformDistribution<ScalarType>::get_instance()(m_rng, 0.0, 1.0) < m_sensitivity) {
+                positive_test = true;
+                break;
+            }
+            // Test non-infected animals
+            else if (mio::UniformDistribution<ScalarType>::get_instance()(m_rng, 0.0, 1.0) > m_specificity) {
+                positive_test = true;
+                break;
+            }
+        }
+        if (positive_test) {
+            node.set_date_confirmation(Base::m_t + 4.0);
+            mio::log_debug("Post-culling");
+        }
     }
 
     /**
