@@ -104,7 +104,7 @@ public:
                         check_for_cases(n.property, Base::m_t, n.id);
                     }
                     else {
-                        if (n.property.get_date_confirmation() < Base::m_t + dt && !n.property.is_quarantined()) {
+                        if (n.property.get_date_confirmation() < Base::m_t && !n.property.is_quarantined()) {
                             cull_node(n.id);
                             for (size_t index = 0;
                                  index < n.property.get_regional_neighbors()[m_ten_km_radius_index].size(); ++index) {
