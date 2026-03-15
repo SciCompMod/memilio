@@ -22,7 +22,7 @@
 .. |Graph_Neural_Network_Surrogates_DOI| replace:: DOI:10.1038/s41598-026-39431-5
 .. _Graph_Neural_Network_Surrogates_DOI: https://doi.org/10.1038/s41598-026-39431-5
 
-.. |Revisiting_the_Linear_Chain| replace:: Plötzke L, Wendler A, Schmieding R, Kühn MJ. (2024). *Revisiting the Linear Chain Trick in epidemiological models: Implications of underlying assumptions for numerical solutions*. *Mathematics and Computers in Simulation* 239, pp. 823-844 (2026). |Revisiting_the_Linear_Chain_DOI|_
+.. |Revisiting_the_Linear_Chain| replace:: Plötzke L, Wendler A, Schmieding R, Kühn MJ. (2026). *Revisiting the Linear Chain Trick in epidemiological models: Implications of underlying assumptions for numerical solutions*. *Mathematics and Computers in Simulation* 239, pp. 823-844. |Revisiting_the_Linear_Chain_DOI|_
 .. |Revisiting_the_Linear_Chain_DOI| replace:: DOI:10.1016/j.matcom.2025.07.045
 .. _Revisiting_the_Linear_Chain_DOI: https://doi.org/10.1016/j.matcom.2025.07.045
 
