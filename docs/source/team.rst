@@ -318,6 +318,33 @@ Daniel Abele is a research software engineer at the Institute of Software Techno
    * `ORCID Profile: 0000-0001-7021-1573 <https://orcid.org/0000-0001-7021-1573>`__
 
 
+Lena Plötzke
+^^^^^^^^^^^
+
+.. image:: _static/team/max_mustermann.jpg
+   :alt: NAME
+   :width: 150px
+   :align: left
+   :class: developer-photo
+
+**Research Focus:** High-Performance Computing, Mathematical Modeling, Scientific Computing, Linear Chain Trick (LCT), Integro-Differential Equations (IDEs)
+
+Lena Plötzke received her Bachelor's and Master's degrees from the University of Cologne in collaboration with the German Aerospace Center (DLR). Her bachelor's thesis examined models using integro-differential equations and her master's thesis focused on the Linear Chain Trick. She later authored a paper based on this research. Lena worked on the MEmilio software from September 2021 to January 2025.
+
+.. dropdown:: Selected Publications
+   :animate: fade-in-slide-down
+
+   * |MEmilio_citation|
+   * |A_nonstandard_numerical_scheme|
+   * |Revisiting_the_Linear_Chain|
+
+.. dropdown:: Links
+   :animate: fade-in-slide-down
+
+   * `ORCID Profile: 0000-0003-0440-1429 <https://orcid.org/0000-0003-0440-1429>`__
+
+
+
 Margrit Klitz
 ^^^^^^^^^^^^^
 
