@@ -69,6 +69,14 @@ class Test_TimeSeries(unittest.TestCase):
         self.assertEqual(
             output, '\nTime a \n2.00 1.00\n3.50 2.00\n')
 
+    def test_get_times(self):
+        """Test get_times method"""
+        ts = mio.TimeSeries(1)
+        ts.add_time_point(1.5, np.r_[10.0])
+        ts.add_time_point(2.5, np.r_[20.0])
+        times = ts.get_times()
+        self.assertEqual(times, [1.5, 2.5])
+
     def test_print_table_with_separator(self):
         """Test print_table with custom separator"""
         ts = mio.TimeSeries(1)

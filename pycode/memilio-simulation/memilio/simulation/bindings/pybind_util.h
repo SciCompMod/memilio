@@ -47,9 +47,7 @@ struct PicklingTag {
 
 // Detect serialization by matching a `serialize_internal` function
 template <class IOContext, class T>
-using serialize_internal_t = decltype(mio::serialize_internal(std::declval<IOContext&>(), std::declval<T&>()));
-template <class IOContext, class T>
-using has_serialize_internal = mio::is_expression_valid<serialize_internal_t, IOContext, T>;
+concept HasSerializeInternal = requires(IOContext& ctxt, T& t) { mio::serialize_internal(ctxt, t); };
 
 template <class T, class... Args>
 void pybind_pickle_class(pybind11::class_<T, Args...>& cls)
@@ -120,7 +118,7 @@ private:
     {
         auto cls = pybind11::class_<T, Args...>(m, name.c_str(), std::forward<Options>(options)...);
         // Bind the class depending on its features
-        if constexpr (has_serialize_internal<mio::PickleSerializer, T>::value) {
+        if constexpr (HasSerializeInternal<mio::PickleSerializer, T>) {
             pybind_pickle_class<T, Args...>(cls);
         }
         return cls;
@@ -237,7 +235,7 @@ auto bind_Range(pybind11::module_& m, const std::string& class_name)
 {
     //bindings for iterator for the range
     struct Iterator {
-        typename Range::Iterators iter_pair;
+        std::pair<typename Range::iterator, typename Range::iterator> iter_pair;
     };
     bind_class<Iterator, EnablePickling::Never>(m, (std::string("_Iter") + class_name).c_str())
         .def(
@@ -257,7 +255,7 @@ auto bind_Range(pybind11::module_& m, const std::string& class_name)
         .def(
             "__iter__",
             [](Range& self) {
-                return Iterator{{self.begin(), self.end()}};
+                return self;
             },
             pybind11::keep_alive<1, 0>{}) //keep alive the Range as long as there is an iterator
         .def(

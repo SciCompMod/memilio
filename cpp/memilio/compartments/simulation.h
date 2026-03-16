@@ -23,7 +23,6 @@
 #include "memilio/compartments/compartmental_model.h"
 #include "memilio/compartments/simulation_base.h"
 #include "memilio/math/integrator.h"
-#include "memilio/utils/metaprogramming.h"
 #include "memilio/math/stepper_wrapper.h"
 #include "memilio/utils/time_series.h"
 
@@ -75,27 +74,15 @@ public:
 };
 
 /**
- * Defines the return type of the `advance` member function of a type.
- * Template is invalid if this member function does not exist.
- *
- * @tparam FP floating point type, e.g., double
- * @tparam Sim a compartment model simulation type.
+ * Concept to check if a type is a simulation for a compartmental model.
+ * @tparam Simulation A type that may or may not be a compartmental model simulation.
+ * @tparam FP A floating point type, e.g., double.
  */
-template <typename FP, class Sim>
-using advance_expr_t = decltype(std::declval<Sim>().advance(std::declval<FP>()));
-
-/**
- * Template meta function to check if a type is a compartment model simulation.
- * Defines a static constant of name `value`.
- * The constant `value` will be equal to true if Sim is a valid compartment simulation type.
- * Otherwise, `value` will be equal to false.
- * @tparam FP floating point type, e.g., double
- * @tparam Sim a type that may or may not be a compartment model simulation.
- */
-template <typename FP, class Sim>
-using is_compartment_model_simulation =
-    std::integral_constant<bool, (is_expression_valid<advance_expr_t, FP, Sim>::value &&
-                                  IsCompartmentalModel<typename Sim::Model, FP>)>;
+template <class Simulation, typename FP>
+concept IsCompartmentalModelSimulation = requires(Simulation simulation, FP t) {
+    requires IsCompartmentalModel<typename Simulation::Model, FP>;
+    simulation.advance(t);
+};
 
 /**
  * @brief Run a Simulation of a CompartmentalModel.

@@ -23,9 +23,8 @@
 #include "memilio/io/io.h"
 #include "memilio/io/serializer_base.h"
 #include "memilio/utils/compiler_diagnostics.h"
-#include "memilio/utils/metaprogramming.h"
+
 #include <memory>
-#include <sstream>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -152,7 +151,8 @@ public:
     * @param name Name of the element.
     * @param value Value to be serialized.
     */
-    template <class T, std::enable_if_t<std::is_trivial<T>::value, void*> = nullptr>
+    template <class T>
+        requires std::is_trivial_v<T>
     void add_element(const std::string& name, const T& value);
 
     /**
@@ -167,7 +167,8 @@ public:
     * @param name Name of the element.
     * @param value Value to be serialized.
     */
-    template <class T, std::enable_if_t<negation_v<std::is_trivial<T>>, void*> = nullptr>
+    template <class T>
+        requires(!std::is_trivial_v<T>)
     void add_element(const std::string& name, const T& value);
 
     /**
@@ -178,7 +179,8 @@ public:
     * @param tag Tag that determines the type of the element.
     * @returns Deserialized value.
     */
-    template <class T, std::enable_if_t<std::is_trivial<T>::value, void*> = nullptr>
+    template <class T>
+        requires std::is_trivial_v<T>
     IOResult<T> expect_element(const std::string& name, Tag<T> tag);
 
     /**
@@ -187,7 +189,8 @@ public:
     * @param tag Tag that determines the type of the element.
     * @returns Deserialized value.
     */
-    template <class T, std::enable_if_t<negation<std::is_trivial<T>>::value, void*> = nullptr>
+    template <class T>
+        requires(!std::is_trivial_v<T>)
     IOResult<T> expect_element(const std::string& name, Tag<T> tag);
 
     /**
@@ -287,7 +290,8 @@ public:
     * @param ctxt The serialization context.
     * @param t The value to be serialized.
     */
-    template <class T, std::enable_if_t<std::is_trivial<T>::value, void*> = nullptr>
+    template <class T>
+        requires std::is_trivial_v<T>
     friend void serialize_internal(BinarySerializerContext& ctxt, const T& t)
     {
         //add element to dummy object.
@@ -302,7 +306,8 @@ public:
     * @param tag The value to be serialized.
     * @returns The deserialized value.
     */
-    template <class T, std::enable_if_t<std::is_trivial<T>::value, void*> = nullptr>
+    template <class T>
+        requires std::is_trivial_v<T>
     friend IOResult<T> deserialize_internal(BinarySerializerContext& ctxt, Tag<T> tag)
     {
         unused(tag);
@@ -315,7 +320,8 @@ private:
     ByteStream& m_stream; ///< Reference to a stream that stores the serialized bytes.
 };
 
-template <class T, std::enable_if_t<std::is_trivial<T>::value, void*>>
+template <class T>
+    requires std::is_trivial_v<T>
 void BinarySerializerObject::add_element(const std::string& name, const T& value)
 {
     mio::unused(name);
@@ -323,7 +329,8 @@ void BinarySerializerObject::add_element(const std::string& name, const T& value
     m_stream.write(p, sizeof(value));
 }
 
-template <class T, std::enable_if_t<negation_v<std::is_trivial<T>>, void*>>
+template <class T>
+    requires(!std::is_trivial_v<T>)
 void BinarySerializerObject::add_element(const std::string& name, const T& value)
 {
     mio::unused(name);
@@ -341,7 +348,8 @@ inline void BinarySerializerObject::add_element(const std::string& name, const s
     m_stream.write(p_data, size);
 }
 
-template <class T, std::enable_if_t<std::is_trivial<T>::value, void*>>
+template <class T>
+    requires std::is_trivial_v<T>
 IOResult<T> BinarySerializerObject::expect_element(const std::string& name, Tag<T> /*tag*/)
 {
     mio::unused(name);
@@ -359,7 +367,8 @@ IOResult<T> BinarySerializerObject::expect_element(const std::string& name, Tag<
     return failure(*m_status);
 }
 
-template <class T, std::enable_if_t<negation<std::is_trivial<T>>::value, void*>>
+template <class T>
+    requires(!std::is_trivial_v<T>)
 IOResult<T> BinarySerializerObject::expect_element(const std::string& name, Tag<T> tag)
 {
     mio::unused(name);

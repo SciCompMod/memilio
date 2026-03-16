@@ -18,7 +18,9 @@ read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 
 if read_the_docs_build:
 
+    subprocess.call('git submodule update --init --recursive', shell=True)
     subprocess.call('cd ..; doxygen', shell=True)
+    subprocess.call('cd ..; doxysphinx build source $READTHEDOCS_OUTPUT/html Doxyfile', shell = True)
 
 # sys.path.insert(0, os.path.abspath('../../pycode'))
 
@@ -34,10 +36,9 @@ extensions = [
     'sphinx_copybutton',
     'sphinx_toolbox.collapse',
     'sphinx_design',
-    'breathe',
-    'exhale',
     'hoverxref.extension',
-    #    'sphinx_remove_toctrees'
+    'sphinxcontrib.doxylink',
+#    'sphinx_remove_toctrees'
 ]
 
 intersphinx_mapping = {
@@ -62,18 +63,16 @@ hoverxref_role_types = {
     "class": "tooltip",
 }
 
-exhale_args = {
-    "containmentFolder":   "./api",
-    "rootFileName":        "library_root.rst",
-    "doxygenStripFromPath":    "..",
-    "rootFileTitle":       "C++ API",
-    "createTreeView":      True,
-    "treeViewIsBootstrap": False,
-    "contentsDirectives":    False,
+# doxylink readthedocs setup:
+doxylink = {
+    "CPP-API": ("cppapi/html/tagfile.xml", 
+                "cppapi/html")
 }
-
-breathe_projects = {"MEmilio": "../xml"}
-breathe_default_project = "MEmilio"
+#doxylink local setup:
+# doxylink = {
+#     "CPP-API": ("source/cppapi/html/tagfile.xml", 
+#                 "../../source/cppapi/html")
+# }
 
 # remove_from_toctrees = ["api/*"]
 
