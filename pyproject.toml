@@ -43,7 +43,7 @@ packages = ["pycode/memilio-simulation"]
 
 [tool.cibuildwheel]
 # Disable some wheels
-build = ["cp38*"]
+# build = ["cp38*"]
 skip = ["pp*", "*musllinux*", "*-win32"] 
 
 [tool.autopep8]
