@@ -27,6 +27,7 @@
 
 //Includes from MEmilio
 #include "abm/simulation.h"
+#include "abm/household.h"
 
 #include "pybind11/attr.h"
 #include "pybind11/cast.h"
@@ -127,11 +128,15 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::abm::VirusVariant, mio::AgeGroup>(
         m, "_AgeParameterArray");
+    pymio::bind_CustomIndexArray<mio::AbstractParameterDistribution, mio::abm::VirusVariant, mio::AgeGroup>(
+        m, "_DistAgeParameterArray");
+    pymio::bind_CustomIndexArray<bool, mio::AgeGroup>(m, "_boolAgeParameterArray");
+    pymio::bind_CustomIndexArray<int, mio::AgeGroup>(m, "_intAgeParameterArray");
     pymio::bind_CustomIndexArray<mio::abm::TestParameters, mio::abm::TestType>(m, "_TestData");
     pymio::bind_Index<mio::abm::ProtectionType>(m, "ProtectionTypeIndex");
     pymio::bind_ParameterSet<mio::abm::ParametersBase, pymio::EnablePickling::Never>(m, "ParametersBase");
     pymio::bind_class<mio::abm::Parameters, pymio::EnablePickling::Never, mio::abm::ParametersBase>(m, "Parameters")
-        .def(py::init<int>())
+        .def(py::init<size_t>())
         .def("check_constraints", &mio::abm::Parameters::check_constraints);
 
     pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters, pymio::EnablePickling::Never>(
@@ -232,6 +237,17 @@ PYBIND11_MODULE(_simulation_abm, m)
              static_cast<void (mio::abm::Simulation<>::*)(mio::abm::TimePoint)>(&mio::abm::Simulation<>::advance),
              py::arg("tmax"))
         .def_property_readonly("model", py::overload_cast<>(&mio::abm::Simulation<>::get_model));
+
+    pymio::bind_class<mio::abm::HouseholdMember, pymio::EnablePickling::Never>(m, "HouseholdMember")
+        .def(py::init<size_t>(), py::arg("num_agegroups") = 1)
+        .def_property("age_weights", &mio::abm::HouseholdMember::get_age_weights,
+                      &mio::abm::HouseholdMember::set_age_weight);
+
+    pymio::bind_class<mio::abm::HouseholdGroup, pymio::EnablePickling::Never>(m, "HouseholdGroup").def(py::init<>());
+    // .def("add_households", &mio::abm::HouseholdGroup::add_households,
+    //      py::arg("households") = std::vector<mio::abm::Household>(), py::arg("num_households") = 1);
+
+    pymio::bind_class<mio::abm::Household, pymio::EnablePickling::Never>(m, "Household").def(py::init<>());
 
     m.attr("__version__") = "dev";
 }
