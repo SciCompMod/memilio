@@ -789,20 +789,22 @@ public:
      * @param foi_outer_factors
      */
     void set_parameters(ScalarType suspicion_threshold, ScalarType sensitivity, ScalarType h0, ScalarType r0,
-                        ScalarType alpha, ScalarType infection_baseline, std::vector<Timepoint> infection_dates,
-                        std::vector<ScalarType> foi_inner_factors, std::vector<ScalarType> foi_outer_factors,
+                        ScalarType alpha, ScalarType infection_baseline, ScalarType culling_factor,
+                        std::vector<Timepoint> infection_dates, std::vector<ScalarType> foi_inner_factors,
+                        std::vector<ScalarType> foi_outer_factors,
                         std::vector<ScalarType> dampings = {1.0, 1.0, 1.0, 1.0, 1.0})
     {
-        m_suspicion_threshold = suspicion_threshold;
-        m_sensitivity         = sensitivity;
-        m_h0                  = h0;
-        m_r0                  = r0;
-        m_alpha               = alpha;
-        m_infection_baseline  = infection_baseline;
-        m_infection_dates     = infection_dates;
-        m_foi_inner_factor    = foi_inner_factors;
-        m_foi_outer_factor    = foi_outer_factors;
-        m_dampings            = dampings;
+        m_suspicion_threshold      = suspicion_threshold;
+        m_sensitivity              = sensitivity;
+        m_h0                       = h0;
+        m_r0                       = r0;
+        m_alpha                    = alpha;
+        m_infection_baseline       = infection_baseline;
+        m_culling_capacity_per_day = 64116 * culling_factor;
+        m_infection_dates          = infection_dates;
+        m_foi_inner_factor         = foi_inner_factors;
+        m_foi_outer_factor         = foi_outer_factors;
+        m_dampings                 = dampings;
     }
 
     /**
