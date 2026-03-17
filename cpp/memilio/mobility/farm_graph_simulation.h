@@ -479,25 +479,9 @@ private:
 
     void post_culling_test(Node& node)
     {
-        bool positive_test                   = false;
-        const std::vector<ScalarType> values = {node.get_result().get_last_value().begin(),
-                                                node.get_result().get_last_value().end() - 1};
-        for (size_t test = 0; test < 20; test++) {
-            const auto test_compartment = mio::DiscreteDistribution<size_t>::get_instance()(m_rng, values);
-            // Test infected animals
-            if (test_compartment == 3 &&
-                mio::UniformDistribution<ScalarType>::get_instance()(m_rng, 0.0, 1.0) < m_sensitivity) {
-                positive_test = true;
-                break;
-            }
-            // Test non-infected animals
-            else if (mio::UniformDistribution<ScalarType>::get_instance()(m_rng, 0.0, 1.0) > m_specificity) {
-                positive_test = true;
-                break;
-            }
-        }
-        if (positive_test) {
-            node.set_date_confirmation(Base::m_t + 4.0);
+        // Find cases if there are at least 10 infected birds.
+        if (node.get_result().get_last_value()[3] >= 10) {
+            node.set_date_confirmation(Base::m_t + 5.0);
             mio::log_debug("Post-culling");
         }
     }
