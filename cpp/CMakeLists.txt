@@ -197,6 +197,7 @@ if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/smm)
     add_subdirectory(models/hybrid)
     add_subdirectory(models/ode_mseirs4)
+    add_subdirectory(models/ode_meningitis)
 endif()
 
 if(MEMILIO_BUILD_EXAMPLES)
