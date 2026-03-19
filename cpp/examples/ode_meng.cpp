@@ -17,16 +17,18 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "ode_secir/model.h"
+#include "ode_meningitis/model.h"
 #include "memilio/compartments/simulation.h"
+#include "memilio/data/analyze_result.h"
 #include "memilio/utils/logging.h"
+#include "memilio/utils/time_series.h"
 
 int main()
 {
     mio::set_log_level(mio::LogLevel::debug);
 
     ScalarType t0   = 0;
-    ScalarType tmax = 50;
+    ScalarType tmax = 10;
     ScalarType dt   = 0.1;
 
     mio::log_info("Simulating meningitis model; t={} ... {} with dt = {}.", t0, tmax, dt);
@@ -34,6 +36,7 @@ int main()
     ScalarType cont_freq = 10; // set in line with the transmission risk below
 
     ScalarType nb_total_t0 = 10000;
+    ScalarType nb_inf_t0   = 100;
 
     mio::omeng::Model<ScalarType> model(1);
 
@@ -58,51 +61,47 @@ int main()
     // contact_matrix[0].add_damping(0.7, mio::SimulationTime<ScalarType>(30.));
 
     model.populations.set_total(nb_total_t0);
+    model.populations[{mio::AgeGroup(0), mio::omeng::InfectionState::Incoming}]        = 0;
     model.populations[{mio::AgeGroup(0), mio::omeng::InfectionState::SusceptibleHigh}] = 0;
     model.populations[{mio::AgeGroup(0), mio::omeng::InfectionState::Carrier}]         = 0;
-    model.populations[{mio::AgeGroup(0), mio::omeng::InfectionState::Infected}]        = 0;
+    model.populations[{mio::AgeGroup(0), mio::omeng::InfectionState::Infected}]        = nb_inf_t0;
     model.populations[{mio::AgeGroup(0), mio::omeng::InfectionState::Recovered}]       = 0;
     model.populations[{mio::AgeGroup(0), mio::omeng::InfectionState::Dead}]            = 0;
     model.populations[{mio::AgeGroup(0), mio::omeng::InfectionState::DeadNatural}]     = 0;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::omeng::InfectionState::SusceptibleLow},
-                                                nb_total_t0);
+                                                nb_total_t0 - nb_inf_t0);
 
     model.check_constraints();
 
     // Using default Integrator
-    mio::TimeSeries<ScalarType> secir = mio::omeng::simulate<ScalarType>(t0, tmax, dt, model);
+    auto result = mio::omeng::simulate_flows<ScalarType>(t0, tmax, dt, model);
 
     /*
     Example of using a different integrator
-   All available integrators are listed in cpp/memilio/math/README.md
+    All available integrators are listed in cpp/memilio/math/README.md
 
     auto integrator = std::make_unique<mio::RKIntegratorCore>();
     integrator->set_dt_min(0.3);
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
-    mio::TimeSeries<ScalarType> secir = simulate<ScalarType>(t0, tmax, dt, model, std::move(integrator));
+    auto result = mio::omeng::simulate_flows<ScalarType>(t0, tmax, dt, model, std::move(integrator));
     */
 
-    bool print_to_terminal = true;
+    // Note: The "Incoming" compartment (Inc) acts as a pure source node for recruitment.
+    // Since the FlowModel framework only supports conservative flows between compartments, there is
+    // no external inflow into Incoming. Its value therefore becomes increasingly negative over time.
+    // This is expected model behaviour: Inc accumulates the total number of recruits with a negative sign
+    // and does NOT represent a real population. The living population is S_L + S_H + C + I + R.
 
-    if (print_to_terminal) {
-        std::vector<std::string> vars = {"S_H", "S_L", "C", "I", "R", "D_D", "D_N"};
-        printf("\n # t");
-        for (size_t k = 0; k < (size_t)mio::omeng::InfectionState::Count; k++) {
-            printf(" %s", vars[k].c_str());
-        }
+    // simulate_flows additionally records all inter-compartment flows at each time step.
+    // The return value is a pair: [0] = compartment TimeSeries, [1] = flow TimeSeries.
+    printf("Compartments:\n");
+    auto result_interpolated = mio::interpolate_simulation_result(result[0]);
+    result_interpolated.print_table({"Inc", "S_L", "S_H", "C", "I", "R", "D_D", "D_N"});
 
-        auto num_points = static_cast<size_t>(secir.get_num_time_points());
-        for (size_t i = 0; i < num_points; i++) {
-            printf("\n%.14f ", secir.get_time(i));
-            Eigen::VectorX<ScalarType> res_j = secir.get_value(i);
-            for (size_t j = 0; j < (size_t)mio::omeng::InfectionState::Count; j++) {
-                printf(" %.14f", res_j[j]);
-            }
-        }
-
-        Eigen::VectorX<ScalarType> res_j = secir.get_last_value();
-        printf("number total: %f", res_j[0] + res_j[1] + res_j[2] + res_j[3] + res_j[4] + res_j[5] + res_j[6]);
-    }
+    // auto result_flows_interp = mio::interpolate_simulation_result(result[1]);
+    // printf("\nFlows:\n");
+    // result_flows_interp.print_table({"Inc->S_H", "Inc->S_L", "S_H->C", "S_L->C", "C->I", "C->R", "I->R", "I->D_D",
+    //                                  "R->S_L", "R->S_H", "S_H->D_N", "S_L->D_N", "C->D_N", "I->D_N", "R->D_N"});
 }

@@ -214,3 +214,7 @@ endif()
 add_executable(ode_mseirs4_example ode_mseirs4.cpp)
 target_link_libraries(ode_mseirs4_example PRIVATE memilio ode_mseirs4)
 target_compile_options(ode_mseirs4_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(ode_meningitis_example ode_meng.cpp)
+target_link_libraries(ode_meningitis_example PRIVATE memilio ode_meningitis)
+target_compile_options(ode_meningitis_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
