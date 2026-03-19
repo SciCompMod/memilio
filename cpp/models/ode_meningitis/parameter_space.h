@@ -27,6 +27,7 @@
 #include "ode_meningitis/model.h"
 
 #include <assert.h>
+#include <limits>
 #include <string>
 #include <vector>
 #include <random>
@@ -36,9 +37,11 @@ namespace mio
 {
 namespace omeng
 {
-/** Sets alls SecirParams parameters normally distributed, 
- *  using the current value and a given standard deviation
- * @param[inout] params SecirParams including contact patterns for alle age groups
+
+/**
+ * @brief Sets all meningitis model parameters normally distributed,
+ *  using the current value and a given standard deviation.
+ * @param[inout] model Model including contact patterns
  * @param[in] t0 start time
  * @param[in] tmax end time
  * @param[in] dev_rel maximum relative deviation from particular value(s) given in params
@@ -53,7 +56,6 @@ void set_params_distributions_normal(Model<FP>& model, FP t0, FP tmax, FP dev_re
         auto upper_bound = min<FP>(max<FP>(min_val, (1 + dev_rel * 2.6) * v), 0.5 * std::numeric_limits<FP>::max());
 
         if (mio::floating_point_equal<FP>(lower_bound, upper_bound, mio::Limits<FP>::zero_tolerance())) {
-            //MSVC has problems if standard deviation for normal distribution is zero
             mio::log_debug("Bounded ParameterDistribution has standard deviation close to zero. Therefore constant "
                            "distribution is used.");
             v.set_distribution(ParameterDistributionConstant(
@@ -61,48 +63,39 @@ void set_params_distributions_normal(Model<FP>& model, FP t0, FP tmax, FP dev_re
         }
         else {
             v.set_distribution(ParameterDistributionNormal(
-                //add add limits for nonsense big values. Also mscv has a problem with a few doubles so this fixes it
                 lower_bound, upper_bound, min<FP>(max<FP>(min_val, v.value()), 0.3 * std::numeric_limits<FP>::max()),
                 min<FP>(max<FP>(min_val, dev_rel * v), std::numeric_limits<FP>::max())));
         }
     };
 
-    set_distribution(model.parameters.template get<Seasonality<FP>>(), 0.0);
-    set_distribution(model.parameters.template get<ICUCapacity<FP>>());
-    set_distribution(model.parameters.template get<TestAndTraceCapacity<FP>>());
     set_distribution(model.parameters.template get<DynamicNPIsImplementationDelay<FP>>());
 
-    // populations
+    // populations – skip Incoming, Dead and DeadNatural
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
         for (auto j = Index<InfectionState>(0); j < Index<InfectionState>(InfectionState::Count); j++) {
-
-            // don't touch S and D
-            if (j == InfectionState::Susceptible || j == InfectionState::Dead) {
+            if (j == InfectionState::Incoming || j == InfectionState::Dead ||
+                j == InfectionState::DeadNatural) {
                 continue;
             }
-
-            // variably sized groups
             set_distribution(model.populations[{i, j}], 0.0);
         }
     }
 
-    // times
+    // per-group infection parameters
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
-
-        set_distribution(model.parameters.template get<TimeExposed<FP>>()[i]);
-        set_distribution(model.parameters.template get<TimeInfectedNoSymptoms<FP>>()[i]);
-        set_distribution(model.parameters.template get<TimeInfectedSymptoms<FP>>()[i]);
-        set_distribution(model.parameters.template get<TimeInfectedSevere<FP>>()[i]);
-        set_distribution(model.parameters.template get<TimeInfectedCritical<FP>>()[i]);
-
+        set_distribution(model.parameters.template get<RateCarrierToInfected<FP>>()[i]);
+        set_distribution(model.parameters.template get<RateCarrierToRecovered<FP>>()[i]);
+        set_distribution(model.parameters.template get<RateInfectedToDead<FP>>()[i]);
+        set_distribution(model.parameters.template get<RateInfectedToRecovered<FP>>()[i]);
+        set_distribution(model.parameters.template get<RateNaturalDeath<FP>>()[i]);
+        set_distribution(model.parameters.template get<RateImmunityLoss<FP>>()[i]);
+        set_distribution(model.parameters.template get<ProbabilityImmunityLossSusLow<FP>>()[i], 0.0);
         set_distribution(model.parameters.template get<TransmissionProbabilityOnContact<FP>>()[i]);
-        set_distribution(model.parameters.template get<RelativeTransmissionNoSymptoms<FP>>()[i]);
-        set_distribution(model.parameters.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i]);
-        set_distribution(model.parameters.template get<RiskOfInfectionFromSymptomatic<FP>>()[i]);
-        set_distribution(model.parameters.template get<MaxRiskOfInfectionFromSymptomatic<FP>>()[i]);
-        set_distribution(model.parameters.template get<DeathsPerCritical<FP>>()[i]);
-        set_distribution(model.parameters.template get<SeverePerInfectedSymptoms<FP>>()[i]);
-        set_distribution(model.parameters.template get<CriticalPerSevere<FP>>()[i]);
+        set_distribution(model.parameters.template get<RiskOfInfectionFromFromCarrier<FP>>()[i]);
+        set_distribution(model.parameters.template get<RiskOfInfectionFromFromInfected<FP>>()[i]);
+        set_distribution(model.parameters.template get<ModificationRate<FP>>()[i], 0.0);
+        set_distribution(model.parameters.template get<IncomeFractionSusLow<FP>>()[i], 0.0);
+        set_distribution(model.parameters.template get<IncomeRate<FP>>()[i]);
     }
 
     // dampings
@@ -119,81 +112,55 @@ void set_params_distributions_normal(Model<FP>& model, FP t0, FP tmax, FP dev_re
 }
 
 /**
- * draws a sample from the specified distributions for all parameters related to the demographics, e.g. population.
- * @param[inout] model Model including contact patterns for alle age groups
+ * @brief Draws a sample from distributions for all demographic parameters (population).
+ * @param[inout] model Meningitis model
  */
 template <typename FP>
 void draw_sample_demographics(Model<FP>& model)
 {
-    model.parameters.template get<ICUCapacity<FP>>().draw_sample();
-    model.parameters.template get<TestAndTraceCapacity<FP>>().draw_sample();
-
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
         FP group_total = model.populations.get_group_total(i);
 
-        model.populations[{i, InfectionState::Exposed}].draw_sample();
-        model.populations[{i, InfectionState::InfectedNoSymptoms}].draw_sample();
-        model.populations[{i, InfectionState::InfectedSymptoms}].draw_sample();
-        model.populations[{i, InfectionState::InfectedSevere}].draw_sample();
-        model.populations[{i, InfectionState::InfectedCritical}].draw_sample();
+        model.populations[{i, InfectionState::SusceptibleLow}].draw_sample();
+        model.populations[{i, InfectionState::Carrier}].draw_sample();
+        model.populations[{i, InfectionState::Infected}].draw_sample();
         model.populations[{i, InfectionState::Recovered}].draw_sample();
 
-        // no sampling for dead and total numbers
-        // [...]
-
-        model.populations.template set_difference_from_group_total<AgeGroup>({i, InfectionState::Susceptible},
-                                                                             group_total);
-        model.populations.template set_difference_from_group_total<AgeGroup>({i, InfectionState::Susceptible},
-                                                                             model.populations.get_group_total(i));
+        // SusceptibleHigh is set as remainder – Dead/DeadNatural/Incoming are not sampled
+        model.populations.template set_difference_from_group_total<AgeGroup>({i, InfectionState::SusceptibleHigh},
+                                                                              group_total);
+        model.populations.template set_difference_from_group_total<AgeGroup>({i, InfectionState::SusceptibleHigh},
+                                                                              model.populations.get_group_total(i));
     }
 }
 
 /**
- * draws a sample from the specified distributions for all parameters related to the infection.
- * @param[inout] model Model including contact patterns for alle age groups
+ * @brief Draws a sample from distributions for all infection-related parameters.
+ * @param[inout] model Meningitis model
  */
 template <typename FP>
 void draw_sample_infection(Model<FP>& model)
 {
-    model.parameters.template get<Seasonality<FP>>().draw_sample();
-
-    //not age dependent
-    model.parameters.template get<TimeExposed<FP>>()[AgeGroup(0)].draw_sample();
-    model.parameters.template get<TimeInfectedNoSymptoms<FP>>()[AgeGroup(0)].draw_sample();
-    model.parameters.template get<TimeInfectedSymptoms<FP>>()[AgeGroup(0)].draw_sample();
-    model.parameters.template get<RelativeTransmissionNoSymptoms<FP>>()[AgeGroup(0)].draw_sample();
-    model.parameters.template get<RiskOfInfectionFromSymptomatic<FP>>()[AgeGroup(0)].draw_sample();
-    model.parameters.template get<MaxRiskOfInfectionFromSymptomatic<FP>>()[AgeGroup(0)].draw_sample();
-
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
-        //not age dependent
-        model.parameters.template get<TimeExposed<FP>>()[i] =
-            model.parameters.template get<TimeExposed<FP>>()[AgeGroup(0)];
-        model.parameters.template get<TimeInfectedNoSymptoms<FP>>()[i] =
-            model.parameters.template get<TimeInfectedNoSymptoms<FP>>()[AgeGroup(0)];
-        model.parameters.template get<RelativeTransmissionNoSymptoms<FP>>()[i] =
-            model.parameters.template get<RelativeTransmissionNoSymptoms<FP>>()[AgeGroup(0)];
-        model.parameters.template get<RiskOfInfectionFromSymptomatic<FP>>()[i] =
-            model.parameters.template get<RiskOfInfectionFromSymptomatic<FP>>()[AgeGroup(0)];
-        model.parameters.template get<MaxRiskOfInfectionFromSymptomatic<FP>>()[i] =
-            model.parameters.template get<MaxRiskOfInfectionFromSymptomatic<FP>>()[AgeGroup(0)];
-
-        //age dependent
-        model.parameters.template get<TimeInfectedSymptoms<FP>>()[i].draw_sample();
-        model.parameters.template get<TimeInfectedSevere<FP>>()[i].draw_sample();
-        model.parameters.template get<TimeInfectedCritical<FP>>()[i].draw_sample();
-
+        model.parameters.template get<RateCarrierToInfected<FP>>()[i].draw_sample();
+        model.parameters.template get<RateCarrierToRecovered<FP>>()[i].draw_sample();
+        model.parameters.template get<RateInfectedToDead<FP>>()[i].draw_sample();
+        model.parameters.template get<RateInfectedToRecovered<FP>>()[i].draw_sample();
+        model.parameters.template get<RateNaturalDeath<FP>>()[i].draw_sample();
+        model.parameters.template get<RateImmunityLoss<FP>>()[i].draw_sample();
+        model.parameters.template get<ProbabilityImmunityLossSusLow<FP>>()[i].draw_sample();
         model.parameters.template get<TransmissionProbabilityOnContact<FP>>()[i].draw_sample();
-        model.parameters.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i].draw_sample();
-        model.parameters.template get<DeathsPerCritical<FP>>()[i].draw_sample();
-        model.parameters.template get<SeverePerInfectedSymptoms<FP>>()[i].draw_sample();
-        model.parameters.template get<CriticalPerSevere<FP>>()[i].draw_sample();
+        model.parameters.template get<RiskOfInfectionFromFromCarrier<FP>>()[i].draw_sample();
+        model.parameters.template get<RiskOfInfectionFromFromInfected<FP>>()[i].draw_sample();
+        model.parameters.template get<ModificationRate<FP>>()[i].draw_sample();
+        model.parameters.template get<IncomeFractionSusLow<FP>>()[i].draw_sample();
+        model.parameters.template get<IncomeRate<FP>>()[i].draw_sample();
     }
 }
 
-/** Draws a sample from Model parameter distributions and stores sample values
- * as SecirParams parameter values (cf. UncertainValue and SecirParams classes).
- * @param[inout] model Model including contact patterns for alle age groups.
+/**
+ * @brief Draws a sample from all Model parameter distributions.
+ * @param[inout] model Meningitis model
  */
 template <typename FP>
 void draw_sample(Model<FP>& model)
@@ -204,12 +171,17 @@ void draw_sample(Model<FP>& model)
     model.apply_constraints();
 }
 
+/**
+ * @brief Draws samples for a graph of meningitis models.
+ * @param[inout] graph Graph of meningitis models with mobility parameters
+ * @return New graph with sampled parameter values
+ */
 template <typename FP>
 Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityParameters<FP>>& graph)
 {
     Graph<Model<FP>, MobilityParameters<FP>> sampled_graph;
 
-    //sample global parameters
+    // sample global parameters from first node
     auto& shared_params_model = graph.nodes()[0].property;
     draw_sample_infection(shared_params_model);
     auto& shared_contacts = shared_params_model.parameters.template get<ContactPatterns<FP>>();
@@ -222,18 +194,15 @@ Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityPa
     for (auto& params_node : graph.nodes()) {
         auto& node_model = params_node.property;
 
-        //sample local parameters
+        // sample local demographics
         draw_sample_demographics(params_node.property);
 
-        //copy global parameters
-        //save demographic parameters so they aren't overwritten
-        auto local_icu_capacity = node_model.parameters.template get<ICUCapacity<FP>>();
-        auto local_tnt_capacity = node_model.parameters.template get<TestAndTraceCapacity<FP>>();
-        auto local_holidays     = node_model.parameters.template get<ContactPatterns<FP>>().get_school_holidays();
-        node_model.parameters   = shared_params_model.parameters;
-        node_model.parameters.template get<ICUCapacity<FP>>()                           = local_icu_capacity;
-        node_model.parameters.template get<TestAndTraceCapacity<FP>>()                  = local_tnt_capacity;
-        node_model.parameters.template get<ContactPatterns<FP>>().get_school_holidays() = local_holidays;
+        // copy global parameters but keep node-local income rate and contact holidays
+        auto local_income_rate = node_model.parameters.template get<IncomeRate<FP>>();
+        auto local_holidays    = node_model.parameters.template get<ContactPatterns<FP>>().get_school_holidays();
+        node_model.parameters  = shared_params_model.parameters;
+        node_model.parameters.template get<IncomeRate<FP>>()                             = local_income_rate;
+        node_model.parameters.template get<ContactPatterns<FP>>().get_school_holidays()  = local_holidays;
 
         node_model.parameters.template get<ContactPatterns<FP>>().make_matrix();
         node_model.apply_constraints();
