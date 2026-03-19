@@ -146,6 +146,11 @@ add_pymio_module(_simulation_omseirs4
     SOURCES memilio/simulation/bindings/models/omseirs4.cpp
 )
 
+add_pymio_module(_simulation_omeng
+    LINKED_LIBRARIES memilio ode_meningitis
+    SOURCES memilio/simulation/bindings/models/omeng.cpp
+)
+
 # install all shared memilio libraries, which were given as "LINKED_LIBRARIES" to add_pymio_module
 list(REMOVE_DUPLICATES PYMIO_MEMILIO_LIBS_LIST)
 

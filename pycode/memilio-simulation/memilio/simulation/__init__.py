@@ -56,5 +56,9 @@ def __getattr__(attr):
         import memilio.simulation.ssirs as ssirs
         return ssirs
 
+    elif attr == "omeng":
+        import memilio.simulation.omeng as omeng
+        return omeng
+
     raise AttributeError("module {!r} has no attribute "
                          "{!r}".format(__name__, attr))
