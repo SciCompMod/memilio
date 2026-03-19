@@ -345,6 +345,43 @@ Lena Plötzke received her Bachelor's and Master's degrees from the University o
 
 
 
+Khoa Nguyen
+^^^^^^^^^^^
+ 
+.. image:: https://martinkuehn.eu/research/images/khoa.png
+   :alt: Khoa Nguyen
+   :width: 150px
+   :align: left
+   :class: developer-photo
+ 
+**Research Focus:**
+ 
+Agent-Based Modeling, Computational Social Science, Mobility and Energy Transitions, Epidemiological Simulation, Policy-Oriented Simulation, Behavioural Decision Modeling
+
+Khoa Nguyen obtained an MEng in Computing from Imperial College London and a PhD in Computer Science from Utrecht University, with a thesis on behavioural decision-making frameworks for agent-based models. He has held research positions at HES-SO Valais-Wallis, the Helmholtz Centre for Infection Research, and UniSanté in Lausanne, working at the intersection of computational modeling, public policy, and applied AI. His research focuses on the development and application of simulation models to study complex socio-technical systems, particularly in the domains of mobility, energy, infectious disease, and health services. Over the years, he contributed to developing and analyzing models for Swiss mobility demand (BedDeM), epidemic spread based on population mobility (PANDEMOS), and AI-driven digital navigation platforms in healthcare (UniSanté). His work spans multi-agent systems, micro–macro model coupling, and policy-oriented scenario analysis, leveraging agent-based, metapopulation-style, and hybrid approaches alongside modern data and AI pipelines.
+
+ 
+.. dropdown:: Selected Publications
+   :animate: fade-in-slide-down
+
+   * |MEmilio_citation|
+   * |Agent-based_modeling_for|
+   * Nguyen, K. (2023). A Behavioural Decision-Making Framework For Agent-Based Models. PhD thesis, Utrecht University. https://dspace.library.uu.nl/handle/1874/425798.
+   * Nguyen, K., Piana, V., and Schumann, R. (2022). Simulating bounded rationality in decision-making: an agent-based choice modelling of vehicle purchasing. In Conference of the European Social Simulation Association, pages 421–433. Springer. DOI: http://dx.doi.org/10.1007/978-3-031-34920-1_34 
+   * Nguyen, K. and Schumann, R. (2021). An exploratory comparison of behavioural determinants in mobility modal choices. In Ahrweiler, P. and Neumann, M., editors, Advances in Social Simulation, pages 569–581, Cham. Springer International Publishing. DOI: https://doi.org/10.1007/978-3-030-61503-1_54
+   * Nguyen, K. and Schumann, R. (2021). A socio-psychological approach to simulate trust and reputation in modal choices. In Uchiya, T., Bai, Q., and Marsá Maestre, I., editors, PRIMA 2020: Principles and Practice of Multi-Agent Systems, Lecture Notes in Computer Science, pages 39–54, Cham. Springer International Publishing. https://doi.org/10.1007/978-3-030-69322-0_3
+   * Nguyen, K. and Schumann, R. (2020). A socio-psychological modal choice approach to modelling mobility and energy demand for electric vehicles. In Nguyen, K., Roman, R., and Schumann, R., editors, Proceedings of the 9th DACH+ Conference on Energy Informatics, volume 3 of Energy Informatics. Springer. DOI: https://doi.org/10.1186/s42162-020-00123-7
+   * Nguyen, K. and Schumann, R. (2020). On developing a more comprehensive decision-making architecture for empirical social research: Lesson from agent-based simulation of mobility demands in Switzerland. In Paolucci, M., Sichman, J. S., and Verhagen, H., editors, Multi-Agent-Based Simulation XX, volume XX of International Workshop on Multi-Agent Systems and Agent-Based Simulation, pages 39–54, Cham. Springer International Publishing. DOI: https://doi.org/10.1007/978-3-030-60843-9_4
+ 
+ 
+.. dropdown:: Links
+   :animate: fade-in-slide-down
+ 
+   * `Google Scholar Profile <https://scholar.google.com/citations?user=tVkA0eUAAAAJ>`__
+   * `ORCID Profile: 0000-0002-3123-602X <https://orcid.org/0000-0002-3123-602X>`__
+
+
+
 Margrit Klitz
 ^^^^^^^^^^^^^
 
