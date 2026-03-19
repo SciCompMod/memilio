@@ -27,13 +27,8 @@
 #include "ode_meningitis/analyze_result.h"
 #include "ode_meningitis/infection_state.h"
 #include "ode_meningitis/parameters.h"
-#include "memilio/math/smoother.h"
 #include "memilio/math/eigen_util.h"
-#include "memilio/math/interpolation.h"
 #include "parameters.h"
-
-#include <numbers>
-#include <complex>
 
 namespace mio
 {
@@ -43,16 +38,22 @@ namespace omeng
 // Create template specializations for the age resolved
 // SECIHURD model
 // clang-format off
-using Flows = TypeList<Flow<InfectionState::Incoming,               InfectionState::SusceptibleHigh>,
-                       Flow<InfectionState::Incoming,               InfectionState::SusceptibleLow>,
-                       Flow<InfectionState::SusceptibleHigh,        InfectionState::Carrier>,
-                       Flow<InfectionState::SusceptibleLow,         InfectionState::Carrier>,
-                       Flow<InfectionState::Carrier,                InfectionState::Infected>,
-                       Flow<InfectionState::Infected,               InfectionState::Recovered>,
-                       Flow<InfectionState::Recovered,              InfectionState::SusceptibleHigh>,
-                       Flow<InfectionState::Recovered,              InfectionState::SusceptibleLow>,
-                       Flow<InfectionState::Infected,               InfectionState::Dead>,
-                       Flow<InfectionState::Infected,               InfectionState::DeadNatural>>;
+using Flows = TypeList<
+    Flow<InfectionState::Incoming,        InfectionState::SusceptibleHigh>,
+    Flow<InfectionState::Incoming,        InfectionState::SusceptibleLow>,
+    Flow<InfectionState::SusceptibleHigh, InfectionState::Carrier>,         
+    Flow<InfectionState::SusceptibleLow,  InfectionState::Carrier>,          
+    Flow<InfectionState::Carrier,         InfectionState::Infected>,         
+    Flow<InfectionState::Carrier,         InfectionState::Recovered>,        
+    Flow<InfectionState::Infected,        InfectionState::Recovered>,        
+    Flow<InfectionState::Infected,        InfectionState::Dead>,             
+    Flow<InfectionState::Recovered,       InfectionState::SusceptibleLow>,  
+    Flow<InfectionState::Recovered,       InfectionState::SusceptibleHigh>, 
+    Flow<InfectionState::SusceptibleHigh, InfectionState::DeadNatural>,
+    Flow<InfectionState::SusceptibleLow,  InfectionState::DeadNatural>,
+    Flow<InfectionState::Carrier,         InfectionState::DeadNatural>,
+    Flow<InfectionState::Infected,        InfectionState::DeadNatural>,
+    Flow<InfectionState::Recovered,       InfectionState::DeadNatural>>;
 // clang-format on
 
 template <typename FP>
@@ -90,8 +91,6 @@ public:
             size_t Ci  = this->populations.get_flat_index({i, InfectionState::Carrier});
             size_t Ii  = this->populations.get_flat_index({i, InfectionState::Infected});
             size_t Ri  = this->populations.get_flat_index({i, InfectionState::Recovered});
-            size_t DDi = this->populations.get_flat_index({i, InfectionState::DeadDisease});
-            size_t DNi = this->populations.get_flat_index({i, InfectionState::DeadNatural});
 
             FP dummy_flow_S = 0;
             for (AgeGroup j = 0; j < n_agegroups; j++) {
@@ -100,8 +99,6 @@ public:
                 size_t Cj  = this->populations.get_flat_index({j, InfectionState::Carrier});
                 size_t Ij  = this->populations.get_flat_index({j, InfectionState::Infected});
                 size_t Rj  = this->populations.get_flat_index({j, InfectionState::Recovered});
-                size_t DDj = this->populations.get_flat_index({j, InfectionState::DeadDisease});
-                size_t DNj = this->populations.get_flat_index({j, InfectionState::DeadNatural});
 
                 FP cont_freq_eff = contact_matrix.get_matrix_at(SimulationTime<FP>(t))(
                     static_cast<Eigen::Index>((size_t)i), static_cast<Eigen::Index>((size_t)j));
@@ -114,14 +111,11 @@ public:
             }
 
             // Incoming from outside to SH
-            flows[this->template get_flat_flow_index<InfectionState::Incoming, InfectionState::SusceptibleHigh>({i})] +=
-                (1.0 - params.template get<IncomeFractionSusLow<typename FP><FP>>()[i]) *
-                params.template get<IncomeRate<FP>>()[i];
-
+            flows[this->template get_flat_flow_index<InfectionState::Incoming, InfectionState::SusceptibleHigh>({i})] =
+                (1.0 - params.template get<IncomeFractionSusLow<FP>>()[i]) * params.template get<IncomeRate<FP>>()[i];
             // Incoming from outside to SL
-            flows[this->template get_flat_flow_index<InfectionState::Incoming, InfectionState::SusceptibleLow>({i})] +=
-                params.template get<IncomeFractionSusLow<typename FP><FP>>()[i] *
-                params.template get<IncomeRate<FP>>()[i];
+            flows[this->template get_flat_flow_index<InfectionState::Incoming, InfectionState::SusceptibleLow>({i})] =
+                params.template get<IncomeFractionSusLow<FP>>()[i] * params.template get<IncomeRate<FP>>()[i];
 
             // SusceptibleHigh -> Carrier
             flows[this->template get_flat_flow_index<InfectionState::SusceptibleHigh, InfectionState::Carrier>({i})] +=
@@ -363,24 +357,6 @@ FP get_infections_relative(const Simulation<FP, Base>& sim, FP /* t*/, const Eig
     FP inf_rel = sum_inf / sim.get_model().populations.get_total();
 
     return inf_rel;
-}
-
-/**
- * Get mobility factors.
- * Used by mobility graph simulation.
- * @param model the compartment model with initial values.
- * @param t current simulation time.
- * @param y current value of compartments.
- * @return vector expression, same size as y, with mobility factors per compartment.
- * @tparam FP floating point type, e.g., double.
- * @tparam Base simulation type that uses the meningitis compartment model; see Simulation.
- */
-template <typename FP, class Base = mio::Simulation<FP, Model<FP>>>
-auto get_mobility_factors(const Simulation<FP, Base>& /**/, FP /*t*/, const Eigen::Ref<const Eigen::VectorX<FP>>& y)
-{
-    auto factors = Eigen::VectorX<FP>::Ones(y.rows()).eval();
-
-    return factors;
 }
 
 } // namespace omeng
