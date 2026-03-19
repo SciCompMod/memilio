@@ -45,12 +45,12 @@ int main()
     model.parameters.get<mio::omeng::RateImmunityLoss<ScalarType>>()                = 0.851; // xi
     model.parameters.get<mio::omeng::ProbabilityImmunityLossSusLow<ScalarType>>()   = 0.6997; //  theta
     model.parameters.get<mio::omeng::ModificationRate<ScalarType>>()                = 0.23; //  a
-    model.parameters.get<mio::omeng::IncomeFractionSusLow<ScalarType>>()            = 0.585; //  Delta
     model.parameters.get<mio::omeng::RiskOfInfectionFromFromCarrier<ScalarType>>()  = 0.742; // omega
     model.parameters.get<mio::omeng::RiskOfInfectionFromFromInfected<ScalarType>>() = 0.425; // 0 to 0.85; omega1
     model.parameters.get<mio::omeng::TransmissionProbabilityOnContact<ScalarType>>() =
         0.05; // set in line with contact frequency = 10
-    model.parameters.get<mio::omeng::IncomeRate<ScalarType>>() = 19787; // Pi
+    model.parameters.get<mio::omeng::IncomeFractionSusLow<ScalarType>>() = 0.585; //  Delta
+    model.parameters.get<mio::omeng::IncomeRate<ScalarType>>()           = 19787; // Pi
 
     mio::ContactMatrixGroup<ScalarType>& contact_matrix =
         model.parameters.get<mio::omeng::ContactPatterns<ScalarType>>();
