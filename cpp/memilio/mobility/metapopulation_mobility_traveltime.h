@@ -241,8 +241,9 @@ TravelTimeSchedule compute_traveltime_schedule(const Graph<NodeProp, EdgeProp>& 
     sched.first_mobility_step.resize(n_edges, n_steps);
 
     // -- 1. Build per-edge schedules --------------------------------------
+    auto all_edges = graph.edges();
     for (size_t ei = 0; ei < n_edges; ++ei) {
-        const auto& e          = graph.edges()[ei];
+        const auto& e          = all_edges[ei];
         const auto& edge       = e.property;
         const size_t dest_node = e.end_node_idx;
         const size_t src_node  = e.start_node_idx;
@@ -520,7 +521,8 @@ private:
     /// first transit node's mobility_sim.
     void init_mobility(size_t ei, FP t_sub)
     {
-        auto& e         = m_graph.edges()[ei];
+        auto all_edges  = m_graph.edges();
+        auto& e         = all_edges[ei];
         auto& edge      = e.property;
         auto& node_from = m_graph.nodes()[e.start_node_idx].property.local_sim;
 
@@ -552,8 +554,9 @@ private:
     /// Move commuters from the previous node to the current node in the schedule.
     void transfer_commuters(size_t ei, size_t step, FP /*t_sub*/)
     {
-        auto& e    = m_graph.edges()[ei];
-        auto& edge = e.property;
+        auto all_edges = m_graph.edges();
+        auto& e        = all_edges[ei];
+        auto& edge     = e.property;
 
         if (edge.mobile_population.get_num_time_points() == 0)
             return;
@@ -607,8 +610,9 @@ private:
 
     void update_commuter_states(size_t step, FP t_sub, FP sub_dt)
     {
+        auto all_edges = m_graph.edges();
         for (size_t ei : m_schedule.edges_at_step[step]) {
-            auto& e    = m_graph.edges()[ei];
+            auto& e    = all_edges[ei];
             auto& edge = e.property;
 
             if (edge.mobile_population.get_num_time_points() == 0)
@@ -656,8 +660,9 @@ private:
     void end_of_day(FP t_end)
     {
         // Return all still-mobile commuters to their home local_sim.
-        for (size_t ei = 0; ei < m_graph.edges().size(); ++ei) {
-            auto& e    = m_graph.edges()[ei];
+        auto all_edges = m_graph.edges();
+        for (size_t ei = 0; ei < all_edges.size(); ++ei) {
+            auto& e    = all_edges[ei];
             auto& edge = e.property;
 
             if (edge.mobile_population.get_num_time_points() == 0)
