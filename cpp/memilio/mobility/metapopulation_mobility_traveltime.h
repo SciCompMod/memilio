@@ -456,259 +456,259 @@ public:
                 for (auto& n : m_graph.nodes()) {
                     n.property.local_sim.get_simulation().advance(t_max);
                 }
+                m_t = t_max;
+                break;
             }
-            m_t = t_max;
-            break;
-        }
 
-        for (size_t step = 0; step < m_n_steps; ++step) {
-            const FP t_sub = m_t + static_cast<FP>(step) * sub_dt;
+            for (size_t step = 0; step < m_n_steps; ++step) {
+                const FP t_sub = m_t + static_cast<FP>(step) * sub_dt;
 
-            // Phase 1: Move commuters along edges.
-            move_commuters(step, t_sub);
+                // Phase 1: Move commuters along edges.
+                move_commuters(step, t_sub);
 
-            // Phase 2: Advance local simulations.
-            advance_local_sims(step, t_sub, sub_dt);
+                // Phase 2: Advance local simulations.
+                advance_local_sims(step, t_sub, sub_dt);
 
-            // Phase 3: Update infection states of commuters in transit.
-            update_commuter_states(step, t_sub, sub_dt);
-        }
+                // Phase 3: Update infection states of commuters in transit.
+                update_commuter_states(step, t_sub, sub_dt);
+            }
 
-        // End-of-day: return remaining transit individuals, reset mobility nodes.
-        end_of_day(m_t + FP{1});
+            // End-of-day: return remaining transit individuals, reset mobility nodes.
+            end_of_day(m_t + FP{1});
 
-        m_t += FP{1};
+            m_t += FP{1};
 
-        // Interpolate to daily resolution after interpolation_threshold days to limit memory usage.
-        if (m_t > interpolation_threshold) {
-            interpolate_results();
+            // Interpolate to daily resolution after interpolation_threshold days to limit memory usage.
+            if (m_t > interpolation_threshold) {
+                interpolate_results();
+            }
         }
     }
-}
 
-private : FP m_t;
-FP m_dt;
-GraphT m_graph;
-size_t m_n_steps;
-TravelTimeSchedule m_schedule;
+private:
+    FP m_t;
+    FP m_dt;
+    GraphT m_graph;
+    size_t m_n_steps;
+    TravelTimeSchedule m_schedule;
 
-FP compute_first_departure() const
-{
-    FP earliest = FP{1};
-    for (size_t ei = 0; ei < m_graph.edges().size(); ++ei) {
-        const FP t_dep = static_cast<FP>(m_schedule.first_mobility_step[ei]) / m_n_steps;
-        earliest       = std::min(earliest, t_dep);
-    }
-    return earliest;
-}
-
-void move_commuters(size_t step, FP t_sub)
-{
-    for (size_t ei : m_schedule.edges_at_step[step]) {
-        if (step == m_schedule.first_mobility_step[ei]) {
-            // First mobility step: extract commuters from local_sim of origin.
-            init_mobility(ei, t_sub);
+    FP compute_first_departure() const
+    {
+        FP earliest = FP{1};
+        for (size_t ei = 0; ei < m_graph.edges().size(); ++ei) {
+            const FP t_dep = static_cast<FP>(m_schedule.first_mobility_step[ei]) / m_n_steps;
+            earliest       = std::min(earliest, t_dep);
         }
-        else {
-            // Subsequent steps: move commuters from previous to current transit node.
-            transfer_commuters(ei, step, t_sub);
+        return earliest;
+    }
+
+    void move_commuters(size_t step, FP t_sub)
+    {
+        for (size_t ei : m_schedule.edges_at_step[step]) {
+            if (step == m_schedule.first_mobility_step[ei]) {
+                // First mobility step: extract commuters from local_sim of origin.
+                init_mobility(ei, t_sub);
+            }
+            else {
+                // Subsequent steps: move commuters from previous to current transit node.
+                transfer_commuters(ei, step, t_sub);
+            }
         }
     }
-}
 
-/// Extract commuters from local_sim at the origin node and place them in the
-/// first transit node's mobility_sim.
-void init_mobility(size_t ei, FP t_sub)
-{
-    auto& e         = m_graph.edges()[ei];
-    auto& edge      = e.property;
-    auto& node_from = m_graph.nodes()[e.start_node_idx].property.local_sim;
+    /// Extract commuters from local_sim at the origin node and place them in the
+    /// first transit node's mobility_sim.
+    void init_mobility(size_t ei, FP t_sub)
+    {
+        auto& e         = m_graph.edges()[ei];
+        auto& edge      = e.property;
+        auto& node_from = m_graph.nodes()[e.start_node_idx].property.local_sim;
 
-    const auto& last_val = node_from.get_result().get_last_value();
-    const auto& coeffs   = edge.parameters.get_coefficients().get_matrix_at(SimulationTime<FP>(t_sub));
-    const auto factors   = get_mobility_factors<FP>(node_from, t_sub, last_val);
+        const auto& last_val = node_from.get_result().get_last_value();
+        const auto& coeffs   = edge.parameters.get_coefficients().get_matrix_at(SimulationTime<FP>(t_sub));
+        const auto factors   = get_mobility_factors<FP>(node_from, t_sub, last_val);
 
-    Eigen::VectorX<FP> travel_subgroup = (last_val.array() * coeffs.array() * factors.array()).matrix();
+        Eigen::VectorX<FP> travel_subgroup = (last_val.array() * coeffs.array() * factors.array()).matrix();
 
-    // Clamp negatives
-    travel_subgroup = travel_subgroup.cwiseMax(FP{0});
+        // Clamp negatives
+        travel_subgroup = travel_subgroup.cwiseMax(FP{0});
 
-    // Optional: test commuters
-    test_commuters<FP>(node_from, travel_subgroup, t_sub);
+        // Optional: test commuters
+        test_commuters<FP>(node_from, travel_subgroup, t_sub);
 
-    edge.mobile_population.add_time_point(t_sub, travel_subgroup);
-    edge.return_times.add_time_point(t_sub);
+        edge.mobile_population.add_time_point(t_sub, travel_subgroup);
+        edge.return_times.add_time_point(t_sub);
 
-    // Move from origin local_sim.
-    Eigen::Ref<Eigen::VectorX<FP>> origin_val = node_from.get_result().get_last_value();
-    origin_val -= travel_subgroup;
+        // Move from origin local_sim.
+        Eigen::Ref<Eigen::VectorX<FP>> origin_val = node_from.get_result().get_last_value();
+        origin_val -= travel_subgroup;
 
-    // Place in first transit node's mobility_sim.
-    const size_t first_transit = edge.path.front();
-    auto& mob_sim              = m_graph.nodes()[first_transit].property.mobility_sim;
-    mob_sim.get_result().get_last_value() += travel_subgroup;
-}
-
-/// Move commuters from the previous node to the current node in the schedule.
-void transfer_commuters(size_t ei, size_t step, FP /*t_sub*/)
-{
-    auto& e    = m_graph.edges()[ei];
-    auto& edge = e.property;
-
-    if (edge.mobile_population.get_num_time_points() == 0)
-        return;
-
-    const size_t prev_node = m_schedule.node_at_step[ei][step - 1];
-    const size_t curr_node = m_schedule.node_at_step[ei][step];
-    const bool prev_mob    = m_schedule.in_mobility[ei][step - 1];
-    const bool curr_mob    = m_schedule.in_mobility[ei][step];
-
-    if (prev_node == curr_node && prev_mob == curr_mob)
-        return;
-
-    Eigen::Ref<Eigen::VectorX<FP>> travel_subgroup = edge.mobile_population.get_last_value();
-    size_t num_age                                 = static_cast<size_t>(
-        m_graph.nodes()[prev_node].property.local_sim.get_simulation().get_model().parameters.get_num_groups());
-    correct_negative_compartments<FP>(travel_subgroup, num_age);
-
-    // Remove from previous location.
-    auto& sim_from =
-        prev_mob ? m_graph.nodes()[prev_node].property.mobility_sim : m_graph.nodes()[prev_node].property.local_sim;
-    sim_from.get_result().get_last_value() -= travel_subgroup;
-
-    // Add to new location.
-    auto& sim_to =
-        curr_mob ? m_graph.nodes()[curr_node].property.mobility_sim : m_graph.nodes()[curr_node].property.local_sim;
-    sim_to.get_result().get_last_value() += travel_subgroup;
-
-    correct_negative_compartments<FP>(sim_from.get_result().get_last_value(), num_age);
-    correct_negative_compartments<FP>(sim_to.get_result().get_last_value(), num_age);
-}
-
-void advance_local_sims(size_t step, FP t_sub, FP sub_dt)
-{
-    for (size_t ni : m_schedule.local_nodes_at_step[step]) {
-        // Determine the next breakpoint to find dt for this node.
-        const FP node_dt = get_local_dt(ni, step, sub_dt);
-        m_graph.nodes()[ni].property.local_sim.get_simulation().advance(t_sub + node_dt);
+        // Place in first transit node's mobility_sim.
+        const size_t first_transit = edge.path.front();
+        auto& mob_sim              = m_graph.nodes()[first_transit].property.mobility_sim;
+        mob_sim.get_result().get_last_value() += travel_subgroup;
     }
-}
 
-FP get_local_dt(size_t ni, size_t step, FP sub_dt) const
-{
-    const auto& bps = m_schedule.local_breakpoints[ni];
-    const auto it   = std::lower_bound(bps.begin(), bps.end(), step);
-    if (it == bps.end() || std::next(it) == bps.end()) {
-        // Last breakpoint: advance to end of day.
-        return (static_cast<FP>(m_n_steps) - static_cast<FP>(step)) * sub_dt;
-    }
-    return static_cast<FP>(*std::next(it) - step) * sub_dt;
-}
-
-void update_commuter_states(size_t step, FP t_sub, FP sub_dt)
-{
-    for (size_t ei : m_schedule.edges_at_step[step]) {
+    /// Move commuters from the previous node to the current node in the schedule.
+    void transfer_commuters(size_t ei, size_t step, FP /*t_sub*/)
+    {
         auto& e    = m_graph.edges()[ei];
         auto& edge = e.property;
 
         if (edge.mobile_population.get_num_time_points() == 0)
-            continue;
-        if (!m_schedule.in_mobility[ei][step])
-            continue; // If not in transit, skip.
+            return;
 
+        const size_t prev_node = m_schedule.node_at_step[ei][step - 1];
         const size_t curr_node = m_schedule.node_at_step[ei][step];
-        auto& mob_node         = m_graph.nodes()[curr_node].property.mobility_sim;
-        auto& model            = mob_node.get_simulation().get_model();
+        const bool prev_mob    = m_schedule.in_mobility[ei][step - 1];
+        const bool curr_mob    = m_schedule.in_mobility[ei][step];
 
-        // Auxiliary Euler step for commuter sub-population state estimation
-        FP mob_dt                                      = get_mobility_dt(ei, step, sub_dt);
-        Eigen::Ref<Eigen::VectorX<FP>> travel_subgroup = edge.mobile_population.get_last_value();
-        const Eigen::VectorX<FP> total_mob             = mob_node.get_result().get_last_value();
-
-        Eigen::VectorX<FP> y0 = travel_subgroup.eval();
-        Eigen::VectorX<FP> y1 = Eigen::VectorX<FP>::Zero(y0.size());
-        FP t_euler            = t_sub;
-        auto deriv_fn = [&](Eigen::Ref<const Eigen::VectorX<FP>> y, FP /*t*/, Eigen::Ref<Eigen::VectorX<FP>> dydt) {
-            model.get_derivatives(total_mob, y, t_sub, dydt);
-        };
-        DerivFunction<FP> f = deriv_fn;
-        EulerIntegratorCore<FP>().step(f, y0, t_euler, mob_dt, y1);
-        travel_subgroup = y1;
-
-        // The auxiliary Euler heuristic can is prone to overshooting, especially when a subpopulation share is
-        // high and the dynamics are fast. To prevent negative compartment values, we apply a correction step.
-        size_t num_age = static_cast<size_t>(model.parameters.get_num_groups());
-        correct_negative_compartments<FP>(travel_subgroup, num_age);
-    }
-}
-
-FP get_mobility_dt(size_t ei, size_t step, FP sub_dt) const
-{
-    const size_t curr_node = m_schedule.node_at_step[ei][step];
-    const auto& bps        = m_schedule.mobility_breakpoints[curr_node];
-    const auto it          = std::lower_bound(bps.begin(), bps.end(), step);
-    if (it == bps.end() || std::next(it) == bps.end()) {
-        return (static_cast<FP>(m_n_steps) - static_cast<FP>(step)) * sub_dt;
-    }
-    return static_cast<FP>(*std::next(it) - step) * sub_dt;
-}
-
-void end_of_day(FP t_end)
-{
-    // Return all still-mobile commuters to their home local_sim.
-    for (size_t ei = 0; ei < m_graph.edges().size(); ++ei) {
-        auto& e    = m_graph.edges()[ei];
-        auto& edge = e.property;
-
-        if (edge.mobile_population.get_num_time_points() == 0)
-            continue;
-
-        // Final node in schedule is always the origin (home).
-        const size_t home_node = e.start_node_idx;
-        const size_t last_step = m_n_steps - 1;
-        const bool last_mob    = m_schedule.in_mobility[ei][last_step];
-        auto& sim_last = last_mob ? m_graph.nodes()[m_schedule.node_at_step[ei][last_step]].property.mobility_sim
-                                  : m_graph.nodes()[m_schedule.node_at_step[ei][last_step]].property.local_sim;
+        if (prev_node == curr_node && prev_mob == curr_mob)
+            return;
 
         Eigen::Ref<Eigen::VectorX<FP>> travel_subgroup = edge.mobile_population.get_last_value();
         size_t num_age                                 = static_cast<size_t>(
-            m_graph.nodes()[home_node].property.local_sim.get_simulation().get_model().parameters.get_num_groups());
+            m_graph.nodes()[prev_node].property.local_sim.get_simulation().get_model().parameters.get_num_groups());
         correct_negative_compartments<FP>(travel_subgroup, num_age);
 
-        sim_last.get_result().get_last_value() -= travel_subgroup;
-        m_graph.nodes()[home_node].property.local_sim.get_result().get_last_value() += travel_subgroup;
+        // Remove from previous location.
+        auto& sim_from =
+            prev_mob ? m_graph.nodes()[prev_node].property.mobility_sim : m_graph.nodes()[prev_node].property.local_sim;
+        sim_from.get_result().get_last_value() -= travel_subgroup;
 
-        // Clear edge commuter tracking.
-        for (Eigen::Index i = edge.mobile_population.get_num_time_points() - 1; i >= 0; --i) {
-            edge.mobile_population.remove_time_point(i);
-            edge.return_times.remove_time_point(i);
+        // Add to new location.
+        auto& sim_to =
+            curr_mob ? m_graph.nodes()[curr_node].property.mobility_sim : m_graph.nodes()[curr_node].property.local_sim;
+        sim_to.get_result().get_last_value() += travel_subgroup;
+
+        correct_negative_compartments<FP>(sim_from.get_result().get_last_value(), num_age);
+        correct_negative_compartments<FP>(sim_to.get_result().get_last_value(), num_age);
+    }
+
+    void advance_local_sims(size_t step, FP t_sub, FP sub_dt)
+    {
+        for (size_t ni : m_schedule.local_nodes_at_step[step]) {
+            // Determine the next breakpoint to find dt for this node.
+            const FP node_dt = get_local_dt(ni, step, sub_dt);
+            m_graph.nodes()[ni].property.local_sim.get_simulation().advance(t_sub + node_dt);
         }
     }
 
-    // Reset mobility_sim to zero: transit nodes start empty each day.
-    for (auto& n : m_graph.nodes()) {
-        n.property.mobility_sim.get_result().get_last_value().setZero();
+    FP get_local_dt(size_t ni, size_t step, FP sub_dt) const
+    {
+        const auto& bps = m_schedule.local_breakpoints[ni];
+        const auto it   = std::lower_bound(bps.begin(), bps.end(), step);
+        if (it == bps.end() || std::next(it) == bps.end()) {
+            // Last breakpoint: advance to end of day.
+            return (static_cast<FP>(m_n_steps) - static_cast<FP>(step)) * sub_dt;
+        }
+        return static_cast<FP>(*std::next(it) - step) * sub_dt;
     }
 
-    mio::unused(t_end);
-}
+    void update_commuter_states(size_t step, FP t_sub, FP sub_dt)
+    {
+        for (size_t ei : m_schedule.edges_at_step[step]) {
+            auto& e    = m_graph.edges()[ei];
+            auto& edge = e.property;
 
-/// Keep only one time point per day in local_sim results (daily resolution).
-void interpolate_results()
-{
-    for (auto& n : m_graph.nodes()) {
-        auto& res = n.property.local_sim.get_simulation().get_result();
-        if (res.get_num_time_points() > 2) {
-            const FP t_last   = res.get_last_time();
-            const auto v_last = res.get_last_value().eval();
-            while (res.get_num_time_points() > 1) {
-                res.remove_last_time_point();
+            if (edge.mobile_population.get_num_time_points() == 0)
+                continue;
+            if (!m_schedule.in_mobility[ei][step])
+                continue; // If not in transit, skip.
+
+            const size_t curr_node = m_schedule.node_at_step[ei][step];
+            auto& mob_node         = m_graph.nodes()[curr_node].property.mobility_sim;
+            auto& model            = mob_node.get_simulation().get_model();
+
+            // Auxiliary Euler step for commuter sub-population state estimation
+            FP mob_dt                                      = get_mobility_dt(ei, step, sub_dt);
+            Eigen::Ref<Eigen::VectorX<FP>> travel_subgroup = edge.mobile_population.get_last_value();
+            const Eigen::VectorX<FP> total_mob             = mob_node.get_result().get_last_value();
+
+            Eigen::VectorX<FP> y0 = travel_subgroup.eval();
+            Eigen::VectorX<FP> y1 = Eigen::VectorX<FP>::Zero(y0.size());
+            FP t_euler            = t_sub;
+            auto deriv_fn = [&](Eigen::Ref<const Eigen::VectorX<FP>> y, FP /*t*/, Eigen::Ref<Eigen::VectorX<FP>> dydt) {
+                model.get_derivatives(total_mob, y, t_sub, dydt);
+            };
+            DerivFunction<FP> f = deriv_fn;
+            EulerIntegratorCore<FP>().step(f, y0, t_euler, mob_dt, y1);
+            travel_subgroup = y1;
+
+            // The auxiliary Euler heuristic can is prone to overshooting, especially when a subpopulation share is
+            // high and the dynamics are fast. To prevent negative compartment values, we apply a correction step.
+            size_t num_age = static_cast<size_t>(model.parameters.get_num_groups());
+            correct_negative_compartments<FP>(travel_subgroup, num_age);
+        }
+    }
+
+    FP get_mobility_dt(size_t ei, size_t step, FP sub_dt) const
+    {
+        const size_t curr_node = m_schedule.node_at_step[ei][step];
+        const auto& bps        = m_schedule.mobility_breakpoints[curr_node];
+        const auto it          = std::lower_bound(bps.begin(), bps.end(), step);
+        if (it == bps.end() || std::next(it) == bps.end()) {
+            return (static_cast<FP>(m_n_steps) - static_cast<FP>(step)) * sub_dt;
+        }
+        return static_cast<FP>(*std::next(it) - step) * sub_dt;
+    }
+
+    void end_of_day(FP t_end)
+    {
+        // Return all still-mobile commuters to their home local_sim.
+        for (size_t ei = 0; ei < m_graph.edges().size(); ++ei) {
+            auto& e    = m_graph.edges()[ei];
+            auto& edge = e.property;
+
+            if (edge.mobile_population.get_num_time_points() == 0)
+                continue;
+
+            // Final node in schedule is always the origin (home).
+            const size_t home_node = e.start_node_idx;
+            const size_t last_step = m_n_steps - 1;
+            const bool last_mob    = m_schedule.in_mobility[ei][last_step];
+            auto& sim_last = last_mob ? m_graph.nodes()[m_schedule.node_at_step[ei][last_step]].property.mobility_sim
+                                      : m_graph.nodes()[m_schedule.node_at_step[ei][last_step]].property.local_sim;
+
+            Eigen::Ref<Eigen::VectorX<FP>> travel_subgroup = edge.mobile_population.get_last_value();
+            size_t num_age                                 = static_cast<size_t>(
+                m_graph.nodes()[home_node].property.local_sim.get_simulation().get_model().parameters.get_num_groups());
+            correct_negative_compartments<FP>(travel_subgroup, num_age);
+
+            sim_last.get_result().get_last_value() -= travel_subgroup;
+            m_graph.nodes()[home_node].property.local_sim.get_result().get_last_value() += travel_subgroup;
+
+            // Clear edge commuter tracking.
+            for (Eigen::Index i = edge.mobile_population.get_num_time_points() - 1; i >= 0; --i) {
+                edge.mobile_population.remove_time_point(i);
+                edge.return_times.remove_time_point(i);
             }
-            res.add_time_point(t_last, v_last);
+        }
+
+        // Reset mobility_sim to zero: transit nodes start empty each day.
+        for (auto& n : m_graph.nodes()) {
+            n.property.mobility_sim.get_result().get_last_value().setZero();
+        }
+
+        mio::unused(t_end);
+    }
+
+    /// Keep only one time point per day in local_sim results (daily resolution).
+    void interpolate_results()
+    {
+        for (auto& n : m_graph.nodes()) {
+            auto& res = n.property.local_sim.get_simulation().get_result();
+            if (res.get_num_time_points() > 2) {
+                const FP t_last   = res.get_last_time();
+                const auto v_last = res.get_last_value().eval();
+                while (res.get_num_time_points() > 1) {
+                    res.remove_last_time_point();
+                }
+                res.add_time_point(t_last, v_last);
+            }
         }
     }
-}
-}; // namespace mio
+}; // class GraphSimulationTravelTime
 
 /**
  * @brief Create a travel-time-aware graph simulation.
