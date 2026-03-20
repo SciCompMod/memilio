@@ -760,6 +760,7 @@ public:
     {
         return m_rng;
     }
+
     /**
      * @brief Set the free parameters for the simulation.
      * 
@@ -789,6 +790,16 @@ public:
         m_foi_inner_factor         = foi_inner_factors;
         m_foi_outer_factor         = foi_outer_factors;
         m_dampings                 = dampings;
+    }
+
+    void copy_parameters_from_simulation(const FarmSimulation<Graph, Timepoint, Timespan, edge_f, node_f>& other)
+    {
+        m_culling_queue      = other.m_culling_queue;
+        m_prev_culling_queue = other.m_prev_culling_queue;
+        m_vaccination_queue  = other.m_vaccination_queue;
+        m_first_detection    = other.m_first_detection;
+        m_standstill         = other.m_standstill;
+        m_specificity        = other.m_specificity;
     }
 
     /**

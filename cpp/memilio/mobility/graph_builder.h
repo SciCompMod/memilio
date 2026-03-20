@@ -102,6 +102,14 @@ public:
         return graph;
     }
 
+    /**
+     * @brief get last node
+     */
+    Node<NodePropertyT>& get_last_node()
+    {
+        return m_nodes.back();
+    };
+
 private:
     /**
      * @brief Sort the edge vector of a graph.
