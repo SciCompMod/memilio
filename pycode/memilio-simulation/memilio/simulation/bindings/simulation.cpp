@@ -162,5 +162,7 @@ PYBIND11_MODULE(_simulation, m)
 
     pymio::bind_random_number_generator(m, "RandomNumberGenerator");
 
+    pymio::bind_discrete_distribution(m, "DiscreteDistribution");
+
     m.attr("__version__") = "dev";
 }
