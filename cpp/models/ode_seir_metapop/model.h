@@ -109,15 +109,16 @@ public:
                     const size_t Rjn = population.get_flat_index({Region(region_n), AgeGroup(age_j), Recovered});
                     const size_t Sjn = population.get_flat_index({Region(region_n), AgeGroup(age_j), Susceptible});
 
-                    const double Nj_inv = 1.0 / (pop[Sjn] + pop[Ejn] + pop[Ijn] + pop[Rjn]);
-                    double coeffStoE    = 0.5 *
-                                       params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(
-                                           SimulationTime<FP>(t))(age_i, age_j) *
-                                       params.template get<TransmissionProbabilityOnContact<FP>>()[AgeGroup(age_i)];
+                    const FP Njn    = pop[Sjn] + pop[Ejn] + pop[Ijn] + pop[Rjn];
+                    const FP divNjn = (Njn < Limits<FP>::zero_tolerance()) ? FP(0.0) : FP(1.0 / Njn);
+                    FP coeffStoE    = 0.5 *
+                                   params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(
+                                       SimulationTime<FP>(t))(age_i, age_j) *
+                                   params.template get<TransmissionProbabilityOnContact<FP>>()[AgeGroup(age_i)];
 
                     flows[Base::template get_flat_flow_index<Susceptible, Exposed>(
                         {Region(region_n), AgeGroup(age_i)})] +=
-                        (pop[Ijn] * Nj_inv + infections_due_commuting(region_n, age_j)) * coeffStoE *
+                        (pop[Ijn] * divNjn + infections_due_commuting(region_n, age_j)) * coeffStoE *
                         y[population.get_flat_index({Region(region_n), AgeGroup(age_i), Susceptible})];
                 }
             }
@@ -171,7 +172,7 @@ public:
 
                         double coeffStoE =
                             0.5 *
-                            contact_matrix.get_matrix_at(SimulationTime<FP>(static_cast<FP>(t_idx)))(i.get(), j.get()) *
+                            contact_matrix.get_matrix_at(SimulationTime<FP>(y.get_time(t_idx)))(i.get(), j.get()) *
                             params.template get<TransmissionProbabilityOnContact<ScalarType>>()[i];
                         if (n == m) {
                             F(i.get() * num_regions + n.get(), num_age_groups * num_regions + j.get() * num_regions +
@@ -181,10 +182,10 @@ public:
                             F(i.get() * num_regions + n.get(),
                               num_age_groups * num_regions + j.get() * num_regions + m.get()) +=
                                 coeffStoE * y.get_value(t_idx)[Si] *
-                                commuting_strengths.get_matrix_at(SimulationTime<FP>(static_cast<FP>(t_idx)))(n.get(),
-                                                                                                              k.get()) *
-                                commuting_strengths.get_matrix_at(SimulationTime<FP>(static_cast<FP>(t_idx)))(m.get(),
-                                                                                                              k.get()) /
+                                commuting_strengths.get_matrix_at(SimulationTime<FP>(y.get_time(t_idx)))(n.get(),
+                                                                                                         k.get()) *
+                                commuting_strengths.get_matrix_at(SimulationTime<FP>(y.get_time(t_idx)))(m.get(),
+                                                                                                         k.get()) /
                                 population_after_commuting[{k, j}];
                         }
                     }

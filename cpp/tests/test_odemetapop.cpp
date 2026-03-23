@@ -268,6 +268,149 @@ TEST_F(ModelTestOdeMetapop, apply_constraints_parameters)
     mio::set_log_level(mio::LogLevel::warn);
 }
 
+TEST_F(ModelTestOdeMetapop, get_reproduction_numbers)
+{
+    model.parameters.set<mio::oseirmetapop::TimeExposed<ScalarType>>(5.2);
+    model.parameters.set<mio::oseirmetapop::TimeInfected<ScalarType>>(6);
+    model.parameters.set<mio::oseirmetapop::TransmissionProbabilityOnContact<ScalarType>>(0.04);
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.get<mio::oseirmetapop::ContactPatterns<ScalarType>>();
+    contact_matrix[0].get_baseline().setConstant(10);
+
+    Eigen::MatrixXd mobility_data_commuter((size_t)model.parameters.get_num_regions(),
+                                           (size_t)model.parameters.get_num_regions());
+    mobility_data_commuter << 0., 0., 0., 1., 0.2, 0., 0.6, 0.2, 0., 0.5, 0.5, 0., 0., 0., 0., 1.;
+    model.set_commuting_strengths(mobility_data_commuter);
+
+    model.apply_constraints();
+
+    tmax = 1;
+
+    Eigen::VectorXd checkReproductionNumbers(4);
+    checkReproductionNumbers << 2.3728557964184716, 2.3726126970254491, 2.3710580092591909, 2.3687971820697493;
+
+    Eigen::VectorXd checkReproductionNumbers2(4);
+    checkReproductionNumbers2 << 2.1355702167766251, 2.1353514273229033, 2.1339522083332727, 2.1319174638627727;
+
+    Eigen::VectorXd checkReproductionNumbers3(4);
+    checkReproductionNumbers3 << 1.8982846371347806, 1.8980901576203593, 1.8968464074073521, 1.8950377456557974;
+
+    mio::TimeSeries<ScalarType> result((size_t)model.parameters.get_num_regions() *
+                                       (size_t)mio::oseir::InfectionState::Count);
+    mio::TimeSeries<ScalarType>::Vector result_0(16);
+    mio::TimeSeries<ScalarType>::Vector result_1(16);
+    mio::TimeSeries<ScalarType>::Vector result_2(16);
+    mio::TimeSeries<ScalarType>::Vector result_3(16);
+
+    result_0.setZero();
+    result_1.setZero();
+    result_2.setZero();
+    result_3.setZero();
+
+    for (auto region = mio::regions::Region(0); region < mio::regions::Region(4); region++) {
+        result_0[model.populations.get_flat_index(
+            {region, mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible})] = 1049000.00000;
+        result_1[model.populations.get_flat_index(
+            {region, mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible})] = 1048892.52981;
+        result_2[model.populations.get_flat_index(
+            {region, mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible})] = 1048205.22826;
+        result_3[model.populations.get_flat_index(
+            {region, mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible})] = 1047205.75424;
+    }
+
+    result.add_time_point(0, result_0);
+    result.add_time_point(0.10000, result_1);
+    result.add_time_point(0.55000, result_2);
+    result.add_time_point(1.00000, result_3);
+
+    auto reproduction_numbers = model.get_reproduction_numbers(result);
+
+    for (int i = 0; i < reproduction_numbers.size(); i++) {
+        EXPECT_NEAR(reproduction_numbers[i], checkReproductionNumbers[i], 1e-12);
+    }
+
+    contact_matrix[0].get_baseline().setConstant(9);
+
+    auto reproduction_numbers2 = model.get_reproduction_numbers(result);
+
+    for (int i = 0; i < reproduction_numbers2.size(); i++) {
+        EXPECT_NEAR(reproduction_numbers2[i], checkReproductionNumbers2[i], 1e-12);
+    }
+
+    contact_matrix[0].get_baseline().setConstant(8);
+
+    auto reproduction_numbers3 = model.get_reproduction_numbers(result);
+
+    for (int i = 0; i < reproduction_numbers2.size(); i++) {
+        EXPECT_NEAR(reproduction_numbers3[i], checkReproductionNumbers3[i], 1e-12);
+    }
+}
+
+TEST_F(ModelTestOdeMetapop, get_reproduction_number)
+{
+    model.parameters.set<mio::oseirmetapop::TimeExposed<ScalarType>>(5.2);
+    model.parameters.set<mio::oseirmetapop::TimeInfected<ScalarType>>(6);
+    model.parameters.set<mio::oseirmetapop::TransmissionProbabilityOnContact<ScalarType>>(0.04);
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.get<mio::oseirmetapop::ContactPatterns<ScalarType>>();
+    contact_matrix[0].get_baseline().setConstant(10);
+
+    Eigen::MatrixXd mobility_data_commuter((size_t)model.parameters.get_num_regions(),
+                                           (size_t)model.parameters.get_num_regions());
+    mobility_data_commuter << 0., 0., 0., 1., 0.2, 0., 0.6, 0.2, 0., 0.5, 0.5, 0., 0., 0., 0., 1.;
+    model.set_commuting_strengths(mobility_data_commuter);
+
+    model.apply_constraints();
+
+    tmax = 1;
+
+    mio::TimeSeries<ScalarType> result((size_t)model.parameters.get_num_regions() *
+                                       (size_t)mio::oseir::InfectionState::Count);
+    mio::TimeSeries<ScalarType>::Vector result_0(16);
+    mio::TimeSeries<ScalarType>::Vector result_1(16);
+    mio::TimeSeries<ScalarType>::Vector result_2(16);
+    mio::TimeSeries<ScalarType>::Vector result_3(16);
+
+    result_0.setZero();
+    result_1.setZero();
+    result_2.setZero();
+    result_3.setZero();
+
+    for (auto region = mio::regions::Region(0); region < mio::regions::Region(4); region++) {
+        result_0[model.populations.get_flat_index(
+            {region, mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible})] = 1049000.00000;
+        result_1[model.populations.get_flat_index(
+            {region, mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible})] = 1048892.52981;
+        result_2[model.populations.get_flat_index(
+            {region, mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible})] = 1048205.22826;
+        result_3[model.populations.get_flat_index(
+            {region, mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible})] = 1047205.75424;
+    }
+
+    result.add_time_point(0, result_0);
+    result.add_time_point(0.10000, result_1);
+    result.add_time_point(0.55000, result_2);
+    result.add_time_point(1.00000, result_3);
+
+    EXPECT_FALSE(model.get_reproduction_number(-1, result)); //Test for indices out of range
+    EXPECT_FALSE(model.get_reproduction_number((size_t)result.get_num_time_points(), result));
+
+    EXPECT_EQ(model.get_reproduction_number((size_t)0, result).value(),
+              model.get_reproduction_number(0.0, result).value());
+
+    EXPECT_NEAR(model.get_reproduction_number((size_t)0, result).value(), 2.3728557964184716, 1e-12);
+    EXPECT_NEAR(model.get_reproduction_number((size_t)1, result).value(), 2.3726126970254491, 1e-12);
+    EXPECT_NEAR(model.get_reproduction_number((size_t)2, result).value(), 2.3710580092591909, 1e-12);
+
+    contact_matrix[0].get_baseline().setConstant(9);
+    EXPECT_NEAR(model.get_reproduction_number((size_t)0, result).value(), 2.1355702167766251, 1e-12);
+    EXPECT_NEAR(model.get_reproduction_number((size_t)1, result).value(), 2.1353514273229033, 1e-12);
+
+    contact_matrix[0].get_baseline().setConstant(8);
+    EXPECT_NEAR(model.get_reproduction_number((size_t)0, result).value(), 1.8982846371347806, 1e-12);
+    EXPECT_NEAR(model.get_reproduction_number((size_t)1, result).value(), 1.8980901576203593, 1e-12);
+}
+
 TEST(TestOdeMetapop, compareSEIR)
 {
     ScalarType t0   = 0;
