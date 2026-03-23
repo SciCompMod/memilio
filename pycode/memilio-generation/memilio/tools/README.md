@@ -29,7 +29,7 @@ In addition to the main source file, it is possible to include further source fi
 For this purpose, the `asts´ instance of the [ASTHandler class](/pycode/memilio-generation/memilio/generation/ast_handler.py) provides the method `add_source_file´:
 ```python
 asts.add_source_file("name_of_the_file.cpp")
-´´´
+```
 
 To set up a target folder, specify the desired output directory for the generated bindings here:
 `conf.target_folder = file_path`
