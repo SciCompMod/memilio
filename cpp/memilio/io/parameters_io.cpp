@@ -23,8 +23,8 @@
 #ifdef MEMILIO_HAS_JSONCPP
 
 #include "memilio/io/epi_data.h"
-#include "memilio/io/result_io.h"
-#include "json/value.h"
+
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -43,7 +43,7 @@ read_population_data(const std::vector<PopulationDataEntry>& population_data, co
         }
         //find region that this county belongs to
         //all counties belong to the country (id = 0)
-        auto it = std::find_if(vregion.begin(), vregion.end(), [&county_entry](auto r) {
+        auto it = std::ranges::find_if(vregion, [&county_entry](auto r) {
             return r == 0 ||
                    (county_entry.county_id &&
                     regions::StateId(r) == regions::get_state_id(int(*county_entry.county_id))) ||

@@ -22,9 +22,7 @@
 
 #include "memilio/io/binary_serializer.h"
 #include "memilio/io/io.h"
-#include "memilio/mobility/graph_simulation.h"
 #include "memilio/utils/logging.h"
-#include "memilio/utils/metaprogramming.h"
 #include "memilio/utils/miompi.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
@@ -160,14 +158,11 @@ public:
     run(CreateSimulationFunction&& create_simulation, ProcessSimulationResultFunction&& process_simulation_result)
     {
         using ResultT = EnsembleResultT<CreateSimulationFunction, ProcessSimulationResultFunction>;
-        int num_procs, rank;
+        int num_procs = 1, rank = 0;
 
 #ifdef MEMILIO_ENABLE_MPI
         MPI_Comm_size(mpi::get_world(), &num_procs);
         MPI_Comm_rank(mpi::get_world(), &rank);
-#else
-        num_procs = 1;
-        rank      = 0;
 #endif
 
         //The ParameterDistributions used for sampling parameters use thread_local_rng()
@@ -176,9 +171,8 @@ public:
         m_rng.synchronize();
 
         std::vector<size_t> run_distribution = distribute_runs(m_num_runs, num_procs);
-        size_t start_run_idx =
-            std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
-        size_t end_run_idx = start_run_idx + run_distribution[size_t(rank)];
+        size_t start_run_idx = std::accumulate(run_distribution.begin(), run_distribution.begin() + rank, size_t(0));
+        size_t end_run_idx   = start_run_idx + run_distribution[rank];
 
         if constexpr (std::is_void_v<ResultT>) {
             // if the processor returns nothing, there is nothing to synchronize

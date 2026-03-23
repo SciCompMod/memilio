@@ -355,8 +355,4 @@ An example can be found at:
 
 - `examples/lct_secir.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/lct_secir.cpp>`_ 
 
-
-Overview of the ``lsecir`` namespace:
------------------------------------------
-
-.. doxygennamespace:: mio::lsecir
+The code documentation for the model can be found at :CPP-API:`mio::lsecir` .
