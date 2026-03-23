@@ -375,14 +375,18 @@ private:
     {
         if (t < m_new_regulations_day) {
             for (size_t index = 0; index < node.get_regional_neighbors()[m_one_km_radius_index].size(); ++index) {
-                prev_cull_node(node.get_regional_neighbors()[m_one_km_radius_index][index]);
+                const auto node_id = node.get_regional_neighbors()[m_one_km_radius_index][index];
+                if (graph.nodes()[node_id].property.get_result().get_last_value().sum() > 0) {
+                    prev_cull_node(node_id);
+                }
             }
         }
         else {
             for (size_t index = 0; index < node.get_regional_neighbors()[m_three_km_radius_index].size(); ++index) {
-                if (graph.nodes()[node.get_regional_neighbors()[m_three_km_radius_index][index]]
-                        .property.get_farm_type() > 1) {
-                    prev_cull_node(node.get_regional_neighbors()[m_three_km_radius_index][index]);
+                const auto node_id = node.get_regional_neighbors()[m_three_km_radius_index][index];
+                if (graph.nodes()[node_id].property.get_farm_type() > 1 &&
+                    graph.nodes()[node_id].property.get_result().get_last_value().sum() > 0) {
+                    prev_cull_node(node_id);
                 }
             }
         }
@@ -435,7 +439,7 @@ private:
      * @param queue Queue to cull from.
      * @param capacity Number of animals that can be culled.
      */
-    ScalarType cull_queue(std::queue<std::pair<size_t, ScalarType>> queue, ScalarType capacity)
+    ScalarType cull_queue(std::queue<std::pair<size_t, ScalarType>>& queue, ScalarType capacity)
     {
         while (!queue.empty() && capacity > 0 && queue.front().second < Base::m_t - 1) {
             auto [node_id, day]     = queue.front();
