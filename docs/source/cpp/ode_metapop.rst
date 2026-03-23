@@ -13,7 +13,7 @@ Simulation
 As the model is given as a large system of ODEs, the simulation can be performed by solving the system using a standard ODE solver. The model is build on the same setup as the simpler ODE-models, so we refer to :doc:`ode` for more details.
 
 
-How to: Set up and run the ODE metapopulation model
+How to: Set up and run the ODE-based metapopulation model
 ---------------------------------------------------
 
 To set up a simulation of the ODE metapopulation model, you need to set the parameters and initial populations for each region. To do so, we can proceed similarly as for the simpler ODE models, see :doc:`ode`. Additionally, we need to set up the mobility between the regions via a mobility matrix of size :math:`n\times n`:
