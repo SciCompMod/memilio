@@ -96,23 +96,33 @@ template <typename FP>
 mio::IOResult<void> set_covid_parameters(mio::Date start_date, mio::osecirvvs::Parameters<FP>& params,
                                          const fs::path& temp_dir)
 {
-    BOOST_OUTCOME_TRY(auto&& parameter_list, mio::read_json((temp_dir / "parameter_list_lha.json").string()));
-    std::map<std::string, std::string> id_to_name{};
-    for (auto entry : parameter_list) {
-        id_to_name[entry["id"].asString()] = entry["name"].asString();
-    }
+    // BOOST_OUTCOME_TRY(auto&& parameter_list, mio::read_json((temp_dir / "parameter_list_lha.json").string()));
+    // std::map<std::string, std::string> id_to_name{};
+    // for (auto entry : parameter_list) {
+    //     id_to_name[entry["id"].asString()] = entry["name"].asString();
+    // }
 
     // Set parameters per group
-    BOOST_OUTCOME_TRY(auto&& scenario_data_run, mio::read_json((temp_dir / "scenario_data_run_lha.json").string()));
+    // BOOST_OUTCOME_TRY(auto&& scenario_data_run, mio::read_json((temp_dir / "scenario_data_run_lha.json").string()));
+
+    unused(start_date);
+    // unused(scenario_data_run);
+
+    BOOST_OUTCOME_TRY(auto&& parameters, mio::read_json((temp_dir / "parameter_list_lha_direct.json").string()));
 
     for (int group = 0; group < int(size_t(params.get_num_groups())); group++) {
         std::map<std::string, double> parameter_values_min{};
         std::map<std::string, double> parameter_values_max{};
 
-        for (auto parameter : scenario_data_run["modelParameters"]) {
-            std::string parameter_name           = id_to_name[parameter["parameterId"].asString()];
-            parameter_values_min[parameter_name] = parameter["values"][group]["valueMin"].asDouble();
-            parameter_values_max[parameter_name] = parameter["values"][group]["valueMax"].asDouble();
+        // for (auto parameter : scenario_data_run["modelParameters"]) {
+        //     std::string parameter_name           = id_to_name[parameter["parameterId"].asString()];
+        //     parameter_values_min[parameter_name] = parameter["values"][group]["valueMin"].asDouble();
+        //     parameter_values_max[parameter_name] = parameter["values"][group]["valueMax"].asDouble();
+        // }
+
+        for (auto parameter_name : parameters.getMemberNames()) {
+            parameter_values_min[parameter_name] = parameters[parameter_name][0][group].asDouble();
+            parameter_values_max[parameter_name] = parameters[parameter_name][1][group].asDouble();
         }
 
         //times
@@ -205,7 +215,8 @@ mio::IOResult<void> set_covid_parameters(mio::Date start_date, mio::osecirvvs::P
 
 mio::IOResult<mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>>
 get_graph(mio::Date start_date, const int num_days_sim, std::vector<int> lha_ids, const fs::path& data_dir,
-          const fs::path& temp_dir, bool only_one_node = false)
+          const fs::path& temp_dir, bool only_one_node = false, std::string lha_data_filename = "",
+          std::string vacc_filename = "", std::string recovered_detected_filename = "")
 {
     // global parameters
     const int num_age_groups = 6;
@@ -221,7 +232,8 @@ get_graph(mio::Date start_date, const int num_days_sim, std::vector<int> lha_ids
     mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> params_graph;
 
     BOOST_OUTCOME_TRY(mio::osecirvvs::set_lha_data<double>(params, params_graph, data_dir.string(), start_date, lha_ids,
-                                                           only_one_node));
+                                                           only_one_node, lha_data_filename, vacc_filename,
+                                                           recovered_detected_filename));
 
     return mio::success(params_graph);
 }
@@ -229,11 +241,13 @@ get_graph(mio::Date start_date, const int num_days_sim, std::vector<int> lha_ids
 mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, std::vector<int> lha_ids,
                         const std::string& data_dir, const std::string& result_dir, const std::string& temp_dir,
                         bool save_single_runs, const int num_runs, bool save_non_aggregated_results = false,
-                        bool only_one_node = false)
+                        bool only_one_node = false, std::string lha_data_filename = "", std::string vacc_filename = "",
+                        std::string recovered_detected_filename = "")
 {
     //create or load graph
     mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> params_graph;
-    BOOST_OUTCOME_TRY(auto&& created, get_graph(start_date, num_days_sim, lha_ids, data_dir, temp_dir, only_one_node));
+    BOOST_OUTCOME_TRY(auto&& created, get_graph(start_date, num_days_sim, lha_ids, data_dir, temp_dir, only_one_node,
+                                                lha_data_filename, vacc_filename, recovered_detected_filename));
     params_graph = created;
 
     std::vector<int> county_ids(params_graph.nodes().size());
@@ -310,17 +324,30 @@ int main(int argc, char** argv)
 {
     // This example runs the simulation for one county where this county provides LHA data.
 
+    std::string dataset       = "lha_data_2026-03-23";
+    std::string result_folder = "2026-03-23";
+
+    std::string setup = "original";
+    // std::string setup = "altered_vaccinations";
+
     mio::set_log_level(mio::LogLevel::warn);
     mio::mpi::init();
+    std::cout << "Starting simulation \n";
 
-    std::string data_dir   = "../../data";
-    std::string result_dir = data_dir;
-    std::string temp_dir   = data_dir;
+    std::string data_dir = "../../data";
+    std::string result_dir;
+    if (setup == "original") {
+        result_dir = data_dir + fmt::format("/results/{}/{}/original", result_folder, dataset);
+    }
+    else {
+        result_dir = data_dir + fmt::format("/results/{}/{}/altered_vaccinations", result_folder, dataset);
+    }
+    std::string temp_dir = data_dir;
     // County ID.
     std::vector<int> lha_ids = {5315};
     mio::Date start_date     = mio::Date(2020, 1, 20);
     int num_days_sim         = 30;
-    int num_simulation_runs  = 3;
+    int num_simulation_runs  = 100;
 
     if (argc == 10) {
         data_dir   = argv[1];
@@ -336,7 +363,15 @@ int main(int argc, char** argv)
     // Run simulation for model with only one node, i.e. only for Cologne.
     bool only_one_node = true;
 
-    std::string lha_data_filename = "lha_synthetic_data_altered_vaccinations_renamed.csv";
+    std::string lha_data_filename;
+    if (setup == "original") {
+        lha_data_filename = fmt::format("{}/lha_synthetic_data_renamed.csv", dataset);
+    }
+    else {
+        lha_data_filename = fmt::format("{}/lha_synthetic_data_altered_vaccinations_renamed.csv", dataset);
+    }
+    std::string vacc_filename               = fmt::format("{}/vaccination_formatted.txt", dataset);
+    std::string recovered_detected_filename = fmt::format("{}/recovered_detected_formatted.txt", dataset);
 
     //mio::thread_local_rng().seed(
     //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
@@ -356,8 +391,9 @@ int main(int argc, char** argv)
     }
     printf("Saving results to \"%s\".\n", result_dir.c_str());
 
-    auto result = run(num_days_sim, start_date, lha_ids, data_dir, result_dir, temp_dir, false, num_simulation_runs,
-                      save_non_aggregated_results, only_one_node);
+    auto result =
+        run(num_days_sim, start_date, lha_ids, data_dir, result_dir, temp_dir, false, num_simulation_runs,
+            save_non_aggregated_results, only_one_node, lha_data_filename, vacc_filename, recovered_detected_filename);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         mio::mpi::finalize();

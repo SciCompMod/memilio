@@ -903,7 +903,8 @@ size_t get_index_of_age_group(int age);
  */
 template <typename FP>
 IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Model<FP>& model, int lha_id,
-                             bool only_one_node, std::string lha_data_filename = "")
+                             bool only_one_node, std::string lha_data_filename = "", std::string vacc_filename = "",
+                             std::string recovered_detected_filename = "")
 {
     // Open file.
     std::string filename;
@@ -933,7 +934,7 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
     std::getline(fin, line);
     line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
     std::vector<std::string> titles;
-    boost::split(titles, line, boost::is_any_of(";"));
+    boost::split(titles, line, boost::is_any_of(","));
     size_t count_of_titles              = 0;
     std::map<std::string, size_t> index = {};
     for (auto const& title : titles) {
@@ -979,6 +980,8 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
     auto days_until_effective_improved_immunity = static_cast<size_t>(
         static_cast<FP>(model.parameters.template get<DaysUntilEffectiveImprovedImmunity<FP>>()[AgeGroup(0)]));
 
+    ScalarType symptoms_counter = 0.;
+
     size_t line_idx = 0;
     while (line_idx < lines_in_reverse.size()) {
         line = lines_in_reverse[line_idx];
@@ -987,7 +990,7 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
         row.clear();
 
         // Read columns in this row.
-        split_line(line, &row);
+        split_line_comma(line, &row);
         line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 
         // Only consider first row of reversed dataset for each id, i.e. we are using the last row of original data set
@@ -1148,7 +1151,14 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
 
         size_t time_since_reporting = get_offset_in_days(current_date, parse_date(row[index["11"]]).value());
 
+        // std::cout << "time since reporting threshold: "
+        //           << params.template get<TimeExposed<double>>()[(AgeGroup)age_group] +
+        //                  params.template get<TimeInfectedNoSymptoms<double>>()[(AgeGroup)age_group] +
+        //                  params.template get<TimeInfectedSymptoms<double>>()[(AgeGroup)age_group]
+        //           << std::endl;
         if (any_symptoms) {
+
+            symptoms_counter += 1;
             if (time_since_reporting < params.template get<TimeExposed<double>>()[(AgeGroup)age_group] +
                                            params.template get<TimeInfectedNoSymptoms<double>>()[(AgeGroup)age_group] +
                                            params.template get<TimeInfectedSymptoms<double>>()[(AgeGroup)age_group]) {
@@ -1161,14 +1171,27 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
             continue;
         }
 
-        // If no symptoms have been reported, we assume that the individual has been in infection InfectedNoSymptoms at
+        // If no symptoms have been reported, we assume that the individual has not been in infection state InfectedSymptoms at
         // some point. Depending on the time  since reporting, we assume that the individual is
-        // either in InfectedSymptoms or in Recovered at the current date.
+        // either in InfectedNoSymptoms or in Recovered at the current date.
         else {
+
             if (time_since_reporting < params.template get<TimeExposed<double>>()[(AgeGroup)age_group] +
                                            params.template get<TimeInfectedNoSymptoms<double>>()[(AgeGroup)age_group]) {
                 num_InfectedNoSymptoms[age_group][immunity_level] += 1;
             }
+
+            // if (time_since_reporting < params.template get<TimeExposed<double>>()[(AgeGroup)age_group] +
+            //                                params.template get<TimeInfectedNoSymptoms<double>>()[(AgeGroup)age_group]) {
+            //     num_InfectedNoSymptoms[age_group][immunity_level] += 1;
+            // }
+
+            // else if (time_since_reporting <
+            //          params.template get<TimeExposed<double>>()[(AgeGroup)age_group] +
+            //              params.template get<TimeInfectedNoSymptoms<double>>()[(AgeGroup)age_group] +
+            //              params.template get<TimeInfectedSymptoms<double>>()[(AgeGroup)age_group]) {
+            //     num_InfectedSymptoms[age_group][immunity_level] += 1;
+            // }
 
             else {
                 num_Recovered[age_group][immunity_level] += 1;
@@ -1176,6 +1199,8 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
             continue;
         }
     }
+
+    std::cout << "Symptoms counter: " << symptoms_counter << std::endl;
 
     // Write data into model.
     // Get population data.
@@ -1216,10 +1241,9 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
     // If we only have a model with one node for which LHA data is available as well as data on detected recovered and
     // vaccinations, we use this data to initialize Susceptible compartments.
     if (only_one_node) {
-        const fs::path vaccinations_path =
-            path_join(data_dir, fmt::format("Germany/pydata/{}", lha_id), "vaccinations.txt");
+        const fs::path vaccinations_path = path_join(data_dir, fmt::format("Germany/pydata/{}", lha_id), vacc_filename);
         const fs::path recovered_detected_path =
-            path_join(data_dir, fmt::format("Germany/pydata/{}", lha_id), "recovered_detected.txt");
+            path_join(data_dir, fmt::format("Germany/pydata/{}", lha_id), recovered_detected_filename);
 
         if (!fs::exists(vaccinations_path) || !fs::exists(recovered_detected_path)) {
             mio::log_error("Cannot read in data. File does not exist.");
@@ -1272,7 +1296,6 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
                 break;
             }
         }
-        std::cout << date_rec.year << date_rec.month << date_rec.day << std::endl;
 
         for (auto i = AgeGroup(0); i < (AgeGroup)num_age_groups; i++) {
 
@@ -1296,6 +1319,20 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
                 S = num_population[0][size_t(i)] - S_pv - S_v;
             }
 
+            // Exposed
+
+            // Initialize Exposed as in other initialization for SECIRVVS model.
+            double denom_E = 1 / (S + S_pv * model.parameters.template get<ReducExposedPartialImmunity<double>>()[i] +
+                                  S_v * model.parameters.template get<ReducExposedImprovedImmunity<double>>()[i]);
+            model.populations[{i, InfectionState::ExposedNaive}] =
+                S * model.populations[{i, InfectionState::ExposedNaive}] * denom_E;
+            model.populations[{i, InfectionState::ExposedPartialImmunity}] =
+                S_pv * model.parameters.template get<ReducExposedPartialImmunity<double>>()[i] *
+                model.populations[{i, InfectionState::ExposedPartialImmunity}] * denom_E;
+            model.populations[{i, InfectionState::ExposedImprovedImmunity}] =
+                S_v * model.parameters.template get<ReducExposedImprovedImmunity<double>>()[i] *
+                model.populations[{i, InfectionState::ExposedImprovedImmunity}] * denom_E;
+
             model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] =
                 model.parameters.template get<DailyFullVaccinations<double>>()[{i, SimulationDay(0)}] +
                 model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] -
@@ -1314,6 +1351,9 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
                  model.populations[{i, InfectionState::DeadNaive}] +
                  model.populations[{i, InfectionState::DeadPartialImmunity}] +
                  model.populations[{i, InfectionState::DeadImprovedImmunity}]);
+
+            // std::cout << "S improved immunity: " << model.populations[{i, InfectionState::SusceptibleImprovedImmunity}]
+            //           << std::endl;
 
             model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] =
                 std::min(S_v - model.populations[{i, InfectionState::ExposedImprovedImmunity}] -
@@ -1338,6 +1378,13 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
 
             model.populations.template set_difference_from_group_total<AgeGroup>({i, InfectionState::SusceptibleNaive},
                                                                                  num_population[0][size_t(i)]);
+
+            std::cout << "S naive: " << model.populations[{i, InfectionState::SusceptibleNaive}] << std::endl;
+            std::cout << "S partial immunity: " << model.populations[{i, InfectionState::SusceptiblePartialImmunity}]
+                      << std::endl;
+            std::cout << "S improved immunity: " << model.populations[{i, InfectionState::SusceptibleImprovedImmunity}]
+                      << std::endl;
+            std::cout << std::endl;
         }
     }
 
@@ -1833,7 +1880,8 @@ IOResult<void> convert_model_data_type(mio::VectorRange<Node<Model<ScalarType>>>
 template <typename FP>
 IOResult<void> set_lha_data(const Parameters<FP>& params, mio::Graph<Model<FP>, MobilityParameters<FP>>& graph_model,
                             const std::string data_dir, const Date current_date, std::vector<int> lha_ids,
-                            bool only_one_node = false, std::string lha_data_filename = "")
+                            bool only_one_node = false, std::string lha_data_filename = "",
+                            std::string vacc_filename = "", std::string recovered_detected_filename = "")
 {
     std::cout << "Setting LHA data  \n";
     using Model       = Model<FP>;
@@ -1877,8 +1925,9 @@ IOResult<void> set_lha_data(const Parameters<FP>& params, mio::Graph<Model<FP>, 
             size_t lha_idx = std::distance(node_ids.begin(), it);
 
             // Set populations based on LHA data for corrsponding node.
-            auto lha_result = details::read_lha_data<FP>(data_dir, current_date, nodes[lha_idx], lha_ids[lha_counter],
-                                                         only_one_node, lha_data_filename);
+            auto lha_result =
+                details::read_lha_data<FP>(data_dir, current_date, nodes[lha_idx], lha_ids[lha_counter], only_one_node,
+                                           lha_data_filename, vacc_filename, recovered_detected_filename);
 
             // Add node corresponding to considered LHA to graph_model.
             graph_model.add_node(node_ids[lha_idx], nodes[lha_idx]);
