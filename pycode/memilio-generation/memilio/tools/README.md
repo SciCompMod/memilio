@@ -26,7 +26,7 @@ To use a different model, replace ode_secirvvs with the desired model's name in 
 
 Adding Additional Source Files:
 In addition to the main source file, it is possible to include further source files in the binding process.
-For this purpose, the ´asts´ instance of the [ASTHandler class](/pycode/memilio-generation/memilio/generation/ast_handler.py) provides the method ´add_source_file´:
+For this purpose, the `asts´ instance of the [ASTHandler class](/pycode/memilio-generation/memilio/generation/ast_handler.py) provides the method `add_source_file´:
 ```python
 asts.add_source_file("name_of_the_file.cpp")
 ´´´
