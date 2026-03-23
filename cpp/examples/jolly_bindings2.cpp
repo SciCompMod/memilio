@@ -42,7 +42,7 @@
 #include <utility>
 #include <vector>
 
-enum class InfectionState
+enum class InfState
 {
     S,
     E,
@@ -51,10 +51,9 @@ enum class InfectionState
     Count
 };
 
-mio::FarmSimulation<
-    mio::Graph<mio::FarmNode<ScalarType, mio::smm::Simulation<ScalarType, InfectionState, mio::Index<InfectionState>,
-                                                              mio::regions::Region>>,
-               mio::MobilityEdgeDirected<ScalarType>>>
+mio::FarmSimulation<mio::Graph<
+    mio::FarmNode<ScalarType, mio::smm::Simulation<ScalarType, InfState, mio::Index<InfState>, mio::regions::Region>>,
+    mio::MobilityEdgeDirected<ScalarType>>>
 simulate_with_init(std::string farm_file, ScalarType tmax, ScalarType dt, ScalarType suspicion_threshold,
                    ScalarType sensitivity, ScalarType h0, ScalarType r0, ScalarType alpha,
                    ScalarType infection_baseline, ScalarType culling_factor, ScalarType A0_SEI, ScalarType A0_EI,
@@ -71,15 +70,15 @@ simulate_with_init(std::string farm_file, ScalarType tmax, ScalarType dt, Scalar
 {
     const auto t0 = 0.;
 
-    using Status = mio::Index<InfectionState>;
+    using Status = mio::Index<InfState>;
     using mio::regions::Region;
     auto rng = mio::RandomNumberGenerator();
     rng.seed({seed});
 
     //total compartment sizes
-    using Model   = mio::smm::Model<ScalarType, InfectionState, Status, Region>;
+    using Model   = mio::smm::Model<ScalarType, InfState, Status, Region>;
     using Builder = mio::GraphBuilder<
-        mio::FarmNode<ScalarType, mio::smm::Simulation<ScalarType, InfectionState, Status, mio::regions::Region>>,
+        mio::FarmNode<ScalarType, mio::smm::Simulation<ScalarType, InfState, Status, mio::regions::Region>>,
         mio::MobilityEdgeDirected<ScalarType>>;
 
     auto home = Region(0);
@@ -87,55 +86,55 @@ simulate_with_init(std::string farm_file, ScalarType tmax, ScalarType dt, Scalar
     using AR = mio::AdoptionRate<ScalarType, Status, Region>;
     //Organic Ducks
     std::vector<AR> adoption_rates_0;
-    adoption_rates_0.push_back({InfectionState::S, InfectionState::E, home, 1.0, {{InfectionState::I, A0_SEI}}});
-    adoption_rates_0.push_back({InfectionState::E, InfectionState::I, home, A0_EI, {}});
-    adoption_rates_0.push_back({InfectionState::I, InfectionState::D, home, A0_ID, {}});
-    adoption_rates_0.push_back({InfectionState::S, InfectionState::E, home, 0.00, {}});
-    adoption_rates_0.push_back({InfectionState::S, InfectionState::D, home, A0_DeathRate, {}});
-    adoption_rates_0.push_back({InfectionState::E, InfectionState::D, home, A0_DeathRate, {}});
-    adoption_rates_0.push_back({InfectionState::I, InfectionState::D, home, A0_DeathRate, {}});
+    adoption_rates_0.push_back({InfState::S, InfState::E, home, 1.0, {{InfState::I, A0_SEI}}});
+    adoption_rates_0.push_back({InfState::E, InfState::I, home, A0_EI, {}});
+    adoption_rates_0.push_back({InfState::I, InfState::D, home, A0_ID, {}});
+    adoption_rates_0.push_back({InfState::S, InfState::E, home, 0.00, {}});
+    adoption_rates_0.push_back({InfState::S, InfState::D, home, A0_DeathRate, {}});
+    adoption_rates_0.push_back({InfState::E, InfState::D, home, A0_DeathRate, {}});
+    adoption_rates_0.push_back({InfState::I, InfState::D, home, A0_DeathRate, {}});
 
     // Conventional Ducks
     std::vector<AR> adoption_rates_1;
-    adoption_rates_1.push_back({InfectionState::S, InfectionState::E, home, 1.0, {{InfectionState::I, A1_SEI}}});
-    adoption_rates_1.push_back({InfectionState::E, InfectionState::I, home, A1_EI, {}});
-    adoption_rates_1.push_back({InfectionState::I, InfectionState::D, home, A1_ID, {}});
-    adoption_rates_1.push_back({InfectionState::S, InfectionState::E, home, 0.00, {}});
-    adoption_rates_1.push_back({InfectionState::S, InfectionState::D, home, A1_DeathRate, {}});
-    adoption_rates_1.push_back({InfectionState::E, InfectionState::D, home, A1_DeathRate, {}});
-    adoption_rates_1.push_back({InfectionState::I, InfectionState::D, home, A1_DeathRate, {}});
+    adoption_rates_1.push_back({InfState::S, InfState::E, home, 1.0, {{InfState::I, A1_SEI}}});
+    adoption_rates_1.push_back({InfState::E, InfState::I, home, A1_EI, {}});
+    adoption_rates_1.push_back({InfState::I, InfState::D, home, A1_ID, {}});
+    adoption_rates_1.push_back({InfState::S, InfState::E, home, 0.00, {}});
+    adoption_rates_1.push_back({InfState::S, InfState::D, home, A1_DeathRate, {}});
+    adoption_rates_1.push_back({InfState::E, InfState::D, home, A1_DeathRate, {}});
+    adoption_rates_1.push_back({InfState::I, InfState::D, home, A1_DeathRate, {}});
 
     // Layer hens
     std::vector<AR> adoption_rates_2;
-    adoption_rates_2.push_back({InfectionState::S, InfectionState::E, home, 1.0, {{InfectionState::I, A2_SEI}}});
-    adoption_rates_2.push_back({InfectionState::E, InfectionState::I, home, A2_EI, {}});
-    adoption_rates_2.push_back({InfectionState::I, InfectionState::D, home, A2_ID, {}});
-    adoption_rates_2.push_back({InfectionState::S, InfectionState::E, home, 0.00, {}});
-    adoption_rates_2.push_back({InfectionState::S, InfectionState::D, home, A2_DeathRate, {}});
-    adoption_rates_2.push_back({InfectionState::E, InfectionState::D, home, A2_DeathRate, {}});
-    adoption_rates_2.push_back({InfectionState::I, InfectionState::D, home, A2_DeathRate, {}});
+    adoption_rates_2.push_back({InfState::S, InfState::E, home, 1.0, {{InfState::I, A2_SEI}}});
+    adoption_rates_2.push_back({InfState::E, InfState::I, home, A2_EI, {}});
+    adoption_rates_2.push_back({InfState::I, InfState::D, home, A2_ID, {}});
+    adoption_rates_2.push_back({InfState::S, InfState::E, home, 0.00, {}});
+    adoption_rates_2.push_back({InfState::S, InfState::D, home, A2_DeathRate, {}});
+    adoption_rates_2.push_back({InfState::E, InfState::D, home, A2_DeathRate, {}});
+    adoption_rates_2.push_back({InfState::I, InfState::D, home, A2_DeathRate, {}});
 
     // Broiler 1
     std::vector<AR> adoption_rates_3;
-    adoption_rates_3.push_back({InfectionState::S, InfectionState::E, home, 1.0, {{InfectionState::I, A3_SEI}}});
-    adoption_rates_3.push_back({InfectionState::E, InfectionState::I, home, A3_EI, {}});
-    adoption_rates_3.push_back({InfectionState::I, InfectionState::D, home, A3_ID, {}});
-    adoption_rates_3.push_back({InfectionState::S, InfectionState::E, home, 0.00, {}});
-    adoption_rates_3.push_back({InfectionState::S, InfectionState::D, home, A3_DeathRate, {}});
-    adoption_rates_3.push_back({InfectionState::E, InfectionState::D, home, A3_DeathRate, {}});
-    adoption_rates_3.push_back({InfectionState::I, InfectionState::D, home, A3_DeathRate, {}});
+    adoption_rates_3.push_back({InfState::S, InfState::E, home, 1.0, {{InfState::I, A3_SEI}}});
+    adoption_rates_3.push_back({InfState::E, InfState::I, home, A3_EI, {}});
+    adoption_rates_3.push_back({InfState::I, InfState::D, home, A3_ID, {}});
+    adoption_rates_3.push_back({InfState::S, InfState::E, home, 0.00, {}});
+    adoption_rates_3.push_back({InfState::S, InfState::D, home, A3_DeathRate, {}});
+    adoption_rates_3.push_back({InfState::E, InfState::D, home, A3_DeathRate, {}});
+    adoption_rates_3.push_back({InfState::I, InfState::D, home, A3_DeathRate, {}});
 
     // Broiler 2
     std::vector<AR> adoption_rates_4;
-    adoption_rates_4.push_back({InfectionState::S, InfectionState::E, home, 1.0, {{InfectionState::I, A4_SEI}}});
-    adoption_rates_4.push_back({InfectionState::E, InfectionState::I, home, A4_EI, {}});
-    adoption_rates_4.push_back({InfectionState::I, InfectionState::D, home, A4_ID, {}});
-    adoption_rates_4.push_back({InfectionState::S, InfectionState::E, home, 0.00, {}});
-    adoption_rates_4.push_back({InfectionState::S, InfectionState::D, home, A4_DeathRate, {}});
-    adoption_rates_4.push_back({InfectionState::E, InfectionState::D, home, A4_DeathRate, {}});
-    adoption_rates_4.push_back({InfectionState::I, InfectionState::D, home, A4_DeathRate, {}});
+    adoption_rates_4.push_back({InfState::S, InfState::E, home, 1.0, {{InfState::I, A4_SEI}}});
+    adoption_rates_4.push_back({InfState::E, InfState::I, home, A4_EI, {}});
+    adoption_rates_4.push_back({InfState::I, InfState::D, home, A4_ID, {}});
+    adoption_rates_4.push_back({InfState::S, InfState::E, home, 0.00, {}});
+    adoption_rates_4.push_back({InfState::S, InfState::D, home, A4_DeathRate, {}});
+    adoption_rates_4.push_back({InfState::E, InfState::D, home, A4_DeathRate, {}});
+    adoption_rates_4.push_back({InfState::I, InfState::D, home, A4_DeathRate, {}});
 
-    Model curr_model(Status{InfectionState::Count}, mio::regions::Region(1), rng);
+    Model curr_model(Status{InfState::Count}, mio::regions::Region(1), rng);
 
     Builder builder;
 
@@ -163,15 +162,15 @@ simulate_with_init(std::string farm_file, ScalarType tmax, ScalarType dt, Scalar
             model.parameters.get<mio::smm::AdoptionRates<ScalarType, Status, mio::regions::Region>>() =
                 adoption_rates_4;
 
-        model.populations[{home, InfectionState::S}] = volume;
+        model.populations[{home, InfState::S}] = volume;
         // if (farm_id % 2 == 0)
-        //     curr_model.populations[{home, InfectionState::E}] = 1;
+        //     curr_model.populations[{home, InfState::E}] = 1;
         builder.add_node(farm_id, x, y, type, size, population, slaughter, hrz, model, t0);
     }
 
     std::vector<std::vector<size_t>> interesting_indices;
-    interesting_indices.push_back({curr_model.populations.get_flat_index({home, InfectionState::E})});
-    interesting_indices.push_back({curr_model.populations.get_flat_index({home, InfectionState::I})});
+    interesting_indices.push_back({curr_model.populations.get_flat_index({home, InfState::E})});
+    interesting_indices.push_back({curr_model.populations.get_flat_index({home, InfState::I})});
 
     auto graph = std::move(builder).build();
 
@@ -193,29 +192,18 @@ simulate_with_init(std::string farm_file, ScalarType tmax, ScalarType dt, Scalar
                        {foi_inner_factor0, foi_inner_factor1, foi_inner_factor2, foi_inner_factor3, foi_inner_factor4},
                        {foi_outer_factor0, foi_outer_factor1, foi_outer_factor2, foi_outer_factor3, foi_outer_factor4},
                        {damping0, damping1, damping2, damping3, damping4});
-
-    sim.advance(10);
-    auto result = sim.get_confirmation_dates(10);
-    mio::log_info("Number of infected farms after 10 days: {}", std::count_if(result.begin(), result.end(), [](int r) {
-                      return r >= 0;
-                  }));
     sim.advance(tmax);
-    result = sim.get_confirmation_dates(tmax);
-    mio::log_info("Number of infected farms after tmax: {}", std::count_if(result.begin(), result.end(), [](int r) {
-                      return r >= 0;
-                  }));
 
-    return sim; //sim.get_confirmation_dates(tmax);
+    return sim;
 }
 
-mio::FarmSimulation<
-    mio::Graph<mio::FarmNode<ScalarType, mio::smm::Simulation<ScalarType, InfectionState, mio::Index<InfectionState>,
-                                                              mio::regions::Region>>,
-               mio::MobilityEdgeDirected<ScalarType>>>
-simulate(
+mio::FarmSimulation<mio::Graph<
+    mio::FarmNode<ScalarType, mio::smm::Simulation<ScalarType, InfState, mio::Index<InfState>, mio::regions::Region>>,
+    mio::MobilityEdgeDirected<ScalarType>>>
+simulate_continued(
     const mio::FarmSimulation<
-        mio::Graph<mio::FarmNode<ScalarType, mio::smm::Simulation<ScalarType, InfectionState,
-                                                                  mio::Index<InfectionState>, mio::regions::Region>>,
+        mio::Graph<mio::FarmNode<ScalarType, mio::smm::Simulation<ScalarType, InfState, mio::Index<InfState>,
+                                                                  mio::regions::Region>>,
                    mio::MobilityEdgeDirected<ScalarType>>>& sim_to_copy,
     const ScalarType t, ScalarType tmax, ScalarType dt, ScalarType suspicion_threshold, ScalarType sensitivity,
     ScalarType h0, ScalarType r0, ScalarType alpha, ScalarType infection_baseline, ScalarType culling_factor,
@@ -229,15 +217,15 @@ simulate(
     ScalarType damping1, ScalarType damping2, ScalarType damping3, ScalarType damping4, ScalarType first_infection_day,
     ScalarType second_infection_day, ScalarType third_infection_day, u_int seed)
 {
-    using Status = mio::Index<InfectionState>;
+    using Status = mio::Index<InfState>;
     using mio::regions::Region;
     auto rng = mio::RandomNumberGenerator();
     rng.seed({seed});
 
     //total compartment sizes
-    using Model   = mio::smm::Model<ScalarType, InfectionState, Status, Region>;
+    using Model   = mio::smm::Model<ScalarType, InfState, Status, Region>;
     using Builder = mio::GraphBuilder<
-        mio::FarmNode<ScalarType, mio::smm::Simulation<ScalarType, InfectionState, Status, mio::regions::Region>>,
+        mio::FarmNode<ScalarType, mio::smm::Simulation<ScalarType, InfState, Status, mio::regions::Region>>,
         mio::MobilityEdgeDirected<ScalarType>>;
 
     auto home = Region(0);
@@ -245,55 +233,55 @@ simulate(
     using AR = mio::AdoptionRate<ScalarType, Status, Region>;
     //Organic Ducks
     std::vector<AR> adoption_rates_0;
-    adoption_rates_0.push_back({InfectionState::S, InfectionState::E, home, 1.0, {{InfectionState::I, A0_SEI}}});
-    adoption_rates_0.push_back({InfectionState::E, InfectionState::I, home, A0_EI, {}});
-    adoption_rates_0.push_back({InfectionState::I, InfectionState::D, home, A0_ID, {}});
-    adoption_rates_0.push_back({InfectionState::S, InfectionState::E, home, 0.00, {}});
-    adoption_rates_0.push_back({InfectionState::S, InfectionState::D, home, A0_DeathRate, {}});
-    adoption_rates_0.push_back({InfectionState::E, InfectionState::D, home, A0_DeathRate, {}});
-    adoption_rates_0.push_back({InfectionState::I, InfectionState::D, home, A0_DeathRate, {}});
+    adoption_rates_0.push_back({InfState::S, InfState::E, home, 1.0, {{InfState::I, A0_SEI}}});
+    adoption_rates_0.push_back({InfState::E, InfState::I, home, A0_EI, {}});
+    adoption_rates_0.push_back({InfState::I, InfState::D, home, A0_ID, {}});
+    adoption_rates_0.push_back({InfState::S, InfState::E, home, 0.00, {}});
+    adoption_rates_0.push_back({InfState::S, InfState::D, home, A0_DeathRate, {}});
+    adoption_rates_0.push_back({InfState::E, InfState::D, home, A0_DeathRate, {}});
+    adoption_rates_0.push_back({InfState::I, InfState::D, home, A0_DeathRate, {}});
 
     // Conventional Ducks
     std::vector<AR> adoption_rates_1;
-    adoption_rates_1.push_back({InfectionState::S, InfectionState::E, home, 1.0, {{InfectionState::I, A1_SEI}}});
-    adoption_rates_1.push_back({InfectionState::E, InfectionState::I, home, A1_EI, {}});
-    adoption_rates_1.push_back({InfectionState::I, InfectionState::D, home, A1_ID, {}});
-    adoption_rates_1.push_back({InfectionState::S, InfectionState::E, home, 0.00, {}});
-    adoption_rates_1.push_back({InfectionState::S, InfectionState::D, home, A1_DeathRate, {}});
-    adoption_rates_1.push_back({InfectionState::E, InfectionState::D, home, A1_DeathRate, {}});
-    adoption_rates_1.push_back({InfectionState::I, InfectionState::D, home, A1_DeathRate, {}});
+    adoption_rates_1.push_back({InfState::S, InfState::E, home, 1.0, {{InfState::I, A1_SEI}}});
+    adoption_rates_1.push_back({InfState::E, InfState::I, home, A1_EI, {}});
+    adoption_rates_1.push_back({InfState::I, InfState::D, home, A1_ID, {}});
+    adoption_rates_1.push_back({InfState::S, InfState::E, home, 0.00, {}});
+    adoption_rates_1.push_back({InfState::S, InfState::D, home, A1_DeathRate, {}});
+    adoption_rates_1.push_back({InfState::E, InfState::D, home, A1_DeathRate, {}});
+    adoption_rates_1.push_back({InfState::I, InfState::D, home, A1_DeathRate, {}});
 
     // Layer hens
     std::vector<AR> adoption_rates_2;
-    adoption_rates_2.push_back({InfectionState::S, InfectionState::E, home, 1.0, {{InfectionState::I, A2_SEI}}});
-    adoption_rates_2.push_back({InfectionState::E, InfectionState::I, home, A2_EI, {}});
-    adoption_rates_2.push_back({InfectionState::I, InfectionState::D, home, A2_ID, {}});
-    adoption_rates_2.push_back({InfectionState::S, InfectionState::E, home, 0.00, {}});
-    adoption_rates_2.push_back({InfectionState::S, InfectionState::D, home, A2_DeathRate, {}});
-    adoption_rates_2.push_back({InfectionState::E, InfectionState::D, home, A2_DeathRate, {}});
-    adoption_rates_2.push_back({InfectionState::I, InfectionState::D, home, A2_DeathRate, {}});
+    adoption_rates_2.push_back({InfState::S, InfState::E, home, 1.0, {{InfState::I, A2_SEI}}});
+    adoption_rates_2.push_back({InfState::E, InfState::I, home, A2_EI, {}});
+    adoption_rates_2.push_back({InfState::I, InfState::D, home, A2_ID, {}});
+    adoption_rates_2.push_back({InfState::S, InfState::E, home, 0.00, {}});
+    adoption_rates_2.push_back({InfState::S, InfState::D, home, A2_DeathRate, {}});
+    adoption_rates_2.push_back({InfState::E, InfState::D, home, A2_DeathRate, {}});
+    adoption_rates_2.push_back({InfState::I, InfState::D, home, A2_DeathRate, {}});
 
     // Broiler 1
     std::vector<AR> adoption_rates_3;
-    adoption_rates_3.push_back({InfectionState::S, InfectionState::E, home, 1.0, {{InfectionState::I, A3_SEI}}});
-    adoption_rates_3.push_back({InfectionState::E, InfectionState::I, home, A3_EI, {}});
-    adoption_rates_3.push_back({InfectionState::I, InfectionState::D, home, A3_ID, {}});
-    adoption_rates_3.push_back({InfectionState::S, InfectionState::E, home, 0.00, {}});
-    adoption_rates_3.push_back({InfectionState::S, InfectionState::D, home, A3_DeathRate, {}});
-    adoption_rates_3.push_back({InfectionState::E, InfectionState::D, home, A3_DeathRate, {}});
-    adoption_rates_3.push_back({InfectionState::I, InfectionState::D, home, A3_DeathRate, {}});
+    adoption_rates_3.push_back({InfState::S, InfState::E, home, 1.0, {{InfState::I, A3_SEI}}});
+    adoption_rates_3.push_back({InfState::E, InfState::I, home, A3_EI, {}});
+    adoption_rates_3.push_back({InfState::I, InfState::D, home, A3_ID, {}});
+    adoption_rates_3.push_back({InfState::S, InfState::E, home, 0.00, {}});
+    adoption_rates_3.push_back({InfState::S, InfState::D, home, A3_DeathRate, {}});
+    adoption_rates_3.push_back({InfState::E, InfState::D, home, A3_DeathRate, {}});
+    adoption_rates_3.push_back({InfState::I, InfState::D, home, A3_DeathRate, {}});
 
     // Broiler 2
     std::vector<AR> adoption_rates_4;
-    adoption_rates_4.push_back({InfectionState::S, InfectionState::E, home, 1.0, {{InfectionState::I, A4_SEI}}});
-    adoption_rates_4.push_back({InfectionState::E, InfectionState::I, home, A4_EI, {}});
-    adoption_rates_4.push_back({InfectionState::I, InfectionState::D, home, A4_ID, {}});
-    adoption_rates_4.push_back({InfectionState::S, InfectionState::E, home, 0.00, {}});
-    adoption_rates_4.push_back({InfectionState::S, InfectionState::D, home, A4_DeathRate, {}});
-    adoption_rates_4.push_back({InfectionState::E, InfectionState::D, home, A4_DeathRate, {}});
-    adoption_rates_4.push_back({InfectionState::I, InfectionState::D, home, A4_DeathRate, {}});
+    adoption_rates_4.push_back({InfState::S, InfState::E, home, 1.0, {{InfState::I, A4_SEI}}});
+    adoption_rates_4.push_back({InfState::E, InfState::I, home, A4_EI, {}});
+    adoption_rates_4.push_back({InfState::I, InfState::D, home, A4_ID, {}});
+    adoption_rates_4.push_back({InfState::S, InfState::E, home, 0.00, {}});
+    adoption_rates_4.push_back({InfState::S, InfState::D, home, A4_DeathRate, {}});
+    adoption_rates_4.push_back({InfState::E, InfState::D, home, A4_DeathRate, {}});
+    adoption_rates_4.push_back({InfState::I, InfState::D, home, A4_DeathRate, {}});
 
-    Model curr_model(Status{InfectionState::Count}, mio::regions::Region(1), rng);
+    Model curr_model(Status{InfState::Count}, mio::regions::Region(1), rng);
 
     Builder builder;
 
@@ -316,15 +304,11 @@ simulate(
             model.parameters.get<mio::smm::AdoptionRates<ScalarType, Status, mio::regions::Region>>() =
                 adoption_rates_4;
 
-        auto last_value = node.property.get_result().get_last_value();
-        model.populations[{home, InfectionState::S}] =
-            last_value[model.populations.get_flat_index({home, InfectionState::S})];
-        model.populations[{home, InfectionState::E}] =
-            last_value[model.populations.get_flat_index({home, InfectionState::E})];
-        model.populations[{home, InfectionState::I}] =
-            last_value[model.populations.get_flat_index({home, InfectionState::I})];
-        model.populations[{home, InfectionState::D}] =
-            last_value[model.populations.get_flat_index({home, InfectionState::D})];
+        auto last_value                        = node.property.get_result().get_last_value();
+        model.populations[{home, InfState::S}] = last_value[model.populations.get_flat_index({home, InfState::S})];
+        model.populations[{home, InfState::E}] = last_value[model.populations.get_flat_index({home, InfState::E})];
+        model.populations[{home, InfState::I}] = last_value[model.populations.get_flat_index({home, InfState::I})];
+        model.populations[{home, InfState::D}] = last_value[model.populations.get_flat_index({home, InfState::D})];
         builder.add_node(node.id, node.property.get_x(), node.property.get_y(), type, node.property.get_farm_size(),
                          node.property.get_population_date(), node.property.get_slaughter_date(),
                          node.property.get_in_hrz(), model, t);
@@ -346,8 +330,8 @@ simulate(
     }
 
     std::vector<std::vector<size_t>> interesting_indices;
-    interesting_indices.push_back({curr_model.populations.get_flat_index({home, InfectionState::E})});
-    interesting_indices.push_back({curr_model.populations.get_flat_index({home, InfectionState::I})});
+    interesting_indices.push_back({curr_model.populations.get_flat_index({home, InfState::E})});
+    interesting_indices.push_back({curr_model.populations.get_flat_index({home, InfState::I})});
 
     auto graph = std::move(builder).build();
 
@@ -422,14 +406,14 @@ int main()
     mio::log_info("Number of infected farms: {}", std::count_if(result.begin(), result.end(), [](int r) {
                       return r >= 0;
                   }));
-    auto sim_continue = simulate(
+    auto sim_continue = simulate_continued(
         sim1, tmax, tmax + 50, dt, suspicion_threshold, sensitivity, h0, r0, alpha, infection_baseline, culling_factor,
         A0_SEI, A0_EI, A0_ID, A0_DeathRate, A1_SEI, A1_EI, A1_ID, A1_DeathRate, A2_SEI, A2_EI, A2_ID, A2_DeathRate,
         A3_SEI, A3_EI, A3_ID, A3_DeathRate, A4_SEI, A4_EI, A4_ID, A4_DeathRate, foi_inner_factor0, foi_outer_factor0,
         foi_inner_factor1, foi_outer_factor1, foi_inner_factor2, foi_outer_factor2, foi_inner_factor3,
         foi_outer_factor3, foi_inner_factor4, foi_outer_factor4, damping0, damping1, damping2, damping3, damping4,
         first_infection_day, second_infection_day, third_infection_day, seed);
-    result = sim_continue.get_confirmation_dates(tmax);
+    result = sim_continue.get_confirmation_dates(tmax + 50);
     mio::log_info("Number of infected farms: {}", std::count_if(result.begin(), result.end(), [](int r) {
                       return r >= 0;
                   }));
