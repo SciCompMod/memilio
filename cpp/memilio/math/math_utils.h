@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Rene Schmieding
 *
@@ -22,7 +22,7 @@
 
 #include "memilio/config.h"
 #include "memilio/io/io.h"
-#include "memilio/math/eigen.h"
+#include "memilio/math/eigen.h" // IWYU pragma: keep
 
 namespace mio
 {
@@ -81,7 +81,7 @@ inline auto evaluate_intermediate(Intermediate&& x)
         return static_cast<Type>(x);
     }
     else {
-        return x;
+        return std::forward<Intermediate>(x);
     }
 }
 

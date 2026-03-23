@@ -25,9 +25,7 @@ parameter to the model.
 
 .. code-block:: cpp
 
-    using LctStateGroup1 = mio::LctInfectionState<ScalarType, `List of InfectionStates`, `Number of subcompartments of State1`, 
-                                                                                   `Number of subcompartments of State2`, 
-                                                                                   `...`>;
+    using LctStateGroup1 = mio::LctInfectionState<ScalarType, ListofInfectionStates, NumberofsubcompartmentsofState1, NumberofsubcompartmentsofState2, ...>;
 
 The model is implemented as **CompartmentalModel**.
 

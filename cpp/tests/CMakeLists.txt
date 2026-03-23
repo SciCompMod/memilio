@@ -62,7 +62,6 @@ set(TESTSOURCES
     test_binary_serializer.cpp
     test_compartments_simulation.cpp
     test_mobility_io.cpp
-    test_transform_iterator.cpp
     test_metaprogramming.cpp
     test_history.cpp
     test_utils.cpp
@@ -72,6 +71,7 @@ set(TESTSOURCES
     test_ide_secir_ageres.cpp
     test_state_age_function.cpp
     test_lct_secir.cpp
+    test_lct_secir_2_diseases.cpp
     test_lct_initializer_flows.cpp
     test_glct_secir.cpp
     test_ad.cpp

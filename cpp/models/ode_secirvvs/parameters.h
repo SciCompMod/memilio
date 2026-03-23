@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
@@ -357,7 +357,7 @@ struct MaxRiskOfInfectionFromSymptomatic {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type(size, 0.);
+        return Type(size, 1.);
     }
     static std::string name()
     {

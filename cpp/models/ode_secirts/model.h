@@ -1,5 +1,5 @@
 /*
-* * Copyright (C) 2020-2025 MEmilio
+* * Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Henrik Zunker, Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
@@ -54,7 +54,6 @@ using Flows = TypeList<
     Flow<InfectionState::InfectedSevereNaive,                         InfectionState::DeadNaive>,
     Flow<InfectionState::InfectedCriticalNaive,                       InfectionState::DeadNaive>,
     Flow<InfectionState::InfectedCriticalNaive,                       InfectionState::TemporaryImmunePartialImmunity>,
-    Flow<InfectionState::TemporaryImmunePartialImmunity,              InfectionState::SusceptiblePartialImmunity>,
     //partial immunity
     Flow<InfectionState::SusceptiblePartialImmunity,                  InfectionState::ExposedPartialImmunity>,
     Flow<InfectionState::SusceptiblePartialImmunity,                  InfectionState::TemporaryImmuneImprovedImmunity>,

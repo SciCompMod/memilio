@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Kilian Volmer, Sascha Korf, Carlotta Gerstein, Daniel Abele, Elisabeth Kluth, Khoa Nguyen, David Kerkmann
 *
@@ -24,10 +24,11 @@
 #include "memilio/io/default_serialize.h"
 #include "memilio/geography/distance.h"
 #include "memilio/config.h"
-#include "memilio/utils/logging.h"
+
 #include <cassert>
 #include <cmath>
 #include <numbers>
+
 namespace mio
 {
 namespace geo

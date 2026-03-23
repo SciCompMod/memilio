@@ -9,7 +9,7 @@ as nodes in a directed graph. One local model represents a geographical region. 
 and via the graph edges follows the same mobility rules that can be handed as argument to ``mio::GraphABModel``. 
 Therefore this graph-based agent-based (graph-ABM) model can be reduced to a single mobility-based agent-based model if 
 simulation time steps within the whole graph, i.e. the step size of each node and the step size of the edge exchange, are equal. 
-Preimplemented mobility rules can be found in `<https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/mobility_rules.h>`_. 
+Preimplemented mobility rules can be found in `cpp/models/abm/mobility_rules.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/mobility_rules.h>`_. 
 The motivation behind the graph-ABM is to have multiple ABMs run independently from each other in parallel for different regions and only synchronize, 
 i.e. exchange agents via edges, in fixed time intervals. The synchronization time steps should be bigger than the internal 
 ABM time steps to reduce communication between nodes as much as possible.
@@ -148,8 +148,8 @@ Below, ``mio::abm::LogInfectionState`` is used as logger.
     graph.add_edge(model1.get_id(), model2.get_id());
     graph.add_edge(model2.get_id(), model1.get_id());
 
-To simulate the model from `start_date` to `end_date` with given graph step size `exchange_time_span`, a GraphSimulation has to be created. 
-The step size is used to regularly exchange agents via the graph edges. Advancing the simulation until `end_date` is done as follows:
+To simulate the model from ``start_date`` to ``end_date`` with given graph step size ``exchange_time_span``, a GraphSimulation has to be created. 
+The step size is used to regularly exchange agents via the graph edges. Advancing the simulation until ``end_date`` is done as follows:
 
 .. code-block:: cpp
 

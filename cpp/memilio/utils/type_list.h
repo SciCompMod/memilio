@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: René Schmieding
 *
@@ -23,9 +23,6 @@
 #include "memilio/utils/metaprogramming.h"
 
 #include <cstddef>
-#include <tuple>
-#include <type_traits>
-#include <utility>
 
 namespace mio
 {
@@ -49,6 +46,9 @@ struct TypeList {
     {
         return sizeof...(Types);
     }
+
+    /// @brief Checks whether TypeList contains any type multiple times.
+    static constexpr bool has_duplicates = has_duplicates_v<Types...>;
 };
 
 /// Specialization of type_at_index for TypeList. @see type_at_index.

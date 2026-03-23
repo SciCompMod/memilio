@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_TEST_TMP_FILE_REGISTER_H
-#define EPI_TEST_TMP_FILE_REGISTER_H
+#ifndef MIO_TESTS_TMP_FILE_REGISTER_H
+#define MIO_TESTS_TMP_FILE_REGISTER_H
 
 #include "memilio/io/io.h"
 #include "memilio/utils/logging.h"
@@ -79,4 +79,4 @@ private:
     std::vector<boost::filesystem::path> m_files;
 };
 
-#endif //EPI_TEST_TMP_FILE_REGISTER_H
+#endif // MIO_TESTS_TMP_FILE_REGISTER_H

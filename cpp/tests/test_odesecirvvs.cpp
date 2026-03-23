@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -44,6 +44,7 @@
 #include "ode_secirvvs/parameters.h"
 #include "ode_secirvvs/parameters_io.h"
 #include "ode_secirvvs/analyze_result.h"
+#include "utils.h"
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -423,14 +424,13 @@ mio::osecirvvs::Model<double> make_model(int num_age_groups, bool set_invalid_in
     set_synthetic_population_data(model.populations, set_invalid_initial_value);
     set_demographic_parameters(model.parameters, set_invalid_initial_value);
     set_contact_parameters(model.parameters, set_invalid_initial_value);
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     model.parameters.apply_constraints();
     return model;
 }
 
 TEST(TestOdeSECIRVVS, draw_sample)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> graph;
 
     auto num_age_groups = 6;
@@ -589,6 +589,7 @@ TEST(TestOdeSECIRVVS, set_divi_data_invalid_dates)
 
 TEST(TestOdeSECIRVVS, set_confirmed_cases_data_with_ICU)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     const auto num_age_groups = 6;
     auto model                = mio::osecirvvs::Model<double>(num_age_groups);
     model.populations.array().setConstant(1);
@@ -1001,6 +1002,7 @@ TEST(TestOdeSECIRVVS, model_initialization_old_date_county)
 
 TEST(TestOdeSECIRVVS, set_population_data_overflow_vacc)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     auto num_age_groups = 6; // Data to be read requires RKI confirmed cases data age groups
     auto model          = make_model(num_age_groups);
     // set all compartments to zero
@@ -1040,6 +1042,7 @@ TEST(TestOdeSECIRVVS, set_population_data_overflow_vacc)
 
 TEST(TestOdeSECIRVVS, set_population_data_no_data_avail)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     auto num_age_groups = 6; // Data to be read requires RKI confirmed cases data age groups
     auto model          = make_model(num_age_groups);
     // set all compartments to zero
@@ -1086,6 +1089,7 @@ TEST(TestOdeSECIRVVS, run_simulation)
 
 TEST(TestOdeSECIRVVS, set_vaccination_data_not_avail)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     const auto num_age_groups = 2;
     const auto num_days       = 5;
     mio::osecirvvs::Model<double> model(num_age_groups);
@@ -1169,8 +1173,6 @@ TEST(TestOdeSECIRVVS, set_vaccination_data_min_date_not_avail)
 
 TEST(TestOdeSECIRVVS, parameter_percentiles)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     //build small graph
     auto model = make_model(5);
     auto graph = mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>();

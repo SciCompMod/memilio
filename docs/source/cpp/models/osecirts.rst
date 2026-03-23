@@ -317,7 +317,7 @@ The model also supports dynamic NPIs based on epidemic thresholds:
     dynamic_npis.set_base_value(100'000);                // Per 100,000 population
     dynamic_npis.set_threshold(200.0, dampings);         // Trigger at 200 cases per 100,000
 
-For more complex scenarios, such as real-world venue closures or lockdown modeling, detailed NPIs with location-specific dampings can be implemented. For further details, see the documentation of the :doc:`ODE-SECIR model <cpp/osecir>`
+For more complex scenarios, such as real-world venue closures or lockdown modeling, detailed NPIs with location-specific dampings can be implemented. For further details, see the documentation of the :doc:`ODE-SECIR model <osecir>`
 
 Simulation
 ----------
@@ -401,7 +401,5 @@ Examples
 To get started with the ODE-SECIRTS model, check out the code example in the MEmilio repository:
 `examples/ode_secirts.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_secirts.cpp>`_.
 
-Overview of the ``osecirts`` namespace:
------------------------------------------
 
-.. doxygennamespace:: mio::osecirts
+The code documentation for the model can be found at :CPP-API:`mio::osecirts` .

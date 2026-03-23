@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Henrik Zunker
 *
@@ -81,10 +81,10 @@ public:
                            y[idx(InfectionState::I4)];
         const FP R_total = y[idx(InfectionState::R1)] + y[idx(InfectionState::R2)] + y[idx(InfectionState::R3)] +
                            y[idx(InfectionState::R4)];
-        const FP N     = pop.sum();
-        const FP inv_N = (N > Limits<FP>::zero_tolerance())
-                             ? FP(1) / N
-                             : FP(0.0); // avoid excessive force of infection or division by zero when empty
+        const FP N       = pop.sum();
+        const FP inv_N   = (N > Limits<FP>::zero_tolerance())
+                               ? FP(1) / N
+                               : FP(0.0); // avoid excessive force of infection or division by zero when empty
         const FP lambda1 = beta1 * I_total * inv_N;
         const FP lambda2 = beta2 * I_total * inv_N;
         const FP lambda3 = beta3 * I_total * inv_N;

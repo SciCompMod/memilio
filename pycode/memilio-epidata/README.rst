@@ -109,9 +109,6 @@ To get the coverage report do
     python -m coverage xml -o coverage_python.xml
     python -m coverage html -d coverage_python
 
-Coverage report for actual master:
-
-:Coverage Report: https://scicompmod.github.io/memilio/coverage/python/
 
 Inspection via pylint
 ---------------------
@@ -129,9 +126,6 @@ Run pylint with the commands
     python ../run_pylint.py
     pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
 
-Pylint report for actual master:
-
-:Pylint Report: https://dlr-sc.github.io/memilio/pylint/
 
 Additional Tools
 ----------------

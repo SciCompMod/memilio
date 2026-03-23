@@ -1,8 +1,6 @@
-.. |MEmilio_citation| replace:: Bicker J, Kerkmann D, Korf S, Ploetzke L, Schmieding R, Wendler AC, Zunker H, Nguyen K, Abele D, Gerstein C, Lenz P, Betz M, Schmidt A, Hannemann-Tamas R, Volmer K, Waßmuth N, Tritzschak H, Richter D, Heger M, Basermann A, Meyer-Hermann M, Hasenauer J, Kühn MJ. (2025). *MEmilio - a High Performance Modular Epidemics Simulation Software*. Available at |MEmilio_github|_ and |MEmilio_elib|_.
-.. |MEmilio_github| replace:: https://github.com/SciCompMod/memilio
-.. _MEmilio_github: https://github.com/SciCompMod/memilio
-.. |MEmilio_elib| replace:: https://elib.dlr.de/213614/
-.. _MEmilio_elib: https://elib.dlr.de/213614/
+.. |MEmilio_citation| replace:: Bicker J, Gerstein C, Kerkmann D, Korf S, Schmieding R, Wendler A, Zunker H, Abele D, Betz M, Nguyen K, Plötzke L, Volmer K, SchmidtA,  Waßmuth N, Lenz P, Richter D, Tritzschak H, Hannemann-Tamas R, Litz J, Johannssen P, Borges M, Jungklaus A, Heger M, Lange A, Kluth E, Rack K, Wieland V, Arruda J, Binder S, Klitz M, Siggel M, Dahmen M, Basermann A, Meyer-Hermann M, Hasenauer J, Kühn MJ. (2026). *MEmilio -- A high performance Modular EpideMIcs simuLatIOn software for multi-scale and comparative simulations of infectious disease dynamics*. Submitted for publication. |MEmilio_DOI|_
+.. |MEmilio_DOI| replace:: DOI:10.48550/arXiv.2602.11381
+.. _MEmilio_DOI: https://doi.org/10.48550/arXiv.2602.11381
 
 .. |Novel_travel_time_aware_metapopulation_models| replace:: Zunker H, Schmieding R, Kerkmann D, Schengen A, Diexer S, Mikolajczyk R, Meyer-Hermann M, Kühn MJ. (2024). *Novel travel time aware metapopulation models and multi-layer waning immunity for late-phase epidemic and endemic scenarios*. *PLOS Computational Biology* 20(12): e1012630. |Novel_travel_time_aware_metapopulation_models_DOI|_
 .. |Novel_travel_time_aware_metapopulation_models_DOI| replace:: DOI:10.1371/journal.pcbi.1012630 
@@ -20,9 +18,9 @@
 .. |Hybrid_metapopulation_agent-based_DOI| replace:: DOI:10.1016/j.idm.2024.12.015
 .. _Hybrid_metapopulation_agent-based_DOI: https://doi.org/10.1016/j.idm.2024.12.015
 
-.. |Graph_Neural_Network_Surrogates| replace:: Schmidt A, Zunker H, Heinlein A, Kühn MJ. (2025). *Graph Neural Network Surrogates to leverage Mechanistic Expert Knowledge towards Reliable and Immediate Pandemic Response*. Submitted for publication. |Graph_Neural_Network_Surrogates_DOI|_
-.. |Graph_Neural_Network_Surrogates_DOI| replace:: arXiv:2411.06500
-.. _Graph_Neural_Network_Surrogates_DOI: https://arxiv.org/abs/2411.06500
+.. |Graph_Neural_Network_Surrogates| replace:: Schmidt A, Zunker H, Heinlein A, Kühn MJ. (2026). *Graph neural network surrogates to leverage mechanistic expert knowledge towards reliable and immediate pandemic response*. *Scientific Reports*. |Graph_Neural_Network_Surrogates_DOI|_
+.. |Graph_Neural_Network_Surrogates_DOI| replace:: DOI:10.1038/s41598-026-39431-5
+.. _Graph_Neural_Network_Surrogates_DOI: https://doi.org/10.1038/s41598-026-39431-5
 
 .. |Revisiting_the_Linear_Chain| replace:: Plötzke L, Wendler A, Schmieding R, Kühn MJ. (2024). *Revisiting the Linear Chain Trick in epidemiological models: Implications of underlying assumptions for numerical solutions*. Mathematics and Computers in Simulation 239, pp. 823-844 (2026). |Revisiting_the_Linear_Chain_DOI|_
 .. |Revisiting_the_Linear_Chain_DOI| replace:: DOI:10.1016/j.matcom.2025.07.045
@@ -63,3 +61,7 @@
 .. |Coupled_Epidemiological_and_Wastewater| replace:: Bicker J, Tomza N, Wallrafen-Sam K, Schmid N, Hofmann A., et al. (2025). *Coupled Epidemiological and Wastwater Modeling at the Urban Scale: A Case Study for Munich*. medRxiv. |Coupled_Epidemiological_and_Wastewater_DOI|_
 .. |Coupled_Epidemiological_and_Wastewater_DOI| replace:: DOI:10.1101/2025.09.25.25336633
 .. _Coupled_Epidemiological_and_Wastewater_DOI: https://doi.org/10.1101/2025.09.25.25336633
+
+.. |Missing_Transmission_Chains| replace:: Korf S, Wagner S J, Köster G, Kühn M J (2025). *On the Effect of Missing Transmission Chain Information in Agent-Based Models: Outcomes of Superspreading Events and Workplace Transmission*. arXiv. |Missing_Transmission_Chains_DOI|_
+.. |Missing_Transmission_Chains_DOI| replace:: DOI:10.48550/ARXIV.2512.06189
+.. _Missing_Transmission_Chains_DOI: https://doi.org/10.48550/ARXIV.2512.06189

@@ -114,6 +114,8 @@ Initial conditions are absolute counts in each InfectionState; totals may be set
 
 Example (see `examples/ode_mseirs4.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_mseirs4.cpp>`_) shows a complete initialization and simulation.
 
+The code documentation for the model can be found at :CPP-API:`mio::omseirs4` .
+
 Simulation
 ----------
 

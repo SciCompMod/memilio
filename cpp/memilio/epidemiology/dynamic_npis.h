@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin J. Kuehn, Daniel Abele
 *
@@ -20,9 +20,7 @@
 #ifndef MIO_EPI_DYNAMIC_LOCKDOWN_H
 #define MIO_EPI_DYNAMIC_LOCKDOWN_H
 
-#include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/epidemiology/damping_sampling.h"
-#include "memilio/math/floating_point.h"
 #include "memilio/utils/stl_util.h"
 
 namespace mio
@@ -72,11 +70,11 @@ public:
      */
     auto get_thresholds() const
     {
-        return make_range(m_thresholds.begin(), m_thresholds.end());
+        return Range(m_thresholds);
     }
     auto get_thresholds()
     {
-        return make_range(m_thresholds.begin(), m_thresholds.end());
+        return Range(m_thresholds);
     }
     /** @} */
 
