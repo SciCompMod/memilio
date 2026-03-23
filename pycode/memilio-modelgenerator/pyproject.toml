@@ -1,0 +1,41 @@
+[build-system]
+requires = [
+  "setuptools>=42",
+  "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "memilio-modelgenerator"
+version = "0.1.0"
+description = "Part of MEmilio project, automatic generation of ODE compartment model C++ and Python binding source files."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "Apache-2.0" }
+authors = [{ name = "MEmilio Team" }]
+maintainers = [
+  { email = "martin.kuehn@dlr.de" }
+]
+dependencies = [
+  "jinja2>=3.0.0",
+  "pyyaml>=6.0",
+  "jsonschema>=4.0.0",
+  "importlib-resources>=1.1.0; python_version < '3.9'"
+]
+
+[project.optional-dependencies]
+dev = []
+
+[project.scripts]
+memilio-modelgenerator = "memilio.modelgenerator.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/SciCompMod/memilio"
+Team = "https://memilio.readthedocs.io/en/latest/team.html"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["memilio*"]
+
+[tool.setuptools.package-data]
+"memilio.modelgenerator" = ["templates/*.jinja2", "schema/*.json"]
