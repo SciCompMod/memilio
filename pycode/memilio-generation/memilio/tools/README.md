@@ -24,7 +24,17 @@ This descibes the filepath to your model.cpp outgoing from the tools folder.
 
 To use a different model, replace ode_secirvvs with the desired model's name in the file path.
 
-To set up a target folder, specify the desired output directory for the generated bindings.
+Adding Additional Source Files:
+In addition to the main source file, it is possible to include further source files in the binding process.
+For this purpose, the ´asts´ instance of the [ASTHandler class](/pycode/memilio-generation/memilio/generation/ast_handler.py) provides the method ´add_source_file´:
+```python
+asts.add_source_file("name_of_the_file.cpp")
+´´´
+
+To set up a target folder, specify the desired output directory for the generated bindings here:
+`conf.target_folder = file_path`
+If no custom path is specified and `file_path`is used as the target folder, the generated files will be saved in
+the tools directory by default, as this is the working directory of the skript.
 
 After setting up the source file and target folder, set the path to the example script in the terminal:
 If the terminal shows the memilio package, just give the path with: 
@@ -53,10 +63,10 @@ You can print the AST in the example script with the aviz instance of the Visual
 
 
 Example:
-`aviz.output_ast_formatted(ast, ast.get_node_by_index(1))` displays the second node of the AST and its children in a file called ast_formatted.txt. 
-The root node (`.get_node_by_index(0)`) displays the whole AST.
+`aviz.output_ast_formatted(asts.get_ast_by_id(0), ast.get_node_by_index(1))` displays the second node of the first AST and its children in a file called ast_formatted.txt. 
+The root node `.get_node_by_index(0)` displays the whole AST.
 
-`aviz.output_ast_terminal(ast, ast.get_node_by_index(1))` displays the second node of the AST and its children in terminal.
+`aviz.output_ast_terminal(asts.get_ast_by_id(0), ast.get_node_by_index(1))` displays the second node of the AST and its children in terminal.
 
 The first argument of the statements specify the given AST. The second argument specifies the node and its children that you want to display.
 
