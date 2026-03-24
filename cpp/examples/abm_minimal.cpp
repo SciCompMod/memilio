@@ -99,9 +99,8 @@ int main()
     // Increase aerosol transmission for all locations
     model.parameters.get<mio::abm::AerosolTransmissionRates>() = 10.0;
     // Increase contact rate for all people between 15 and 34 (i.e. people meet more often in the same location)
-    model.get_location(work)
-        .get_infection_parameters()
-        .get<mio::abm::ContactRates>()[{age_group_15_to_34, age_group_15_to_34}] = 10.0;
+    model.get_location(work).get_infection_parameters().get<mio::abm::ContactRates>().get_baseline()(
+        (size_t)age_group_15_to_34, (size_t)age_group_15_to_34) = 10.0;
 
     // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 10.
     auto validity_period       = mio::abm::days(1);
@@ -166,9 +165,8 @@ int main()
     // The first column is Time. The other columns correspond to the number of people with a certain infection state at this Time:
     // Time = Time in days, S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
     // I_Crit = InfectedCritical, R = Recovered, D = Dead
-    std::ofstream outfile("abm_minimal.txt");
-    std::get<0>(historyTimeSeries.get_log())
-        .print_table(outfile, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4);
+    // std::ofstream outfile("abm_minimal.txt");
+    std::get<0>(historyTimeSeries.get_log()).print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4);
     std::cout << "Results written to abm_minimal.txt" << std::endl;
 
     return 0;

@@ -29,8 +29,6 @@ num_age_groups = 4
 
 model = Model(num_age_groups)
 
-# model.rng([1, 2, 3, 4, 5, 6])
-
 # Set parameters
 
 for age_group in range(num_age_groups):
@@ -98,7 +96,7 @@ contacts = np.zeros((num_age_groups, num_age_groups))
 contacts[2, 3] = 10
 
 model.get_location(
-    work).infection_parameters.ContactRates[0].baseline = contacts
+    work).infection_parameters.ContactRates.baseline = contacts
 
 # Testing Schemes
 
@@ -119,13 +117,14 @@ model.testing_strategy.add_scheme(
 # Seed infections
 
 infection_distribution = [0.5, 0.3, 0.05, 0.05, 0.05, 0.05, 0.0, 0.0]
+rng = np.random.default_rng()
 for person in model.persons:
-    infection_state = mio.abm.InfectionState(np.random.choice(
+    infection_state = mio.abm.InfectionState(rng.choice(
         len(infection_distribution), p=infection_distribution))
-    rng = mio.abm.PersonalRandomNumberGenerator(person)
+    prng = mio.abm.PersonalRandomNumberGenerator(person)
 
     if infection_state != mio.abm.InfectionState.Susceptible:
-        person.add_new_infection(rng, mio.abm.VirusVariant.Wildtype,
+        person.add_new_infection(prng, mio.abm.VirusVariant.Wildtype,
                                  person.age, model.parameters, start_date, infection_state)
 
 for person in model.persons:

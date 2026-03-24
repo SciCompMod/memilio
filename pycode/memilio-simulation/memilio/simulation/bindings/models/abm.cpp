@@ -253,7 +253,10 @@ PYBIND11_MODULE(_simulation_abm, m)
             [](mio::abm::Model& self, mio::abm::TestingStrategy strategy) {
                 self.get_testing_strategy() = strategy;
             },
-            py::return_value_policy::reference_internal);
+            py::return_value_policy::reference_internal)
+        .def("seed_rng", [](mio::abm::Model& self, std::vector<uint32_t> seeds) {
+            self.get_rng().seed(seeds);
+        });
 
     pymio::bind_class<mio::abm::Simulation<>, pymio::EnablePickling::Never>(m, "Simulation")
         .def(py::init<mio::abm::TimePoint, size_t>())
