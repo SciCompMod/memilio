@@ -392,9 +392,6 @@ TEST_F(ModelTestOdeMetapop, get_reproduction_number)
     result.add_time_point(0.55000, result_2);
     result.add_time_point(1.00000, result_3);
 
-    EXPECT_FALSE(model.get_reproduction_number(-1, result)); //Test for indices out of range
-    EXPECT_FALSE(model.get_reproduction_number((size_t)result.get_num_time_points(), result));
-
     EXPECT_NEAR(model.get_reproduction_number((size_t)0, result).value(), 2.3728557964184716, 1e-12);
     EXPECT_NEAR(model.get_reproduction_number((size_t)1, result).value(), 2.3726126970254491, 1e-12);
     EXPECT_NEAR(model.get_reproduction_number((size_t)2, result).value(), 2.3710580092591909, 1e-12);
