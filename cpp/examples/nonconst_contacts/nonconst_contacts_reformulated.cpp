@@ -44,7 +44,7 @@ ScalarType RiskOfInfectionFromSymptomatic   = 1.;
 ScalarType Seasonality                      = 0.;
 
 ScalarType cont_freq    = 1.;
-ScalarType damping      = 0.1;
+ScalarType damping      = 0.;
 ScalarType scaling_time = 15.;
 
 ScalarType S0               = 999000.;
@@ -125,10 +125,9 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent,
 
 mio::IOResult<void> simulate_ide(ScalarType ide_exponent, size_t gregory_order, size_t finite_difference_order,
                                  ScalarType t0_ode, ScalarType t0_ide, ScalarType tmax, ScalarType TimeInfected,
-                                 ScalarType alpha, std::string save_dir = "",
+                                 std::string save_dir = "",
                                  mio::TimeSeries<ScalarType> result_groundtruth =
-                                     mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
-                                 size_t fd_order_contacts = 1)
+                                     mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count))
 {
     using namespace params;
     using Vec = mio::TimeSeries<ScalarType>::Vector;
@@ -197,8 +196,7 @@ mio::IOResult<void> simulate_ide(ScalarType ide_exponent, size_t gregory_order, 
 
     // Carry out simulation.
     mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide);
-    bool use_complement = false;
-    sim.advance(tmax, alpha, use_complement, fd_order_contacts);
+    sim.advance_reformulated(tmax);
 
     if (!save_dir.empty()) {
         // Save compartments.
@@ -229,17 +227,14 @@ int main()
 
     std::vector<size_t> gregory_orders = {1, 2, 3};
     size_t finite_difference_order     = 4;
-    size_t fd_order_contacts           = 1;
-
-    ScalarType alpha = 1.;
 
     // Compute groundtruth with ODE model.
     ScalarType ode_exponent               = 6.;
     std::vector<ScalarType> ide_exponents = {0, 1, 2};
 
-    std::string save_dir = fmt::format("../../simulation_results/2026-03-12/phi_deriv_order={}/"
+    std::string save_dir = fmt::format("../../simulation_results/2026-03-25/reformulated/"
                                        "nonconst_contacts_t0={}_tinit={}_tmax={}_scalingtime={}_damping={}/",
-                                       fd_order_contacts, t0_ode, t0_ide, tmax, scaling_time, damping);
+                                       t0_ode, t0_ide, tmax, scaling_time, damping);
 
     // Make folder if not existent yet.
     boost::filesystem::path dir(save_dir);
@@ -252,9 +247,8 @@ int main()
         for (ScalarType ide_exponent : ide_exponents) {
 
             std::cout << std::endl;
-            mio::IOResult<void> result_ide =
-                simulate_ide(ide_exponent, gregory_order, finite_difference_order, t0_ode, t0_ide, tmax, time_infected,
-                             alpha, save_dir, result_ode, fd_order_contacts);
+            mio::IOResult<void> result_ide = simulate_ide(ide_exponent, gregory_order, finite_difference_order, t0_ode,
+                                                          t0_ide, tmax, time_infected, save_dir, result_ode);
         }
     }
 }

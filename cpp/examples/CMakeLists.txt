@@ -158,6 +158,10 @@ add_executable(detailed_init_exponential convergence/detailed_init_exponential.c
 target_link_libraries(detailed_init_exponential PRIVATE memilio ide_sir)
 target_compile_options(detailed_init_exponential PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(detailed_init_linear_decay convergence/detailed_init_linear_decay.cpp)
+target_link_libraries(detailed_init_linear_decay PRIVATE memilio ide_sir)
+target_compile_options(detailed_init_linear_decay PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(detailed_init_exponential_complement convergence/detailed_init_exponential_complement.cpp)
 target_link_libraries(detailed_init_exponential_complement PRIVATE memilio ide_sir)
 target_compile_options(detailed_init_exponential_complement PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
@@ -173,6 +177,10 @@ target_compile_options(analytical_example_S_deriv PRIVATE ${MEMILIO_CXX_FLAGS_EN
 add_executable(nonconst_contacts nonconst_contacts/nonconst_contacts.cpp)
 target_link_libraries(nonconst_contacts PRIVATE memilio ide_sir)
 target_compile_options(nonconst_contacts PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(nonconst_contacts_reformulated nonconst_contacts/nonconst_contacts_reformulated.cpp)
+target_link_libraries(nonconst_contacts_reformulated PRIVATE memilio ide_sir)
+target_compile_options(nonconst_contacts_reformulated PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(secir_changepoints nonconst_contacts/secir_changepoints.cpp)
 target_link_libraries(secir_changepoints PRIVATE memilio ide_secir)
