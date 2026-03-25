@@ -79,6 +79,7 @@ add_library(memilio
     mobility/metapopulation_mobility_stochastic.cpp
     mobility/graph_simulation.h
     mobility/graph_simulation.cpp
+    mobility/stage_aligned_mobility.h
     mobility/graph.h
     mobility/graph.cpp
     mobility/graph_builder.h

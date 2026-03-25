@@ -21,6 +21,7 @@ set(TESTSOURCES
     test_sde_sirs.cpp
     test_sde_seirvv.cpp
     test_mobility.cpp
+    test_oseir_mobility.cpp
     test_date.cpp
     test_eigen_util.cpp
     test_odesecir_ageres.cpp
