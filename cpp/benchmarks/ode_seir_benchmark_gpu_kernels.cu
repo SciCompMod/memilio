@@ -111,7 +111,7 @@ __device__ __forceinline__ void seir_compute_lambda_dev(const double* __restrict
  * at addresses [c * num_commuters + cg] and [c * num_commuters + cg+1]
  * -> consecutive -> fully coalesced.
  */
-__global__ void __launch_bounds__(GPU_BLOCK_SIZE, 2)
+__global__ void __launch_bounds__(GPU_BLOCK_SIZE)
     seir_commuter_rk4_kernel(double* __restrict__ d_mobile,
                              const double* __restrict__ d_lambda_stages, // [4 * G]
                              const double* __restrict__ d_rE, // [G]
@@ -194,7 +194,7 @@ __global__ void __launch_bounds__(GPU_BLOCK_SIZE, 2)
  * Register budget: 1 × NC doubles.  Fluxes are computed from the old state
  * before any compartment in the same age group is updated.
  */
-__global__ void __launch_bounds__(GPU_BLOCK_SIZE, 2)
+__global__ void __launch_bounds__(GPU_BLOCK_SIZE)
     seir_commuter_euler_kernel(double* __restrict__ d_mobile,
                                const double* __restrict__ d_lambda, // [G]
                                const double* __restrict__ d_rE, const double* __restrict__ d_rI,
@@ -370,7 +370,7 @@ __device__ __forceinline__ void seir_lambda_ct(const double* __restrict__ y, dou
  * by the host wrapper).
  */
 template <int G_>
-__global__ void __launch_bounds__(GPU_BLOCK_SIZE, 2)
+__global__ void __launch_bounds__(GPU_BLOCK_SIZE)
     seir_totals_allpatches_ct_kernel(double* __restrict__ d_z, double* __restrict__ d_lambda_stages,
                                      const double* __restrict__ d_contact, const double* __restrict__ d_beta,
                                      const double* __restrict__ d_rE, const double* __restrict__ d_rI,
@@ -476,7 +476,7 @@ __global__ void __launch_bounds__(GPU_BLOCK_SIZE, 2)
  * @brief Compile-time commuter RK4 for all (patch, commuter) pairs.
  */
 template <int G_>
-__global__ void __launch_bounds__(GPU_BLOCK_SIZE, 2)
+__global__ void __launch_bounds__(GPU_BLOCK_SIZE)
     seir_commuter_allpatches_ct_kernel(double* __restrict__ d_mobile, const double* __restrict__ d_lambda_stages,
                                        const double* __restrict__ d_rE, const double* __restrict__ d_rI,
                                        const int* __restrict__ d_iS, const int* __restrict__ d_iE,
@@ -581,7 +581,7 @@ __global__ void __launch_bounds__(GPU_BLOCK_SIZE, 2)
  * stage into d_lambda_stages so the commuter kernel can
  * read it without any CPU involvement.
  */
-__global__ void __launch_bounds__(GPU_BLOCK_SIZE, 2)
+__global__ void __launch_bounds__(GPU_BLOCK_SIZE)
     seir_totals_rk4_lambda_allpatches_kernel(double* __restrict__ d_z, // [NC × P], z[c*P + p]
                                              double* __restrict__ d_lambda_stages, // [4G × P], lam[(s*G+g)*P + p]
                                              const double* __restrict__ d_contact, // [G×G] shared
@@ -683,7 +683,7 @@ __global__ void __launch_bounds__(GPU_BLOCK_SIZE, 2)
  * full 4-stage RK4 step, reading lambda from d_lambda_stages which was
  * written by seir_totals_rk4_lambda_allpatches_kernel on the same stream.
  */
-__global__ void __launch_bounds__(GPU_BLOCK_SIZE, 2)
+__global__ void __launch_bounds__(GPU_BLOCK_SIZE)
     seir_commuter_rk4_allpatches_kernel(double* __restrict__ d_mobile, // [(c*P + p)*N + cg]
                                         const double* __restrict__ d_lambda_stages, // [(s*G + g)*P + p]
                                         const double* __restrict__ d_rE, const double* __restrict__ d_rI,
