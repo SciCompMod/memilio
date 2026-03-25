@@ -2,6 +2,7 @@ add_library(ode_seir
     infection_state.h
     model.h
     model.cpp
+    mobility.h
     parameters.h
 )
 target_link_libraries(ode_seir PUBLIC memilio)
