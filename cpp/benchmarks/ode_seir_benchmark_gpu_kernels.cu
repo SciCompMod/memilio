@@ -379,15 +379,16 @@ __global__ void __launch_bounds__(GPU_BLOCK_SIZE)
 {
     constexpr int NC_ = 4 * G_;
 
-    // ---- Shared memory for broadcast parameters (identical for all threads) ----
-    __shared__ double s_contact[G_ * G_];
-    __shared__ double s_beta[G_];
-    __shared__ double s_rE[G_];
-    __shared__ double s_rI[G_];
-    __shared__ int s_iS[G_];
-    __shared__ int s_iE[G_];
-    __shared__ int s_iI[G_];
-    __shared__ int s_iR[G_];
+    // ---- Dynamic shared memory for broadcast parameters ----
+    extern __shared__ char smem_totals_ct_raw[];
+    double* s_contact = reinterpret_cast<double*>(smem_totals_ct_raw);
+    double* s_beta    = s_contact + G_ * G_;
+    double* s_rE      = s_beta + G_;
+    double* s_rI      = s_rE + G_;
+    int* s_iS         = reinterpret_cast<int*>(s_rI + G_);
+    int* s_iE         = s_iS + G_;
+    int* s_iI         = s_iE + G_;
+    int* s_iR         = s_iI + G_;
 
     // Cooperative load: first G_*G_ threads load contact, first G_ load the rest
     for (int idx = static_cast<int>(threadIdx.x); idx < G_ * G_; idx += GPU_BLOCK_SIZE)
@@ -485,13 +486,14 @@ __global__ void __launch_bounds__(GPU_BLOCK_SIZE)
 {
     constexpr int NC_ = 4 * G_;
 
-    // ---- Shared memory for broadcast parameters (same for all threads in block) ----
-    __shared__ double s_rE[G_];
-    __shared__ double s_rI[G_];
-    __shared__ int s_iS[G_];
-    __shared__ int s_iE[G_];
-    __shared__ int s_iI[G_];
-    __shared__ int s_iR[G_];
+    // ---- Dynamic shared memory for broadcast parameters ----
+    extern __shared__ char smem_comm_ct_raw[];
+    double* s_rE = reinterpret_cast<double*>(smem_comm_ct_raw);
+    double* s_rI = s_rE + G_;
+    int* s_iS    = reinterpret_cast<int*>(s_rI + G_);
+    int* s_iE    = s_iS + G_;
+    int* s_iI    = s_iE + G_;
+    int* s_iR    = s_iI + G_;
 
     if (static_cast<int>(threadIdx.x) < G_) {
         s_rE[threadIdx.x] = d_rE[threadIdx.x];
@@ -902,32 +904,35 @@ void launch_seir_totals_rk4_lambda_allpatches(double* d_z, double* d_lambda_stag
                                               int NC, int G, int P, double dt)
 {
     const int blocks = (P + GPU_BLOCK_SIZE - 1) / GPU_BLOCK_SIZE;
+    // Dynamic shared memory: G*G doubles (contact) + G doubles (beta) + 2*G doubles (rE,rI) + 4*G ints (iS..iR)
+    const size_t smem =
+        static_cast<size_t>(G * G + G + 2 * G) * sizeof(double) + static_cast<size_t>(4 * G) * sizeof(int);
     // Dispatch to the compile-time-G kernel so all inner loops are fully
     // unrolled and the NC_-sized local arrays live in hardware registers.
     switch (G) {
     case 1:
-        seir_totals_allpatches_ct_kernel<1><<<blocks, GPU_BLOCK_SIZE>>>(d_z, d_lambda_stages, d_contact, d_beta, d_rE,
-                                                                        d_rI, d_iS, d_iE, d_iI, d_iR, P, dt);
+        seir_totals_allpatches_ct_kernel<1><<<blocks, GPU_BLOCK_SIZE, smem>>>(
+            d_z, d_lambda_stages, d_contact, d_beta, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, dt);
         break;
     case 2:
-        seir_totals_allpatches_ct_kernel<2><<<blocks, GPU_BLOCK_SIZE>>>(d_z, d_lambda_stages, d_contact, d_beta, d_rE,
-                                                                        d_rI, d_iS, d_iE, d_iI, d_iR, P, dt);
+        seir_totals_allpatches_ct_kernel<2><<<blocks, GPU_BLOCK_SIZE, smem>>>(
+            d_z, d_lambda_stages, d_contact, d_beta, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, dt);
         break;
     case 3:
-        seir_totals_allpatches_ct_kernel<3><<<blocks, GPU_BLOCK_SIZE>>>(d_z, d_lambda_stages, d_contact, d_beta, d_rE,
-                                                                        d_rI, d_iS, d_iE, d_iI, d_iR, P, dt);
+        seir_totals_allpatches_ct_kernel<3><<<blocks, GPU_BLOCK_SIZE, smem>>>(
+            d_z, d_lambda_stages, d_contact, d_beta, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, dt);
         break;
     case 4:
-        seir_totals_allpatches_ct_kernel<4><<<blocks, GPU_BLOCK_SIZE>>>(d_z, d_lambda_stages, d_contact, d_beta, d_rE,
-                                                                        d_rI, d_iS, d_iE, d_iI, d_iR, P, dt);
+        seir_totals_allpatches_ct_kernel<4><<<blocks, GPU_BLOCK_SIZE, smem>>>(
+            d_z, d_lambda_stages, d_contact, d_beta, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, dt);
         break;
     case 5:
-        seir_totals_allpatches_ct_kernel<5><<<blocks, GPU_BLOCK_SIZE>>>(d_z, d_lambda_stages, d_contact, d_beta, d_rE,
-                                                                        d_rI, d_iS, d_iE, d_iI, d_iR, P, dt);
+        seir_totals_allpatches_ct_kernel<5><<<blocks, GPU_BLOCK_SIZE, smem>>>(
+            d_z, d_lambda_stages, d_contact, d_beta, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, dt);
         break;
     case 6:
-        seir_totals_allpatches_ct_kernel<6><<<blocks, GPU_BLOCK_SIZE>>>(d_z, d_lambda_stages, d_contact, d_beta, d_rE,
-                                                                        d_rI, d_iS, d_iE, d_iI, d_iR, P, dt);
+        seir_totals_allpatches_ct_kernel<6><<<blocks, GPU_BLOCK_SIZE, smem>>>(
+            d_z, d_lambda_stages, d_contact, d_beta, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, dt);
         break;
     default:
         printf("launch_seir_totals_allpatches: G=%d not compiled in switch\n", G);
@@ -947,34 +952,36 @@ void launch_seir_commuter_rk4_allpatches(double* d_mobile, const double* d_lambd
 {
     const int bx = (N + GPU_BLOCK_SIZE - 1) / GPU_BLOCK_SIZE;
     dim3 grid(static_cast<unsigned>(bx), static_cast<unsigned>(P));
+    // Dynamic shared memory: 2*G doubles (rE,rI) + 4*G ints (iS..iR)
+    const size_t smem = static_cast<size_t>(2 * G) * sizeof(double) + static_cast<size_t>(4 * G) * sizeof(int);
     switch (G) {
     case 1:
         seir_commuter_allpatches_ct_kernel<1>
-            <<<grid, GPU_BLOCK_SIZE>>>(d_mobile, d_lambda_stages, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, N, dt);
+            <<<grid, GPU_BLOCK_SIZE, smem>>>(d_mobile, d_lambda_stages, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, N, dt);
         break;
     case 2:
         seir_commuter_allpatches_ct_kernel<2>
-            <<<grid, GPU_BLOCK_SIZE>>>(d_mobile, d_lambda_stages, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, N, dt);
+            <<<grid, GPU_BLOCK_SIZE, smem>>>(d_mobile, d_lambda_stages, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, N, dt);
         break;
     case 3:
         seir_commuter_allpatches_ct_kernel<3>
-            <<<grid, GPU_BLOCK_SIZE>>>(d_mobile, d_lambda_stages, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, N, dt);
+            <<<grid, GPU_BLOCK_SIZE, smem>>>(d_mobile, d_lambda_stages, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, N, dt);
         break;
     case 4:
         seir_commuter_allpatches_ct_kernel<4>
-            <<<grid, GPU_BLOCK_SIZE>>>(d_mobile, d_lambda_stages, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, N, dt);
+            <<<grid, GPU_BLOCK_SIZE, smem>>>(d_mobile, d_lambda_stages, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, N, dt);
         break;
     case 5:
         seir_commuter_allpatches_ct_kernel<5>
-            <<<grid, GPU_BLOCK_SIZE>>>(d_mobile, d_lambda_stages, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, N, dt);
+            <<<grid, GPU_BLOCK_SIZE, smem>>>(d_mobile, d_lambda_stages, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, N, dt);
         break;
     case 6:
         seir_commuter_allpatches_ct_kernel<6>
-            <<<grid, GPU_BLOCK_SIZE>>>(d_mobile, d_lambda_stages, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, N, dt);
+            <<<grid, GPU_BLOCK_SIZE, smem>>>(d_mobile, d_lambda_stages, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, N, dt);
         break;
     case 8:
         seir_commuter_allpatches_ct_kernel<8>
-            <<<grid, GPU_BLOCK_SIZE>>>(d_mobile, d_lambda_stages, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, N, dt);
+            <<<grid, GPU_BLOCK_SIZE, smem>>>(d_mobile, d_lambda_stages, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, N, dt);
         break;
     default:
         printf("launch_seir_commuter_allpatches: G=%d not compiled in switch\n", G);
