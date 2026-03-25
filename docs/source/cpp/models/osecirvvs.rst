@@ -425,7 +425,5 @@ Examples of the basic ODE-SECIR model can be found at:
 - `examples/ode_secir_ageres.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_secir_ageres.cpp>`_
 - `examples/ode_secir_parameter_study.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_secir_parameter_study.cpp>`_
 
-Overview of the ``osecirvvs`` namespace:
------------------------------------------
 
-.. doxygennamespace:: mio::osecirvvs
+The code documentation for the model can be found at :CPP-API:`mio::osecirvvs` .

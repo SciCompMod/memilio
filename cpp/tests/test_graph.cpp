@@ -35,10 +35,13 @@
 #include "matchers.h"
 #include "temp_file_register.h"
 #include "memilio/utils/stl_util.h"
+#include "utils.h"
 #include "gmock/gmock-matchers.h"
+#include "gmock/gmock.h"
 #include <cstddef>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <sys/types.h>
 #include <type_traits>
 #include <string>
 
@@ -373,7 +376,11 @@ TEST(TestGraphBuilder, Build_unique)
     builder.add_edge(1, 2, 200);
     builder.add_edge(2, 1, 300);
 
+    mio::RedirectLogger logger;
+    logger.capture();
     auto g = std::move(builder).build(true);
+    EXPECT_THAT(logger.read(), testing::HasSubstr("[warning] Removed duplicate edge(s)"));
+    logger.release();
 
     EXPECT_EQ(g.nodes().size(), 3);
     EXPECT_EQ(g.edges().size(), 3);
@@ -394,17 +401,13 @@ struct MoveOnly {
 };
 using MoveOnlyGraph = mio::Graph<MoveOnly, MoveOnly>;
 
-template <class G>
-using add_node_expr_t = decltype(std::declval<G>().add_node(int()));
-template <class G>
-using add_edge_expr_t = decltype(std::declval<G>().add_edge(size_t(), size_t()));
-
 } // namespace
 
-static_assert(std::is_constructible<MoveOnlyGraph>::value, "Graph should support move-only node and edge properties.");
-static_assert(std::is_move_constructible<MoveOnlyGraph>::value && std::is_move_assignable<MoveOnlyGraph>::value,
+static_assert(std::is_constructible_v<MoveOnlyGraph>, "Graph should support move-only node and edge properties.");
+static_assert(std::is_move_constructible_v<MoveOnlyGraph> && std::is_move_assignable_v<MoveOnlyGraph>,
               "Graph should support move-only node and edge properties.");
-static_assert(mio::is_expression_valid<add_node_expr_t, MoveOnlyGraph>::value,
-              "Graph should support move-only node and edge properties.");
-static_assert(mio::is_expression_valid<add_edge_expr_t, MoveOnlyGraph>::value,
-              "Graph should support move-only node and edge properties.");
+static_assert(
+    requires(MoveOnlyGraph g, int i) { g.add_node(i); }, "Graph should support move-only node and edge properties.");
+static_assert(
+    requires(MoveOnlyGraph g, size_t i) { g.add_edge(i, i); },
+    "Graph should support move-only node and edge properties.");

@@ -208,7 +208,4 @@ Examples
 An example can be found at `examples/ode_sir.cpp <https://github.com/SciCompMod/memilio/tree/main/cpp/examples/ode_sir.cpp>`_.
 
 
-Overview of the ``osir`` namespace:
------------------------------------------
-
-.. doxygennamespace:: mio::osir
+The code documentation for the model can be found at :CPP-API:`mio::osir` .

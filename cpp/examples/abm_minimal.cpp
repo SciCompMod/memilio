@@ -100,7 +100,7 @@ int main()
     model.parameters.get<mio::abm::AerosolTransmissionRates>() = 10.0;
     // Increase contact rate for all people between 15 and 34 (i.e. people meet more often in the same location)
     model.get_location(work).get_infection_parameters().get<mio::abm::ContactRates>().get_baseline()(
-        (size_t)age_group_15_to_34, (size_t)age_group_15_to_34) = 10.0;
+        age_group_15_to_34.get(), age_group_15_to_34.get()) = 10.0;
 
     // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 10.
     auto validity_period       = mio::abm::days(1);
