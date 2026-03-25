@@ -32,6 +32,12 @@
 #include <boost/numeric/odeint/stepper/euler.hpp>
 #include <boost/numeric/odeint/stepper/runge_kutta4.hpp>
 #include <iostream>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+#ifdef LIKWID_PERFMON
+#include <likwid-marker.h>
+#endif
 
 namespace mio
 {
@@ -170,15 +176,15 @@ void setup_explicit_model_benchmark(mio::oseir::StandardModelLagrangian& model_e
     model_explicit.check_constraints();
 }
 
-const ScalarType t0    = 0.0;
-const ScalarType t_max = 0.2;
-const ScalarType dt    = 0.1;
+const ScalarType t0 = 0.0;
+// const ScalarType t_max = 0.2;
+// const ScalarType dt    = 0.1;
 
-// const ScalarType t_max = 50.0;
-// const ScalarType dt    = 0.5;
+const ScalarType t_max = 50.0;
+const ScalarType dt    = 0.5;
 
-const ScalarType t_max_phi = 0.5;
-const ScalarType dt_phi    = 0.1;
+const ScalarType t_max_phi = 1;
+const ScalarType dt_phi    = 0.5;
 
 namespace
 {
@@ -199,8 +205,9 @@ static BenchSetupPrinter bench_setup_printer;
 // const std::vector<int> commuter_group_counts = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
 // const std::vector<int> age_group_counts      = {1, 2, 3, 4, 5, 6};
 
-const std::vector<int> commuter_group_counts = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
-const std::vector<int> age_group_counts      = {1, 2, 3, 4, 5, 6, 8, 12, 16};
+const std::vector<int> commuter_group_counts = {256, 512, 1024, 2048, 4096, 8192, 16384};
+const std::vector<int> age_group_counts      = {1, 3, 6}; //, 8, 12, 16};
+const std::vector<int> core_counts           = {1, 7, 14, 28, 56};
 
 static void bench_auxiliary_euler(::benchmark::State& state)
 {
@@ -458,6 +465,239 @@ static void bench_standard_lagrangian_euler(::benchmark::State& state)
         }
     }
 }
+
+// ============================================================================
+// OpenMP-parallel stage-aligned RK4: the outer patch loop runs in parallel.
+//
+// All NP = num_commuter_groups + 1 patches share the same model type
+// and are independent of each other, so they can be computed simultaneously
+// across all available CPU threads.
+// ============================================================================
+#ifdef _OPENMP
+static void bench_stage_aligned_rk4_omp(::benchmark::State& state)
+{
+    const int num_commuter_groups = state.range(0);
+    const size_t num_age_groups   = static_cast<size_t>(state.range(1));
+    const int num_threads         = static_cast<int>(state.range(2));
+    const int num_patches         = num_commuter_groups + 1;
+    mio::set_log_level(mio::LogLevel::critical);
+    omp_set_num_threads(num_threads);
+
+    // Per-patch runtime state
+    struct PatchState {
+        Eigen::VectorXd current_totals;
+        std::vector<Eigen::VectorXd> mobile_pops;
+        // RK4 stage vectors for the totals ODE
+        Eigen::VectorXd y0, y1, y2, y3; // stage inputs
+        Eigen::VectorXd k0, k1, k2, k3; // stage derivatives
+        // lambda[stage][age_group]
+        std::vector<std::vector<double>> lambda;
+        // RK4 workspace for commuter ODE
+        Eigen::VectorXd k1c, k2c, k3c, k4c;
+        Eigen::VectorXd Xc2, Xc3, Xc4;
+    };
+    std::vector<PatchState> patches(static_cast<size_t>(num_patches));
+
+    for (auto _ : state) {
+
+        // ---- NOT measured: model setup and data initialisation ----
+        state.PauseTiming();
+
+        ModelType model(num_age_groups);
+        setup_model_benchmark(model);
+        const auto ic               = make_seir_index_cache(model);
+        const Eigen::VectorXd proto = model.populations.get_compartments();
+        const size_t NC             = static_cast<size_t>(proto.size());
+
+        std::vector<double> rate_E(num_age_groups, 0.0);
+        std::vector<double> rate_I(num_age_groups, 0.0);
+        for (size_t g = 0; g < num_age_groups; ++g) {
+            const double tE = model.parameters.get<mio::oseir::TimeExposed<ScalarType>>()[mio::AgeGroup(g)];
+            const double tI = model.parameters.get<mio::oseir::TimeInfected<ScalarType>>()[mio::AgeGroup(g)];
+            rate_E[g]       = (tE > 1e-10) ? 1.0 / tE : 0.0;
+            rate_I[g]       = (tI > 1e-10) ? 1.0 / tI : 0.0;
+        }
+
+        const double mobile_fraction = 0.1 * num_commuter_groups;
+        const Eigen::VectorXd init_mob =
+            proto * (num_commuter_groups > 0 ? mobile_fraction / num_commuter_groups : 0.0);
+
+#pragma omp parallel for schedule(static)
+        for (int p = 0; p < num_patches; ++p) {
+            PatchState& ps    = patches[static_cast<size_t>(p)];
+            ps.current_totals = proto;
+            ps.mobile_pops.assign(num_commuter_groups, init_mob);
+            ps.lambda.assign(4, std::vector<double>(num_age_groups, 0.0));
+
+            ps.y0.resize(NC);
+            ps.y0.setZero();
+            ps.y1.resize(NC);
+            ps.y1.setZero();
+            ps.y2.resize(NC);
+            ps.y2.setZero();
+            ps.y3.resize(NC);
+            ps.y3.setZero();
+            ps.k0.resize(NC);
+            ps.k0.setZero();
+            ps.k1.resize(NC);
+            ps.k1.setZero();
+            ps.k2.resize(NC);
+            ps.k2.setZero();
+            ps.k3.resize(NC);
+            ps.k3.setZero();
+            ps.k1c.resize(NC);
+            ps.k1c.setZero();
+            ps.k2c.resize(NC);
+            ps.k2c.setZero();
+            ps.k3c.resize(NC);
+            ps.k3c.setZero();
+            ps.k4c.resize(NC);
+            ps.k4c.setZero();
+            ps.Xc2.resize(NC);
+            ps.Xc2.setZero();
+            ps.Xc3.resize(NC);
+            ps.Xc3.setZero();
+            ps.Xc4.resize(NC);
+            ps.Xc4.setZero();
+        }
+
+        // ---- Pre-compute contact*beta matrix ----
+        // Doing this once before the parallel region avoids calling
+        // get_matrix_at() inside the loop, where all 36 OMP threads would
+        // simultaneously call it.
+        std::vector<double> contact_beta(num_age_groups * num_age_groups, 0.0);
+        for (size_t i = 0; i < num_age_groups; ++i) {
+            const double beta_i =
+                model.parameters.get<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>()[mio::AgeGroup(i)];
+            for (size_t j = 0; j < num_age_groups; ++j) {
+                contact_beta[i * num_age_groups + j] =
+                    model.parameters.get<mio::oseir::ContactPatterns<ScalarType>>().get_cont_freq_mat().get_matrix_at(
+                        0.0)(i, j) *
+                    beta_i;
+            }
+        }
+
+        auto compute_lambda = [&](const Eigen::VectorXd& y, std::vector<double>& lam_out) {
+            for (size_t i = 0; i < num_age_groups; ++i)
+                lam_out[i] = 0.0;
+            for (size_t j = 0; j < num_age_groups; ++j) {
+                const double Nj    = y[ic.S[j]] + y[ic.E[j]] + y[ic.I[j]] + y[ic.R[j]];
+                const double divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
+                const double wj    = divNj * y[ic.I[j]];
+                for (size_t i = 0; i < num_age_groups; ++i)
+                    lam_out[i] += contact_beta[i * num_age_groups + j] * wj;
+            }
+        };
+
+        // Computes lambda AND the totals RHS and
+        // avoids calling model.get_derivatives() inside the parallel part.
+        auto compute_rhs_and_lambda = [&](const Eigen::VectorXd& y, Eigen::VectorXd& k_out,
+                                          std::vector<double>& lam_out) {
+            compute_lambda(y, lam_out);
+            for (size_t g = 0; g < num_age_groups; ++g) {
+                const int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
+                const double fSE = lam_out[g] * y[iS];
+                const double fEI = rate_E[g] * y[iE];
+                const double fIR = rate_I[g] * y[iI];
+                k_out[iS]        = -fSE;
+                k_out[iE]        = fSE - fEI;
+                k_out[iI]        = fEI - fIR;
+                k_out[iR]        = fIR;
+            }
+        };
+
+        // ---- MEASURED: parallel time integration over all patches ----
+        state.ResumeTiming();
+#ifdef LIKWID_PERFMON
+        LIKWID_MARKER_START("omp_rk4_hot");
+#endif
+
+#pragma omp parallel for schedule(static)
+        for (int p = 0; p < num_patches; ++p) {
+            PatchState& ps = patches[static_cast<size_t>(p)];
+
+            for (ScalarType t = t0; t < t_max; t += dt) {
+
+                // --- Totals RK4 + lambda per stage (no heap allocations) ---
+                ps.y0 = ps.current_totals;
+                compute_rhs_and_lambda(ps.y0, ps.k0, ps.lambda[0]);
+
+                ps.y1 = ps.y0 + (dt * 0.5) * ps.k0;
+                compute_rhs_and_lambda(ps.y1, ps.k1, ps.lambda[1]);
+
+                ps.y2 = ps.y0 + (dt * 0.5) * ps.k1;
+                compute_rhs_and_lambda(ps.y2, ps.k2, ps.lambda[2]);
+
+                ps.y3 = ps.y0 + dt * ps.k2;
+                compute_rhs_and_lambda(ps.y3, ps.k3, ps.lambda[3]);
+
+                const Eigen::VectorXd next_totals =
+                    ps.current_totals + (dt / 6.0) * (ps.k0 + 2.0 * ps.k1 + 2.0 * ps.k2 + ps.k3);
+
+                // --- Commuter RK4 ---
+                for (int cg = 0; cg < num_commuter_groups; ++cg) {
+                    Eigen::Ref<Eigen::VectorXd> Xc = ps.mobile_pops[static_cast<size_t>(cg)];
+
+                    for (size_t g = 0; g < num_age_groups; ++g) {
+                        const int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
+                        const double fSE = ps.lambda[0][g] * Xc[iS];
+                        const double fEI = rate_E[g] * Xc[iE];
+                        const double fIR = rate_I[g] * Xc[iI];
+                        ps.k1c[iS]       = -fSE;
+                        ps.k1c[iE]       = fSE - fEI;
+                        ps.k1c[iI]       = fEI - fIR;
+                        ps.k1c[iR]       = fIR;
+                    }
+
+                    ps.Xc2 = Xc + (dt * 0.5) * ps.k1c;
+                    for (size_t g = 0; g < num_age_groups; ++g) {
+                        const int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
+                        const double fSE = ps.lambda[1][g] * ps.Xc2[iS];
+                        const double fEI = rate_E[g] * ps.Xc2[iE];
+                        const double fIR = rate_I[g] * ps.Xc2[iI];
+                        ps.k2c[iS]       = -fSE;
+                        ps.k2c[iE]       = fSE - fEI;
+                        ps.k2c[iI]       = fEI - fIR;
+                        ps.k2c[iR]       = fIR;
+                    }
+
+                    ps.Xc3 = Xc + (dt * 0.5) * ps.k2c;
+                    for (size_t g = 0; g < num_age_groups; ++g) {
+                        const int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
+                        const double fSE = ps.lambda[2][g] * ps.Xc3[iS];
+                        const double fEI = rate_E[g] * ps.Xc3[iE];
+                        const double fIR = rate_I[g] * ps.Xc3[iI];
+                        ps.k3c[iS]       = -fSE;
+                        ps.k3c[iE]       = fSE - fEI;
+                        ps.k3c[iI]       = fEI - fIR;
+                        ps.k3c[iR]       = fIR;
+                    }
+
+                    ps.Xc4 = Xc + dt * ps.k3c;
+                    for (size_t g = 0; g < num_age_groups; ++g) {
+                        const int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
+                        const double fSE = ps.lambda[3][g] * ps.Xc4[iS];
+                        const double fEI = rate_E[g] * ps.Xc4[iE];
+                        const double fIR = rate_I[g] * ps.Xc4[iI];
+                        ps.k4c[iS]       = -fSE;
+                        ps.k4c[iE]       = fSE - fEI;
+                        ps.k4c[iI]       = fEI - fIR;
+                        ps.k4c[iR]       = fIR;
+                    }
+
+                    Xc += (dt / 6.0) * (ps.k1c + 2.0 * ps.k2c + 2.0 * ps.k3c + ps.k4c);
+                }
+                ps.current_totals = next_totals;
+            }
+        } // end omp parallel for
+#ifdef LIKWID_PERFMON
+        LIKWID_MARKER_STOP("omp_rk4_hot");
+#endif
+
+        benchmark::DoNotOptimize(patches);
+    }
+}
+#endif // _OPENMP
 
 static void bench_stage_aligned_euler(::benchmark::State& state)
 {
@@ -871,65 +1111,65 @@ static void bench_matrix_phi_reconstruction_blockdiag(::benchmark::State& state)
 } // namespace benchmark_mio
 } // namespace mio
 
-static void bench_matrix_phi_reconstruction_blockdiag_rk4(benchmark::State& state)
-{
-    mio::benchmark_mio::bench_matrix_phi_reconstruction_blockdiag<boost::numeric::odeint::runge_kutta4<
-        Eigen::VectorXd, double, Eigen::VectorXd, double, boost::numeric::odeint::vector_space_algebra>>(state);
-}
+// static void bench_matrix_phi_reconstruction_blockdiag_rk4(benchmark::State& state)
+// {
+//     mio::benchmark_mio::bench_matrix_phi_reconstruction_blockdiag<boost::numeric::odeint::runge_kutta4<
+//         Eigen::VectorXd, double, Eigen::VectorXd, double, boost::numeric::odeint::vector_space_algebra>>(state);
+// }
 
-BENCHMARK(bench_matrix_phi_reconstruction_blockdiag_rk4)
-    ->Apply([](auto* b) {
-        for (int i : mio::benchmark_mio::commuter_group_counts) {
-            for (int g : mio::benchmark_mio::age_group_counts) {
-                b->Args({i, g});
-            }
-        }
-    }) -> Name("matrix_phi_blockdiag(RK4)") -> Unit(::benchmark::kMicrosecond);
+// BENCHMARK(bench_matrix_phi_reconstruction_blockdiag_rk4)
+//     ->Apply([](auto* b) {
+//         for (int i : mio::benchmark_mio::commuter_group_counts) {
+//             for (int g : mio::benchmark_mio::age_group_counts) {
+//                 b->Args({i, g});
+//             }
+//         }
+//     }) -> Name("matrix_phi_blockdiag(RK4)") -> Unit(::benchmark::kMicrosecond);
 
-static void bench_matrix_phi_reconstruction_blockdiag_euler(benchmark::State& state)
-{
-    mio::benchmark_mio::bench_matrix_phi_reconstruction_blockdiag<boost::numeric::odeint::euler<
-        Eigen::VectorXd, double, Eigen::VectorXd, double, boost::numeric::odeint::vector_space_algebra>>(state);
-}
+// static void bench_matrix_phi_reconstruction_blockdiag_euler(benchmark::State& state)
+// {
+//     mio::benchmark_mio::bench_matrix_phi_reconstruction_blockdiag<boost::numeric::odeint::euler<
+//         Eigen::VectorXd, double, Eigen::VectorXd, double, boost::numeric::odeint::vector_space_algebra>>(state);
+// }
 
-BENCHMARK(bench_matrix_phi_reconstruction_blockdiag_euler)
-    ->Apply([](auto* b) {
-        for (int i : mio::benchmark_mio::commuter_group_counts) {
-            for (int g : mio::benchmark_mio::age_group_counts) {
-                b->Args({i, g});
-            }
-        }
-    }) -> Name("matrix_phi_blockdiag(Euler)") -> Unit(::benchmark::kMicrosecond);
+// BENCHMARK(bench_matrix_phi_reconstruction_blockdiag_euler)
+//     ->Apply([](auto* b) {
+//         for (int i : mio::benchmark_mio::commuter_group_counts) {
+//             for (int g : mio::benchmark_mio::age_group_counts) {
+//                 b->Args({i, g});
+//             }
+//         }
+//     }) -> Name("matrix_phi_blockdiag(Euler)") -> Unit(::benchmark::kMicrosecond);
 
-static void bench_matrix_phi_reconstruction_rk4(benchmark::State& state)
-{
-    mio::benchmark_mio::bench_matrix_phi_reconstruction<boost::numeric::odeint::runge_kutta4<
-        Eigen::VectorXd, double, Eigen::VectorXd, double, boost::numeric::odeint::vector_space_algebra>>(state);
-}
+// static void bench_matrix_phi_reconstruction_rk4(benchmark::State& state)
+// {
+//     mio::benchmark_mio::bench_matrix_phi_reconstruction<boost::numeric::odeint::runge_kutta4<
+//         Eigen::VectorXd, double, Eigen::VectorXd, double, boost::numeric::odeint::vector_space_algebra>>(state);
+// }
 
-BENCHMARK(bench_matrix_phi_reconstruction_rk4)
-    ->Apply([](auto* b) {
-        for (int i : mio::benchmark_mio::commuter_group_counts) {
-            for (int g : mio::benchmark_mio::age_group_counts) {
-                b->Args({i, g});
-            }
-        }
-    }) -> Name("matrix_phi_reconstruction(RK4)") -> Unit(::benchmark::kMicrosecond);
+// BENCHMARK(bench_matrix_phi_reconstruction_rk4)
+//     ->Apply([](auto* b) {
+//         for (int i : mio::benchmark_mio::commuter_group_counts) {
+//             for (int g : mio::benchmark_mio::age_group_counts) {
+//                 b->Args({i, g});
+//             }
+//         }
+//     }) -> Name("matrix_phi_reconstruction(RK4)") -> Unit(::benchmark::kMicrosecond);
 
-static void bench_matrix_phi_reconstruction_euler(benchmark::State& state)
-{
-    mio::benchmark_mio::bench_matrix_phi_reconstruction<boost::numeric::odeint::euler<
-        Eigen::VectorXd, double, Eigen::VectorXd, double, boost::numeric::odeint::vector_space_algebra>>(state);
-}
+// static void bench_matrix_phi_reconstruction_euler(benchmark::State& state)
+// {
+//     mio::benchmark_mio::bench_matrix_phi_reconstruction<boost::numeric::odeint::euler<
+//         Eigen::VectorXd, double, Eigen::VectorXd, double, boost::numeric::odeint::vector_space_algebra>>(state);
+// }
 
-BENCHMARK(bench_matrix_phi_reconstruction_euler)
-    ->Apply([](auto* b) {
-        for (int i : mio::benchmark_mio::commuter_group_counts) {
-            for (int g : mio::benchmark_mio::age_group_counts) {
-                b->Args({i, g});
-            }
-        }
-    }) -> Name("matrix_phi_reconstruction(Euler)") -> Unit(::benchmark::kMicrosecond);
+// BENCHMARK(bench_matrix_phi_reconstruction_euler)
+//     ->Apply([](auto* b) {
+//         for (int i : mio::benchmark_mio::commuter_group_counts) {
+//             for (int g : mio::benchmark_mio::age_group_counts) {
+//                 b->Args({i, g});
+//             }
+//         }
+//     }) -> Name("matrix_phi_reconstruction(Euler)") -> Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(mio::benchmark_mio::bench_stage_aligned_rk4)
     ->Apply([](auto* b) {
@@ -940,51 +1180,88 @@ BENCHMARK(mio::benchmark_mio::bench_stage_aligned_rk4)
         }
     }) -> Name("stage-aligned(RK4)") -> Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(mio::benchmark_mio::bench_stage_aligned_euler)
+#ifdef _OPENMP
+BENCHMARK(mio::benchmark_mio::bench_stage_aligned_rk4_omp)
     ->Apply([](auto* b) {
-        for (int i : mio::benchmark_mio::commuter_group_counts) {
-            for (int g : mio::benchmark_mio::age_group_counts) {
-                b->Args({i, g});
+        for (int t : mio::benchmark_mio::core_counts) {
+            for (int i : mio::benchmark_mio::commuter_group_counts) {
+                for (int g : mio::benchmark_mio::age_group_counts) {
+                    b->Args({i, g, t});
+                }
             }
         }
-    }) -> Name("stage-aligned(Euler)") -> Unit(::benchmark::kMicrosecond);
+    }) -> Name("stage-aligned-omp(RK4)") -> Unit(::benchmark::kMicrosecond);
+#endif
 
-BENCHMARK(mio::benchmark_mio::bench_auxiliary_euler)
-    ->Apply([](auto* b) {
-        for (int i : mio::benchmark_mio::commuter_group_counts) {
-            for (int g : mio::benchmark_mio::age_group_counts) {
-                b->Args({i, g});
-            }
-        }
-    }) -> Name("auxiliary_Euler") -> Unit(::benchmark::kMicrosecond);
+// BENCHMARK(mio::benchmark_mio::bench_stage_aligned_euler)
+//     ->Apply([](auto* b) {
+//         for (int i : mio::benchmark_mio::commuter_group_counts) {
+//             for (int g : mio::benchmark_mio::age_group_counts) {
+//                 b->Args({i, g});
+//             }
+//         }
+//     }) -> Name("stage-aligned(Euler)") -> Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(mio::benchmark_mio::bench_stage_aligned_hybrid)
-    ->Apply([](auto* b) {
-        for (int i : mio::benchmark_mio::commuter_group_counts) {
-            for (int g : mio::benchmark_mio::age_group_counts) {
-                b->Args({i, g});
-            }
-        }
-    }) -> Name("stage-aligned(hybrid)") -> Unit(::benchmark::kMicrosecond);
+// BENCHMARK(mio::benchmark_mio::bench_auxiliary_euler)
+//     ->Apply([](auto* b) {
+//         for (int i : mio::benchmark_mio::commuter_group_counts) {
+//             for (int g : mio::benchmark_mio::age_group_counts) {
+//                 b->Args({i, g});
+//             }
+//         }
+//     }) -> Name("auxiliary_Euler") -> Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(mio::benchmark_mio::bench_standard_lagrangian_rk4)
-    ->Apply([](auto* b) {
-        for (int i : mio::benchmark_mio::commuter_group_counts) {
+// BENCHMARK(mio::benchmark_mio::bench_stage_aligned_hybrid)
+//     ->Apply([](auto* b) {
+//         for (int i : mio::benchmark_mio::commuter_group_counts) {
+//             for (int g : mio::benchmark_mio::age_group_counts) {
+//                 b->Args({i, g});
+//             }
+//         }
+//     }) -> Name("stage-aligned(hybrid)") -> Unit(::benchmark::kMicrosecond);
 
-            for (int g : mio::benchmark_mio::age_group_counts) {
-                b->Args({i, g});
-            }
-        }
-    }) -> Name("lagrange_rk4") -> Unit(::benchmark::kMicrosecond);
+// BENCHMARK(mio::benchmark_mio::bench_standard_lagrangian_rk4)
+//     ->Apply([](auto* b) {
+//         for (int i : mio::benchmark_mio::commuter_group_counts) {
 
-BENCHMARK(mio::benchmark_mio::bench_standard_lagrangian_euler)
-    ->Apply([](auto* b) {
-        for (int i : mio::benchmark_mio::commuter_group_counts) {
-            for (int g : mio::benchmark_mio::age_group_counts) {
-                b->Args({i, g});
-            }
-        }
-    }) -> Name("lagrange_euler") -> Unit(::benchmark::kMicrosecond);
+//             for (int g : mio::benchmark_mio::age_group_counts) {
+//                 b->Args({i, g});
+//             }
+//         }
+//     }) -> Name("lagrange_rk4") -> Unit(::benchmark::kMicrosecond);
+
+// BENCHMARK(mio::benchmark_mio::bench_standard_lagrangian_euler)
+//     ->Apply([](auto* b) {
+//         for (int i : mio::benchmark_mio::commuter_group_counts) {
+//             for (int g : mio::benchmark_mio::age_group_counts) {
+//                 b->Args({i, g});
+//             }
+//         }
+//     }) -> Name("lagrange_euler") -> Unit(::benchmark::kMicrosecond);
 
 // run all benchmarks
+// When compiled with LIKWID Marker API (-DLIKWID_PERFMON), replace the
+// standard BENCHMARK_MAIN() macro with a custom main that calls
+// LIKWID_MARKER_INIT / LIKWID_MARKER_CLOSE around the benchmark runner.
+// Without LIKWID the behaviour is identical to BENCHMARK_MAIN().
+#ifdef LIKWID_PERFMON
+int main(int argc, char** argv)
+{
+    LIKWID_MARKER_INIT;
+#pragma omp parallel
+    {
+        LIKWID_MARKER_THREADINIT;
+    }
+    ::benchmark::Initialize(&argc, argv);
+    if (::benchmark::ReportUnrecognizedArguments(argc, argv)) {
+        LIKWID_MARKER_CLOSE;
+        return 1;
+    }
+    ::benchmark::RunSpecifiedBenchmarks();
+    ::benchmark::Shutdown();
+    LIKWID_MARKER_CLOSE;
+    return 0;
+}
+#else
 BENCHMARK_MAIN();
+#endif
