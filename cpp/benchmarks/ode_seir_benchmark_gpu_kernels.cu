@@ -25,6 +25,7 @@
  */
 
 #include <cuda_runtime.h>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 
@@ -92,11 +93,11 @@ __device__ __forceinline__ void seir_compute_lambda_dev(const double* __restrict
     for (int i = 0; i < G; ++i)
         lam[i] = 0.0;
     for (int j = 0; j < G; ++j) {
-        const double Nj    = y[iS[j]] + y[iE[j]] + y[iI[j]] + y[iR[j]];
-        const double divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
-        const double Ij    = y[iI[j]];
+        const double Nj       = y[iS[j]] + y[iE[j]] + y[iI[j]] + y[iR[j]];
+        const double divNj    = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
+        const double Ij_divNj = y[iI[j]] * divNj;
         for (int i = 0; i < G; ++i)
-            lam[i] += d_contact[i * G + j] * d_beta[i] * divNj * Ij;
+            lam[i] = fma(d_contact[i * G + j] * d_beta[i], Ij_divNj, lam[i]);
     }
 }
 
@@ -110,16 +111,36 @@ __device__ __forceinline__ void seir_compute_lambda_dev(const double* __restrict
  * at addresses [c * num_commuters + cg] and [c * num_commuters + cg+1]
  * -> consecutive -> fully coalesced.
  */
-__global__ void seir_commuter_rk4_kernel(double* __restrict__ d_mobile,
-                                         const double* __restrict__ d_lambda_stages, // [4 * G]
-                                         const double* __restrict__ d_rE, // [G]
-                                         const double* __restrict__ d_rI, // [G]
-                                         const int* __restrict__ d_iS, // [G]
-                                         const int* __restrict__ d_iE, // [G]
-                                         const int* __restrict__ d_iI, // [G]
-                                         const int* __restrict__ d_iR, // [G]
-                                         int NC, int G, double dt, int num_commuters)
+__global__ void __launch_bounds__(GPU_BLOCK_SIZE, 2)
+    seir_commuter_rk4_kernel(double* __restrict__ d_mobile,
+                             const double* __restrict__ d_lambda_stages, // [4 * G]
+                             const double* __restrict__ d_rE, // [G]
+                             const double* __restrict__ d_rI, // [G]
+                             const int* __restrict__ d_iS, // [G]
+                             const int* __restrict__ d_iE, // [G]
+                             const int* __restrict__ d_iI, // [G]
+                             const int* __restrict__ d_iR, // [G]
+                             int NC, int G, double dt, int num_commuters)
 {
+    // ---- Shared memory for broadcast parameters ----
+    extern __shared__ char smem_rk4_raw[];
+    double* s_rE = reinterpret_cast<double*>(smem_rk4_raw);
+    double* s_rI = s_rE + G;
+    int* s_iS    = reinterpret_cast<int*>(s_rI + G);
+    int* s_iE    = s_iS + G;
+    int* s_iI    = s_iE + G;
+    int* s_iR    = s_iI + G;
+
+    if (static_cast<int>(threadIdx.x) < G) {
+        s_rE[threadIdx.x] = d_rE[threadIdx.x];
+        s_rI[threadIdx.x] = d_rI[threadIdx.x];
+        s_iS[threadIdx.x] = d_iS[threadIdx.x];
+        s_iE[threadIdx.x] = d_iE[threadIdx.x];
+        s_iI[threadIdx.x] = d_iI[threadIdx.x];
+        s_iR[threadIdx.x] = d_iR[threadIdx.x];
+    }
+    __syncthreads();
+
     const int cg = static_cast<int>(blockIdx.x) * GPU_BLOCK_SIZE + static_cast<int>(threadIdx.x);
     if (cg >= num_commuters)
         return;
@@ -129,39 +150,42 @@ __global__ void seir_commuter_rk4_kernel(double* __restrict__ d_mobile,
     for (int c = 0; c < NC; ++c)
         Xc[c] = d_mobile[c * num_commuters + cg];
 
-    // Running accumulator: k1 + 2*k2 + 2*k3  (k4 added at the end)
+    // Running accumulator: Xc + dt/6*(k1 + 2*k2 + 2*k3 + k4)
     double acc[GPU_MAX_NC];
     double k[GPU_MAX_NC];
     double tmp[GPU_MAX_NC];
 
+    const double dt6 = dt / 6.0;
+    const double dt3 = dt / 3.0;
+    const double dt2 = dt * 0.5;
+
     // ---- Stage 1: k1 ----
-    seir_rhs_dev(Xc, k, d_lambda_stages + 0 * G, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, G);
+    seir_rhs_dev(Xc, k, d_lambda_stages + 0 * G, s_rE, s_rI, s_iS, s_iE, s_iI, s_iR, G);
     for (int c = 0; c < NC; ++c) {
-        acc[c] = k[c]; // acc = k1
-        tmp[c] = Xc[c] + (dt * 0.5) * k[c]; // tmp = Xc + (h/2)*k1
+        acc[c] = fma(dt6, k[c], Xc[c]); // acc = Xc + (dt/6)*k1
+        tmp[c] = fma(dt2, k[c], Xc[c]); // tmp = Xc + (dt/2)*k1
     }
 
     // ---- Stage 2: k2 ----
-    seir_rhs_dev(tmp, k, d_lambda_stages + 1 * G, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, G);
+    seir_rhs_dev(tmp, k, d_lambda_stages + 1 * G, s_rE, s_rI, s_iS, s_iE, s_iI, s_iR, G);
     for (int c = 0; c < NC; ++c) {
-        acc[c] += 2.0 * k[c]; // acc += 2*k2
-        tmp[c] = Xc[c] + (dt * 0.5) * k[c]; // tmp = Xc + (h/2)*k2
+        acc[c] = fma(dt3, k[c], acc[c]); // acc += (dt/3)*k2
+        tmp[c] = fma(dt2, k[c], Xc[c]); // tmp = Xc + (dt/2)*k2
     }
 
     // ---- Stage 3: k3 ----
-    seir_rhs_dev(tmp, k, d_lambda_stages + 2 * G, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, G);
+    seir_rhs_dev(tmp, k, d_lambda_stages + 2 * G, s_rE, s_rI, s_iS, s_iE, s_iI, s_iR, G);
     for (int c = 0; c < NC; ++c) {
-        acc[c] += 2.0 * k[c]; // acc += 2*k3
-        tmp[c] = Xc[c] + dt * k[c]; // tmp = Xc + h*k3
+        acc[c] = fma(dt3, k[c], acc[c]); // acc += (dt/3)*k3
+        tmp[c] = fma(dt, k[c], Xc[c]); // tmp = Xc + dt*k3
     }
 
     // ---- Stage 4: k4 ----
-    seir_rhs_dev(tmp, k, d_lambda_stages + 3 * G, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, G);
+    seir_rhs_dev(tmp, k, d_lambda_stages + 3 * G, s_rE, s_rI, s_iS, s_iE, s_iI, s_iR, G);
 
     // ---- Write back ----
-    const double c6 = dt / 6.0;
     for (int c = 0; c < NC; ++c)
-        d_mobile[c * num_commuters + cg] = Xc[c] + c6 * (acc[c] + k[c]);
+        d_mobile[c * num_commuters + cg] = fma(dt6, k[c], acc[c]);
 }
 
 /**
@@ -170,13 +194,32 @@ __global__ void seir_commuter_rk4_kernel(double* __restrict__ d_mobile,
  * Register budget: 1 × NC doubles.  Fluxes are computed from the old state
  * before any compartment in the same age group is updated.
  */
-__global__ void seir_commuter_euler_kernel(double* __restrict__ d_mobile,
-                                           const double* __restrict__ d_lambda, // [G]
-                                           const double* __restrict__ d_rE, const double* __restrict__ d_rI,
-                                           const int* __restrict__ d_iS, const int* __restrict__ d_iE,
-                                           const int* __restrict__ d_iI, const int* __restrict__ d_iR, int NC, int G,
-                                           double dt, int num_commuters)
+__global__ void __launch_bounds__(GPU_BLOCK_SIZE, 2)
+    seir_commuter_euler_kernel(double* __restrict__ d_mobile,
+                               const double* __restrict__ d_lambda, // [G]
+                               const double* __restrict__ d_rE, const double* __restrict__ d_rI,
+                               const int* __restrict__ d_iS, const int* __restrict__ d_iE, const int* __restrict__ d_iI,
+                               const int* __restrict__ d_iR, int NC, int G, double dt, int num_commuters)
 {
+    // ---- Shared memory for broadcast parameters ----
+    extern __shared__ char smem_euler_raw[];
+    double* s_rE = reinterpret_cast<double*>(smem_euler_raw);
+    double* s_rI = s_rE + G;
+    int* s_iS    = reinterpret_cast<int*>(s_rI + G);
+    int* s_iE    = s_iS + G;
+    int* s_iI    = s_iE + G;
+    int* s_iR    = s_iI + G;
+
+    if (static_cast<int>(threadIdx.x) < G) {
+        s_rE[threadIdx.x] = d_rE[threadIdx.x];
+        s_rI[threadIdx.x] = d_rI[threadIdx.x];
+        s_iS[threadIdx.x] = d_iS[threadIdx.x];
+        s_iE[threadIdx.x] = d_iE[threadIdx.x];
+        s_iI[threadIdx.x] = d_iI[threadIdx.x];
+        s_iR[threadIdx.x] = d_iR[threadIdx.x];
+    }
+    __syncthreads();
+
     const int cg = static_cast<int>(blockIdx.x) * GPU_BLOCK_SIZE + static_cast<int>(threadIdx.x);
     if (cg >= num_commuters)
         return;
@@ -186,13 +229,13 @@ __global__ void seir_commuter_euler_kernel(double* __restrict__ d_mobile,
         Xc[c] = d_mobile[c * num_commuters + cg];
 
     for (int g = 0; g < G; ++g) {
-        const double fSE = d_lambda[g] * Xc[d_iS[g]];
-        const double fEI = d_rE[g] * Xc[d_iE[g]];
-        const double fIR = d_rI[g] * Xc[d_iI[g]];
-        Xc[d_iS[g]] += dt * (-fSE);
-        Xc[d_iE[g]] += dt * (fSE - fEI);
-        Xc[d_iI[g]] += dt * (fEI - fIR);
-        Xc[d_iR[g]] += dt * fIR;
+        const double fSE = d_lambda[g] * Xc[s_iS[g]];
+        const double fEI = s_rE[g] * Xc[s_iE[g]];
+        const double fIR = s_rI[g] * Xc[s_iI[g]];
+        Xc[s_iS[g]] += dt * (-fSE);
+        Xc[s_iE[g]] += dt * (fSE - fEI);
+        Xc[s_iI[g]] += dt * (fEI - fIR);
+        Xc[s_iR[g]] += dt * fIR;
     }
 
     for (int c = 0; c < NC; ++c)
@@ -211,8 +254,8 @@ __global__ void seir_commuter_euler_kernel(double* __restrict__ d_mobile,
  *   d_contact        [G*G]  row-major contact matrix (constant across steps).
  *   d_beta           [G]    transmission probability (constant).
  *
- * Register budget: 7×NC doubles (z, k1..k4, tmp) + 1×G lambda 
- * For NC=64, G=16: 448 + 16 = 464 doubles 
+ * Register budget: 4×NC doubles (z, acc, k, tmp) + 1×G lambda
+ * For NC=64, G=16: 256 + 16 = 272 doubles (was 464 with k1..k4)
  */
 __global__ void seir_totals_rk4_lambda_kernel(double* __restrict__ d_z, double* __restrict__ d_lambda_stages,
                                               const double* __restrict__ d_contact, const double* __restrict__ d_beta,
@@ -225,50 +268,57 @@ __global__ void seir_totals_rk4_lambda_kernel(double* __restrict__ d_z, double* 
         return;
 
     double z[GPU_MAX_NC];
-    double k1[GPU_MAX_NC];
-    double k2[GPU_MAX_NC];
-    double k3[GPU_MAX_NC];
-    double k4[GPU_MAX_NC];
+    double acc[GPU_MAX_NC];
+    double k[GPU_MAX_NC];
     double tmp[GPU_MAX_NC];
     double lam[GPU_MAX_NC / 4]; // G <= 16
 
+    const double dt6 = dt / 6.0;
+    const double dt3 = dt / 3.0;
+    const double dt2 = dt * 0.5;
+
     for (int c = 0; c < NC; ++c)
-        z[c] = d_z[c];
+        z[c] = acc[c] = d_z[c];
 
     // ---- Stage 1 ----
     seir_compute_lambda_dev(z, lam, d_contact, d_beta, d_iS, d_iE, d_iI, d_iR, G);
     for (int g = 0; g < G; ++g)
         d_lambda_stages[0 * G + g] = lam[g];
-    seir_rhs_dev(z, k1, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, G);
+    seir_rhs_dev(z, k, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, G);
+    for (int c = 0; c < NC; ++c) {
+        acc[c] = fma(dt6, k[c], acc[c]);
+        tmp[c] = fma(dt2, k[c], z[c]);
+    }
 
     // ---- Stage 2 ----
-    for (int c = 0; c < NC; ++c)
-        tmp[c] = z[c] + 0.5 * dt * k1[c];
     seir_compute_lambda_dev(tmp, lam, d_contact, d_beta, d_iS, d_iE, d_iI, d_iR, G);
     for (int g = 0; g < G; ++g)
         d_lambda_stages[1 * G + g] = lam[g];
-    seir_rhs_dev(tmp, k2, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, G);
+    seir_rhs_dev(tmp, k, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, G);
+    for (int c = 0; c < NC; ++c) {
+        acc[c] = fma(dt3, k[c], acc[c]);
+        tmp[c] = fma(dt2, k[c], z[c]);
+    }
 
     // ---- Stage 3 ----
-    for (int c = 0; c < NC; ++c)
-        tmp[c] = z[c] + 0.5 * dt * k2[c];
     seir_compute_lambda_dev(tmp, lam, d_contact, d_beta, d_iS, d_iE, d_iI, d_iR, G);
     for (int g = 0; g < G; ++g)
         d_lambda_stages[2 * G + g] = lam[g];
-    seir_rhs_dev(tmp, k3, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, G);
+    seir_rhs_dev(tmp, k, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, G);
+    for (int c = 0; c < NC; ++c) {
+        acc[c] = fma(dt3, k[c], acc[c]);
+        tmp[c] = fma(dt, k[c], z[c]);
+    }
 
     // ---- Stage 4 ----
-    for (int c = 0; c < NC; ++c)
-        tmp[c] = z[c] + dt * k3[c];
     seir_compute_lambda_dev(tmp, lam, d_contact, d_beta, d_iS, d_iE, d_iI, d_iR, G);
     for (int g = 0; g < G; ++g)
         d_lambda_stages[3 * G + g] = lam[g];
-    seir_rhs_dev(tmp, k4, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, G);
+    seir_rhs_dev(tmp, k, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, G);
 
-    // ---- RK4 update ----
-    const double c6 = dt / 6.0;
+    // ---- Final update ----
     for (int c = 0; c < NC; ++c)
-        d_z[c] = z[c] + c6 * (k1[c] + 2.0 * k2[c] + 2.0 * k3[c] + k4[c]);
+        d_z[c] = fma(dt6, k[c], acc[c]);
 }
 
 /** Compile-time SEIR RHS. */
@@ -302,12 +352,12 @@ __device__ __forceinline__ void seir_lambda_ct(const double* __restrict__ y, dou
         lam[i] = 0.0;
 #pragma unroll
     for (int j = 0; j < G_; ++j) {
-        const double Nj    = y[iS[j]] + y[iE[j]] + y[iI[j]] + y[iR[j]];
-        const double divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
-        const double Ij    = y[iI[j]];
+        const double Nj       = y[iS[j]] + y[iE[j]] + y[iI[j]] + y[iR[j]];
+        const double divNj    = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
+        const double Ij_divNj = y[iI[j]] * divNj;
 #pragma unroll
         for (int i = 0; i < G_; ++i)
-            lam[i] += d_contact[i * G_ + j] * d_beta[i] * divNj * Ij;
+            lam[i] = fma(d_contact[i * G_ + j] * d_beta[i], Ij_divNj, lam[i]);
     }
 }
 
@@ -320,72 +370,102 @@ __device__ __forceinline__ void seir_lambda_ct(const double* __restrict__ y, dou
  * by the host wrapper).
  */
 template <int G_>
-__global__ void seir_totals_allpatches_ct_kernel(double* __restrict__ d_z, double* __restrict__ d_lambda_stages,
-                                                 const double* __restrict__ d_contact,
-                                                 const double* __restrict__ d_beta, const double* __restrict__ d_rE,
-                                                 const double* __restrict__ d_rI, const int* __restrict__ d_iS,
-                                                 const int* __restrict__ d_iE, const int* __restrict__ d_iI,
-                                                 const int* __restrict__ d_iR, int P, double dt)
+__global__ void __launch_bounds__(GPU_BLOCK_SIZE, 2)
+    seir_totals_allpatches_ct_kernel(double* __restrict__ d_z, double* __restrict__ d_lambda_stages,
+                                     const double* __restrict__ d_contact, const double* __restrict__ d_beta,
+                                     const double* __restrict__ d_rE, const double* __restrict__ d_rI,
+                                     const int* __restrict__ d_iS, const int* __restrict__ d_iE,
+                                     const int* __restrict__ d_iI, const int* __restrict__ d_iR, int P, double dt)
 {
     constexpr int NC_ = 4 * G_;
-    const int p       = static_cast<int>(blockIdx.x) * GPU_BLOCK_SIZE + static_cast<int>(threadIdx.x);
+
+    // ---- Shared memory for broadcast parameters (identical for all threads) ----
+    __shared__ double s_contact[G_ * G_];
+    __shared__ double s_beta[G_];
+    __shared__ double s_rE[G_];
+    __shared__ double s_rI[G_];
+    __shared__ int s_iS[G_];
+    __shared__ int s_iE[G_];
+    __shared__ int s_iI[G_];
+    __shared__ int s_iR[G_];
+
+    // Cooperative load: first G_*G_ threads load contact, first G_ load the rest
+    for (int idx = static_cast<int>(threadIdx.x); idx < G_ * G_; idx += GPU_BLOCK_SIZE)
+        s_contact[idx] = d_contact[idx];
+    if (static_cast<int>(threadIdx.x) < G_) {
+        s_beta[threadIdx.x] = d_beta[threadIdx.x];
+        s_rE[threadIdx.x]   = d_rE[threadIdx.x];
+        s_rI[threadIdx.x]   = d_rI[threadIdx.x];
+        s_iS[threadIdx.x]   = d_iS[threadIdx.x];
+        s_iE[threadIdx.x]   = d_iE[threadIdx.x];
+        s_iI[threadIdx.x]   = d_iI[threadIdx.x];
+        s_iR[threadIdx.x]   = d_iR[threadIdx.x];
+    }
+    __syncthreads();
+
+    const int p = static_cast<int>(blockIdx.x) * GPU_BLOCK_SIZE + static_cast<int>(threadIdx.x);
     if (p >= P)
         return;
+
     double z[NC_]; // original state, held as base for all stage inputs
     double acc[NC_]; // running accumulator: z0 + dt*(k1 + 2k2 + 2k3 + k4)/6
     double k[NC_]; // current-stage derivative (reused)
     double tmp[NC_]; // next-stage input (reused)
     double lam[G_]; // lambda (reused per stage)
 
+    const double dt6 = dt / 6.0;
+    const double dt3 = dt / 3.0;
+    const double dt2 = dt * 0.5;
+
 #pragma unroll
     for (int c = 0; c < NC_; ++c)
         z[c] = acc[c] = d_z[c * P + p];
 
     // Stage 1: k1, lambda_0
-    seir_lambda_ct<G_>(z, lam, d_contact, d_beta, d_iS, d_iE, d_iI, d_iR);
+    seir_lambda_ct<G_>(z, lam, s_contact, s_beta, s_iS, s_iE, s_iI, s_iR);
 #pragma unroll
     for (int g = 0; g < G_; ++g)
         d_lambda_stages[(0 * G_ + g) * P + p] = lam[g];
-    seir_rhs_ct<G_>(z, k, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR);
+    seir_rhs_ct<G_>(z, k, lam, s_rE, s_rI, s_iS, s_iE, s_iI, s_iR);
 #pragma unroll
     for (int c = 0; c < NC_; ++c) {
-        acc[c] += (dt / 6.0) * k[c]; // acc += dt/6 * k1
-        tmp[c] = z[c] + 0.5 * dt * k[c]; // input for stage 2
+        acc[c] = fma(dt6, k[c], acc[c]);
+        tmp[c] = fma(dt2, k[c], z[c]);
     }
 
     // Stage 2: k2, lambda_1
-    seir_lambda_ct<G_>(tmp, lam, d_contact, d_beta, d_iS, d_iE, d_iI, d_iR);
+    seir_lambda_ct<G_>(tmp, lam, s_contact, s_beta, s_iS, s_iE, s_iI, s_iR);
 #pragma unroll
     for (int g = 0; g < G_; ++g)
         d_lambda_stages[(1 * G_ + g) * P + p] = lam[g];
-    seir_rhs_ct<G_>(tmp, k, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR);
+    seir_rhs_ct<G_>(tmp, k, lam, s_rE, s_rI, s_iS, s_iE, s_iI, s_iR);
 #pragma unroll
     for (int c = 0; c < NC_; ++c) {
-        acc[c] += (dt / 3.0) * k[c]; // acc += dt/3 * k2
-        tmp[c] = z[c] + 0.5 * dt * k[c]; // input for stage 3
+        acc[c] = fma(dt3, k[c], acc[c]);
+        tmp[c] = fma(dt2, k[c], z[c]);
     }
 
     // Stage 3: k3, lambda_2
-    seir_lambda_ct<G_>(tmp, lam, d_contact, d_beta, d_iS, d_iE, d_iI, d_iR);
+    seir_lambda_ct<G_>(tmp, lam, s_contact, s_beta, s_iS, s_iE, s_iI, s_iR);
 #pragma unroll
     for (int g = 0; g < G_; ++g)
         d_lambda_stages[(2 * G_ + g) * P + p] = lam[g];
-    seir_rhs_ct<G_>(tmp, k, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR);
+    seir_rhs_ct<G_>(tmp, k, lam, s_rE, s_rI, s_iS, s_iE, s_iI, s_iR);
 #pragma unroll
     for (int c = 0; c < NC_; ++c) {
-        acc[c] += (dt / 3.0) * k[c]; // acc += dt/3 * k3
-        tmp[c] = z[c] + dt * k[c]; // input for stage 4
+        acc[c] = fma(dt3, k[c], acc[c]);
+        tmp[c] = fma(dt, k[c], z[c]);
     }
 
     // Stage 4: k4, lambda_3
-    seir_lambda_ct<G_>(tmp, lam, d_contact, d_beta, d_iS, d_iE, d_iI, d_iR);
+    seir_lambda_ct<G_>(tmp, lam, s_contact, s_beta, s_iS, s_iE, s_iI, s_iR);
 #pragma unroll
     for (int g = 0; g < G_; ++g)
         d_lambda_stages[(3 * G_ + g) * P + p] = lam[g];
-    seir_rhs_ct<G_>(tmp, k, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR);
+    seir_rhs_ct<G_>(tmp, k, lam, s_rE, s_rI, s_iS, s_iE, s_iI, s_iR);
 #pragma unroll
     for (int c = 0; c < NC_; ++c)
-        acc[c] += (dt / 6.0) * k[c]; // acc += dt/6 * k4  -> acc = z0 + dt*(k1+2k2+2k3+k4)/6
+        acc[c] = fma(dt6, k[c], acc[c]);
 
 #pragma unroll
     for (int c = 0; c < NC_; ++c)
@@ -396,15 +476,35 @@ __global__ void seir_totals_allpatches_ct_kernel(double* __restrict__ d_z, doubl
  * @brief Compile-time commuter RK4 for all (patch, commuter) pairs.
  */
 template <int G_>
-__global__ void
-seir_commuter_allpatches_ct_kernel(double* __restrict__ d_mobile, const double* __restrict__ d_lambda_stages,
-                                   const double* __restrict__ d_rE, const double* __restrict__ d_rI,
-                                   const int* __restrict__ d_iS, const int* __restrict__ d_iE,
-                                   const int* __restrict__ d_iI, const int* __restrict__ d_iR, int P, int N, double dt)
+__global__ void __launch_bounds__(GPU_BLOCK_SIZE, 2)
+    seir_commuter_allpatches_ct_kernel(double* __restrict__ d_mobile, const double* __restrict__ d_lambda_stages,
+                                       const double* __restrict__ d_rE, const double* __restrict__ d_rI,
+                                       const int* __restrict__ d_iS, const int* __restrict__ d_iE,
+                                       const int* __restrict__ d_iI, const int* __restrict__ d_iR, int P, int N,
+                                       double dt)
 {
     constexpr int NC_ = 4 * G_;
-    const int p       = static_cast<int>(blockIdx.y);
-    const int cg      = static_cast<int>(blockIdx.x) * GPU_BLOCK_SIZE + static_cast<int>(threadIdx.x);
+
+    // ---- Shared memory for broadcast parameters (same for all threads in block) ----
+    __shared__ double s_rE[G_];
+    __shared__ double s_rI[G_];
+    __shared__ int s_iS[G_];
+    __shared__ int s_iE[G_];
+    __shared__ int s_iI[G_];
+    __shared__ int s_iR[G_];
+
+    if (static_cast<int>(threadIdx.x) < G_) {
+        s_rE[threadIdx.x] = d_rE[threadIdx.x];
+        s_rI[threadIdx.x] = d_rI[threadIdx.x];
+        s_iS[threadIdx.x] = d_iS[threadIdx.x];
+        s_iE[threadIdx.x] = d_iE[threadIdx.x];
+        s_iI[threadIdx.x] = d_iI[threadIdx.x];
+        s_iR[threadIdx.x] = d_iR[threadIdx.x];
+    }
+    __syncthreads();
+
+    const int p  = static_cast<int>(blockIdx.y);
+    const int cg = static_cast<int>(blockIdx.x) * GPU_BLOCK_SIZE + static_cast<int>(threadIdx.x);
     if (cg >= N || p >= P)
         return;
 
@@ -416,6 +516,11 @@ seir_commuter_allpatches_ct_kernel(double* __restrict__ d_mobile, const double* 
     double tmp[NC_]; // stage input (reused across stages)
     double lam[G_]; // lambda (reused per stage)
 
+    // Precompute RK4 weights to avoid repeated division
+    const double dt6 = dt / 6.0;
+    const double dt3 = dt / 3.0;
+    const double dt2 = dt * 0.5;
+
 #pragma unroll
     for (int c = 0; c < NC_; ++c)
         Xc[c] = acc[c] = d_mobile[(p * NC_ + c) * N + cg];
@@ -424,43 +529,43 @@ seir_commuter_allpatches_ct_kernel(double* __restrict__ d_mobile, const double* 
 #pragma unroll
     for (int g = 0; g < G_; ++g)
         lam[g] = d_lambda_stages[(0 * G_ + g) * P + p];
-    seir_rhs_ct<G_>(Xc, k, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR);
+    seir_rhs_ct<G_>(Xc, k, lam, s_rE, s_rI, s_iS, s_iE, s_iI, s_iR);
 #pragma unroll
     for (int c = 0; c < NC_; ++c) {
-        acc[c] += (dt / 6.0) * k[c];
-        tmp[c] = Xc[c] + 0.5 * dt * k[c];
+        acc[c] = fma(dt6, k[c], acc[c]);
+        tmp[c] = fma(dt2, k[c], Xc[c]);
     }
 
 // Stage 2
 #pragma unroll
     for (int g = 0; g < G_; ++g)
         lam[g] = d_lambda_stages[(1 * G_ + g) * P + p];
-    seir_rhs_ct<G_>(tmp, k, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR);
+    seir_rhs_ct<G_>(tmp, k, lam, s_rE, s_rI, s_iS, s_iE, s_iI, s_iR);
 #pragma unroll
     for (int c = 0; c < NC_; ++c) {
-        acc[c] += (dt / 3.0) * k[c];
-        tmp[c] = Xc[c] + 0.5 * dt * k[c];
+        acc[c] = fma(dt3, k[c], acc[c]);
+        tmp[c] = fma(dt2, k[c], Xc[c]);
     }
 
 // Stage 3
 #pragma unroll
     for (int g = 0; g < G_; ++g)
         lam[g] = d_lambda_stages[(2 * G_ + g) * P + p];
-    seir_rhs_ct<G_>(tmp, k, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR);
+    seir_rhs_ct<G_>(tmp, k, lam, s_rE, s_rI, s_iS, s_iE, s_iI, s_iR);
 #pragma unroll
     for (int c = 0; c < NC_; ++c) {
-        acc[c] += (dt / 3.0) * k[c];
-        tmp[c] = Xc[c] + dt * k[c];
+        acc[c] = fma(dt3, k[c], acc[c]);
+        tmp[c] = fma(dt, k[c], Xc[c]);
     }
 
 // Stage 4
 #pragma unroll
     for (int g = 0; g < G_; ++g)
         lam[g] = d_lambda_stages[(3 * G_ + g) * P + p];
-    seir_rhs_ct<G_>(tmp, k, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR);
+    seir_rhs_ct<G_>(tmp, k, lam, s_rE, s_rI, s_iS, s_iE, s_iI, s_iR);
 #pragma unroll
     for (int c = 0; c < NC_; ++c)
-        acc[c] += (dt / 6.0) * k[c]; // acc = Xc + dt*(k1+2k2+2k3+k4)/6
+        acc[c] = fma(dt6, k[c], acc[c]); // acc = Xc + dt*(k1+2k2+2k3+k4)/6
 
 #pragma unroll
     for (int c = 0; c < NC_; ++c)
@@ -476,64 +581,96 @@ seir_commuter_allpatches_ct_kernel(double* __restrict__ d_mobile, const double* 
  * stage into d_lambda_stages so the commuter kernel can
  * read it without any CPU involvement.
  */
-__global__ void
-seir_totals_rk4_lambda_allpatches_kernel(double* __restrict__ d_z, // [NC × P], z[c*P + p]
-                                         double* __restrict__ d_lambda_stages, // [4G × P], lam[(s*G+g)*P + p]
-                                         const double* __restrict__ d_contact, // [G×G] shared
-                                         const double* __restrict__ d_beta, const double* __restrict__ d_rE,
-                                         const double* __restrict__ d_rI, const int* __restrict__ d_iS,
-                                         const int* __restrict__ d_iE, const int* __restrict__ d_iI,
-                                         const int* __restrict__ d_iR, int NC, int G, int P, double dt)
+__global__ void __launch_bounds__(GPU_BLOCK_SIZE, 2)
+    seir_totals_rk4_lambda_allpatches_kernel(double* __restrict__ d_z, // [NC × P], z[c*P + p]
+                                             double* __restrict__ d_lambda_stages, // [4G × P], lam[(s*G+g)*P + p]
+                                             const double* __restrict__ d_contact, // [G×G] shared
+                                             const double* __restrict__ d_beta, const double* __restrict__ d_rE,
+                                             const double* __restrict__ d_rI, const int* __restrict__ d_iS,
+                                             const int* __restrict__ d_iE, const int* __restrict__ d_iI,
+                                             const int* __restrict__ d_iR, int NC, int G, int P, double dt)
 {
+    // ---- Shared memory for broadcast parameters ----
+    extern __shared__ char smem_totals_raw[];
+    double* s_contact = reinterpret_cast<double*>(smem_totals_raw);
+    double* s_beta    = s_contact + GPU_MAX_NC / 4 * GPU_MAX_NC / 4; // G*G max
+    double* s_rE      = s_beta + GPU_MAX_NC / 4;
+    double* s_rI      = s_rE + GPU_MAX_NC / 4;
+    int* s_iS         = reinterpret_cast<int*>(s_rI + GPU_MAX_NC / 4);
+    int* s_iE         = s_iS + GPU_MAX_NC / 4;
+    int* s_iI         = s_iE + GPU_MAX_NC / 4;
+    int* s_iR         = s_iI + GPU_MAX_NC / 4;
+
+    for (int idx = static_cast<int>(threadIdx.x); idx < G * G; idx += GPU_BLOCK_SIZE)
+        s_contact[idx] = d_contact[idx];
+    if (static_cast<int>(threadIdx.x) < G) {
+        s_beta[threadIdx.x] = d_beta[threadIdx.x];
+        s_rE[threadIdx.x]   = d_rE[threadIdx.x];
+        s_rI[threadIdx.x]   = d_rI[threadIdx.x];
+        s_iS[threadIdx.x]   = d_iS[threadIdx.x];
+        s_iE[threadIdx.x]   = d_iE[threadIdx.x];
+        s_iI[threadIdx.x]   = d_iI[threadIdx.x];
+        s_iR[threadIdx.x]   = d_iR[threadIdx.x];
+    }
+    __syncthreads();
+
     const int p = static_cast<int>(blockIdx.x) * GPU_BLOCK_SIZE + static_cast<int>(threadIdx.x);
     if (p >= P)
         return;
 
+    // Accumulator pattern: 4 arrays instead of 7 (saves 3×NC registers)
     double z[GPU_MAX_NC];
-    double k1[GPU_MAX_NC];
-    double k2[GPU_MAX_NC];
-    double k3[GPU_MAX_NC];
-    double k4[GPU_MAX_NC];
+    double acc[GPU_MAX_NC];
+    double k[GPU_MAX_NC];
     double tmp[GPU_MAX_NC];
     double lam[GPU_MAX_NC / 4]; // G <= 16
 
+    const double dt6 = dt / 6.0;
+    const double dt3 = dt / 3.0;
+    const double dt2 = dt * 0.5;
+
     for (int c = 0; c < NC; ++c)
-        z[c] = d_z[c * P + p];
+        z[c] = acc[c] = d_z[c * P + p];
 
     // --- Stage 1 ---
-    seir_compute_lambda_dev(z, lam, d_contact, d_beta, d_iS, d_iE, d_iI, d_iR, G);
+    seir_compute_lambda_dev(z, lam, s_contact, s_beta, s_iS, s_iE, s_iI, s_iR, G);
     for (int g = 0; g < G; ++g)
         d_lambda_stages[(0 * G + g) * P + p] = lam[g];
-    seir_rhs_dev(z, k1, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, G);
+    seir_rhs_dev(z, k, lam, s_rE, s_rI, s_iS, s_iE, s_iI, s_iR, G);
+    for (int c = 0; c < NC; ++c) {
+        acc[c] = fma(dt6, k[c], acc[c]);
+        tmp[c] = fma(dt2, k[c], z[c]);
+    }
 
     // --- Stage 2 ---
-    for (int c = 0; c < NC; ++c)
-        tmp[c] = z[c] + 0.5 * dt * k1[c];
-    seir_compute_lambda_dev(tmp, lam, d_contact, d_beta, d_iS, d_iE, d_iI, d_iR, G);
+    seir_compute_lambda_dev(tmp, lam, s_contact, s_beta, s_iS, s_iE, s_iI, s_iR, G);
     for (int g = 0; g < G; ++g)
         d_lambda_stages[(1 * G + g) * P + p] = lam[g];
-    seir_rhs_dev(tmp, k2, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, G);
+    seir_rhs_dev(tmp, k, lam, s_rE, s_rI, s_iS, s_iE, s_iI, s_iR, G);
+    for (int c = 0; c < NC; ++c) {
+        acc[c] = fma(dt3, k[c], acc[c]);
+        tmp[c] = fma(dt2, k[c], z[c]);
+    }
 
     // --- Stage 3 ---
-    for (int c = 0; c < NC; ++c)
-        tmp[c] = z[c] + 0.5 * dt * k2[c];
-    seir_compute_lambda_dev(tmp, lam, d_contact, d_beta, d_iS, d_iE, d_iI, d_iR, G);
+    seir_compute_lambda_dev(tmp, lam, s_contact, s_beta, s_iS, s_iE, s_iI, s_iR, G);
     for (int g = 0; g < G; ++g)
         d_lambda_stages[(2 * G + g) * P + p] = lam[g];
-    seir_rhs_dev(tmp, k3, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, G);
+    seir_rhs_dev(tmp, k, lam, s_rE, s_rI, s_iS, s_iE, s_iI, s_iR, G);
+    for (int c = 0; c < NC; ++c) {
+        acc[c] = fma(dt3, k[c], acc[c]);
+        tmp[c] = fma(dt, k[c], z[c]);
+    }
 
     // --- Stage 4 ---
-    for (int c = 0; c < NC; ++c)
-        tmp[c] = z[c] + dt * k3[c];
-    seir_compute_lambda_dev(tmp, lam, d_contact, d_beta, d_iS, d_iE, d_iI, d_iR, G);
+    seir_compute_lambda_dev(tmp, lam, s_contact, s_beta, s_iS, s_iE, s_iI, s_iR, G);
     for (int g = 0; g < G; ++g)
         d_lambda_stages[(3 * G + g) * P + p] = lam[g];
-    seir_rhs_dev(tmp, k4, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, G);
+    seir_rhs_dev(tmp, k, lam, s_rE, s_rI, s_iS, s_iE, s_iI, s_iR, G);
 
-    // --- RK4 update ---
-    const double c6 = dt / 6.0;
+    // --- Final update ---
     for (int c = 0; c < NC; ++c)
-        d_z[c * P + p] = z[c] + c6 * (k1[c] + 2.0 * k2[c] + 2.0 * k3[c] + k4[c]);
+        d_z[c * P + p] = fma(dt6, k[c], acc[c]);
 }
 
 /**
@@ -546,59 +683,87 @@ seir_totals_rk4_lambda_allpatches_kernel(double* __restrict__ d_z, // [NC × P],
  * full 4-stage RK4 step, reading lambda from d_lambda_stages which was
  * written by seir_totals_rk4_lambda_allpatches_kernel on the same stream.
  */
-__global__ void seir_commuter_rk4_allpatches_kernel(double* __restrict__ d_mobile, // [(c*P + p)*N + cg]
-                                                    const double* __restrict__ d_lambda_stages, // [(s*G + g)*P + p]
-                                                    const double* __restrict__ d_rE, const double* __restrict__ d_rI,
-                                                    const int* __restrict__ d_iS, const int* __restrict__ d_iE,
-                                                    const int* __restrict__ d_iI, const int* __restrict__ d_iR, int NC,
-                                                    int G, int P, int N, double dt)
+__global__ void __launch_bounds__(GPU_BLOCK_SIZE, 2)
+    seir_commuter_rk4_allpatches_kernel(double* __restrict__ d_mobile, // [(c*P + p)*N + cg]
+                                        const double* __restrict__ d_lambda_stages, // [(s*G + g)*P + p]
+                                        const double* __restrict__ d_rE, const double* __restrict__ d_rI,
+                                        const int* __restrict__ d_iS, const int* __restrict__ d_iE,
+                                        const int* __restrict__ d_iI, const int* __restrict__ d_iR, int NC, int G,
+                                        int P, int N, double dt)
 {
+    // ---- Shared memory for broadcast parameters ----
+    extern __shared__ char smem_comm_raw[];
+    double* s_rE = reinterpret_cast<double*>(smem_comm_raw);
+    double* s_rI = s_rE + G;
+    int* s_iS    = reinterpret_cast<int*>(s_rI + G);
+    int* s_iE    = s_iS + G;
+    int* s_iI    = s_iE + G;
+    int* s_iR    = s_iI + G;
+
+    if (static_cast<int>(threadIdx.x) < G) {
+        s_rE[threadIdx.x] = d_rE[threadIdx.x];
+        s_rI[threadIdx.x] = d_rI[threadIdx.x];
+        s_iS[threadIdx.x] = d_iS[threadIdx.x];
+        s_iE[threadIdx.x] = d_iE[threadIdx.x];
+        s_iI[threadIdx.x] = d_iI[threadIdx.x];
+        s_iR[threadIdx.x] = d_iR[threadIdx.x];
+    }
+    __syncthreads();
+
     const int p  = static_cast<int>(blockIdx.y);
     const int cg = static_cast<int>(blockIdx.x) * GPU_BLOCK_SIZE + static_cast<int>(threadIdx.x);
     if (cg >= N || p >= P)
         return;
 
+    // Accumulator pattern: 4 arrays instead of 7 (saves 3×NC registers)
     double Xc[GPU_MAX_NC];
-    double k1[GPU_MAX_NC];
-    double k2[GPU_MAX_NC];
-    double k3[GPU_MAX_NC];
-    double k4[GPU_MAX_NC];
+    double acc[GPU_MAX_NC];
+    double k[GPU_MAX_NC];
     double tmp[GPU_MAX_NC];
     double lam[GPU_MAX_NC / 4]; // G <= 16
 
+    const double dt6 = dt / 6.0;
+    const double dt3 = dt / 3.0;
+    const double dt2 = dt * 0.5;
+
     for (int c = 0; c < NC; ++c)
-        Xc[c] = d_mobile[(p * NC + c) * N + cg];
+        Xc[c] = acc[c] = d_mobile[(p * NC + c) * N + cg];
 
     // --- Stage 1 ---
     for (int g = 0; g < G; ++g)
         lam[g] = d_lambda_stages[(0 * G + g) * P + p];
-    seir_rhs_dev(Xc, k1, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, G);
+    seir_rhs_dev(Xc, k, lam, s_rE, s_rI, s_iS, s_iE, s_iI, s_iR, G);
+    for (int c = 0; c < NC; ++c) {
+        acc[c] = fma(dt6, k[c], acc[c]);
+        tmp[c] = fma(dt2, k[c], Xc[c]);
+    }
 
     // --- Stage 2 ---
-    for (int c = 0; c < NC; ++c)
-        tmp[c] = Xc[c] + 0.5 * dt * k1[c];
     for (int g = 0; g < G; ++g)
         lam[g] = d_lambda_stages[(1 * G + g) * P + p];
-    seir_rhs_dev(tmp, k2, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, G);
+    seir_rhs_dev(tmp, k, lam, s_rE, s_rI, s_iS, s_iE, s_iI, s_iR, G);
+    for (int c = 0; c < NC; ++c) {
+        acc[c] = fma(dt3, k[c], acc[c]);
+        tmp[c] = fma(dt2, k[c], Xc[c]);
+    }
 
     // --- Stage 3 ---
-    for (int c = 0; c < NC; ++c)
-        tmp[c] = Xc[c] + 0.5 * dt * k2[c];
     for (int g = 0; g < G; ++g)
         lam[g] = d_lambda_stages[(2 * G + g) * P + p];
-    seir_rhs_dev(tmp, k3, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, G);
+    seir_rhs_dev(tmp, k, lam, s_rE, s_rI, s_iS, s_iE, s_iI, s_iR, G);
+    for (int c = 0; c < NC; ++c) {
+        acc[c] = fma(dt3, k[c], acc[c]);
+        tmp[c] = fma(dt, k[c], Xc[c]);
+    }
 
     // --- Stage 4 ---
-    for (int c = 0; c < NC; ++c)
-        tmp[c] = Xc[c] + dt * k3[c];
     for (int g = 0; g < G; ++g)
         lam[g] = d_lambda_stages[(3 * G + g) * P + p];
-    seir_rhs_dev(tmp, k4, lam, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, G);
+    seir_rhs_dev(tmp, k, lam, s_rE, s_rI, s_iS, s_iE, s_iI, s_iR, G);
 
-    // --- RK4 update ---
-    const double c6 = dt / 6.0;
+    // --- Write back ---
     for (int c = 0; c < NC; ++c)
-        d_mobile[(p * NC + c) * N + cg] = Xc[c] + c6 * (k1[c] + 2.0 * k2[c] + 2.0 * k3[c] + k4[c]);
+        d_mobile[(p * NC + c) * N + cg] = fma(dt6, k[c], acc[c]);
 }
 
 // ---------------------------------------------------------------------------
@@ -672,8 +837,10 @@ void launch_seir_commuter_rk4(double* d_mobile, const double* d_lambda_stages, c
                               double dt, int num_commuters)
 {
     const int blocks = (num_commuters + GPU_BLOCK_SIZE - 1) / GPU_BLOCK_SIZE;
-    seir_commuter_rk4_kernel<<<blocks, GPU_BLOCK_SIZE>>>(d_mobile, d_lambda_stages, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR,
-                                                         NC, G, dt, num_commuters);
+    // Shared memory: 2*G doubles (rE, rI) + 4*G ints (iS, iE, iI, iR)
+    const size_t smem = static_cast<size_t>(2 * G) * sizeof(double) + static_cast<size_t>(4 * G) * sizeof(int);
+    seir_commuter_rk4_kernel<<<blocks, GPU_BLOCK_SIZE, smem>>>(d_mobile, d_lambda_stages, d_rE, d_rI, d_iS, d_iE, d_iI,
+                                                               d_iR, NC, G, dt, num_commuters);
 }
 
 /**
@@ -687,8 +854,10 @@ void launch_seir_commuter_euler(double* d_mobile, const double* d_lambda, const 
                                 double dt, int num_commuters)
 {
     const int blocks = (num_commuters + GPU_BLOCK_SIZE - 1) / GPU_BLOCK_SIZE;
-    seir_commuter_euler_kernel<<<blocks, GPU_BLOCK_SIZE>>>(d_mobile, d_lambda, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, NC,
-                                                           G, dt, num_commuters);
+    // Shared memory: 2*G doubles (rE, rI) + 4*G ints (iS, iE, iI, iR)
+    const size_t smem = static_cast<size_t>(2 * G) * sizeof(double) + static_cast<size_t>(4 * G) * sizeof(int);
+    seir_commuter_euler_kernel<<<blocks, GPU_BLOCK_SIZE, smem>>>(d_mobile, d_lambda, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR,
+                                                                 NC, G, dt, num_commuters);
 }
 
 /**
