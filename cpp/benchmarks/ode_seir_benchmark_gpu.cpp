@@ -130,7 +130,7 @@ const ScalarType dt_gpu    = 0.5;
 
 const std::vector<int> commuter_group_counts_gpu = {256,  512,   1024, 2048, 4096,
                                                     8192, 16384, 32768}; // , 65536, 131072, 262144, 524288, 1048576};
-const std::vector<int> age_group_counts_gpu      = {1, 2, 3, 4, 5, 6}; //, 8, 12, 16};
+const std::vector<int> age_group_counts_gpu      = {1, 2, 3, 4, 5, 6, 8};
 
 /** Identical setup to the CPU reference benchmark. */
 inline void setup_model_gpu(ModelType& model, size_t num_agegroups)

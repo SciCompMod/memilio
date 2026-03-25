@@ -803,6 +803,10 @@ void launch_seir_commuter_rk4_allpatches(double* d_mobile, const double* d_lambd
         seir_commuter_allpatches_ct_kernel<6>
             <<<grid, GPU_BLOCK_SIZE>>>(d_mobile, d_lambda_stages, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, N, dt);
         break;
+    case 8:
+        seir_commuter_allpatches_ct_kernel<8>
+            <<<grid, GPU_BLOCK_SIZE>>>(d_mobile, d_lambda_stages, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, N, dt);
+        break;
     default:
         printf("launch_seir_commuter_allpatches: G=%d not compiled in switch\n", G);
     }
