@@ -320,85 +320,73 @@ mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, std::vecto
     return mio::success();
 }
 
-int main(int argc, char** argv)
+int main()
 {
     // This example runs the simulation for one county where this county provides LHA data.
 
-    std::string dataset       = "lha_data_2026-03-23";
-    std::string result_folder = "2026-03-23";
+    std::string dataset       = "lha_data_2026-03-24";
+    std::string result_folder = "2026-03-24";
 
-    std::string setup = "original";
-    // std::string setup = "altered_vaccinations";
-
-    mio::set_log_level(mio::LogLevel::warn);
-    mio::mpi::init();
-    std::cout << "Starting simulation \n";
-
-    std::string data_dir = "../../data";
-    std::string result_dir;
-    if (setup == "original") {
-        result_dir = data_dir + fmt::format("/results/{}/{}/original", result_folder, dataset);
-    }
-    else {
-        result_dir = data_dir + fmt::format("/results/{}/{}/altered_vaccinations", result_folder, dataset);
-    }
-    std::string temp_dir = data_dir;
     // County ID.
     std::vector<int> lha_ids = {5315};
     mio::Date start_date     = mio::Date(2020, 1, 20);
     int num_days_sim         = 30;
     int num_simulation_runs  = 100;
 
-    if (argc == 10) {
-        data_dir   = argv[1];
-        result_dir = argv[2];
-        temp_dir   = argv[3];
-        lha_ids.push_back(std::atoi(argv[4]));
-        start_date          = mio::Date(std::atoi(argv[5]), std::atoi(argv[6]), std::atoi(argv[7]));
-        num_days_sim        = std::atoi(argv[8]);
-        num_simulation_runs = std::atoi(argv[9]);
-    }
+    std::vector setups = {"original", "altered_vaccinations"};
 
-    bool save_non_aggregated_results = true;
-    // Run simulation for model with only one node, i.e. only for Cologne.
-    bool only_one_node = true;
+    for (std::string setup : setups) {
+        mio::set_log_level(mio::LogLevel::warn);
+        mio::mpi::init();
+        std::cout << "Starting simulation \n";
 
-    std::string lha_data_filename;
-    if (setup == "original") {
-        lha_data_filename = fmt::format("{}/lha_synthetic_data_renamed.csv", dataset);
-    }
-    else {
-        lha_data_filename = fmt::format("{}/lha_synthetic_data_altered_vaccinations_renamed.csv", dataset);
-    }
-    std::string vacc_filename               = fmt::format("{}/vaccination_formatted.txt", dataset);
-    std::string recovered_detected_filename = fmt::format("{}/recovered_detected_formatted.txt", dataset);
+        std::string data_dir   = "../../data";
+        std::string result_dir = data_dir + fmt::format("/results/{}/{}/{}", result_folder, dataset, setup);
 
-    //mio::thread_local_rng().seed(
-    //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
-    mio::thread_local_rng().synchronize();
-    // if (mio::mpi::is_root()) {
-    //     printf("Seeds: ");
-    //     for (auto s : mio::thread_local_rng().get_seeds()) {
-    //         printf("%u, ", s);
-    //     }
-    //     printf("\n");
-    // }
+        std::string temp_dir = data_dir;
 
-    boost::filesystem::path res_dir(result_dir);
-    bool created_results = boost::filesystem::create_directories(res_dir);
-    if (created_results) {
-        mio::log_info("Directory '{:s}' was created.", res_dir.string());
-    }
-    printf("Saving results to \"%s\".\n", result_dir.c_str());
+        std::string lha_data_filename;
+        if (setup == "original") {
+            lha_data_filename = fmt::format("{}/lha_synthetic_data_renamed.csv", dataset);
+        }
+        else {
+            lha_data_filename = fmt::format("{}/lha_synthetic_data_altered_vaccinations_renamed.csv", dataset);
+        }
+        std::string vacc_filename               = fmt::format("{}/vaccination_formatted.txt", dataset);
+        std::string recovered_detected_filename = fmt::format("{}/recovered_detected_formatted.txt", dataset);
 
-    auto result =
-        run(num_days_sim, start_date, lha_ids, data_dir, result_dir, temp_dir, false, num_simulation_runs,
-            save_non_aggregated_results, only_one_node, lha_data_filename, vacc_filename, recovered_detected_filename);
-    if (!result) {
-        printf("%s\n", result.error().formatted_message().c_str());
+        //mio::thread_local_rng().seed(
+        //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
+        mio::thread_local_rng().synchronize();
+        // if (mio::mpi::is_root()) {
+        //     printf("Seeds: ");
+        //     for (auto s : mio::thread_local_rng().get_seeds()) {
+        //         printf("%u, ", s);
+        //     }
+        //     printf("\n");
+        // }
+
+        boost::filesystem::path res_dir(result_dir);
+        std::cout << "Result dir: " << result_dir << std::endl;
+        bool created_results = boost::filesystem::create_directories(res_dir);
+        if (created_results) {
+            mio::log_info("Directory '{:s}' was created.", res_dir.string());
+        }
+        printf("Saving results to \"%s\".\n", result_dir.c_str());
+
+        bool save_non_aggregated_results = true;
+        // Run simulation for model with only one node, i.e. only for Cologne.
+        bool only_one_node = true;
+
+        auto result = run(num_days_sim, start_date, lha_ids, data_dir, result_dir, temp_dir, false, num_simulation_runs,
+                          save_non_aggregated_results, only_one_node, lha_data_filename, vacc_filename,
+                          recovered_detected_filename);
+        if (!result) {
+            printf("%s\n", result.error().formatted_message().c_str());
+            mio::mpi::finalize();
+            return -1;
+        }
         mio::mpi::finalize();
-        return -1;
     }
-    mio::mpi::finalize();
     return 0;
 }

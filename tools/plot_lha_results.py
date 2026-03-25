@@ -6,12 +6,13 @@ import matplotlib.pyplot as plt
 # -----------------------------
 # configuration
 # -----------------------------
-DATASET = "lha_data_2026-03-12_full_pop"
-BASE_DIR = f"./data/results/{DATASET}"
+DATASET = "lha_data_2026-03-24"
+SUBFOLDER = "2026-03-24"
+BASE_DIR = f"./data/results/{SUBFOLDER}/{DATASET}"
 SCENARIOS = ["original", "altered_vaccinations"]
 PERCENTILES = ["p25", "p50", "p75"]
 
-OUTPUT_DIR = f"plots/{DATASET}"
+OUTPUT_DIR = f"plots/{SUBFOLDER}/{DATASET}"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 AGE_GROUPS = ["Group1", "Group2", "Group3", "Group4", "Group5", "Group6"]
@@ -114,6 +115,9 @@ colors = {
 }
 
 for comp_idx, comp_name in COMPARTMENTS.items():
+
+    if "Confirmed" in comp_name:
+        continue
 
     plt.figure(figsize=(10, 6))
 

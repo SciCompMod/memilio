@@ -960,7 +960,7 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
     std::vector<std::vector<size_t>> num_Deaths(num_age_groups, std::vector<size_t>(num_immunity_levels, 0));
     std::vector<std::vector<size_t>> num_Recovered(num_age_groups, std::vector<size_t>(num_immunity_levels, 0));
 
-    // size_t row_counter = 0;
+    Parameters params = model.parameters;
 
     // Define counters to determine number individuals that are partially or fully vaccinated.
     std::vector<double> counter_partial_immunity = std::vector<double>(num_age_groups, 0.);
@@ -1040,12 +1040,11 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
         }
 
         // Determine age group.
-        size_t age_group = details::get_index_of_age_group(std::stoi(row[index["16"]]));
+        // size_t age_group = details::get_index_of_age_group(std::stoi(row[index["16"]]));
+        size_t age_group = std::stoi(row[index["16"]]);
 
         // Determine immunity level.
         size_t immunity_level = 0;
-
-        Parameters params = model.parameters;
 
         if (row[index["44"]] != "NULL") {
 
@@ -1139,7 +1138,7 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
         bool any_symptoms = false;
         size_t i          = 0;
         while (!any_symptoms && i < symptom_columns.size()) {
-            if (row[index[symptom_columns[i]]] == "True") {
+            if (row[index[symptom_columns[i]]] == "1") {
                 any_symptoms = true;
             }
             i++;
@@ -1208,6 +1207,8 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
                       read_population_data(path_join(data_dir, "Germany/pydata", "county_current_population.json"),
                                            std::vector<int>(1, lha_id)));
 
+    // std::cout << "pop per group: " << num_population[0][size_t(i)] << std::endl;
+
     // Set populations of infected compartments per age group according to LHA data.
     for (auto i = AgeGroup(0); i < (AgeGroup)num_age_groups; i++) {
         // InfectedNoSymptoms
@@ -1236,6 +1237,23 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
         model.populations[{i, InfectionState::DeadNaive}]            = num_Deaths[(size_t)i][0];
         model.populations[{i, InfectionState::DeadPartialImmunity}]  = num_Deaths[(size_t)i][1];
         model.populations[{i, InfectionState::DeadImprovedImmunity}] = num_Deaths[(size_t)i][2];
+
+        std::cout << "InfNoSy: " << model.populations[{i, InfectionState::InfectedNoSymptomsNaive}] << ", "
+                  << model.populations[{i, InfectionState::InfectedNoSymptomsPartialImmunity}] << ", "
+                  << model.populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunity}] << std::endl;
+        std::cout << "InfSy: " << model.populations[{i, InfectionState::InfectedSymptomsNaive}] << ", "
+                  << model.populations[{i, InfectionState::InfectedSymptomsPartialImmunity}] << ", "
+                  << model.populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] << std::endl;
+        std::cout << "InfSev: " << model.populations[{i, InfectionState::InfectedSevereNaive}] << ", "
+                  << model.populations[{i, InfectionState::InfectedSeverePartialImmunity}] << ", "
+                  << model.populations[{i, InfectionState::InfectedSevereImprovedImmunity}] << std::endl;
+        std::cout << "InfCri: " << model.populations[{i, InfectionState::InfectedCriticalNaive}] << ", "
+                  << model.populations[{i, InfectionState::InfectedCriticalPartialImmunity}] << ", "
+                  << model.populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] << std::endl;
+        std::cout << "Dead: " << model.populations[{i, InfectionState::DeadNaive}] << ", "
+                  << model.populations[{i, InfectionState::DeadPartialImmunity}] << ", "
+                  << model.populations[{i, InfectionState::DeadImprovedImmunity}] << std::endl;
+        std::cout << std::endl;
     }
 
     // If we only have a model with one node for which LHA data is available as well as data on detected recovered and
@@ -1304,7 +1322,7 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
                                       std::stod(num_recovered[1 + size_t(i)]),
                                   num_population[0][size_t(i)]);
 
-            current_immunity_level = 0;
+            current_immunity_level = 1;
             double S_pv = std::max(std::stod(num_vaccinated[1 + num_age_groups * current_immunity_level + (size_t)i]) +
                                        std::stod(num_recovered[1 + size_t(i)]),
                                    0.0); // use std::max with 0
@@ -1321,22 +1339,61 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
 
             // Exposed
 
-            // Initialize Exposed as in other initialization for SECIRVVS model.
-            double denom_E = 1 / (S + S_pv * model.parameters.template get<ReducExposedPartialImmunity<double>>()[i] +
-                                  S_v * model.parameters.template get<ReducExposedImprovedImmunity<double>>()[i]);
+            double forceofinf = 0.;
+
+            for (auto j = AgeGroup(0); j < (AgeGroup)num_age_groups; j++) {
+                // effective contact rate by contact rate between groups i and j and damping j
+                ContactMatrixGroup<FP> const& contact_matrix = params.template get<ContactPatterns<FP>>();
+                double season_val                            = (1 + params.template get<Seasonality<FP>>() *
+                                             sin(std::numbers::pi_v<ScalarType> *
+                                                                            ((params.template get<StartDay<FP>>()) / 182.5 + 0.5)));
+                double cont_freq_eff =
+                    season_val * contact_matrix.get_matrix_at(SimulationTime<FP>(0))(
+                                     static_cast<Eigen::Index>((size_t)i), static_cast<Eigen::Index>((size_t)j));
+
+                // without died people
+                FP Nj = num_population[0][(size_t)j] - model.populations[{i, InfectionState::DeadNaive}] -
+                        model.populations[{i, InfectionState::DeadPartialImmunity}] -
+                        model.populations[{i, InfectionState::DeadImprovedImmunity}];
+                const FP divNj = (Nj < Limits<FP>::zero_tolerance()) ? FP(0.0) : FP(1.0 / Nj);
+
+                forceofinf += cont_freq_eff * divNj *
+                              params.template get<TransmissionProbabilityOnContact<FP>>()[(AgeGroup)j] *
+                              (params.template get<RelativeTransmissionNoSymptoms<FP>>()[j] *
+                                   (model.populations[{j, InfectionState::InfectedNoSymptomsNaive}] +
+                                    model.populations[{j, InfectionState::InfectedNoSymptomsPartialImmunity}] +
+                                    model.populations[{j, InfectionState::InfectedNoSymptomsImprovedImmunity}]) +
+                               params.template get<RiskOfInfectionFromSymptomatic<FP>>()[j] *
+                                   (model.populations[{j, InfectionState::InfectedSymptomsNaive}] +
+                                    model.populations[{j, InfectionState::InfectedSymptomsPartialImmunity}] +
+                                    model.populations[{j, InfectionState::InfectedSymptomsImprovedImmunity}]));
+            }
+            std::cout << "foi: " << forceofinf << std::endl;
+            std::cout << "S: " << S << std::endl;
+            std::cout << "S_pv: " << S_pv << std::endl;
+            std::cout << "S_v: " << S_v << std::endl;
             model.populations[{i, InfectionState::ExposedNaive}] =
-                S * model.populations[{i, InfectionState::ExposedNaive}] * denom_E;
+                S * forceofinf * params.template get<TimeExposed<double>>()[i];
             model.populations[{i, InfectionState::ExposedPartialImmunity}] =
-                S_pv * model.parameters.template get<ReducExposedPartialImmunity<double>>()[i] *
-                model.populations[{i, InfectionState::ExposedPartialImmunity}] * denom_E;
+                S_pv * model.parameters.template get<ReducExposedPartialImmunity<double>>()[i] * forceofinf *
+                params.template get<TimeExposed<double>>()[i];
             model.populations[{i, InfectionState::ExposedImprovedImmunity}] =
-                S_v * model.parameters.template get<ReducExposedImprovedImmunity<double>>()[i] *
-                model.populations[{i, InfectionState::ExposedImprovedImmunity}] * denom_E;
+                S_v * model.parameters.template get<ReducExposedImprovedImmunity<double>>()[i] * forceofinf *
+                params.template get<TimeExposed<double>>()[i];
+
+            std::cout << "E naive: " << model.populations[{i, InfectionState::ExposedNaive}] << std::endl;
+            std::cout << "E partial immunity: " << model.populations[{i, InfectionState::ExposedPartialImmunity}]
+                      << std::endl;
+            std::cout << "E improved immunity: " << model.populations[{i, InfectionState::ExposedImprovedImmunity}]
+                      << std::endl;
 
             model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] =
                 model.parameters.template get<DailyFullVaccinations<double>>()[{i, SimulationDay(0)}] +
                 model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] -
-                (model.populations[{i, InfectionState::InfectedSymptomsNaive}] +
+                (model.populations[{i, InfectionState::InfectedNoSymptomsNaive}] +
+                 model.populations[{i, InfectionState::InfectedNoSymptomsPartialImmunity}] +
+                 model.populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunity}] +
+                 model.populations[{i, InfectionState::InfectedSymptomsNaive}] +
                  model.populations[{i, InfectionState::InfectedSymptomsPartialImmunity}] +
                  model.populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] +
                  model.populations[{i, InfectionState::InfectedSymptomsNaiveConfirmed}] +
@@ -1378,7 +1435,7 @@ IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Mode
 
             model.populations.template set_difference_from_group_total<AgeGroup>({i, InfectionState::SusceptibleNaive},
                                                                                  num_population[0][size_t(i)]);
-
+            std::cout << "pop per group: " << num_population[0][size_t(i)] << std::endl;
             std::cout << "S naive: " << model.populations[{i, InfectionState::SusceptibleNaive}] << std::endl;
             std::cout << "S partial immunity: " << model.populations[{i, InfectionState::SusceptiblePartialImmunity}]
                       << std::endl;
