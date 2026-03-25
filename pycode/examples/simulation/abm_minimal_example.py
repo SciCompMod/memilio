@@ -150,14 +150,8 @@ tmax = t0 + mio.abm.days(10)
 sim = mio.abm.Simulation(t0, model)
 
 
-history = mio.abm.History(mio.TimeSeries(num_age_groups))
+history = mio.abm.History(mio.TimeSeries(len(mio.abm.InfectionState.values())))
 
 sim.advance(tmax, history)
-
-for person in sim.model.persons:
-    # print("start_date: ", person.get_infection_state(start_date))
-    if (person.get_infection_state(start_date) == mio.abm.InfectionState.Susceptible):
-
-        print("end_date: ", person.get_infection_state(end_date))
 
 history.get_log().print_table()
