@@ -31,6 +31,7 @@ from typing import Dict, Optional
 import re
 
 import yaml
+import tomllib
 
 if sys.version_info >= (3, 9):
     import importlib.resources as importlib_resources
@@ -86,6 +87,27 @@ class Generator:
         """
         with open(yaml_path, encoding="utf-8") as fh:
             raw = yaml.safe_load(fh)
+
+        Validator.validate(raw)
+        config = cls._parse(raw)
+        return cls(config)
+
+    @classmethod
+    def from_toml(cls, toml_path: str | Path) -> Generator:
+        """
+        Build a :class:`Generator` from a TOML file.
+
+        Parameters
+        ----------
+        toml_path:
+            Path to the ``.toml`` configuration file.
+
+        Returns
+        -------
+        Generator
+        """
+        with open(toml_path, "rb") as fh:
+            raw = tomllib.load(fh)
 
         Validator.validate(raw)
         config = cls._parse(raw)

@@ -68,7 +68,10 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        gen = Generator.from_yaml(args.config)
+        if args.config.endswith(".toml"):
+            gen =Generator.from_toml(args.config)
+        else:
+            gen = Generator.from_yaml(args.config)
     except FileNotFoundError:
         print(f"ERROR: config file not found: {args.config}", file=sys.stderr)
         return 1
