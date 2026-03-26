@@ -29,6 +29,7 @@
 #include "epidemiology/simulation_day.h"
 #include "math/integrator.h"
 #include "mobility/metapopulation_mobility_instant.h"
+#include "utils/abstract_parameter_distribution.h"
 #include "utils/date.h"
 #include "utils/logging.h"
 #include "utils/time_series.h"
@@ -36,6 +37,7 @@
 #include "utils/uncertain_value.h"
 #include "utils/index.h"
 #include "utils/custom_index_array.h"
+#include "utils/random_number_generator.h"
 
 //Includes from MEmilio
 #include "memilio/mobility/metapopulation_mobility_instant.h"
@@ -53,8 +55,11 @@ PYBIND11_MODULE(_simulation, m)
 {
     pymio::bind_parameter_distribution(m, "ParameterDistribution");
     pymio::bind_parameter_distribution_normal(m, "ParameterDistributionNormal");
+    pymio::bind_parameter_distribution_lognormal(m, "ParameterDistributionLogNormal");
     pymio::bind_parameter_distribution_uniform(m, "ParameterDistributionUniform");
     pymio::bind_uncertain_value(m, "UncertainValue");
+
+    pymio::bind_abstract_parameter_distribution(m, "AbstractParameterDistribution");
 
     pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>(m, "AgeGroupArray");
     pymio::bind_class<mio::AgeGroup, pymio::EnablePickling::Required, mio::Index<mio::AgeGroup>>(m, "AgeGroup")
@@ -154,6 +159,8 @@ PYBIND11_MODULE(_simulation, m)
     m.def("seed_random_number_generator", [] {
         mio::thread_local_rng().seed(mio::RandomNumberGenerator::generate_seeds());
     });
+
+    pymio::bind_random_number_generator(m, "RandomNumberGenerator");
 
     m.attr("__version__") = "dev";
 }
