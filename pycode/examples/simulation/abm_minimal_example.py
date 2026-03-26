@@ -150,7 +150,8 @@ tmax = t0 + mio.abm.days(10)
 sim = mio.abm.Simulation(t0, model)
 
 
-history = mio.abm.History(mio.TimeSeries(len(mio.abm.InfectionState.values())))
+history = mio.abm.TimeSeriesWriterLogInfectionStateHistory(
+    mio.TimeSeries(len(mio.abm.InfectionState.values())))
 
 sim.advance(tmax, history)
 

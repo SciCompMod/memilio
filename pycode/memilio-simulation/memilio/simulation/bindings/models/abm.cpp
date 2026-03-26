@@ -305,7 +305,7 @@ PYBIND11_MODULE(_simulation_abm, m)
     m.def("close_social_events", &mio::abm::close_social_events);
 
     pymio::bind_class<mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState>,
-                      pymio::EnablePickling::Never>(m, "History")
+                      pymio::EnablePickling::Never>(m, "TimeSeriesWriterLogInfectionStateHistory")
         .def(py::init<mio::TimeSeries<double>>())
         .def(
             "get_log",
