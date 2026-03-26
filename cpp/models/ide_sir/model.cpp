@@ -176,10 +176,38 @@ ScalarType ModelMessinaExtendedDetailedInit::compute_phi_deriv(ScalarType dt, si
     return deriv;
 }
 
+ScalarType ModelMessinaExtendedDetailedInit::phi_deriv_analytical(ScalarType current_time, ScalarType damping_time)
+{
+
+    ScalarType xleft  = damping_time - 1;
+    ScalarType xright = damping_time;
+
+    if (current_time <= xleft || current_time >= xright) {
+        return 0.;
+    }
+
+    std::cout << "damping_time: " << damping_time << std::endl;
+
+    ScalarType yleft =
+        parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(SimulationTime<ScalarType>(xleft))(0, 0);
+    ScalarType yright =
+        parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(SimulationTime<ScalarType>(xright))(0, 0);
+
+    std::cout << "yleft, right: " << yleft << ", " << yright << std::endl;
+
+    ScalarType deriv = -0.5 * (yleft - yright) / (xright - xleft) * std::numbers::pi_v<ScalarType> *
+                       std::sin(std::numbers::pi_v<ScalarType> / (xright - xleft) * (current_time - xleft));
+
+    return deriv;
+}
+
 ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType susceptibles, ScalarType dt,
                                                                   size_t t0_index, ScalarType alpha,
-                                                                  bool use_complement, size_t fd_order_contacts)
+                                                                  bool use_complement, size_t fd_order_contacts,
+                                                                  ScalarType damping_time)
 {
+    unused(fd_order_contacts);
+    unused(damping_time);
     // Get the index of the current time step.
     size_t current_time_index = populations.get_num_time_points() - 1;
 
@@ -228,49 +256,55 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
 
             // Compute inner sum
             ScalarType inner_sum = 0.;
-            // if ((parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-            //          SimulationTime<ScalarType>(j * dt))(0, 0) -
-            //      parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-            //          SimulationTime<ScalarType>((j - 1) * dt))(0, 0)) > 1e-8) {
-            // std::cout << "beta': "
-            //           << (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-            //                   SimulationTime<ScalarType>(j * dt))(0, 0) -
-            //               parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-            //                   SimulationTime<ScalarType>((j - 1) * dt))(0, 0))
-            //           << std::endl;
-            // std::cout << "phi(j): "
-            //           << (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-            //                  SimulationTime<ScalarType>(j * dt))(0, 0))
-            //           << std::endl;
-            // std::cout << "phi(j-1): "
-            //           << (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-            //                  SimulationTime<ScalarType>((j - 1) * dt))(0, 0))
-            //           << std::endl;
-            for (size_t k = 0; k <= j; k++) {
-                ScalarType gregory_weight_inner_sum = 0.;
-                if (j < switch_weights_index) {
-                    gregory_weight_inner_sum = sum_part1_weight(current_time_index, j);
-                }
-                else {
-                    gregory_weight_inner_sum = sum_part2_weight(current_time_index, j);
-                }
 
-                ScalarType relevant_susceptibles;
-                // If k<n, we take the Susceptibles at the corresponding index that we have already computed.
-                if (k < current_time_index) {
-                    relevant_susceptibles = populations.get_value(k)[(Eigen::Index)InfectionState::Susceptible];
-                }
-                // In case of j=n, the number of Susceptibles is not already known and stored in populations but is determined
-                // by the input to the fixed point iteration.
-                else {
-                    relevant_susceptibles = susceptibles;
-                }
+            ScalarType current_time = populations.get_last_time();
+            ScalarType phi_deriv    = compute_phi_deriv(dt, j, fd_order_contacts);
+            // ScalarType phi_deriv = phi_deriv_analytical(current_time, damping_time);
 
-                inner_sum += gregory_weight_inner_sum * m_transmissionproboncontact_vector[j - k] *
-                             m_riskofinffromsymptomatic_vector[j - k] * m_transitiondistribution_vector[j - k] *
-                             relevant_susceptibles;
+            if (phi_deriv > 1e-10) {
+                // if ((parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                //          SimulationTime<ScalarType>(j * dt))(0, 0) -
+                //      parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                //          SimulationTime<ScalarType>((j - 1) * dt))(0, 0)) > 1e-8) {
+                // std::cout << "beta': "
+                //           << (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                //                   SimulationTime<ScalarType>(j * dt))(0, 0) -
+                //               parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                //                   SimulationTime<ScalarType>((j - 1) * dt))(0, 0))
+                //           << std::endl;
+                // std::cout << "phi(j): "
+                //           << (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                //                  SimulationTime<ScalarType>(j * dt))(0, 0))
+                //           << std::endl;
+                // std::cout << "phi(j-1): "
+                //           << (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                //                  SimulationTime<ScalarType>((j - 1) * dt))(0, 0))
+                //           << std::endl;
+                for (size_t k = 0; k <= j; k++) {
+                    ScalarType gregory_weight_inner_sum = 0.;
+                    if (j < switch_weights_index) {
+                        gregory_weight_inner_sum = sum_part1_weight(current_time_index, j);
+                    }
+                    else {
+                        gregory_weight_inner_sum = sum_part2_weight(current_time_index, j);
+                    }
+
+                    ScalarType relevant_susceptibles;
+                    // If k<n, we take the Susceptibles at the corresponding index that we have already computed.
+                    if (k < current_time_index) {
+                        relevant_susceptibles = populations.get_value(k)[(Eigen::Index)InfectionState::Susceptible];
+                    }
+                    // In case of j=n, the number of Susceptibles is not already known and stored in populations but is determined
+                    // by the input to the fixed point iteration.
+                    else {
+                        relevant_susceptibles = susceptibles;
+                    }
+
+                    inner_sum += gregory_weight_inner_sum * m_transmissionproboncontact_vector[j - k] *
+                                 m_riskofinffromsymptomatic_vector[j - k] * m_transitiondistribution_vector[j - k] *
+                                 relevant_susceptibles;
+                }
             }
-            // }
 
             ScalarType gregory_weight = 0.;
             if (j < switch_weights_index) {
@@ -291,10 +325,8 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
                 relevant_susceptibles = susceptibles;
             }
 
-            ScalarType phi_deriv = compute_phi_deriv(dt, j, fd_order_contacts);
-
             // For each index, the corresponding summand is computed here.
-            ScalarType current_time = populations.get_last_time();
+
             sum += -gregory_weight * m_transmissionproboncontact_vector[current_time_index - j] *
                        m_riskofinffromsymptomatic_vector[current_time_index - j] *
                        m_transitiondistribution_vector[current_time_index - j] *
@@ -351,14 +383,15 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
 }
 
 size_t ModelMessinaExtendedDetailedInit::compute_S(ScalarType s_init, ScalarType dt, size_t t0_index, ScalarType alpha,
-                                                   bool use_complement, size_t fd_order_contacts, ScalarType tol,
-                                                   size_t max_iterations)
+                                                   bool use_complement, size_t fd_order_contacts,
+                                                   ScalarType damping_time, ScalarType tol, size_t max_iterations)
 {
     size_t iter_counter = 0;
     // std::cout << "s_init:" << s_init << std::endl;
     while (iter_counter < max_iterations) {
 
-        ScalarType s_new = fixed_point_function(s_init, dt, t0_index, alpha, use_complement, fd_order_contacts);
+        ScalarType s_new =
+            fixed_point_function(s_init, dt, t0_index, alpha, use_complement, fd_order_contacts, damping_time);
 
         if (std::fabs(s_init - s_new) < tol) {
             break;
@@ -445,6 +478,8 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function_reformulated(S
 
         unused(susceptibles);
 
+        std::cout << "inner sum: " << inner_sum << std::endl;
+
         // For each index, the corresponding summand is computed here.
         ScalarType current_time = populations.get_last_time();
         sum += -dt * gregory_weight * m_transmissionproboncontact_vector[current_time_index - j] *
@@ -452,12 +487,14 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function_reformulated(S
                    m_transitiondistribution_vector[current_time_index - j] *
                    parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
                        SimulationTime<ScalarType>(current_time - (j + t0_index) * dt))(0, 0) *
-                   (m_N - populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible]) +
+                   (m_N + populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible]) +
                dt * dt * gregory_weight *
                    parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
                        SimulationTime<ScalarType>(j * dt))(0, 0) *
                    inner_sum;
     }
+
+    std::cout << "sum: " << sum << std::endl;
 
     return populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible] * std::exp(sum);
 }
@@ -467,17 +504,20 @@ size_t ModelMessinaExtendedDetailedInit::compute_S_reformulated(ScalarType s_ini
 {
     size_t iter_counter = 0;
     // std::cout << "s_init:" << s_init << std::endl;
-    while (iter_counter < max_iterations) {
+    ScalarType s_new = fixed_point_function_reformulated(s_init, dt, t0_index);
+    s_init           = s_new;
+    unused(tol);
+    // while (iter_counter < max_iterations) {
 
-        ScalarType s_new = fixed_point_function_reformulated(s_init, dt, t0_index);
+    //     ScalarType s_new = fixed_point_function_reformulated(s_init, dt, t0_index);
 
-        if (std::fabs(s_init - s_new) < tol) {
-            break;
-        }
+    //     if (std::fabs(s_init - s_new) < tol) {
+    //         break;
+    //     }
 
-        s_init = s_new;
-        iter_counter++;
-    }
+    //     s_init = s_new;
+    //     iter_counter++;
+    // }
 
     if (iter_counter == max_iterations) {
         std::cout << "Max number of iterations reached without convergence. Results may not be accurate." << std::endl;

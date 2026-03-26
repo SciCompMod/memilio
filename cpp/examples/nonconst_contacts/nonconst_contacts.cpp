@@ -67,15 +67,6 @@ mio::UncertainContactMatrix<ScalarType> scale_contact_matrix(ScalarType damping,
     return mio::UncertainContactMatrix(contact_matrix);
 }
 
-ScalarType contact_rate_derivative(ScalarType damping, ScalarType damping_time)
-{
-    using namespace params;
-
-    ScalarType deriv = 0. * damping + damping_time;
-
-    return deriv;
-}
-
 mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent, ScalarType t0_ode, ScalarType tmax,
                                                         int TimeInfected, std::string save_dir = "")
 {
@@ -198,7 +189,7 @@ mio::IOResult<void> simulate_ide(ScalarType ide_exponent, size_t gregory_order, 
     // Carry out simulation.
     mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide);
     bool use_complement = false;
-    sim.advance(tmax, alpha, use_complement, fd_order_contacts);
+    sim.advance(tmax, alpha, use_complement, fd_order_contacts, scaling_time);
 
     if (!save_dir.empty()) {
         // Save compartments.
@@ -229,17 +220,17 @@ int main()
 
     std::vector<size_t> gregory_orders = {1, 2, 3};
     size_t finite_difference_order     = 4;
-    size_t fd_order_contacts           = 1;
+    size_t fd_order_contacts           = 4;
 
     ScalarType alpha = 1.;
 
     // Compute groundtruth with ODE model.
     ScalarType ode_exponent               = 6.;
-    std::vector<ScalarType> ide_exponents = {0, 1, 2};
+    std::vector<ScalarType> ide_exponents = {0, 1, 2, 3};
 
-    std::string save_dir = fmt::format("../../simulation_results/2026-03-12/phi_deriv_order={}/"
+    std::string save_dir = fmt::format("../../simulation_results/2026-03-26/phi_deriv_order=4/"
                                        "nonconst_contacts_t0={}_tinit={}_tmax={}_scalingtime={}_damping={}/",
-                                       fd_order_contacts, t0_ode, t0_ide, tmax, scaling_time, damping);
+                                       t0_ode, t0_ide, tmax, scaling_time, damping);
 
     // Make folder if not existent yet.
     boost::filesystem::path dir(save_dir);
