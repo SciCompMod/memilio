@@ -934,6 +934,10 @@ void launch_seir_totals_rk4_lambda_allpatches(double* d_z, double* d_lambda_stag
         seir_totals_allpatches_ct_kernel<6><<<blocks, GPU_BLOCK_SIZE, smem>>>(
             d_z, d_lambda_stages, d_contact, d_beta, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, dt);
         break;
+    case 8:
+        seir_totals_allpatches_ct_kernel<8><<<blocks, GPU_BLOCK_SIZE, smem>>>(
+            d_z, d_lambda_stages, d_contact, d_beta, d_rE, d_rI, d_iS, d_iE, d_iI, d_iR, P, dt);
+        break;
     default:
         printf("launch_seir_totals_allpatches: G=%d not compiled in switch\n", G);
     }
