@@ -12,7 +12,7 @@ BASE_DIR = f"./data/results/{SUBFOLDER}/{DATASET}"
 SCENARIOS = ["original", "altered_vaccinations"]
 PERCENTILES = ["p25", "p50", "p75"]
 
-OUTPUT_DIR = f"plots/{SUBFOLDER}/{DATASET}"
+OUTPUT_DIR = f"plots/{SUBFOLDER}/{DATASET}/infcri"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 AGE_GROUPS = ["Group1", "Group2", "Group3", "Group4", "Group5", "Group6"]
@@ -114,59 +114,95 @@ colors = {
     "altered_vaccinations": "tab:red"
 }
 
-for comp_idx, comp_name in COMPARTMENTS.items():
+infcri_comps = ["InfectedCriticalNaive",
+                "InfectedCriticalPartialImmunity", "InfectedCriticalImprovedImmunity"]
 
-    if "Confirmed" in comp_name:
-        continue
+infcri_labels = ["ICU (Naive)", "ICU (Partial immunity)",
+                 "ICU (Improved immunity)"]
 
-    plt.figure(figsize=(10, 6))
+# find indices for the three InfectedCritical compartments
+comp_indices = []
+for comp in infcri_comps:
+    found = None
+    for idx, name in COMPARTMENTS.items():
+        if name == comp:
+            found = idx
+            break
+    if found is not None:
+        comp_indices.append((found, comp))
+# if any missing, proceed with those found
 
-    for scenario in SCENARIOS:
+labels = ["Fully local data (median)", "Fully local data (p25–p75)", "Reduced information data (median)",
+          "Reduced information data (p25–p75)"]
 
-        if not all(p in results[scenario] for p in PERCENTILES):
-            continue
+if comp_indices:
+    n = len(comp_indices)
+    fig, axes = plt.subplots(1, n, figsize=(7 * n, 6), sharex=True)
 
-        time = results[scenario]["p50"]["time"]
+    # ensure axes is iterable
+    if n == 1:
+        axes = [axes]
 
-        p25 = results[scenario]["p25"]["data"][:, comp_idx]
-        p50 = results[scenario]["p50"]["data"][:, comp_idx]
-        p75 = results[scenario]["p75"]["data"][:, comp_idx]
+    for i, (comp_idx, comp_name) in enumerate(comp_indices):
+        ax = axes[i]
 
-        color = colors[scenario]
+        for scenario in SCENARIOS:
 
-        # percentile band
-        plt.fill_between(
-            time,
-            p25,
-            p75,
-            alpha=0.25,
-            color=color,
-            label=f"{scenario} p25–p75"
-        )
+            if not all(p in results[scenario] for p in PERCENTILES):
+                continue
 
-        # median
-        plt.plot(
-            time,
-            p50,
-            color=color,
-            linewidth=2,
-            label=f"{scenario} median"
-        )
+            time = results[scenario]["p50"]["time"]
 
-    plt.title(comp_name)
-    plt.xlabel("Time")
-    plt.ylabel("Population")
-    plt.grid(True)
-    plt.legend()
+            p25 = results[scenario]["p25"]["data"][:, comp_idx]
+            p50 = results[scenario]["p50"]["data"][:, comp_idx]
+            p75 = results[scenario]["p75"]["data"][:, comp_idx]
 
-    plt.tight_layout()
+            color = colors.get(scenario, None)
+
+            if scenario == "original":
+                label = "Fully local data"
+            else:
+                label = "Reduced information data"
+
+            ax.plot(
+                time,
+                p50,
+                color=color,
+                linewidth=2,
+                # label=f"{label} median"
+            )
+
+            ax.fill_between(
+                time,
+                p25,
+                p75,
+                alpha=0.25,
+                color=color,
+                # label=f"{label} p25–p75"
+            )
+
+        ax.set_title(infcri_labels[i] if i < len(
+            infcri_labels) else comp_name, fontsize=20, fontweight="bold", pad=10)
+        # ax.set_xlabel("Time")
+        if i == 0:
+            ax.set_ylabel("Population", labelpad=10, fontsize=16)
+        if i == 1:
+            ax.set_xlabel("Time", fontsize=16, labelpad=10)
+        ax.grid(True)
+
+    # fig.supxlabel("        Time", fontsize=14)
+    fig.legend(labels, ncol=2, fontsize=18, loc="lower center",
+               bbox_to_anchor=(0.52, -0.15), bbox_transform=fig.transFigure)  #
+
+    # plt.tight_layout()
+    plt.tight_layout()  # rect=(0., 0., 0.9, 1.)
 
     outfile = os.path.join(
         OUTPUT_DIR,
-        f"{comp_idx:02d}_{comp_name}.png"
+        f"InfectedCritical_all.png"
     )
 
-    plt.savefig(outfile, dpi=300)
+    plt.savefig(outfile, dpi=300, bbox_inches='tight')
     plt.close()
 
 print("All plots saved to:", OUTPUT_DIR)
