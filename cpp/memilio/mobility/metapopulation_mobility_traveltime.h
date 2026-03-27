@@ -26,6 +26,7 @@
 #include "memilio/math/eigen.h"
 #include "memilio/math/euler.h"
 #include "memilio/math/floating_point.h"
+#include "memilio/math/math_utils.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/time_series.h"
 
@@ -150,41 +151,25 @@ struct TravelTimeEdge {
  * @brief Correct small negative compartment values caused by the auxiliary Euler
  * step to estimate the infection states of travelers.
  *
- * The vector is partitioned into `num_age_groups` equally sized blocks.
- * Any value below `tolerance` is zeroed out and its deficit is added to the
- * largest compartment in the same age-group block. This preserves the total
- * population within each age group.
+ * The vector is partitioned into `num_age_groups` equally sized blocks. For each
+ * block, mio::map_to_nonnegative is applied, which redistributes negative values
+ * proportionally across the positive entries while preserving the nonnegative sum.
  *
  * @tparam FP           Floating-point type.
  * @param vec           Compartment vector to correct (in-place).
- * @param num_age_groups Number of age groups.
- * @param tolerance     Threshold below which a value is considered negative.
- * @param max_iter      Maximum number of correction iterations.
+ * @param num_age_groups Number of age groups
  */
-
 template <typename FP>
-void correct_negative_compartments(Eigen::Ref<Eigen::VectorX<FP>> vec, size_t num_age_groups, FP tolerance = -1e-7,
-                                   size_t max_iter = 100)
+void correct_negative_compartments(Eigen::Ref<Eigen::VectorX<FP>> vec, size_t num_age_groups)
 {
-    const size_t n_comparts = static_cast<size_t>(vec.size()) / num_age_groups;
-    for (size_t iter = 0; iter < max_iter; ++iter) {
-        if (vec.minCoeff() >= tolerance) {
-            return;
+    const Eigen::Index n_comparts = static_cast<Eigen::Index>(vec.size()) / static_cast<Eigen::Index>(num_age_groups);
+    for (size_t grp = 0; grp < num_age_groups; ++grp) {
+        auto slice  = vec.segment(static_cast<Eigen::Index>(grp) * n_comparts, n_comparts);
+        auto result = map_to_nonnegative<FP>(slice);
+        if (!result) {
+            log_error("correct_negative_compartments: could not map age group {} to nonnegative values: {}", grp,
+                      result.error().message());
         }
-        Eigen::Index min_idx;
-        const FP min_val = vec.minCoeff(&min_idx);
-        const auto grp   = static_cast<size_t>(min_idx) / n_comparts;
-        const auto beg   = static_cast<Eigen::Index>(grp * n_comparts);
-        const auto end   = beg + static_cast<Eigen::Index>(n_comparts);
-        Eigen::Index max_idx;
-        vec.segment(beg, end - beg).maxCoeff(&max_idx);
-        max_idx += beg;
-        vec(max_idx) += min_val;
-        vec(min_idx) = FP{0};
-    }
-    if (vec.minCoeff() < tolerance) {
-        log_error("correct_negative_compartments: could not correct all negative values after {} iterations.",
-                  max_iter);
     }
 }
 
@@ -223,13 +208,15 @@ struct TravelTimeSchedule {
  * @tparam NodeProp     TravelTimeNodeProperty type.
  * @tparam EdgeProp     TravelTimeEdge type.
  * @param graph         The simulation graph.
- * @param n_steps       Number of time steps per day (default: 100).
+ * @param n_steps       Number of time steps per day (default: 120). The value 120 corresponds to a resolution of
+ *                      12 minutes per step and is divisible by many common travel-time fractions (e.g. 0.05, 0.1,
+ *                      0.25), so typical commute durations map directly to exact integer step counts without rounding.
  * @param eps           Floating-point tolerance for time comparisons.
  * @return              Fully populated TravelTimeSchedule.
  */
-template <typename FP, class NodeProp, class EdgeProp>
-TravelTimeSchedule compute_traveltime_schedule(const Graph<NodeProp, EdgeProp>& graph, size_t n_steps = 100,
-                                               double eps = 1e-10)
+template <typename FP, class Sim>
+TravelTimeSchedule compute_traveltime_schedule(const Graph<TravelTimeNodeProperty<FP, Sim>, TravelTimeEdge<FP>>& graph,
+                                               size_t n_steps = 120, FP eps = Limits<FP>::zero_tolerance())
 {
     const size_t n_edges = graph.edges().size();
     const size_t n_nodes = graph.nodes().size();
@@ -240,7 +227,7 @@ TravelTimeSchedule compute_traveltime_schedule(const Graph<NodeProp, EdgeProp>& 
     sched.in_mobility.resize(n_edges);
     sched.first_mobility_step.resize(n_edges, n_steps);
 
-    // -- 1. Build per-edge schedules --------------------------------------
+    // 1. Build per-edge schedules
     auto all_edges = graph.edges();
     for (size_t ei = 0; ei < n_edges; ++ei) {
         const auto& e          = all_edges[ei];
@@ -296,7 +283,7 @@ TravelTimeSchedule compute_traveltime_schedule(const Graph<NodeProp, EdgeProp>& 
         }
     }
 
-    // -- 2. Derive per-node breakpoint schedules ---------------------------
+    // 2. Derive per-node breakpoint schedules
     sched.local_breakpoints.resize(n_nodes);
     sched.mobility_breakpoints.resize(n_nodes);
 
@@ -332,7 +319,7 @@ TravelTimeSchedule compute_traveltime_schedule(const Graph<NodeProp, EdgeProp>& 
             sched.mobility_breakpoints[ni].push_back(n_steps - 1);
     }
 
-    // -- 3. Build per-step lookup tables ----------------------------------
+    // 3. Build per-step lookup tables
     sched.edges_at_step.resize(n_steps);
     sched.local_nodes_at_step.resize(n_steps);
     sched.mobility_nodes_at_step.resize(n_steps);
@@ -401,12 +388,12 @@ public:
      * @param graph   The simulation graph.
      * @param n_steps Number of sub-steps per day (default 100).
      */
-    GraphSimulationTravelTime(FP t0, FP dt, GraphT graph, size_t n_steps = 100)
+    GraphSimulationTravelTime(FP t0, FP dt, GraphT graph, size_t n_steps = 120)
         : m_t(t0)
         , m_dt(dt)
         , m_graph(std::move(graph))
         , m_n_steps(n_steps)
-        , m_schedule(compute_traveltime_schedule<FP>(m_graph, n_steps))
+        , m_schedule(compute_traveltime_schedule(m_graph, n_steps))
     {
         // Reset mobility_sim compartments to zero as transit nodes always start empty.
         for (auto& n : m_graph.nodes()) {
@@ -438,20 +425,22 @@ public:
      * 3. Update commuter infection states in the transit nodes.
      *
      * At the end of each day, transit nodes are emptied (they should already be empty up to a certain tolerance)
-     * and for longer simulations (more than interpolation_threshold (default 20) days) results are interpolated to restrict memory usage to one time point per day.
+     * and for longer simulations (more than interpolation_threshold (default 20) days) results are reduced to
+     * one time point per day to limit memory usage.
      *
      * @param t_max Maximum simulation time.
-     * @param interpolation_threshold Time after which results are interpolated to daily resolution.
+     * @param interpolation_threshold Time after which results are reduced to daily resolution.
      */
     void advance(FP t_max, FP interpolation_threshold = FP{20})
     {
         const FP sub_dt = FP{1} / static_cast<FP>(m_n_steps);
 
         // Earliest commuter departure across all edges.
-        FP t_first_departure = compute_first_departure();
+        const FP t_first_departure = compute_first_departure();
 
-        while (m_t < t_max - FP{1e-10}) {
-            if (m_t + t_first_departure > t_max) {
+        const auto n_days = static_cast<size_t>(t_max - m_t);
+        for (size_t day = 0; day < n_days; ++day) {
+            if (m_t + t_first_departure >= t_max) {
                 // If t_max is reached before the first commuter departure of the next day,
                 // no mobility exchange occurs. Only advance local sims and stop.
                 for (auto& n : m_graph.nodes()) {
@@ -475,13 +464,13 @@ public:
             }
 
             // End-of-day: return remaining transit individuals, reset mobility nodes.
-            end_of_day(m_t + FP{1});
+            end_of_day();
 
             m_t += FP{1};
 
-            // Interpolate to daily resolution after interpolation_threshold days to limit memory usage.
+            // Reduce to daily resolution after interpolation_threshold days to limit memory usage.
             if (m_t > interpolation_threshold) {
-                interpolate_results();
+                reduce_to_daily_resolution();
             }
         }
     }
@@ -512,7 +501,7 @@ private:
             }
             else {
                 // Subsequent steps: move commuters from previous to current transit node.
-                transfer_commuters(ei, step, t_sub);
+                transfer_commuters(ei, step);
             }
         }
     }
@@ -552,7 +541,7 @@ private:
     }
 
     /// Move commuters from the previous node to the current node in the schedule.
-    void transfer_commuters(size_t ei, size_t step, FP /*t_sub*/)
+    void transfer_commuters(size_t ei, size_t step)
     {
         auto all_edges = m_graph.edges();
         auto& e        = all_edges[ei];
@@ -657,7 +646,7 @@ private:
         return static_cast<FP>(*std::next(it) - step) * sub_dt;
     }
 
-    void end_of_day(FP t_end)
+    void end_of_day()
     {
         // Return all still-mobile commuters to their home local_sim.
         auto all_edges = m_graph.edges();
@@ -694,12 +683,10 @@ private:
         for (auto& n : m_graph.nodes()) {
             n.property.mobility_sim.get_result().get_last_value().setZero();
         }
-
-        mio::unused(t_end);
     }
 
     /// Keep only one time point per day in local_sim results (daily resolution).
-    void interpolate_results()
+    void reduce_to_daily_resolution()
     {
         for (auto& n : m_graph.nodes()) {
             auto& res = n.property.local_sim.get_simulation().get_result();
@@ -727,11 +714,13 @@ private:
  * @param n_steps   Number of day sub-steps (default 100).
  * @return          GraphSimulationTravelTime instance.
  */
-template <typename FP, class NodeProp, class EdgeProp>
-GraphSimulationTravelTime<FP, Graph<NodeProp, EdgeProp>>
-make_traveltime_sim(FP t0, FP dt, Graph<NodeProp, EdgeProp> graph, size_t n_steps = 100)
+template <typename FP, class Sim>
+GraphSimulationTravelTime<FP, Graph<TravelTimeNodeProperty<FP, Sim>, TravelTimeEdge<FP>>>
+make_traveltime_sim(FP t0, FP dt, Graph<TravelTimeNodeProperty<FP, Sim>, TravelTimeEdge<FP>> graph,
+                    size_t n_steps = 120)
 {
-    return GraphSimulationTravelTime<FP, Graph<NodeProp, EdgeProp>>(t0, dt, std::move(graph), n_steps);
+    return GraphSimulationTravelTime<FP, Graph<TravelTimeNodeProperty<FP, Sim>, TravelTimeEdge<FP>>>(
+        t0, dt, std::move(graph), n_steps);
 }
 
 } // namespace mio
