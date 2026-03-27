@@ -9,7 +9,7 @@ Commuting between regions is governed by a commuting matrix, which describes the
 
 .. note::
     
-     In comparison to the :doc:`Graph-based metapopulation model<graph_metapop>`, commuting is not performed explicitly, i.e., individuals are not exchanged between subpopulations, but rather their theoretical impact to transmission dynamics in other locations is considered, leading to a large system of ODEs which can be solved using standard numerical integration methods. For a dense network, this approach scales better with the number of regions than the graph-based approach. 
+     In comparison to the :doc:`Graph-based metapopulation model<graph_metapop>`, commuting is not performed explicitly, i.e., individuals are not exchanged between subpopulations, but rather their theoretical impact to transmission dynamics in other locations is considered, leading to a large system of ODEs which can be solved using standard numerical integration methods. For a dense network, this approach scales better with the number of regions than the graph-based approach. Currently, the implicit mobility approach is only available for the SEIR model.
 
 Simulation
 ----------
