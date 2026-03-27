@@ -310,8 +310,7 @@ private:
     {
         FP earliest = FP{1};
         for (size_t ei = 0; ei < m_graph.edges().size(); ++ei) {
-            const FP t_dep = static_cast<FP>(m_schedule.first_mobility_step(ei)) / m_n_steps;
-            earliest       = std::min(earliest, t_dep);
+            earliest = std::min(earliest, static_cast<FP>(m_schedule.first_departure_time(ei)));
         }
         return earliest;
     }

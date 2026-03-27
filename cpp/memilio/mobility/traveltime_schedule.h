@@ -101,7 +101,7 @@ public:
     }
 
     /**
-     * @brief First sub-step at which edge commuters begin their outbound trip.
+     * @brief First sub-step index at which edge commuters begin their outbound trip.
      *
      * All sub-steps before this index belong to the local phase at the origin.
      * Equals n_steps if the edge is never active (e.g. zero travel time or zero
@@ -111,6 +111,18 @@ public:
     {
         assert(ei < m_n_edges);
         return m_first_mobility_step[ei];
+    }
+
+    /**
+     * @brief Precomputed departure time for edge ei as a fraction of the normalized
+     *        time period, i.e. `first_mobility_step(ei) / n_steps`.
+     *
+     * Stored explicitly to avoid the division in the inner advance loop.
+     */
+    double first_departure_time(size_t ei) const
+    {
+        assert(ei < m_n_edges);
+        return m_first_departure_time[ei];
     }
 
     /**
@@ -196,7 +208,8 @@ private:
     /// the edge's commuters are in transit at this step.
     std::vector<bool> m_in_mobility;
 
-    std::vector<size_t> m_first_mobility_step; ///< first step with commuter movement
+    std::vector<size_t> m_first_mobility_step; ///< first step index with commuter movement
+    std::vector<double> m_first_departure_time; ///< precomputed departure time = first_mobility_step / n_steps
 
     std::vector<std::vector<size_t>> m_local_breakpoints; ///< sorted step indices
     std::vector<std::vector<size_t>> m_mobility_breakpoints; ///< sorted step indices
@@ -214,6 +227,7 @@ TravelTimeSchedule::TravelTimeSchedule(const GraphT& graph, size_t n_steps, FP e
     , m_node_at_step(m_n_edges * n_steps, 0)
     , m_in_mobility(m_n_edges * n_steps, false)
     , m_first_mobility_step(m_n_edges, n_steps)
+    , m_first_departure_time(m_n_edges, 1.0)
     , m_local_breakpoints(m_n_nodes)
     , m_mobility_breakpoints(m_n_nodes)
     , m_edges_at_step(n_steps)
@@ -257,7 +271,8 @@ TravelTimeSchedule::TravelTimeSchedule(const GraphT& graph, size_t n_steps, FP e
         const size_t step_arrive    = step_depart + steps_travel;
         const size_t step_leave_dst = n_steps - steps_travel;
 
-        m_first_mobility_step[ei] = step_depart;
+        m_first_mobility_step[ei]  = step_depart;
+        m_first_departure_time[ei] = static_cast<double>(step_depart) * dt_step;
 
         // Outbound travel: step_depart … step_arrive-1
         size_t current_step = step_depart;
