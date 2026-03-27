@@ -70,9 +70,9 @@ int main()
         for (size_t i = 0; i < (size_t)model.parameters.get_num_regions(); i++) {
 
             printf("\t %.5f ",
-                   interpolated_result.get_value(t)[(size_t)model.parameters.get_num_regions() *
-                                                        ((size_t)mio::oseirmetapop::InfectionState::Count - 1) +
-                                                    i] /
+                   interpolated_result.get_value((size_t)t)[(size_t)model.parameters.get_num_regions() *
+                                                                ((size_t)mio::oseirmetapop::InfectionState::Count - 1) +
+                                                            i] /
                        model.populations.get_group_total(mio::regions::Region(i)) * 100);
         }
     }
