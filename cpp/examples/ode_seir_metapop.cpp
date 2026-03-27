@@ -49,8 +49,12 @@ int main()
 
     model.parameters.template get<ContactPatterns<>>().get_cont_freq_mat()[0].get_baseline().setConstant(2.7);
 
-    model.parameters.set<TimeExposed<>>(3.335);
-    model.parameters.set<TimeInfected<>>(8.097612257);
+    model.parameters.get<mio::oseirmetapop::TimeExposed<>>()[{mio::regions::Region(0), mio::AgeGroup(0)}]  = 3.;
+    model.parameters.get<mio::oseirmetapop::TimeExposed<>>()[{mio::regions::Region(1), mio::AgeGroup(0)}]  = 4.;
+    model.parameters.get<mio::oseirmetapop::TimeExposed<>>()[{mio::regions::Region(2), mio::AgeGroup(0)}]  = 5.;
+    model.parameters.get<mio::oseirmetapop::TimeInfected<>>()[{mio::regions::Region(0), mio::AgeGroup(0)}] = 7.;
+    model.parameters.get<mio::oseirmetapop::TimeInfected<>>()[{mio::regions::Region(1), mio::AgeGroup(0)}] = 8.;
+    model.parameters.get<mio::oseirmetapop::TimeInfected<>>()[{mio::regions::Region(2), mio::AgeGroup(0)}] = 9.;
     model.parameters.set<TransmissionProbabilityOnContact<>>(0.07333);
 
     auto result              = simulate(t0, tmax, dt, model);

@@ -4,12 +4,12 @@ ODE-based metapopulation model
 Introduction
 ----------------
 
-This metapopulation model incorporates the effects of spatial heterogeneity and population dynamics into a system of ordinary differential equations (ODEs). A population is divided into several subpopulations, each representing spatially seperated regions which interact on some level. Each subpopulation is further divided into epidemiological compartments and eventually into age groups.
+This model incorporates spatial resolution into an ODE-based metapopulation model by including the effects of other regions into the force of infection term of the ODEs. A population is divided into several subpopulations, each representing spatially seperated regions which interact on some level. Each subpopulation is further divided into epidemiological compartments and eventually into age groups.
 Commuting between regions is governed by a commuting matrix, which describes the fraction of individuals that commute from one region to another.
 
 .. note::
     
-     In comparison to the :doc:`Graph-based metapopulation model<graph_metapop>`, commuting is not performed explicitly, i.e., individuals are not exchanged between subpopulations, but rather their theoretical impact to transmission dynamics in other locations is considered, leading to a large system of ODEs which can be solved using standard numerical integration methods.
+     In comparison to the :doc:`Graph-based metapopulation model<graph_metapop>`, commuting is not performed explicitly, i.e., individuals are not exchanged between subpopulations, but rather their theoretical impact to transmission dynamics in other locations is considered, leading to a large system of ODEs which can be solved using standard numerical integration methods. For a dense network, this approach scales better with the number of regions than the graph-based approach. 
 
 Simulation
 ----------
@@ -55,14 +55,14 @@ Construct an ``Eigen::MatrixXd`` of size :math:`n_{regions} \times n_{regions}` 
 
 .. code-block:: cpp
 
-    Eigen::MatrixXd mobility_data_commuter(3, 3);
-    mobility_data_commuter << 0.4, 0.3, 0.3, 0.2, 0.7, 0.1, 0.4, 0.1, 0.5;
+    Eigen::MatrixXd commuting_strengths(3, 3);
+    commuting_strengths << 0.4, 0.3, 0.3, 0.2, 0.7, 0.1, 0.4, 0.1, 0.5;
 
 Set the commuting strengths matrix via the ``set_commuting_strengths`` method to ensure that the population after commuting is correctly updated:
 
 .. code-block:: cpp
     
-    model.set_commuting_strengths(mobility_data_commuter);
+    model.set_commuting_strengths(commuting_strengths);
 
 If no mobility data is provided, you should still run ``model.set_commuting_strengths()`` which sets the matrix to an identity matrix, reflecting no mobility between regions. Without setting this, you will encounter errors during the simulation.
 
