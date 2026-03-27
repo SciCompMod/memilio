@@ -65,9 +65,8 @@ int main()
     for (size_t i = 0; i < (size_t)model.parameters.get_num_regions(); i++) {
         printf("\t Region %zd", i);
     }
-    for (size_t t : interpolated_result.get_times()) {
-        printf("\n %zd", t);
-        // for (size_t k = 0; k < (size_t)mio::oseir::InfectionState::Count; k++) {
+    for (ScalarType t : interpolated_result.get_times()) {
+        printf("\n %f", t);
         for (size_t i = 0; i < (size_t)model.parameters.get_num_regions(); i++) {
 
             printf("\t %.5f ",
