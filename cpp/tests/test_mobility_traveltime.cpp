@@ -20,12 +20,15 @@
 
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/mobility/metapopulation_mobility_traveltime.h"
+#include "memilio/mobility/traveltime_schedule.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/math/euler.h"
+#include "memilio/math/floating_point.h"
 #include "ode_seir/model.h"
 #include "ode_seir/infection_state.h"
 
 #include "gtest/gtest.h"
+#include "utils.h"
 #include <cmath>
 #include <limits>
 
@@ -67,32 +70,29 @@ TEST(TravelTimeMobility, ScheduleBasicStructure)
     const size_t n_steps = 100;
 
     auto graph = make_two_node_graph(1000.0, 10.0, 800.0, 0.0, travel_time, stay_dur, 0.1);
-    auto sched = mio::compute_traveltime_schedule<FP>(graph, n_steps);
+    auto sched = mio::TravelTimeSchedule(graph, n_steps, mio::Limits<FP>::zero_tolerance());
 
     // Schedule must have one entry per edge.
-    ASSERT_EQ(sched.node_at_step.size(), graph.edges().size());
-    ASSERT_EQ(sched.in_mobility.size(), graph.edges().size());
+    ASSERT_EQ(sched.num_edges(), graph.edges().size());
 
     // Each edge schedule must have n_steps entries.
-    for (size_t ei = 0; ei < graph.edges().size(); ++ei) {
-        ASSERT_EQ(sched.node_at_step[ei].size(), n_steps);
-        ASSERT_EQ(sched.in_mobility[ei].size(), n_steps);
-    }
+    ASSERT_EQ(sched.num_steps(), n_steps);
 
     // Breakpoints must be non-empty for every node.
-    ASSERT_EQ(sched.local_breakpoints.size(), graph.nodes().size());
+    ASSERT_EQ(sched.num_nodes(), graph.nodes().size());
     for (size_t ni = 0; ni < graph.nodes().size(); ++ni) {
-        EXPECT_FALSE(sched.local_breakpoints[ni].empty()) << "local_breakpoints empty for node " << ni;
+        EXPECT_FALSE(sched.local_breakpoints(ni).empty()) << "local_breakpoints empty for node " << ni;
     }
 
     // first_mobility_step must be valid indices.
     for (size_t ei = 0; ei < graph.edges().size(); ++ei) {
-        EXPECT_LT(sched.first_mobility_step[ei], n_steps) << "first_mobility_step out of range for edge " << ei;
+        EXPECT_LT(sched.first_mobility_step(ei), n_steps) << "first_mobility_step out of range for edge " << ei;
     }
 }
 
 TEST(TravelTimeMobility, PopulationConservation)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     const FP t0          = 0.0;
     const FP tmax        = 3.0;
     const FP travel_time = 0.04;
@@ -141,6 +141,7 @@ TEST(TravelTimeMobility, ZeroMobilityCoefficient)
 
 TEST(TravelTimeMobility, LargeTravelTimeDoesNotCrash)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off); // suppress expected errors from correct_negative_compartments
     const FP t0 = 0.0;
 
     // Nearly all-day travel: 49% + 1% stay + 49% return = 99% of day in travel.
@@ -155,10 +156,10 @@ TEST(TravelTimeMobility, LargeTravelTimeDoesNotCrash)
 TEST(TravelTimeMobility, CorrectNegativeCompartments)
 {
     // 2 age groups, 4 compartments each == size 8.
-    // Use values below the default tolerance (-1e-7) to trigger correction.
+    // Negative values are corrected via map_to_nonnegative per age group slice.
     Eigen::VectorX<FP> v(8);
-    v << 100.0, 50.0, -1e-5, 30.0, // group 0: negative below tolerance at index 2
-        200.0, 80.0, 40.0, -2e-5; // group 1: negative below tolerance at index 7
+    v << 100.0, 50.0, -1e-5, 30.0, // group 0: negative at index 2
+        200.0, 80.0, 40.0, -2e-5; // group 1: negative at index 7
 
     const FP sum0_before = v.head(4).sum();
     const FP sum1_before = v.tail(4).sum();
@@ -172,12 +173,6 @@ TEST(TravelTimeMobility, CorrectNegativeCompartments)
     // Population within each age group is conserved
     EXPECT_NEAR(v.head(4).sum(), sum0_before, 1e-12) << "Population not conserved in group 0";
     EXPECT_NEAR(v.tail(4).sum(), sum1_before, 1e-12) << "Population not conserved in group 1";
-
-    // Values that are within tolerance (-1e-7) should NOT be corrected
-    Eigen::VectorX<FP> v2(4);
-    v2 << 100.0, 50.0, -1e-8, 30.0;
-    mio::correct_negative_compartments<FP>(v2, 1);
-    EXPECT_LT(v2[2], FP{0}) << "Value above tolerance should not have been corrected";
 }
 
 TEST(TravelTimeMobility, ScheduleNodeAssignmentTwoNode)
@@ -187,21 +182,21 @@ TEST(TravelTimeMobility, ScheduleNodeAssignmentTwoNode)
     const size_t n_steps = 100;
 
     auto graph = make_two_node_graph(1000.0, 0.0, 800.0, 0.0, travel_time, stay_dur, 0.1);
-    auto sched = mio::compute_traveltime_schedule<FP>(graph, n_steps);
+    auto sched = mio::TravelTimeSchedule(graph, n_steps, mio::Limits<FP>::zero_tolerance());
 
     // Edge 0->1 is edge index 0 (first edge added).
     const size_t ei = 0;
-    ASSERT_LT(ei, sched.node_at_step.size());
+    ASSERT_LT(ei, sched.num_edges());
 
-    const size_t first = sched.first_mobility_step[ei];
+    const size_t first = sched.first_mobility_step(ei);
     EXPECT_LT(first, n_steps);
 
     // During the stay phase, in_mobility must be false and node must be dest (1).
     bool found_stay = false;
     for (size_t s = first; s < n_steps; ++s) {
-        if (!sched.in_mobility[ei][s]) {
+        if (!sched.in_mobility_at(ei, s)) {
             found_stay = true;
-            EXPECT_EQ(sched.node_at_step[ei][s], size_t{1}) << "Expected destination node during stay at step " << s;
+            EXPECT_EQ(sched.node_at(ei, s), size_t{1}) << "Expected destination node during stay at step " << s;
         }
     }
     EXPECT_TRUE(found_stay) << "No stay phase found in edge schedule";
