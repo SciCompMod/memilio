@@ -106,19 +106,22 @@ int main()
 
     // -- Mobility parameters -----------------------------------------------
     // A -> B trip passes through C (path = {A, C, B}, n_patches = 3).
-    // travel_time_AB = 2 * tt_patch_AC_CB; with n_steps=100 this yields tt_per_patch = 0.03 (3 sub-steps/patch).
-    // step_depart_AB = 48  ->  A's commuters are in C's mobility_sim at sub-steps 51–53 (outbound)
-    //                                                            and at sub-steps 94–96 (return).
+    // travel_time_AB = 2 * tt_patch_AC_CB; with n_steps=120 this yields tt_per_patch = 3 sub-steps/patch.
+    // step_depart_AB = 62  ->  A's commuters are in C's mobility_sim at outbound sub-steps 65–67
+    //                                                            and at return sub-steps 114–116.
     //
     // B <-> C (path = {B,C} or {C,B}, n_patches = 2).
-    // tt_direct_BC = 2/24  ->  tt_per_patch = 0.04 (4 sub-steps/patch).
-    //   C->B: step_depart = 50  ->  C->B commuters are in C's mobility_sim at sub-steps 50–53
-    //         -> overlaps with A's outbound transit (51–53) in C's mobility_sim.
-    //   B->C return: in C's mobility_sim at sub-steps 92–95
-    //         -> overlaps with A's return transit (94–96) in C's mobility_sim.
+    // tt_direct_BC = 2/24  ->  tt_per_patch = 5 sub-steps/patch.
+    //   C->B: step_depart = 60  ->  C->B commuters in C's mobility_sim at outbound sub-steps 60–64,
+    //         and return sub-steps 115–119.
+    //   B->C: step_depart = 70  ->  B->C commuters in C's mobility_sim at outbound sub-steps 75–79,
+    //         and return sub-steps 110–114.
+    // During the return phase, all three groups share C's mobility_sim:
+    //   A->B return (114–116), B->C return (110–114) at sub-step 114
+    //   A->B return (114–116), C->B return (115–119) at sub-steps 115–116
     // All three groups therefore share C's mobility_sim and can infect each other during transit.
     const FP tt_patch_AC_CB = 1.0 / 24.0; // 1 h per patch (A <-> C)
-    const FP tt_direct_BC   = 2.0 / 24.0; // 2 h one-way B <-> C (tt_per_patch=0.04 -> schedule overlap in C)
+    const FP tt_direct_BC   = 2.0 / 24.0; // 2 h one-way B <-> C (5 sub-steps/patch -> schedule overlap in C)
     const FP stay_dur_AB    = 8.0 / 24.0;
     const FP stay_dur_C     = 6.0 / 24.0;
 
@@ -160,13 +163,8 @@ int main()
     print_row("C", sim.get_graph().nodes()[2].property);
     std::cout << std::string(62, '-') << "\n";
 
-    std::cout << "\nSchedule overlap (n_steps=100, sub-step = 0.01 day):\n"
-              << "  A outbound through C : sub-steps 51-53\n"
-              << "  C->B outbound in C   : sub-steps 50-53  -> overlap 51-53\n"
-              << "  A return through C   : sub-steps 94-96\n"
-              << "  B->C return in C     : sub-steps 92-95  -> overlap 94-95\n"
-              << "\nAll three groups share C's mobility_sim during these steps,\n"
-              << "so infections can spread between A-transit commuters and C<->B commuters.\n"
+    std::cout << "\nDuring the return phase, A-transit commuters and C<->B commuters\n"
+              << "share C's mobility_sim and can infect each other during transit.\n"
               << "This effect is not captured by standard metapopulation models\n"
               << "without explicit travel time.\n";
 

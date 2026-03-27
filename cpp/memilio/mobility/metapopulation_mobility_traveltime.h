@@ -153,23 +153,39 @@ struct TravelTimeEdge {
  * step to estimate the infection states of travelers.
  *
  * The vector is partitioned into `num_age_groups` equally sized blocks. For each
- * block, mio::map_to_nonnegative is applied, which redistributes negative values
- * proportionally across the positive entries while preserving the nonnegative sum.
+ * block, negative values are iteratively redistributed to the largest positive
+ * compartment in the same block until all values are within `tolerance` of zero,
+ * preserving the total population sum exactly.
  *
- * @tparam FP           Floating-point type.
- * @param vec           Compartment vector to correct (in-place).
- * @param num_age_groups Number of age groups
+ * @tparam FP            Floating-point type.
+ * @param vec            Compartment vector to correct (in-place).
+ * @param num_age_groups Number of age groups.
+ * @param tolerance      Values above this threshold are considered nonnegative.
+ * @param max_iter       Maximum redistribution iterations per age group.
  */
 template <typename FP>
-void correct_negative_compartments(Eigen::Ref<Eigen::VectorX<FP>> vec, size_t num_age_groups)
+void correct_negative_compartments(Eigen::Ref<Eigen::VectorX<FP>> vec, size_t num_age_groups,
+                                   FP tolerance = static_cast<FP>(-1e-7), size_t max_iter = 100)
 {
-    const Eigen::Index n_comparts = static_cast<Eigen::Index>(vec.size()) / static_cast<Eigen::Index>(num_age_groups);
+    const size_t n_comparts = vec.size() / num_age_groups;
     for (size_t grp = 0; grp < num_age_groups; ++grp) {
-        auto slice  = vec.segment(static_cast<Eigen::Index>(grp) * n_comparts, n_comparts);
-        auto result = map_to_nonnegative<FP>(slice);
-        if (!result) {
-            log_error("correct_negative_compartments: could not map age group {} to nonnegative values: {}", grp,
-                      result.error().message());
+        const auto beg = static_cast<Eigen::Index>(grp * n_comparts);
+        const auto len = static_cast<Eigen::Index>(n_comparts);
+        auto slice     = vec.segment(beg, len);
+        for (size_t iter = 0; iter < max_iter; ++iter) {
+            Eigen::Index min_idx;
+            if (slice.minCoeff(&min_idx) >= tolerance) {
+                break;
+            }
+            Eigen::Index max_idx;
+            slice.maxCoeff(&max_idx);
+            slice(max_idx) += slice(min_idx);
+            slice(min_idx) = FP{0};
+        }
+        if (slice.minCoeff() < tolerance) {
+            log_error("correct_negative_compartments: could not correct all negative values in age group {} "
+                      "after {} iterations.",
+                      grp, max_iter);
         }
     }
 }
