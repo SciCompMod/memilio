@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_MOBILITY_TRAVELTIME_H
-#define MIO_MOBILITY_TRAVELTIME_H
+#ifndef MIO_MOBILITY_METAPOPULATION_MOBILITY_TRAVELTIME_H
+#define MIO_MOBILITY_METAPOPULATION_MOBILITY_TRAVELTIME_H
 
 #include "memilio/mobility/graph.h"
 #include "memilio/mobility/graph_simulation.h"
@@ -736,4 +736,4 @@ make_traveltime_sim(FP t0, FP dt, Graph<NodeProp, EdgeProp> graph, size_t n_step
 
 } // namespace mio
 
-#endif // MIO_MOBILITY_TRAVELTIME_H
+#endif // MIO_MOBILITY_METAPOPULATION_MOBILITY_TRAVELTIME_H
