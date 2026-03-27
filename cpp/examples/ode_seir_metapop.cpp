@@ -1,8 +1,29 @@
+/*
+* Copyright (C) 2020-2026 MEmilio
+*
+* Authors: Carlotta Gerstein
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/custom_index_array.h"
 #include "models/ode_seir_metapop/model.h"
 #include "models/ode_seir_metapop/parameters.h"
 #include "memilio/geography/regions.h"
+#include "memilio/data/analyze_result.h"
 
 int main()
 {
@@ -18,7 +39,7 @@ int main()
         model.populations[{mio::regions::Region(i), mio::AgeGroup(0), InfectionState::Susceptible}] = 10000;
     }
 
-    model.populations[{mio::regions::Region(0), mio::AgeGroup(0), InfectionState::Exposed}] += 100;
+    model.populations[{mio::regions::Region(0), mio::AgeGroup(0), InfectionState::Infected}] += 100;
     model.populations[{mio::regions::Region(0), mio::AgeGroup(0), InfectionState::Susceptible}] -= 100;
 
     Eigen::MatrixXd mobility_data_commuter(3, 3);
@@ -32,11 +53,25 @@ int main()
     model.parameters.set<TimeInfected<>>(8.097612257);
     model.parameters.set<TransmissionProbabilityOnContact<>>(0.07333);
 
-    auto result = simulate(t0, tmax, dt, model);
+    auto result              = simulate(t0, tmax, dt, model);
+    auto interpolated_result = mio::interpolate_simulation_result(result);
 
-    result.print_table({"Susceptible Region 1", "Exposed Region 1", "Infected Region 1", "Recovered Region 1",
-                        "Susceptible Region 2", "Exposed Region 2", "Infected Region 2", "Recovered Region 2",
-                        "Susceptible Region 3", "Exposed Region 3", "Infected Region 3", "Recovered Region 3"},
-                       20, 7);
+    std::vector<std::string> vars = {"S", "E", "I", "R"};
+    printf("Infected individuals per Region over time [%%]:\n");
+    for (size_t i = 0; i < (size_t)model.parameters.get_num_regions(); i++) {
+        printf("\t Region %ld", i);
+    }
+    for (size_t t : interpolated_result.get_times()) {
+        printf("\n %ld", t);
+        // for (size_t k = 0; k < (size_t)mio::oseir::InfectionState::Count; k++) {
+        for (size_t i = 0; i < (size_t)model.parameters.get_num_regions(); i++) {
+
+            printf("\t %.5f ",
+                   interpolated_result.get_value(t)[(size_t)model.parameters.get_num_regions() *
+                                                        ((size_t)mio::oseirmetapop::InfectionState::Count - 1) +
+                                                    i] /
+                       model.populations.get_group_total(mio::regions::Region(i)) * 100);
+        }
+    }
     return 0;
 }

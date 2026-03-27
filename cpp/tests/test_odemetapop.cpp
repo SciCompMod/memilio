@@ -197,17 +197,21 @@ TEST_F(ModelTestOdeMetapop, apply_constraints_parameters)
     mio::set_log_level(mio::LogLevel::off);
     model.parameters.set<mio::oseirmetapop::TimeExposed<ScalarType>>(-5.2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::oseirmetapop::TimeExposed<ScalarType>>()[(mio::AgeGroup)0], tol_times);
+    EXPECT_EQ((model.parameters
+                   .get<mio::oseirmetapop::TimeExposed<ScalarType>>()[{mio::regions::Region(0), mio::AgeGroup(0)}]),
+              tol_times);
 
     model.parameters.set<mio::oseirmetapop::TimeInfected<ScalarType>>(1e-5);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::oseirmetapop::TimeInfected<ScalarType>>()[(mio::AgeGroup)0], tol_times);
+    EXPECT_EQ((model.parameters
+                   .get<mio::oseirmetapop::TimeInfected<ScalarType>>()[{(mio::regions::Region)0, (mio::AgeGroup)0}]),
+              tol_times);
 
     model.parameters.set<mio::oseirmetapop::TransmissionProbabilityOnContact<ScalarType>>(10.);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_NEAR(
-        model.parameters.get<mio::oseirmetapop::TransmissionProbabilityOnContact<ScalarType>>()[(mio::AgeGroup)0], 0.0,
-        1e-14);
+    EXPECT_NEAR((model.parameters.get<mio::oseirmetapop::TransmissionProbabilityOnContact<ScalarType>>()[{
+                    (mio::regions::Region)0, (mio::AgeGroup)0}]),
+                0.0, 1e-14);
 
     model.parameters.set<mio::oseirmetapop::TransmissionProbabilityOnContact<ScalarType>>(0.04);
 

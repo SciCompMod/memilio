@@ -45,10 +45,10 @@ using Region = mio::regions::Region;
  */
 template <typename FP = ScalarType>
 struct TransmissionProbabilityOnContact {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(Region, AgeGroup size)
+    using Type = CustomIndexArray<UncertainValue<FP>, Region, AgeGroup>;
+    static Type get_default(Region size_region, AgeGroup size_age)
     {
-        return Type(size, 1.0);
+        return Type({size_region, size_age}, 1.0);
     }
     static std::string name()
     {
@@ -61,10 +61,10 @@ struct TransmissionProbabilityOnContact {
  */
 template <typename FP = ScalarType>
 struct TimeExposed {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(Region, AgeGroup size)
+    using Type = CustomIndexArray<UncertainValue<FP>, Region, AgeGroup>;
+    static Type get_default(Region size_region, AgeGroup size_age)
     {
-        return Type(size, 5.2);
+        return Type({size_region, size_age}, 5.2);
     }
     static std::string name()
     {
@@ -77,10 +77,10 @@ struct TimeExposed {
  */
 template <typename FP = ScalarType>
 struct TimeInfected {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(Region, AgeGroup size)
+    using Type = CustomIndexArray<UncertainValue<FP>, Region, AgeGroup>;
+    static Type get_default(Region size_region, AgeGroup size_age)
     {
-        return Type(size, 6.0);
+        return Type({size_region, size_age}, 6.0);
     }
     static std::string name()
     {
@@ -187,32 +187,33 @@ public:
         bool corrected     = false;
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_agegroups); i++) {
-            if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
-                log_warning(
-                    "Constraint check: Parameter TimeExposed changed from {} to {}. Please note that "
-                    "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
-                    "and reset parameters.",
-                    this->template get<TimeExposed<FP>>()[i], tol_times);
-                this->template get<TimeExposed<FP>>()[i] = tol_times;
-                corrected                                = true;
-            }
-            if (this->template get<TimeInfected<FP>>()[i] < tol_times) {
-                log_warning(
-                    "Constraint check: Parameter TimeInfected changed from {} to {}. Please note that "
-                    "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
-                    "and reset parameters.",
-                    this->template get<TimeInfected<FP>>()[i], tol_times);
-                this->template get<TimeInfected<FP>>()[i] = tol_times;
-                corrected                                 = true;
-            }
-            if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
-                this->template get<TransmissionProbabilityOnContact<FP>>()[i] > 1.0) {
-                log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {} to {} ",
-                            this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0);
-                this->template get<TransmissionProbabilityOnContact<FP>>() = 0.0;
-                corrected                                                  = true;
-            }
             for (auto j = Region(0); j < Region(m_num_regions); j++) {
+                if (this->template get<TimeExposed<FP>>()[{j, i}] < tol_times) {
+                    log_warning(
+                        "Constraint check: Parameter TimeExposed changed from {} to {}. Please note that "
+                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                        "and reset parameters.",
+                        this->template get<TimeExposed<FP>>()[{j, i}], tol_times);
+                    this->template get<TimeExposed<FP>>()[{j, i}] = tol_times;
+                    corrected                                     = true;
+                }
+                if (this->template get<TimeInfected<FP>>()[{j, i}] < tol_times) {
+                    log_warning(
+                        "Constraint check: Parameter TimeInfected changed from {} to {}. Please note that "
+                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                        "and reset parameters.",
+                        this->template get<TimeInfected<FP>>()[{j, i}], tol_times);
+                    this->template get<TimeInfected<FP>>()[{j, i}] = tol_times;
+                    corrected                                      = true;
+                }
+                if (this->template get<TransmissionProbabilityOnContact<FP>>()[{j, i}] < 0.0 ||
+                    this->template get<TransmissionProbabilityOnContact<FP>>()[{j, i}] > 1.0) {
+                    log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {} to {} ",
+                                this->template get<TransmissionProbabilityOnContact<FP>>()[{j, i}], 0.0);
+                    this->template get<TransmissionProbabilityOnContact<FP>>() = 0.0;
+                    corrected                                                  = true;
+                }
+
                 if (this->template get<PopulationAfterCommuting<FP>>()[{j, i}] <= 0.0) {
                     log_warning(
                         "Constraint check: Parameter PopulationAfterCommuting changed from {} to {}. Please "
@@ -257,30 +258,31 @@ public:
     {
         const double tol_times = 1e-1;
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_agegroups); i++) {
-            if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
-                log_error(
-                    "Constraint check: Parameter TimeExposed {} smaller or equal {}. Please note that "
-                    "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
-                    "and reset parameters.",
-                    this->template get<TimeExposed<FP>>()[i], 0.0);
-                return true;
-            }
-            if (this->template get<TimeInfected<FP>>()[i] < tol_times) {
-                log_error(
-                    "Constraint check: Parameter TimeInfected {} smaller or equal {}. Please note that "
-                    "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
-                    "and reset parameters.",
-                    this->template get<TimeInfected<FP>>()[i], 0.0);
-                return true;
-            }
-            if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
-                this->template get<TransmissionProbabilityOnContact<FP>>()[i] > 1.0) {
-                log_error("Constraint check: Parameter TransmissionProbabilityOnContact {} smaller {} or "
-                          "greater {:.4f}",
-                          this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0, 1.0);
-                return true;
-            }
             for (auto j = Region(0); j < Region(m_num_regions); j++) {
+                if (this->template get<TimeExposed<FP>>()[{j, i}] < tol_times) {
+                    log_error(
+                        "Constraint check: Parameter TimeExposed {} smaller or equal {}. Please note that "
+                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                        "and reset parameters.",
+                        this->template get<TimeExposed<FP>>()[{j, i}], 0.0);
+                    return true;
+                }
+                if (this->template get<TimeInfected<FP>>()[{j, i}] < tol_times) {
+                    log_error(
+                        "Constraint check: Parameter TimeInfected {} smaller or equal {}. Please note that "
+                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                        "and reset parameters.",
+                        this->template get<TimeInfected<FP>>()[{j, i}], 0.0);
+                    return true;
+                }
+                if (this->template get<TransmissionProbabilityOnContact<FP>>()[{j, i}] < 0.0 ||
+                    this->template get<TransmissionProbabilityOnContact<FP>>()[{j, i}] > 1.0) {
+                    log_error("Constraint check: Parameter TransmissionProbabilityOnContact {} smaller {} or "
+                              "greater {:.4f}",
+                              this->template get<TransmissionProbabilityOnContact<FP>>()[{j, i}], 0.0, 1.0);
+                    return true;
+                }
+
                 if (this->template get<PopulationAfterCommuting<FP>>()[{j, i}] <= 0.0) {
                     log_error("Constraint check: Parameter PopulationAfterCommuting {} smaller or equal {}",
                               this->template get<PopulationAfterCommuting<FP>>()[{j, i}], 0.0);
