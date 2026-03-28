@@ -45,19 +45,33 @@ public:
      */
     void advance(TimePoint tmax)
     {
-        Simulation<Model>::advance(tmax, history);
+        Simulation<Model>::advance(tmax, history, history_detailed);
     }
 
     /**
      * @brief Return the simulation result aggregated by infection states.
      */
-    const mio::TimeSeries<double>& get_result() const
+    mio::TimeSeries<double> get_result() const
     {
-        return get<0>(history.get_log());
+        return std::get<0>(history.get_log());
     }
 
+      /**
+     * @brief Return the detailed simulation result aggregated by infection states.
+     */
+    mio::TimeSeries<double> get_result_detailed() const
+    {
+        return std::get<0>(history_detailed.get_log());
+    }
+
+
     mio::History<TimeSeriesWriter, LogInfectionState> history{
-        Eigen::Index(InfectionState::Count)}; ///< History used to create the result TimeSeries.
+        Eigen::Index(InfectionState::Count)}; 
+
+    mio::History<TimeSeriesWriter, LogInfectionPerLocationTypePerAgeGroup> history_detailed{
+        Eigen::Index(LocationType::Count) * this->get_model().parameters.get_num_groups()};
+
+    
 };
 
 } // namespace abm
