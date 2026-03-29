@@ -215,8 +215,6 @@ Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityPa
     shared_contacts.draw_sample_dampings();
     auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
     shared_dynamic_npis.draw_sample();
-    auto& shared_dynamic_npis_delay = shared_params_model.parameters.template get<DynamicNPIsImplementationDelay<FP>>();
-    shared_dynamic_npis_delay.draw_sample();
 
     for (auto& params_node : graph.nodes()) {
         auto& node_model = params_node.property;
