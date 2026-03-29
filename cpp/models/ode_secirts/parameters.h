@@ -727,22 +727,6 @@ struct InfectiousnessNewVariant {
     }
 };
 
-/**
- * @brief The delay with which DynamicNPIs are implemented and enforced after exceedance of threshold.
- */
-template <typename FP>
-struct DynamicNPIsImplementationDelay {
-    using Type = UncertainValue<FP>;
-    static Type get_default(AgeGroup /*size*/)
-    {
-        return Type(0.0);
-    }
-    static std::string name()
-    {
-        return "DynamicNPIsImplementationDelay";
-    }
-};
-
 template <typename FP>
 using ParametersBase = ParameterSet<
     StartDay<FP>, Seasonality<FP>, ICUCapacity<FP>, TestAndTraceCapacity<FP>, TestAndTraceCapacityMaxRiskNoSymptoms<FP>,
@@ -757,8 +741,7 @@ using ParametersBase = ParameterSet<
     DailyBoosterVaccinations<FP>, ReducExposedPartialImmunity<FP>, ReducExposedImprovedImmunity<FP>,
     ReducInfectedSymptomsPartialImmunity<FP>, ReducInfectedSymptomsImprovedImmunity<FP>,
     ReducInfectedSevereCriticalDeadPartialImmunity<FP>, ReducInfectedSevereCriticalDeadImprovedImmunity<FP>,
-    ReducTimeInfectedMild<FP>, InfectiousnessNewVariant<FP>, DynamicNPIsImplementationDelay<FP>,
-    StartDayNewVariant<FP>>;
+    ReducTimeInfectedMild<FP>, InfectiousnessNewVariant<FP>, StartDayNewVariant<FP>>;
 
 /**
  * @brief Parameters of the age-resolved SECIRS-type model with high temporary immunity upon immunization and waning immunity over
@@ -877,13 +860,6 @@ public:
             log_warning("Constraint check: Parameter TestAndTraceCapacityMaxRiskNoSymptoms changed from {} to {}",
                         this->template get<TestAndTraceCapacityMaxRiskNoSymptoms<FP>>(), 0);
             this->template set<TestAndTraceCapacityMaxRiskNoSymptoms<FP>>(0);
-            corrected = true;
-        }
-
-        if (this->template get<DynamicNPIsImplementationDelay<FP>>() < 0.0) {
-            log_warning("Constraint check: Parameter DynamicNPIsImplementationDelay changed from {} to {}",
-                        this->template get<DynamicNPIsImplementationDelay<FP>>(), 0);
-            this->template set<DynamicNPIsImplementationDelay<FP>>(0);
             corrected = true;
         }
 
@@ -1139,11 +1115,6 @@ public:
 
         if (this->template get<TestAndTraceCapacityMaxRiskNoSymptoms<FP>>() < 0.0) {
             log_error("Constraint check: Parameter TestAndTraceCapacityMaxRiskNoSymptoms smaller {}", 0);
-            return true;
-        }
-
-        if (this->template get<DynamicNPIsImplementationDelay<FP>>() < 0.0) {
-            log_error("Constraint check: Parameter DynamicNPIsImplementationDelay smaller {}", 0);
             return true;
         }
 

@@ -70,7 +70,6 @@ void set_params_distributions_normal(Model<FP>& model, FP t0, FP tmax, FP dev_re
     set_distribution(model.parameters.template get<Seasonality<FP>>(), 0.0);
     set_distribution(model.parameters.template get<ICUCapacity<FP>>());
     set_distribution(model.parameters.template get<TestAndTraceCapacity<FP>>());
-    set_distribution(model.parameters.template get<DynamicNPIsImplementationDelay<FP>>());
 
     // populations
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {

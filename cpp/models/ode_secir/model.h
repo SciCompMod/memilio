@@ -292,48 +292,39 @@ public:
         auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns<FP>>();
 
-        FP delay_npi_implementation; // delay which is needed to implement a NPI that is criterion-dependent
-        FP t        = BaseT::get_result().get_last_time();
-        const FP dt = dyn_npis.get_thresholds().size() > 0 ? FP(dyn_npis.get_interval().get()) : FP(tmax);
+        FP t = BaseT::get_result().get_last_time();
 
         while (t < tmax) {
             FP dt_eff = min<FP>(dt, tmax - t);
-            dt_eff    = min<FP>(dt_eff, m_t_last_npi_check + dt - t);
 
             BaseT::advance(t + dt_eff);
             if (t > 0) {
                 delay_npi_implementation =
                     this->get_model().parameters.template get<DynamicNPIsImplementationDelay<FP>>();
             }
-            else { // DynamicNPIs for t=0 are 'misused' to be from-start NPIs. I.e., do not enforce delay.
+            else { // DynamicNPIs for t=0 are 'misused' to be 'from-start NPIs'. I.e., do not enforce delay.
                 delay_npi_implementation = 0;
             }
             t = t + dt_eff;
 
             if (dyn_npis.get_thresholds().size() > 0) {
-                if (floating_point_greater_equal<FP>(t, m_t_last_npi_check + dt)) {
-                    if (t < t_end_dyn_npis) {
-                        auto inf_rel = get_infections_relative<FP>(*this, t, this->get_result().get_last_value()) *
-                                       dyn_npis.get_base_value();
-                        auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
-                        if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
-                            (exceeded_threshold->first > m_dynamic_npi.first ||
-                             t > FP(m_dynamic_npi.second))) { //old npi was weaker or is expired
+                if (t < t_end_dyn_npis) {
+                    auto inf_rel = get_infections_relative<FP>(*this, t, this->get_result().get_last_value()) *
+                                   dyn_npis.get_base_value();
+                    auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
+                    if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
+                        (exceeded_threshold->first > m_dynamic_npi.first ||
+                         t > FP(m_dynamic_npi.second))) { // old npi was weaker or is expired
 
-                            auto t_start  = SimulationTime<FP>(t + delay_npi_implementation);
-                            auto t_end    = t_start + SimulationTime<FP>(FP(dyn_npis.get_duration()));
-                            m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
-                            implement_dynamic_npis<FP>(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
-                                                       t_start, t_end, [](auto& g) {
-                                                           return make_contact_damping_matrix(g);
-                                                       });
-                        }
+                        auto t_start  = SimulationTime<FP>(t + delay_npi_implementation);
+                        auto t_end    = t_start + SimulationTime<FP>(FP(dyn_npis.get_duration()));
+                        m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
+                        implement_dynamic_npis<FP>(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
+                                                   t_start, t_end, [](auto& g) {
+                                                       return make_contact_damping_matrix(g);
+                                                   });
                     }
-                    m_t_last_npi_check = t;
                 }
-            }
-            else {
-                m_t_last_npi_check = t;
             }
         }
 
@@ -678,8 +669,8 @@ auto get_mobility_factors(const Simulation<FP, Base>& sim, FP /*t*/, const Eigen
     auto test_and_trace_capacity          = FP(params.template get<TestAndTraceCapacity<FP>>());
     auto test_and_trace_capacity_max_risk = FP(params.template get<TestAndTraceCapacityMaxRisk<FP>>());
     auto riskFromInfectedSymptomatic      = smoother_cosine<FP>(test_and_trace_required, test_and_trace_capacity,
-                                                                test_and_trace_capacity * test_and_trace_capacity_max_risk,
-                                                                p_inf.matrix(), p_inf_max.matrix());
+                                                           test_and_trace_capacity * test_and_trace_capacity_max_risk,
+                                                           p_inf.matrix(), p_inf_max.matrix());
 
     //set factor for infected
     auto factors = Eigen::VectorX<FP>::Ones(y.rows()).eval();

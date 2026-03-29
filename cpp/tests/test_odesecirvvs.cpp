@@ -292,10 +292,10 @@ void set_contact_parameters(mio::osecirvvs::Model<double>::ParameterSet& paramet
     npis.set_threshold(10.0, {mio::DampingSampling<double>(npi_value, mio::DampingLevel(0), mio::DampingType(0),
                                                            mio::SimulationTime<double>(0), {0}, npi_groups)});
     npis.set_base_value(100'000);
-    npis.set_interval(mio::SimulationTime<double>(3.0));
+    npis.set_implementation_delay(mio::SimulationTime<double>(3.0));
     npis.set_duration(mio::SimulationTime<double>(14.0));
-    parameters.get_end_dynamic_npis() = 10.0; //required for dynamic NPIs to have effect in this model
-    parameters.template get<mio::osecirvvs::DynamicNPIsImplementationDelay<double>>() = 7;
+    npis.set_directive_end(10.0); // required for dynamic NPIs to have effect in this model
+    npis.set_implementation_delay(7.0);
 }
 
 void set_covid_parameters(mio::osecirvvs::Model<double>::ParameterSet& params, bool set_invalid_initial_value)
@@ -1472,7 +1472,6 @@ TEST(TestOdeSECIRVVS, check_constraints_parameters)
     EXPECT_EQ(model.parameters.check_constraints(), 0);
 
     model.parameters.set<mio::osecirvvs::InfectiousnessNewVariant<double>>(1);
-    model.parameters.set<mio::osecirvvs::DynamicNPIsImplementationDelay<double>>(-4);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
     mio::set_log_level(mio::LogLevel::warn);
@@ -1603,10 +1602,6 @@ TEST(TestOdeSECIRVVS, apply_constraints_parameters)
     model.parameters.set<mio::osecirvvs::InfectiousnessNewVariant<double>>(-4);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecirvvs::InfectiousnessNewVariant<double>>()[indx_agegroup], 1);
-
-    model.parameters.set<mio::osecirvvs::DynamicNPIsImplementationDelay<double>>(-4);
-    EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecirvvs::DynamicNPIsImplementationDelay<double>>(), 0);
 
     EXPECT_EQ(model.parameters.apply_constraints(), 0);
     mio::set_log_level(mio::LogLevel::warn);

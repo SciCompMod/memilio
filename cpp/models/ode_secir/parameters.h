@@ -334,22 +334,6 @@ struct DynamicNPIsInfectedSymptoms {
 };
 
 /**
- * @brief The delay with which DynamicNPIs are implemented and enforced after exceedance of threshold.
- */
-template <typename FP>
-struct DynamicNPIsImplementationDelay {
-    using Type = UncertainValue<FP>;
-    static Type get_default(AgeGroup /*size*/)
-    {
-        return Type(0.0);
-    }
-    static std::string name()
-    {
-        return "DynamicNPIsImplementationDelay";
-    }
-};
-
-/**
  * @brief capacity to test and trace contacts of infected for quarantine per day.
  */
 template <typename FP>
@@ -382,14 +366,12 @@ struct TestAndTraceCapacityMaxRisk {
 };
 
 template <typename FP>
-using ParametersBase =
-    ParameterSet<StartDay<FP>, Seasonality<FP>, ICUCapacity<FP>, TestAndTraceCapacity<FP>,
-                 TestAndTraceCapacityMaxRisk<FP>, ContactPatterns<FP>, DynamicNPIsImplementationDelay<FP>,
-                 DynamicNPIsInfectedSymptoms<FP>, TimeExposed<FP>, TimeInfectedNoSymptoms<FP>, TimeInfectedSymptoms<FP>,
-                 TimeInfectedSevere<FP>, TimeInfectedCritical<FP>, TransmissionProbabilityOnContact<FP>,
-                 RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>,
-                 RiskOfInfectionFromSymptomatic<FP>, MaxRiskOfInfectionFromSymptomatic<FP>,
-                 SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerCritical<FP>>;
+using ParametersBase = ParameterSet<
+    StartDay<FP>, Seasonality<FP>, ICUCapacity<FP>, TestAndTraceCapacity<FP>, TestAndTraceCapacityMaxRisk<FP>,
+    ContactPatterns<FP>, DynamicNPIsInfectedSymptoms<FP>, TimeExposed<FP>, TimeInfectedNoSymptoms<FP>,
+    TimeInfectedSymptoms<FP>, TimeInfectedSevere<FP>, TimeInfectedCritical<FP>, TransmissionProbabilityOnContact<FP>,
+    RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>, RiskOfInfectionFromSymptomatic<FP>,
+    MaxRiskOfInfectionFromSymptomatic<FP>, SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerCritical<FP>>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
@@ -488,13 +470,6 @@ public:
             log_warning("Constraint check: Parameter ICUCapacity changed from {} to {}",
                         this->template get<ICUCapacity<FP>>(), 0);
             this->template set<ICUCapacity<FP>>(0);
-            corrected = true;
-        }
-
-        if (this->template get<DynamicNPIsImplementationDelay<FP>>() < 0.0) {
-            log_warning("Constraint check: Parameter DynamicNPIsImplementationDelay changed from {} to {}",
-                        this->template get<DynamicNPIsImplementationDelay<FP>>(), 0);
-            this->template set<DynamicNPIsImplementationDelay<FP>>(0);
             corrected = true;
         }
 
@@ -640,11 +615,6 @@ public:
 
         if (this->template get<TestAndTraceCapacityMaxRisk<FP>>() < 0.0) {
             log_error("Constraint check: Parameter TestAndTraceCapacityMaxRisk smaller {}", 0);
-            return true;
-        }
-
-        if (this->template get<DynamicNPIsImplementationDelay<FP>>() < 0.0) {
-            log_error("Constraint check: Parameter DynamicNPIsImplementationDelay smaller {}", 0);
             return true;
         }
 

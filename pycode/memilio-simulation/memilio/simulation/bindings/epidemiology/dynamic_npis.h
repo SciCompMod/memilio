@@ -39,12 +39,12 @@ void bind_dynamicNPI_members(pybind11::module_& m, std::string const& name)
     bind_class<C, EnablePickling::Required>(m, name.c_str())
         .def(pybind11::init<>())
         .def_property(
-            "interval",
+            "implementation_delay",
             [](mio::DynamicNPIs<double>& self) {
-                return static_cast<double>(self.get_interval());
+                return static_cast<double>(self.get_implementation_delay());
             },
             [](mio::DynamicNPIs<double>& self, double v) {
-                self.set_interval(mio::SimulationTime<double>(v));
+                self.set_implementation_delay(mio::SimulationTime<double>(v));
             })
         .def_property(
             "duration",

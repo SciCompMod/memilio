@@ -186,22 +186,6 @@ struct DynamicNPIsInfectedSymptoms {
 };
 
 /**
- * @brief The delay with which DynamicNPIs are implemented and enforced after exceedance of threshold.
- */
-template <typename FP>
-struct DynamicNPIsImplementationDelay {
-    using Type = UncertainValue<FP>;
-    static Type get_default(AgeGroup /*size*/)
-    {
-        return Type(0.0);
-    }
-    static std::string name()
-    {
-        return "DynamicNPIsImplementationDelay";
-    }
-};
-
-/**
  * @brief the (mean) latent time in day unit
  */
 template <typename FP>
@@ -625,14 +609,13 @@ struct InfectiousnessNewVariant {
 template <typename FP>
 using ParametersBase = ParameterSet<
     StartDay<FP>, Seasonality<FP>, ICUCapacity<FP>, TestAndTraceCapacity<FP>, TestAndTraceCapacityMaxRiskNoSymptoms<FP>,
-    TestAndTraceCapacityMaxRiskSymptoms<FP>, ContactPatterns<FP>, DynamicNPIsImplementationDelay<FP>,
-    DynamicNPIsInfectedSymptoms<FP>, TimeExposed<FP>, TimeInfectedNoSymptoms<FP>, TimeInfectedSymptoms<FP>,
-    TimeInfectedSevere<FP>, TimeInfectedCritical<FP>, TransmissionProbabilityOnContact<FP>,
-    RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>, RiskOfInfectionFromSymptomatic<FP>,
-    MaxRiskOfInfectionFromSymptomatic<FP>, SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerCritical<FP>,
-    VaccinationGap<FP>, DaysUntilEffectivePartialImmunity<FP>, DaysUntilEffectiveImprovedImmunity<FP>,
-    DailyFullVaccinations<FP>, DailyPartialVaccinations<FP>, ReducExposedPartialImmunity<FP>,
-    ReducExposedImprovedImmunity<FP>, ReducInfectedSymptomsPartialImmunity<FP>,
+    TestAndTraceCapacityMaxRiskSymptoms<FP>, ContactPatterns<FP>, DynamicNPIsInfectedSymptoms<FP>, TimeExposed<FP>,
+    TimeInfectedNoSymptoms<FP>, TimeInfectedSymptoms<FP>, TimeInfectedSevere<FP>, TimeInfectedCritical<FP>,
+    TransmissionProbabilityOnContact<FP>, RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>,
+    RiskOfInfectionFromSymptomatic<FP>, MaxRiskOfInfectionFromSymptomatic<FP>, SeverePerInfectedSymptoms<FP>,
+    CriticalPerSevere<FP>, DeathsPerCritical<FP>, VaccinationGap<FP>, DaysUntilEffectivePartialImmunity<FP>,
+    DaysUntilEffectiveImprovedImmunity<FP>, DailyFullVaccinations<FP>, DailyPartialVaccinations<FP>,
+    ReducExposedPartialImmunity<FP>, ReducExposedImprovedImmunity<FP>, ReducInfectedSymptomsPartialImmunity<FP>,
     ReducInfectedSymptomsImprovedImmunity<FP>, ReducInfectedSevereCriticalDeadPartialImmunity<FP>,
     ReducInfectedSevereCriticalDeadImprovedImmunity<FP>, ReducTimeInfectedMild<FP>, InfectiousnessNewVariant<FP>,
     StartDayNewVariant<FP>>;
@@ -753,13 +736,6 @@ public:
             log_warning("Constraint check: Parameter TestAndTraceCapacityMaxRiskNoSymptoms changed from {} to {}",
                         this->template get<TestAndTraceCapacityMaxRiskNoSymptoms<FP>>(), 0);
             this->template set<TestAndTraceCapacityMaxRiskNoSymptoms<FP>>(0);
-            corrected = true;
-        }
-
-        if (this->template get<DynamicNPIsImplementationDelay<FP>>() < 0.0) {
-            log_warning("Constraint check: Parameter DynamicNPIsImplementationDelay changed from {} to {}",
-                        this->template get<DynamicNPIsImplementationDelay<FP>>(), 0);
-            this->template set<DynamicNPIsImplementationDelay<FP>>(0);
             corrected = true;
         }
 
@@ -976,11 +952,6 @@ public:
 
         if (this->template get<TestAndTraceCapacityMaxRiskNoSymptoms<FP>>() < 0.0) {
             log_error("Constraint check: Parameter TestAndTraceCapacityMaxRiskNoSymptoms smaller {}", 0);
-            return true;
-        }
-
-        if (this->template get<DynamicNPIsImplementationDelay<FP>>() < 0.0) {
-            log_error("Constraint check: Parameter DynamicNPIsImplementationDelay smaller {}", 0);
             return true;
         }
 
