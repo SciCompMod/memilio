@@ -47,6 +47,22 @@ void bind_dynamicNPI_members(pybind11::module_& m, std::string const& name)
                 self.set_implementation_delay(mio::SimulationTime<double>(v));
             })
         .def_property(
+            "directive_begin",
+            [](mio::DynamicNPIs<double>& self) {
+                return static_cast<double>(self.get_directive_begin());
+            },
+            [](mio::DynamicNPIs<double>& self, double v) {
+                self.set_directive_begin(mio::SimulationTime<double>(v));
+            })
+        .def_property(
+            "directive_end",
+            [](mio::DynamicNPIs<double>& self) {
+                return static_cast<double>(self.get_directive_end());
+            },
+            [](mio::DynamicNPIs<double>& self, double v) {
+                self.set_directive_end(mio::SimulationTime<double>(v));
+            })
+        .def_property(
             "duration",
             [](mio::DynamicNPIs<double>& self) {
                 return static_cast<double>(self.get_duration());

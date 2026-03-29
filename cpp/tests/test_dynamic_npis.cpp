@@ -63,6 +63,25 @@ TEST(DynamicNPIs, get_threshold)
     EXPECT_EQ(npis.get_max_exceeded_threshold(0.5), npis.get_thresholds().end());
 }
 
+TEST(DynamicNPIs, get_and_set_delay)
+{
+    mio::DynamicNPIs<double> npis;
+    EXPECT_EQ(npis.get_implementation_delay(), 0.0);
+    npis.set_implementation_delay(7.0);
+    EXPECT_EQ(npis.get_implementation_delay(), 7.0);
+}
+
+TEST(DynamicNPIs, get_and_set_directive_begin_end)
+{
+    mio::DynamicNPIs<double> npis;
+    EXPECT_LE(npis.get_directive_begin(), -1e4);
+    EXPECT_GE(npis.get_directive_end(), 1e4);
+    npis.set_directive_begin(7.0);
+    EXPECT_EQ(npis.get_directive_begin(), 7.0);
+    npis.set_directive_end(14.0);
+    EXPECT_EQ(npis.get_directive_end(), 14.0);
+}
+
 TEST(DynamicNPIs, get_damping_indices)
 {
     using Damping                 = mio::Damping<double, mio::RectMatrixShape<double>>;
@@ -315,7 +334,6 @@ TEST(DynamicNPIs, mobility)
                                                                       Eigen::VectorXd::Ones(2)}});
     npis.set_duration(mio::SimulationTime<double>(5.0));
     npis.set_base_value(100'000);
-    npis.set_interval(mio::SimulationTime<double>(3.0));
 
     mio::MobilityCoefficientGroup<double> coeffs(1, 2);
     mio::MobilityParameters<double> parameters(coeffs);
@@ -323,11 +341,11 @@ TEST(DynamicNPIs, mobility)
 
     mio::MobilityEdge<double> edge(parameters);
 
-    EXPECT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //initial
+    EXPECT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); // initial
 
     edge.apply_mobility(0.5, 0.5, node_from, node_to);
 
-    EXPECT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //not check at the beginning
+    EXPECT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); // no check at the beginning
 
     EXPECT_CALL(node_from.get_simulation(), advance).Times(1).WillOnce([&](auto t) {
         node_from.get_simulation().result.add_time_point(t, last_state_safe);
@@ -336,7 +354,7 @@ TEST(DynamicNPIs, mobility)
     node_to.advance(3.0, 2.5);
     edge.apply_mobility(3.0, 2.5, node_from, node_to);
 
-    EXPECT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //threshold not exceeded
+    EXPECT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); // threshold not exceeded
 
     EXPECT_CALL(node_from.get_simulation(), advance).Times(1).WillOnce([&](auto t) {
         node_from.get_simulation().result.add_time_point(t, last_state_crit);
@@ -346,7 +364,7 @@ TEST(DynamicNPIs, mobility)
     edge.apply_mobility(4.5, 1.5, node_from, node_to);
 
     EXPECT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(),
-              0); //threshold exceeded, but only check every 3 days
+              0); // threshold exceeded, but only check every 3 days
 
     EXPECT_CALL(node_from.get_simulation(), advance).Times(1).WillOnce([&](auto t) {
         node_from.get_simulation().result.add_time_point(t, last_state_crit);

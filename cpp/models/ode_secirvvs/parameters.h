@@ -677,18 +677,6 @@ public:
     }
 
     /**
-     * Time in simulation after which no dynamic NPIs are applied.
-     */
-    FP& get_end_dynamic_npis()
-    {
-        return m_end_dynamic_npis;
-    }
-    FP get_end_dynamic_npis() const
-    {
-        return m_end_dynamic_npis;
-    }
-
-    /**
      * @brief Checks whether all Parameters satisfy their corresponding constraints and applies them, if they do not.
      * Time spans cannot be negative and probabilities can only take values between [0,1].
      *
@@ -1125,7 +1113,6 @@ private:
     FP m_commuter_nondetection    = 0.0;
     FP m_start_commuter_detection = 0.0;
     FP m_end_commuter_detection   = 0.0;
-    FP m_end_dynamic_npis         = std::numeric_limits<FP>::max();
 };
 
 } // namespace osecirvvs
