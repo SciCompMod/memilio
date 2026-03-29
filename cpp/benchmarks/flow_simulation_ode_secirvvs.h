@@ -42,8 +42,8 @@ class FlowlessModel : public CompartmentalModel<ScalarType, osecirvvs::Infection
 {
     using InfectionState = osecirvvs::InfectionState;
     using Base           = CompartmentalModel<ScalarType, osecirvvs::InfectionState,
-                                              mio::Populations<ScalarType, AgeGroup, osecirvvs::InfectionState>,
-                                              osecirvvs::Parameters<ScalarType>>;
+                                    mio::Populations<ScalarType, AgeGroup, osecirvvs::InfectionState>,
+                                    osecirvvs::Parameters<ScalarType>>;
 
 public:
     FlowlessModel(const Populations& pop, const ParameterSet& params)
@@ -539,7 +539,6 @@ public:
     */
     Eigen::Ref<Eigen::VectorX<ScalarType>> advance(ScalarType tmax)
     {
-        auto& t_end_dyn_npis = this->get_model().parameters.get_end_dynamic_npis();
         auto& dyn_npis =
             this->get_model().parameters.template get<osecirvvs::DynamicNPIsInfectedSymptoms<ScalarType>>();
         auto& contact_patterns  = this->get_model().parameters.template get<osecirvvs::ContactPatterns<ScalarType>>();
@@ -549,14 +548,11 @@ public:
             this->get_model().parameters.template get<osecirvvs::TransmissionProbabilityOnContact<ScalarType>>();
 
         ScalarType delay_npi_implementation;
-        auto t        = Base::get_result().get_last_time();
-        const auto dt = dyn_npis.get_interval().get();
+        auto t = Base::get_result().get_last_time();
         while (t < tmax) {
 
-            auto dt_eff = std::min({dt, tmax - t, m_t_last_npi_check + dt - t});
-            if (dt_eff >= 1.0) {
-                dt_eff = 1.0;
-            }
+            auto dt_eff = min<FP>(dt, tmax - t);
+            dt_eff      = min<FP>(dt_eff, 1.0);
 
             if (t == 0) {
                 //this->apply_vaccination(t); // done in init now?
@@ -569,39 +565,33 @@ public:
             }
 
             if (t > 0) {
-                delay_npi_implementation = 7;
+                delay_npi_implementation = dyn_npis.get_implementation_delay();
             }
-            else {
+            else { // DynamicNPIs for t=0 are 'misused' to be from-start NPIs. I.e., do not enforce delay.
                 delay_npi_implementation = 0;
             }
             t = t + dt_eff;
 
             if (dyn_npis.get_thresholds().size() > 0) {
-                if (floating_point_greater_equal(t, m_t_last_npi_check + dt)) {
-                    if (t < t_end_dyn_npis) {
-                        auto inf_rel = get_infections_relative(*this, t, this->get_result().get_last_value()) *
-                                       dyn_npis.get_base_value();
-                        auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
-                        if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
-                            (exceeded_threshold->first > m_dynamic_npi.first ||
-                             t > ScalarType(m_dynamic_npi.second))) { //old npi was weaker or is expired
+                if (t >= dyn_npis.get_directive_begin() && t < dyn_npis.get_directive_end()) {
+                    auto inf_rel = get_infections_relative(*this, t, this->get_result().get_last_value()) *
+                                   dyn_npis.get_base_value();
+                    auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
+                    if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
+                        (exceeded_threshold->first > m_dynamic_npi.first ||
+                         t > ScalarType(m_dynamic_npi.second))) { // old npi was weaker or is expired
 
-                            auto t_start = SimulationTime<ScalarType>(t + delay_npi_implementation);
-                            auto t_end   = t_start + SimulationTime<ScalarType>(dyn_npis.get_duration());
-                            this->get_model().parameters.get_start_commuter_detection() = t_start.get();
-                            this->get_model().parameters.get_end_commuter_detection()   = t_end.get();
-                            m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
-                            implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
-                                                   t_start, t_end, [](auto& g) {
-                                                       return make_contact_damping_matrix(g);
-                                                   });
-                        }
+                        auto t_start = SimulationTime<ScalarType>(t + delay_npi_implementation);
+                        auto t_end   = t_start + SimulationTime<ScalarType>(dyn_npis.get_duration());
+                        this->get_model().parameters.get_start_commuter_detection() = t_start.get();
+                        this->get_model().parameters.get_end_commuter_detection()   = t_end.get();
+                        m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
+                        implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
+                                               t_start, t_end, [](auto& g) {
+                                                   return make_contact_damping_matrix(g);
+                                               });
                     }
-                    m_t_last_npi_check = t;
                 }
-            }
-            else {
-                m_t_last_npi_check = t;
             }
         }
 

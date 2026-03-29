@@ -43,8 +43,7 @@ public:
     using Simulation = Sim;
 
     template <class... Args>
-        requires std::is_constructible_v<Sim, Args...>
-    SimulationNode(Args&&... args)
+    requires std::is_constructible_v<Sim, Args...> SimulationNode(Args&&... args)
         : m_simulation(std::forward<Args>(args)...)
         , m_last_state(m_simulation.get_result().get_last_value())
         , m_t0(m_simulation.get_result().get_last_time())
@@ -547,14 +546,8 @@ template <class Sim>
 void mio::MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<FP, Sim>& node_from,
                                            SimulationNode<FP, Sim>& node_to)
 {
-    //check dynamic npis
-    if (m_t_last_dynamic_npi_check == -std::numeric_limits<FP>::infinity()) {
-        m_t_last_dynamic_npi_check = node_from.get_t0();
-    }
-
     auto& dyn_npis = m_parameters.get_dynamic_npis_infected();
-    if (dyn_npis.get_thresholds().size() > 0 &&
-        floating_point_greater_equal<FP>(t, m_t_last_dynamic_npi_check + dyn_npis.get_interval().get())) {
+    if (dyn_npis.get_thresholds().size() > 0) {
         auto inf_rel =
             get_infections_relative<FP>(node_from, t, node_from.get_last_state()) * dyn_npis.get_base_value();
         auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
@@ -569,7 +562,6 @@ void mio::MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<FP, Sim>&
                                                m_parameters.get_coefficients().get_shape(), g);
                                        });
         }
-        m_t_last_dynamic_npi_check = t;
     }
 
     //returns

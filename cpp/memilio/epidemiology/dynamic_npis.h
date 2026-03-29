@@ -97,22 +97,23 @@ public:
     }
 
     /**
-     * Get/Set the interval at which the NPIs are checked.
+     * Get/Set the implementation delay at which the NPIs are implemented after threshold exceedance.
+     * This parameters imitates delayed reaction times when automatic implementations should be realized.
      * @{
      */
     /**
-     * @return the interval at which the NPIs are checked.
+     * @return the implementation delay after which the NPIs is implemented upon threshold exceedance.
      */
-    SimulationTime<FP> get_interval() const
+    SimulationTime<FP> get_implementation_delay() const
     {
-        return m_interval;
+        return m_delay;
     }
     /**
-     * @param interval The interval at which the NPIs are checked.
+     * @param delay The implementation delay after which the NPIs is implemented upon threshold exceedance.
      */
-    void set_interval(SimulationTime<FP> interval)
+    void set_implementation_delay(SimulationTime<FP> delay)
     {
-        m_interval = interval;
+        m_delay = delay;
     }
     /**@}*/
 
@@ -130,11 +131,53 @@ public:
         return m_base;
     }
     /**
-     * @return The base value of the thresholds.
+     * @param v Sets the base value of the thresholds.
      */
     void set_base_value(FP v)
     {
         m_base = v;
+    }
+    /**@}*/
+
+    /**
+     * Get/Set the first day of the simulation for which a DynamicNPI *can* be activated.
+     * This parameter imitates the beginning date of a legal directive.
+     * @{
+     */
+    /**     
+     * @return the first day of a legal directive prescribing the DynamicNPI.
+     */
+    SimulationTime<FP> get_directive_begin() const
+    {
+        return m_directive_begin;
+    }
+    /**
+     * @param begin The first day of a legal directive prescribing the DynamicNPI.
+     */
+    void set_directive_begin(SimulationTime<FP> begin)
+    {
+        m_directive_begin = begin;
+    }
+    /**@}*/
+
+    /**
+     * Get/Set the first day of the simulation for which a DynamicNPI *can* be active.
+     * This parameter imitates the last date of a legal directive and ends all active DynamicNPIs.
+     * @{
+     */
+    /**     
+     * @return the last day of a legal directive prescribing the DynamicNPI.
+     */
+    SimulationTime<FP> get_directive_end() const
+    {
+        return m_directive_end;
+    }
+    /**
+     * @param end The last day of a legal directive prescribing the DynamicNPI.
+     */
+    void set_directive_end(SimulationTime<FP> end)
+    {
+        m_directive_end = end;
     }
     /**@}*/
 
@@ -160,8 +203,10 @@ public:
         auto obj = io.create_object("DynamicNPIs");
         obj.add_list("Thresholds", get_thresholds().begin(), get_thresholds().end());
         obj.add_element("Duration", get_duration());
-        obj.add_element("Interval", get_interval());
+        obj.add_element("Delay", get_implementation_delay());
         obj.add_element("BaseValue", get_base_value());
+        obj.add_element("DirectiveBegin", get_directive_begin());
+        obj.add_element("DirectiveEnd", get_directive_end());
     }
 
     /**
@@ -174,27 +219,33 @@ public:
         auto obj = io.expect_object("DynamicNPIs");
         auto t   = obj.expect_list("Thresholds", Tag<std::pair<FP, std::vector<DampingSampling<FP>>>>{});
         auto d   = obj.expect_element("Duration", Tag<SimulationTime<FP>>{});
-        auto i   = obj.expect_element("Interval", Tag<SimulationTime<FP>>{});
+        auto i   = obj.expect_element("Delay", Tag<SimulationTime<FP>>{});
         auto b   = obj.expect_element("BaseValue", Tag<FP>{});
+        auto f   = obj.expect_element("DirectiveBegin", Tag<SimulationTime<FP>>{});
+        auto l   = obj.expect_element("DirectiveEnd", Tag<SimulationTime<FP>>{});
         return apply(
             io,
-            [](auto&& t_, auto&& d_, auto&& i_, auto&& b_) {
+            [](auto&& t_, auto&& d_, auto&& i_, auto&& b_, auto&& f_, auto&& l_) {
                 auto npis = DynamicNPIs();
                 npis.set_duration(d_);
-                npis.set_interval(i_);
+                npis.set_implementation_delay(i_);
                 npis.set_base_value(b_);
                 for (auto&& e : t_) {
                     npis.set_threshold(e.first, e.second);
                 }
+                npis.set_directive_begin(f_);
+                npis.set_directive_end(l_);
                 return npis;
             },
-            t, d, i, b);
+            t, d, i, b, f, l);
     }
 
 private:
     std::vector<std::pair<FP, std::vector<DampingSampling<FP>>>> m_thresholds;
     SimulationTime<FP> m_duration{14.0};
-    SimulationTime<FP> m_interval{3.0};
+    SimulationTime<FP> m_delay{0.0};
+    SimulationTime<FP> m_directive_begin{-std::numeric_limits<FP>::max};
+    SimulationTime<FP> m_directive_end{std::numeric_limits<FP>::max};
     FP m_base{1.0};
 };
 
@@ -292,13 +343,13 @@ void implement_dynamic_npis(DampingExprGroup& damping_expr_group, const std::vec
 
             auto npi_implemented = false;
 
-            //add begin of npi if not already bigger
+            // add begin of npi if not already bigger
             if ((active.array() < value.array()).any()) {
                 damping_expr.add_damping(max(value, active), level, type, begin);
                 npi_implemented = true;
             }
 
-            //replace dampings during the new npi
+            // replace dampings during the new npi
             auto damping_indices = get_damping_indices<FP>(damping_expr, level, type, begin, end);
             for (auto& i : damping_indices) {
                 auto& d = damping_expr.get_dampings()[i];
@@ -306,27 +357,27 @@ void implement_dynamic_npis(DampingExprGroup& damping_expr_group, const std::vec
                 npi_implemented = true;
             }
 
-            //add end of npi to restore active dampings if any change was made
+            // add end of npi to restore active dampings if any change was made
             if (npi_implemented) {
                 damping_expr.add_damping(active_end, level, type, end);
             }
         }
     }
 
-    //remove duplicates that accumulated because of dampings that become active during the time span
-    //a damping is obsolete if the most recent damping of the same type and level has the same value
+    // remove duplicates that accumulated because of dampings that become active during the time span
+    // a damping is obsolete if the most recent damping of the same type and level has the same value
     for (auto& damping_expr : damping_expr_group) {
-        //go from the back so indices aren't invalidated when dampings are removed
-        //use indices to loop instead of reverse iterators because removing invalidates the current iterator
+        // go from the back so indices aren't invalidated when dampings are removed
+        // use indices to loop instead of reverse iterators because removing invalidates the current iterator
         for (auto i = int(0); i < int(damping_expr.get_dampings().size()) - 1; ++i) {
             auto it = damping_expr.get_dampings().rbegin() + i;
 
-            //look for previous damping of the same type/level
+            // look for previous damping of the same type/level
             auto it_prev = std::find_if(it + 1, damping_expr.get_dampings().rend(), [&di = *it](auto& dj) {
                 return di.get_level() == dj.get_level() && di.get_type() == dj.get_type();
             });
 
-            //remove if match is found and has same value
+            // remove if match is found and has same value
             if (it_prev != damping_expr.get_dampings().rend() && it->get_coeffs() == it_prev->get_coeffs()) {
                 damping_expr.remove_damping(damping_expr.get_dampings().size() - 1 - i);
             }

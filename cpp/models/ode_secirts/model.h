@@ -754,7 +754,6 @@ public:
         using std::floor;
         using std::min;
 
-        auto& t_end_dyn_npis   = this->get_model().parameters.get_end_dynamic_npis();
         auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns<FP>>();
         // const size_t num_groups = (size_t)this->get_model().parameters.get_num_groups();
@@ -764,14 +763,11 @@ public:
         auto base_infectiousness = this->get_model().parameters.template get<TransmissionProbabilityOnContact<FP>>();
 
         FP delay_npi_implementation;
-        auto t        = BaseT::get_result().get_last_time();
-        const auto dt = dyn_npis.get_interval().get();
+        FP t = BaseT::get_result().get_last_time();
         while (t < tmax) {
 
-            auto dt_eff = min<FP>({dt, tmax - t, m_t_last_npi_check + dt - t});
-            if (dt_eff >= 1.0) {
-                dt_eff = 1.0;
-            }
+            auto dt_eff = min<FP>(dt, tmax - t);
+            dt_eff      = min<FP>(dt_eff, 1.0);
 
             BaseT::advance(t + dt_eff);
             if (t + 0.5 + dt_eff - floor(t + 0.5) >= 1) {
@@ -779,8 +775,7 @@ public:
             }
 
             if (t > 0) {
-                delay_npi_implementation =
-                    this->get_model().parameters.template get<DynamicNPIsImplementationDelay<FP>>();
+                delay_npi_implementation = dyn_npis.get_implementation_delay();
             }
             else {
                 // DynamicNPIs for t=0 are 'misused' to be from-start NPIs. I.e., do not enforce delay.
@@ -789,31 +784,25 @@ public:
             t = t + dt_eff;
 
             if (dyn_npis.get_thresholds().size() > 0) {
-                if (floating_point_greater_equal<FP>(t, m_t_last_npi_check + dt)) {
-                    if (t < t_end_dyn_npis) {
-                        auto inf_rel = get_infections_relative<FP>(*this, t, this->get_result().get_last_value()) *
-                                       dyn_npis.get_base_value();
-                        auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
-                        if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
-                            (exceeded_threshold->first > m_dynamic_npi.first ||
-                             t > FP(m_dynamic_npi.second))) { //old npi was weaker or is expired
+                if (t >= dyn_npis.get_directive_begin() && t < dyn_npis.get_directive_end()) {
+                    auto inf_rel = get_infections_relative<FP>(*this, t, this->get_result().get_last_value()) *
+                                   dyn_npis.get_base_value();
+                    auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
+                    if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
+                        (exceeded_threshold->first > m_dynamic_npi.first ||
+                         t > FP(m_dynamic_npi.second))) { //old npi was weaker or is expired
 
-                            auto t_start = SimulationTime<FP>(t + delay_npi_implementation);
-                            auto t_end   = t_start + SimulationTime<FP>(dyn_npis.get_duration());
-                            this->get_model().parameters.get_start_commuter_detection() = (FP)t_start;
-                            this->get_model().parameters.get_end_commuter_detection()   = (FP)t_end;
-                            m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
-                            implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
-                                                   t_start, t_end, [](auto& g) {
-                                                       return make_contact_damping_matrix(g);
-                                                   });
-                        }
+                        auto t_start = SimulationTime<FP>(t + delay_npi_implementation);
+                        auto t_end   = t_start + SimulationTime<FP>(dyn_npis.get_duration());
+                        this->get_model().parameters.get_start_commuter_detection() = (FP)t_start;
+                        this->get_model().parameters.get_end_commuter_detection()   = (FP)t_end;
+                        m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
+                        implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
+                                               t_start, t_end, [](auto& g) {
+                                                   return make_contact_damping_matrix(g);
+                                               });
                     }
-                    m_t_last_npi_check = t;
                 }
-            }
-            else {
-                m_t_last_npi_check = t;
             }
         }
         // reset TransmissionProbabilityOnContact. This is important for the graph simulation where the advance
