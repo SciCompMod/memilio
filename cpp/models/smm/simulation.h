@@ -90,13 +90,12 @@ public:
             // update time
             current_time += m_waiting_times[next_event];
             // Save results until the next event time point
-            if (current_time > next_result_time) {
-                while (current_time > next_result_time) {
-                    m_result.add_time_point(next_result_time);
-                    // copy from the previous last value
-                    m_result.get_last_value() = m_model->populations.get_compartments();
-                    next_result_time += m_dt;
-                }
+            // do not save current time, as it does not yet include the next event
+            while (next_result_time < current_time) {
+                m_result.add_time_point(next_result_time);
+                // copy from the previous last value
+                m_result.get_last_value() = m_model->populations.get_compartments();
+                next_result_time += m_dt;
             }
             // decide event type by index and perform it
             if (next_event < adoption_rates().size()) {
@@ -123,7 +122,7 @@ public:
         }
         // copy last result, if no event occurs between last result time point and tmax
         if (m_result.get_last_time() < tmax) {
-            while (tmax >= next_result_time) {
+            while (next_result_time <= tmax) {
                 m_result.add_time_point(next_result_time);
                 m_result.get_last_value() = m_model->populations.get_compartments();
                 next_result_time += m_dt;
