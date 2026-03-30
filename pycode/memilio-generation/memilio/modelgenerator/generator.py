@@ -200,7 +200,7 @@ class Generator:
                 f"    LINKED_LIBRARIES memilio {prefix}\n"
                 f"    SOURCES memilio/simulation/bindings/models/{prefix}.cpp\n"
                 f")")
-            if module_name not in text:
+            if f"add_pymio_module({module_name}\n" not in text:
                 # Insert before the "# install all shared" comment
                 marker = "# install all shared memilio libraries"
                 text = text.replace(marker, block + "\n\n" + marker)
