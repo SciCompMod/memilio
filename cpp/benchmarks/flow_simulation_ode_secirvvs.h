@@ -551,8 +551,7 @@ public:
         auto t = Base::get_result().get_last_time();
         while (t < tmax) {
 
-            auto dt_eff = min<FP>(dt, tmax - t);
-            dt_eff      = min<FP>(dt_eff, 1.0);
+            auto dt_eff = min<ScalarType>(1.0, tmax - t);
 
             if (t == 0) {
                 //this->apply_vaccination(t); // done in init now?
@@ -573,7 +572,9 @@ public:
             t = t + dt_eff;
 
             if (dyn_npis.get_thresholds().size() > 0) {
-                if (t >= ScalarType(dyn_npis.get_directive_begin()) && t < ScalarType(dyn_npis.get_directive_end())) {
+                ScalarType direc_begin = ScalarType(dyn_npis.get_directive_begin());
+                ScalarType direc_end   = ScalarType(dyn_npis.get_directive_end());
+                if (floating_point_greater_equal(t, direc_begin, 1e-10) && t < direc_end) {
                     auto inf_rel = get_infections_relative(*this, t, this->get_result().get_last_value()) *
                                    dyn_npis.get_base_value();
                     auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
@@ -581,15 +582,19 @@ public:
                         (exceeded_threshold->first > m_dynamic_npi.first ||
                          t > ScalarType(m_dynamic_npi.second))) { // old npi was weaker or is expired
 
-                        auto t_start = SimulationTime<ScalarType>(t + delay_npi_implementation);
-                        auto t_end   = t_start + SimulationTime<ScalarType>(dyn_npis.get_duration());
-                        this->get_model().parameters.get_start_commuter_detection() = t_start.get();
-                        this->get_model().parameters.get_end_commuter_detection()   = t_end.get();
-                        m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
-                        implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
-                                               t_start, t_end, [](auto& g) {
-                                                   return make_contact_damping_matrix(g);
-                                               });
+                        if (t + delay_npi_implementation < direc_end) {
+                            auto t_start = SimulationTime<ScalarType>(t + delay_npi_implementation);
+                            // set the end to the minimum of start+delay and the end of the directive
+                            auto t_end = SimulationTime<ScalarType>(
+                                min<ScalarType>(direc_end, ScalarType(t_start + dyn_npis.get_duration())));
+                            this->get_model().parameters.get_start_commuter_detection() = t_start.get();
+                            this->get_model().parameters.get_end_commuter_detection()   = t_end.get();
+                            m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
+                            implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
+                                                   t_start, t_end, [](auto& g) {
+                                                       return make_contact_damping_matrix(g);
+                                                   });
+                        }
                     }
                 }
             }

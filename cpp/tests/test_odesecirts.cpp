@@ -465,7 +465,7 @@ void set_contact_parameters(mio::osecirts::Model<double>::ParameterSet& paramete
                                                            mio::SimulationTime<double>(0), {0}, npi_groups)});
     npis.set_base_value(100'000);
     npis.set_duration(mio::SimulationTime<double>(14.0));
-    npis.set_directive_end(mio::SimulationTime<double>(10.0)); //required for dynamic NPIs to have effect in this model
+    // npis.set_directive_end(mio::SimulationTime<double>(10.0)); // --> can probably be removed???
 }
 
 void set_covid_parameters(mio::osecirts::Model<double>::ParameterSet& params, bool set_invalid_initial_value)

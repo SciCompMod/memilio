@@ -294,7 +294,7 @@ void set_contact_parameters(mio::osecirvvs::Model<double>::ParameterSet& paramet
     npis.set_base_value(100'000);
     npis.set_implementation_delay(mio::SimulationTime<double>(3.0));
     npis.set_duration(mio::SimulationTime<double>(14.0));
-    npis.set_directive_end(mio::SimulationTime<double>(10.0)); // required for dynamic NPIs to have effect in this model
+    // npis.set_directive_end(mio::SimulationTime<double>(10.0)); // --> can probably be removed???
     npis.set_implementation_delay(mio::SimulationTime<double>(7.0));
 }
 

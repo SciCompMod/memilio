@@ -306,7 +306,9 @@ public:
             t = t + dt_eff;
 
             if (dyn_npis.get_thresholds().size() > 0) {
-                if (t >= FP(dyn_npis.get_directive_begin()) && t < FP(dyn_npis.get_directive_end())) {
+                FP direc_begin = FP(dyn_npis.get_directive_begin());
+                FP direc_end   = FP(dyn_npis.get_directive_end());
+                if (floating_point_greater_equal(t, direc_begin, 1e-10) && t < direc_end) {
                     auto inf_rel = get_infections_relative<FP>(*this, t, this->get_result().get_last_value()) *
                                    dyn_npis.get_base_value();
                     auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
@@ -314,13 +316,16 @@ public:
                         (exceeded_threshold->first > m_dynamic_npi.first ||
                          t > FP(m_dynamic_npi.second))) { // old npi was weaker or is expired
 
-                        auto t_start  = SimulationTime<FP>(t + delay_npi_implementation);
-                        auto t_end    = t_start + SimulationTime<FP>(FP(dyn_npis.get_duration()));
-                        m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
-                        implement_dynamic_npis<FP>(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
-                                                   t_start, t_end, [](auto& g) {
-                                                       return make_contact_damping_matrix(g);
-                                                   });
+                        if (t + delay_npi_implementation < direc_end) {
+                            auto t_start = SimulationTime<FP>(t + delay_npi_implementation);
+                            // set the end to the minimum of start+delay and the end of the directive
+                            auto t_end = SimulationTime<FP>(min<FP>(direc_end, FP(t_start + dyn_npis.get_duration())));
+                            m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
+                            implement_dynamic_npis<FP>(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
+                                                       t_start, t_end, [](auto& g) {
+                                                           return make_contact_damping_matrix(g);
+                                                       });
+                        }
                     }
                 }
             }
