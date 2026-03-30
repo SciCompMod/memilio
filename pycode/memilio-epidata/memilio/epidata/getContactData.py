@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2025 MEmilio
+# Copyright (C) 2020-2026 MEmilio
 #
 # Authors: Henrik Zunker
 #
@@ -180,7 +180,7 @@ def load_contact_matrix(
     :param reduce_to_rki_groups: If True, aggregate to the six RKI age groups 
       (0-4, 5-14, 15-34, 35-59, 60-79, 80+ years). Default True.
     :param population: An iterable of 16 float values representing the population 
-      size for each age group. Required if reduce_to_rki_groups is True.
+      size for each original age group. Required if reduce_to_rki_groups is True.
     :returns: DataFrame indexed by age group with floats.
     """
     xls_bytes = _load_workbook_bytes(contact_path)
@@ -218,7 +218,7 @@ def load_contact_matrix(
 def _aggregate_to_rki_age_groups(
         matrix: pd.DataFrame, population: Iterable[float]):
     """
-    Aggregate a 16x16 age contact matrix to the 6-group RKI scheme using 
+    Aggregate an age-structured 16x16 contact matrix to the 6-group RKI scheme using 
     population-weighted averages.
     Assumes the original columns/rows follow AGE_GROUP_LABELS order.
     Note: The source only provides data up to 70-74 and a 75+ group.
@@ -263,7 +263,7 @@ def _aggregate_to_rki_age_groups(
             weighted_contacts = contacts_summed_over_cols * pop_weights
 
             # Calculate the average: Sum of weighted contacts divided by the
-            #  new total population
+            #  new total population per group.
             aggregated.iat[i, j] = weighted_contacts.sum() / pop_weights.sum()
 
     return aggregated
