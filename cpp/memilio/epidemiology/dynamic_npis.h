@@ -244,8 +244,8 @@ private:
     std::vector<std::pair<FP, std::vector<DampingSampling<FP>>>> m_thresholds;
     SimulationTime<FP> m_duration{14.0};
     SimulationTime<FP> m_delay{0.0};
-    SimulationTime<FP> m_directive_begin{-std::numeric_limits<FP>::max};
-    SimulationTime<FP> m_directive_end{std::numeric_limits<FP>::max};
+    SimulationTime<FP> m_directive_begin{SimulationTime<FP>(std::numeric_limits<FP>::lowest())};
+    SimulationTime<FP> m_directive_end{SimulationTime<FP>(std::numeric_limits<FP>::max())};
     FP m_base{1.0};
 };
 

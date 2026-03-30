@@ -1139,13 +1139,6 @@ TEST(TestOdeSecir, check_constraints_parameters)
     model.parameters.set<mio::osecir::CriticalPerSevere<double>>(0.5);
     model.parameters.set<mio::osecir::DeathsPerCritical<double>>(1.1);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
-
-    model.parameters.set<mio::osecir::DeathsPerCritical<double>>(1.0);
-    model.parameters.set<mio::osecir::DynamicNPIsImplementationDelay<double>>(-4);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
-
-    model.parameters.set<mio::osecir::DynamicNPIsImplementationDelay<double>>(3);
-    EXPECT_EQ(model.parameters.check_constraints(), 0);
 }
 
 TEST(TestOdeSecir, apply_constraints_parameters)

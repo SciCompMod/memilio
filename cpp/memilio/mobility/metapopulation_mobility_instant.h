@@ -471,7 +471,7 @@ void calculate_mobility_returns(Eigen::Ref<typename TimeSeries<FP>::Vector> mobi
 }
 
 /**
- * get the percantage of infected people of the total population in the node
+ * Get the percentage of infected people of the total population in the node.
  * If dynamic NPIs are enabled, there needs to be an overload of get_infections_relative(model, y)
  * for the Model type that can be found with argument-dependent lookup. Ideally define get_infections_relative
  * in the same namespace as the Model type.

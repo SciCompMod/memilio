@@ -291,14 +291,14 @@ public:
         auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns<FP>>();
 
+        FP delay_npi_implementation;
         FP t = BaseT::get_result().get_last_time();
-
         while (t < tmax) {
-            FP dt_eff = min<FP>(dt, tmax - t);
+            FP dt_eff = min<FP>(1.0, tmax - t);
 
             BaseT::advance(t + dt_eff);
             if (t > 0) {
-                delay_npi_implementation = dyn_npis.get_implementation_delay();
+                delay_npi_implementation = FP(dyn_npis.get_implementation_delay());
             }
             else { // DynamicNPIs for t=0 are 'misused' to be 'from-start NPIs'. I.e., do not enforce delay.
                 delay_npi_implementation = 0;
@@ -306,7 +306,7 @@ public:
             t = t + dt_eff;
 
             if (dyn_npis.get_thresholds().size() > 0) {
-                if (t >= dyn_npis.get_directive_begin() && t < dyn_npis.get_directive_end()) {
+                if (t >= FP(dyn_npis.get_directive_begin()) && t < FP(dyn_npis.get_directive_end())) {
                     auto inf_rel = get_infections_relative<FP>(*this, t, this->get_result().get_last_value()) *
                                    dyn_npis.get_base_value();
                     auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
