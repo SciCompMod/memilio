@@ -30,7 +30,7 @@ import numpy as np
 import pandas as pd
 import requests
 
-from memilio.epidata.getContactData import (get_available_countries,
+from memilio.epidata.getContactData import (list_available_contact_countries,
                                             load_contact_matrix)
 from memilio.simulation import AgeGroup, ContactMatrix, Damping
 from memilio.simulation.oseir import InfectionState as State
@@ -205,7 +205,7 @@ def simulate_country_seir(
     a simulation. In general, the contact matrix is of size 16x16, but if
     `use_rki_groups` is True, it will be aggregated to 6x6 (RKI groups).
     """
-    available_countries = get_available_countries()
+    available_countries = list_available_contact_countries()
     if country not in available_countries:
         raise ValueError(
             f"Country '{country}' not available. "

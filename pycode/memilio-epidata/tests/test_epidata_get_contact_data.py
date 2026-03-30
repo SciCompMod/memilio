@@ -166,6 +166,7 @@ class TestGetContactData(unittest.TestCase):
         self.assertEqual(matrix.shape, (6, 6))
         self.assertEqual(list(matrix.columns), AGE_GROUP_LABELS_RKI)
         self.assertEqual(list(matrix.index), AGE_GROUP_LABELS_RKI)
+        # Same expected values as in test_load_contact_matrix_rki_groups above.
         self.assertEqual(matrix.iloc[0, 0], 0)
         self.assertEqual(matrix.iloc[1, 0], 24)
         mock_resp.raise_for_status.assert_called_once()

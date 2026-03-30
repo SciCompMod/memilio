@@ -21,7 +21,8 @@
 :strong:`getContactData.py`
 
 Load an age-structured contact matrix for a chosen country based on
-Prem et al., 2017. The module can download the supporting ZIP from
+Prem et al., 2017 (DOI: https://doi.org/10.1371/journal.pcbi.1005697).
+The module can download the supporting ZIP from
 https://doi.org/10.1371/journal.pcbi.1005697.s002 (contains the
 ``MUestimates_all_locations_1.xlsx`` workbook) or read a defined local
 workbook path. By default, downloads are done in memory and no
@@ -31,7 +32,7 @@ files are written.
 import io
 import os
 import zipfile
-from typing import Iterable, List, Optional
+from typing import Iterable, Optional
 
 import numpy as np
 import pandas as pd
@@ -135,16 +136,6 @@ def list_available_contact_countries(
     xls_bytes = _load_workbook_bytes(contact_path)
     xls = pd.ExcelFile(io.BytesIO(xls_bytes))
     return xls.sheet_names
-
-
-def get_available_countries(contact_path: Optional[str] = None):
-    """
-    Get list of all available countries.
-
-    :param contact_path: Optional local path to the workbook.
-    :returns: List of all available countries.
-    """
-    return list_available_contact_countries(contact_path)
 
 
 def _select_sheet_name(country: str, sheet_names: Iterable[str]):
