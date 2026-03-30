@@ -196,10 +196,12 @@ public:
             flows[this->template get_flat_flow_index<InfectionState::InfectedSevere, InfectionState::InfectedCritical>(
                 {i})] = criticalPerSevereAdjusted / params.template get<TimeInfectedSevere<FP>>()[i] * y[ISevi];
             flows[this->template get_flat_flow_index<InfectionState::InfectedSevere, InfectionState::Recovered>({i})] =
-                (1.0 - params.template get<CriticalPerSevere<FP>>()[i]) /
+                (1.0 - params.template get<CriticalPerSevere<FP>>()[i] -
+                 params.template get<DeathsPerSevere<FP>>()[i]) /
                 params.template get<TimeInfectedSevere<FP>>()[i] * y[ISevi];
             flows[this->template get_flat_flow_index<InfectionState::InfectedSevere, InfectionState::Dead>({i})] =
-                deathsPerSevereAdjusted / params.template get<TimeInfectedSevere<FP>>()[i] * y[ISevi];
+                (params.template get<DeathsPerSevere<FP>>()[i] + deathsPerSevereAdjusted) /
+                params.template get<TimeInfectedSevere<FP>>()[i] * y[ISevi];
 
             // InfectedCritical -> Dead / Recovered
             flows[this->template get_flat_flow_index<InfectionState::InfectedCritical, InfectionState::Dead>({i})] =
@@ -678,8 +680,8 @@ auto get_mobility_factors(const Simulation<FP, Base>& sim, FP /*t*/, const Eigen
     auto test_and_trace_capacity          = FP(params.template get<TestAndTraceCapacity<FP>>());
     auto test_and_trace_capacity_max_risk = FP(params.template get<TestAndTraceCapacityMaxRisk<FP>>());
     auto riskFromInfectedSymptomatic      = smoother_cosine<FP>(test_and_trace_required, test_and_trace_capacity,
-                                                                test_and_trace_capacity * test_and_trace_capacity_max_risk,
-                                                                p_inf.matrix(), p_inf_max.matrix());
+                                                           test_and_trace_capacity * test_and_trace_capacity_max_risk,
+                                                           p_inf.matrix(), p_inf_max.matrix());
 
     //set factor for infected
     auto factors = Eigen::VectorX<FP>::Ones(y.rows()).eval();

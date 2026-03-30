@@ -286,6 +286,24 @@ struct CriticalPerSevere {
 };
 
 /**
+ * @brief the percentage of dead patients per hospitalized patients.
+ * This is a direct mortality probability from the InfectedSevere compartment,
+ * independent of ICU capacity.
+ */
+template <typename FP>
+struct DeathsPerSevere {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.);
+    }
+    static std::string name()
+    {
+        return "DeathsPerSevere";
+    }
+};
+
+/**
  * @brief the percentage of dead patients per ICU patients in the SECIR model
  */
 template <typename FP>
@@ -389,7 +407,7 @@ using ParametersBase =
                  TimeInfectedSevere<FP>, TimeInfectedCritical<FP>, TransmissionProbabilityOnContact<FP>,
                  RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>,
                  RiskOfInfectionFromSymptomatic<FP>, MaxRiskOfInfectionFromSymptomatic<FP>,
-                 SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerCritical<FP>>;
+                 SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerSevere<FP>, DeathsPerCritical<FP>>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
@@ -605,6 +623,22 @@ public:
                 corrected                                      = true;
             }
 
+            if (this->template get<DeathsPerSevere<FP>>()[i] < 0.0 ||
+                this->template get<DeathsPerSevere<FP>>()[i] > 1.0) {
+                log_warning("Constraint check: Parameter DeathsPerSevere changed from {} to {}",
+                            this->template get<DeathsPerSevere<FP>>()[i], 0);
+                this->template get<DeathsPerSevere<FP>>()[i] = 0;
+                corrected                                    = true;
+            }
+
+            if (this->template get<CriticalPerSevere<FP>>()[i] + this->template get<DeathsPerSevere<FP>>()[i] > 1.0) {
+                log_warning("Constraint check: CriticalPerSevere + DeathsPerSevere exceed 1.0 for age group {}. "
+                            "DeathsPerSevere changed from {} to 0.",
+                            static_cast<size_t>(i), this->template get<DeathsPerSevere<FP>>()[i]);
+                this->template get<DeathsPerSevere<FP>>()[i] = 0;
+                corrected                                    = true;
+            }
+
             if (this->template get<DeathsPerCritical<FP>>()[i] < 0.0 ||
                 this->template get<DeathsPerCritical<FP>>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter DeathsPerCritical changed from {} to {}",
@@ -723,6 +757,18 @@ public:
             if (this->template get<CriticalPerSevere<FP>>()[i] < 0.0 ||
                 this->template get<CriticalPerSevere<FP>>()[i] > 1.0) {
                 log_error("Constraint check: Parameter CriticalPerSevere smaller {} or larger {}", 0, 1);
+                return true;
+            }
+
+            if (this->template get<DeathsPerSevere<FP>>()[i] < 0.0 ||
+                this->template get<DeathsPerSevere<FP>>()[i] > 1.0) {
+                log_error("Constraint check: Parameter DeathsPerSevere smaller {} or larger {}", 0, 1);
+                return true;
+            }
+
+            if (this->template get<CriticalPerSevere<FP>>()[i] + this->template get<DeathsPerSevere<FP>>()[i] > 1.0) {
+                log_error("Constraint check: CriticalPerSevere + DeathsPerSevere exceed 1.0 for age group {}.",
+                          static_cast<size_t>(i));
                 return true;
             }
 
