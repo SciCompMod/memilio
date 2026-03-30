@@ -407,6 +407,34 @@ class TestExampleTemplate(unittest.TestCase):
         self.assertIn("State.Susceptible", content)
 
 
+# simulation_py
+class TestSimulationPyTemplate(unittest.TestCase):
+
+    def setUp(self):
+        self.files = _render(SEIR_YAML)
+        self.key = "pycode/memilio-simulation/memilio/simulation/oseir.py"
+        self.content = self.files[self.key]
+
+    def test_key_in_render(self):
+        self.assertIn(self.key, self.files)
+
+    def test_imports_compiled_module(self):
+        self.assertIn(
+            "from memilio.simulation._simulation_oseir import *", self.content)
+
+    def test_namespace_in_key(self):
+        # namespace drives the filename
+        files = Generator.from_yaml(SEIRD_YAML).render()
+        self.assertIn(
+            "pycode/memilio-simulation/memilio/simulation/oseird.py", files)
+
+    def test_seird_imports_correct_module(self):
+        files = Generator.from_yaml(SEIRD_YAML).render()
+        content = files["pycode/memilio-simulation/memilio/simulation/oseird.py"]
+        self.assertIn(
+            "from memilio.simulation._simulation_oseird import *", content)
+
+
 # Validation
 class TestValidation(unittest.TestCase):
 
@@ -518,20 +546,35 @@ add_pymio_module(_simulation_oseir
 list(REMOVE_DUPLICATES PYMIO_MEMILIO_LIBS_LIST)
 """
 
+_SIM_INIT_STUB = """\
+from memilio.simulation._simulation import *
+
+
+def __getattr__(attr):
+    if attr == "oseir":
+        import memilio.simulation.oseir as oseir
+        return oseir
+    raise AttributeError("module {!r} has no attribute {!r}".format(__name__, attr))
+"""
+
 
 class TestCMakePatching(unittest.TestCase):
 
-    def _make_repo(self, cpp_cmake=_CPP_CMAKE_STUB, sim_cmake=_SIM_CMAKE_STUB):
+    def _make_repo(self, cpp_cmake=_CPP_CMAKE_STUB, sim_cmake=_SIM_CMAKE_STUB,
+                   sim_init=_SIM_INIT_STUB):
         from pathlib import Path
         tmp = tempfile.mkdtemp()
         cpp_dir = os.path.join(tmp, "cpp")
         sim_dir = os.path.join(tmp, "pycode", "memilio-simulation")
+        sim_pkg_dir = os.path.join(sim_dir, "memilio", "simulation")
         os.makedirs(cpp_dir)
-        os.makedirs(sim_dir)
+        os.makedirs(sim_pkg_dir)
         with open(os.path.join(cpp_dir, "CMakeLists.txt"), "w") as f:
             f.write(cpp_cmake)
         with open(os.path.join(sim_dir, "CMakeLists.txt"), "w") as f:
             f.write(sim_cmake)
+        with open(os.path.join(sim_pkg_dir, "__init__.py"), "w") as f:
+            f.write(sim_init)
         return tmp
 
     def _gen(self):
@@ -642,6 +685,44 @@ class TestCMakePatching(unittest.TestCase):
         gen.write(tmp)
         # Should not raise
         gen.write(tmp, overwrite=True)
+
+    def test_sim_init_gets_patched(self):
+        from pathlib import Path
+        d = {
+            "model": {"name": "SIR", "namespace": "osir_new", "prefix": "ode_sir_new"},
+            "infection_states": ["Susceptible", "Infected", "Recovered"],
+            "parameters": [
+                {"name": "TransmissionRate", "description": "rate",
+                    "type": "probability", "default": 0.3},
+                {"name": "RecoveryTime", "description": "time",
+                    "type": "time", "default": 7.0},
+            ],
+            "transitions": [
+                {"from": "Susceptible", "to": "Infected", "type": "infection",
+                 "parameter": "TransmissionRate", "infectious_state": "Infected"},
+                {"from": "Infected", "to": "Recovered",
+                    "type": "linear", "parameter": "RecoveryTime"},
+            ],
+        }
+        gen = Generator.from_dict(d)
+        tmp = self._make_repo()
+        patches = gen.render_patches(Path(tmp))
+        patched = patches[gen._SIM_INIT]
+        self.assertIsNotNone(patched)
+        self.assertIn('attr == "osir_new"', patched)
+        self.assertIn(
+            "import memilio.simulation.osir_new as osir_new", patched)
+        # original entry must still be there
+        self.assertIn('attr == "oseir"', patched)
+        # raise AttributeError must still be there
+        self.assertIn("raise AttributeError", patched)
+
+    def test_sim_init_no_duplicate(self):
+        from pathlib import Path
+        gen = self._gen()  # namespace = oseir, already in stub
+        tmp = self._make_repo()
+        patches = gen.render_patches(Path(tmp))
+        self.assertIsNone(patches[gen._SIM_INIT])
 
 
 if __name__ == "__main__":

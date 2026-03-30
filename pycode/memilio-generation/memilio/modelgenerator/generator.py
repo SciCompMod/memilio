@@ -154,10 +154,14 @@ class Generator:
                 f"pycode/memilio-simulation/memilio/simulation/bindings/models/{prefix}.cpp"
             ): self._render("pybindings_cpp.jinja2"),
             f"pycode/examples/simulation/{prefix}_simple.py": self._render("example_py.jinja2"),
+            (
+                f"pycode/memilio-simulation/memilio/simulation/{cfg.meta.namespace}.py"
+            ): self._render("simulation_py.jinja2"),
         }
 
     _CPP_CMAKE = "cpp/CMakeLists.txt"
     _SIM_CMAKE = "pycode/memilio-simulation/CMakeLists.txt"
+    _SIM_INIT = "pycode/memilio-simulation/memilio/simulation/__init__.py"
 
     def render_patches(self, output_dir: Path) -> dict[str, str | None]:
         """
@@ -203,6 +207,24 @@ class Generator:
                 results[self._SIM_CMAKE] = text
             else:
                 results[self._SIM_CMAKE] = None  # already present
+
+        # pycode/memilio-simulation/memilio/simulation/__init__.py
+        sim_init = output_dir / self._SIM_INIT
+        if sim_init.exists():
+            text = sim_init.read_text(encoding="utf-8")
+            lazy_entry = (
+                f"    elif attr == \"{namespace}\":\n"
+                f"        import memilio.simulation.{namespace} as {namespace}\n"
+                f"        return {namespace}\n"
+            )
+            if f'attr == "{namespace}"' not in text:
+                text = text.replace(
+                    "    raise AttributeError",
+                    lazy_entry + "    raise AttributeError"
+                )
+                results[self._SIM_INIT] = text
+            else:
+                results[self._SIM_INIT] = None  # already present
 
         return results
 
