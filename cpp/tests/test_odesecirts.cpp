@@ -689,6 +689,60 @@ TEST(TestOdeSECIRTS, draw_sample_model)
                     .all());
 }
 
+TEST(TestOdeSECIRTS, deathsPerSevere_flows)
+{
+    // Test that DeathsPerSevere causes ISev->Dead flow independent of ICU overflow.
+    // Only populate the Naive severity path; block ICr path to isolate the effect.
+    mio::osecirts::Model<double> model(1);
+    auto& params = model.parameters;
+
+    params.get<mio::osecirts::TimeInfectedSevere<double>>()[(mio::AgeGroup)0]      = 10.0;
+    params.get<mio::osecirts::TimeInfectedCritical<double>>()[(mio::AgeGroup)0]    = 7.0;
+    params.get<mio::osecirts::TimeTemporaryImmunityPI<double>>()[(mio::AgeGroup)0] = 30.0;
+    params.get<mio::osecirts::TimeTemporaryImmunityII<double>>()[(mio::AgeGroup)0] = 30.0;
+    params.get<mio::osecirts::CriticalPerSevere<double>>()[(mio::AgeGroup)0]       = 0.0; // block ISev->ICr->Dead path
+    params.get<mio::osecirts::DeathsPerSevere<double>>()[(mio::AgeGroup)0]         = 0.1;
+    params.get<mio::osecirts::DeathsPerCritical<double>>()[(mio::AgeGroup)0]       = 0.3;
+    params.get<mio::osecirts::ICUCapacity<double>>()                               = 1e9; // no ICU overflow
+    // Disable vaccinations
+    params.get<mio::osecirts::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(size_t(100)));
+    params.get<mio::osecirts::DailyPartialVaccinations<double>>().array().setConstant(0);
+    params.get<mio::osecirts::DailyFullVaccinations<double>>().resize(mio::SimulationDay(size_t(100)));
+    params.get<mio::osecirts::DailyFullVaccinations<double>>().array().setConstant(0);
+    params.get<mio::osecirts::DailyBoosterVaccinations<double>>().resize(mio::SimulationDay(size_t(100)));
+    params.get<mio::osecirts::DailyBoosterVaccinations<double>>().array().setConstant(0);
+
+    const double nb_severe                                                                    = 1000.0;
+    model.populations[{mio::AgeGroup(0), mio::osecirts::InfectionState::InfectedSevereNaive}] = nb_severe;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecirts::InfectionState::SusceptibleNaive},
+                                                nb_severe);
+
+    // Simulate a small time step
+    double t0 = 0, tmax = 0.5, dt = 0.1;
+    mio::TimeSeries<double> result = mio::simulate<double>(t0, tmax, dt, model);
+
+    // With DeathsPerSevere=0.1 and no ICU overflow, deaths from ISev must be > 0
+    auto dead_naive = result.get_last_value()[(size_t)mio::osecirts::InfectionState::DeadNaive];
+    EXPECT_GT(dead_naive, 0.0);
+
+    // Now run again with DeathsPerSevere=0
+    params.get<mio::osecirts::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = 0.0;
+    mio::TimeSeries<double> result_no_severe_deaths                        = mio::simulate<double>(t0, tmax, dt, model);
+    auto dead_naive_no_severe =
+        result_no_severe_deaths.get_last_value()[(size_t)mio::osecirts::InfectionState::DeadNaive];
+    EXPECT_DOUBLE_EQ(dead_naive_no_severe, 0.0);
+
+    // Population must be conserved in both runs
+    EXPECT_NEAR(result.get_last_value().sum(), nb_severe, 1e-10);
+    EXPECT_NEAR(result_no_severe_deaths.get_last_value().sum(), nb_severe, 1e-10);
+
+    // Recovery (TemporaryImmunePartialImmunity) flow must be higher when DeathsPerSevere=0
+    auto rec_with = result.get_last_value()[(size_t)mio::osecirts::InfectionState::TemporaryImmunePartialImmunity];
+    auto rec_without =
+        result_no_severe_deaths.get_last_value()[(size_t)mio::osecirts::InfectionState::TemporaryImmunePartialImmunity];
+    EXPECT_GT(rec_without, rec_with);
+}
+
 TEST(TestOdeSECIRTS, checkPopulationConservation)
 {
     auto num_age_groups = 2;
