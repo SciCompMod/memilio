@@ -63,6 +63,15 @@ def main(argv=None) -> int:
         action="store_true",
         help="Print all generated file contents instead of writing them to disk.",
     )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help=(
+            "Overwrite existing model files. By default the generator refuses to "
+            "write into an already existing model directory to prevent accidentally "
+            "overwriting existing, handwritten C++ code."
+        ),
+    )
 
     args = parser.parse_args(argv)
 
@@ -107,7 +116,11 @@ def main(argv=None) -> int:
         output_dir = Path(__file__).resolve().parents[4]
 
     print(f"Writing model files to: {output_dir}")
-    gen.write(output_dir)
+    try:
+        gen.write(output_dir, overwrite=args.force)
+    except FileExistsError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
     print("Done.")
     return 0
 

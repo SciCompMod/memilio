@@ -625,6 +625,24 @@ class TestCMakePatching(unittest.TestCase):
             self.assertTrue(
                 (Path(tmp) / rel).exists(), f"Missing: {rel}")
 
+    def test_write_raises_if_model_dir_exists(self):
+        from pathlib import Path
+        gen = self._gen()
+        tmp = self._make_repo()
+        # First write succeeds
+        gen.write(tmp)
+        # Second write without overwrite=True must fail
+        with self.assertRaises(FileExistsError):
+            gen.write(tmp)
+
+    def test_write_overwrite_flag_allows_second_write(self):
+        from pathlib import Path
+        gen = self._gen()
+        tmp = self._make_repo()
+        gen.write(tmp)
+        # Should not raise
+        gen.write(tmp, overwrite=True)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -206,19 +206,38 @@ class Generator:
 
         return results
 
-    def write(self, output_dir: str | Path) -> None:
+    def write(self, output_dir: str | Path, overwrite: bool = False) -> None:
         """
         Write all rendered files under *output_dir* and patch the two
         existing CMakeLists files.
 
-        Directories are created as needed.  Existing files are overwritten.
+        Directories are created as needed.
 
         Parameters
         ----------
         output_dir:
             Root of the MEmilio repository (or any target directory).
+        overwrite:
+            If ``False`` (default) and the model directory
+            ``cpp/models/<prefix>`` already exists, an error is raised to
+            prevent accidentally overwriting an existing handwritten model.
+            Set to ``True`` to allow overwriting.
+
+        Raises
+        ------
+        FileExistsError
+            When *overwrite* is ``False`` and the target model directory
+            already exists.
         """
         output_dir = Path(output_dir)
+        prefix = self._config.meta.prefix
+        model_dir = output_dir / "cpp" / "models" / prefix
+        if model_dir.exists() and not overwrite:
+            raise FileExistsError(
+                f"Model directory already exists: {model_dir}\n"
+                f"Pass overwrite=True (or --force on the CLI) to overwrite it."
+            )
+
         for rel_path, content in self.render().items():
             target = output_dir / rel_path
             target.parent.mkdir(parents=True, exist_ok=True)
