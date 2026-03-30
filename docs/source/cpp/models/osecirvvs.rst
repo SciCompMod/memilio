@@ -9,7 +9,7 @@ The ratio of two variants can change over time, which affects the average transm
 
 Below is an overview of the model architecture and its compartments.
 
-.. image:: https://github.com/SciCompMod/memilio/assets/69154294/5d1b72ec-2f45-44a4-8eba-b77533c9e6cf
+.. image:: https://martinkuehn.eu/research/images/secirvvs.png
    :alt: SECIRVVS_model
 
 Infection States

@@ -13,7 +13,7 @@ and, mostly, early epidemic phases.
 
 The infection states and the transitions (also see next two sections) are visualized in the following graph.
 
-.. image:: https://github.com/SciCompMod/memilio/assets/70579874/46b09e8a-d083-4ef9-8328-21975890b60f
+.. image:: https://martinkuehn.eu/research/images/secir.png
    :alt: secir_model
 
 Infection States

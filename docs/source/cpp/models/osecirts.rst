@@ -14,7 +14,7 @@ The complete system of equations can be found in the supplementary material: `do
 
 Below is an overview of the model architecture and its compartments.
 
-.. image:: https://github.com/SciCompMod/memilio/assets/69154294/6dec331f-bd91-410f-be5e-c8cf6eb0572b
+.. image:: https://martinkuehn.eu/research/images/secir_waning.png
    :alt: SECIRTS_model
 
 Infection States
