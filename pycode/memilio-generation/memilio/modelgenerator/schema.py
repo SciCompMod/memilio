@@ -22,7 +22,7 @@
 Dataclass definitions that represent a parsed model configuration.
 
 These are the internal representations produced by parsing a YAML file.
-The :class:`Generator` consumes these objects and passes them to the
+The `Generator` consumes these objects and passes them to the
 Jinja2 templates.
 """
 
@@ -32,9 +32,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
 
-# ---------------------------------------------------------------------------
 # Transition types
-# ---------------------------------------------------------------------------
 
 class TransitionType:
     """Symbolic constants for the supported flow types."""
@@ -43,7 +41,7 @@ class TransitionType:
     LINEAR = "linear"
     """Simple outflow: (1 / parameter) * source_compartment."""
     CUSTOM = "custom"
-    """Placeholder; user must supply the expression manually."""
+    """Placeholder. User must supply the expression manually."""
 
     ALL = (INFECTION, LINEAR, CUSTOM)
 
@@ -89,7 +87,7 @@ class ParameterConfig:
     """Short description used in the Doxygen comment."""
 
     type: str
-    """One of :attr:`ParameterType.ALL`."""
+    """One of `ParameterType.ALL`."""
 
     default: float
     """Default value passed to ``get_default``."""
@@ -113,10 +111,10 @@ class TransitionConfig:
     """Target compartment name."""
 
     type: str
-    """One of :attr:`TransitionType.ALL`."""
+    """One of `TransitionType.ALL`."""
 
     parameter: str | None = None
-    """Name of the :class:`ParameterConfig` that drives this flow."""
+    """Name of the `ParameterConfig` that drives this flow."""
 
     infectious_state: str | None = None
     """

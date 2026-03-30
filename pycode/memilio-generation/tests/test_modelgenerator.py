@@ -20,7 +20,6 @@
 
 import os
 import tempfile
-import textwrap
 import unittest
 
 from memilio.modelgenerator import Generator
@@ -31,12 +30,14 @@ EXAMPLES_DIR = os.path.join(HERE, "..", "..", "examples", "modelgenerator")
 
 SEIR_YAML = os.path.join(EXAMPLES_DIR, "seir.yaml")
 SEIRD_YAML = os.path.join(EXAMPLES_DIR, "seird.yaml")
+SEIR_TOML = os.path.join(EXAMPLES_DIR, "seir.toml")
 
 
 def _render(yaml_path: str) -> dict:
     return Generator.from_yaml(yaml_path).render()
 
 
+# Parsing
 class TestParsing(unittest.TestCase):
 
     def test_seir_meta(self):
@@ -75,7 +76,73 @@ class TestParsing(unittest.TestCase):
         gen = Generator.from_yaml(SEIR_YAML)
         self.assertTrue(gen._config.has_infection_transition)
 
+    def test_parameter_defaults(self):
+        gen = Generator.from_yaml(SEIR_YAML)
+        by_name = {p.name: p for p in gen._config.parameters}
+        self.assertAlmostEqual(by_name["TimeExposed"].default, 5.2)
+        self.assertAlmostEqual(by_name["TimeInfected"].default, 6.0)
+        self.assertAlmostEqual(
+            by_name["TransmissionProbabilityOnContact"].default, 1.0)
 
+    def test_parameter_bounds(self):
+        gen = Generator.from_yaml(SEIR_YAML)
+        by_name = {p.name: p for p in gen._config.parameters}
+        prob = by_name["TransmissionProbabilityOnContact"]
+        self.assertEqual(prob.bounds, (0.0, 1.0))
+        time_exp = by_name["TimeExposed"]
+        self.assertAlmostEqual(time_exp.bounds[0], 0.1)
+        self.assertIsNone(time_exp.bounds[1])
+
+
+# TOML loading
+class TestTomlLoading(unittest.TestCase):
+
+    def test_toml_parses_same_meta_as_yaml(self):
+        gen_yaml = Generator.from_yaml(SEIR_YAML)
+        gen_toml = Generator.from_toml(SEIR_TOML)
+        self.assertEqual(gen_toml._config.meta.name,
+                         gen_yaml._config.meta.name)
+        self.assertEqual(gen_toml._config.meta.namespace,
+                         gen_yaml._config.meta.namespace)
+        self.assertEqual(gen_toml._config.meta.prefix,
+                         gen_yaml._config.meta.prefix)
+
+    def test_toml_parses_same_states(self):
+        gen_yaml = Generator.from_yaml(SEIR_YAML)
+        gen_toml = Generator.from_toml(SEIR_TOML)
+        self.assertEqual(gen_toml._config.infection_states,
+                         gen_yaml._config.infection_states)
+
+    def test_toml_parses_same_parameters(self):
+        gen_yaml = Generator.from_yaml(SEIR_YAML)
+        gen_toml = Generator.from_toml(SEIR_TOML)
+        names_yaml = [p.name for p in gen_yaml._config.parameters]
+        names_toml = [p.name for p in gen_toml._config.parameters]
+        self.assertEqual(names_toml, names_yaml)
+
+    def test_toml_parses_same_transitions(self):
+        gen_yaml = Generator.from_yaml(SEIR_YAML)
+        gen_toml = Generator.from_toml(SEIR_TOML)
+        types_yaml = [t.type for t in gen_yaml._config.transitions]
+        types_toml = [t.type for t in gen_toml._config.transitions]
+        self.assertEqual(types_toml, types_yaml)
+
+    def test_toml_renders_identical_model_h(self):
+        files_yaml = Generator.from_yaml(SEIR_YAML).render()
+        files_toml = Generator.from_toml(SEIR_TOML).render()
+        self.assertEqual(
+            files_toml["cpp/models/ode_seir/model.h"],
+            files_yaml["cpp/models/ode_seir/model.h"])
+
+    def test_toml_renders_identical_infection_state_h(self):
+        files_yaml = Generator.from_yaml(SEIR_YAML).render()
+        files_toml = Generator.from_toml(SEIR_TOML).render()
+        self.assertEqual(
+            files_toml["cpp/models/ode_seir/infection_state.h"],
+            files_yaml["cpp/models/ode_seir/infection_state.h"])
+
+
+# infection_state.h template
 class TestInfectionStateTemplate(unittest.TestCase):
 
     def setUp(self):
@@ -99,6 +166,7 @@ class TestInfectionStateTemplate(unittest.TestCase):
         self.assertIn("enum class InfectionState", self.content)
 
 
+# parameters.h template
 class TestParametersTemplate(unittest.TestCase):
 
     def setUp(self):
@@ -133,7 +201,30 @@ class TestParametersTemplate(unittest.TestCase):
     def test_time_constraint(self):
         self.assertIn("tol_times", self.content)
 
+    def test_default_values_in_get_default(self):
+        # TimeExposed default = 5.2, TimeInfected = 6.0
+        self.assertIn("5.2", self.content)
+        self.assertIn("6.0", self.content)
 
+    def test_no_contact_patterns_without_infection(self):
+        # A model with only linear transitions must not get ContactPatterns
+        d = {
+            "model": {"name": "SI", "namespace": "osi", "prefix": "ode_si"},
+            "infection_states": ["S", "I"],
+            "parameters": [
+                {"name": "Rate", "description": "d",
+                    "type": "time", "default": 5.0}
+            ],
+            "transitions": [
+                {"from": "S", "to": "I", "type": "linear", "parameter": "Rate"}
+            ],
+        }
+        content = Generator.from_dict(d).render()[
+            "cpp/models/ode_si/parameters.h"]
+        self.assertNotIn("ContactPatterns", content)
+
+
+# model.h template
 class TestModelTemplate(unittest.TestCase):
 
     def setUp(self):
@@ -171,7 +262,19 @@ class TestModelTemplate(unittest.TestCase):
         for state in ["Susceptible", "Exposed", "Infected", "Recovered"]:
             self.assertIn(f"idx_{state}_i", self.content)
 
+    def test_seird_custom_transition_todo(self):
+        content = Generator.from_yaml(SEIRD_YAML).render()[
+            "cpp/models/ode_seird/model.h"]
+        self.assertIn("TODO", content)
+        self.assertIn("YOUR EXPRESSION HERE", content)
 
+    def test_seird_custom_formula_hint(self):
+        content = Generator.from_yaml(SEIRD_YAML).render()[
+            "cpp/models/ode_seird/model.h"]
+        self.assertIn("DeathRate[i] * y[idx_Infected_i]", content)
+
+
+# pybindings.cpp template
 class TestPybindingsTemplate(unittest.TestCase):
 
     def setUp(self):
@@ -194,6 +297,7 @@ class TestPybindingsTemplate(unittest.TestCase):
         self.assertIn("py::init<int>()", self.content)
 
 
+# CMakeLists.txt template
 class TestCMakeTemplate(unittest.TestCase):
 
     def setUp(self):
@@ -213,6 +317,97 @@ class TestCMakeTemplate(unittest.TestCase):
             "target_link_libraries(ode_seir PUBLIC memilio)", self.content)
 
 
+# Python example template
+class TestExampleTemplate(unittest.TestCase):
+
+    def setUp(self):
+        self.files = _render(SEIR_YAML)
+        self.key = "pycode/examples/simulation/ode_seir_simple.py"
+        self.content = self.files[self.key]
+
+    def test_example_key_in_render(self):
+        self.assertIn(self.key, self.files)
+
+    def test_imports_numpy(self):
+        self.assertIn("import numpy as np", self.content)
+
+    def test_imports_agegroup(self):
+        self.assertIn("from memilio.simulation import AgeGroup", self.content)
+
+    def test_imports_correct_module(self):
+        self.assertIn(
+            "from memilio.simulation.oseir import", self.content)
+
+    def test_imports_damping_for_infection_model(self):
+        self.assertIn("from memilio.simulation import Damping", self.content)
+
+    def test_simulate_call(self):
+        self.assertIn("simulate(t0, tmax, dt, model)", self.content)
+
+    def test_interpolate_call(self):
+        self.assertIn("interpolate_simulation_result(result)", self.content)
+
+    def test_default_parameter_values(self):
+        # TransmissionProbabilityOnContact default = 1.0
+        self.assertIn(
+            "model.parameters.TransmissionProbabilityOnContact[A0] = 1.0",
+            self.content)
+        # TimeExposed default = 5.2
+        self.assertIn(
+            "model.parameters.TimeExposed[A0] = 5.2", self.content)
+        # TimeInfected default = 6.0
+        self.assertIn(
+            "model.parameters.TimeInfected[A0] = 6.0", self.content)
+
+    def test_contact_patterns_setup(self):
+        self.assertIn("cont_freq_mat[0].baseline", self.content)
+        self.assertIn("cont_freq_mat[0].minimum", self.content)
+
+    def test_initial_conditions(self):
+        self.assertIn("State.Exposed", self.content)
+        self.assertIn("set_difference_from_total", self.content)
+        self.assertIn("State.Susceptible", self.content)
+
+    def test_print_table(self):
+        self.assertIn("get_num_time_points", self.content)
+        self.assertIn("get_time", self.content)
+        self.assertIn("get_value", self.content)
+
+    def test_run_simulation_function(self):
+        self.assertIn("def run_simulation(", self.content)
+
+    def test_main_guard(self):
+        self.assertIn('if __name__ == "__main__":', self.content)
+
+    def test_tmax_10_days_default(self):
+        self.assertIn("tmax=10.0", self.content)
+
+    def test_no_damping_for_linear_only_model(self):
+        d = {
+            "model": {"name": "SI", "namespace": "osi", "prefix": "ode_si"},
+            "infection_states": ["S", "I"],
+            "parameters": [
+                {"name": "Rate", "description": "d",
+                    "type": "time", "default": 5.0}
+            ],
+            "transitions": [
+                {"from": "S", "to": "I", "type": "linear", "parameter": "Rate"}
+            ],
+        }
+        content = Generator.from_dict(d).render()[
+            "pycode/examples/simulation/ode_si_simple.py"]
+        self.assertNotIn("Damping", content)
+        self.assertNotIn("ContactPatterns", content)
+
+    def test_seird_example_uses_second_state(self):
+        content = Generator.from_yaml(SEIRD_YAML).render()[
+            "pycode/examples/simulation/ode_seird_simple.py"]
+        # Second state is Exposed, initial conditions should seed it
+        self.assertIn("State.Exposed", content)
+        self.assertIn("State.Susceptible", content)
+
+
+# Validation
 class TestValidation(unittest.TestCase):
 
     def _base(self):
@@ -264,6 +459,45 @@ class TestValidation(unittest.TestCase):
         with self.assertRaises(ValidationError):
             Generator.from_dict(d)
 
+    def test_too_few_states(self):
+        d = self._base()
+        d["infection_states"] = ["S"]
+        with self.assertRaises(ValidationError):
+            Generator.from_dict(d)
+
+    def test_missing_infectious_state_for_infection_transition(self):
+        d = self._base()
+        d["transitions"] = [
+            {"from": "S", "to": "I", "type": "infection",
+             "parameter": "Rate", "infectious_state": "Unknown"}
+        ]
+        with self.assertRaises(ValidationError):
+            Generator.from_dict(d)
+
+    def test_validation_error_lists_all_errors(self):
+        d = self._base()
+        del d["model"]
+        d["infection_states"] = ["S"]
+        try:
+            Generator.from_dict(d)
+            self.fail("Expected ValidationError")
+        except ValidationError as exc:
+            self.assertGreater(len(exc.errors), 1)
+
+    def test_description_must_be_string(self):
+        d = self._base()
+        d["parameters"][0]["description"] = 42
+        with self.assertRaises(ValidationError):
+            Generator.from_dict(d)
+
+    def test_duplicate_parameter_names(self):
+        d = self._base()
+        d["parameters"].append(
+            {"name": "Rate", "description": "dup", "type": "time", "default": 2.0}
+        )
+        with self.assertRaises(ValidationError):
+            Generator.from_dict(d)
+
 
 # CMakeLists patching
 _CPP_CMAKE_STUB = """\
@@ -288,7 +522,7 @@ list(REMOVE_DUPLICATES PYMIO_MEMILIO_LIBS_LIST)
 class TestCMakePatching(unittest.TestCase):
 
     def _make_repo(self, cpp_cmake=_CPP_CMAKE_STUB, sim_cmake=_SIM_CMAKE_STUB):
-        """Create a temporary directory tree that looks like a minimal MEmilio repo."""
+        from pathlib import Path
         tmp = tempfile.mkdtemp()
         cpp_dir = os.path.join(tmp, "cpp")
         sim_dir = os.path.join(tmp, "pycode", "memilio-simulation")
@@ -304,7 +538,7 @@ class TestCMakePatching(unittest.TestCase):
         return Generator.from_yaml(SEIR_YAML)
 
     def test_cpp_cmake_gets_patched(self):
-        # Use a model with a different prefix so it's not already present
+        from pathlib import Path
         d = {
             "model": {"name": "SIR", "namespace": "osir_new", "prefix": "ode_sir_new"},
             "infection_states": ["Susceptible", "Infected", "Recovered"],
@@ -323,24 +557,21 @@ class TestCMakePatching(unittest.TestCase):
         }
         gen = Generator.from_dict(d)
         tmp = self._make_repo()
-        from pathlib import Path
         patches = gen.render_patches(Path(tmp))
         patched = patches[gen._CPP_CMAKE]
         self.assertIsNotNone(patched)
-        assert patched is not None
         self.assertIn("add_subdirectory(models/ode_sir_new)", patched)
-        # Original entries must still be there
         self.assertIn("add_subdirectory(models/ode_seir)", patched)
 
     def test_cpp_cmake_no_duplicate(self):
-        """If the entry is already in the file, render_patches returns None."""
-        gen = self._gen()  # prefix = ode_seir, already in stub
-        tmp = self._make_repo()
         from pathlib import Path
+        gen = self._gen()
+        tmp = self._make_repo()
         patches = gen.render_patches(Path(tmp))
         self.assertIsNone(patches[gen._CPP_CMAKE])
 
     def test_sim_cmake_gets_patched(self):
+        from pathlib import Path
         d = {
             "model": {"name": "SIR", "namespace": "osir_new", "prefix": "ode_sir_new"},
             "infection_states": ["Susceptible", "Infected", "Recovered"],
@@ -359,27 +590,40 @@ class TestCMakePatching(unittest.TestCase):
         }
         gen = Generator.from_dict(d)
         tmp = self._make_repo()
-        from pathlib import Path
         patches = gen.render_patches(Path(tmp))
         patched = patches[gen._SIM_CMAKE]
         self.assertIsNotNone(patched)
-        assert patched is not None
         self.assertIn("add_pymio_module(_simulation_osir_new", patched)
         self.assertIn("LINKED_LIBRARIES memilio ode_sir_new", patched)
         self.assertIn(
             "SOURCES memilio/simulation/bindings/models/ode_sir_new.cpp",
             patched)
-        # Original content must still be there
         self.assertIn("_simulation_oseir", patched)
         self.assertIn("list(REMOVE_DUPLICATES", patched)
 
     def test_sim_cmake_no_duplicate(self):
-        """If the module is already registered, render_patches returns None."""
-        gen = self._gen()  # namespace = oseir -> _simulation_oseir, already in stub
-        tmp = self._make_repo()
         from pathlib import Path
+        gen = self._gen()
+        tmp = self._make_repo()
         patches = gen.render_patches(Path(tmp))
         self.assertIsNone(patches[gen._SIM_CMAKE])
+
+    def test_write_creates_all_files(self):
+        from pathlib import Path
+        gen = self._gen()
+        tmp = self._make_repo()
+        gen.write(tmp)
+        prefix = gen._config.meta.prefix
+        expected = [
+            f"cpp/models/{prefix}/infection_state.h",
+            f"cpp/models/{prefix}/parameters.h",
+            f"cpp/models/{prefix}/model.h",
+            f"cpp/models/{prefix}/model.cpp",
+            f"cpp/models/{prefix}/CMakeLists.txt",
+        ]
+        for rel in expected:
+            self.assertTrue(
+                (Path(tmp) / rel).exists(), f"Missing: {rel}")
 
 
 if __name__ == "__main__":

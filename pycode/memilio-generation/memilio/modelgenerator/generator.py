@@ -19,7 +19,7 @@
 #############################################################################
 
 """
-Core generator: parses a YAML config, builds the internal :class:`ModelConfig`
+Core generator: parses a YAML config, builds the internal `ModelConfig`
 representation, and renders all Jinja2 templates into strings.
 """
 
@@ -31,7 +31,11 @@ from typing import Dict, Optional
 import re
 
 import yaml
-import tomllib
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 if sys.version_info >= (3, 9):
     import importlib.resources as importlib_resources
@@ -58,7 +62,7 @@ class Generator:
     Parameters
     ----------
     config:
-        Fully-validated :class:`ModelConfig` instance.
+        Fully-validated `ModelConfig` instance.
     """
 
     def __init__(self, config: ModelConfig):
@@ -74,7 +78,7 @@ class Generator:
     @classmethod
     def from_yaml(cls, yaml_path: str | Path) -> Generator:
         """
-        Build a :class:`Generator` from a YAML file.
+        Build a `Generator` from a YAML file.
 
         Parameters
         ----------
@@ -95,7 +99,7 @@ class Generator:
     @classmethod
     def from_toml(cls, toml_path: str | Path) -> Generator:
         """
-        Build a :class:`Generator` from a TOML file.
+        Build a `Generator` from a TOML file.
 
         Parameters
         ----------
@@ -116,7 +120,7 @@ class Generator:
     @classmethod
     def from_dict(cls, raw: dict) -> Generator:
         """
-        Build a :class:`Generator` from an already-loaded dictionary.
+        Build a `Generator` from an already-loaded dictionary.
 
         Parameters
         ----------
@@ -134,7 +138,7 @@ class Generator:
         ``relative_output_path  to  file_content``
 
         The paths are relative to the MEmilio repository root.
-        Use :meth:`render_patches` for the in-place edits to existing
+        Use `render_patches` for the in-place edits to existing
         CMakeLists files.
         """
         cfg = self._config
@@ -149,6 +153,7 @@ class Generator:
             (
                 f"pycode/memilio-simulation/memilio/simulation/bindings/models/{prefix}.cpp"
             ): self._render("pybindings_cpp.jinja2"),
+            f"pycode/examples/simulation/{prefix}_simple.py": self._render("example_py.jinja2"),
         }
 
     _CPP_CMAKE = "cpp/CMakeLists.txt"
@@ -165,7 +170,7 @@ class Generator:
         namespace = self._config.meta.namespace
         results: dict[str, str | None] = {}
 
-        # --- cpp/CMakeLists.txt -------------------------------------------
+        # cpp/CMakeLists.txt
         cpp_cmake = output_dir / self._CPP_CMAKE
         if cpp_cmake.exists():
             text = cpp_cmake.read_text(encoding="utf-8")
@@ -181,7 +186,7 @@ class Generator:
             else:
                 results[self._CPP_CMAKE] = None  # already present
 
-        # --- pycode/memilio-simulation/CMakeLists.txt ---------------------
+        # pycode/memilio-simulation/CMakeLists.txt
         sim_cmake = output_dir / self._SIM_CMAKE
         if sim_cmake.exists():
             text = sim_cmake.read_text(encoding="utf-8")

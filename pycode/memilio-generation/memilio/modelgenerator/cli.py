@@ -39,7 +39,6 @@ from .validator import ValidationError
 
 
 def main(argv=None) -> int:
-    """Entry point registered in ``pyproject.toml``."""
     parser = argparse.ArgumentParser(
         prog="memilio-modelgenerator",
         description="Generate MEmilio C++ model files and pybind11 bindings from a YAML config.",
@@ -69,7 +68,7 @@ def main(argv=None) -> int:
 
     try:
         if args.config.endswith(".toml"):
-            gen =Generator.from_toml(args.config)
+            gen = Generator.from_toml(args.config)
         else:
             gen = Generator.from_yaml(args.config)
     except FileNotFoundError:

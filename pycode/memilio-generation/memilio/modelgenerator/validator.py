@@ -19,11 +19,10 @@
 #############################################################################
 
 """
-Validation of a raw YAML dictionary before it is converted to
-:class:`~memilio.modelgenerator.schema.ModelConfig`.
+Validation of a raw YAML dictionary before it is converted to `ModelConfig`.
 
 All errors are collected and raised together as a single
-:class:`ValidationError` so the user sees the full list at once.
+`ValidationError` so the user sees the full list at once.
 """
 
 from __future__ import annotations
@@ -54,7 +53,7 @@ class Validator:
     @staticmethod
     def validate(data: dict[str, Any]) -> None:
         """
-        Validate *data* and raise :class:`ValidationError` if any problem
+        Validate *data* and raise `ValidationError` if any problem
         is found.
 
         Parameters
