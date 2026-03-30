@@ -1,6 +1,16 @@
 MEmilio Generation
 ===================
 
+.. note::
+
+    The ``memilio-generation`` package contains two independent tools:
+
+    * **Model Generator:** generates a C++ compartmental model with Python bindings from a YAML/TOML configuration file. See :doc:`m-modelgenerator`.
+    * **Bindings Generator:** automatically generates Python bindings from existing C++ model source files using libclang. Described on this page.
+
+Bindings Generator
+------------------
+
 This package provides an automatic code generator for Python bindings of the MEmilio C++ library. 
 It enables the automatic generation of a part of the :doc:`Python Bindings <m-simulation>` that is common across multiple models. 
 For a particular example, see the SEIR model with its files `oseir.cpp <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-simulation/memilio/simulation/bindings/models/oseir.cpp>`_ and `oseir.py <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-simulation/memilio/simulation/oseir.py>`_.
