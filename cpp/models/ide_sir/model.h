@@ -72,12 +72,10 @@ public:
     ScalarType phi_deriv_analytical(ScalarType current_time, ScalarType damping_type);
 
     // Returns the number of iterations needed in fixed point iteration.
-    size_t compute_S(ScalarType s_init, ScalarType dt, size_t t0_index = 0, ScalarType alpha = 1.,
-                     bool use_complement = false, size_t fd_order_contacts = 1, ScalarType damping_time = 1000.,
-                     ScalarType tol = 1e-14, size_t max_iterations = 100);
+    size_t compute_S(ScalarType s_init, ScalarType dt, size_t t0_index = 0, size_t fd_order_contacts = 1,
+                     ScalarType damping_time = 1000., ScalarType tol = 1e-14, size_t max_iterations = 100);
 
-    ScalarType fixed_point_function(ScalarType s, ScalarType dt, size_t t0_index, ScalarType alpha,
-                                    bool use_complement = false, size_t fd_order_contacts = 1,
+    ScalarType fixed_point_function(ScalarType s, ScalarType dt, size_t t0_index, size_t fd_order_contacts = 1,
                                     ScalarType damping_time = 1000.);
 
     size_t compute_S_reformulated(ScalarType s_init, ScalarType dt, size_t t0_index = 0, ScalarType tol = 1e-14,
@@ -88,8 +86,8 @@ public:
     void compute_S_deriv(ScalarType dt, size_t time_point_index);
     void compute_S_deriv(ScalarType dt);
 
-    void compute_I_and_R(ScalarType dt, size_t time_point_index, bool use_complement = false);
-    void compute_I_and_R(ScalarType dt, bool use_complement = false);
+    void compute_I_and_R(ScalarType dt, size_t time_point_index);
+    void compute_I_and_R(ScalarType dt);
 
     void set_transitiondistribution_vector(ScalarType dt, ScalarType tmax, size_t t0_index = 0);
     void set_parameter_vectors(ScalarType dt, ScalarType tmax, size_t t0_index = 0);

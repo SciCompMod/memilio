@@ -116,7 +116,7 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent,
 
 mio::IOResult<void> simulate_ide(ScalarType ide_exponent, size_t gregory_order, size_t finite_difference_order,
                                  ScalarType t0_ode, ScalarType t0_ide, ScalarType tmax, ScalarType TimeInfected,
-                                 ScalarType alpha, std::string save_dir = "",
+                                 std::string save_dir = "",
                                  mio::TimeSeries<ScalarType> result_groundtruth =
                                      mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
                                  size_t fd_order_contacts = 1)
@@ -188,8 +188,7 @@ mio::IOResult<void> simulate_ide(ScalarType ide_exponent, size_t gregory_order, 
 
     // Carry out simulation.
     mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide);
-    bool use_complement = false;
-    sim.advance(tmax, alpha, use_complement, fd_order_contacts, scaling_time);
+    sim.advance(tmax, fd_order_contacts, scaling_time);
 
     if (!save_dir.empty()) {
         // Save compartments.
@@ -218,17 +217,15 @@ int main()
     ScalarType t0_ide = 10.;
     ScalarType tmax   = 20.;
 
-    std::vector<size_t> gregory_orders = {1, 2, 3};
+    std::vector<size_t> gregory_orders = {3};
     size_t finite_difference_order     = 4;
-    size_t fd_order_contacts           = 4;
-
-    ScalarType alpha = 1.;
+    size_t fd_order_contacts           = 1;
 
     // Compute groundtruth with ODE model.
-    ScalarType ode_exponent               = 6.;
-    std::vector<ScalarType> ide_exponents = {0, 1, 2, 3};
+    ScalarType ode_exponent               = 5.;
+    std::vector<ScalarType> ide_exponents = {0.};
 
-    std::string save_dir = fmt::format("../../simulation_results/2026-03-26/phi_deriv_order=4/"
+    std::string save_dir = fmt::format("../../simulation_results/2026-03-30/phi_deriv_analytical/"
                                        "nonconst_contacts_t0={}_tinit={}_tmax={}_scalingtime={}_damping={}/",
                                        t0_ode, t0_ide, tmax, scaling_time, damping);
 
@@ -245,7 +242,7 @@ int main()
             std::cout << std::endl;
             mio::IOResult<void> result_ide =
                 simulate_ide(ide_exponent, gregory_order, finite_difference_order, t0_ode, t0_ide, tmax, time_infected,
-                             alpha, save_dir, result_ode, fd_order_contacts);
+                             save_dir, result_ode, fd_order_contacts);
         }
     }
 }
