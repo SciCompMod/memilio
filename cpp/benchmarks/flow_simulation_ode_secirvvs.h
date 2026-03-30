@@ -551,25 +551,16 @@ public:
         auto t = Base::get_result().get_last_time();
         while (t < tmax) {
 
-            auto dt_eff = min<ScalarType>(1.0, tmax - t);
-
-            if (t == 0) {
-                //this->apply_vaccination(t); // done in init now?
-                this->apply_variant(t, base_infectiousness);
-            }
-            Base::advance(t + dt_eff);
-            if (t + 0.5 + dt_eff - std::floor(t + 0.5) >= 1) {
-                this->apply_vaccination(t + 0.5 + dt_eff);
-                this->apply_variant(t, base_infectiousness);
-            }
-
             if (t > 0) {
                 delay_npi_implementation = ScalarType(dyn_npis.get_implementation_delay());
             }
             else { // DynamicNPIs for t=0 are 'misused' to be from-start NPIs. I.e., do not enforce delay.
                 delay_npi_implementation = 0;
             }
-            t = t + dt_eff;
+            if (t == 0) {
+                //this->apply_vaccination(t); // done in init now?
+                this->apply_variant(t, base_infectiousness);
+            }
 
             if (dyn_npis.get_thresholds().size() > 0) {
                 ScalarType direc_begin = ScalarType(dyn_npis.get_directive_begin());
@@ -598,6 +589,14 @@ public:
                     }
                 }
             }
+
+            auto dt_eff = min<ScalarType>(1.0, tmax - t);
+            Base::advance(t + dt_eff);
+            if (t + 0.5 + dt_eff - std::floor(t + 0.5) >= 1) {
+                this->apply_vaccination(t + 0.5 + dt_eff);
+                this->apply_variant(t, base_infectiousness);
+            }
+            t = t + dt_eff;
         }
 
         this->get_model().parameters.template get<osecirvvs::TransmissionProbabilityOnContact<ScalarType>>() =

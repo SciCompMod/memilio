@@ -294,16 +294,20 @@ public:
         FP delay_npi_implementation;
         FP t = BaseT::get_result().get_last_time();
         while (t < tmax) {
-            FP dt_eff = min<FP>(1.0, tmax - t);
+            // FP t_next_damp = t;
+            // for (auto&& mat : contact_patterns.get_cont_freq_mat()) {
+            //     for (auto&& damp : mat.get_dampings()) {
+            //         FP t_damp = damp.get_time().get();
+            //         if(t_damp > t && t_damp <
+            //     }
+            // }
 
-            BaseT::advance(t + dt_eff);
             if (t > 0) {
                 delay_npi_implementation = FP(dyn_npis.get_implementation_delay());
             }
             else { // DynamicNPIs for t=0 are 'misused' to be 'from-start NPIs'. I.e., do not enforce delay.
                 delay_npi_implementation = 0;
             }
-            t = t + dt_eff;
 
             if (dyn_npis.get_thresholds().size() > 0) {
                 FP direc_begin = FP(dyn_npis.get_directive_begin());
@@ -329,6 +333,10 @@ public:
                     }
                 }
             }
+
+            FP dt_eff = min<FP>(1.0, tmax - t);
+            BaseT::advance(t + dt_eff);
+            t = t + dt_eff;
         }
 
         return this->get_result().get_last_value();

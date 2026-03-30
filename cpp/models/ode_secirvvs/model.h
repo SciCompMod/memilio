@@ -687,17 +687,6 @@ public:
         FP delay_npi_implementation;
         FP t = BaseT::get_result().get_last_time();
         while (t < tmax) {
-            FP dt_eff = min<FP>(1.0, tmax - t);
-
-            if (t == 0) {
-                //this->apply_vaccination(t); // done in init now?
-                this->apply_variant(t, base_infectiousness);
-            }
-            BaseT::advance(t + dt_eff);
-            if (t + 0.5 + dt_eff - floor(t + 0.5) >= 1) {
-                this->apply_vaccination(t + 0.5 + dt_eff);
-                this->apply_variant(t, base_infectiousness);
-            }
 
             if (t > 0) {
                 delay_npi_implementation = FP(dyn_npis.get_implementation_delay());
@@ -705,7 +694,10 @@ public:
             else { // DynamicNPIs for t=0 are 'misused' to be from-start NPIs. I.e., do not enforce delay.
                 delay_npi_implementation = 0;
             }
-            t = t + dt_eff;
+            if (t == 0) {
+                //this->apply_vaccination(t); // done in init now?
+                this->apply_variant(t, base_infectiousness);
+            }
 
             if (dyn_npis.get_thresholds().size() > 0) {
                 FP direc_begin = FP(dyn_npis.get_directive_begin());
@@ -733,6 +725,14 @@ public:
                     }
                 }
             }
+
+            FP dt_eff = min<FP>(1.0, tmax - t);
+            BaseT::advance(t + dt_eff);
+            if (t + 0.5 + dt_eff - floor(t + 0.5) >= 1) {
+                this->apply_vaccination(t + 0.5 + dt_eff);
+                this->apply_variant(t, base_infectiousness);
+            }
+            t = t + dt_eff;
         }
         // reset TransmissionProbabilityOnContact. This is important for the graph simulation where the advance
         // function is called multiple times for the same model.
