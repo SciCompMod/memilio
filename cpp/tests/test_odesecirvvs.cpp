@@ -1471,6 +1471,17 @@ TEST(TestOdeSECIRVVS, check_constraints_parameters)
     EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::CriticalPerSevere<double>>(0.5);
+    model.parameters.get<mio::osecirvvs::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = -0.1;
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.get<mio::osecirvvs::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = 1.1;
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    // CriticalPerSevere(0.5) + DeathsPerSevere(0.6) = 1.1 > 1
+    model.parameters.get<mio::osecirvvs::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = 0.6;
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.get<mio::osecirvvs::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = 0.3;
     model.parameters.set<mio::osecirvvs::DeathsPerCritical<double>>(1.1);
     EXPECT_EQ(model.parameters.check_constraints(), 1);
 
@@ -1601,6 +1612,18 @@ TEST(TestOdeSECIRVVS, apply_constraints_parameters)
     model.parameters.set<mio::osecirvvs::CriticalPerSevere<double>>(-1.0);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecirvvs::CriticalPerSevere<double>>()[indx_agegroup], 0);
+
+    model.parameters.get<mio::osecirvvs::DeathsPerSevere<double>>()[indx_agegroup] = -0.1;
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::DeathsPerSevere<double>>()[indx_agegroup], 0.0);
+
+    // Combined constraint: CriticalPerSevere(0.7) + DeathsPerSevere(0.5) = 1.2 > 1 => DeathsPerSevere set to 0
+    model.parameters.get<mio::osecirvvs::CriticalPerSevere<double>>()[indx_agegroup] = 0.7;
+    model.parameters.get<mio::osecirvvs::DeathsPerSevere<double>>()[indx_agegroup]   = 0.5;
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_LE(model.parameters.get<mio::osecirvvs::CriticalPerSevere<double>>()[indx_agegroup] +
+                  model.parameters.get<mio::osecirvvs::DeathsPerSevere<double>>()[indx_agegroup],
+              1.0);
 
     model.parameters.set<mio::osecirvvs::DeathsPerCritical<double>>(1.1);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
