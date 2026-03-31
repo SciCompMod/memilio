@@ -1665,3 +1665,179 @@ TEST(TestOdeSECIRVVS, apply_variant_function)
         sim.get_model().parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact<double>>()[mio::AgeGroup(0)],
         0.4, 1e-10);
 }
+
+TEST(TestOdeSECIRVVS, get_reproduction_number)
+{
+    const size_t num_groups = 1;
+    mio::osecirvvs::Model<double> model((int)num_groups);
+
+    auto& contact_matrix = model.parameters.get<mio::osecirvvs::ContactPatterns<double>>().get_cont_freq_mat();
+    contact_matrix[0]    = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, 10));
+
+    model.parameters.set<mio::osecirvvs::StartDay<double>>(60);
+    model.parameters.set<mio::osecirvvs::Seasonality<double>>(0.2);
+
+    // times
+    model.parameters.get<mio::osecirvvs::TimeExposed<double>>()[mio::AgeGroup(0)]            = 3.2;
+    model.parameters.get<mio::osecirvvs::TimeInfectedNoSymptoms<double>>()[mio::AgeGroup(0)] = 2.0;
+    model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms<double>>()[mio::AgeGroup(0)]   = 5.8;
+    model.parameters.get<mio::osecirvvs::TimeInfectedSevere<double>>()[mio::AgeGroup(0)]     = 9.5;
+    model.parameters.get<mio::osecirvvs::TimeInfectedCritical<double>>()[mio::AgeGroup(0)]   = 7.1;
+
+    // probabilities
+    model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact<double>>()[mio::AgeGroup(0)]  = 0.05;
+    model.parameters.get<mio::osecirvvs::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(0)]    = 0.7;
+    model.parameters.get<mio::osecirvvs::RecoveredPerInfectedNoSymptoms<double>>()[mio::AgeGroup(0)]    = 0.09;
+    model.parameters.get<mio::osecirvvs::RiskOfInfectionFromSymptomatic<double>>()[mio::AgeGroup(0)]    = 0.25;
+    model.parameters.get<mio::osecirvvs::MaxRiskOfInfectionFromSymptomatic<double>>()[mio::AgeGroup(0)] = 0.45;
+    model.parameters.get<mio::osecirvvs::SeverePerInfectedSymptoms<double>>()[mio::AgeGroup(0)]         = 0.2;
+    model.parameters.get<mio::osecirvvs::CriticalPerSevere<double>>()[mio::AgeGroup(0)]                 = 0.25;
+    model.parameters.get<mio::osecirvvs::DeathsPerCritical<double>>()[mio::AgeGroup(0)]                 = 0.3;
+
+    // vaccination reduction factors
+    model.parameters.get<mio::osecirvvs::ReducExposedPartialImmunity<double>>()[mio::AgeGroup(0)]           = 0.8;
+    model.parameters.get<mio::osecirvvs::ReducExposedImprovedImmunity<double>>()[mio::AgeGroup(0)]          = 0.331;
+    model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity<double>>()[mio::AgeGroup(0)]  = 0.65;
+    model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity<double>>()[mio::AgeGroup(0)] = 0.243;
+    model.parameters.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity<double>>()[mio::AgeGroup(0)] =
+        0.1;
+    model.parameters.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity<double>>()[mio::AgeGroup(0)] =
+        0.091;
+    model.parameters.get<mio::osecirvvs::ReducTimeInfectedMild<double>>()[mio::AgeGroup(0)] = 0.9;
+
+    model.parameters.get<mio::osecirvvs::ICUCapacity<double>>()          = std::numeric_limits<double>::max();
+    model.parameters.get<mio::osecirvvs::TestAndTraceCapacity<double>>() = std::numeric_limits<double>::max();
+
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().array().setConstant(0);
+
+    const int num_states = (int)mio::osecirvvs::InfectionState::Count;
+    mio::TimeSeries<double> time_series(num_states);
+
+    auto idx = [&model](mio::osecirvvs::InfectionState s) {
+        return model.populations.get_flat_index({mio::AgeGroup(0), s});
+    };
+
+    // Region 0: moderate infection level, mixed vaccination status
+    Eigen::VectorXd r0                                                          = Eigen::VectorXd::Zero(num_states);
+    r0[idx(mio::osecirvvs::InfectionState::SusceptibleNaive)]                   = 8000;
+    r0[idx(mio::osecirvvs::InfectionState::SusceptiblePartialImmunity)]         = 500;
+    r0[idx(mio::osecirvvs::InfectionState::ExposedNaive)]                       = 300;
+    r0[idx(mio::osecirvvs::InfectionState::ExposedPartialImmunity)]             = 50;
+    r0[idx(mio::osecirvvs::InfectionState::ExposedImprovedImmunity)]            = 20;
+    r0[idx(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)]            = 100;
+    r0[idx(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)]  = 20;
+    r0[idx(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)] = 10;
+    r0[idx(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)]              = 80;
+    r0[idx(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)]    = 15;
+    r0[idx(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)]   = 5;
+    r0[idx(mio::osecirvvs::InfectionState::InfectedSevereNaive)]                = 30;
+    r0[idx(mio::osecirvvs::InfectionState::InfectedCriticalNaive)]              = 10;
+    r0[idx(mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity)]        = 800;
+    r0[idx(mio::osecirvvs::InfectionState::DeadNaive)]                          = 60;
+
+    // Region 1: fewer susceptibles, more recovered
+    Eigen::VectorXd r1                                                   = r0;
+    r1[idx(mio::osecirvvs::InfectionState::SusceptibleNaive)]            = 7900;
+    r1[idx(mio::osecirvvs::InfectionState::ExposedNaive)]                = 350;
+    r1[idx(mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity)] = 850;
+
+    // Region 2: further decreased susceptibles
+    Eigen::VectorXd r2                                                   = r0;
+    r2[idx(mio::osecirvvs::InfectionState::SusceptibleNaive)]            = 7800;
+    r2[idx(mio::osecirvvs::InfectionState::ExposedNaive)]                = 400;
+    r2[idx(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)]     = 120;
+    r2[idx(mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity)] = 880;
+
+    time_series.add_time_point(0.0, r0);
+    time_series.add_time_point(0.5, r1);
+    time_series.add_time_point(1.0, r2);
+
+    mio::osecirvvs::Simulation<double> sim(model, 0.0);
+    sim.get_result() = time_series;
+
+    // test that reproduction number cannot be computed outside of time range
+    EXPECT_FALSE(mio::osecirvvs::get_reproduction_number(time_series.get_time(0) - 0.5, sim));
+    EXPECT_FALSE(mio::osecirvvs::get_reproduction_number(time_series.get_last_time() + 0.5, sim));
+    EXPECT_FALSE(mio::osecirvvs::get_reproduction_number((size_t)time_series.get_num_time_points(), sim));
+
+    // test that reproduction number at discrete time points can be computed and matches interpolation at those points
+    EXPECT_EQ(mio::osecirvvs::get_reproduction_number((size_t)0, sim).value(),
+              mio::osecirvvs::get_reproduction_number(0.0, sim).value());
+
+    // test that reproduction number is positive and finite at all time points
+    auto r_t0 = mio::osecirvvs::get_reproduction_number((size_t)0, sim);
+    auto r_t1 = mio::osecirvvs::get_reproduction_number((size_t)1, sim);
+    auto r_t2 = mio::osecirvvs::get_reproduction_number((size_t)2, sim);
+    ASSERT_TRUE(r_t0);
+    ASSERT_TRUE(r_t1);
+    ASSERT_TRUE(r_t2);
+    EXPECT_GT(r_t0.value(), 0.0);
+    EXPECT_GT(r_t1.value(), 0.0);
+    EXPECT_GT(r_t2.value(), 0.0);
+    EXPECT_TRUE(std::isfinite(r_t0.value()));
+    EXPECT_TRUE(std::isfinite(r_t1.value()));
+    EXPECT_TRUE(std::isfinite(r_t2.value()));
+
+    // test that shrinking susceptible pool -> R_t should decrease
+    EXPECT_LT(r_t2.value(), r_t0.value());
+
+    // test interpolation: linear between discrete time points
+    auto r_interp = mio::osecirvvs::get_reproduction_number(0.25, sim);
+    ASSERT_TRUE(r_interp);
+    double expected_interp = r_t0.value() + (r_t1.value() - r_t0.value()) * 0.5;
+    EXPECT_NEAR(r_interp.value(), expected_interp, 1e-12);
+
+    // get_reproduction_numbers at all time points
+    auto r_all = mio::osecirvvs::get_reproduction_numbers(sim);
+    EXPECT_EQ(r_all.size(), time_series.get_num_time_points());
+    EXPECT_NEAR(r_all[0], r_t0.value(), 1e-12);
+    EXPECT_NEAR(r_all[1], r_t1.value(), 1e-12);
+    EXPECT_NEAR(r_all[2], r_t2.value(), 1e-12);
+
+    // test limited Test-and-Trace capacity: R_t should increase
+    model.parameters.get<mio::osecirvvs::TestAndTraceCapacity<double>>() = 0;
+    mio::osecirvvs::Simulation<double> sim2(model, 0.0);
+    sim2.get_result() = time_series;
+    auto r_t0_limited = mio::osecirvvs::get_reproduction_number((size_t)0, sim2);
+    ASSERT_TRUE(r_t0_limited);
+    EXPECT_GT(r_t0_limited.value(), r_t0.value());
+
+    // test that zero population in age group does not crash
+    model.parameters.get<mio::osecirvvs::TestAndTraceCapacity<double>>() = std::numeric_limits<double>::max();
+    Eigen::VectorXd r_zero                                               = Eigen::VectorXd::Zero(num_states);
+    r_zero[idx(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)]   = 1;
+    mio::TimeSeries<double> ts_zero(num_states);
+    ts_zero.add_time_point(0.0, r_zero);
+    mio::osecirvvs::Simulation<double> sim3(model, 0.0);
+    sim3.get_result() = ts_zero;
+    EXPECT_TRUE(mio::osecirvvs::get_reproduction_number((size_t)0, sim3));
+}
+
+TEST(TestOdeSECIRVVS, get_reproduction_number_multiple_age_groups)
+{
+    auto num_age_groups = 2;
+    auto model          = make_model(num_age_groups);
+
+    mio::osecirvvs::Simulation<double> sim(model, 0.0);
+    sim.advance(5.0);
+
+    // Reproduction number should be computable for all time points
+    for (int i = 0; i < sim.get_result().get_num_time_points(); i++) {
+        auto r = mio::osecirvvs::get_reproduction_number((size_t)i, sim);
+        ASSERT_TRUE(r) << "Failed at time index " << i;
+        EXPECT_GT(r.value(), 0.0) << "R_t not positive at time index " << i;
+        EXPECT_TRUE(std::isfinite(r.value())) << "R_t not finite at time index " << i;
+    }
+
+    auto r_all = mio::osecirvvs::get_reproduction_numbers(sim);
+    EXPECT_EQ(r_all.size(), sim.get_result().get_num_time_points());
+
+    // Interpolated value at midpoint
+    double t_mid = 0.5 * (sim.get_result().get_time(0) + sim.get_result().get_time(1));
+    auto r_mid   = mio::osecirvvs::get_reproduction_number(t_mid, sim);
+    ASSERT_TRUE(r_mid);
+    EXPECT_GT(r_mid.value(), 0.0);
+}
