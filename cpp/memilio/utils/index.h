@@ -114,7 +114,7 @@ Index<T...> tuple_to_index(std::tuple<Index<T>...>);
  * a[{Tag1(0), Tag2(14)}]
  * @endcode
  *
- * The underlying size_t value can be obtained via get():
+ * The underlying size_t value can be obtained via the get() member function:
  * @code
  *   Index<Tag1> i(3);
  *   size_t v = i.get();

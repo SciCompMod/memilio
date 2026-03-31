@@ -39,21 +39,29 @@ namespace mio
 
 /**
  * Typesafe integer representing the level of a damping.
- * The underlying int value can be obtained via get().
+ * The underlying int value can be obtained via the get() member function:
+ * @code
+ *   DampingLevel l(2);
+ *   int v = l.get();
+ * @endcode
  * @see TypeSafe
  */
 DECL_TYPESAFE(int, DampingLevel);
 
 /**
  * Typesafe integer representing the type of a damping.
- * The underlying int value can be obtained via get().
+ * The underlying int value can be obtained via the get() member function:
+ * @code
+ *   DampingType t(1);
+ *   int v = t.get();
+ * @endcode
  * @see TypeSafe
  */
 DECL_TYPESAFE(int, DampingType);
 
 /**
  * Typesafe wrapper for a floating-point simulation time value (in days).
- * The underlying value can be obtained via get():
+ * The underlying value can be obtained via the get() member function:
  * @code
  *   SimulationTime<double> t(3.5);
  *   double days = t.get();

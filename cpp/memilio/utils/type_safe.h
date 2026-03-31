@@ -35,7 +35,7 @@ namespace mio
  * instead of
  *   void work(int f, int b);
  *
- * The underlying value can be accessed via get() or via an explicit cast:
+ * The underlying value can be accessed via the get() member function or via an explicit cast:
  *   Foo f(5);
  *   int v = f.get();       // preferred
  *   int w = int(f);        // also valid

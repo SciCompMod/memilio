@@ -29,7 +29,7 @@ namespace mio
  * @brief Typesafe index representing an age group.
  * Used as a tag for all age dependent categories in a model.
  * The number of age groups is determined at runtime.
- * The underlying size_t value (i.e., the age group index) can be obtained via get():
+ * The underlying size_t value (i.e., the age group index) can be obtained via the get() member function:
  * @code
  *   AgeGroup g(2);
  *   size_t idx = g.get();
