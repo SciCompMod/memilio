@@ -93,7 +93,6 @@ public:
             // do not save current time, as it does not yet include the next event
             while (next_result_time < current_time) {
                 m_result.add_time_point(next_result_time);
-                // copy from the previous last value
                 m_result.get_last_value() = m_model->populations.get_compartments();
                 next_result_time += m_dt;
             }
