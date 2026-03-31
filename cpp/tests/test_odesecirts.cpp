@@ -693,6 +693,8 @@ TEST(TestOdeSECIRTS, deathsPerSevere_flows)
 {
     // Test that DeathsPerSevere causes ISev->Dead flow independent of ICU overflow.
     // Only populate the Naive severity path; block ICr path to isolate the effect.
+    // CriticalPerSevere=0 blocks the ISev->ICr->Dead path entirely, so ICUCapacity and
+    // DeathsPerCritical have no influence and are left at their default values.
     mio::osecirts::Model<double> model(1);
     auto& params = model.parameters;
 
@@ -702,8 +704,6 @@ TEST(TestOdeSECIRTS, deathsPerSevere_flows)
     params.get<mio::osecirts::TimeTemporaryImmunityII<double>>()[(mio::AgeGroup)0] = 30.0;
     params.get<mio::osecirts::CriticalPerSevere<double>>()[(mio::AgeGroup)0]       = 0.0; // block ISev->ICr->Dead path
     params.get<mio::osecirts::DeathsPerSevere<double>>()[(mio::AgeGroup)0]         = 0.1;
-    params.get<mio::osecirts::DeathsPerCritical<double>>()[(mio::AgeGroup)0]       = 0.3;
-    params.get<mio::osecirts::ICUCapacity<double>>()                               = 1e9; // no ICU overflow
     // Disable vaccinations
     params.get<mio::osecirts::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(size_t(100)));
     params.get<mio::osecirts::DailyPartialVaccinations<double>>().array().setConstant(0);

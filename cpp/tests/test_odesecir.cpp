@@ -768,7 +768,8 @@ TEST(TestOdeSecir, testModelConstraints)
 TEST(TestOdeSecir, deathsPerSevere_flows)
 {
     // Test that DeathsPerSevere causes ISev->Dead flow independent of ICU overflow.
-    // Set ICU capacity very high so no overflow occurs.
+    // CriticalPerSevere=0 blocks the ISev->ICr->Dead path entirely, so ICUCapacity and
+    // DeathsPerCritical have no influence and are left at their default values.
     mio::osecir::Model<double> model(1);
     auto& params = model.parameters;
 
@@ -776,8 +777,6 @@ TEST(TestOdeSecir, deathsPerSevere_flows)
     params.get<mio::osecir::TimeInfectedCritical<double>>()[(mio::AgeGroup)0] = 7.0;
     params.get<mio::osecir::CriticalPerSevere<double>>()[(mio::AgeGroup)0]    = 0.0; // block ISev->ICr->Dead path
     params.get<mio::osecir::DeathsPerSevere<double>>()[(mio::AgeGroup)0]      = 0.1;
-    params.get<mio::osecir::DeathsPerCritical<double>>()[(mio::AgeGroup)0]    = 0.3;
-    params.get<mio::osecir::ICUCapacity<double>>()                            = 1e9; // no ICU overflow
 
     const double nb_severe                                                             = 1000.0;
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSevere}] = nb_severe;
