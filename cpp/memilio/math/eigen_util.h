@@ -22,6 +22,7 @@
 
 #include "memilio/math/eigen.h" // IWYU pragma: keep
 
+#include <cassert>
 #include <utility>
 #include <iterator>
 
