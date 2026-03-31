@@ -765,6 +765,53 @@ TEST(TestOdeSecir, testModelConstraints)
     }
 }
 
+TEST(TestOdeSecir, deathsPerSevere_flows)
+{
+    // Test that DeathsPerSevere causes ISev->Dead flow independent of ICU overflow.
+    // CriticalPerSevere=0 blocks the ISev->ICr->Dead path entirely, so ICUCapacity and
+    // DeathsPerCritical have no influence and are left at their default values.
+    mio::osecir::Model<double> model(1);
+    auto& params = model.parameters;
+
+    params.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0]   = 10.0;
+    params.get<mio::osecir::TimeInfectedCritical<double>>()[(mio::AgeGroup)0] = 7.0;
+    params.get<mio::osecir::CriticalPerSevere<double>>()[(mio::AgeGroup)0]    = 0.0; // block ISev->ICr->Dead path
+    params.get<mio::osecir::DeathsPerSevere<double>>()[(mio::AgeGroup)0]      = 0.1;
+
+    const double nb_severe                                                             = 1000.0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSevere}] = nb_severe;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
+                                                nb_severe);
+
+    // Simulate a small time step
+    double t0 = 0, tmax = 0.5, dt = 0.1;
+    mio::TimeSeries<double> result = mio::simulate<double>(t0, tmax, dt, model);
+
+    // With DeathsPerSevere=0.1 and no ICU overflow, deaths from ISev must be > 0
+    auto dead_final = result.get_last_value()[(size_t)mio::osecir::InfectionState::Dead];
+    EXPECT_GT(dead_final, 0.0);
+
+    // Now run again with DeathsPerSevere=0
+    params.get<mio::osecir::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = 0.0;
+    mio::TimeSeries<double> result_no_severe_deaths                      = mio::simulate<double>(t0, tmax, dt, model);
+    auto dead_no_severe = result_no_severe_deaths.get_last_value()[(size_t)mio::osecir::InfectionState::Dead];
+
+    // With DeathsPerSevere=0 and no ICU overflow there should be no deaths from ISev,
+    // so dead compartment stays 0 (ICr is also 0 initially)
+    EXPECT_DOUBLE_EQ(dead_no_severe, 0.0);
+
+    // Population must be conserved in both runs
+    double total_with    = result.get_last_value().sum();
+    double total_without = result_no_severe_deaths.get_last_value().sum();
+    EXPECT_NEAR(total_with, nb_severe, 1e-10);
+    EXPECT_NEAR(total_without, nb_severe, 1e-10);
+
+    // Recovery flow must be higher when DeathsPerSevere=0
+    auto rec_with    = result.get_last_value()[(size_t)mio::osecir::InfectionState::Recovered];
+    auto rec_without = result_no_severe_deaths.get_last_value()[(size_t)mio::osecir::InfectionState::Recovered];
+    EXPECT_GT(rec_without, rec_with);
+}
+
 TEST(TestOdeSecir, testAndTraceCapacity)
 {
     double cont_freq = 10;
@@ -1137,6 +1184,17 @@ TEST(TestOdeSecir, check_constraints_parameters)
     EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecir::CriticalPerSevere<double>>(0.5);
+    model.parameters.get<mio::osecir::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = -0.1;
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.get<mio::osecir::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = 1.1;
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    // CriticalPerSevere(0.5) + DeathsPerSevere(0.6) = 1.1 > 1
+    model.parameters.get<mio::osecir::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = 0.6;
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.get<mio::osecir::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = 0.3;
     model.parameters.set<mio::osecir::DeathsPerCritical<double>>(1.1);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
@@ -1218,6 +1276,18 @@ TEST(TestOdeSecir, apply_constraints_parameters)
     model.parameters.set<mio::osecir::CriticalPerSevere<double>>(-1.0);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecir::CriticalPerSevere<double>>()[indx_agegroup], 0);
+
+    model.parameters.get<mio::osecir::DeathsPerSevere<double>>()[indx_agegroup] = -0.1;
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecir::DeathsPerSevere<double>>()[indx_agegroup], 0.0);
+
+    // Combined constraint: CriticalPerSevere(0.7) + DeathsPerSevere(0.5) = 1.2 > 1 => DeathsPerSevere set to 0
+    model.parameters.get<mio::osecir::CriticalPerSevere<double>>()[indx_agegroup] = 0.7;
+    model.parameters.get<mio::osecir::DeathsPerSevere<double>>()[indx_agegroup]   = 0.5;
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_LE(model.parameters.get<mio::osecir::CriticalPerSevere<double>>()[indx_agegroup] +
+                  model.parameters.get<mio::osecir::DeathsPerSevere<double>>()[indx_agegroup],
+              1.0);
 
     model.parameters.set<mio::osecir::DeathsPerCritical<double>>(1.1);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
