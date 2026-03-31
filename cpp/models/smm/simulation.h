@@ -83,35 +83,30 @@ public:
         update_current_rates_and_waiting_times();
         size_t next_event = determine_next_event(); // index of the next event
         FP current_time   = m_result.get_last_time();
-        // set current time to add next time point in the future
-        FP last_result_time = current_time;
+        // set next result time; system state is saved every dt time step
+        FP next_result_time = current_time + m_dt;
         // iterate over time
         while (current_time + m_waiting_times[next_event] < tmax) {
-            // If the next event happens further in the future than the next stored time point, add a new one.
-            if (current_time + m_waiting_times[next_event] >= last_result_time) {
-                auto num_dt      = std::ceil((current_time + m_waiting_times[next_event] - last_result_time) / m_dt);
-                last_result_time = std::min(tmax, last_result_time + num_dt * m_dt);
-                m_result.add_time_point(last_result_time);
-                // copy from the previous last value
-                m_result.get_last_value() = m_result[m_result.get_num_time_points() - 2];
-            }
             // update time
             current_time += m_waiting_times[next_event];
+            // Save results until the next event time point
+            // do not save current time, as it does not yet include the next event
+            while (next_result_time < current_time) {
+                m_result.add_time_point(next_result_time);
+                m_result.get_last_value() = m_model->populations.get_compartments();
+                next_result_time += m_dt;
+            }
             // decide event type by index and perform it
             if (next_event < adoption_rates().size()) {
                 // perform adoption event
                 const auto& rate = adoption_rates()[next_event];
-                m_result.get_last_value()[m_model->populations.get_flat_index({rate.region, rate.from})] -= 1;
                 m_model->populations[{rate.region, rate.from}] -= 1.0;
-                m_result.get_last_value()[m_model->populations.get_flat_index({rate.region, rate.to})] += 1;
                 m_model->populations[{rate.region, rate.to}] += 1.0;
             }
             else {
                 // perform transition event
                 const auto& rate = transition_rates()[next_event - adoption_rates().size()];
-                m_result.get_last_value()[m_model->populations.get_flat_index({rate.from, rate.status})] -= 1;
                 m_model->populations[{rate.from, rate.status}] -= 1.0;
-                m_result.get_last_value()[m_model->populations.get_flat_index({rate.to, rate.status})] += 1;
                 m_model->populations[{rate.to, rate.status}] += 1.0;
             }
             // update internal times
@@ -124,10 +119,13 @@ public:
             update_current_rates_and_waiting_times();
             next_event = determine_next_event();
         }
-        // copy last result, if no event occurs between last_result_time and tmax
-        if (last_result_time < tmax) {
-            m_result.add_time_point(tmax);
-            m_result.get_last_value() = m_result[m_result.get_num_time_points() - 2];
+        // copy last result, if no event occurs between last result time point and tmax
+        if (m_result.get_last_time() < tmax) {
+            while (next_result_time <= tmax) {
+                m_result.add_time_point(next_result_time);
+                m_result.get_last_value() = m_model->populations.get_compartments();
+                next_result_time += m_dt;
+            }
             // update internal times
             for (size_t i = 0; i < m_internal_time.size(); i++) {
                 m_internal_time[i] += m_current_rates[i] * (tmax - current_time);
@@ -184,7 +182,7 @@ private:
     inline void update_current_rates_and_waiting_times()
     {
         size_t i               = 0; // shared index for iterating both rates
-        const auto last_values = m_result.get_last_value();
+        const auto last_values = m_model->populations.get_compartments();
         for (const auto& rate : adoption_rates()) {
             m_current_rates[i] = m_model->evaluate(rate, last_values);
             m_waiting_times[i] = (m_current_rates[i] > 0)
