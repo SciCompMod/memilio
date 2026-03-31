@@ -29,16 +29,22 @@ namespace mio
 /**
  * Typesafe wrapper around any type to make function arguments, tuple elements, etc. easily distinguishable.
  * e.g.
+ * @code
  *   class Foo : public TypeSafe<int, Foo> { using TypeSafe::TypeSafe; };
  *   class Bar : public TypeSafe<int, Bar> { using TypeSafe::TypeSafe; };
  *   void work(Foo f, Bar b);
+ * @endcode
  * instead of
+ * @code
  *   void work(int f, int b);
+ * @endcode
  *
  * The underlying value can be accessed via the get() member function or via an explicit cast:
+ * @code
  *   Foo f(5);
  *   int v = f.get();       // preferred
  *   int w = int(f);        // also valid
+ * @endcode
  *
  * Additional arithmetic and comparison operators can be mixed in by deriving from the
  * operator helper classes OperatorAdditionSubtraction, OperatorScalarMultiplicationDivision,
