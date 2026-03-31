@@ -43,16 +43,21 @@ namespace details
 template <class... T>
 void is_multi_index_impl(Index<T...>);
 
+/// @brief Function definition that accepts Index types defined via CRTP, used for the definition of IsMultiIndex.
+template <class T>
+    requires std::is_base_of_v<Index<T>, T>
+void is_multi_index_impl(T);
+
 } // namespace details
 
-/// @brief A MultiIndex is an Index with any number of categories. Does accept empty or single category indices.
-template <typename... CategoryTags>
-concept IsMultiIndex = requires(Index<CategoryTags...> i) { details::is_multi_index_impl(i); };
+/// @brief A MultiIndex is an Index with any number of categories. Does accept empty or single category Index types.
+template <typename MultiIndex>
+concept IsMultiIndex = requires(std::decay_t<MultiIndex> i) { details::is_multi_index_impl(i); };
 
 namespace details
 {
 
-/// @brief Obtain a tuple of single-category indices from a Index or MultiIndex.
+/// @brief Obtain a tuple of single-category indices from a Index or MultiIndex. Used in @see concatenate_indices.
 template <class... Tags>
 std::tuple<Index<Tags>...> get_tuple(const Index<Tags...>& i)
 {
@@ -64,20 +69,20 @@ std::tuple<Index<Tags>...> get_tuple(const Index<Tags...>& i)
     }
 }
 
-/// @brief Obtain a tuple of one single-category index from an enum value.
+/// @brief Obtain a tuple of one single-category index from an enum value. Used in @see concatenate_indices.
 template <class Enum>
 std::tuple<Index<Enum>> get_tuple(Enum i)
-    requires std::is_enum<Enum>::value
+    requires std::is_enum_v<Enum>
 {
     return std::tuple(Index<Enum>(i));
 }
 
 /// @brief Merge a series of enums or MultIndex%s into a tuple of single-category indices.
 template <class... IndexArgs>
-    requires((std::is_enum_v<IndexArgs> || IsMultiIndex<IndexArgs>) && ...)
+    requires((std::is_enum_v<std::decay_t<IndexArgs>> || IsMultiIndex<IndexArgs>) && ...)
 decltype(auto) concatenate_indices_impl(IndexArgs&&... args)
 {
-    return std::tuple_cat(details::get_tuple(args)...);
+    return std::tuple_cat(details::get_tuple(std::forward<IndexArgs>(args))...);
 }
 
 /**

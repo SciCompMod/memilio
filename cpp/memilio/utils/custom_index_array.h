@@ -25,6 +25,7 @@
 #include "memilio/utils/metaprogramming.h"
 
 #include <concepts>
+#include <type_traits>
 
 namespace
 {
@@ -69,11 +70,6 @@ std::pair<size_t, size_t> flatten_index(Index const& indices, Index const& dimen
         return {(size_t)mio::get<I>(indices), (size_t)mio::get<I>(dimensions)};
     }
 }
-
-template <typename T>
-struct is_random_access_iterator
-    : std::is_base_of<typename std::iterator_traits<T>::iterator_category, std::random_access_iterator_tag> {
-};
 
 } // namespace details
 
@@ -363,7 +359,7 @@ private:
      *
      */
     template <typename Tag, typename iter_type>
-        requires details::is_random_access_iterator<iter_type>::value
+        requires std::random_access_iterator<iter_type>
     class Slice
     {
         using difference_type = typename iter_type::difference_type;
@@ -375,15 +371,26 @@ private:
             using iterator_category = std::random_access_iterator_tag;
             using difference_type   = std::ptrdiff_t;
             using value_type        = T;
-            using pointer           = value_type*;
-            using reference         = value_type&;
+            using pointer           = std::conditional_t<std::is_const_v<T>, const value_type*, value_type*>;
+            using reference         = std::conditional_t<std::is_const_v<T>, const value_type&, value_type&>;
 
+            /// @brief Construct an iterator over a Slice.
             Iterator(iter_type begin_, size_t di_, size_t dr_, Seq<size_t> const& seq_, difference_type offset = 0)
                 : data_begin(begin_)
                 , di(di_)
                 , dr(dr_)
                 , seq(seq_)
                 , inner_offset(offset)
+            {
+            }
+
+            /// @brief Default constructor to suffice STL iterator requirements. This iterator is not valid nor usable.
+            Iterator()
+                : data_begin(nullptr)
+                , di(0)
+                , dr(0)
+                , seq(0, 0)
+                , inner_offset(0)
             {
             }
 
@@ -412,7 +419,7 @@ private:
             {
                 return data_begin[outer_offset(inner_offset + rhs)];
             }
-            value_type const& operator[](const difference_type& rhs) const
+            reference operator[](const difference_type& rhs) const
             {
                 return data_begin[outer_offset(inner_offset + rhs)];
             }
@@ -420,9 +427,9 @@ private:
             {
                 return data_begin[outer_offset(inner_offset)];
             }
-            value_type const& operator*() const
+            reference operator*() const
             {
-                return *(data_begin[outer_offset(inner_offset)]);
+                return data_begin[outer_offset(inner_offset)];
             }
             pointer operator->()
             {
@@ -452,13 +459,31 @@ private:
                 return tmp;
             }
 
-            Iterator operator+(const int& rhs) const
+            Iterator operator+(const difference_type& rhs) const
             {
                 return Iterator(data_begin, di, dr, seq, inner_offset + rhs);
             }
-            Iterator operator-(const int& rhs) const
+            Iterator operator-(const difference_type& rhs) const
             {
                 return Iterator(data_begin, di, dr, seq, inner_offset - rhs);
+            }
+
+            friend Iterator operator+(const difference_type& lhs, const Iterator& rhs)
+            {
+                return rhs + lhs;
+            }
+            friend Iterator operator-(const difference_type& lhs, const Iterator& rhs)
+            {
+                return rhs - lhs;
+            }
+
+            difference_type operator+(const Iterator& rhs) const
+            {
+                return inner_offset + rhs.inner_offset;
+            }
+            difference_type operator-(const Iterator& rhs) const
+            {
+                return inner_offset - rhs.inner_offset;
             }
 
             friend bool operator==(const Iterator& a, const Iterator& b)
@@ -488,7 +513,7 @@ private:
             }
 
         private:
-            inline Slice::difference_type outer_offset(difference_type const& inner) const
+            Slice::difference_type outer_offset(difference_type const& inner) const
             {
 
                 // calculate the outer offset from the inner offset
