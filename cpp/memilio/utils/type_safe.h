@@ -27,15 +27,26 @@ namespace mio
 {
 
 /**
- * typesafe wrapper around any type to make function arguments, tuple elements, etc. easily distinguishable.
+ * Typesafe wrapper around any type to make function arguments, tuple elements, etc. easily distinguishable.
  * e.g.
- *   class Foo : public Type<int, Foo>() {};
- *   class Bar : public Type<int, Bar>() {};
+ *   class Foo : public TypeSafe<int, Foo> { using TypeSafe::TypeSafe; };
+ *   class Bar : public TypeSafe<int, Bar> { using TypeSafe::TypeSafe; };
  *   void work(Foo f, Bar b);
  * instead of
  *   void work(int f, int b);
- * @tparam T type of the underlying value
- * @tparam Derived Concrete type derived from this type for CRTP.
+ *
+ * The underlying value can be accessed via get() or via an explicit cast:
+ *   Foo f(5);
+ *   int v = f.get();       // preferred
+ *   int w = int(f);        // also valid
+ *
+ * Additional arithmetic and comparison operators can be mixed in by deriving from the
+ * operator helper classes OperatorAdditionSubtraction, OperatorScalarMultiplicationDivision,
+ * OperatorComparison, and OperatorIncrementDecrement.
+ * Alternatively, use the DECL_TYPESAFE macro for a simple one-line declaration.
+ *
+ * @tparam T Type of the underlying value.
+ * @tparam Derived Concrete type derived from this class (CRTP).
  */
 template <class T, class Derived>
 class TypeSafe
@@ -57,12 +68,18 @@ public:
     }
 
     /**
-     * conversion to underlying type.
+     * Explicit conversion to the underlying type.
+     * Prefer get() for clarity.
      */
     explicit operator T() const
     {
         return m_t;
     }
+
+    /**
+     * Returns the underlying value.
+     * This is the preferred way to access the raw value of a TypeSafe wrapper.
+     */
     T get() const
     {
         return m_t;
@@ -223,7 +240,9 @@ public:
 };
 
 /**
- * helper macro to declare a class that derives from TypeSafe.
+ * Helper macro to declare a simple typesafe wrapper struct around a given type.
+ * The resulting struct derives from TypeSafe and provides access to the underlying value via get().
+ * @see TypeSafe
  */
 #define DECL_TYPESAFE(T, Name)                                                                                         \
     struct Name : public ::mio::TypeSafe<T, Name> {                                                                    \

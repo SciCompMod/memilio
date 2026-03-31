@@ -90,17 +90,20 @@ Index<T...> tuple_to_index(std::tuple<Index<T>...>);
 } // namespace details
 
 /**
- * @brief An Index with a single template parameter is a typesafe wrapper for size_t
- * that is associated with a Tag. It is used to index into a CustomIndexArray
+ * @brief Typesafe wrapper for a size_t index associated with a Tag type.
+ * Used to index into a CustomIndexArray:
  *
+ * @code
  * CustomIndexArray<Tag1, Tag2> a;
  * a[{Index<Tag1>(0), Index<Tag2>(14)}]
+ * @endcode
  *
  * Will retrieve the element associated with the indices 0 and 14 for the Tags Tag1
  * and Tag2 respectively.
  *
  * Optionally, the tag can be derived from Index to shorten the notation:
  *
+ * @code
  * struct Tag1 : public Index<Tag1>{
  *    Tag1(size_t val) : Index<Tag1>(val) {}
  * };
@@ -109,9 +112,16 @@ Index<T...> tuple_to_index(std::tuple<Index<T>...>);
  * };
  * CustomIndexArray<Tag1, Tag2> a;
  * a[{Tag1(0), Tag2(14)}]
+ * @endcode
  *
- * @tparam CategoryTag A tag for the typesafe index
+ * The underlying size_t value can be obtained via get():
+ * @code
+ *   Index<Tag1> i(3);
+ *   size_t v = i.get();
+ * @endcode
  *
+ * @tparam CategoryTag A tag type for the typesafe index.
+ * @see TypeSafe
  */
 template <typename CategoryTag>
 class MEMILIO_ENABLE_EBO Index<CategoryTag> : public TypeSafe<size_t, Index<CategoryTag>>,

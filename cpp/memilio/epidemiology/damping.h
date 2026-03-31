@@ -38,17 +38,29 @@ namespace mio
 {
 
 /**
- * integer damping level.
+ * Typesafe integer representing the level of a damping.
+ * The underlying int value can be obtained via get().
+ * @see TypeSafe
  */
 DECL_TYPESAFE(int, DampingLevel);
 
 /**
- * integer damping type.
+ * Typesafe integer representing the type of a damping.
+ * The underlying int value can be obtained via get().
+ * @see TypeSafe
  */
 DECL_TYPESAFE(int, DampingType);
 
 /**
- * double simulation time.
+ * Typesafe wrapper for a floating-point simulation time value (in days).
+ * The underlying value can be obtained via get():
+ * @code
+ *   SimulationTime<double> t(3.5);
+ *   double days = t.get();
+ * @endcode
+ * Supports arithmetic (+, -, *, /) and comparison operators.
+ * @tparam FP Floating point type, e.g., double.
+ * @see TypeSafe
  */
 template <typename FP>
 class MEMILIO_ENABLE_EBO SimulationTime : public TypeSafe<FP, SimulationTime<FP>>,
