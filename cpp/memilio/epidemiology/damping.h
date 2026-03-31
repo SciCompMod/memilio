@@ -326,6 +326,7 @@ public:
     void clear()
     {
         m_dampings.clear();
+        m_accumulated_dampings_cached.clear();
         automatic_cache_update();
     }
 

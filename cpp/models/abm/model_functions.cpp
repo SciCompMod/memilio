@@ -43,12 +43,12 @@ ScalarType total_exposure_by_contacts(const ContactExposureRates& rates, const C
             age_receiver_group_size > 1) // adjust for the person not meeting themself
         {
             total_exposure += rates[{cell_index, virus, age_transmitter}] *
-                              params.get<ContactRates>()[{age_receiver, age_transmitter}] * age_receiver_group_size /
-                              (age_receiver_group_size - 1);
+                              params.get<ContactRates>().get_baseline()(age_receiver.get(), age_transmitter.get()) *
+                              age_receiver_group_size / (age_receiver_group_size - 1);
         }
         else {
             total_exposure += rates[{cell_index, virus, age_transmitter}] *
-                              params.get<ContactRates>()[{age_receiver, age_transmitter}];
+                              params.get<ContactRates>().get_baseline()(age_receiver.get(), age_transmitter.get());
         }
     }
     return total_exposure;
@@ -189,12 +189,15 @@ void adjust_contact_rates(Location& location, size_t num_agegroups)
         ScalarType total_contacts = 0.;
         // slizing would be preferred but is problematic since both Tags of ContactRates are AgeGroup
         for (auto contact_to = AgeGroup(0); contact_to < AgeGroup(num_agegroups); contact_to++) {
-            total_contacts += location.get_infection_parameters().get<ContactRates>()[{contact_from, contact_to}];
+            total_contacts += location.get_infection_parameters().get<ContactRates>().get_baseline()(contact_from.get(),
+                                                                                                     contact_to.get());
         }
         if (total_contacts > location.get_infection_parameters().get<MaximumContacts>()) {
             for (auto contact_to = AgeGroup(0); contact_to < AgeGroup(num_agegroups); contact_to++) {
-                location.get_infection_parameters().get<ContactRates>()[{contact_from, contact_to}] =
-                    location.get_infection_parameters().get<ContactRates>()[{contact_from, contact_to}] *
+                location.get_infection_parameters().get<ContactRates>().get_baseline()(contact_from.get(),
+                                                                                       contact_to.get()) =
+                    location.get_infection_parameters().get<ContactRates>().get_baseline()(contact_from.get(),
+                                                                                           contact_to.get()) *
                     location.get_infection_parameters().get<MaximumContacts>() / total_contacts;
             }
         }
