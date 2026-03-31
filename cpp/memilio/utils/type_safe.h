@@ -27,7 +27,7 @@ namespace mio
 {
 
 /**
- * Typesafe wrapper around any type to make function arguments, tuple elements, etc. easily distinguishable.
+ * @brief Typesafe wrapper around any type to make function arguments, tuple elements, etc. easily distinguishable.
  * e.g.
  * @code
  *   class Foo : public TypeSafe<int, Foo> { using TypeSafe::TypeSafe; };
@@ -246,7 +246,7 @@ public:
 };
 
 /**
- * Helper macro to declare a simple typesafe wrapper struct around a given type.
+ * @brief Helper macro to declare a simple typesafe wrapper struct around a given type.
  * The resulting struct derives from TypeSafe and provides access to the underlying value via get().
  * @see TypeSafe
  */

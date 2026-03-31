@@ -38,7 +38,7 @@ namespace mio
 {
 
 /**
- * Typesafe integer representing the level of a damping.
+ * @brief Typesafe integer representing the level of a damping.
  * The underlying int value can be obtained via the get() member function:
  * @code
  *   DampingLevel l(2);
@@ -49,7 +49,7 @@ namespace mio
 DECL_TYPESAFE(int, DampingLevel);
 
 /**
- * Typesafe integer representing the type of a damping.
+ * @brief Typesafe integer representing the type of a damping.
  * The underlying int value can be obtained via the get() member function:
  * @code
  *   DampingType t(1);
@@ -60,7 +60,7 @@ DECL_TYPESAFE(int, DampingLevel);
 DECL_TYPESAFE(int, DampingType);
 
 /**
- * Typesafe wrapper for a floating-point simulation time value (in days).
+ * @brief Typesafe wrapper for a floating-point simulation time value (in days).
  * The underlying value can be obtained via the get() member function:
  * @code
  *   SimulationTime<double> t(3.5);
