@@ -15,8 +15,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v6
-
       - uses: pypa/cibuildwheel@v2.16
 
       - uses: actions/upload-artifact@v6
