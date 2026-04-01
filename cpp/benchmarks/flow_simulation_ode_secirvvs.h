@@ -713,6 +713,15 @@ void setup_model(Model& model)
     model.parameters.template get<osecirvvs::ReducTimeInfectedMild<ScalarType>>()[AgeGroup(0)]               = 0.9;
 
     model.parameters.template get<osecirvvs::Seasonality<ScalarType>>() = 0.2;
+
+    auto& npis      = model.parameters.template get<osecirvvs::DynamicNPIsInfectedSymptoms<ScalarType>>();
+    auto npi_groups = Eigen::VectorXd::Ones(contact_matrix[0].get_num_groups());
+    npis.set_threshold(0.01 * 100'000, {DampingSampling<ScalarType>(0.5, DampingLevel(0), DampingType(0),
+                                                                    SimulationTime<ScalarType>(0), {0}, npi_groups)});
+    npis.set_base_value(100'000);
+    npis.set_implementation_delay(SimulationTime<ScalarType>(7.0));
+    npis.set_duration(SimulationTime<ScalarType>(14.0));
+
     // The function apply_constraints() ensures that all parameters are within their defined bounds.
     // Note that negative values are set to zero instead of stopping the simulation.
     model.apply_constraints();
