@@ -7,7 +7,7 @@ The model assumes perfect immunity after recovery
 
 The infection states and the transitions are visualized in the following graph.
 
-.. image:: https://martinkuehn.eu/research/images/ode_seirdb.png
+.. image:: https://martinkuehn.eu/research/images/seirdb.png
    :alt: SEIRDB_model
 
 
@@ -258,7 +258,4 @@ An example can be found at
 `examples/ode_seirdb.cpp <https://github.com/SciCompMod/memilio/tree/main/cpp/examples/ode_seirdb.cpp>`_.
 
 
-Overview of the ``oseir`` namespace:
------------------------------------------
-
-.. doxygennamespace:: mio::oseirdb
+The code documentation for the model can be found at :CPP-API:`mio::oseirdb` .

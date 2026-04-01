@@ -129,14 +129,23 @@ For development of code use this command instead
 
 This command allows you to work on the code without having to reinstall the package after a change. It also installs all additional dependencies required for development and maintenance.
 
+.. dropdown:: :fa:`gears` Build files for skbuild
+
+    The simulaion and generation packages use skbuild to compile python bindings or parts of the C++ library.
+    By default, the cmake build files are put into ``pycode/build/memilio-{package_name}`` to save on time during
+    package development. If you get unexpected cmake errors, you can try and delete the respective build directory. If
+    you do not want to store the build files at all, you can remove the ``build_dir`` entry from the section
+    ``[tool.scikit-build]`` in the ``pyproject.toml``. Then skbuild will use a temporary directory instead.
+
 Testing
 -------
 
-Each package provides a test suite under ``pycode/memilio-{package_name}/memilio/{package_name}_test``. 
+Each package provides a test suite under ``pycode/memilio-{package_name}/tests``. 
 To run the tests, simply use the following command inside the package folder after installation:
 
 .. code-block:: console 
 
+    cd tests
     python -m unittest
 
 Coverage Report
@@ -176,7 +185,3 @@ Run pylint with the commands in the package folder
 
 From the repository root you can also target a package explicitly, for example
 ``python pycode/run_pylint.py --package-dir memilio-plot``.
-
-Pylint report for actual master:
-
-`Pylint Report <https://dlr-sc.github.io/memilio/pylint/>`__

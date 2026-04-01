@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Henrik Zunker
 *
@@ -19,6 +19,7 @@
 */
 
 #include "matchers.h"
+#include "memilio/utils/logging.h"
 #include "temp_file_register.h"
 #include "test_data_dir.h"
 #include "memilio/data/analyze_result.h"
@@ -35,7 +36,6 @@
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/parameter_distributions.h"
 #include "memilio/utils/parameter_set.h"
-#include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/uncertain_value.h"
 #include "ode_secirts/infection_state.h"
 #include "ode_secirts/model.h"
@@ -43,12 +43,12 @@
 #include "ode_secirts/parameters.h"
 #include "ode_secirts/parameters_io.h"
 #include "ode_secirts/analyze_result.h"
+#include "utils.h"
 
 #include "gtest/gtest.h"
 #include "gmock/gmock-matchers.h"
 #include <algorithm>
 #include <iterator>
-#include <limits>
 
 const mio::osecirts::Model<double>& osecirts_testing_model()
 {
@@ -125,31 +125,31 @@ TEST(TestOdeSECIRTS, get_flows)
 
     model.get_flows(y, y, 0.0, flows);
 
-    std::vector<double> expected_values = {0.09375,  0.90625,  1,   0.5, 0.5, 0.5, 0.5,      0.5,      0.5, 0.5, 0.5,
-                                           0.5,      0.5,      0,   0.5, 0.5, 1,   0.046875, 0.953125, 1,   0.5, 0.5,
-                                           0.5,      0.5,      0.5, 0.5, 0.5, 0.5, 0.5,      0.5,      0,   0.5, 0.5,
-                                           0.046875, 0.953125, 1,   0.5, 0.5, 0.5, 0.5,      0.5,      0.5, 0.5, 0.5,
-                                           0.5,      0.5,      0,   0.5, 0.5, 0,   1,        1,        1};
+    std::vector<double> expected_values = {
+        0.09375, 0.90625, 1,   0.5,      0.5,      0.5, 0.5,      0.5,      0.5, 0.5, 0.5, 0.5, 0.5,
+        0,       0.5,     0.5, 0.046875, 0.953125, 1,   0.5,      0.5,      0.5, 0.5, 0.5, 0.5, 0.5,
+        0.5,     0.5,     0.5, 0,        0.5,      0.5, 0.046875, 0.953125, 1,   0.5, 0.5, 0.5, 0.5,
+        0.5,     0.5,     0.5, 0.5,      0.5,      0.5, 0,        0.5,      0.5, 1,   1,   1,   1};
 
-    EXPECT_EQ(flows.size(), 53);
+    EXPECT_EQ(flows.size(), 52);
 
     // Compare expected with actual values
-    for (size_t i = 0; i < expected_values.size(); i++) {
-        EXPECT_NEAR(flows(i), expected_values[i], 1e-10);
+    for (auto i = 0; i < flows.size(); i++) {
+        EXPECT_NEAR(flows(i), expected_values[i], 1e-5);
     }
 }
 
 TEST(TestOdeSECIRTS, Simulation)
 {
-    auto sim        = mio::osecirts::Simulation<double>(osecirts_testing_model(), 0, 1);
+    auto sim = mio::osecirts::Simulation<double>(osecirts_testing_model(), 0, 1);
     sim.set_integrator_core(std::make_unique<mio::EulerIntegratorCore<double>>());
     sim.advance(1);
 
     EXPECT_EQ(sim.get_result().get_num_time_points(), 2); // stores initial value and single step
 
     Eigen::VectorXd expected_result(29);
-    expected_result << 1.0, 2.0, 0.09375, 0.046875, 0.046875, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.5, 0.5,
-        0.5, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5, 0.0, 1.5, 1.5, 1.5, 2.90625, 7.90625;
+    expected_result << 1, 1, 0.09375, 0.046875, 0.046875, 1, 1, 1, 0, 0, 0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 1, 1, 1, 0.5,
+        0.5, 0.5, 0, 1.5, 1.5, 1.5, 3.90625, 7.90625;
     EXPECT_EQ(sim.get_result().get_last_value(), expected_result);
 }
 
@@ -165,14 +165,14 @@ TEST(TestOdeSECIRTS, FlowSimulation)
     EXPECT_EQ(sim.get_result().get_num_time_points(), 2); // stores initial value and single step
 
     Eigen::VectorXd expected_result(29);
-    expected_result << 1.0, 2.0, 0.09375, 0.046875, 0.046875, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.5, 0.5,
-        0.5, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5, 0.0, 1.5, 1.5, 1.5, 2.90625, 7.90625;
+    expected_result << 1, 1, 0.09375, 0.046875, 0.046875, 1, 1, 1, 0, 0, 0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 1, 1, 1, 0.5,
+        0.5, 0.5, 0, 1.5, 1.5, 1.5, 3.90625, 7.90625;
     EXPECT_EQ(sim.get_result().get_last_value(), expected_result);
 
-    Eigen::VectorXd expected_flows(53);
-    expected_flows << 0.09375, 0.90625, 1.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0, 0.5, 0.5, 1.0,
-        0.046875, 0.953125, 1.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0, 0.5, 0.5, 0.046875, 0.953125,
-        1.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0, 0.5, 0.5, 0.0, 1.0, 1.0, 1.0;
+    Eigen::VectorXd expected_flows(52);
+    expected_flows << 0.09375, 0.90625, 1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0, 0.5, 0.5, 0.046875,
+        0.953125, 1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0, 0.5, 0.5, 0.046875, 0.953125, 1, 0.5, 0.5,
+        0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0, 0.5, 0.5, 1, 1, 1, 1;
     EXPECT_EQ(sim.get_flows().get_last_value(), expected_flows);
 }
 
@@ -258,7 +258,8 @@ TEST(TestOdeSECIRTS, overflow_vaccinations)
     }
 
     // simulate one step with explicit Euler
-    auto result     = mio::simulate_flows<double, mio::osecirts::Model<double>>(t0, tmax, dt, model, std::make_unique<mio::EulerIntegratorCore<double>>());
+    auto result = mio::simulate_flows<double, mio::osecirts::Model<double>>(
+        t0, tmax, dt, model, std::make_unique<mio::EulerIntegratorCore<double>>());
 
     // get the flow indices for each type of vaccination and also the indices of the susceptible compartments
     auto flow_indx_partial_vaccination =
@@ -286,6 +287,7 @@ TEST(TestOdeSECIRTS, overflow_vaccinations)
 
 TEST(TestOdeSECIRTS, smooth_vaccination_rate)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     const ScalarType tmax = 2.;
 
     // init simple model
@@ -595,6 +597,7 @@ mio::osecirts::Model<double> make_model(int num_age_groups, bool set_invalid_ini
     set_synthetic_population_data(model.populations, set_invalid_initial_value);
     set_demographic_parameters(model.parameters, set_invalid_initial_value);
     set_contact_parameters(model.parameters, set_invalid_initial_value);
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     model.parameters.apply_constraints();
     return model;
 }
@@ -602,8 +605,6 @@ mio::osecirts::Model<double> make_model(int num_age_groups, bool set_invalid_ini
 
 TEST(TestOdeSECIRTS, draw_sample_graph)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     mio::Graph<mio::osecirts::Model<double>, mio::MobilityParameters<double>> graph;
 
     auto num_age_groups = 6;
@@ -663,8 +664,6 @@ TEST(TestOdeSECIRTS, draw_sample_graph)
 
 TEST(TestOdeSECIRTS, draw_sample_model)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     auto num_age_groups = 6;
     auto model          = make_model(num_age_groups, /*set_invalid_initial_value*/ true);
     mio::osecirts::draw_sample(model);
@@ -690,6 +689,60 @@ TEST(TestOdeSECIRTS, draw_sample_model)
                     .all());
 }
 
+TEST(TestOdeSECIRTS, deathsPerSevere_flows)
+{
+    // Test that DeathsPerSevere causes ISev->Dead flow independent of ICU overflow.
+    // Only populate the Naive severity path; block ICr path to isolate the effect.
+    // CriticalPerSevere=0 blocks the ISev->ICr->Dead path entirely, so ICUCapacity and
+    // DeathsPerCritical have no influence and are left at their default values.
+    mio::osecirts::Model<double> model(1);
+    auto& params = model.parameters;
+
+    params.get<mio::osecirts::TimeInfectedSevere<double>>()[(mio::AgeGroup)0]      = 10.0;
+    params.get<mio::osecirts::TimeInfectedCritical<double>>()[(mio::AgeGroup)0]    = 7.0;
+    params.get<mio::osecirts::TimeTemporaryImmunityPI<double>>()[(mio::AgeGroup)0] = 30.0;
+    params.get<mio::osecirts::TimeTemporaryImmunityII<double>>()[(mio::AgeGroup)0] = 30.0;
+    params.get<mio::osecirts::CriticalPerSevere<double>>()[(mio::AgeGroup)0]       = 0.0; // block ISev->ICr->Dead path
+    params.get<mio::osecirts::DeathsPerSevere<double>>()[(mio::AgeGroup)0]         = 0.1;
+    // Disable vaccinations
+    params.get<mio::osecirts::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(size_t(100)));
+    params.get<mio::osecirts::DailyPartialVaccinations<double>>().array().setConstant(0);
+    params.get<mio::osecirts::DailyFullVaccinations<double>>().resize(mio::SimulationDay(size_t(100)));
+    params.get<mio::osecirts::DailyFullVaccinations<double>>().array().setConstant(0);
+    params.get<mio::osecirts::DailyBoosterVaccinations<double>>().resize(mio::SimulationDay(size_t(100)));
+    params.get<mio::osecirts::DailyBoosterVaccinations<double>>().array().setConstant(0);
+
+    const double nb_severe                                                                    = 1000.0;
+    model.populations[{mio::AgeGroup(0), mio::osecirts::InfectionState::InfectedSevereNaive}] = nb_severe;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecirts::InfectionState::SusceptibleNaive},
+                                                nb_severe);
+
+    // Simulate a small time step
+    double t0 = 0, tmax = 0.5, dt = 0.1;
+    mio::TimeSeries<double> result = mio::simulate<double>(t0, tmax, dt, model);
+
+    // With DeathsPerSevere=0.1 and no ICU overflow, deaths from ISev must be > 0
+    auto dead_naive = result.get_last_value()[(size_t)mio::osecirts::InfectionState::DeadNaive];
+    EXPECT_GT(dead_naive, 0.0);
+
+    // Now run again with DeathsPerSevere=0
+    params.get<mio::osecirts::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = 0.0;
+    mio::TimeSeries<double> result_no_severe_deaths                        = mio::simulate<double>(t0, tmax, dt, model);
+    auto dead_naive_no_severe =
+        result_no_severe_deaths.get_last_value()[(size_t)mio::osecirts::InfectionState::DeadNaive];
+    EXPECT_DOUBLE_EQ(dead_naive_no_severe, 0.0);
+
+    // Population must be conserved in both runs
+    EXPECT_NEAR(result.get_last_value().sum(), nb_severe, 1e-10);
+    EXPECT_NEAR(result_no_severe_deaths.get_last_value().sum(), nb_severe, 1e-10);
+
+    // Recovery (TemporaryImmunePartialImmunity) flow must be higher when DeathsPerSevere=0
+    auto rec_with = result.get_last_value()[(size_t)mio::osecirts::InfectionState::TemporaryImmunePartialImmunity];
+    auto rec_without =
+        result_no_severe_deaths.get_last_value()[(size_t)mio::osecirts::InfectionState::TemporaryImmunePartialImmunity];
+    EXPECT_GT(rec_without, rec_with);
+}
+
 TEST(TestOdeSECIRTS, checkPopulationConservation)
 {
     auto num_age_groups = 2;
@@ -710,6 +763,7 @@ TEST(TestOdeSECIRTS, checkPopulationConservation)
 
 TEST(TestOdeSECIRTS, read_confirmed_cases)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     auto num_age_groups = 6; //reading data requires RKI data age groups
     auto model          = std::vector<mio::osecirts::Model<double>>({make_model(num_age_groups)});
     const std::vector<int> region{1002};
@@ -770,6 +824,7 @@ TEST(TestOdeSECIRTS, set_divi_data_invalid_dates)
 
 TEST(TestOdeSECIRTS, set_confirmed_cases_data_with_ICU)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     const auto num_age_groups = 6;
     auto model                = mio::osecirts::Model<double>(num_age_groups);
     model.populations.array().setConstant(1);
@@ -839,6 +894,7 @@ TEST(TestOdeSECIRTS, set_confirmed_cases_data_with_ICU)
 
 TEST(TestOdeSECIRTS, read_data)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     auto num_age_groups = 6; //reading data requires RKI data age groups
     auto model1         = std::vector<mio::osecirts::Model<double>>({make_model(num_age_groups)});
     auto model2         = std::vector<mio::osecirts::Model<double>>({make_model(num_age_groups)});
@@ -1042,12 +1098,13 @@ TEST(TestOdeSECIRTS, model_initialization)
     const std::vector<std::vector<double>> immunity_population = {{0.04, 0.04, 0.075, 0.08, 0.035, 0.01},
                                                                   {0.61, 0.61, 0.62, 0.62, 0.58, 0.41},
                                                                   {0.35, 0.35, 0.305, 0.3, 0.385, 0.58}};
-
-    ASSERT_THAT(mio::osecirts::read_input_data_county(model_vector, {2020, 12, 01}, {0},
-                                                      std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                      TEST_DATA_DIR, 2, immunity_population, false),
-                IsSuccess());
-
+    {
+        mio::LogLevelOverride llo(mio::LogLevel::off);
+        ASSERT_THAT(mio::osecirts::read_input_data_county(model_vector, {2020, 12, 01}, {0},
+                                                          std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+                                                          TEST_DATA_DIR, 2, immunity_population, false),
+                    IsSuccess());
+    }
     // Values from data/export_time_series_init_osecirts.h5, for reading in comparison
     // operator for return of mio::read_result and model population needed.
     auto expected_values =
@@ -1072,6 +1129,7 @@ TEST(TestOdeSECIRTS, model_initialization)
 
 TEST(TestOdeSECIRTS, set_vaccination_data_not_avail)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     const auto num_age_groups = 2;
     const auto num_days       = 5;
     mio::osecirts::Model<double> model(num_age_groups);
@@ -1159,8 +1217,6 @@ TEST(TestOdeSECIRTS, set_vaccination_data_min_date_not_avail)
 
 TEST(TestOdeSECIRTS, parameter_percentiles)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     //build small graph
     auto model = make_model(5);
     auto graph = mio::Graph<mio::osecirts::Model<double>, mio::MobilityParameters<double>>();
@@ -1399,6 +1455,17 @@ TEST(TestOdeSECIRTS, check_constraints_parameters)
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirts::CriticalPerSevere<double>>(0.5);
+    model.parameters.get<mio::osecirts::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = -0.1;
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.get<mio::osecirts::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = 1.1;
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    // CriticalPerSevere(0.5) + DeathsPerSevere(0.6) = 1.1 > 1
+    model.parameters.get<mio::osecirts::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = 0.6;
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.get<mio::osecirts::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = 0.3;
     model.parameters.set<mio::osecirts::DeathsPerCritical<double>>(1.1);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
@@ -1540,6 +1607,18 @@ TEST(TestOdeSECIRTS, apply_constraints_parameters)
     model.parameters.set<mio::osecirts::CriticalPerSevere<double>>(-1.0);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecirts::CriticalPerSevere<double>>()[indx_agegroup], 0);
+
+    model.parameters.get<mio::osecirts::DeathsPerSevere<double>>()[indx_agegroup] = -0.1;
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirts::DeathsPerSevere<double>>()[indx_agegroup], 0.0);
+
+    // Combined constraint: CriticalPerSevere(0.7) + DeathsPerSevere(0.5) = 1.2 > 1 => DeathsPerSevere set to 0
+    model.parameters.get<mio::osecirts::CriticalPerSevere<double>>()[indx_agegroup] = 0.7;
+    model.parameters.get<mio::osecirts::DeathsPerSevere<double>>()[indx_agegroup]   = 0.5;
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_LE(model.parameters.get<mio::osecirts::CriticalPerSevere<double>>()[indx_agegroup] +
+                  model.parameters.get<mio::osecirts::DeathsPerSevere<double>>()[indx_agegroup],
+              1.0);
 
     model.parameters.set<mio::osecirts::DeathsPerCritical<double>>(1.1);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);

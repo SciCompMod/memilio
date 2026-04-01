@@ -29,6 +29,7 @@ Martin Kühn studied at University of Cologne, Germany, and Université de Montr
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
+   * |MEmilio_citation|
    * |Graph_Neural_Network_Surrogates|
    * |A_nonstandard_numerical_scheme|
    * |Revisiting_the_Linear_Chain|
@@ -64,6 +65,7 @@ Henrik Zunker is a PhD student at the Institute of Software Technology at the Ge
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
+   * |MEmilio_citation|
    * |Risk-mediated_dynamic_regulation|
    * |Graph_Neural_Network_Surrogates|
    * |Novel_travel_time_aware_metapopulation_models|
@@ -94,8 +96,10 @@ His background is in numerical mathematics, where he studied at the University o
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
+   * |MEmilio_citation|
    * |Agent-based_modeling_for|
    * |Integrating_Human_Mobility_Models|
+   * |Missing_Transmission_Chains|
 
 .. dropdown:: Links
    :animate: fade-in-slide-down
@@ -119,6 +123,7 @@ Julia Bicker is a PhD student at the Institute of Software Technology at the Ger
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
+   * |MEmilio_citation|
    * |Hybrid_metapopulation_agent-based|
    * |Integrative_Modeling_of_the|
 
@@ -144,6 +149,7 @@ Anna Wendler is a PhD student at the Institute of Software Technology at the Ger
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
+   * |MEmilio_citation|
    * |A_nonstandard_numerical_scheme|
    * |Revisiting_the_Linear_Chain|
 
@@ -171,6 +177,7 @@ Carlotta Gerstein completed her Bachelor's degree in Mathematics at the Universi
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
+   * |MEmilio_citation|
    * |Agent-based_modeling_for|
 
 .. dropdown:: Links
@@ -195,7 +202,15 @@ assistant in the group of Prof. Kevin Thurley and wrote his thesis on modeling i
 2024 he joined the group of Prof. Jan Hasenauer at the Life and Medical Sciences Institute and the Bonn Center 
 for Mathematical Life Sciences as a PhD student to work on infectious disease modeling.
 
+.. dropdown:: Selected Publications
+   :animate: fade-in-slide-down
 
+   * |MEmilio_citation|
+
+.. dropdown:: Links
+   :animate: fade-in-slide-down
+
+   * `ORCID Profile: 0009-0008-9861-0216 <https://orcid.org/0009-0008-9861-0216>`__
 
 Maximilian Betz
 ^^^^^^^^^^^^^^^
@@ -209,6 +224,12 @@ Maximilian Betz
 **Research Focus:** Epidemiological modeling, Machine Learning, Automatic generation of Python bindings
 
 Maximilian Betz completed his Bachelor's degree in Computer Science at the DHBW Mannheim as an integrated degree program with the Department of High-Performance Computing at the German Aerospace Center (DLR). Afterwards, he continued with a Master's in Computer Science at the University of Cologne, where he focused on Machine Learning and High Performance Computing. During the Master's, he kept working at the DLR as a student assistant with a focus on automatic generation of Python bindings, metapopulation models to simulate the spatial spread of infectious diseases and Machine Learning based parameter inference.
+
+.. dropdown:: Selected Publications
+   :animate: fade-in-slide-down
+
+   * |MEmilio_citation|
+
 
 René Schmieding
 ^^^^^^^^^^^^^^^
@@ -229,6 +250,7 @@ equation-based models.
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
+   * |MEmilio_citation|
    * |Novel_travel_time_aware_metapopulation_models|
    * |Hybrid_metapopulation_agent-based|
    * |Integrating_Human_Mobility_Models|
@@ -257,6 +279,7 @@ He is interested in the development of agent-based models for infectious disease
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
+   * |MEmilio_citation|
    * |Agent-based_modeling_for|
    * |Novel_travel_time_aware_metapopulation_models|
    * |Integrative_Modeling_of_the|
@@ -282,6 +305,7 @@ Daniel Abele is a research software engineer at the Institute of Software Techno
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
+   * |MEmilio_citation|
    * |Assessment_of_effective_mitigation|
 
 .. dropdown:: Links
@@ -291,7 +315,7 @@ Daniel Abele is a research software engineer at the Institute of Software Techno
 
 
 Margrit Klitz
-^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
 .. image:: https://martinkuehn.eu/research/images/margrit.png
    :alt: Margrit Klitz
@@ -307,6 +331,23 @@ Margrit Klitz holds a PhD in mathematics from the University of Bonn. She worked
    :animate: fade-in-slide-down
 
    * `ORCID Profile: 0000-0003-3657-4180 <https://orcid.org/0000-0003-3657-4180>`__
+
+
+Katrin Rack
+^^^^^^^^^^^
+
+**Research Focus:** High performance computing, machine learning, anomaly detection
+
+Kathrin Rack studied physics at the University of Düsseldorf.  She holds a PhD. in theoretical physics from the University 
+of Cologne for her work in computational biophysics at Forschungszentrum Jülich. Since 2015, she has been supporting the 
+Institute for Software Technology at the German Aerospace Center. She was part of the MEmilio project from the beginning 
+until end of 2021. During this period, she designed and developed the initial data-management component. Moreover, she 
+integrated and steered the software-development process.
+
+.. dropdown:: Links
+   :animate: fade-in-slide-down
+
+   * `ORCID Profile: 0000-0002-5794-5705 <https://orcid.org/0000-0002-5794-5705>`__
 
 
 
@@ -326,6 +367,7 @@ Agatha Schmidt completed her Master's degree at the University of Cologne in col
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
+   * |MEmilio_citation|
    * |Graph_Neural_Network_Surrogates|
 
 .. dropdown:: Links

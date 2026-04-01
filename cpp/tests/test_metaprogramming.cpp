@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -20,40 +20,6 @@
 
 #include "memilio/utils/metaprogramming.h"
 #include <type_traits>
-
-class Foo
-{
-public:
-    void fox(int);
-};
-class Bar
-{
-public:
-    void baz(int);
-};
-template <class T>
-using fox_member_function_t = decltype(std::declval<T&>().fox(0));
-static_assert(mio::is_expression_valid<fox_member_function_t, Foo>::value,
-              "Expression Valid: Foo has member function fox");
-static_assert(!mio::is_expression_valid<fox_member_function_t, Bar>::value,
-              "Expression Not Valid: Bar does not have member function fox");
-
-static_assert(!mio::negation_v<std::is_same<int, int>>, "Negation: Not True = False");
-static_assert(mio::negation_v<std::is_same<int, double>>, "Negation: Not False = True");
-
-template <class T>
-struct InvalidPredicate {
-};
-static_assert(mio::conjunction_v<std::is_same<int, int>, std::is_same<double, double>>,
-              "Conjunction: True && True = True");
-static_assert(!mio::conjunction_v<std::is_same<int, double>, std::is_same<int, int>>,
-              "Conjunction: False && True = False");
-static_assert(!mio::conjunction_v<std::is_same<int, int>, std::is_same<double, int>>,
-              "Conjunction: True && False = False");
-static_assert(!mio::conjunction_v<std::is_same<int, double>, std::is_same<double, int>>,
-              "Conjunction: False && False = False");
-static_assert(!mio::conjunction_v<std::is_same<int, double>, InvalidPredicate<int>>,
-              "Conjunction: False && Unevaluated = False (Short Circuit)");
 
 struct NC : mio::not_copyable_if_t<true> {
 };

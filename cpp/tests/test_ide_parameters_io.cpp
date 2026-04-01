@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Lena Ploetzke
 *
@@ -203,16 +203,16 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRunAgeRes)
 
     // Compare transitions at last time point with results from a previous run that are given here.
     Eigen::VectorX<ScalarType> compare(num_transitions * num_agegroups);
-    compare << 336.428571428600, 328.285714285701, 162.000000000000, 163.071428571425, 80.130989648839, 79.803571428575,
-        39.476374533415, 39.476374533415, 19.550404043081, 19.550404043081, 1105.714285714297, 1069.857142857200,
-        515.714285714250, 163.071428571425, 80.130989648839, 79.803571428575, 39.476374533415, 39.476374533415,
-        19.550404043081, 19.550404043081, 5819.000000000000, 5744.000000000000, 2806.428571428551, 163.071428571425,
-        80.130989648839, 79.803571428575, 39.476374533415, 39.476374533415, 19.550404043081, 19.550404043081,
-        6685.142857142899, 6572.857142857101, 3200.714285714304, 163.071428571425, 80.130989648839, 79.803571428575,
-        39.476374533415, 39.476374533415, 19.550404043081, 19.550404043081, 2376.000000000000, 2342.285714285696,
-        1142.571428571406, 163.071428571425, 80.130989648839, 79.803571428575, 39.476374533415, 39.476374533415,
-        19.550404043081, 19.550404043081, 966.714285714304, 946.142857142797, 457.214285714301, 163.071428571425,
-        80.130989648839, 79.803571428575, 39.476374533415, 39.476374533415, 19.550404043081, 19.550404043081;
+    compare << 336.4285714286, 328.2857142857, 162.0000000000, 163.0714285714, 80.1309896488, 79.8035714286,
+        39.4763745334, 39.4763745334, 19.5504040431, 19.5504040431, 1105.7142857143, 1069.8571428572, 515.7142857142,
+        525.3214285714, 254.4848638825, 253.2142857143, 124.6903391854, 124.6903391854, 61.1148381577, 61.1148381577,
+        5819.0000000000, 5744.0000000000, 2806.4285714286, 2839.2142857143, 1394.5112118989, 1391.2321428571,
+        689.6518098426, 689.6518098426, 340.5829657792, 340.5829657792, 6685.1428571429, 6572.8571428571,
+        3200.7142857143, 3243.5714285714, 1591.9783266355, 1588.8214285714, 787.5403666800, 787.5403666800,
+        388.5439635160, 388.5439635160, 2376.0000000000, 2342.2857142857, 1142.5714285714, 1156.8571428571,
+        566.0586818750, 564.0892857143, 277.9264675819, 277.9264675819, 136.1445518771, 136.1445518771, 966.7142857143,
+        946.1428571428, 457.2142857143, 465.1428571428, 226.4021912199, 225.5714285714, 110.8246575673, 110.8246575673,
+        54.0704051215, 54.0704051215;
 
     mio::isecir::Simulation sim(model, dt);
     ASSERT_EQ(compare.size(), model.transitions.get_last_value().size());
@@ -267,14 +267,14 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailure)
     // --- Case where not all needed dates from the future are provided.
     start_date = mio::Date(2020, 06, 07);
     status     = mio::isecir::set_initial_flows<mio::ConfirmedCasesNoAgeEntry>(model, dt, test_data, start_date,
-                                                                           scale_confirmed_cases);
+                                                                               scale_confirmed_cases);
 
     ASSERT_THAT(print_wrap(status), IsFailure(mio::StatusCode::OutOfRange));
 
     // --- Case where not all needed dates from the past are provided.
     start_date = mio::Date(2020, 05, 24);
     status     = mio::isecir::set_initial_flows<mio::ConfirmedCasesNoAgeEntry>(model, dt, test_data, start_date,
-                                                                           scale_confirmed_cases);
+                                                                               scale_confirmed_cases);
     // Check that status is Success as just a warning is logged.
     ASSERT_THAT(print_wrap(status), IsSuccess());
     // Check that the flow InfectedNoSymptomsToInfectedSymptoms has actually been set to 0.
@@ -293,7 +293,7 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailure)
     // --- Valid case.
     start_date = mio::Date(2020, 06, 02);
     status     = mio::isecir::set_initial_flows<mio::ConfirmedCasesNoAgeEntry>(model, dt, test_data, start_date,
-                                                                           scale_confirmed_cases);
+                                                                               scale_confirmed_cases);
 
     ASSERT_THAT(print_wrap(status), IsSuccess());
 }
@@ -341,14 +341,14 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailureAgeRes)
     // --- Case where not all needed dates from the future are provided.
     start_date = mio::Date(2020, 12, 31);
     status     = mio::isecir::set_initial_flows<mio::ConfirmedCasesDataEntry>(model, dt, test_data, start_date,
-                                                                          scale_confirmed_cases);
+                                                                              scale_confirmed_cases);
 
     ASSERT_THAT(print_wrap(status), IsFailure(mio::StatusCode::OutOfRange));
 
     // --- Case where not all needed dates from the past are provided.
     start_date = mio::Date(2020, 10, 1);
     status     = mio::isecir::set_initial_flows<mio::ConfirmedCasesDataEntry>(model, dt, test_data, start_date,
-                                                                          scale_confirmed_cases);
+                                                                              scale_confirmed_cases);
     // Check that status is Success as just a warning is logged.
     ASSERT_THAT(print_wrap(status), IsSuccess());
     // Check that the flow InfectedNoSymptomsToInfectedSymptoms has actually been set to 0.
@@ -369,7 +369,7 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailureAgeRes)
     // --- Valid case.
     start_date = mio::Date(2020, 11, 01);
     status     = mio::isecir::set_initial_flows<mio::ConfirmedCasesDataEntry>(model, dt, test_data, start_date,
-                                                                          scale_confirmed_cases);
+                                                                              scale_confirmed_cases);
 
     ASSERT_THAT(print_wrap(status), IsSuccess());
 }

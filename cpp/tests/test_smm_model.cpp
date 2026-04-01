@@ -1,7 +1,7 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
-* Authors: Julia Bicker
+* Authors: Julia Bicker, Kilian Volmer
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -18,18 +18,17 @@
 * limitations under the License.
 */
 
-#include <algorithm>
-#include <cmath>
-#include <cstddef>
-#include <cstdint>
-#include <gtest/gtest.h>
-#include "memilio/utils/compiler_diagnostics.h"
+#include "abm_helpers.h"
+#include "memilio/epidemiology/adoption_rate.h"
+#include "memilio/epidemiology/age_group.h"
+#include "memilio/geography/regions.h"
 #include "smm/model.h"
 #include "smm/parameters.h"
 #include "smm/simulation.h"
-#include "abm_helpers.h"
-#include "memilio/epidemiology/adoption_rate.h"
-#include <iostream>
+
+#include <gtest/gtest.h>
+
+#include <cmath>
 #include <numeric>
 #include <vector>
 
@@ -45,6 +44,14 @@ enum class InfectionState
 
 };
 
+enum class Infections
+{
+    S,
+    I,
+    R,
+    Count
+};
+
 TEST(TestSMM, evaluateAdoptionRate)
 {
     //Test whether the adoption rates are evaluated correctly.
@@ -53,9 +60,9 @@ TEST(TestSMM, evaluateAdoptionRate)
     // with N(from, region) the population in Region "region" having infection state "from"
     //Second-order adoption rates are given by:
     // rate.factor * N(rate.from, rate.region)/total_pop * sum (over all rate.influences) influence.factor * N(influence.status, rate.region)
-    using Model = mio::smm::Model<double, 1, InfectionState>;
+    using Model = mio::smm::Model<double, InfectionState>;
 
-    Model model;
+    Model model(InfectionState::Count, mio::regions::Region(1));
 
     //Set adoption rates
     std::vector<mio::AdoptionRate<double, InfectionState>> adoption_rates;
@@ -80,13 +87,52 @@ TEST(TestSMM, evaluateAdoptionRate)
     EXPECT_EQ(model.evaluate(adoption_rates[1], model.populations.get_compartments()), 2.);
 }
 
+TEST(TestSMM, evaluateinterregionalAdoptionRate)
+{
+    using Age = mio::AgeGroup;
+    using mio::regions::Region;
+    using Status = mio::Index<Infections, Age, Region>;
+    using Model  = mio::smm::Model<double, Infections, Status, mio::Index<>>;
+
+    std::vector<mio::AdoptionRate<double, Status, mio::Index<>>> adoption_rates;
+    //Second-order adoption
+    adoption_rates.push_back({{Infections::S, Age(0), Region(0)},
+                              {Infections::I, Age(0), Region(0)},
+                              {},
+                              0.1,
+                              {{{Infections::I, Age(1), Region(0)}, 0.1}, {{Infections::I, Age(1), Region(1)}, 0.2}}});
+    //First-order adoption
+    adoption_rates.push_back({{Infections::I, Age(1), Region(0)}, {Infections::R, Age(1), Region(0)}, {}, 0.2, {}});
+    Model model({Infections::Count, Age(2), Region(2)}, {});
+
+    model.populations[{Infections::S, Age(0), Region(0)}] = 50;
+    model.populations[{Infections::I, Age(0), Region(0)}] = 10;
+    model.populations[{Infections::R, Age(0), Region(0)}] = 0;
+
+    model.populations[{Infections::S, Age(1), Region(0)}] = 100;
+    model.populations[{Infections::I, Age(1), Region(0)}] = 20;
+    model.populations[{Infections::R, Age(1), Region(0)}] = 0;
+
+    model.populations[{Infections::S, Age(0), Region(1)}] = 40;
+    model.populations[{Infections::I, Age(0), Region(1)}] = 80;
+    model.populations[{Infections::R, Age(0), Region(1)}] = 0;
+
+    model.populations[{Infections::S, Age(1), Region(1)}] = 80;
+    model.populations[{Infections::I, Age(1), Region(1)}] = 16;
+    model.populations[{Infections::R, Age(1), Region(1)}] = 0;
+
+    EXPECT_DOUBLE_EQ(model.evaluate(adoption_rates[0], model.populations.get_compartments()),
+                     0.1 * 50. * (0.1 * 20. * 1. + 0.2 * 16 * 1.) / (60 + 120 + 120 + 96));
+    EXPECT_DOUBLE_EQ(model.evaluate(adoption_rates[1], model.populations.get_compartments()), 4.);
+}
+
 TEST(TestSMM, evaluateTransitionRate)
 {
     //Same test as 'evaluateAdoptionRate' only for spatial transition rates.
     //Transition rates are given by: rate.factor * N(rate.status, rate.from)
-    using Model = mio::smm::Model<double, 2, InfectionState>;
+    using Model = mio::smm::Model<double, InfectionState>;
 
-    Model model;
+    Model model(InfectionState::Count, mio::regions::Region(2));
     //Initialize model populations
     model.populations[{mio::regions::Region(0), InfectionState::S}] = 50;
     model.populations[{mio::regions::Region(0), InfectionState::E}] = 10;
@@ -114,9 +160,9 @@ TEST(TestSMMSimulation, advance)
 {
     //Test whether Gillespie algorithm calculates events in the correct order
     using testing::Return;
-    using Model = mio::smm::Model<double, 2, InfectionState>;
+    using Model = mio::smm::Model<double, InfectionState>;
 
-    Model model;
+    Model model(InfectionState::Count, mio::regions::Region(2));
     //Initialize model populations
     model.populations[{mio::regions::Region(0), InfectionState::S}] = 1;
     model.populations[{mio::regions::Region(0), InfectionState::E}] = 0;
@@ -151,8 +197,8 @@ TEST(TestSMMSimulation, advance)
     //Spatial transition
     transition_rates.push_back({InfectionState::R, mio::regions::Region(1), mio::regions::Region(0), 0.01});
 
-    model.parameters.get<mio::smm::AdoptionRates<double, InfectionState>>()   = adoption_rates;
-    model.parameters.get<mio::smm::TransitionRates<double, InfectionState>>() = transition_rates;
+    model.parameters.get<mio::smm::AdoptionRates<double, InfectionState, mio::regions::Region>>()   = adoption_rates;
+    model.parameters.get<mio::smm::TransitionRates<double, InfectionState, mio::regions::Region>>() = transition_rates;
 
     //Mock exponential distribution to control the normalized waiting times that are drawn
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
@@ -168,7 +214,7 @@ TEST(TestSMMSimulation, advance)
         .WillOnce(Return(0.0031)) //spatial transition event 1->0, corresponds to global time 0.31
         .WillRepeatedly(testing::Return(1.0));
 
-    auto sim = mio::smm::Simulation(model, 0.0, 0.1);
+    auto sim = mio::smm::Simulation(model, 0.0, 0.05);
     sim.advance(30.);
     //Check whether first value in result time series corresponds to initial values
     EXPECT_EQ(sim.get_result().get_value(0)[static_cast<size_t>(InfectionState::S)], 1);
@@ -176,28 +222,28 @@ TEST(TestSMMSimulation, advance)
     EXPECT_EQ(sim.get_result().get_value(
                   0)[static_cast<size_t>(InfectionState::Count) + static_cast<size_t>(InfectionState::R)],
               1);
-    //no event happens in first two time steps i.e. the first saved result is after t=0.2
-    EXPECT_GE(sim.get_result().get_time(1), 0.2);
+    //first event happens at 0.2005 which means there are no events in the first four time steps
+    EXPECT_GE(sim.get_result().get_time(4), 0.2);
     //adoption from I to R is first event
-    EXPECT_EQ(sim.get_result().get_value(1)[static_cast<size_t>(InfectionState::S)], 1);
-    EXPECT_EQ(sim.get_result().get_value(1)[static_cast<size_t>(InfectionState::I)], 0);
-    EXPECT_EQ(sim.get_result().get_value(1)[static_cast<size_t>(InfectionState::R)], 1);
+    EXPECT_EQ(sim.get_result().get_value(5)[static_cast<size_t>(InfectionState::S)], 1);
+    EXPECT_EQ(sim.get_result().get_value(5)[static_cast<size_t>(InfectionState::I)], 0);
+    EXPECT_EQ(sim.get_result().get_value(5)[static_cast<size_t>(InfectionState::R)], 1);
     EXPECT_EQ(sim.get_result().get_value(
                   1)[static_cast<size_t>(InfectionState::Count) + static_cast<size_t>(InfectionState::R)],
               1);
     //spatial transition is second event
-    EXPECT_EQ(sim.get_result().get_value(2)[static_cast<size_t>(InfectionState::S)], 1);
-    EXPECT_EQ(sim.get_result().get_value(2)[static_cast<size_t>(InfectionState::I)], 0);
-    EXPECT_EQ(sim.get_result().get_value(2)[static_cast<size_t>(InfectionState::R)], 2);
+    EXPECT_EQ(sim.get_result().get_value(7)[static_cast<size_t>(InfectionState::S)], 1);
+    EXPECT_EQ(sim.get_result().get_value(7)[static_cast<size_t>(InfectionState::I)], 0);
+    EXPECT_EQ(sim.get_result().get_value(7)[static_cast<size_t>(InfectionState::R)], 2);
 }
 
 TEST(TestSMMSimulation, stopsAtTmax)
 {
     //Test whether simulation stops at tmax and whether system state at tmax is saved if there are no adoptions/transitions
     using testing::Return;
-    using Model = mio::smm::Model<double, 2, InfectionState>;
+    using Model = mio::smm::Model<double, InfectionState>;
 
-    Model model;
+    Model model(InfectionState::Count, mio::regions::Region(2));
 
     //Set adoption and spatial transition rates
     std::vector<mio::AdoptionRate<double, InfectionState>> adoption_rates;
@@ -211,14 +257,14 @@ TEST(TestSMMSimulation, stopsAtTmax)
 
     transition_rates.push_back({InfectionState::R, mio::regions::Region(1), mio::regions::Region(0), 0.01});
 
-    model.parameters.get<mio::smm::AdoptionRates<double, InfectionState>>()   = adoption_rates;
-    model.parameters.get<mio::smm::TransitionRates<double, InfectionState>>() = transition_rates;
+    model.parameters.get<mio::smm::AdoptionRates<double, InfectionState, mio::regions::Region>>()   = adoption_rates;
+    model.parameters.get<mio::smm::TransitionRates<double, InfectionState, mio::regions::Region>>() = transition_rates;
 
     //As populations are not set they have value 0 i.e. no events will happen
     //Simulate for 30 days
-    auto sim = mio::smm::Simulation(model, 0.0, 0.1);
+    auto sim = mio::smm::Simulation(model, 0.0, 30.);
     sim.advance(30.);
-    //As model populations are all zero only t0 and tmax should be logged
+    //As dt=30 only t0 and tmax should be logged
     EXPECT_EQ(sim.get_result().get_num_time_points(), 2);
     EXPECT_EQ(sim.get_result().get_last_time(), 30.);
 }
@@ -228,7 +274,7 @@ TEST(TestSMMSimulation, convergence)
     //Test whether the mean number of transitions in one unit-time step corresponds to the expected number of transitions
     // given by rate * pop up to some tolerance
     using testing::Return;
-    using Model = mio::smm::Model<double, 2, InfectionState>;
+    using Model = mio::smm::Model<double, InfectionState>;
 
     double pop      = 1000;
     size_t num_runs = 100;
@@ -243,7 +289,7 @@ TEST(TestSMMSimulation, convergence)
 
     //Do 100 unit-time step simulations with 1000 agents
     for (size_t n = 0; n < num_runs; ++n) {
-        Model model;
+        Model model(InfectionState::Count, mio::regions::Region(2));
 
         model.populations[{mio::regions::Region(0), InfectionState::S}] = pop;
         model.populations[{mio::regions::Region(0), InfectionState::E}] = 0;
@@ -252,13 +298,14 @@ TEST(TestSMMSimulation, convergence)
         model.populations[{mio::regions::Region(0), InfectionState::R}] = 0;
         model.populations[{mio::regions::Region(0), InfectionState::D}] = 0;
 
-        model.populations[{mio::regions::Region(1), InfectionState::S}]           = 0;
-        model.populations[{mio::regions::Region(1), InfectionState::E}]           = 0;
-        model.populations[{mio::regions::Region(1), InfectionState::C}]           = 0;
-        model.populations[{mio::regions::Region(1), InfectionState::I}]           = 0;
-        model.populations[{mio::regions::Region(1), InfectionState::R}]           = 0;
-        model.populations[{mio::regions::Region(1), InfectionState::D}]           = 0;
-        model.parameters.get<mio::smm::TransitionRates<double, InfectionState>>() = transition_rates;
+        model.populations[{mio::regions::Region(1), InfectionState::S}] = 0;
+        model.populations[{mio::regions::Region(1), InfectionState::E}] = 0;
+        model.populations[{mio::regions::Region(1), InfectionState::C}] = 0;
+        model.populations[{mio::regions::Region(1), InfectionState::I}] = 0;
+        model.populations[{mio::regions::Region(1), InfectionState::R}] = 0;
+        model.populations[{mio::regions::Region(1), InfectionState::D}] = 0;
+        model.parameters.get<mio::smm::TransitionRates<double, InfectionState, mio::regions::Region>>() =
+            transition_rates;
 
         auto sim = mio::smm::Simulation(model, 0.0, 1.0);
         sim.advance(1.);

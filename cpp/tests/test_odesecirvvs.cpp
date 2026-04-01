@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -44,6 +44,7 @@
 #include "ode_secirvvs/parameters.h"
 #include "ode_secirvvs/parameters_io.h"
 #include "ode_secirvvs/analyze_result.h"
+#include "utils.h"
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -423,14 +424,13 @@ mio::osecirvvs::Model<double> make_model(int num_age_groups, bool set_invalid_in
     set_synthetic_population_data(model.populations, set_invalid_initial_value);
     set_demographic_parameters(model.parameters, set_invalid_initial_value);
     set_contact_parameters(model.parameters, set_invalid_initial_value);
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     model.parameters.apply_constraints();
     return model;
 }
 
 TEST(TestOdeSECIRVVS, draw_sample)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> graph;
 
     auto num_age_groups = 6;
@@ -490,6 +490,56 @@ TEST(TestOdeSECIRVVS, draw_sample)
               parameters0.get<mio::osecirvvs::ICUCapacity<double>>())
         << "Failure might be spurious, check RNG seeds.";
     ASSERT_FALSE((populations1.array() == populations0.array()).all()) << "Failure might be spurious, check RNG seeds.";
+}
+
+TEST(TestOdeSECIRVVS, deathsPerSevere_flows)
+{
+    // Test that DeathsPerSevere causes ISev->Dead flow independent of ICU overflow.
+    // Only populate the Naive severity path; block ICr path to isolate the effect.
+    // CriticalPerSevere=0 blocks the ISev->ICr->Dead path entirely, so ICUCapacity and
+    // DeathsPerCritical have no influence and are left at their default values.
+    mio::osecirvvs::Model<double> model(1);
+    auto& params = model.parameters;
+
+    params.get<mio::osecirvvs::TimeInfectedSevere<double>>()[(mio::AgeGroup)0]   = 10.0;
+    params.get<mio::osecirvvs::TimeInfectedCritical<double>>()[(mio::AgeGroup)0] = 7.0;
+    params.get<mio::osecirvvs::CriticalPerSevere<double>>()[(mio::AgeGroup)0]    = 0.0; // block ISev->ICr->Dead path
+    params.get<mio::osecirvvs::DeathsPerSevere<double>>()[(mio::AgeGroup)0]      = 0.1;
+    // Disable vaccinations
+    params.get<mio::osecirvvs::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(size_t(100)));
+    params.get<mio::osecirvvs::DailyPartialVaccinations<double>>().array().setConstant(0);
+    params.get<mio::osecirvvs::DailyFullVaccinations<double>>().resize(mio::SimulationDay(size_t(100)));
+    params.get<mio::osecirvvs::DailyFullVaccinations<double>>().array().setConstant(0);
+
+    const double nb_severe                                                                     = 1000.0;
+    model.populations[{mio::AgeGroup(0), mio::osecirvvs::InfectionState::InfectedSevereNaive}] = nb_severe;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptibleNaive},
+                                                nb_severe);
+
+    // Simulate a small time step
+    double t0 = 0, tmax = 0.5, dt = 0.1;
+    mio::TimeSeries<double> result = mio::simulate<double>(t0, tmax, dt, model);
+
+    // With DeathsPerSevere=0.1 and no ICU overflow, deaths from ISev must be > 0
+    auto dead_naive = result.get_last_value()[(size_t)mio::osecirvvs::InfectionState::DeadNaive];
+    EXPECT_GT(dead_naive, 0.0);
+
+    // Now run again with DeathsPerSevere=0
+    params.get<mio::osecirvvs::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = 0.0;
+    mio::TimeSeries<double> result_no_severe_deaths = mio::simulate<double>(t0, tmax, dt, model);
+    auto dead_naive_no_severe =
+        result_no_severe_deaths.get_last_value()[(size_t)mio::osecirvvs::InfectionState::DeadNaive];
+    EXPECT_DOUBLE_EQ(dead_naive_no_severe, 0.0);
+
+    // Population must be conserved in both runs
+    EXPECT_NEAR(result.get_last_value().sum(), nb_severe, 1e-10);
+    EXPECT_NEAR(result_no_severe_deaths.get_last_value().sum(), nb_severe, 1e-10);
+
+    // Recovery flow must be higher when DeathsPerSevere=0
+    auto rec_with = result.get_last_value()[(size_t)mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity];
+    auto rec_without =
+        result_no_severe_deaths.get_last_value()[(size_t)mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity];
+    EXPECT_GT(rec_without, rec_with);
 }
 
 TEST(TestOdeSECIRVVS, checkPopulationConservation)
@@ -589,6 +639,7 @@ TEST(TestOdeSECIRVVS, set_divi_data_invalid_dates)
 
 TEST(TestOdeSECIRVVS, set_confirmed_cases_data_with_ICU)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     const auto num_age_groups = 6;
     auto model                = mio::osecirvvs::Model<double>(num_age_groups);
     model.populations.array().setConstant(1);
@@ -1001,6 +1052,7 @@ TEST(TestOdeSECIRVVS, model_initialization_old_date_county)
 
 TEST(TestOdeSECIRVVS, set_population_data_overflow_vacc)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     auto num_age_groups = 6; // Data to be read requires RKI confirmed cases data age groups
     auto model          = make_model(num_age_groups);
     // set all compartments to zero
@@ -1040,6 +1092,7 @@ TEST(TestOdeSECIRVVS, set_population_data_overflow_vacc)
 
 TEST(TestOdeSECIRVVS, set_population_data_no_data_avail)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     auto num_age_groups = 6; // Data to be read requires RKI confirmed cases data age groups
     auto model          = make_model(num_age_groups);
     // set all compartments to zero
@@ -1086,6 +1139,7 @@ TEST(TestOdeSECIRVVS, run_simulation)
 
 TEST(TestOdeSECIRVVS, set_vaccination_data_not_avail)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     const auto num_age_groups = 2;
     const auto num_days       = 5;
     mio::osecirvvs::Model<double> model(num_age_groups);
@@ -1169,8 +1223,6 @@ TEST(TestOdeSECIRVVS, set_vaccination_data_min_date_not_avail)
 
 TEST(TestOdeSECIRVVS, parameter_percentiles)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     //build small graph
     auto model = make_model(5);
     auto graph = mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>();
@@ -1419,6 +1471,17 @@ TEST(TestOdeSECIRVVS, check_constraints_parameters)
     EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::CriticalPerSevere<double>>(0.5);
+    model.parameters.get<mio::osecirvvs::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = -0.1;
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.get<mio::osecirvvs::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = 1.1;
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    // CriticalPerSevere(0.5) + DeathsPerSevere(0.6) = 1.1 > 1
+    model.parameters.get<mio::osecirvvs::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = 0.6;
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.get<mio::osecirvvs::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = 0.3;
     model.parameters.set<mio::osecirvvs::DeathsPerCritical<double>>(1.1);
     EXPECT_EQ(model.parameters.check_constraints(), 1);
 
@@ -1549,6 +1612,18 @@ TEST(TestOdeSECIRVVS, apply_constraints_parameters)
     model.parameters.set<mio::osecirvvs::CriticalPerSevere<double>>(-1.0);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecirvvs::CriticalPerSevere<double>>()[indx_agegroup], 0);
+
+    model.parameters.get<mio::osecirvvs::DeathsPerSevere<double>>()[indx_agegroup] = -0.1;
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::DeathsPerSevere<double>>()[indx_agegroup], 0.0);
+
+    // Combined constraint: CriticalPerSevere(0.7) + DeathsPerSevere(0.5) = 1.2 > 1 => DeathsPerSevere set to 0
+    model.parameters.get<mio::osecirvvs::CriticalPerSevere<double>>()[indx_agegroup] = 0.7;
+    model.parameters.get<mio::osecirvvs::DeathsPerSevere<double>>()[indx_agegroup]   = 0.5;
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_LE(model.parameters.get<mio::osecirvvs::CriticalPerSevere<double>>()[indx_agegroup] +
+                  model.parameters.get<mio::osecirvvs::DeathsPerSevere<double>>()[indx_agegroup],
+              1.0);
 
     model.parameters.set<mio::osecirvvs::DeathsPerCritical<double>>(1.1);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);

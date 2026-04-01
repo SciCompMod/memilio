@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Henrik Zunker
 *
@@ -30,6 +30,25 @@
 
 namespace mio
 {
+
+/// @brief Sets the default log level on creation, and resets it to the previous level on destruction.
+class LogLevelOverride
+{
+public:
+    LogLevelOverride(LogLevel temporary_level)
+        : m_previous_level(spdlog::default_logger()->level())
+    {
+        set_log_level(temporary_level);
+    }
+
+    ~LogLevelOverride()
+    {
+        spdlog::set_level(m_previous_level);
+    }
+
+private:
+    spdlog::level::level_enum m_previous_level;
+};
 
 /// @brief Can be used to redirect an spdlog::logger. This may cause unintended side effects, like silencing errors!
 class RedirectLogger

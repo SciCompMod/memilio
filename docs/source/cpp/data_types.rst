@@ -52,4 +52,4 @@ The following list explains the nonstandard data types that are used throughout 
    * - :code:`GeographicalLocation`
      - Stores coordinates in (Latitude, Longitude) format. Allows for comparisons and realistic distance calculations.
    * - :code:`Distance`
-     - Represents a distance. Internally, all distances are stored in meters. They can be created from meters or kilometers and they can be exported using both units.
+     - Represents a distance. Internally, all distances are stored in meters. They can be created from meters or kilometers and they can be exported using both units. See :CPP-API:`mio::geo::Distance`

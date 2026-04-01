@@ -14,7 +14,7 @@ The complete system of equations can be found in the supplementary material: `do
 
 Below is an overview of the model architecture and its compartments.
 
-.. image:: https://github.com/SciCompMod/memilio/assets/69154294/6dec331f-bd91-410f-be5e-c8cf6eb0572b
+.. image:: https://martinkuehn.eu/research/images/secir_waning.png
    :alt: SECIRTS_model
 
 Infection States
@@ -190,6 +190,10 @@ The model includes all parameters from the ODE-SECIRVVS model as well as additio
    * - :math:`\mu_{I_{Sev}}^{I_{Cr}}`
      - ``CriticalPerSevere``
      - Probability of transition from compartment InfectedSevere to InfectedCritical.
+   * - :math:`\mu_{I_{Sev}}^{D}`
+     - ``DeathsPerSevere``
+     - Probability of dying when in compartment InfectedSevere, independent of ICU capacity. When ICU capacity is
+       exceeded, additional deaths from InfectedSevere may occur through the ICU overflow mechanism.
    * - :math:`\mu_{I_{Cr}}^{D}`
      - ``DeathsPerCritical``
      - Probability of dying when located in compartment InfectedCritical.
@@ -317,7 +321,7 @@ The model also supports dynamic NPIs based on epidemic thresholds:
     dynamic_npis.set_base_value(100'000);                // Per 100,000 population
     dynamic_npis.set_threshold(200.0, dampings);         // Trigger at 200 cases per 100,000
 
-For more complex scenarios, such as real-world venue closures or lockdown modeling, detailed NPIs with location-specific dampings can be implemented. For further details, see the documentation of the :doc:`ODE-SECIR model <cpp/osecir>`
+For more complex scenarios, such as real-world venue closures or lockdown modeling, detailed NPIs with location-specific dampings can be implemented. For further details, see the documentation of the :doc:`ODE-SECIR model <osecir>`
 
 Simulation
 ----------
@@ -401,7 +405,5 @@ Examples
 To get started with the ODE-SECIRTS model, check out the code example in the MEmilio repository:
 `examples/ode_secirts.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_secirts.cpp>`_.
 
-Overview of the ``osecirts`` namespace:
------------------------------------------
 
-.. doxygennamespace:: mio::osecirts
+The code documentation for the model can be found at :CPP-API:`mio::osecirts` .

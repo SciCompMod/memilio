@@ -9,7 +9,7 @@ MEmilio implements various models for infectious disease dynamics, from simple c
 
 If you use MEmilio, please cite our work
 
-- Bicker J, Kerkmann D, Korf S, Plötzke L, Schmieding R, Wendler A, Zunker H et al. (2025)  *MEmilio - a High Performance Modular Epidemics Simulation Software*. Available at https://github.com/SciCompMod/memilio and https://elib.dlr.de/213614/ .
+- Bicker J, Gerstein C, Kerkmann D, Korf S, Schmieding R, Wendler A, Zunker H et al. (2026)  *MEmilio - A high performance Modular Epidemics Simulation software for multi-scale and comparative simulations of infectious disease dynamics*. Submitted for publication. https://doi.org/10.48550/arXiv.2602.11381
 
 and, in particular, for
 

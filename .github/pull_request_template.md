@@ -18,19 +18,19 @@ Please check our [git workflow](https://memilio.readthedocs.io/en/latest/develop
 
 ### Checks by code author
 
-- [ ] Every addressed issue is linked (use the "Closes #ISSUE" keyword below)
-- [ ] New code adheres to [coding guidelines](https://memilio.readthedocs.io/en/latest/development.html#coding-guidelines)
-- [ ] No large data files have been added (files should in sum not exceed 100 KB, avoid PDFs, Word docs, etc.)
-- [ ] Tests are added for new functionality and a local test run was successful (with and without OpenMP)
-- [ ] Appropriate **documentation within the code** (Doxygen) for new functionality has been added in the code
-- [ ] Appropriate **external documentation** (ReadTheDocs) for new functionality has been added to the online documentation
-- [ ] Proper attention to licenses, especially no new third-party software with conflicting license has been added
+- [ ] Every addressed issue is linked (use the "Closes #ISSUE" keyword below).
+- [ ] New code adheres to [coding guidelines](https://memilio.readthedocs.io/en/latest/development.html#coding-guidelines).
+- [ ] No large data files have been added (files should in sum not exceed 100 KB, avoid PDFs, Word docs, etc.).
+- [ ] Tests are added for new functionality and a local test run was successful (with and without OpenMP).
+- [ ] Appropriate **documentation within the code** (Doxygen) for new functionality has been added in the code.
+- [ ] Appropriate **external documentation** (ReadTheDocs) for new functionality has been added to the online documentation and checked in the preview.
+- [ ] Proper attention to licenses, especially no new third-party software with conflicting license has been added.
 - [ ] (For ABM development) Checked [benchmark results](https://memilio.readthedocs.io/en/latest/development.html#agent-based-model-development) and ran and posted a local test above from before and after development to ensure performance is monitored.
 
 ### Checks by code reviewer(s)
 
-- [ ] Corresponding issue(s) is/are linked and addressed
-- [ ] Code is clean of development artifacts (no deactivated or commented code lines, no debugging printouts, etc.)
-- [ ] Appropriate **unit tests** have been added, CI passes, code coverage and performance is acceptable (did not decrease)
-- [ ] No large data files added in the whole history of commits(files should in sum not exceed 100 KB, avoid PDFs, Word docs, etc.)
+- [ ] Corresponding issue(s) is/are linked and addressed.
+- [ ] Code is clean of development artifacts (no deactivated or commented code lines, no debugging printouts, etc.).
+- [ ] Appropriate **unit tests** have been added, CI passes, code coverage and performance is acceptable (did not decrease).
+- [ ] No large data files added in the whole history of commits(files should in sum not exceed 100 KB, avoid PDFs, Word docs, etc.).
 - [ ] On merge, add 2-5 lines with the changes (main added features, changed items, or corrected bugs) to the merge-commit-message. This can be taken from the **briefly-list-the-changes** above (best case) or the separate commit messages (worst case).

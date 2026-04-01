@@ -47,7 +47,4 @@ The simulation runs in discrete time steps using an Euler-Maruyama integration s
 An example can be found in `examples/sde_seirvv.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/sde_seirvv.cpp>`_
 
 
-Overview of the ``sseirvv`` namespace:
------------------------------------------
-
-.. doxygennamespace:: mio::sseirvv
+The code documentation for the model can be found at :CPP-API:`mio::sseirvv` .

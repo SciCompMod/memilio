@@ -36,3 +36,4 @@ cmake.version = ">=3.13"
 cmake.args = ["-DMEMILIO_BUILD_SHARED_LIBS:BOOL=ON"]
 wheel.packages = ["memilio"]
 wheel.install-dir = "memilio/simulation"
+build-dir = "../build/memilio-simulation"

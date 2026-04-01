@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin J. Kuehn, Daniel Abele
 *
@@ -20,8 +20,8 @@
 #ifndef DAMPING_H
 #define DAMPING_H
 
-#include "memilio/config.h"
-#include "memilio/math/eigen.h"
+#include "memilio/config.h" // IWYU pragma: keep
+#include "memilio/math/eigen.h" // IWYU pragma: keep
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/type_safe.h"
 #include "memilio/utils/stl_util.h"
@@ -38,17 +38,37 @@ namespace mio
 {
 
 /**
- * integer damping level.
+ * @brief Typesafe integer representing the level of a damping.
+ * The underlying int value can be obtained via the get() member function:
+ * @code
+ *   DampingLevel l(2);
+ *   int v = l.get();
+ * @endcode
+ * @see TypeSafe
  */
 DECL_TYPESAFE(int, DampingLevel);
 
 /**
- * integer damping type.
+ * @brief Typesafe integer representing the type of a damping.
+ * The underlying int value can be obtained via the get() member function:
+ * @code
+ *   DampingType t(1);
+ *   int v = t.get();
+ * @endcode
+ * @see TypeSafe
  */
 DECL_TYPESAFE(int, DampingType);
 
 /**
- * double simulation time.
+ * @brief Typesafe wrapper for a floating-point simulation time value (in days).
+ * The underlying value can be obtained via the get() member function:
+ * @code
+ *   SimulationTime<double> t(3.5);
+ *   double days = t.get();
+ * @endcode
+ * Supports arithmetic (+, -, *, /) and comparison operators.
+ * @tparam FP Floating point type, e.g., double.
+ * @see TypeSafe
  */
 template <typename FP>
 class MEMILIO_ENABLE_EBO SimulationTime : public TypeSafe<FP, SimulationTime<FP>>,
@@ -80,7 +100,8 @@ public:
      * @param shape_args arguments to construct the shape of the damping matrix (can be Shape itself, copy ctor)
      * @tparam T constructor arguments of Damping::Shape.
      */
-    template <class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, int>>
+    template <class... T>
+        requires std::is_constructible_v<Shape, T...>
     explicit Damping(T... shape_args)
         : Base(Matrix::Zero(Shape(shape_args...).rows(), Shape(shape_args...).cols()), {}, {}, {})
     {
@@ -110,7 +131,8 @@ public:
      * @param t time at which the damping becomes active
      * @tparam T Shape constructor arguments.
      */
-    template <class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, void>>
+    template <class... T>
+        requires std::is_constructible_v<Shape, T...>
     Damping(FP d, DampingLevel level, DampingType type, SimulationTime<FP> t, T... shape_args)
         : Damping(Matrix::Constant(Shape(shape_args...).rows(), Shape(shape_args...).cols(), d), level, type, t)
     {
@@ -135,7 +157,8 @@ public:
      * @param t time at which the damping becomes active
      * @tparam T Shape constructor arguments.
      */
-    template <class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, void>>
+    template <class... T>
+        requires std::is_constructible_v<Shape, T...>
     Damping(FP d, SimulationTime<FP> t, T... shape_args)
         : Damping(d, DampingLevel(0), DampingType(0), t, shape_args...)
     {
@@ -267,7 +290,8 @@ public:
      * @param num_dampings number of initial elements in the collection
      * @tparam T Shape constructor arguments.
      */
-    template <class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, void>>
+    template <class... T>
+        requires std::is_constructible_v<Shape, T...>
     explicit Dampings(T... shape_args)
         : m_dampings()
         , m_shape(shape_args...)
@@ -322,6 +346,7 @@ public:
     void clear()
     {
         m_dampings.clear();
+        m_accumulated_dampings_cached.clear();
         automatic_cache_update();
     }
 
@@ -536,7 +561,6 @@ private:
         return sum;
     }
 
-private:
     std::vector<value_type> m_dampings;
     Shape m_shape;
     std::vector<std::tuple<Matrix, SimulationTime<FP>>> m_accumulated_dampings_cached;

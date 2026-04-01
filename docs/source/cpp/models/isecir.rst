@@ -371,7 +371,4 @@ Different examples can be found at:
 - `examples/ide_secir_ageres.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ide_secir_ageres.cpp>`_
 - `examples/ide_initialization.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ide_initialization.cpp>`_  
 
-Overview of the ``isecir`` namespace:
------------------------------------------
-
-.. doxygennamespace:: mio::isecir
+The code documentation for the model can be found at :CPP-API:`mio::isecir` .

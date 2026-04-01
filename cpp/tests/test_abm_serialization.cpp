@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: René Schmieding
 *
@@ -117,7 +117,7 @@ TEST(TestAbmSerialization, Infection)
     reference_json["viral_load"]                   = viral_load;
     reference_json["log_norm_alpha"]               = Json::Value((double)i++);
     reference_json["log_norm_beta"]                = Json::Value((double)i++);
-    reference_json["individual_virus_shed_factor"] = Json::Value((double)i++);
+    reference_json["individual_viral_shed_factor"] = Json::Value((double)i++);
     reference_json["detected"]                     = Json::Value((bool)0);
 
     test_json_serialization<mio::abm::Infection>(reference_json);

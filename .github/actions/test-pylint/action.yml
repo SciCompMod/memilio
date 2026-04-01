@@ -13,12 +13,12 @@ runs:
         sudo apt-get -qq update
         sudo apt-get -qq -y install python3-pip gnupg
         python -m pip install --upgrade pip
-    # Pylint runs against the prebuilt wheels in pycode/wheelhouse/*cp311*.
+    # Pylint runs against the prebuilt wheels in pycode/wheelhouse/*cp312*.
     # So, use current latest supported Python version.
-    - name: Set up Python 3.11
+    - name: Set up Python 3.12
       uses: actions/setup-python@v5
       with:
-        python-version: "3.11"
+        python-version: "3.12"
     - name: Download Python Wheels
       uses: actions/download-artifact@v4
       with:
@@ -28,7 +28,7 @@ runs:
       shell: bash
       run: |
         shopt -s nullglob
-        for pkg in pycode/wheelhouse/*cp311*.whl; do python -m pip install "$pkg"; done # packages that contain native extensions are version specific
+        for pkg in pycode/wheelhouse/*cp312*.whl; do python -m pip install "$pkg"; done # packages that contain native extensions are version specific
         for pkg in pycode/wheelhouse/*py3*.whl; do python -m pip install "$pkg"; done # pure python packages are not version specific
         python -m pip install --upgrade-strategy only-if-needed --prefer-binary --find-links pycode/wheelhouse "memilio-${{ inputs.package }}[dev]"
     - name: Run pylint

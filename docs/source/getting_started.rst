@@ -89,7 +89,7 @@ Before you can install MEmilio, you need to install some common development tool
 
 *   **Python:** Required for the Python packages.
 
-    *   MEmilio is tested daily with Python 3.8 and 3.11. While other versions may also work, we recommend using the latest release of either of these. You can download it from the official website `python.org <https://www.python.org/>`__.
+    *   MEmilio is tested daily with Python 3.8 and 3.12. While other versions may also work, we recommend using the latest release of either of these. You can download it from the official website `python.org <https://www.python.org/>`__.
 
 *   **C++ Compiler and CMake:**
 
@@ -173,17 +173,33 @@ For experienced developers and C++ programmers, we offer the C++ backend to full
 
 Please see the full :doc:`C++ Build instructions <cpp/installation>` for more details and a list of compile options.
 
-1.  Run CMake. This tool *configures* the project for compilation on your specific system.
+1.  Run CMake. This tool *configures* the project for compilation on your specific system. It takes around 10 seconds, depending on your internet connection as external libraries are fetched.
 
     .. code-block:: console
 
         cmake -S cpp -B cpp/build
 
-2.  Compile the code and create the executables. You can find them under *cpp/build/bin*.
+2. Compile the code and create the executables.
+Run the build command from inside your build directory. To speed up the process,
+you can use the ``-j`` flag (e.g., using 4 cores):
+
+.. code-block:: bash
+
+   cmake --build . -j 4
+
+.. note::
+   On a standard 4-core (2024) laptop, compilation takes approximately 6 minutes.
+   Upon completion, the executables are located in the ``cpp/build/bin`` directory.
 
     .. code-block:: console
 
         cmake --build cpp/build
+
+If you want to build a specific example, you can specify it with the ``--target`` flag:
+
+.. code-block:: console
+
+   cmake --build . --target <example_name>
 
 If you experience errors, feel free to contact martin.kuehn@dlr.de or open a `discussion on GitHub <https://github.com/SciCompMod/memilio/discussions>`_!
 
