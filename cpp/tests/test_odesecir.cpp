@@ -30,6 +30,7 @@
 #include "memilio/data/analyze_result.h"
 #include "memilio/math/adapt_rk.h"
 #include "memilio/geography/regions.h"
+#include "utils.h"
 
 #include <numbers>
 
@@ -43,7 +44,7 @@ TEST(TestOdeSecir, compareWithPreviousRun)
     */
     double t0   = 0;
     double tmax = 50;
-    double dt   = 0.1;
+    double dt   = 0.3;
 
     double cont_freq = 10;
 
@@ -674,8 +675,8 @@ TEST(TestOdeSecir, testDamping)
 
 TEST(TestOdeSecir, testModelConstraints)
 {
-    mio::set_log_level(
-        mio::LogLevel::err); //as many random things are drawn, warnings are inevitable and cluster output
+    // as many random things are drawn, warnings are inevitable and cluster output
+    mio::LogLevelOverride llo(mio::LogLevel::err);
     double t0   = 0;
     double tmax = 57; // after 57 days with cont_freq 10 and winter, the virus would already decline
     double dt   = 0.1;
@@ -762,7 +763,53 @@ TEST(TestOdeSecir, testModelConstraints)
             EXPECT_LE(secihurd.get_value(i)[5], 9000) << " at row " << i;
         }
     }
-    mio::set_log_level(mio::LogLevel::warn);
+}
+
+TEST(TestOdeSecir, deathsPerSevere_flows)
+{
+    // Test that DeathsPerSevere causes ISev->Dead flow independent of ICU overflow.
+    // CriticalPerSevere=0 blocks the ISev->ICr->Dead path entirely, so ICUCapacity and
+    // DeathsPerCritical have no influence and are left at their default values.
+    mio::osecir::Model<double> model(1);
+    auto& params = model.parameters;
+
+    params.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0]   = 10.0;
+    params.get<mio::osecir::TimeInfectedCritical<double>>()[(mio::AgeGroup)0] = 7.0;
+    params.get<mio::osecir::CriticalPerSevere<double>>()[(mio::AgeGroup)0]    = 0.0; // block ISev->ICr->Dead path
+    params.get<mio::osecir::DeathsPerSevere<double>>()[(mio::AgeGroup)0]      = 0.1;
+
+    const double nb_severe                                                             = 1000.0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSevere}] = nb_severe;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
+                                                nb_severe);
+
+    // Simulate a small time step
+    double t0 = 0, tmax = 0.5, dt = 0.1;
+    mio::TimeSeries<double> result = mio::simulate<double>(t0, tmax, dt, model);
+
+    // With DeathsPerSevere=0.1 and no ICU overflow, deaths from ISev must be > 0
+    auto dead_final = result.get_last_value()[(size_t)mio::osecir::InfectionState::Dead];
+    EXPECT_GT(dead_final, 0.0);
+
+    // Now run again with DeathsPerSevere=0
+    params.get<mio::osecir::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = 0.0;
+    mio::TimeSeries<double> result_no_severe_deaths                      = mio::simulate<double>(t0, tmax, dt, model);
+    auto dead_no_severe = result_no_severe_deaths.get_last_value()[(size_t)mio::osecir::InfectionState::Dead];
+
+    // With DeathsPerSevere=0 and no ICU overflow there should be no deaths from ISev,
+    // so dead compartment stays 0 (ICr is also 0 initially)
+    EXPECT_DOUBLE_EQ(dead_no_severe, 0.0);
+
+    // Population must be conserved in both runs
+    double total_with    = result.get_last_value().sum();
+    double total_without = result_no_severe_deaths.get_last_value().sum();
+    EXPECT_NEAR(total_with, nb_severe, 1e-10);
+    EXPECT_NEAR(total_without, nb_severe, 1e-10);
+
+    // Recovery flow must be higher when DeathsPerSevere=0
+    auto rec_with    = result.get_last_value()[(size_t)mio::osecir::InfectionState::Recovered];
+    auto rec_without = result_no_severe_deaths.get_last_value()[(size_t)mio::osecir::InfectionState::Recovered];
+    EXPECT_GT(rec_without, rec_with);
 }
 
 TEST(TestOdeSecir, testAndTraceCapacity)
@@ -1072,10 +1119,11 @@ TEST(TestOdeSecir, test_commuters)
 
 TEST(TestOdeSecir, check_constraints_parameters)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
+
     auto model = mio::osecir::Model<double>(1);
     EXPECT_EQ(model.parameters.check_constraints(), 0);
 
-    mio::set_log_level(mio::LogLevel::off);
     model.parameters.set<mio::osecir::Seasonality<double>>(-0.5);
     EXPECT_EQ(model.parameters.check_constraints(), 1);
 
@@ -1136,6 +1184,17 @@ TEST(TestOdeSecir, check_constraints_parameters)
     EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecir::CriticalPerSevere<double>>(0.5);
+    model.parameters.get<mio::osecir::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = -0.1;
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.get<mio::osecir::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = 1.1;
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    // CriticalPerSevere(0.5) + DeathsPerSevere(0.6) = 1.1 > 1
+    model.parameters.get<mio::osecir::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = 0.6;
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.get<mio::osecir::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = 0.3;
     model.parameters.set<mio::osecir::DeathsPerCritical<double>>(1.1);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
@@ -1145,18 +1204,18 @@ TEST(TestOdeSecir, check_constraints_parameters)
 
     model.parameters.set<mio::osecir::DynamicNPIsImplementationDelay<double>>(3);
     EXPECT_EQ(model.parameters.check_constraints(), 0);
-    mio::set_log_level(mio::LogLevel::warn);
 }
 
 TEST(TestOdeSecir, apply_constraints_parameters)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
+
     auto model             = mio::osecir::Model<double>(1);
     auto indx_agegroup     = mio::AgeGroup(0);
     const double tol_times = 1e-1;
 
     EXPECT_EQ(model.parameters.apply_constraints(), 0);
 
-    mio::set_log_level(mio::LogLevel::off);
     model.parameters.set<mio::osecir::Seasonality<double>>(-0.5);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecir::Seasonality<double>>(), 0);
@@ -1218,6 +1277,18 @@ TEST(TestOdeSecir, apply_constraints_parameters)
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecir::CriticalPerSevere<double>>()[indx_agegroup], 0);
 
+    model.parameters.get<mio::osecir::DeathsPerSevere<double>>()[indx_agegroup] = -0.1;
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecir::DeathsPerSevere<double>>()[indx_agegroup], 0.0);
+
+    // Combined constraint: CriticalPerSevere(0.7) + DeathsPerSevere(0.5) = 1.2 > 1 => DeathsPerSevere set to 0
+    model.parameters.get<mio::osecir::CriticalPerSevere<double>>()[indx_agegroup] = 0.7;
+    model.parameters.get<mio::osecir::DeathsPerSevere<double>>()[indx_agegroup]   = 0.5;
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_LE(model.parameters.get<mio::osecir::CriticalPerSevere<double>>()[indx_agegroup] +
+                  model.parameters.get<mio::osecir::DeathsPerSevere<double>>()[indx_agegroup],
+              1.0);
+
     model.parameters.set<mio::osecir::DeathsPerCritical<double>>(1.1);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecir::DeathsPerCritical<double>>()[indx_agegroup], 0);
@@ -1227,7 +1298,6 @@ TEST(TestOdeSecir, apply_constraints_parameters)
     EXPECT_EQ(model.parameters.get<mio::osecir::DynamicNPIsImplementationDelay<double>>(), 0);
 
     EXPECT_EQ(model.parameters.apply_constraints(), 0);
-    mio::set_log_level(mio::LogLevel::warn);
 }
 
 #if defined(MEMILIO_HAS_JSONCPP)
@@ -1343,7 +1413,8 @@ TEST_F(ModelTestOdeSecir, export_time_series_init)
 // Test the output of the function for a day way in the past. The model should be initialized with the population data since no Case data is available there.
 TEST_F(ModelTestOdeSecir, export_time_series_init_old_date)
 {
-    mio::set_log_level(mio::LogLevel::off);
+    mio::LogLevelOverride llo(mio::LogLevel::off);
+
     TempFileRegister temp_file_register;
     auto tmp_results_dir = temp_file_register.get_unique_path();
     EXPECT_THAT(mio::create_directory(tmp_results_dir), IsSuccess());
@@ -1375,7 +1446,6 @@ TEST_F(ModelTestOdeSecir, export_time_series_init_old_date)
     // sum of all compartments should be equal to the population
     EXPECT_NEAR(results_extrapolated.sum(), std::accumulate(population_data[0].begin(), population_data[0].end(), 0.0),
                 1e-8);
-    mio::set_log_level(mio::LogLevel::warn);
 }
 
 // // Model initialization should return same start values as export time series on that day
@@ -1407,7 +1477,7 @@ TEST_F(ModelTestOdeSecir, model_initialization)
 // Calling the model initialization with a date way in the past should only initialize the model with the population data.
 TEST_F(ModelTestOdeSecir, model_initialization_old_date)
 {
-    mio::set_log_level(mio::LogLevel::off);
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     // Vector assignment necessary as read_input_data_county changes model
     auto model_vector             = std::vector<mio::osecir::Model<double>>{model};
     const auto pydata_dir_Germany = mio::path_join(TEST_DATA_DIR, "Germany", "pydata");
@@ -1438,12 +1508,12 @@ TEST_F(ModelTestOdeSecir, model_initialization_old_date)
     }
     // sum of all compartments should be equal to the population
     EXPECT_EQ(results_extrapolated.sum(), std::accumulate(population_data[0].begin(), population_data[0].end(), 0.0));
-    mio::set_log_level(mio::LogLevel::warn);
 }
 
 TEST(TestOdeSecir, set_divi_data_invalid_dates)
 {
-    mio::set_log_level(mio::LogLevel::off);
+    mio::LogLevelOverride llo(mio::LogLevel::off);
+
     auto model = mio::osecir::Model<double>(1);
     model.populations.array().setConstant(1);
     auto model_vector = std::vector<mio::osecir::Model<double>>{model};
@@ -1453,12 +1523,12 @@ TEST(TestOdeSecir, set_divi_data_invalid_dates)
     // Assure that populations is the same as before.
     EXPECT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
                 MatrixNear(print_wrap(model.populations.array().cast<double>()), 1e-10, 1e-10));
-
-    mio::set_log_level(mio::LogLevel::warn);
 }
 
 TEST(TestOdeSecir, set_divi_data_empty_data)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
+
     // Create an empty DIVI data vector
     std::vector<mio::DiviEntry> empty_data;
     std::vector<int> regions = {0, 1};
@@ -1475,6 +1545,7 @@ TEST(TestOdeSecir, set_divi_data_empty_data)
 
 TEST_F(ModelTestOdeSecir, set_confirmed_cases_data_with_ICU)
 {
+    mio::LogLevelOverride llo(mio::LogLevel::off);
     // set params
     for (auto age_group = mio::AgeGroup(0); age_group < (mio::AgeGroup)num_age_groups; age_group++) {
         model.parameters.get<mio::osecir::CriticalPerSevere<double>>()[age_group]         = 1.0;

@@ -14,7 +14,7 @@ The complete system of equations can be found in the supplementary material: `do
 
 Below is an overview of the model architecture and its compartments.
 
-.. image:: https://github.com/SciCompMod/memilio/assets/69154294/6dec331f-bd91-410f-be5e-c8cf6eb0572b
+.. image:: https://martinkuehn.eu/research/images/secir_waning.png
    :alt: SECIRTS_model
 
 Infection States
@@ -190,6 +190,10 @@ The model includes all parameters from the ODE-SECIRVVS model as well as additio
    * - :math:`\mu_{I_{Sev}}^{I_{Cr}}`
      - ``CriticalPerSevere``
      - Probability of transition from compartment InfectedSevere to InfectedCritical.
+   * - :math:`\mu_{I_{Sev}}^{D}`
+     - ``DeathsPerSevere``
+     - Probability of dying when in compartment InfectedSevere, independent of ICU capacity. When ICU capacity is
+       exceeded, additional deaths from InfectedSevere may occur through the ICU overflow mechanism.
    * - :math:`\mu_{I_{Cr}}^{D}`
      - ``DeathsPerCritical``
      - Probability of dying when located in compartment InfectedCritical.

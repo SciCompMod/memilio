@@ -178,10 +178,9 @@ TEST_F(TestLocation, adjustContactRates)
 {
     mio::abm::Location loc(mio::abm::LocationType::SocialEvent, mio::abm::LocationId(0));
     //Set the maximum contacts smaller than the contact rates
-    loc.get_infection_parameters().get<mio::abm::MaximumContacts>()                                    = 2;
-    loc.get_infection_parameters().get<mio::abm::ContactRates>()[{mio::AgeGroup(0), mio::AgeGroup(0)}] = 4;
+    loc.get_infection_parameters().get<mio::abm::MaximumContacts>()                   = 2;
+    loc.get_infection_parameters().get<mio::abm::ContactRates>().get_baseline()(0, 0) = 4;
     mio::abm::adjust_contact_rates(loc, 1);
-    auto adjusted_contacts_rate =
-        loc.get_infection_parameters().get<mio::abm::ContactRates>()[{mio::AgeGroup(0), mio::AgeGroup(0)}];
+    auto adjusted_contacts_rate = loc.get_infection_parameters().get<mio::abm::ContactRates>().get_baseline()(0, 0);
     EXPECT_EQ(adjusted_contacts_rate, 2);
 }

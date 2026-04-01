@@ -32,7 +32,7 @@ TEST(TestOdeSecir, compareAgeResWithPreviousRun)
     */
     double t0   = 0;
     double tmax = 50;
-    double dt   = 0.1;
+    double dt   = 0.3;
 
     double cont_freq = 10;
 
@@ -111,7 +111,7 @@ TEST(TestOdeSecir, compareAgeResWithPreviousRunCashKarp)
 {
     double t0   = 0;
     double tmax = 50;
-    double dt   = 0.1;
+    double dt   = 0.3;
 
     double cont_freq = 10;
 

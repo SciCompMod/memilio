@@ -55,20 +55,18 @@ void bind_damping_expression_members(DampingExpressionClass& damping_expression_
              [](DampingExpression& self, const Damping& d) {
                  self.add_damping(d);
              })
+        .def("clear_dampings",
+             [](DampingExpression& self) {
+                 self.clear_dampings();
+             })
         .def_property(
-            "baseline",
-            [](const DampingExpression& self) -> auto& {
-                return self.get_baseline();
-            },
+            "baseline", [](const DampingExpression& self) -> auto& { return self.get_baseline(); },
             [](DampingExpression& self, const Eigen::Ref<const Matrix>& v) {
                 self.get_baseline() = v;
             },
             pybind11::return_value_policy::reference_internal)
         .def_property(
-            "minimum",
-            [](const DampingExpression& self) -> auto& {
-                return self.get_minimum();
-            },
+            "minimum", [](const DampingExpression& self) -> auto& { return self.get_minimum(); },
             [](DampingExpression& self, const Eigen::Ref<const Matrix>& v) {
                 self.get_minimum() = v;
             },
@@ -105,13 +103,16 @@ void bind_damping_expression_group_members(DampingExpressionGroupClass& cl)
            [](DampingExpressionGroup& self, const Damping& d) {
                self.add_damping(d);
            })
+        .def("clear_dampings",
+             [](DampingExpressionGroup& self) {
+                 self.clear_dampings();
+             })
         .def_property_readonly("num_matrices",
                                [](const DampingExpressionGroup& self) {
                                    return self.get_num_matrices();
                                })
         .def(
-            "__getitem__",
-            [](DampingExpressionGroup& self, size_t i) -> auto& {
+            "__getitem__", [](DampingExpressionGroup & self, size_t i) -> auto& {
                 if (i < 0 || i >= self.get_num_matrices()) {
                     throw pybind11::index_error("index out of range");
                 }

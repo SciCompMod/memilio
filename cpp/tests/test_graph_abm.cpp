@@ -29,13 +29,10 @@
 #include "graph_abm/graph_abm_mobility.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/logging.h"
-#include "memilio/utils/miompi.h"
 #include "memilio/mobility/graph.h"
-#include "abm_helpers.h"
-#include <algorithm>
-#include <cstddef>
+#include "utils.h"
+
 #include <gtest/gtest.h>
-#include <iostream>
 
 struct MockHistory {
 
@@ -253,10 +250,15 @@ TEST(TestGraphABM, test_get_person)
     auto& p1 = model.get_person(pid1);
     EXPECT_EQ(p1.get_location(), home);
     EXPECT_EQ(p1.get_age(), mio::AgeGroup(0));
-    model.remove_person(model.get_person_index(pid1));
-    EXPECT_EQ(model.get_person_index(pid1), std::numeric_limits<uint32_t>::max());
 
-    auto& p2 = model.get_person(pid2);
-    EXPECT_EQ(p2.get_location(), work);
-    EXPECT_EQ(p2.get_age(), mio::AgeGroup(1));
+    {
+        model.remove_person(model.get_person_index(pid1));
+
+        mio::LogLevelOverride llo(mio::LogLevel::off);
+        EXPECT_EQ(model.get_person_index(pid1), std::numeric_limits<uint32_t>::max());
+
+        auto& p2 = model.get_person(pid2);
+        EXPECT_EQ(p2.get_location(), work);
+        EXPECT_EQ(p2.get_age(), mio::AgeGroup(1));
+    }
 }

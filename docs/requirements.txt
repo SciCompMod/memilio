@@ -2,12 +2,10 @@ sphinx==7.1.2
 sphinx-rtd-theme==1.3.0rc1
 sphinx-copybutton
 sphinx_design
-breathe
 sphinx-hoverxref
 pycode/memilio-epidata
 pycode/memilio-plot
 pycode/memilio-surrogatemodel
-exhale
 sphinx_toolbox
 doxysphinx
 sphinxcontrib-doxylink
