@@ -1,6 +1,5 @@
 [project]
 name = "memilio-simulation"
-# version = "1.0.3" 
 dynamic = ["version"]
 description = "Part of MEmilio project, Python bindings to the C++ libraries that contain the models and simulations."
 readme = "README.md"
@@ -46,7 +45,6 @@ local_scheme = "no-local-version"
 
 [tool.cibuildwheel]
 # Disable some wheels
-build = ["cp38*"]
 skip = ["pp*", "*musllinux*", "*-win32"] 
 
 [tool.autopep8]
