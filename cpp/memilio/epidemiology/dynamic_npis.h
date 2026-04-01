@@ -23,6 +23,8 @@
 #include "memilio/epidemiology/damping_sampling.h"
 #include "memilio/utils/stl_util.h"
 
+#include <cassert>
+
 namespace mio
 {
 
@@ -54,7 +56,7 @@ public:
      */
     auto get_max_exceeded_threshold(FP value)
     {
-        //thresholds are sorted by value descending, so upper_bound returns the first threshold that is smaller using binary search
+        // thresholds are sorted by value descending, so upper_bound returns the first threshold that is smaller using binary search
         auto iter_max_exceeded_threshold =
             std::upper_bound(m_thresholds.begin(), m_thresholds.end(), value, [](auto& val, auto& t2) {
                 return val > t2.first;
@@ -98,21 +100,22 @@ public:
 
     /**
      * Get/Set the implementation delay at which the NPIs are implemented after threshold exceedance.
-     * This parameters imitates delayed reaction times when automatic implementations should be realized.
+     * This parameter imitates delayed reaction times when automatic implementations should be realized.
      * @{
      */
     /**
-     * @return the implementation delay after which the NPIs is implemented upon threshold exceedance.
+     * @return the implementation delay after which the NPIs are implemented upon threshold exceedance.
      */
     SimulationTime<FP> get_implementation_delay() const
     {
         return m_delay;
     }
     /**
-     * @param delay The implementation delay after which the NPIs is implemented upon threshold exceedance.
+     * @param delay The implementation delay after which the NPIs are implemented upon threshold exceedance.
      */
     void set_implementation_delay(SimulationTime<FP> delay)
     {
+        assert(delay >= SimulationTime<FP>(0.0) && "Implementation delay must be non-negative.");
         m_delay = delay;
     }
     /**@}*/
@@ -156,12 +159,13 @@ public:
      */
     void set_directive_begin(SimulationTime<FP> begin)
     {
+        assert(begin < m_directive_end && "Directive begin must be before directive end.");
         m_directive_begin = begin;
     }
     /**@}*/
 
     /**
-     * Get/Set the first day of the simulation for which a DynamicNPI *can* be active.
+     * Get/Set the last day of the simulation for which a DynamicNPI *can* be active.
      * This parameter imitates the last date of a legal directive and ends all active DynamicNPIs.
      * @{
      */
@@ -177,6 +181,7 @@ public:
      */
     void set_directive_end(SimulationTime<FP> end)
     {
+        assert(m_directive_begin < end && "Directive end must be strictly after directive begin.");
         m_directive_end = end;
     }
     /**@}*/
@@ -338,7 +343,7 @@ void implement_dynamic_npis(DampingExprGroup& damping_expr_group, const std::vec
 
             auto active     = get_active_damping<FP>(damping_expr, level, type, begin);
             auto active_end = get_active_damping<FP>(damping_expr, level, type, end)
-                                  .eval(); //copy because it may be removed or changed
+                                  .eval(); // copy because it may be removed or changed
             auto value = make_matrix(npi.get_value().value() * npi.get_group_weights());
 
             auto npi_implemented = false;
