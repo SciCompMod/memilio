@@ -9,7 +9,7 @@ The ratio of two variants can change over time, which affects the average transm
 
 Below is an overview of the model architecture and its compartments.
 
-.. image:: https://github.com/SciCompMod/memilio/assets/69154294/5d1b72ec-2f45-44a4-8eba-b77533c9e6cf
+.. image:: https://martinkuehn.eu/research/images/secirvvs.png
    :alt: SECIRVVS_model
 
 Infection States
@@ -125,6 +125,10 @@ The model includes all parameters from the basic ODE-SECIR model plus additional
    * - :math:`\mu_{I_{Sev}}^{I_{Cr}}`
      - ``CriticalPerSevere``
      - Probability of transition from InfectedSevere to InfectedCritical.
+   * - :math:`\mu_{I_{Sev}}^{D}`
+     - ``DeathsPerSevere``
+     - Probability of dying when in InfectedSevere, independent of ICU capacity. When ICU capacity is exceeded,
+       additional deaths from InfectedSevere may occur through the ICU overflow mechanism.
    * - :math:`\mu_{I_{Cr}}^{D}`
      - ``DeathsPerCritical``
      - Probability of dying when in InfectedCritical.
