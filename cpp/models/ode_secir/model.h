@@ -288,7 +288,13 @@ public:
     Eigen::Ref<Eigen::VectorX<FP>> advance(FP tmax)
     {
         using std::min;
-        auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
+        auto& dyn_npis = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
+
+        // If no dynamic NPI thresholds are set, directly use the base advance
+        if (dyn_npis.get_thresholds().size() == 0) {
+            return BaseT::advance(tmax);
+        }
+
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns<FP>>();
 
         FP delay_npi_implementation;

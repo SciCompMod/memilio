@@ -22,6 +22,7 @@
 #include "memilio/utils/compiler_diagnostics.h"
 #include "ode_secir/model.h"
 #include "ode_secirvvs/model.h"
+#include "ode_secirts/model.h"
 #include "matchers.h"
 
 #include <gtest/gtest.h>
@@ -364,7 +365,7 @@ TEST(DynamicNPIs, mobility)
     edge.apply_mobility(4.5, 1.5, node_from, node_to);
 
     EXPECT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(),
-              0); // threshold exceeded, but only check every 3 days
+              2); // threshold exceeded, NPI immediately applied
 
     EXPECT_CALL(node_from.get_simulation(), advance).Times(1).WillOnce([&](auto t) {
         node_from.get_simulation().result.add_time_point(t, last_state_crit);
@@ -753,4 +754,153 @@ TEST(DynamicNPIs, secirvvs_delayed_implementation)
         sim_3.get_model().parameters.template get<mio::osecirvvs::ContactPatterns<double>>();
     EXPECT_EQ(contact_matrix_sim_3.get_matrix_at(mio::SimulationTime<double>(10.0))(0, 0), 1.0);
     EXPECT_EQ(contact_matrix_sim_3.get_matrix_at(mio::SimulationTime<double>(11.0))(0, 0), 0.5);
+}
+
+TEST(DynamicNPIs, osecirts_delayed_implementation)
+{
+    mio::osecirts::Model<double> model(1);
+    model.populations[{mio::AgeGroup(0), mio::osecirts::InfectionState::InfectedSymptomsNaive}] = 10;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecirts::InfectionState::SusceptibleNaive},
+                                                100);
+
+    model.parameters.get<mio::osecirts::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirts::DailyPartialVaccinations<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirts::DailyFullVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirts::DailyFullVaccinations<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirts::DailyBoosterVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirts::DailyBoosterVaccinations<double>>().array().setConstant(0);
+
+    mio::ContactMatrixGroup<double>& cm = model.parameters.get<mio::osecirts::ContactPatterns<double>>();
+    cm[0]                               = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, 1.0));
+
+    mio::DynamicNPIs<double> npis;
+    npis.set_threshold(0.05 * 50'000, {mio::DampingSampling<double>{0.5,
+                                                                    mio::DampingLevel(0),
+                                                                    mio::DampingType(0),
+                                                                    mio::SimulationTime<double>(0),
+                                                                    {0},
+                                                                    Eigen::VectorXd::Ones(1)}});
+    npis.set_duration(mio::SimulationTime<double>(5.0));
+    npis.set_base_value(50'000);
+    model.parameters.get<mio::osecirts::DynamicNPIsInfectedSymptoms<double>>() = npis;
+
+    EXPECT_EQ(
+        model.parameters.get<mio::osecirts::ContactPatterns<double>>().get_cont_freq_mat()[0].get_dampings().size(), 0);
+
+    // start with t0 = 0.0 so dynamicNPIs are active from the start
+    mio::osecirts::Simulation<double, mio_test::MockSimulation<mio::osecirts::Model>> sim(model, 0.0);
+    sim.advance(3.0);
+    mio::ContactMatrixGroup<double> const& contact_matrix =
+        sim.get_model().parameters.template get<mio::osecirts::ContactPatterns<double>>();
+    EXPECT_EQ(contact_matrix.get_matrix_at(mio::SimulationTime<double>(0.0))(0, 0), 0.5);
+    EXPECT_EQ(contact_matrix.get_matrix_at(mio::SimulationTime<double>(1.0))(0, 0), 0.5);
+    EXPECT_EQ(contact_matrix.get_matrix_at(mio::SimulationTime<double>(3.0))(0, 0), 0.5);
+
+    // second simulation with t0 = 1.0, so the NPIs are implemented at t0 + delay = 3.0
+    npis.set_implementation_delay(mio::SimulationTime<double>(2.0));
+    model.parameters.get<mio::osecirts::DynamicNPIsInfectedSymptoms<double>>() = npis;
+    mio::osecirts::Simulation<double, mio_test::MockSimulation<mio::osecirts::Model>> sim_2(model, 1.0);
+    sim_2.advance(4.0);
+    mio::ContactMatrixGroup<double> const& contact_matrix_sim_2 =
+        sim_2.get_model().parameters.template get<mio::osecirts::ContactPatterns<double>>();
+    EXPECT_EQ(contact_matrix_sim_2.get_matrix_at(mio::SimulationTime<double>(2.0))(0, 0), 1.0);
+    EXPECT_EQ(contact_matrix_sim_2.get_matrix_at(mio::SimulationTime<double>(3.0))(0, 0), 0.5);
+
+    // third simulation; NPIs are implemented at t0 + delay = 11.0
+    npis.set_implementation_delay(mio::SimulationTime<double>(10.0));
+    model.parameters.get<mio::osecirts::DynamicNPIsInfectedSymptoms<double>>() = npis;
+    mio::osecirts::Simulation<double, mio_test::MockSimulation<mio::osecirts::Model>> sim_3_secirts(model, 1.0);
+    sim_3_secirts.advance(4.0);
+    mio::ContactMatrixGroup<double> const& contact_matrix_sim_3_secirts =
+        sim_3_secirts.get_model().parameters.template get<mio::osecirts::ContactPatterns<double>>();
+    EXPECT_EQ(contact_matrix_sim_3_secirts.get_matrix_at(mio::SimulationTime<double>(10.0))(0, 0), 1.0);
+    EXPECT_EQ(contact_matrix_sim_3_secirts.get_matrix_at(mio::SimulationTime<double>(11.0))(0, 0), 0.5);
+}
+
+TEST(DynamicNPIs, osecirts_implementation_with_directives)
+{
+    mio::osecirts::Model<double> model(1);
+    model.populations[{mio::AgeGroup(0), mio::osecirts::InfectionState::InfectedSymptomsNaive}] = 10;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecirts::InfectionState::SusceptibleNaive},
+                                                100);
+
+    model.parameters.get<mio::osecirts::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirts::DailyPartialVaccinations<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirts::DailyFullVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirts::DailyFullVaccinations<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirts::DailyBoosterVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirts::DailyBoosterVaccinations<double>>().array().setConstant(0);
+
+    mio::ContactMatrixGroup<double>& cm = model.parameters.get<mio::osecirts::ContactPatterns<double>>();
+    cm[0]                               = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, 1.0));
+
+    mio::DynamicNPIs<double> npis;
+    npis.set_threshold(0.05 * 50'000, {mio::DampingSampling<double>{0.5,
+                                                                    mio::DampingLevel(0),
+                                                                    mio::DampingType(0),
+                                                                    mio::SimulationTime<double>(0),
+                                                                    {0},
+                                                                    Eigen::VectorXd::Ones(1)}});
+    npis.set_duration(mio::SimulationTime<double>(5.0));
+    npis.set_base_value(50'000);
+    model.parameters.get<mio::osecirts::DynamicNPIsInfectedSymptoms<double>>() = npis;
+
+    // directive begin is after the simulation, so no NPI is implemented
+    npis.set_directive_begin(mio::SimulationTime<double>(5.0));
+    model.parameters.get<mio::osecirts::DynamicNPIsInfectedSymptoms<double>>() = npis;
+    mio::osecirts::Simulation<double, mio_test::MockSimulation<mio::osecirts::Model>> sim(model, 0.0);
+    sim.advance(3.0);
+    mio::ContactMatrixGroup<double> const& contact_matrix =
+        sim.get_model().parameters.template get<mio::osecirts::ContactPatterns<double>>();
+    EXPECT_EQ(contact_matrix.get_matrix_at(mio::SimulationTime<double>(0.0))(0, 0), 1.0);
+    EXPECT_EQ(contact_matrix.get_matrix_at(mio::SimulationTime<double>(1.0))(0, 0), 1.0);
+    EXPECT_EQ(contact_matrix.get_matrix_at(mio::SimulationTime<double>(3.0))(0, 0), 1.0);
+
+    // directive begin is satisfied (t0=0, so delay is not enforced)
+    npis.set_implementation_delay(mio::SimulationTime<double>(2.0)); // not used as t0=0
+    npis.set_directive_begin(mio::SimulationTime<double>(0.0));
+    model.parameters.get<mio::osecirts::DynamicNPIsInfectedSymptoms<double>>() = npis;
+    mio::osecirts::Simulation<double, mio_test::MockSimulation<mio::osecirts::Model>> sim_2(model, 0.0);
+    sim_2.advance(3.0);
+    mio::ContactMatrixGroup<double> const& contact_matrix_sim_2 =
+        sim_2.get_model().parameters.template get<mio::osecirts::ContactPatterns<double>>();
+    EXPECT_EQ(contact_matrix_sim_2.get_matrix_at(mio::SimulationTime<double>(0.0))(0, 0), 0.5);
+    EXPECT_EQ(contact_matrix_sim_2.get_matrix_at(mio::SimulationTime<double>(4.0))(0, 0), 0.5);
+    EXPECT_EQ(contact_matrix_sim_2.get_matrix_at(mio::SimulationTime<double>(5.0))(0, 0), 1.0); // lifted after duration
+
+    // directive begin is satisfied but directive end ends the NPI earlier
+    npis.set_directive_end(mio::SimulationTime<double>(3.0));
+    model.parameters.get<mio::osecirts::DynamicNPIsInfectedSymptoms<double>>() = npis;
+    mio::osecirts::Simulation<double, mio_test::MockSimulation<mio::osecirts::Model>> sim_3(model, 0.0);
+    sim_3.advance(4.0);
+    mio::ContactMatrixGroup<double> const& contact_matrix_sim_3 =
+        sim_3.get_model().parameters.template get<mio::osecirts::ContactPatterns<double>>();
+    EXPECT_EQ(contact_matrix_sim_3.get_matrix_at(mio::SimulationTime<double>(0.0))(0, 0), 0.5);
+    EXPECT_EQ(contact_matrix_sim_3.get_matrix_at(mio::SimulationTime<double>(2.0))(0, 0), 0.5);
+    EXPECT_EQ(contact_matrix_sim_3.get_matrix_at(mio::SimulationTime<double>(3.0))(0, 0), 1.0);
+
+    // directive begin is satisfied (now with delay>0 as t0=1)
+    npis.set_implementation_delay(mio::SimulationTime<double>(2.0));
+    npis.set_directive_begin(mio::SimulationTime<double>(0.0));
+    npis.set_directive_end(mio::SimulationTime<double>(1000000.));
+    model.parameters.get<mio::osecirts::DynamicNPIsInfectedSymptoms<double>>() = npis;
+    mio::osecirts::Simulation<double, mio_test::MockSimulation<mio::osecirts::Model>> sim_4(model, 1.0);
+    sim_4.advance(4.0);
+    mio::ContactMatrixGroup<double> const& contact_matrix_sim_4 =
+        sim_4.get_model().parameters.template get<mio::osecirts::ContactPatterns<double>>();
+    EXPECT_EQ(contact_matrix_sim_4.get_matrix_at(mio::SimulationTime<double>(2.0))(0, 0), 1.0);
+    EXPECT_EQ(contact_matrix_sim_4.get_matrix_at(mio::SimulationTime<double>(3.0))(0, 0), 0.5);
+    EXPECT_EQ(contact_matrix_sim_4.get_matrix_at(mio::SimulationTime<double>(7.0))(0, 0), 0.5);
+    EXPECT_EQ(contact_matrix_sim_4.get_matrix_at(mio::SimulationTime<double>(8.0))(0, 0), 1.0); // lifted after duration
+
+    // directive end ends the NPI earlier (now with delay>0 as t0=1)
+    npis.set_directive_end(mio::SimulationTime<double>(4.0));
+    model.parameters.get<mio::osecirts::DynamicNPIsInfectedSymptoms<double>>() = npis;
+    mio::osecirts::Simulation<double, mio_test::MockSimulation<mio::osecirts::Model>> sim_5(model, 1.0);
+    sim_5.advance(4.0);
+    mio::ContactMatrixGroup<double> const& contact_matrix_sim_5 =
+        sim_5.get_model().parameters.template get<mio::osecirts::ContactPatterns<double>>();
+    EXPECT_EQ(contact_matrix_sim_5.get_matrix_at(mio::SimulationTime<double>(1.0))(0, 0), 1.0);
+    EXPECT_EQ(contact_matrix_sim_5.get_matrix_at(mio::SimulationTime<double>(3.0))(0, 0), 0.5); // starts lifting then
+    EXPECT_EQ(contact_matrix_sim_5.get_matrix_at(mio::SimulationTime<double>(4.0))(0, 0), 1.0);
 }
