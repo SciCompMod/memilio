@@ -22,8 +22,8 @@ if read_the_docs_build:
     subprocess.call('git submodule update --init --recursive', shell=True)
     subprocess.call('cd ..; doxygen', shell=True)
     subprocess.call('cd ..; doxysphinx build source $READTHEDOCS_OUTPUT/html Doxyfile', shell = True)
-    subprocess.call('wget https://nightly.link/SciCompMod/memilio-tutorials/workflows/run-tutorials/main/tutorial-html.zip')
-    subprocess.call('unzip tutorial-html.zip -d source/tutorials/')
+    subprocess.call('wget https://nightly.link/SciCompMod/memilio-tutorials/workflows/run-tutorials/main/tutorial-html.zip', shell = True)
+    subprocess.call('unzip tutorial-html.zip -d source/tutorials/', shell = True)
 
 # sys.path.insert(0, os.path.abspath('../../pycode'))
 
