@@ -302,14 +302,6 @@ public:
         FP delay_npi_implementation;
         FP t = BaseT::get_result().get_last_time();
         while (t < tmax) {
-            // FP t_next_damp = t;
-            // for (auto&& mat : contact_patterns.get_cont_freq_mat()) {
-            //     for (auto&& damp : mat.get_dampings()) {
-            //         FP t_damp = damp.get_time().get();
-            //         if(t_damp > t && t_damp <
-            //     }
-            // }
-
             if (t > 0) {
                 delay_npi_implementation = FP(dyn_npis.get_implementation_delay());
             }
