@@ -1,6 +1,7 @@
 [project]
 name = "memilio-simulation"
-dynamic = ["version"]
+version = "2.3.0" 
+# dynamic = ["version"] 
 description = "Part of MEmilio project, Python bindings to the C++ libraries that contain the models and simulations."
 readme = "README.md"
 requires-python = ">=3.8"
