@@ -46,7 +46,6 @@ The package currently provides the following modules:
   - `model`: Training and evaluation of the model.
   - `network_architectures`: Contains multiple network architectures.
   - `grid_search`: Utilities for hyperparameter optimization.
-  - `hyperparameter_tuning`: Scripts for tuning model hyperparameters.
 
 - `tests`: This file contains all tests.
 
@@ -152,7 +151,7 @@ Example usage:
 Hyperparameter Optimization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The `grid_search.py` and `hyperparameter_tuning.py` modules provide tools for systematic hyperparameter optimization:
+The `grid_search.py` module provides tools for systematic hyperparameter optimization:
 
 1. **Cross-validation**:
 

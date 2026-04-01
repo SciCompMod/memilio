@@ -443,7 +443,7 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
 
         # Check if the results file is created
         results_file = os.path.join(
-            self.path, "saves", "grid_search_results.csv")
+            self.path, "grid_search_results.csv")
         self.assertTrue(os.path.exists(results_file))
 
         # Check if the results file has the expected number of rows

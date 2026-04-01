@@ -106,14 +106,11 @@ def load_gnn_dataset(
         mobility_filename="commuter_mobility_2022.txt"):
     """Load serialized samples and mobility data into a Spektral dataset.
 
-    Args:
-        dataset_path: Pickle file containing the generated training samples.
-        mobility_dir: Directory containing the commuter mobility file.
-        number_of_nodes: Number of spatial nodes to retain from the mobility data.
-        mobility_filename: Mobility file name to use.
-
-    Returns:
-        Spektral dataset with one `Graph` per sample sharing a common adjacency matrix.
+    :param dataset_path: Pickle file containing the generated training samples.
+    :param mobility_dir: Directory containing the commuter mobility file.
+    :param number_of_nodes: Number of spatial nodes to retain from the mobility data.
+    :param mobility_filename: Mobility file name to use.
+    :returns: Spektral dataset with one `Graph` per sample sharing a common adjacency matrix.
     """
     dataset_path = Path(dataset_path)
     mobility_dir = Path(mobility_dir)
@@ -294,7 +291,7 @@ def train_and_evaluate(
         raise ValueError("Dataset must contain at least one sample.")
 
     n_train, n_valid, n_test = calc_split_index(
-        dataset_size, split_train=0.7, split_valid=0.2, split_test=0.1)
+        dataset_size, split_train=0.7, split_valid=0.15, split_test=0.15)
     if n_train == 0 or n_valid == 0 or n_test == 0:
         raise ValueError(
             "Dataset split produced empty partitions. Provide a larger dataset "
