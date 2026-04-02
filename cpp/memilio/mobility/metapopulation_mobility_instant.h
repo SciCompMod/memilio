@@ -43,8 +43,7 @@ public:
     using Simulation = Sim;
 
     template <class... Args>
-        requires std::is_constructible_v<Sim, Args...>
-    SimulationNode(Args&&... args)
+    requires std::is_constructible_v<Sim, Args...> SimulationNode(Args&&... args)
         : m_simulation(std::forward<Args>(args)...)
         , m_last_state(m_simulation.get_result().get_last_value())
         , m_t0(m_simulation.get_result().get_last_time())
@@ -388,10 +387,10 @@ public:
     /** @} */
 
     /**
-     * compute mobility from node_from to node_to.
-     * mobility is based on coefficients.
+     * @brief Compute mobility from node_from to node_to.
+     * Mobility is based on coefficients.
      * The mobile population is added to the current state of node_to, subtracted from node_from.
-     * on return, the mobile population (adjusted for infections) is subtracted from node_to, added to node_from.
+     * On return, the mobile population (adjusted for infections) is subtracted from node_to, added to node_from.
      * @param t current time
      * @param dt last time step (fixed to 0.5 for mobility model)
      * @param node_from node that people changed from, return to
@@ -448,7 +447,7 @@ void MobilityEdge<FP>::add_mobility_result_time_point(const FP t)
 }
 
 /**
- * adjust number of people that changed node when they return according to the model.
+ * @brief Adjust number of people that changed node when they return according to the model.
  * E.g. during the time in the other node, some people who left as susceptible will return exposed.
  * Implemented for general compartmentmodel simulations, overload for your custom model if necessary
  * so that it can be found with argument-dependent lookup, i.e. in the same namespace as the model.
@@ -472,7 +471,7 @@ void calculate_mobility_returns(Eigen::Ref<typename TimeSeries<FP>::Vector> mobi
 }
 
 /**
- * get the percantage of infected people of the total population in the node
+ * @brief Get the percentage of infected people of the total population in the node.
  * If dynamic NPIs are enabled, there needs to be an overload of get_infections_relative(model, y)
  * for the Model type that can be found with argument-dependent lookup. Ideally define get_infections_relative
  * in the same namespace as the Model type.
@@ -495,7 +494,7 @@ FP get_infections_relative(const SimulationNode<FP, Sim>& node, FP t, const Eige
 }
 
 /**
- * Get an additional mobility factor.
+ * @brief Get an additional mobility factor.
  * The absolute mobility for each compartment is computed by c_i * y_i * f_i, wher c_i is the coefficient set in
  * MobilityParameters, y_i is the current compartment population, f_i is the factor returned by this function.
  * This factor is optional, default 1.0. If you need to adjust mobility in that way, overload get_mobility_factors(model, t, y)
@@ -520,7 +519,7 @@ auto get_mobility_factors(const SimulationNode<FP, Sim>& node, FP t, const Eigen
 }
 
 /**
- * Test persons when moving from their source node.
+ * @brief Test persons when moving from their source node.
  * May transfer persons between compartments, e.g., if an infection was detected.
  * This feature is optional, default implementation does nothing.
  * In order to support this feature for your model, implement a test_commuters overload
@@ -547,14 +546,8 @@ template <class Sim>
 void mio::MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<FP, Sim>& node_from,
                                            SimulationNode<FP, Sim>& node_to)
 {
-    //check dynamic npis
-    if (m_t_last_dynamic_npi_check == -std::numeric_limits<FP>::infinity()) {
-        m_t_last_dynamic_npi_check = node_from.get_t0();
-    }
-
     auto& dyn_npis = m_parameters.get_dynamic_npis_infected();
-    if (dyn_npis.get_thresholds().size() > 0 &&
-        floating_point_greater_equal<FP>(t, m_t_last_dynamic_npi_check + dyn_npis.get_interval().get())) {
+    if (dyn_npis.get_thresholds().size() > 0) {
         auto inf_rel =
             get_infections_relative<FP>(node_from, t, node_from.get_last_state()) * dyn_npis.get_base_value();
         auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
@@ -569,7 +562,6 @@ void mio::MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<FP, Sim>&
                                                m_parameters.get_coefficients().get_shape(), g);
                                        });
         }
-        m_t_last_dynamic_npi_check = t;
     }
 
     //returns
@@ -651,7 +643,7 @@ void apply_mobility(FP t, FP dt, MobilityEdge<FP>& mobilityEdge, SimulationNode<
 }
 
 /**
- * create a mobility-based simulation.
+ * @brief Create a mobility-based simulation.
  * After every second time step, for each edge a portion of the population corresponding to the coefficients of the edge
  * changes from one node to the other. In the next timestep, the mobile population returns to their "home" node.
  * Returns are adjusted based on the development in the target node.
@@ -687,7 +679,7 @@ make_mobility_sim(FP t0, FP dt, Graph<SimulationNode<FP, Sim>, MobilityEdge<FP>>
 /** @} */
 
 /**
- * Create a graph simulation without mobility.
+ * @brief Create a graph simulation without mobility.
  *
  * Note that we set the time step of the graph simulation to infinity since we do not require any exchange between the
  * nodes. Hence, in each node, the simulation runs until tmax when advancing the simulation without interruption.
