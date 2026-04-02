@@ -657,9 +657,12 @@ TEST(DynamicNPIs, secir_backward_consistency_with_predefined)
     model.parameters.get<mio::osecir::DynamicNPIsInfectedSymptoms<double>>() = npis;
 
     // t0=1: threshold exceeded at t=1, delay=2 -> t_start=3, t_start_damping=4,
-    //        duration=5 -> t_end=8, t_end_damping=9
+    //        duration=5 -> t_end=8, t_end_damping=9.
+    // Advance only to t=8 so that the keep-alive renewal (which acts at t=9 when t > t_end=8)
+    // never triggers. The damping list then stays identical to the predefined dampings for all
+    // time points, including t=9 (restore window [8,9] fully captured in the list).
     mio::osecir::Simulation<double, mio_test::MockSimulation<mio::osecir::Model>> sim(model, 1.0);
-    sim.advance(10.0);
+    sim.advance(8.0);
 
     // Equivalent predefined dampings: place damping at t_start_damping=4 and restore at t_end_damping=9.
     // smoother_cosine uses window [t-1, t], so damping at t=4 gives window [3,4].
@@ -669,11 +672,57 @@ TEST(DynamicNPIs, secir_backward_consistency_with_predefined)
     cm_expected[0].add_damping(0.0, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime<double>(9.0));
 
     auto const& cm_dynamic = sim.get_model().parameters.get<mio::osecir::ContactPatterns<double>>().get_cont_freq_mat();
-    for (double t : {1.0, 2.0, 3.0, 3.5, 4.0, 5.0, 7.0, 8.0, 8.5, 9.0, 10.0}) {
+    for (double t : {1.0, 2.0, 3.0, 3.5, 4.0, 5.0, 7.0, 8.0, 8.5, 9.0}) {
         EXPECT_DOUBLE_EQ(cm_dynamic.get_matrix_at(mio::SimulationTime<double>(t))(0, 0),
                          cm_expected.get_matrix_at(mio::SimulationTime<double>(t))(0, 0))
             << "Mismatch at t=" << t;
     }
+}
+
+TEST(DynamicNPIs, secir_expiry_keep_alive)
+{
+    // Verify keep-alive: when the NPI expires but the threshold is still exceeded,
+    // the NPI is renewed immediately with no delay gap and no dip between expiry and renewal.
+    //
+    // Timeline (delay=2, duration=5, t0=1):
+    //   1st NPI: t_start=3, t_start_damping=4, t_end=8, t_end_damping=9
+    //   At t=9 (expiry): keep-alive acts, t_start=9, t_start_damping=9 (no +1!),
+    //                    t_end=14, t_end_damping=15  ->  list collapses to [(t=4,0.5),(t=15,0.0)]
+    mio::osecir::Model<double> model(1);
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = 10;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, 100);
+
+    mio::ContactMatrixGroup<double>& cm = model.parameters.get<mio::osecir::ContactPatterns<double>>();
+    cm[0]                               = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, 1.0));
+
+    mio::DynamicNPIs<double> npis;
+    npis.set_threshold(0.05 * 50'000, {mio::DampingSampling<double>{0.5,
+                                                                    mio::DampingLevel(0),
+                                                                    mio::DampingType(0),
+                                                                    mio::SimulationTime<double>(0),
+                                                                    {0},
+                                                                    Eigen::VectorXd::Ones(1)}});
+    npis.set_duration(mio::SimulationTime<double>(5.0));
+    npis.set_base_value(50'000);
+    npis.set_implementation_delay(mio::SimulationTime<double>(2.0));
+    model.parameters.get<mio::osecir::DynamicNPIsInfectedSymptoms<double>>() = npis;
+
+    // Stop at t=14 so the 2nd keep-alive (which would act at t=15) does not trigger.
+    mio::osecir::Simulation<double, mio_test::MockSimulation<mio::osecir::Model>> sim(model, 1.0);
+    sim.advance(14.0);
+
+    auto const& cm_dyn = sim.get_model().parameters.get<mio::osecir::ContactPatterns<double>>().get_cont_freq_mat();
+
+    // Damping list after keep-alive collapses to [(t=4, 0.5), (t=15, 0.0)]:
+    EXPECT_DOUBLE_EQ(cm_dyn.get_matrix_at(mio::SimulationTime<double>(4.0))(0, 0), 0.5); // 1st NPI active
+    EXPECT_DOUBLE_EQ(cm_dyn.get_matrix_at(mio::SimulationTime<double>(8.0))(0, 0), 0.5); // still active
+    // no dip at t=9 as keep-alive overwrote the restore entry, contact stays at 0.5.
+    // (Without this fix the restore would restore to 1.0 at t=9.)
+    EXPECT_DOUBLE_EQ(cm_dyn.get_matrix_at(mio::SimulationTime<double>(9.0))(0, 0), 0.5);
+    EXPECT_DOUBLE_EQ(cm_dyn.get_matrix_at(mio::SimulationTime<double>(10.0))(0, 0), 0.5); // still constant
+    EXPECT_DOUBLE_EQ(cm_dyn.get_matrix_at(mio::SimulationTime<double>(14.0))(0, 0), 0.5); // still active
+    // Restore window [14, 15]: complete at t=15.
+    EXPECT_DOUBLE_EQ(cm_dyn.get_matrix_at(mio::SimulationTime<double>(15.0))(0, 0), 1.0);
 }
 
 TEST(DynamicNPIs, secirvvs_threshold_safe)
