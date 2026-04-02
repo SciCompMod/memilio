@@ -27,9 +27,16 @@
 #include "parameter_distributions.h"
 #include <memory>
 #include <string>
+#include <concepts>
 
 namespace mio
 {
+
+template <class T>
+concept HasSampleFunction = requires(T t) {
+    { t.get_sample(std::declval<RandomNumberGenerator&>()) } -> std::convertible_to<ScalarType>;
+    { t.get_sample(std::declval<abm::PersonalRandomNumberGenerator&>()) } -> std::convertible_to<ScalarType>;
+};
 
 /**
  * @brief This class represents an arbitrary ParameterDistribution.
@@ -44,7 +51,7 @@ public:
      * The implementation handed to the constructor should have get_sample function
      * overloaded with mio::RandomNumberGenerator and mio::abm::PersonalRandomNumberGenerator as input arguments
      */
-    template <class Impl>
+    template <HasSampleFunction Impl>
     AbstractParameterDistribution(Impl&& dist)
         : m_dist(std::make_shared<Impl>(std::move(dist)))
         , sample_impl1([](void* d, RandomNumberGenerator& rng) {
