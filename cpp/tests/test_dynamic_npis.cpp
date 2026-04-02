@@ -631,6 +631,51 @@ TEST(DynamicNPIs, secir_implementation_with_directives)
     EXPECT_EQ(contact_matrix_sim_5.get_matrix_at(mio::SimulationTime<double>(5.0))(0, 0), 1.0); // lifted at t_end+1=5
 }
 
+TEST(DynamicNPIs, secir_backward_consistency_with_predefined)
+{
+    // Verify the core reproducibility guarantee of the +1 offset:
+    // A simulation with dynamic NPIs (threshold exceeded at t=1, delay=2 -> t_start=3)
+    // must produce the same contact matrix as a simulation with predefined dampings
+    // placed at t_start_damping = t_start+1 = 4 and t_end_damping = t_end+1 = 9.
+    mio::osecir::Model<double> model(1);
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = 10;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, 100);
+
+    mio::ContactMatrixGroup<double>& cm = model.parameters.get<mio::osecir::ContactPatterns<double>>();
+    cm[0]                               = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, 1.0));
+
+    mio::DynamicNPIs<double> npis;
+    npis.set_threshold(0.05 * 50'000, {mio::DampingSampling<double>{0.5,
+                                                                    mio::DampingLevel(0),
+                                                                    mio::DampingType(0),
+                                                                    mio::SimulationTime<double>(0),
+                                                                    {0},
+                                                                    Eigen::VectorXd::Ones(1)}});
+    npis.set_duration(mio::SimulationTime<double>(5.0));
+    npis.set_base_value(50'000);
+    npis.set_implementation_delay(mio::SimulationTime<double>(2.0));
+    model.parameters.get<mio::osecir::DynamicNPIsInfectedSymptoms<double>>() = npis;
+
+    // t0=1: threshold exceeded at t=1, delay=2 -> t_start=3, t_start_damping=4,
+    //        duration=5 -> t_end=8, t_end_damping=9
+    mio::osecir::Simulation<double, mio_test::MockSimulation<mio::osecir::Model>> sim(model, 1.0);
+    sim.advance(10.0);
+
+    // Equivalent predefined dampings: place damping at t_start_damping=4 and restore at t_end_damping=9.
+    // smoother_cosine uses window [t-1, t], so damping at t=4 gives window [3,4].
+    mio::ContactMatrixGroup<double> cm_expected(1, 1);
+    cm_expected[0] = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, 1.0));
+    cm_expected[0].add_damping(0.5, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime<double>(4.0));
+    cm_expected[0].add_damping(0.0, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime<double>(9.0));
+
+    auto const& cm_dynamic = sim.get_model().parameters.get<mio::osecir::ContactPatterns<double>>().get_cont_freq_mat();
+    for (double t : {1.0, 2.0, 3.0, 3.5, 4.0, 5.0, 7.0, 8.0, 8.5, 9.0, 10.0}) {
+        EXPECT_DOUBLE_EQ(cm_dynamic.get_matrix_at(mio::SimulationTime<double>(t))(0, 0),
+                         cm_expected.get_matrix_at(mio::SimulationTime<double>(t))(0, 0))
+            << "Mismatch at t=" << t;
+    }
+}
+
 TEST(DynamicNPIs, secirvvs_threshold_safe)
 {
     mio::osecirvvs::Model<double> model(1);
