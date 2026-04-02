@@ -28,6 +28,7 @@
 #include "epidemiology/dynamic_npis.h"
 #include "epidemiology/simulation_day.h"
 #include "math/integrator.h"
+#include "math/time_series_functor.h"
 #include "mobility/metapopulation_mobility_instant.h"
 #include "utils/abstract_parameter_distribution.h"
 #include "utils/date.h"
@@ -161,6 +162,8 @@ PYBIND11_MODULE(_simulation, m)
     });
 
     pymio::bind_random_number_generator(m, "RandomNumberGenerator");
+
+    pymio::bind_time_series_functor(m, "TimeSeriesFunctor");
 
     m.attr("__version__") = "dev";
 }

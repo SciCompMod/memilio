@@ -136,11 +136,13 @@ PYBIND11_MODULE(_simulation_abm, m)
     pymio::bind_CustomIndexArray<int, mio::AgeGroup>(m, "_intAgeParameterArray");
     pymio::bind_CustomIndexArray<double, mio::abm::VirusVariant>(m, "_doubleVirusVariantArray");
     pymio::bind_CustomIndexArray<mio::abm::TestParameters, mio::abm::TestType>(m, "_TestData");
-    pymio::bind_Index<mio::abm::ProtectionType>(m, "ProtectionTypeIndex");
+    pymio::bind_CustomIndexArray<mio::TimeSeriesFunctor<double>, mio::abm::ProtectionType, mio::AgeGroup,
+                                 mio::abm::VirusVariant>(m, "_ProtectionFactorArray");
     pymio::bind_ParameterSet<mio::abm::ParametersBase, pymio::EnablePickling::Never>(m, "ParametersBase");
     pymio::bind_class<mio::abm::Parameters, pymio::EnablePickling::Never, mio::abm::ParametersBase>(m, "Parameters")
         .def(py::init<size_t>())
-        .def("check_constraints", &mio::abm::Parameters::check_constraints);
+        .def("check_constraints", &mio::abm::Parameters::check_constraints)
+        .def_property_readonly("num_age_groups", &mio::abm::Parameters::get_num_groups);
 
     pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters, pymio::EnablePickling::Never>(
         m, "LocalInfectionParameters")
@@ -168,7 +170,13 @@ PYBIND11_MODULE(_simulation_abm, m)
                  self.add_new_infection(
                      mio::abm::Infection(rng, variant, age, parameters, start_date, infection_state));
              })
-        .def("get_infection_state", &mio::abm::Person::get_infection_state);
+        .def("add_new_vaccination", &mio::abm::Person::add_new_vaccination, py::return_value_policy::reference_internal)
+        // .def("add_new_vaccination",
+        //      [](mio::abm::Person& self, mio::abm::ProtectionType type, mio::abm::TimePoint start_date) {
+        //          self.add_new_vaccination(type, start_date);
+        //      })
+        .def("get_infection_state", &mio::abm::Person::get_infection_state)
+        .def_property_readonly("vaccinations", py::overload_cast<>(&mio::abm::Person::get_vaccinations, py::const_));
 
     pymio::bind_class<mio::abm::TestingCriteria, pymio::EnablePickling::Never>(m, "TestingCriteria")
         .def(py::init<const std::vector<mio::AgeGroup>&, const std::vector<mio::abm::InfectionState>&>(),
