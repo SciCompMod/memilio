@@ -1,8 +1,7 @@
-[  
+[
     {
-        "python_generation_module_path": "/home/rich_dn/repos/parallel_processing/pycode/memilio-generation/../memilio-generation",
-        "skbuild_path_to_database": "/home/rich_dn/repos/parallel_processing/pycode/memilio-generation/_skbuild/linux-x86_64-3.10/cmake-build",
-        "libclang_library_path": "/tools/modulesystem/spack-22.2/opt/spack/linux-ubuntu20.04-x86_64_v3/gcc-9.4.0/llvm-14.0.6-u6u3nxayshaogte7pdnas4i6h4ta5ymi/lib/libclang.so"   
+        "python_generation_module_path": "",
+        "skbuild_path_to_database": "",
+        "libclang_library_path": ""
     }
-
 ]
