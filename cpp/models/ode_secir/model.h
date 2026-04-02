@@ -322,11 +322,17 @@ public:
 
                         if (t + delay_npi_implementation < direc_end) {
                             auto t_start = SimulationTime<FP>(t + delay_npi_implementation);
-                            // set the end to the minimum of start+delay and the end of the directive
+                            // set the end to the minimum of start+duration and the end of the directive
                             auto t_end = SimulationTime<FP>(min<FP>(direc_end, FP(t_start + dyn_npis.get_duration())));
                             m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
+                            // For t_start > 0: shift dampings by +1 so the smooth transition window
+                            // [t_start, t_start+1] lies in the future, consistent with predefined dampings.
+                            // For t_start = 0: window [-1, 0] is in the past, so keep as is.
+                            auto t_start_damping =
+                                (FP(t_start) > FP(0)) ? SimulationTime<FP>(FP(t_start) + FP(1)) : t_start;
+                            auto t_end_damping = (FP(t_start) > FP(0)) ? SimulationTime<FP>(FP(t_end) + FP(1)) : t_end;
                             implement_dynamic_npis<FP>(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
-                                                       t_start, t_end, [](auto& g) {
+                                                       t_start_damping, t_end_damping, [](auto& g) {
                                                            return make_contact_damping_matrix(g);
                                                        });
                         }
