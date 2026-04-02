@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Julia Bicker
 *
@@ -37,11 +37,12 @@ namespace hybrid
 
 template <>
 void convert_model(const dabm::Simulation<SingleWell<mio::osecir::InfectionState>>& current_model,
-                   smm::Simulation<ScalarType, 1, mio::osecir::InfectionState>& target_model);
+                   smm::Simulation<ScalarType, smm::Model<ScalarType, mio::osecir::InfectionState>>& target_model);
 
 template <>
-void convert_model(const smm::Simulation<ScalarType, 1, mio::osecir::InfectionState>& current_model,
-                   dabm::Simulation<SingleWell<mio::osecir::InfectionState>>& target_model);
+void convert_model(
+    const smm::Simulation<ScalarType, smm::Model<ScalarType, mio::osecir::InfectionState>>& current_model,
+    dabm::Simulation<SingleWell<mio::osecir::InfectionState>>& target_model);
 
 template <>
 void convert_model(const dabm::Simulation<SingleWell<mio::osecir::InfectionState>>& current_model,

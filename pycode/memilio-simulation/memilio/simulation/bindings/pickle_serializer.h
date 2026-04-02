@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert
 *
@@ -49,9 +49,6 @@ struct PickleType : std::false_type {
 template <>
 struct PickleType<bool> : std::true_type {
 };
-
-template <class T>
-using is_small_integral = std::integral_constant<bool, (std::is_integral<T>::value && sizeof(T) <= 4)>;
 
 //small ints
 template <class T>

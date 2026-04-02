@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -186,7 +186,7 @@ TYPED_TEST(TestTimeSeries, data)
     ts.add_time_point(2.0, v2);
     ts.add_time_point(3.0, v3);
 
-    auto data_range = mio::make_range(ts.data(), ts.data() + 8);
+    auto data_range = mio::Range(ts.data(), ts.data() + 8);
     ASSERT_THAT(data_range, testing::ElementsAre(TypeParam(0.0), TypeParam(0.5), TypeParam(1.0), TypeParam(1.5),
                                                  TypeParam(2.0), TypeParam(2.5), TypeParam(3.0), TypeParam(3.5)));
 }
@@ -216,13 +216,13 @@ TYPED_TEST(TestTimeSeries, iteratorsRange)
         ++i;
     }
     i = 3;
-    for (auto&& v : mio::make_range(ts.rbegin(), ts.rend())) {
+    for (auto&& v : mio::Range(ts.rbegin(), ts.rend())) {
         ASSERT_EQ(print_wrap(v), print_wrap(ts[i]));
         --i;
     }
     ASSERT_THAT(ts, testing::ElementsAre(v0, v1, v2, v3));
     ASSERT_THAT(ts_constref, testing::ElementsAre(v0, v1, v2, v3));
-    ASSERT_THAT(mio::make_range(ts.rbegin(), ts.rend()), testing::ElementsAre(v3, v2, v1, v0));
+    ASSERT_THAT(mio::Range(ts.rbegin(), ts.rend()), testing::ElementsAre(v3, v2, v1, v0));
 }
 
 TYPED_TEST(TestTimeSeries, timeIteratorsRange)
@@ -362,7 +362,9 @@ TYPED_TEST(TestTimeSeries, print_table_cout_overload)
     // Just test that the print_table overload without ostream argument doesn't throw any exceptions.
     // The function behaviour is tested in "TestTimeSeries.print_table".
     mio::TimeSeries<TypeParam> ts = mio::TimeSeries<TypeParam>::zero(1, 1);
+    std::cout.setstate(std::ios_base::failbit);
     ASSERT_NO_FATAL_FAILURE(ts.print_table());
+    std::cout.clear();
 }
 
 TYPED_TEST(TestTimeSeries, export_csv)

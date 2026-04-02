@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, David Kerkmann, Sascha Korf
 *
@@ -20,40 +20,46 @@
 #ifndef MEMILIO_DATA_ANALYZE_RESULT_H
 #define MEMILIO_DATA_ANALYZE_RESULT_H
 
+#include "memilio/config.h"
+#include "memilio/utils/logging.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/math/interpolation.h"
 #include "memilio/io/io.h"
 
-#include <functional>
+#include <cassert>
 #include <vector>
 
 namespace mio
 {
 
 /**
- * @brief interpolate time series with evenly spaced, integer time points that represent whole days.
- * time points [t0, t1, t2, ..., tmax] interpolated as days [ceil(t0), floor(t0) + 1,...,floor(tmax)].
- * tolerances in the first and last time point (t0 and t_max) are accounted for.
- * values at new time points are linearly interpolated from their immediate neighbors from the old time points.
+ * @brief Interpolate a given time series with evenly spaced, integer time points that represent whole days.
+ * We choose the time points for the interpolated time series using the first and last time points, t0 and tmax, as
+ * [ceil(t0 - abs_tol), floor(t0) + 1, ..., floor(tmax + abs_tol)].
+ * The tolerances in the first and last time point account for inaccuracies from the integration scheme or
+ * floating point arithmetic. Avoid using large(r) tolerances, as this function can not extrapolate results.
+ * The values at new time points are linearly interpolated from their immediate neighbors within the given time series.
  * @see interpolate_simulation_result
- * @param simulation_result time series to interpolate
- * @param abs_tol  absolute tolerance given for doubles t0 and tmax to account for small deviations from whole days.
- * @return interpolated time series
- */
-template <typename FP>
-TimeSeries<FP> interpolate_simulation_result(const TimeSeries<FP>& simulation_result, const FP abs_tol = 1e-14);
-
-/**
- * @brief interpolate time series with freely chosen time points that lie in between the time points of the given time series up to a given tolerance.
- * values at new time points are linearly interpolated from their immediate neighbors from the old time points.
- * @param simulation_result time series to interpolate
- * @param interpolations_times std::vector of time points at which simulation results are interpolated.
- * @return interpolated time series at given interpolation points
+ * @param simulation_result A time series to interpolate.
+ * @param abs_tol Optional parameter to set the absolute tolerance used to account for small deviations from whole days.
+ *   Must be less then 1. The default tolerance is chosen to minimize the chances of "loosing" days due to rounding.
+ * @return An interpolated time series with integer valued times.
  */
 template <typename FP>
 TimeSeries<FP> interpolate_simulation_result(const TimeSeries<FP>& simulation_result,
+                                             const FP abs_tol = FP{100.} * Limits<FP>::zero_tolerance());
 
+/**
+ * @brief Interpolate a time series at the given time points.
+ * New time points must be monotonic increasing, and lie in between time points of the given time series.
+ * The values at new time points are linearly interpolated from their immediate neighbors within the given time series.
+ * @param simulation_result The time series to interpolate.
+ * @param interpolation_times An std::vector of time points at which simulation results are interpolated.
+ * @return The interpolated time series at given interpolation points.
+ */
+template <typename FP>
+TimeSeries<FP> interpolate_simulation_result(const TimeSeries<FP>& simulation_result,
                                              const std::vector<FP>& interpolation_times);
 
 /**
@@ -180,14 +186,15 @@ FP result_distance_2norm(const std::vector<mio::TimeSeries<FP>>& result1,
 template <typename FP>
 TimeSeries<FP> interpolate_simulation_result(const TimeSeries<FP>& simulation_result, const FP abs_tol)
 {
+    assert(abs_tol < 1);
     using std::ceil;
     using std::floor;
     const auto t0    = simulation_result.get_time(0);
     const auto t_max = simulation_result.get_last_time();
-    // add another day if the first time point is equal to day_0 up to absolute tolerance tol
-    const auto day0 = (t0 - abs_tol < ceil(t0) - 1) ? floor(t0) : ceil(t0);
-    // add another day if the last time point is equal to day_max up to absolute tolerance tol
-    const auto day_max = (t_max + abs_tol > floor(t_max) + 1) ? ceil(t_max) : floor(t_max);
+    // add an additional day, if the first time point is within tolerance of floor(t0)
+    const auto day0 = ceil(t0 - abs_tol);
+    // add an additional day, if the last time point is within tolerance of ceil(tmax)
+    const auto day_max = floor(t_max + abs_tol);
 
     // create interpolation_times vector with all days between day0 and day_max
     std::vector<FP> tps(static_cast<int>(day_max) - static_cast<int>(day0) + 1);
@@ -370,80 +377,50 @@ template <class FP>
 IOResult<TimeSeries<FP>> merge_time_series(const TimeSeries<FP>& ts1, const TimeSeries<FP>& ts2,
                                            bool add_values = false)
 {
-    TimeSeries<FP> merged_ts(ts1.get_num_elements());
     if (ts1.get_num_elements() != ts2.get_num_elements()) {
         log_error("TimeSeries have a different number of elements.");
         return failure(mio::StatusCode::InvalidValue);
     }
-    else {
-        Eigen::Index t1_iterator = 0;
-        Eigen::Index t2_iterator = 0;
-        bool t1_finished         = false;
-        bool t2_finished         = false;
-        while (!t1_finished || !t2_finished) {
-            if (!t1_finished) {
-                if (ts1.get_time(t1_iterator) < ts2.get_time(t2_iterator) ||
-                    t2_finished) { // Current time point of first TimeSeries is smaller than current time point of second TimeSeries or second TimeSeries has already been copied entirely
-                    merged_ts.add_time_point(ts1.get_time(t1_iterator), ts1.get_value(t1_iterator));
-                    t1_iterator += 1;
-                }
-                else if (!t2_finished && ts1.get_time(t1_iterator) ==
-                                             ts2.get_time(t2_iterator)) { // Both TimeSeries have the current time point
-                    if (add_values) {
-                        merged_ts.add_time_point(ts1.get_time(t1_iterator),
-                                                 ts1.get_value(t1_iterator) + ts2.get_value(t2_iterator));
-                    }
-                    else {
-                        merged_ts.add_time_point(ts1.get_time(t1_iterator), ts1.get_value(t1_iterator));
-                        log_warning("Both TimeSeries have values for t={}. The value of the first TimeSeries is used",
-                                    ts1.get_time(t1_iterator));
-                    }
-                    t1_iterator += 1;
-                    t2_iterator += 1;
-                    if (t2_iterator >=
-                        ts2.get_num_time_points()) { // Check if all values of second TimeSeries have been copied
-                        t2_finished = true;
-                        t2_iterator = ts2.get_num_time_points() - 1;
-                    }
-                }
-                if (t1_iterator >=
-                    ts1.get_num_time_points()) { // Check if all values of first TimeSeries have been copied
-                    t1_finished = true;
-                    t1_iterator = ts1.get_num_time_points() - 1;
-                }
-            }
-            if (!t2_finished) {
-                if (ts2.get_time(t2_iterator) < ts1.get_time(t1_iterator) ||
-                    t1_finished) { // Current time point of second TimeSeries is smaller than current time point of first TimeSeries or first TimeSeries has already been copied entirely
-                    merged_ts.add_time_point(ts2.get_time(t2_iterator), ts2.get_value(t2_iterator));
-                    t2_iterator += 1;
-                }
-                else if (!t1_finished && ts2.get_time(t2_iterator) ==
-                                             ts1.get_time(t1_iterator)) { // Both TimeSeries have the current time point
-                    if (add_values) {
-                        merged_ts.add_time_point(ts1.get_time(t1_iterator),
-                                                 ts1.get_value(t1_iterator) + ts2.get_value(t2_iterator));
-                    }
-                    else {
-                        merged_ts.add_time_point(ts1.get_time(t1_iterator), ts1.get_value(t1_iterator));
-                        log_warning("Both TimeSeries have values for t={}. The value of the first TimeSeries is used",
-                                    ts1.get_time(t1_iterator));
-                    }
-                    t1_iterator += 1;
-                    t2_iterator += 1;
-                    if (t1_iterator >=
-                        ts1.get_num_time_points()) { // Check if all values of first TimeSeries have been copied
-                        t1_finished = true;
-                        t1_iterator = ts1.get_num_time_points() - 1;
-                    }
-                }
-                if (t2_iterator >=
-                    ts2.get_num_time_points()) { // Check if all values of second TimeSeries have been copied
-                    t2_finished = true;
-                    t2_iterator = ts2.get_num_time_points() - 1;
-                }
-            }
+    if (!ts1.is_strictly_monotonic() || !ts2.is_strictly_monotonic()) {
+        log_error("TimeSeries need to have strictly monotonic time points to be merged.");
+        return failure(mio::StatusCode::InvalidValue);
+    }
+    Eigen::Index t1_iterator   = 0;
+    Eigen::Index t2_iterator   = 0;
+    const Eigen::Index t1_size = ts1.get_num_time_points();
+    const Eigen::Index t2_size = ts2.get_num_time_points();
+    TimeSeries<FP> merged_ts(ts1.get_num_elements());
+    merged_ts.reserve(t1_size + t2_size);
+    // merge entries of both time series until one finishes
+    while (t1_iterator < t1_size && t2_iterator < t2_size) {
+        // check which ts has the smaller time at the current iterator, and merge it
+        if (ts1.get_time(t1_iterator) < ts2.get_time(t2_iterator)) {
+            merged_ts.add_time_point(ts1.get_time(t1_iterator), ts1.get_value(t1_iterator));
+            ++t1_iterator;
         }
+        else if (ts1.get_time(t1_iterator) == ts2.get_time(t2_iterator)) {
+            merged_ts.add_time_point(ts1.get_time(t1_iterator), ts1.get_value(t1_iterator));
+            if (add_values) {
+                merged_ts.get_last_value() += ts2.get_value(t2_iterator);
+            }
+            else {
+                log_warning("Both TimeSeries have values for t={}. The value of the first TimeSeries is used",
+                            ts1.get_time(t1_iterator));
+            }
+            ++t1_iterator;
+            ++t2_iterator;
+        }
+        else { // " > "
+            merged_ts.add_time_point(ts2.get_time(t2_iterator), ts2.get_value(t2_iterator));
+            ++t2_iterator;
+        }
+    }
+    // append remaining entries. at most one of the following for loops will be executed
+    for (; t1_iterator < t1_size; ++t1_iterator) {
+        merged_ts.add_time_point(ts1.get_time(t1_iterator), ts1.get_value(t1_iterator));
+    }
+    for (; t2_iterator < t2_size; ++t2_iterator) {
+        merged_ts.add_time_point(ts2.get_time(t2_iterator), ts2.get_value(t2_iterator));
     }
     return success(merged_ts);
 }

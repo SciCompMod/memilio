@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Henrik Zunker
 *
@@ -77,28 +77,35 @@ public:
             return static_cast<size_t>(s);
         };
 
-        FP I_total = y[idx(InfectionState::I1)] + y[idx(InfectionState::I2)] + y[idx(InfectionState::I3)] +
-                     y[idx(InfectionState::I4)];
-        FP R_total = y[idx(InfectionState::R1)] + y[idx(InfectionState::R2)] + y[idx(InfectionState::R3)] +
-                     y[idx(InfectionState::R4)];
-        FP N = pop.sum();
+        const FP I_total = y[idx(InfectionState::I1)] + y[idx(InfectionState::I2)] + y[idx(InfectionState::I3)] +
+                           y[idx(InfectionState::I4)];
+        const FP R_total = y[idx(InfectionState::R1)] + y[idx(InfectionState::R2)] + y[idx(InfectionState::R3)] +
+                           y[idx(InfectionState::R4)];
+        const FP N       = pop.sum();
+        const FP inv_N   = (N > Limits<FP>::zero_tolerance())
+                               ? FP(1) / N
+                               : FP(0.0); // avoid excessive force of infection or division by zero when empty
+        const FP lambda1 = beta1 * I_total * inv_N;
+        const FP lambda2 = beta2 * I_total * inv_N;
+        const FP lambda3 = beta3 * I_total * inv_N;
+        const FP lambda4 = beta4 * I_total * inv_N;
 
         // dM
         dydt[idx(InfectionState::MaternalImmune)] = mu * R_total - (xi + mu) * y[idx(InfectionState::MaternalImmune)];
 
         // dS1
         dydt[idx(InfectionState::S1)] = mu * (N - R_total) + xi * y[idx(InfectionState::MaternalImmune)] -
-                                        mu * y[idx(InfectionState::S1)] - beta1 * I_total * y[idx(InfectionState::S1)];
+                                        mu * y[idx(InfectionState::S1)] - lambda1 * y[idx(InfectionState::S1)];
 
         // dE1..E4
         dydt[idx(InfectionState::E1)] =
-            beta1 * I_total * y[idx(InfectionState::S1)] - (mu + sigma) * y[idx(InfectionState::E1)];
+            lambda1 * y[idx(InfectionState::S1)] - (mu + sigma) * y[idx(InfectionState::E1)];
         dydt[idx(InfectionState::E2)] =
-            beta2 * I_total * y[idx(InfectionState::S2)] - (mu + sigma) * y[idx(InfectionState::E2)];
+            lambda2 * y[idx(InfectionState::S2)] - (mu + sigma) * y[idx(InfectionState::E2)];
         dydt[idx(InfectionState::E3)] =
-            beta3 * I_total * y[idx(InfectionState::S3)] - (mu + sigma) * y[idx(InfectionState::E3)];
+            lambda3 * y[idx(InfectionState::S3)] - (mu + sigma) * y[idx(InfectionState::E3)];
         dydt[idx(InfectionState::E4)] =
-            beta4 * I_total * y[idx(InfectionState::S4)] - (mu + sigma) * y[idx(InfectionState::E4)];
+            lambda4 * y[idx(InfectionState::S4)] - (mu + sigma) * y[idx(InfectionState::E4)];
 
         // dI1..I4
         dydt[idx(InfectionState::I1)] = sigma * y[idx(InfectionState::E1)] - (nu + mu) * y[idx(InfectionState::I1)];
@@ -113,12 +120,12 @@ public:
         dydt[idx(InfectionState::R4)] = nu * y[idx(InfectionState::I4)] - (mu + gamma) * y[idx(InfectionState::R4)];
 
         // dS2,S3,S4
-        dydt[idx(InfectionState::S2)] = gamma * y[idx(InfectionState::R1)] - mu * y[idx(InfectionState::S2)] -
-                                        beta2 * I_total * y[idx(InfectionState::S2)];
-        dydt[idx(InfectionState::S3)] = gamma * y[idx(InfectionState::R2)] - mu * y[idx(InfectionState::S3)] -
-                                        beta3 * I_total * y[idx(InfectionState::S3)];
+        dydt[idx(InfectionState::S2)] =
+            gamma * y[idx(InfectionState::R1)] - mu * y[idx(InfectionState::S2)] - lambda2 * y[idx(InfectionState::S2)];
+        dydt[idx(InfectionState::S3)] =
+            gamma * y[idx(InfectionState::R2)] - mu * y[idx(InfectionState::S3)] - lambda3 * y[idx(InfectionState::S3)];
         dydt[idx(InfectionState::S4)] = gamma * (y[idx(InfectionState::R3)] + y[idx(InfectionState::R4)]) -
-                                        mu * y[idx(InfectionState::S4)] - beta4 * I_total * y[idx(InfectionState::S4)];
+                                        mu * y[idx(InfectionState::S4)] - lambda4 * y[idx(InfectionState::S4)];
     }
 
     /**

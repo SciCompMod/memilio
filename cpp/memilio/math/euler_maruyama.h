@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin J. Kuehn, Daniel Abele
 *
@@ -20,8 +20,8 @@
 #ifndef MIO_MATH_EULER_MARUYAMA_H
 #define MIO_MATH_EULER_MARUYAMA_H
 
+#include "memilio/math/eigen.h" // IWYU pragma: keep
 #include "memilio/math/integrator.h"
-#include "memilio/math/eigen.h"
 #include "memilio/math/math_utils.h"
 #include "memilio/utils/logging.h"
 
@@ -41,7 +41,7 @@ public:
     {
     }
 
-    std::unique_ptr<SdeIntegratorCore<FP>> clone() const override 
+    std::unique_ptr<SdeIntegratorCore<FP>> clone() const override
     {
         return std::make_unique<EulerMaruyamaIntegratorCore>(*this);
     }

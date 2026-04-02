@@ -15,7 +15,7 @@ Required python packages:
 
 - pandas>=1.2.2
 - matplotlib
-- numpy>=1.22,<1.25
+- numpy>=1.22, !=1.25.*
 - openpyxl
 - xlrd
 - requests

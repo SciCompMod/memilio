@@ -67,4 +67,4 @@ If you use MEmilio, please :doc:`cite our work<citation>`.
       :caption: Code API 
 
       pythonapi/pythonapi
-      api/library_root
+      cppapi/html/index

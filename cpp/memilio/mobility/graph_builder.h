@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Kilian Volmer
 *
@@ -22,11 +22,8 @@
 
 #include "memilio/mobility/graph.h"
 #include "memilio/utils/logging.h"
-#include "memilio/utils/stl_util.h"
+
 #include <algorithm>
-#include <functional>
-#include <iostream>
-#include <ranges>
 
 namespace mio
 {

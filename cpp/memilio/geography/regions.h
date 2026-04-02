@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -17,18 +17,13 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_EPI_REGIONS_H
-#define MIO_EPI_REGIONS_H
+#ifndef MIO_GEOGRAPHY_REGIONS_H
+#define MIO_GEOGRAPHY_REGIONS_H
 
 #include "memilio/utils/date.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/utils/type_safe.h"
 #include "memilio/utils/index.h"
-
-#include "boost/filesystem.hpp"
-
-//is used to provide some paths as function arguments
-namespace fs = boost::filesystem;
 
 namespace mio
 {
@@ -47,7 +42,7 @@ struct Region : public mio::Index<Region> {
 };
 
 /**
- * Id of a state.
+ * @brief Typesafe id of a German state.
  * For Germany the Ids are:
  * 1 = Schleswig-Holstein
  * 2 = Hamburg
@@ -65,16 +60,37 @@ struct Region : public mio::Index<Region> {
  * 14 = Sachsen
  * 15 = Sachsen-Anhalt
  * 16 = Thüringen
+ * The underlying int value can be obtained via the get() member function:
+ * @code
+ *   StateId s(3);
+ *   int v = s.get();
+ * @endcode
+ * @see TypeSafe
  */
 DECL_TYPESAFE(int, StateId);
 
 /**
- * Id of a county.
+ * @brief Typesafe id of a county.
  * Format ssxxx where ss is the id of the state that the county is in (first s may be 0) and xxx are other digits.
  * Ids are generally not consecutive, even within one state.
+ * The underlying int value can be obtained via the get() member function:
+ * @code
+ *   CountyId c(5315);
+ *   int v = c.get();
+ * @endcode
+ * @see TypeSafe
  */
 DECL_TYPESAFE(int, CountyId);
 
+/**
+ * @brief Typesafe id of a district.
+ * The underlying int value can be obtained via the get() member function:
+ * @code
+ *   DistrictId d(9162);
+ *   int v = d.get();
+ * @endcode
+ * @see TypeSafe
+ */
 DECL_TYPESAFE(int, DistrictId);
 
 /**
@@ -88,8 +104,7 @@ StateId get_state_id(int county);
  * @param[in] state id of the state.
  * @return range of pairs of start and end dates of holiday periods, sorted by start date.
  */
-Range<std::pair<std::vector<std::pair<Date, Date>>::const_iterator, std::vector<std::pair<Date, Date>>::const_iterator>>
-get_holidays(StateId state);
+Range<std::vector<std::pair<Date, Date>>::const_iterator> get_holidays(StateId state);
 
 /**
  * get the holidays in a german state in a given time period.
@@ -100,10 +115,9 @@ get_holidays(StateId state);
  * @param[in] end_date end of the queried period.
  * @return range of pairs of start and end dates of holiday periods, sorted by start date.
  */
-Range<std::pair<std::vector<std::pair<Date, Date>>::const_iterator, std::vector<std::pair<Date, Date>>::const_iterator>>
-get_holidays(StateId state, Date start_date, Date end_date);
+Range<std::vector<std::pair<Date, Date>>::const_iterator> get_holidays(StateId state, Date start_date, Date end_date);
 
 } // namespace regions
 } // namespace mio
 
-#endif //MIO_EPI_REGIONS_H
+#endif // MIO_GEOGRAPHY_REGIONS_H

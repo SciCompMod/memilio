@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Khoa Nguyen
 *
@@ -399,8 +399,9 @@ public:
 
     /**
      * @brief Get the latest #ProtectionType and its initial TimePoint of the Person.
+     * @param[in] t TimePoint to check.
      */
-    ProtectionEvent get_latest_protection() const;
+    ProtectionEvent get_latest_protection(TimePoint t) const;
 
     /// This method is used by the default serialization feature.
     auto default_serialize()

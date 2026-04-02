@@ -1,7 +1,7 @@
 ODE-based SECIR-type model with COVID-19 variants and vaccinations
 ====================================================================
 
-This model extends the basic :doc:`ODE-SECIR model <cpp/osecir>`. by adding vaccinations and allowing the implicit modeling of a newly arriving variant that takes hold.
+This model extends the basic :doc:`ODE-SECIR model <osecir>`. by adding vaccinations and different immunity levels. Also, this model allows the implicit modeling of a newly arriving variant that takes hold.
 
 Vaccinations are modeled by adding compartments for partially and fully vaccinated persons. **Partially** and **fully vaccinated** is to be understood in this context as the person having received a first and second vaccine shot as in 2021. Persons that have recovered from the disease are treated as fully vaccinated from that time forward. Vaccinated persons are added on every day of simulation, see parameters ``DailyPartialVaccinations`` and ``DailyFullVaccinations``. All groups can get an infection or get reinfected. Vaccinated persons are less likely to develop symptoms. For example, the probability to develop symptoms when carrying the virus is the base probability from the ODE-SECIR model multiplied with the ``ReducInfectedSymptomsPartialImmunity`` parameter.
 
@@ -9,7 +9,7 @@ The ratio of two variants can change over time, which affects the average transm
 
 Below is an overview of the model architecture and its compartments.
 
-.. image:: https://github.com/SciCompMod/memilio/assets/69154294/5d1b72ec-2f45-44a4-8eba-b77533c9e6cf
+.. image:: https://martinkuehn.eu/research/images/secirvvs.png
    :alt: SECIRVVS_model
 
 Infection States
@@ -125,6 +125,10 @@ The model includes all parameters from the basic ODE-SECIR model plus additional
    * - :math:`\mu_{I_{Sev}}^{I_{Cr}}`
      - ``CriticalPerSevere``
      - Probability of transition from InfectedSevere to InfectedCritical.
+   * - :math:`\mu_{I_{Sev}}^{D}`
+     - ``DeathsPerSevere``
+     - Probability of dying when in InfectedSevere, independent of ICU capacity. When ICU capacity is exceeded,
+       additional deaths from InfectedSevere may occur through the ICU overflow mechanism.
    * - :math:`\mu_{I_{Cr}}^{D}`
      - ``DeathsPerCritical``
      - Probability of dying when in InfectedCritical.
@@ -277,7 +281,8 @@ After setting the initial populations, you also need to set the vaccination para
             num_vaccinations;
     }
 
-.. _Nonpharmaceutical Interventions:
+.. _Nonpharmaceutical Interventions OSECIRVVS:
+
 Nonpharmaceutical Interventions
 -------------------------------
 
@@ -424,7 +429,5 @@ Examples of the basic ODE-SECIR model can be found at:
 - `examples/ode_secir_ageres.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_secir_ageres.cpp>`_
 - `examples/ode_secir_parameter_study.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_secir_parameter_study.cpp>`_
 
-Overview of the ``osecirvvs`` namespace:
------------------------------------------
 
-.. doxygennamespace:: mio::osecirvvs
+The code documentation for the model can be found at :CPP-API:`mio::osecirvvs` .

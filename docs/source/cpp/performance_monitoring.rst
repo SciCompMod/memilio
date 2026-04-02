@@ -68,11 +68,16 @@ To measure how long advancing a simulation without the setup takes, you can writ
         ... // evaluate results
     }
 
-and will see a table printed at the end of your program next to the timer named "my simulation", that lists the time it took to :code:`advance`.
+and will see a table printed at the end of your program next to the timer named "my simulation", that lists the time it
+took to :code:`advance`.
 
 You can add more timers like this, but make sure you use unique names, otherwise the same timer will be reused, and the
 measured times will be added together. The name of the timer object itself (here :code:`my_timer`) is not important, as
 long as the compiler does not complain about it.
+
+Note that the automatic print can be disabled, and a manual print can be performed instead. There is also a print method
+that gathers timers from all ranks in an MPI parallel context. Check out :code:`mio::timing::TimerRegistrar` for details
+on these methods.
 
 
 Timing in the library

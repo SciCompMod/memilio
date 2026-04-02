@@ -35,7 +35,7 @@ Adding a new model
 If currently a model is not available in the Python bindings or you added a new c++ model and want to bind it
 then the following steps should give an overview of what needs to be done:
 
-* Add new bindings including a model file in the `models <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-simulation/memilio/simulation/bindings/models/>`_folder that defines the new module.
+* Add new bindings including a model file in the `models <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-simulation/memilio/simulation/bindings/models/>`_ folder that defines the new module.
 * Add a Python module file similar to the other models, e.g., `osir.py <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-simulation/memilio/simulation/osir.py>`_ (needed for the structure of the Python package) and modify getter function in `__init__.py <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-simulation/memilio/simulation/__init__.py>`_.
 * Add the new module to the building process by modifying `CMakeLists.txt <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-simulation/CMakeLists.txt>`_.
 * Write new tests and examples.

@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
@@ -328,11 +328,12 @@ public:
 
             flows[this->template get_flat_flow_index<InfectionState::InfectedSevereNaive,
                                                      InfectionState::SusceptibleImprovedImmunity>({i})] =
-                (1 - params.template get<CriticalPerSevere<FP>>()[i]) /
+                (1 - params.template get<CriticalPerSevere<FP>>()[i] - params.template get<DeathsPerSevere<FP>>()[i]) /
                 params.template get<TimeInfectedSevere<FP>>()[i] * y[ISevNi];
 
             flows[this->template get_flat_flow_index<InfectionState::InfectedSevereNaive, InfectionState::DeadNaive>(
-                {i})] = deathsPerSevereAdjusted / params.template get<TimeInfectedSevere<FP>>()[i] * y[ISevNi];
+                {i})] = (params.template get<DeathsPerSevere<FP>>()[i] + deathsPerSevereAdjusted) /
+                        params.template get<TimeInfectedSevere<FP>>()[i] * y[ISevNi];
 
             // InfectedCritical
             flows[this->template get_flat_flow_index<InfectionState::InfectedCriticalNaive, InfectionState::DeadNaive>(
@@ -406,13 +407,15 @@ public:
             flows[this->template get_flat_flow_index<InfectionState::InfectedSeverePartialImmunity,
                                                      InfectionState::SusceptibleImprovedImmunity>({i})] =
                 (1 - (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSevereCriticalDeadPartialImmunity) *
-                         params.template get<CriticalPerSevere<FP>>()[i]) /
+                         (params.template get<CriticalPerSevere<FP>>()[i] +
+                          params.template get<DeathsPerSevere<FP>>()[i])) /
                 params.template get<TimeInfectedSevere<FP>>()[i] * y[ISevPIi];
 
             flows[this->template get_flat_flow_index<InfectionState::InfectedSeverePartialImmunity,
                                                      InfectionState::DeadPartialImmunity>({i})] =
                 (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSevereCriticalDeadPartialImmunity) *
-                deathsPerSevereAdjusted / params.template get<TimeInfectedSevere<FP>>()[i] * y[ISevPIi];
+                (params.template get<DeathsPerSevere<FP>>()[i] + deathsPerSevereAdjusted) /
+                params.template get<TimeInfectedSevere<FP>>()[i] * y[ISevPIi];
 
             // InfectedCritical
             flows[this->template get_flat_flow_index<InfectionState::InfectedCriticalPartialImmunity,
@@ -490,13 +493,15 @@ public:
                                                      InfectionState::SusceptibleImprovedImmunity>({i})] =
                 (1 -
                  (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity) *
-                     params.template get<CriticalPerSevere<FP>>()[i]) /
+                     (params.template get<CriticalPerSevere<FP>>()[i] +
+                      params.template get<DeathsPerSevere<FP>>()[i])) /
                 params.template get<TimeInfectedSevere<FP>>()[i] * y[ISevIIi];
 
             flows[this->template get_flat_flow_index<InfectionState::InfectedSevereImprovedImmunity,
                                                      InfectionState::DeadImprovedImmunity>({i})] =
                 (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity) *
-                deathsPerSevereAdjusted / params.template get<TimeInfectedSevere<FP>>()[i] * y[ISevIIi];
+                (params.template get<DeathsPerSevere<FP>>()[i] + deathsPerSevereAdjusted) /
+                params.template get<TimeInfectedSevere<FP>>()[i] * y[ISevIIi];
 
             // InfectedCritical
             flows[this->template get_flat_flow_index<InfectionState::InfectedCriticalImprovedImmunity,
