@@ -54,7 +54,7 @@ class Visualization:
     def output_ast_png(cursor: Cursor, max_depth: int, output_file_name: str = 'ast_graph') -> None:
         """ Output the abstract syntax tree to a .png. Set the starting node and the max depth.
 
-        To save the abstract syntax tree as an png with a starting node and a depth u cann use the following command
+        To save the abstract syntax tree as an png with a starting node and a depth u can use the following command
 
         Example command: aviz.output_ast_png(ast.get_node_by_index(1), 2)
 
@@ -62,9 +62,9 @@ class Visualization:
 
         ast -> instance of the AST class.
 
-        .get_node_by_index -> get a specific node by id (use .output_ast_formatted to see node ids)
+        .get_node_by_index -> get a specific node by id use (.output_ast_formatted to see node ids)
 
-        The number 2 is a example for the depth the graph will show
+        The second parameter is the max depth the graph will show. The root node is depth 0, its children are depth 1 and so on.
 
         :param cursor: The current node of the AST as a cursor object from libclang.
         :param max_depth: Maximal depth the graph displays.
@@ -84,7 +84,7 @@ class Visualization:
 
     @staticmethod
     def output_ast_formatted(ast: AST, cursor: Cursor, output_file_name: str = 'ast_formatted.txt') -> None:
-        """! Output the abstract syntax tree to a file.
+        """ Output the abstract syntax tree to a file.
 
         :param ast: ast object from AST class.
         :param cursor: The current node of the AST as a cursor object from libclang.
@@ -111,25 +111,24 @@ class Visualization:
 def indent(level: int) -> str:
     """ Create an indentation based on the level.
 
-    :param level: int: 
-
+    :param level: int: The current depth in the AST for indentation purposes.
+    :returns: A string representing the indentation for the given level.
     """
     return '│   ' * level + '├── '
 
 
 def newline() -> str:
-    """ Create a new line."""
+    """ Creates a new line."""
     return '\n'
 
 
 def _output_cursor_and_children(cursor: Cursor, ast: AST, writer: Callable[[int, str], None], level: int = 0) -> None:
-    """Generic function to output the cursor and its children with a specified writer.
+    """ Generic function to output the cursor and its children with a specified writer.
 
     :param cursor: The current node of the AST as a libclang cursor object.
     :param ast: AST object from the AST class.
     :param writer: Function that takes `level` and `cursor_label` and handles output.
     :param level: The current depth in the AST for indentation purposes. Default value = 0)
-
     """
 
     cursor_id = ast.get_node_id(cursor)
@@ -159,9 +158,7 @@ def _output_cursor_and_children_graphviz_digraph(cursor: Cursor, graph: Digraph,
     :param graph: Graphviz Digraph object where the nodes and edges will be added.
     :param max_d: Maximal depth.
     :param current_d: Current depth.
-    :param parent_node: Name of the parent node in the graph (None for the root node).
-    :param parent_node: str:  (Default value = None)
-
+    :param parent_node: Name of the parent node in the graph (None for the root node). str: (Default value = None)
     """
 
     if current_d > max_d:

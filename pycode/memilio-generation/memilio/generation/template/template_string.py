@@ -126,7 +126,8 @@ def bind_functions(intermed_repr: IntermediateRepresentation, bindings: binding_
     """ Bind the functions found in the intermediate representation.
 
     :param intermed_repr: Dataclass holding the model features.
-    :param bindings: A dataclass entry representing a function or method node from the AST.
+    :param bindings: A dataclass entry representing a function or method node from the AST
+    :param class_name: Name of the class if the function is a member function.
     :return: Formatted string representing a part of the bindings."""
 
     result = ""
@@ -196,7 +197,7 @@ def lambda_binding(name: str, namespace: str, scalartype: str, class_name: str =
     :param name: Name of the function.
     :param namespace: Namespace of the function.
     :param scalartype: Scalar type used in the function.
-    :class_name: Name of the class if the function is a member function.
+    :param class_name: Name of the class if the function is a member function.
     :return: Formatted string representing a part of the bindings."""
 
     qualified_class = f"{namespace}{class_name}<{scalartype}>"
@@ -273,6 +274,7 @@ def overloaded_function_bindings(name: str, namespace: str, scalartype: str, arg
     :param arg_types: List of argument types for the function.
     :param py_args: Python arguments for the function.
     :param bindings: A dataclass entry representing a overloaded function or method node from the AST.
+    :param prefix: Prefix for the binding (e.g., "m" for module-level functions).
     :return: Formatted string representing a part of the bindings."""
 
     formatted_arg_types = [
@@ -313,6 +315,8 @@ def ensure_list(value) -> list:
 
 def ScalarType(intermed_repr: IntermediateRepresentation) -> str:
     """ Set the datatype for the bindings via. intermediate_representation.
+
+    :param intermed_repr: Dataclass holding the model features.
     :return: String from intermediate_representation
     """
     scalartypestr = intermed_repr.scalartype
@@ -321,8 +325,8 @@ def ScalarType(intermed_repr: IntermediateRepresentation) -> str:
 
 def includes(intermed_repr: IntermediateRepresentation) -> str:
     """ Fills in the Includes for the binding
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.
+    :param intermed_repr: Dataclass holding the model features.
+    :return: Formatted string representing a part of the bindings.
     """
     substitution_string = (
         "//Includes from pymio\n"
@@ -376,9 +380,9 @@ def includes(intermed_repr: IntermediateRepresentation) -> str:
 
 
 def pretty_name_function(intermed_repr: IntermediateRepresentation) -> str:
-    """ ! pretty_name_function
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.
+    """  pretty_name_function
+    :param intermed_repr: Dataclass holding the model features.
+    :return: Formatted string representing a part of the bindings.
     """
     substitution_string = (
         "namespace pymio"
@@ -420,11 +424,11 @@ def pretty_name_function(intermed_repr: IntermediateRepresentation) -> str:
 
 
 def age_group(intermed_repr: IntermediateRepresentation) -> str:
-    """! Generate the code for the AgeGroup class.
+    """ Generate the code for the AgeGroup class.
     Not used by every model.
 
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.
+    :param intermed_repr: Dataclass holding the model features.
+    :return: Formatted string representing a part of the bindings.
     """
     if not intermed_repr.age_group:
         return ""
@@ -439,10 +443,10 @@ def age_group(intermed_repr: IntermediateRepresentation) -> str:
 
 
 def population_enums(intermed_repr: IntermediateRepresentation) -> str:
-    """! Sets the population enums as part of the bindings.
+    """ Sets the population enums as part of the bindings.
 
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.
+    :param intermed_repr: Dataclass holding the model features.
+    :return: Formatted string representing a part of the bindings.
     """
     substitution_string = ""
     for key, values in intermed_repr.enum_populations.items():
@@ -467,10 +471,10 @@ def population_enums(intermed_repr: IntermediateRepresentation) -> str:
 
 
 def population(intermed_repr: IntermediateRepresentation) -> str:
-    """
+    """ Sets the population as part of the bindings.
 
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.
+    :param intermed_repr: Dataclass holding the model features.
+    :return: Formatted string representing a part of the bindings.
 
     """
     for value in intermed_repr.model_base[0:]:
@@ -497,10 +501,10 @@ def draw_sample(intermed_repr: IntermediateRepresentation) -> str:
 
 
 def model_init(intermed_repr: IntermediateRepresentation) -> str:
-    """
+    """  Generate the code for the model initialization in the bindings.
+    Not used by every model.
 
     :param intermed_repr: Dataclass holding the model features.
-    :param intermed_repr: IntermediateRepresentation:
     :returns: Formatted string representing a part of the bindings.
 
     """
@@ -522,11 +526,10 @@ def model_init(intermed_repr: IntermediateRepresentation) -> str:
 
 
 def parameterset_indexing(intermed_repr: IntermediateRepresentation) -> str:
-    """! Generate the code for the AgeGroup class.
+    """ Generate the code for the AgeGroup class.
     Not used by every model.
 
     :param intermed_repr: Dataclass holding the model features.
-    :param intermed_repr: IntermediateRepresentation:
     :returns: Formatted string representing a part of the bindings.
 
     """
@@ -539,11 +542,10 @@ def parameterset_indexing(intermed_repr: IntermediateRepresentation) -> str:
 
 
 def parameterset_wrapper(intermed_repr: IntermediateRepresentation) -> str:
-    """! Generate the code for the parameterset_wrapper needed when using age groups.
+    """ Generate the code for the parameterset_wrapper needed when using age groups.
     Not used by every model.
 
     :param intermed_repr: Dataclass holding the model features.
-    :param intermed_repr: IntermediateRepresentation:
     :returns: Formatted string representing a part of the bindings.
 
     """
@@ -566,11 +568,10 @@ def parameterset_wrapper(intermed_repr: IntermediateRepresentation) -> str:
 
 
 def simulation(intermed_repr: IntermediateRepresentation) -> str:
-    """! Generate the code for the Simulation class.
+    """ Generate the code for the Simulation class.
     Not used by every model.
 
     :param intermed_repr: Dataclass holding the model features.
-    :param intermed_repr: IntermediateRepresentation:
     :returns: Formatted string representing a part of the bindings.
 
     """
@@ -651,11 +652,10 @@ def simulation(intermed_repr: IntermediateRepresentation) -> str:
 
 def simulation_vector_definition(
         intermed_repr: IntermediateRepresentation) -> str:
-    """! Generate the code for vector definition.
+    """ Generate the code for vector definition.
     Not used by every model.
 
     :param intermed_repr: Dataclass holding the model features.
-    :param intermed_repr: IntermediateRepresentation:
     :returns: Formatted string representing a part of the bindings.
 
     """

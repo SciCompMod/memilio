@@ -62,11 +62,7 @@ class IntermediateRepresentation:
         """Setter for the attributes of this class.
 
         :param attribute_name: Name of the attribute in IntermediateRepresentation to be set.
-        :param value: Value the attribute is set to. Needs to be of right type.
-        :param self: Self: 
-        :param attribute_name: str: 
-        :param value: Any: 
-
+        :param value: Value the attribute is set to. Needs to be of right type. 
         """
         self.__setattr__(attribute_name, value)
 
@@ -87,9 +83,6 @@ class IntermediateRepresentation:
         Called by the Scanner as last step of the data extraction.
 
         :param optional: Dictionary of the optional data from the config.json. (Default value = Dict[str, Union[str, bool]])
-        :param self: Self: 
-
-
         """
         assert (self.model_class != None), "set a model name"
         assert (self.namespace != None), "set a model namespace"

@@ -75,7 +75,7 @@ class AST:
         return ast_file_path
 
     def get_file_args(self):
-        """Extract arguments from the compilation database, excluding unwanted ones.
+        """ Extract arguments from the compilation database, excluding unwanted ones.
 
         :returns: List of relevant file arguments.
         """
@@ -95,7 +95,7 @@ class AST:
         return file_args[1:-4]
 
     def prepare_clang_command(self, file_args):
-        """Prepare the Clang command without executing it.
+        """ Prepare the Clang command without executing it.
 
         :param file_args: List of file arguments for the Clang command.
         :returns: List of command-line arguments for Clang.
@@ -107,7 +107,7 @@ class AST:
         return clang_cmd
 
     def run_clang_command(self, clang_cmd):
-        """Execute the Clang command.
+        """ Execute the Clang command.
 
         :param clang_cmd: List of command-line arguments for Clang.
         :returns: Result of the Clang command execution.
@@ -122,7 +122,7 @@ class AST:
             raise RuntimeError("Clang AST generation failed.")
 
     def create_temp_ast_file(self, clang_cmd_result):
-        """Create a temporary file and write the Clang AST output to it.
+        """ Create a temporary file and write the Clang AST output to it.
 
         :param clang_cmd_result: Result of the Clang command execution.
         :returns: Path to the temporary AST file.
@@ -136,7 +136,7 @@ class AST:
     def _assing_ast_with_ids(self, cursor: Cursor) -> None:
         """ Traverse the AST and assign a unique ID to each node.
 
-        :param cursor: The current node (Cursor) in the AST to traverse.
+        :param cursor: The current node of the AST.
         """
         self.cursor_id += 1
         id = self.cursor_id

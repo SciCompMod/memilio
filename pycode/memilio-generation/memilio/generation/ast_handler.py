@@ -34,7 +34,6 @@ class ASTHandler:
     """ ASTHandler class for creating ASTs.
     """
 
-    # Todo: clean __init__()
     def __init__(self: T, conf: ScannerConfig) -> None:
         """ Basic constructor of the ASTHandler class
 
@@ -74,7 +73,7 @@ class ASTHandler:
 
         :param ast_path: Represents the path to the generated AST file created by the clang process.
         :param ast: AST instance.
-        :returns: TranslationUnit object.
+        :returns: A tuple containing the TranslationUnit object and the AST object.
         """
         idx = Index.create()
         tu = idx.read(ast_path)

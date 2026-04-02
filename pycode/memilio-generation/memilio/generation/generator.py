@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 
 
 class Generator:
-    """! Generates the model specific python bindings code with the information given by the IntermediateRepresentation.
+    """ Generates the model specific python bindings code with the information given by the IntermediateRepresentation.
     """
 
     def __init__(self: Self) -> None:
@@ -45,11 +45,11 @@ class Generator:
 
     def create_substitutions(
             self: Self, intermed_repr: IntermediateRepresentation) -> None:
-        """! Create the substitutions needed to generate the bindings.
+        """ Create the substitutions needed to generate the bindings.
         Divided into substitutions for the Python- and C++-file. 
         Uses the string template methods from the template folder.
 
-        @param intermed_repr: Dataclass holding the model features.
+        :param intermed_repr: Dataclass holding the model features.
 
         """
 
@@ -90,13 +90,11 @@ class Generator:
 
     def generate_files(
             self: Self, intermed_repr: IntermediateRepresentation) -> None:
-        """! Generate the python bindings to the C++ code.
+        """ Generate the python bindings to the C++ code.
         Template files for python and cpp from the template folder are used 
         and the identifiers substituted with the corresponding substitutions.
 
         :param intermed_repr: Dataclass holding the model features.
-        :param self: Self: 
-
         """
         with open(os.path.join(intermed_repr.python_generation_module_path,
                                "memilio/generation/template/template_py.txt")) as t:

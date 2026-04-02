@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2026 MEmilio
 #
-# Authors: Maximilian Betz
+# Authors: Maximilian Betz, Daniel Richter
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -24,7 +24,6 @@ Analyze the model and extract the needed information. Information get passed to 
 from __future__ import annotations
 
 import os
-import warnings
 from typing import TYPE_CHECKING, Any, Callable, Union
 
 from clang.cindex import *
@@ -169,7 +168,7 @@ class Scanner:
         """ Get the constructor parameters of a class node.
 
         :param child: Represents the current node of the abstract syntax tree as a Cursor object from libclang.
-        :param constructor_params: List to store the constructor parameters of the current node.
+        :param constructor_params: List to store the constructor parameters of the current node. 
         :returns: True if the child is a constructor, False otherwise.
         """
         if child.kind != CursorKind.CONSTRUCTOR:
@@ -386,7 +385,6 @@ class Scanner:
         """ Dictionary to map CursorKind to methods. Works like a switch.
 
         :param Underlying: kind of the current node.
-        :param self: Self:
         :param kind: CursorKind:
         :returns: Appropriate method for the given kind.
 
@@ -413,8 +411,6 @@ class Scanner:
 
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
-        :param self: Self:
-
         """
         if node.spelling.strip() != default_dict["emptystring"]:
             intermed_repr.enum_populations[node.spelling] = []
@@ -428,8 +424,7 @@ class Scanner:
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
         """
-        warnings.warn("Funktion ist aus der alten Version, und wird ",
-                      DeprecationWarning, stacklevel=2)
+
         if node.semantic_parent.spelling in intermed_repr.enum_populations.keys():
             key = node.semantic_parent.spelling
             intermed_repr.enum_populations[key].append(node.spelling)
@@ -437,7 +432,7 @@ class Scanner:
     def check_class(
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
-        """! Inspect the nodes of kind CLASS_DECL and write information
+        """ Inspect the nodes of kind CLASS_DECL and write information
         (model_class, model_base, simulation_class, parameterset_wrapper) into intermed_repr.
 
         :param node: Current node represented as a Cursor object.
@@ -492,9 +487,8 @@ class Scanner:
         Inspect nodes which represent base specifier.
         For now this is handled by the parent node, which represents the class.
 
-        :param self: Self:
-        :param node: Cursor:
-        :param intermed_repr: IntermediateRepresentation:
+        :param node: Current node represented as a Cursor object.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
 
         """
         pass
@@ -506,8 +500,6 @@ class Scanner:
 
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
-        :param self: Self:
-
         """
         filepath = node.location.file.name
         filepaths = filepath.split("../")
@@ -536,13 +528,12 @@ class Scanner:
     def check_age_group(
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
-        """! Inspect the nodes of kind CLASS_DECL with the name defined in
+        """ Inspect the nodes of kind CLASS_DECL with the name defined in
         config.age_group and write needed information into intermed_repr.
         Information: age_group
 
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
-        :param self: Self:
         """
         for base in node.get_children():
             if base.kind != CursorKind.CXX_BASE_SPECIFIER:
@@ -567,8 +558,6 @@ class Scanner:
 
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
-        :param self: Self:
-
         """
         if intermed_repr.model_class == default_dict["model"]:
             if node.spelling.startswith(default_dict["model"]) and ('<' in node.spelling and '>' in node.spelling):
@@ -589,8 +578,6 @@ class Scanner:
 
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
-        :param self: Self:
-
         """
         if node.spelling == self.config.parameterset:
             intermed_repr.parameterset = node.spelling
@@ -600,10 +587,8 @@ class Scanner:
             intermed_repr: IntermediateRepresentation) -> None:
         """Not used yet.
 
-        :param self: Self:
-        :param node: Cursor:
-        :param intermed_repr: IntermediateRepresentation:
-
+        :param node: Current node represented as a Cursor object.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
         """
         pass
 
@@ -613,7 +598,6 @@ class Scanner:
         delet unnecesary enums and check for missing model features.
 
         :param intermed_repr: Dataclass used for saving the extracted model features.
-        :param self: Self:
         """
 
         population_groups = []

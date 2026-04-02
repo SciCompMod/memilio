@@ -43,8 +43,6 @@ def try_set_libclang_path(path: str) -> None:
     If the given path string is empty or None, the path is determined with a call on the terminal.
 
     :param path: Path to the library files of libclang. Can be an empty string.
-    :param path: str: 
-
     """
     # Check if path was set in config. If not, try to get it with cmd.
     if (not path or path == 'LIBCLANG_PATH-NOTFOUND'):
@@ -72,7 +70,6 @@ def try_get_compilation_database_path(skbuild_path_to_database: str) -> str:
 
     :param skbuild_path_to_database: Value from config.json
     :returns: Path of directory
-
     """
     pkg = importlib_resources.files("memilio.generation")
     filename = skbuild_path_to_database.split('_skbuild')
@@ -93,7 +90,6 @@ def get_base_class(base_type: Type) -> List[Any]:
     Example for base_type: CompartmentalModel.
 
     :param base_type: Type: 
-
     """
     result = [base_type.replace('> >', '>>')]
     for i in range(base_type.get_num_template_arguments()):
@@ -106,7 +102,6 @@ def get_base_class_string(base_type: Type) -> List[Any]:
     Example for base_type.spelling: CompartmentalModel<mio::Populations<mio::AgeGroup, mio::InfectionState>, Parameters>.
 
     :param base_type: of the current node.
-
     """
     # FlowModel arguements are not shown in list
 
