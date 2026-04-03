@@ -71,8 +71,7 @@ MEmilio benefits from a harmonized description of its models in infection states
    :alt: MEmilio's uniform model description.
    :width: 100%
 
-Below we guide you through several tutorials on using MEmilio's models through its Python interface. More experience users might directly start with the `Python exercises <https://github.com/SciCompMod/memilio-tutorials/tree/main/exercises>`_ which are derived versions from the tutorials or with `tutorial and exercises in C++ <https://github.com/SciCompMod/memilio-tutorials/tree/main/cpp-tutorials>`_. For more advanced aggregated models using the Linear Chain Trick or IDE-formulations, we currently only provided tutorials and exercises in C++. For the individual- or agent-based model (ABM), we currently only provide `ABM tutorials in C++ <
-https://github.com/SciCompMod/memilio-tutorials/tree/main/cpp-tutorials/abm>`_. 
+Below we guide you through several tutorials on using MEmilio's models through its Python interface. More experience users might directly start with the `Python exercises <https://github.com/SciCompMod/memilio-tutorials/tree/main/exercises>`_ which are derived versions from the tutorials or with `tutorial and exercises in C++ <https://github.com/SciCompMod/memilio-tutorials/tree/main/cpp-tutorials>`_. For more advanced aggregated models using the Linear Chain Trick or IDE-formulations, we currently only provided tutorials and exercises in C++. For the individual- or agent-based model (ABM), we currently only provide `ABM tutorials in C++ <https://github.com/SciCompMod/memilio-tutorials/tree/main/cpp-tutorials/abm>`_. 
 
 
 Simple compartmental models
@@ -90,26 +89,91 @@ In `Tutorial 01 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutor
 Flows between compartments
 **************************
 
-**FlowModel**: Inherits from CompartmentalModel and extends it with the concept of flows between compartments. Instead of directly defining derivatives, it specifies the flows between compartments.
+Often, modelers might be interested not only in the estimated number of individuals in a state of the disease but also on the number of recent or current transitions between different states such as the number of new hospitalizations. As modelers could introduce additional compartments only following those transitions or do complex post-processing, MEmilio directly computes all transitions between compartments by default. This is realized through MEmilio's **FlowModel** structure which is a still generic but refined specification of the **CompartmentalModel**. Through an optimized backend, the overhead for computing transitions (i.e. flows) and compartmental values is less than 10 %.
+
+In `Tutorial 02 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial02.py>`_, we show how to obtain the numbers of newly symptomatic and hospitalized individuals for our :doc:`ODE-SECIR model <models/osecir>`. The result of the tutorial is the following figure.
+
+.. image:: http://martinkuehn.eu/research/images/tutorial02.png
+   :alt: Newly symptomatic and hospitalized individuals as obtained from Tutorial 02.
+   :width: 100%
 
 
 Demography and contact structures
 *********************************
 
+.. image:: http://martinkuehn.eu/research/images/contacts.png
+   :alt: Module for flexible demographic stratification by age groups.
+   :width: 100%
 
+.. image:: http://martinkuehn.eu/research/images/tutorial05.png
+   :alt: Different epidemic curves for six different age groups.
+   :width: 100%
 
 
 Metapopulation and mobility
 ***************************
 
+.. image:: http://martinkuehn.eu/research/images/mobility.png
+   :alt: Module for flexible spatial resolution in metapopulation models.
+   :width: 100%
 
+.. image:: http://martinkuehn.eu/research/images/tutorial07.png
+   :alt: Delayed epidemic spreading through metapopulation coupling of two regions.
+   :width: 100%
 
 Fixed time-point interventions
 ******************************
 
+.. image:: http://martinkuehn.eu/research/images/tutorial03.png
+   :alt: Changed epidemic outcome through interventions at fixed time points.
+   :width: 100%
+
+
+Location-specific interventions
+*******************************
+
+.. image:: http://martinkuehn.eu/research/images/tutorial10.png
+   :alt: Changed epidemic outcome through interventions at specific locations.
+   :width: 100%
 
 Dynamic interventions
 *********************
+
+.. image:: http://martinkuehn.eu/research/images/tutorial11.png
+   :alt: Changed epidemic outcome through dynamically activated interventions.
+   :width: 100%
+
+Fitting MEmilio's models
+************************
+
+As parameter inference is a research topic of its own, MEmilio does not provide methods for parameter inference but instead provides well designed interfaces to established tools and packages dedicated to model calibration and parameter inference.
+
+`Tutorial 04 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial04.py>`_ and `Tutorial 06 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial06.py>`_, we introduce usage of Approximate Bayesian Computation (ABC) with MEmilio and `pyABC <https://pyabc.readthedocs.io/en/latest/>`_ for likelihood-free inference. 
+
+.. image:: http://martinkuehn.eu/research/images/tutorial04.png
+   :alt: Projections of the calibrated model using pyABC.
+   :width: 100%
+
+.. image:: http://martinkuehn.eu/research/images/tutorial06.png
+   :alt: Posterior distributions for the model parameters using pyABC.
+   :width: 100%
+
+In `Tutorial 09 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial09.py>`_ we use `Bayesflow <https://bayesflow.org/main/index.html>`_, a state of the art python library for Bayesian inference with deep learning.
+
+.. image:: http://martinkuehn.eu/research/images/tutorial09.png
+   :alt: Posterior distributions for the model parameters using BayesFlow.
+   :width: 100%
+
+Linear Chain Trick
+*******************
+
+
+IDE-based models
+*****************
+
+
+Agent-based model
+*****************
 
 
 Download and installation
