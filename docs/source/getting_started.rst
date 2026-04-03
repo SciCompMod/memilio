@@ -8,7 +8,7 @@ Overview
 
 
 MEmilio is an extensive framework for tasks around infectious disease modeling. It supports a multitude of :ref:`model <model-faq>` types 
-including :doc:`equation-based<cpp/aggregated_models>`, :doc:`agent-based <cpp/individual_models>`, 
+including :doc:`equation-based or compartmental<cpp/aggregated_models>`, :doc:`agent-based <cpp/individual_models>`, 
 and :doc:`hybrid graph-ODE-based models <cpp/graph_metapop>`. It furthermore provides ready-to-use tools for data integration and visualizations. 
 Among the equation-based models, we provide models based on :doc:`ordinary differential equations <cpp/ode>`,
 :doc:`the linear chain trick (LCT), <cpp/lct>` and a recent :doc:`generalized LCT <cpp/glct>`, :doc:`integro-differential equations <cpp/ide>` 
@@ -54,9 +54,66 @@ For Python, please see, e.g., :doc:`ODE-based SECIRTS model <python/m-simulation
 
 When individual-level interactions and heterogeneity are crucial, :doc:`individual-based models <cpp/individual_models>` provide a detailed representation of disease dynamics. These models can capture complex behaviors and interactions, making them valuable for understanding transmission dynamics in specific settings. Individual-based models are computationally intensive but offer unparalleled detail for certain research questions such as in-household transmission or vaccination and testing strategies targeting individuals that satisfy specific properties with respect to age, previous infections, immunity levels, or particular workplaces. The most versatile individual-based model in MEmilio is the :doc:`(mobility-based) agent-based model <cpp/mobility_based_abm>`.
 
+A quick tour through MEmilio
+-----------------------------
 
-How to use MEmilio
-------------------
+While MEmilio harmonizes much of its structures across all model classes, we first distinguish between :doc:`compartmental or aggregated models<cpp/aggregated_models>` based on ODEs (ordinary differential equations) without and with Linear Chain Trick, IDEs (integro-differential equations), and SDEs (stochastic differential equations) and :doc:`Agent-based models<cpp/individual_models>`. The following subsections give a brief overview on essential functionality, each presented in a particular and function-specific tutorial. While several tutorials build on previous tutorials, experienced users or users interested in other models might also want jump to later parts of this walkthrough guide. 
+
+An additional overview on MEmilio's elementary model structure is given by the following figure.
+
+.. image:: http://martinkuehn.eu/research/images/model_structure.png
+   :alt: Overview on MEmilio's model structure.
+   :width: 100%
+
+MEmilio benefits from a harmonized description of its models in infection states and parameters, and, potentially, a list of flows between the compartments; see the following figure. All models derive their infection states from a flexible and simple list of InfectionStates. For FlowModels (see below for an explanation), particular transitions are defined evenly flexible as a list of flows between the states. Parameters are also mostly in an identical fashion. 
+
+.. image:: http://martinkuehn.eu/research/images/uniform.png
+   :alt: MEmilio's uniform model description.
+   :width: 100%
+
+Below we guide you through several tutorials on using MEmilio's models through its Python interface. More experience users might directly start with the `Python exercises <https://github.com/SciCompMod/memilio-tutorials/tree/main/exercises>`_ which are derived versions from the tutorials or with `tutorial and exercises in C++ <https://github.com/SciCompMod/memilio-tutorials/tree/main/cpp-tutorials>`_. For more advanced aggregated models using the Linear Chain Trick or IDE-formulations, we currently only provided tutorials and exercises in C++. For the individual- or agent-based model (ABM), we currently only provide `ABM tutorials in C++ <
+https://github.com/SciCompMod/memilio-tutorials/tree/main/cpp-tutorials/abm>`_. 
+
+
+Simple compartmental models
+****************************
+
+Most of MEmilio's compartmental or aggregated models share the same interface derived from a high-level **CompartmentalModel** (see above). It defines the fundamental structure for epidemiological models with compartments (e.g., SEIR, SECIR, SIRS, etc.).
+
+In `Tutorial 01 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial01.py>`_, we show how set up and simulate a simple setting for our :doc:`ODE-SECIR model <models/osecir>`. The result of the tutorial is a figure of a well-known epidemic outcome.
+
+.. image:: http://martinkuehn.eu/research/images/tutorial01.png
+   :alt: A well-known epidemic outcome as a result of Tutorial 01.
+   :width: 100%
+
+
+Flows between compartments
+**************************
+
+**FlowModel**: Inherits from CompartmentalModel and extends it with the concept of flows between compartments. Instead of directly defining derivatives, it specifies the flows between compartments.
+
+
+Demography and contact structures
+*********************************
+
+
+
+
+Metapopulation and mobility
+***************************
+
+
+
+Fixed time-point interventions
+******************************
+
+
+Dynamic interventions
+*********************
+
+
+Download and installation
+-------------------------
 
 The installation and use of MEmilio might look overwhelming at first due to the many features and models included. 
 We have structured this documentation to guide you step-by-step through the installation and usage process.

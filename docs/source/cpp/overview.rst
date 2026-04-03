@@ -2,9 +2,20 @@ Overview
 ============
 
 
+Model structure
+----------------
+
+The MEmilio library uses a modular organization of models where :doc:`compartmental or aggregated models<cpp/aggregated_models>` based on ODEs (ordinary differential equations) without and with Linear Chain Trick, IDEs (integro-differential equations), and SDEs (stochastic differential equations) share a maximum properties and interfaces (implemented in the *memilio* folder) to allow simple and straightforward model adaption with, e.g., demographic or spatial stratification (e.g. found in the *memilio/mobility* folder to create :doc:`metapopulation models<cpp/metapop>`) as shown in the following figure. :doc:`Agent-based models<cpp/individual_models>` are furthermore harmonized with most structures such as parameters, contact patterns, and non-pharmaceutical interventions (e.g. found in *memilio/epidemiology*).
+
+.. image:: http://martinkuehn.eu/research/images/memilio_backend.png
+   :alt: Overview on MEmilio's model backend
+   :width: 100%
+
+For a quick run through MEmilio's functionality see :doc:`installation`.
+
 The MEmilio C++ project is organized as follows:
 
-Main Directory Structure
+Main directory structure
 ---------------------------
 
 The main directory structure in the ``cpp`` directory includes:
@@ -33,31 +44,7 @@ The main directory structure in the ``cpp`` directory includes:
 
 - **benchmarks/**: Analyzing runtime performance
 
-Model Structure
------------------
-
-The MEmilio library uses a modular organization of models, where generic implementations are inherited by specific implementations:
-
-.. image:: http://martinkuehn.eu/research/images/overview.png
-   :alt: Model Hierarchy
-   :width: 100%
-
-**CompartmentalModel**: The base class for all compartment-based models in MEmilio. It defines the fundamental structure for epidemiological models with compartments (e.g., SEIR, SECIR) and provides methods like ``eval_right_hand_side`` and ``get_initial_values`` required for ODE solvers.
-
-**FlowModel**: Inherits from CompartmentalModel and extends it with the concept of flows between compartments. Instead of directly defining derivatives, it specifies the flows between compartments.
-
-**Specific Model Implementations**:
-
-- **ODE Model** (Ordinary Differential Equations): Deterministic models for continuous populations described by ordinary differential equations.
-  
-- **IDE Model** (Integro-Differential Equations): Extends the ODE model integration terms.
-  
-- **SDE Model** (Stochastic Differential Equations): Adds stochastic components to model uncertainties and random effects.
-
-**Individual-based Model**: Stands separate from the compartmental hierarchy and models each individual explicitly with its own properties and interactions. This enables more detailed simulations.
-
-
-Build System
+Build system
 -------------
 
 The project uses CMake as a build system with various configuration options. 

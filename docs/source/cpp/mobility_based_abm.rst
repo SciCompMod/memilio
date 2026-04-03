@@ -1,7 +1,7 @@
 .. include:: ../literature.rst
 
-Agent-based model
-=================
+Agent-based model (with activities and mobility)
+================================================
 
 This module models and simulates the epidemic using an agent-based model (*ABM*) approach. Unlike the compartmental models that use a system of ODEs, this model simulates
 the spread of an epidemic in a population with discrete persons (the agents) moving throughout locations in the
