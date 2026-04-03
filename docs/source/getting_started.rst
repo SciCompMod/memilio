@@ -4,7 +4,7 @@ Getting started
 Overview
 --------
 
-.. note:: This project is under active development.
+.. note:: This project is under active development with approximately 10 full time developers. Any content provided in the repository has been extensively reviewed and can be considered stable. Regular function extensions can be expected. New features are, if possible, integrated in a backward-stable manner but interfaces might change over time.
 
 
 MEmilio is an extensive framework for tasks around infectious disease modeling. It supports a multitude of :ref:`model <model-faq>` types 
@@ -37,6 +37,13 @@ Why to use MEmilio
 
 In computationaly epidemiology and infectious disease dynamics, models are often implemented in Python or R. However, this approach often limits the possibility to build large-scale models including an advanced level of detail, e.g., in demography, spatial resolution, or even individual immunity or to run many simulations in a short time frame. 
 MEmilio addresses this challenge by providing a high-performance framework implemented in C++ that allows for large-scale modeling in short time frames to be used in research, policy advice, and education.
+
+In the following figure, we representatively show an excerpt of Fig. 6 of
+|MEmilio_citation|
+showing the performance of population and metapopulation models implemented in R and in C++ in MEmilio. While for large numbers of regions, the R model based on the C-implemented routine desolve comes close to MEmilio's C++ routine performance, both interfaces (C++ and Python) of MEmilio realize significant speedups for most applications.
+.. image:: http://martinkuehn.eu/research/images/model_structure.png
+   :alt: Performance of population and metapopulation models implemented in R and in C++ in MEmilio.
+   :width: 100%
 
 The use of a particular model is generally driven by the research question at hand. The distinction of MEmilio is the provision of a wide range of models, from simple compartmental models to complex integro-differential and agent-based models, allowing users to select the most appropriate model for their specific needs.
 
@@ -91,7 +98,7 @@ Flows between compartments
 
 Often, modelers might be interested not only in the estimated number of individuals in a state of the disease but also on the number of recent or current transitions between different states such as the number of new hospitalizations. As modelers could introduce additional compartments only following those transitions or do complex post-processing, MEmilio directly computes all transitions between compartments by default. This is realized through MEmilio's **FlowModel** structure which is a still generic but refined specification of the **CompartmentalModel**. Through an optimized backend, the overhead for computing transitions (i.e. flows) and compartmental values is less than 10 %.
 
-In `Tutorial 02 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial02.py>`_, we show how to obtain the numbers of newly symptomatic and hospitalized individuals for our :doc:`ODE-SECIR model <models/osecir>`. The result of the tutorial is the following figure.
+In `Tutorial 02 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial02.py>`_, we show how to obtain the numbers of newly symptomatic and hospitalized individuals for our :doc:`ODE-SECIR model <models/osecir>`. TThe result of the tutorial is shown in the following figure.
 
 .. image:: http://martinkuehn.eu/research/images/tutorial02.png
    :alt: Newly symptomatic and hospitalized individuals as obtained from Tutorial 02.
@@ -101,21 +108,28 @@ In `Tutorial 02 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutor
 Demography and contact structures
 *********************************
 
+As shown in the following figure, MEmilio's models are implemented in a way that they can be stratified by age groups (or other dimensions such as sex) in a single line.
+
 .. image:: http://martinkuehn.eu/research/images/contacts.png
    :alt: Module for flexible demographic stratification by age groups.
    :width: 100%
+
+In `Tutorial 05 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial05.py>`_, we show how to distinguish individuals of three different age groups by their susceptibility with respect to severe and critical infections and simulate outcomes for our :doc:`ODE-SECIR model <models/osecir>`. The result of the tutorial is shown in the following figure.
 
 .. image:: http://martinkuehn.eu/research/images/tutorial05.png
    :alt: Different epidemic curves for six different age groups.
    :width: 100%
 
-
 Metapopulation and mobility
 ***************************
+
+As shown in the following figure, MEmilio's aggregated models can be extended to metapopulation models by using a graph structure.
 
 .. image:: http://martinkuehn.eu/research/images/mobility.png
    :alt: Module for flexible spatial resolution in metapopulation models.
    :width: 100%
+
+In `Tutorial 07 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial07.py>`_, we show how an epidemic with our :doc:`ODE-SECIR model <models/osecir>` evolves with a delay between two different spatial entities. The result of the tutorial is shown in the following figure.
 
 .. image:: http://martinkuehn.eu/research/images/tutorial07.png
    :alt: Delayed epidemic spreading through metapopulation coupling of two regions.
@@ -123,6 +137,8 @@ Metapopulation and mobility
 
 Fixed time-point interventions
 ******************************
+
+In order to control and mitigate epidemic developments, MEmilio provides the ability to introduce non-pharmaceutical interventions (NPIs) or measures as `Dampings` to the contact frequencies. In `Tutorial 03 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial03.py>`_, we show how an epidemic with our :doc:`ODE-SECIR model <models/osecir>` can be first mitigated before a reopening event takes place. The result of the tutorial is shown in the following figure.
 
 .. image:: http://martinkuehn.eu/research/images/tutorial03.png
    :alt: Changed epidemic outcome through interventions at fixed time points.
@@ -132,12 +148,18 @@ Fixed time-point interventions
 Location-specific interventions
 *******************************
 
+Often interventions are targeted to specific types of locations such as schools, workplaces, or social gatherings. In order to most realistically model contact structures and NPIs across different locations, MEmilio uses simple and flexible lists of contact locations. In `Tutorial 10 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial10.py>`_, we explain with our :doc:`ODE-SECIR model <models/osecir>` contact structures can be stratified by locations and NPIs implemented in a location-specific way. The result of the tutorial is shown in the following figure.
+
 .. image:: http://martinkuehn.eu/research/images/tutorial10.png
    :alt: Changed epidemic outcome through interventions at specific locations.
    :width: 100%
 
 Dynamic interventions
 *********************
+
+Eventually, NPIs might often be bound to a threshold or criterion upon which its get activated, e.g., the number of new symptomatic (here, reported) infections over the last days. In order to allow dynamic, threshold-dependent NPIs, MEmilio implements a structure denoted `DynamicNPIs`. In `Tutorial 11 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial11.py>`_, we explain with our :doc:`ODE-SECIR model <models/osecir>` how to set up and simulate dynamic interventions based on symptomatic infections. The result of the tutorial is shown in the following figure. 
+
+Note that the DynamicNPI feature is currently fixed to interventions based on symptomatic infections but if you are interested in using it for other applications, please get in touch with us, as the change could be done by us in very short time.
 
 .. image:: http://martinkuehn.eu/research/images/tutorial11.png
    :alt: Changed epidemic outcome through dynamically activated interventions.
@@ -150,18 +172,21 @@ As parameter inference is a research topic of its own, MEmilio does not provide 
 
 `Tutorial 04 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial04.py>`_ and `Tutorial 06 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial06.py>`_, we introduce usage of Approximate Bayesian Computation (ABC) with MEmilio and `pyABC <https://pyabc.readthedocs.io/en/latest/>`_ for likelihood-free inference. 
 
+The result of Tutorial 04 are the projections of the calibrated model using pyABC:
 .. image:: http://martinkuehn.eu/research/images/tutorial04.png
    :alt: Projections of the calibrated model using pyABC.
    :width: 100%
 
+The result of Tutorial 06 are the posterior distributions for the model parameters using pyABC:
 .. image:: http://martinkuehn.eu/research/images/tutorial06.png
    :alt: Posterior distributions for the model parameters using pyABC.
    :width: 100%
 
 In `Tutorial 09 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial09.py>`_ we use `Bayesflow <https://bayesflow.org/main/index.html>`_, a state of the art python library for Bayesian inference with deep learning.
 
+The result of Tutorial 09 is the region- and age-specific calibration using BayesFlow:
 .. image:: http://martinkuehn.eu/research/images/tutorial09.png
-   :alt: Posterior distributions for the model parameters using BayesFlow.
+   :alt: Region- and age-specific calibration using BayesFlow.
    :width: 100%
 
 Linear Chain Trick
