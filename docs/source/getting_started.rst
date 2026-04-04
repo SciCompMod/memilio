@@ -29,7 +29,7 @@ as infection or mobility data. More about this and our other Python packages can
 of this documentation.
 
 A few things are not represented in this documentation, but are part of the `GitHub repository <https://github.com/SciCompMod/memilio>`__. 
-In the `data <https://github.com/SciCompMod/memilio/tree/main/data>`__ folder you can find some regularly used data 
+In the `data <https://github.com/SciCompMod/memilio/tree/main/data>`_ folder you can find some regularly used data 
 for simulations of a pathogen's spread, currently mostly for Germany. 
 
 Why to use MEmilio
@@ -38,10 +38,9 @@ Why to use MEmilio
 In computationaly epidemiology and infectious disease dynamics, models are often implemented in Python or R. However, this approach often limits the possibility to build large-scale models including an advanced level of detail, e.g., in demography, spatial resolution, or even individual immunity or to run many simulations in a short time frame. 
 MEmilio addresses this challenge by providing a high-performance framework implemented in C++ that allows for large-scale modeling in short time frames to be used in research, policy advice, and education.
 
-In the following figure, we representatively show an excerpt of Fig. 6 of
-|MEmilio_citation|
-showing the performance of population and metapopulation models implemented in R and in C++ in MEmilio. While for large numbers of regions, the R model based on the C-implemented routine desolve comes close to MEmilio's C++ routine performance, both interfaces (C++ and Python) of MEmilio realize significant speedups for most applications.
-.. image:: http://martinkuehn.eu/research/images/model_structure.png
+In the following figure, we representatively show an excerpt of Fig. 6 of `Bicker et al. (2026), DOI: 10.48550/arXiv.2602.11381 <https://doi.org/10.48550/arXiv.2602.11381>`_ showing the performance of population and metapopulation models implemented in R and in C++ in MEmilio. While for large numbers of regions, the R model based on the C-implemented routine desolve comes close to MEmilio's C++ routine performance, both interfaces (C++ and Python) of MEmilio realize significant speedups for most applications.
+
+.. image:: http://martinkuehn.eu/research/images/speedup_memilio.png
    :alt: Performance of population and metapopulation models implemented in R and in C++ in MEmilio.
    :width: 100%
 
@@ -72,7 +71,7 @@ An additional overview on MEmilio's elementary model structure is given by the f
    :alt: Overview on MEmilio's model structure.
    :width: 100%
 
-MEmilio benefits from a harmonized description of its models in infection states and parameters, and, potentially, a list of flows between the compartments; see the following figure. All models derive their infection states from a flexible and simple list of InfectionStates. For FlowModels (see below for an explanation), particular transitions are defined evenly flexible as a list of flows between the states. Parameters are also mostly in an identical fashion. 
+MEmilio benefits from a harmonized description of its models in infection states and parameters, and, potentially, a list of flows between the compartments; see the following figure for a motivation. All models derive their infection states from a flexible and simple list of InfectionStates. For FlowModels (see below for an explanation), particular transitions are defined evenly flexible as a list of flows between the states. Parameters are also mostly in an identical fashion. 
 
 .. image:: http://martinkuehn.eu/research/images/uniform.png
    :alt: MEmilio's uniform model description.
@@ -108,7 +107,7 @@ In `Tutorial 02 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutor
 Demography and contact structures
 *********************************
 
-As shown in the following figure, MEmilio's models are implemented in a way that they can be stratified by age groups (or other dimensions such as sex) in a single line.
+As motivated in the following figure, MEmilio's models are implemented in a way that they can be stratified by age groups (or other dimensions such as sex) in a single line.
 
 .. image:: http://martinkuehn.eu/research/images/contacts.png
    :alt: Module for flexible demographic stratification by age groups.
@@ -123,7 +122,7 @@ In `Tutorial 05 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutor
 Metapopulation and mobility
 ***************************
 
-As shown in the following figure, MEmilio's aggregated models can be extended to metapopulation models by using a graph structure.
+As motivated in the following figure, MEmilio's aggregated models can be extended to metapopulation models by using a graph structure.
 
 .. image:: http://martinkuehn.eu/research/images/mobility.png
    :alt: Module for flexible spatial resolution in metapopulation models.
@@ -173,11 +172,13 @@ As parameter inference is a research topic of its own, MEmilio does not provide 
 `Tutorial 04 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial04.py>`_ and `Tutorial 06 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial06.py>`_, we introduce usage of Approximate Bayesian Computation (ABC) with MEmilio and `pyABC <https://pyabc.readthedocs.io/en/latest/>`_ for likelihood-free inference. 
 
 The result of Tutorial 04 are the projections of the calibrated model using pyABC:
+
 .. image:: http://martinkuehn.eu/research/images/tutorial04.png
    :alt: Projections of the calibrated model using pyABC.
    :width: 100%
 
 The result of Tutorial 06 are the posterior distributions for the model parameters using pyABC:
+
 .. image:: http://martinkuehn.eu/research/images/tutorial06.png
    :alt: Posterior distributions for the model parameters using pyABC.
    :width: 100%
@@ -185,6 +186,7 @@ The result of Tutorial 06 are the posterior distributions for the model paramete
 In `Tutorial 09 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial09.py>`_ we use `Bayesflow <https://bayesflow.org/main/index.html>`_, a state of the art python library for Bayesian inference with deep learning.
 
 The result of Tutorial 09 is the region- and age-specific calibration using BayesFlow:
+
 .. image:: http://martinkuehn.eu/research/images/tutorial09.png
    :alt: Region- and age-specific calibration using BayesFlow.
    :width: 100%
@@ -192,13 +194,36 @@ The result of Tutorial 09 is the region- and age-specific calibration using Baye
 Linear Chain Trick
 *******************
 
+As among others shown in `Plötzke et al. (2026), DOI: 10.1016/j.matcom.2025.07.045 <https://doi.org/10.1016/j.matcom.2025.07.045>`_, exponentially distributed stay times can lead to (substantially) deviating peak timings and values; see also the following figure extracted from Fig. 8 of the mentioned paper.
+
+.. image:: http://martinkuehn.eu/research/images/lct.png
+   :alt: Deviating peaks with exponential distribution assumptions (ODE) versus Linear Chain Trick with Erlang/Gamma distributions.
+   :width: 100%
+
+In the `LCT Tutorial <https://github.com/SciCompMod/memilio-tutorials/blob/main/cpp-tutorials/tutorial_lct.cpp>`_, we show a minimalistic example of an LCT model within MEmilio. Parameters, contact structures, and NPIs can basically be used as in the introductions to simple ODE models. If you are interested in using LCT models with different courses of the disease, please get in touch with us.
 
 IDE-based models
 *****************
 
+While LCT models generalize assumptions from exponential to Gamma, IDE formulations such as presented `Wendler et al. (2026), DOI: 10.1016/j.amc.2025.129636 <https://doi.org/10.1016/j.amc.2025.129636>`_ allow the full flexibility to use any data-driven transition distribution.
 
-Agent-based model
-*****************
+In the `IDE Tutorial <https://github.com/SciCompMod/memilio-tutorials/blob/main/cpp-tutorials/tutorial_ide.cpp>`_, we show a minimalistic example of an IDE model within MEmilio. Parameters, contact structures, and NPIs can basically be used as in the introductions to simple ODE models. If you are interested in using IDE models with different courses of the disease, please get in touch with us.
+
+
+Agent- or individual-based model
+********************************
+
+As motivated in Fig. 5 of `Bicker et al. (2026), DOI: 10.48550/arXiv.2602.11381 <https://doi.org/10.48550/arXiv.2602.11381>`_ and shown here below, different types of models with their implicit or flexible assumptions can lead to all type of epidemic projections.
+
+.. image:: http://martinkuehn.eu/research/images/model_comparisons.png
+   :alt: Results of infectious disease spread with different models and model assumptions.
+   :width: 100%
+
+A major advantage of agent-based models (ABMs) is the possibility to model individuals with individual properties. In the MEmilio-ABM populations are set up straightforward with household structures. Testing and vaccination strategies can be targeted to individuals at particular locations or of selected age groups.
+
+- In the `tutorial on households <https://github.com/SciCompMod/memilio-tutorials/blob/main/cpp-tutorials/abm/tutorial_abm_households.cpp>`_, we show how particular populations and household structures can be set up with the MEmilio-ABM.
+- In the `tutorial on testing <https://github.com/SciCompMod/memilio-tutorials/blob/main/cpp-tutorials/abm/tutorial_abm_testing.cpp>`_, we show how different testing strategies with particular testing schemes can be realized.
+- In the `tutorial on vaccination <https://github.com/SciCompMod/memilio-tutorials/blob/main/cpp-tutorials/abm/tutorial_abm_testing.cpp>`_, we show how different vaccination strategies can be realized.
 
 
 Download and installation
