@@ -1,7 +1,11 @@
 Aggregated models
 =================
 
-There are different equation-based models implemented in MEmilio that consider an aggregated population.
+There are different equation-based or compartmental models implemented in MEmilio that consider an aggregated population as shown in the following figure.
+
+.. image:: http://martinkuehn.eu/research/images/aggregated.png
+   :alt: Overview on MEmilio's models using aggregated populations.
+   :width: 100%
 
 .. toctree::
     :maxdepth: 1

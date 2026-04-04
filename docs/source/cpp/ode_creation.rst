@@ -162,7 +162,7 @@ example being adding :code:`mio::AgeGroups` to the template.
     where we use ``populations.get_flat_index`` to get the correct index in the flat state and derivative vectors.
     You may also want to change the Parameters to use age groups, check out the available ODE models as reference. 
 
-Define a compartmental model class
+Define a CompartmentalModel class
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Now we can define the model:
@@ -219,7 +219,7 @@ Continue :doc:`here<ode>` to learn how to use this model, or read on if you want
 Implement the ODE model using flows
 -----------------------------------
 
-A flow model is a special case of a compartmental model, where the derivative of each compartment over time
+A FlowModel is a special case of a CompartmentalModel, where the derivative of each compartment over time
 :math:`Z_i'(t)` can be written as
 
 .. math::
@@ -230,7 +230,7 @@ where the flows :math:`f_{Z_i \rightarrow Z_j} \gt 0` are the amount of populati
 :math:`Z_i` to :math:`Z_j` at time :math:`t`. So the first sum accumulates all inflows, the second subtracts all
 outflows.
 
-The SIRD model from above can be expressed as a flow model with only three flows:
+The SIRD model from above can be expressed as a FlowModel with only three flows:
 
 .. math::  
 
@@ -245,7 +245,7 @@ Note that all other possible flows, like :math:`f_{I \rightarrow S}`, are consta
 Flows
 ~~~~~
 
-To use a flow model, we need to create a list of all flows. These are used by the model to automatically assemble the
+To use a FlowModel, we need to create a list of all flows. These are used by the model to automatically assemble the
 compartments. We use a :code:`mio::TypeList` with a :code:`mio::Flow` for each mathematical flow. For the SIRD model
 we get:
 
@@ -258,12 +258,12 @@ we get:
 The first term in each :code:`mio::Flow` is the source compartment, the second the target. As a convention, we always
 compute non-negative outflows. Hence, we only list the flow :math:`S \rightarrow I`, but not :math:`I \rightarrow S`.
 
-Infection states, Parameters and Population
+InfectionStates, Parameters and Population
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Since a Flow model is just a special case of a compartmental model, all of these are defined exactly as described above.
+Since a FlowModel is just a special case of a CompartmentalModel, all of these are defined exactly as described above.
 
-Define a flow model class
+Define a FlowModel class
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 With the flows and classes also used by the CompartmentalModel, we can define a FlowModel as such: 
@@ -294,7 +294,7 @@ With the flows and classes also used by the CompartmentalModel, we can define a 
         }
     };
 
-This is mostly analogous to the definition of a compartmental model, with a few important differences. First, we now
+This is mostly analogous to the definition of a CompartmentalModel, with a few important differences. First, we now
 inherit from ``FlowModel``, which gets the ``Flows`` as an additional template argument. The ``Base`` alias changes
 accordingly. Secondly, the function we implement is called ``get_flows`` and computes the derivative of y in terms of
 its flows.
