@@ -38,7 +38,7 @@ Why to use MEmilio
 In computationaly epidemiology and infectious disease dynamics, models are often implemented in Python or R. However, this approach often limits the possibility to build large-scale models including an advanced level of detail, e.g., in demography, spatial resolution, or even individual immunity or to run many simulations in a short time frame. 
 MEmilio addresses this challenge by providing a high-performance framework implemented in C++ that allows for large-scale modeling in short time frames to be used in research, policy advice, and education.
 
-In the following figure, we representatively show an excerpt of Fig. 6 of `Bicker et al. (2026), DOI: 10.48550/arXiv.2602.11381 <https://doi.org/10.48550/arXiv.2602.11381>`_ showing the performance of population and metapopulation models implemented in R and in C++ in MEmilio. While for large numbers of regions, the R model based on the C-implemented routine desolve comes close to MEmilio's C++ routine performance, both interfaces (C++ and Python) of MEmilio realize significant speedups for most applications.
+In the following figure, we representatively show an excerpt of Fig. 6 of `Bicker et al. (2026), DOI: 10.48550/arXiv.2602.11381 <https://doi.org/10.48550/arXiv.2602.11381>`_ showing the performance of population and metapopulation models implemented in R and in C++ in MEmilio. While for large numbers of regions, the R model based on the C-implemented routine desolve comes close to MEmilio's C++ routine performance, both interfaces (C++ and Python) of MEmilio realize significant speedups (factor 100 and more) for most applications.
 
 .. image:: http://martinkuehn.eu/research/images/speedup_memilio.png
    :alt: Performance of population and metapopulation models implemented in R and in C++ in MEmilio.
@@ -71,7 +71,7 @@ An additional overview on MEmilio's elementary model structure is given by the f
    :alt: Overview on MEmilio's model structure.
    :width: 100%
 
-MEmilio benefits from a harmonized description of its models in infection states and parameters, and, potentially, a list of flows between the compartments; see the following figure for a motivation. All models derive their infection states from a flexible and simple list of InfectionStates. For FlowModels (see below for an explanation), particular transitions are defined evenly flexible as a list of flows between the states. Parameters are also mostly in an identical fashion. 
+MEmilio benefits from a harmonized description of its models in infection states and parameters, and, potentially, a list of flows between the compartments; see the following figure for a motivation. All models derive their infection states from a flexible and simple list of InfectionStates. For FlowModels (see below for an explanation), particular transitions are defined evenly flexible as a list of flows between the states. Parameters are also generally defined in an identical fashion. 
 
 .. image:: http://martinkuehn.eu/research/images/uniform.png
    :alt: MEmilio's uniform model description.
@@ -183,9 +183,7 @@ The result of Tutorial 06 are the posterior distributions for the model paramete
    :alt: Posterior distributions for the model parameters using pyABC.
    :width: 100%
 
-In `Tutorial 09 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial09.py>`_ we use `Bayesflow <https://bayesflow.org/main/index.html>`_, a state of the art python library for Bayesian inference with deep learning.
-
-The result of Tutorial 09 is the region- and age-specific calibration using BayesFlow:
+In `Tutorial 09 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial09.py>`_ we use `Bayesflow <https://bayesflow.org/main/index.html>`_, a state of the art python library for Bayesian inference with deep learning. The result of Tutorial 09 is the region- and age-specific calibration using BayesFlow:
 
 .. image:: http://martinkuehn.eu/research/images/tutorial09.png
    :alt: Region- and age-specific calibration using BayesFlow.
@@ -223,7 +221,7 @@ A major advantage of agent-based models (ABMs) is the possibility to model indiv
 
 - In the `tutorial on households <https://github.com/SciCompMod/memilio-tutorials/blob/main/cpp-tutorials/abm/tutorial_abm_households.cpp>`_, we show how particular populations and household structures can be set up with the MEmilio-ABM.
 - In the `tutorial on testing <https://github.com/SciCompMod/memilio-tutorials/blob/main/cpp-tutorials/abm/tutorial_abm_testing.cpp>`_, we show how different testing strategies with particular testing schemes can be realized.
-- In the `tutorial on vaccination <https://github.com/SciCompMod/memilio-tutorials/blob/main/cpp-tutorials/abm/tutorial_abm_testing.cpp>`_, we show how different vaccination strategies can be realized.
+- In the `tutorial on vaccination <https://github.com/SciCompMod/memilio-tutorials/blob/main/cpp-tutorials/abm/tutorial_abm_vaccination.cpp>`_, we show how different vaccination strategies can be realized.
 
 
 Download and installation
