@@ -8,8 +8,19 @@ MEmilio Generation
     * **Model Generator:** generates a C++ compartmental model with Python bindings from a YAML/TOML configuration file. See :doc:`m-modelgenerator`.
     * **Bindings Generator:** automatically generates Python bindings from existing C++ model source files using libclang. Described on this page.
 
+Model Generator
+------------------
+
+The **Model Generator** generates a complete C++ compartmental model and Python bindings from a YAML/TOML
+configuration file. No C++ knowledge is required. See :doc:`m-modelgenerator` for full documentation.
+
+.. _bindings-generator:
+
 Bindings Generator
 ------------------
+
+Overview
+~~~~~~~~
 
 This package provides an automatic code generator for Python bindings of the MEmilio C++ library. 
 It enables the automatic generation of a part of the :doc:`Python Bindings <m-simulation>` that is common across multiple models. 
@@ -23,7 +34,7 @@ The following figure from Chapter 5 outlines the workflow of the generator. Blue
 
 
 Dependencies
-----------
+~~~~~~~~~~~~
 
 The package uses the `Clang C++ library <https://clang.llvm.org/>`_ and the `LibClang Python library <https://libclang.readthedocs.io/en/latest/index.html>`_ to analyze the C++ code of a model. Both need to be installed and share the same version.
 
@@ -43,7 +54,7 @@ For a successful build, the development libraries for Python need to be installe
     If you want to try a different version, set your `libclang` version under ``dependencies`` in the `pyproject.toml <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-generation/pyproject.toml>`_ and change the clang command in ``create_ast`` in `ast.py <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-generation/memilio/generation/ast.py>`_.
 
 Usage
------
+~~~~~
 
 During the installation the package creates a compilation database (compile_commands.json) for the models of the `MEmilio C++ Library <https://github.com/SciCompMod/memilio/blob/main/cpp/>`_.
 
@@ -69,7 +80,7 @@ To use the visualization run the command:
 
 
 Visualization
--------------
+~~~~~~~~~~~~~
 
 The package contains a `Visualization class <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-generation/memilio/generation/graph_visualization.py>`_ to display the generated AST.
 This allows you to visualize the abstract syntax tree (AST) of the C++ model in different ways:
@@ -93,7 +104,7 @@ This means that any nodes beyond the specified depth (e.g., all nodes at level 3
 Notice that the visualization as a PNG file should not print the whole AST, as it is not possible to display the whole AST in a single image.
 
 Development
------------
+~~~~~~~~~~~
 
 When implementing new model features you can follow these steps:
 

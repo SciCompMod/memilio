@@ -1,6 +1,12 @@
 Model Generator
 ===============
 
+.. note::
+
+    Here, you start with a model specification and get C++ source files and Python bindings as output.
+    If you already have a C++ model and want to generate Python bindings for it, you can use the
+    :ref:`Bindings Generator <bindings-generator>` (see :doc:`m-generation`).
+
 The model generator is part of the ``memilio-generation`` package and provides a high-level way to create new
 compartmental ODE models for MEmilio from a simple configuration file. Instead of writing C++ code by hand, you
 describe your model in a YAML or TOML file and the generator produces all required source files automatically.
@@ -10,14 +16,8 @@ immediately after generation is done.
 
 With the following description, we will generate a model that can later be stratified by demography and resolved spatially. The demographic stratification is one-dimensional with a naming of age groups. However, it can equally be used to stratify according to, e.g., sex/gender or income.
 
-.. note::
-
-    Here, you start with a model specification and get C++ source files and Python bindings as output.
-    If the already have a C++ model and want to generate Python bindings for it, you can use the 
-    **bindings generator**, see :doc:`m-generation` for details.
-
 Overview
---------
+~~~~~~~~
 
 Given a configuration file, the generator produces the following files:
 
@@ -47,7 +47,7 @@ In the above description, `<prefix>` is a short but representative name provided
 are generated in place to register the new model.
 
 Configuration file format
---------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Both YAML and TOML are supported. For unexperienced users, we recommend YAML as YAML does not require quotes around string values, thus avoiding potential errors in parsing.
 
@@ -58,7 +58,7 @@ Both YAML and TOML are supported. For unexperienced users, we recommend YAML as 
 The configuration file has four sections that are described below. For all names and namings (comments excluded), please do not use spaces. In general, avoid special characters (colons, question marks etc and in German ä, ö, ü; similarly for other languages) except hyphen and underscore.
 
 model
-~~~~~
+^^^^^
 
 Metadata about the model. For a SEIR model it could look as follows.
 
@@ -66,12 +66,11 @@ Metadata about the model. For a SEIR model it could look as follows.
 
     model:
       name: SEIR          # Human-readable name used in comments and doc-strings
-      namespace: oseir    # Inner C++ namespace  ->  mio::oseir
       namespace: oseir    # In C++, we define a namespace to directly refer to model properties. We suggest to use `o` + a name, all in small letters.
       prefix: ode_seir    # Used for folder name and installation. We suggest to use the format `ode_` and a name all in small letters. 
 
 infection_states
-~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^
 
 A list of compartment names. At least two are required and all names must be unique.
 If you check the generated results, an auxiliary ``Count`` compartment is added automatically at the end of the list for convenience of the computation. For the SEIR model, we have the following list.
@@ -85,7 +84,7 @@ If you check the generated results, an auxiliary ``Count`` compartment is added 
       - Recovered
 
 parameters
-~~~~~~~~~~
+^^^^^^^^^^
 
 A list of model parameters. Each parameter entry will be encapsulated in a particular structure / class.
 
@@ -129,15 +128,14 @@ Default value are passed to a function which only serves as a fallback solution 
 
 Depending on the type and bounds provided by the user, MEmilio introduces a parameter constraint checking functionalism.
 - ``probability``: constraint check enforces ``[0.0, 1.0]``
-- ``time``: constraint check enforces ``[0.1, ∞)`` with a tolerance warning to prevent near zero values.
+- ``time``: constraint check enforces ``[0.1, ∞)``. The threshold of 0.1 days is hardcoded in the generated C++ constraint check and cannot be changed via the ``bounds`` field. It is chosen to prevent unreasonably short compartment stays that would drastically increase the run time of the ODE solver.
 - ``custom``: no automatic constraint check is generated
 
 .. note::
 
     When at least one ``infection`` transition is present, a ``ContactPatterns`` parameter is
     added to the model **automatically**,  you do not need to declare it in the ``parameters``
-    list. It stores the (age-stratified) contact frequencies / matrix (``UncertainContactMatrix``) and is used by
-    to compute the force of infection.
+    list. It stores the (age-stratified) contact frequencies / matrix (``UncertainContactMatrix``) and is used to compute the force of infection.
     In the generated Python example and in your own scripts, set it up like this:
 
     .. code-block:: python
@@ -149,6 +147,7 @@ The minimum contact pattern is a critical parameter as it defines a minimum cont
 
 The parameters that need to be provided for the SEIR model are as follows.
 
+.. code-block:: yaml
 
     parameters:
       - name: TransmissionProbabilityOnContact
@@ -164,7 +163,7 @@ The parameters that need to be provided for the SEIR model are as follows.
         default: 5.2
         per_age_group: true
         bounds: [0.1, null]
-        
+
       - name: TimeInfected
         description: the infectious time in day unit
         type: time
@@ -173,7 +172,7 @@ The parameters that need to be provided for the SEIR model are as follows.
         bounds: [0.1, null]
 
 transitions
-~~~~~~~~~~~
+^^^^^^^^^^^
 
 In order to allow the on-the-fly computation of newly infected (or hospitalized for more complex models), provide a full list of transitions (or flows) between compartments. Each transition has the following fields:
 
@@ -198,7 +197,7 @@ In order to allow the on-the-fly computation of newly infected (or hospitalized 
      - Name of the driving parameter (must be in ``parameters``)
    * - ``infectious_state``
      - for ``infection``
-     - Compartment whose population drives the force of infection (e.g. ``Infected``)
+     - Compartment whose population drives the force of infection (e.g. ``Infected``). Currently, only a single compartment can be specified. If your model has multiple infectious compartments, you can add further ``infection`` transitions, one per infectious compartment. Support for a list of infectious states may be added in a future version.
    * - ``custom_formula``
      - no
      - Optional hint placed in a ``TODO`` comment in the generated code
@@ -206,8 +205,7 @@ In order to allow the on-the-fly computation of newly infected (or hospitalized 
 **Transition types:**
 
 ``infection``
-    `infection` represents the force-of-infection flow. For age-resolved models, tt generates a double loop over contact age groups using the
-    ``ContactPatterns`` contact matrix. The ``ContactPatterns`` parameter is added to the
+    `infection` represents the force-of-infection flow. For age-resolved models, it generates a double loop over contact age groups using the ``ContactPatterns`` contact matrix. The ``ContactPatterns`` parameter is added to the
     model automatically when at least one infection transition is present.
 
     .. math::
@@ -223,18 +221,18 @@ In order to allow the on-the-fly computation of newly infected (or hospitalized 
 
     .. math::
 
-       {X}'_i \leftarrow -\frac{1}{\tau_i} \cdot X_i
+       {X}'_i \leftarrow -\frac{1}{T_i} \cdot X_i
 
-    where :math:`\tau_i` is the time parameter for age group *i*.
+    where :math:`T_i` is the time parameter for age group *i*.
 
 ``custom``
     For `custom`, a placeholder is inserted into ``get_flows()`` with a ``TODO`` comment.
     If ``custom_formula`` is provided, it is shown as a hint next to the placeholder.
     **The generated code will not compile until you fill in the expression.**
 
-.. code-block:: yaml
-
 For the SEIR model, we have the following transitions:
+
+.. code-block:: yaml
 
     transitions:
       - from: Susceptible
@@ -254,7 +252,7 @@ For the SEIR model, we have the following transitions:
         parameter: TimeInfected
 
 Complete example: SEIR model
------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The following YAML file fully specifies an SEIR model:
 
@@ -315,10 +313,22 @@ version of the SEIR model) can be found in
 `pycode/examples/modelgenerator/ <https://github.com/SciCompMod/memilio/blob/main/pycode/examples/modelgenerator/>`_.
 
 Usage
------
+~~~~~
+
+Installation
+^^^^^^^^^^^^
+
+Install the ``memilio-generation`` package from the repository root:
+
+.. code-block:: console
+
+    pip install -e pycode/memilio-generation
+
+The installation registers the ``memilio-modelgenerator`` command and makes the
+``memilio.modelgenerator`` Python module available.
 
 Command-line interface
-~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^
 
 The generator is installed as the command ``memilio-modelgenerator``:
 
@@ -337,7 +347,7 @@ The generator is installed as the command ``memilio-modelgenerator``:
     memilio-modelgenerator path/to/seir.yaml --output-dir /path/to/memilio --force
 
 Python API
-~~~~~~~~~~
+^^^^^^^^^^
 
 .. code-block:: python
 
@@ -372,13 +382,14 @@ Python API
     that model with generated ones.
 
 After generation
-~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^
 
 1. **Fill in custom transitions** (if any): open the generated ``model.h`` and replace the
    ``/* YOUR EXPRESSION HERE */`` placeholder with the actual expression before compiling.
 
 2. **Compile the model** by building the MEmilio C++ library as usual (CMake).
    The patched ``cpp/CMakeLists.txt`` picks up the new model directory automatically.
+   See :doc:`/cpp/installation` for details on configuring and building with CMake.
 
 3. **Install the Python bindings** by reinstalling ``memilio-simulation``:
 
@@ -393,7 +404,7 @@ After generation
        python pycode/examples/simulation/<prefix>_simple.py
 
 Validation
-----------
+~~~~~~~~~~
 
 The generator validates the configuration before any code is produced.
 All errors are collected and reported together.
@@ -407,7 +418,7 @@ Common validation errors:
 * A transition has the same ``from`` and ``to`` state (self-loop)
 
 Development and extension
--------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Adding a new transition type or template feature:
 
