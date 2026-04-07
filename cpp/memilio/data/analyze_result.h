@@ -198,7 +198,7 @@ TimeSeries<FP> interpolate_simulation_result(const TimeSeries<FP>& simulation_re
 
     // create interpolation_times vector with all days between day0 and day_max
     std::vector<FP> tps(day_max - day0 + 1);
-    std::iota(tps.begin(), tps.end(), FP{day0});
+    std::iota(tps.begin(), tps.end(), FP(day0));
 
     return interpolate_simulation_result<FP>(simulation_result, tps);
 }
