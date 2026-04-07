@@ -206,7 +206,8 @@ int main()
             auto copy = model_;
             // using half of the RNG counter for the run index (soft-) limits both the number of runs and RNG draws
             // per person to 2^16 = 65536
-            copy.reset_rng(mio::Counter<uint32_t>(run_idx << 16));
+            const auto ctr = mio::Counter<uint32_t>(static_cast<uint32_t>(run_idx) << 16);
+            copy.reset_rng(ctr);
             return mio::abm::ResultSimulation(std::move(copy), t0_);
         },
         [&result_dir](auto&& sim, auto&& run_idx) {
