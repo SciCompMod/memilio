@@ -8,6 +8,8 @@ C++ knowledge is not required to use the generator, but you can of course edit t
 if you want to add custom features. Additionally, a Python example application is generated that you can run
 immediately after generation is done.
 
+With the following description, we will generate a model that can later be stratified by demography and resolved spatially. The demographic stratification is one-dimensional with a naming of age groups. However, it can equally be used to stratify according to, e.g., sex/gender or income.
+
 .. note::
 
     Here, you start with a model specification and get C++ source files and Python bindings as output.
@@ -40,40 +42,39 @@ Given a configuration file, the generator produces the following files:
    * - ``pycode/examples/simulation/<prefix>_simple.py``
      - Ready-to-run Python simulation example
 
-In addition, the two existing CMakeLists files
+In the above description, `<prefix>` is a short but representative name provided by the users; not containing any spaces; see below for an example. In addition to the above files, the two existing CMakeLists files
 ``cpp/CMakeLists.txt`` and ``pycode/memilio-simulation/CMakeLists.txt``
-are **patched in-place** to register the new model.
+are generated in place to register the new model.
 
 Configuration file format
 --------------------------
 
-Both YAML and TOML are supported. YAML is recommended because it does not require quotes around
-string values, making the files easier to read and write.
+Both YAML and TOML are supported. For unexperienced users, we recommend YAML as YAML does not require quotes around string values, thus avoiding potential errors in parsing.
 
 .. note::
 
-    In TOML, all string values must be enclosed in quotes as this is a
-    hard requirement of the TOML specification and cannot be avoided.
+    In TOML, all string values must be enclosed in quotes.
 
-The configuration file has four sections:
+The configuration file has four sections that are described below. For all names and namings (comments excluded), please do not use spaces. In general, avoid special characters (colons, question marks etc and in German ä, ö, ü; similarly for other languages) except hyphen and underscore.
 
 model
 ~~~~~
 
-Metadata about the model.
+Metadata about the model. For a SEIR model it could look as follows.
 
 .. code-block:: yaml
 
     model:
       name: SEIR          # Human-readable name used in comments and doc-strings
       namespace: oseir    # Inner C++ namespace  ->  mio::oseir
-      prefix: ode_seir    # Folder name and CMake target prefix
+      namespace: oseir    # In C++, we define a namespace to directly refer to model properties. We suggest to use `o` + a name, all in small letters.
+      prefix: ode_seir    # Used for folder name and installation. We suggest to use the format `ode_` and a name all in small letters. 
 
 infection_states
 ~~~~~~~~~~~~~~~~
 
 A list of compartment names. At least two are required and all names must be unique.
-A ``Count`` auxiliary compartment is added automatically at the end of the C++ enum.
+If you check the generated results, an auxiliary ``Count`` compartment is added automatically at the end of the list for convenience of the computation. For the SEIR model, we have the following list.
 
 .. code-block:: yaml
 
@@ -86,7 +87,7 @@ A ``Count`` auxiliary compartment is added automatically at the end of the C++ e
 parameters
 ~~~~~~~~~~
 
-A list of model parameters. Each parameter entry has the following fields:
+A list of model parameters. Each parameter entry will be encapsulated in a particular structure / class.
 
 .. list-table::
    :header-rows: 1
@@ -97,25 +98,36 @@ A list of model parameters. Each parameter entry has the following fields:
      - Description
    * - ``name``
      - yes
-     - C++ struct name, e.g. ``TransmissionProbabilityOnContact``
+     - Intuitive parameter structure name, e.g. ``TransmissionProbabilityOnContact``
    * - ``description``
      - yes
-     - Short description used in the Doxygen comment
+     - Short but meaningful description used in the code documentation.
    * - ``type``
      - yes
      - ``probability`` (scalar in [0,1]), ``time`` (positive duration in days), or ``custom``
    * - ``default``
      - yes
-     - Default value passed to ``get_default()``
+     - Default value serving as fallback value
    * - ``per_age_group``
-     - no
-     - ``true`` (default) -> stored as ``CustomIndexArray<UncertainValue, AgeGroup>``; ``false`` -> plain ``UncertainValue``
+     - no: Only a single value can be set for the parameter
+     - ``true`` (default): For each age group, an individual parameter can be set.
    * - ``bounds``
-     - no
-     - ``[lower, upper]`` - use ``null`` for an open bound. Inferred from ``type`` if omitted.
+     - no: No bound checking or enforcing of the parameter will be done.
+     - ``[lower, upper]`` -- use ``null`` for an unbound parameter. 
+     
+Default value are passed to a function which only serves as a fallback solution if no value is set. If the users pays attention to always set the parameters, the default value can be ignored (i.e. set to a simple value like 0 or 1)
+    
+.. dropdown:: :fa:`gears` Explanations for experienced C++ users
+
+    Each parameter will obtain its own `struct`. Default value are passed to a ``get_default()`` function which 
+    only serves as a fallback solution if no value is set. If stratification by age_groups is desired (`true` value) a 
+    ``CustomIndexArray<UncertainValue, AgeGroup>`` is used, otherwise the parameter will be represented by 
+    MEmilio's custom-built ``UncertainValue`` which acts as a double value but also allows storing a parameter 
+    distribution to sample values from.
 
 **Built-in types and their bounds:**
 
+Depending on the type and bounds provided by the user, MEmilio introduces a parameter constraint checking functionalism.
 - ``probability``: constraint check enforces ``[0.0, 1.0]``
 - ``time``: constraint check enforces ``[0.1, ∞)`` with a tolerance warning to prevent near zero values.
 - ``custom``: no automatic constraint check is generated
@@ -124,16 +136,19 @@ A list of model parameters. Each parameter entry has the following fields:
 
     When at least one ``infection`` transition is present, a ``ContactPatterns`` parameter is
     added to the model **automatically**,  you do not need to declare it in the ``parameters``
-    list. It stores the age-group contact matrix (``UncertainContactMatrix``) and is used by
-    every infection transition to compute the force of infection.
+    list. It stores the (age-stratified) contact frequencies / matrix (``UncertainContactMatrix``) and is used by
+    to compute the force of infection.
     In the generated Python example and in your own scripts, set it up like this:
 
     .. code-block:: python
 
         model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.ones((num_groups, num_groups))
         model.parameters.ContactPatterns.cont_freq_mat[0].minimum  = np.zeros((num_groups, num_groups))
+        
+The minimum contact pattern is a critical parameter as it defines a minimum contact frequency under which we cannot go below in the simulation, no matter the strictness of a nonpharmaceutical intervention. It should only be set if a good estimation is available. Otherwise, set it to zero.
 
-.. code-block:: yaml
+The parameters that need to be provided for the SEIR model are as follows.
+
 
     parameters:
       - name: TransmissionProbabilityOnContact
@@ -149,11 +164,18 @@ A list of model parameters. Each parameter entry has the following fields:
         default: 5.2
         per_age_group: true
         bounds: [0.1, null]
+        
+      - name: TimeInfected
+        description: the infectious time in day unit
+        type: time
+        default: 6.0
+        per_age_group: true
+        bounds: [0.1, null]
 
 transitions
 ~~~~~~~~~~~
 
-A list of compartment flows. Each transition has the following fields:
+In order to allow the on-the-fly computation of newly infected (or hospitalized for more complex models), provide a full list of transitions (or flows) between compartments. Each transition has the following fields:
 
 .. list-table::
    :header-rows: 1
@@ -184,33 +206,35 @@ A list of compartment flows. Each transition has the following fields:
 **Transition types:**
 
 ``infection``
-    Force-of-infection flow. Generates a double loop over contact age groups using the
+    `infection` represents the force-of-infection flow. For age-resolved models, tt generates a double loop over contact age groups using the
     ``ContactPatterns`` contact matrix. The ``ContactPatterns`` parameter is added to the
     model automatically when at least one infection transition is present.
 
     .. math::
 
-       \dot{S}_i \leftarrow -\sum_j c_{ij} \cdot \phi \cdot \frac{I_j}{N_j} \cdot S_i
+       {S}'_i \leftarrow -\sum_j c_{ij} \cdot \phi \cdot \frac{I_j}{N_j} \cdot S_i
 
     where :math:`c_{ij}` is the contact rate between age groups *i* and *j*,
     :math:`\phi` is the transmission probability, and :math:`N_j` is the total
     population of age group *j*.
 
 ``linear``
-    Simple outflow proportional to the compartment size:
+    The `linear` flow is a simple outflow proportional to the compartment size:
 
     .. math::
 
-       \dot{X}_i \leftarrow -\frac{1}{\tau_i} \cdot X_i
+       {X}'_i \leftarrow -\frac{1}{\tau_i} \cdot X_i
 
     where :math:`\tau_i` is the time parameter for age group *i*.
 
 ``custom``
-    A placeholder is inserted into ``get_flows()`` with a ``TODO`` comment.
+    For `custom`, a placeholder is inserted into ``get_flows()`` with a ``TODO`` comment.
     If ``custom_formula`` is provided, it is shown as a hint next to the placeholder.
     **The generated code will not compile until you fill in the expression.**
 
 .. code-block:: yaml
+
+For the SEIR model, we have the following transitions:
 
     transitions:
       - from: Susceptible
@@ -377,13 +401,13 @@ All errors are collected and reported together.
 Common validation errors:
 
 * Missing or empty ``model``, ``infection_states``, ``parameters``, or ``transitions`` section
-* Fewer than 2 infection states, or duplicate state names
+* Fewer than two infection states, or duplicate state names
 * Parameter ``type`` is not one of ``probability``, ``time``, ``custom``
 * ``parameter`` or ``infectious_state`` in a transition references an unknown name
 * A transition has the same ``from`` and ``to`` state (self-loop)
 
-Development
------------
+Development and extension
+-------------------------------
 
 Adding a new transition type or template feature:
 
