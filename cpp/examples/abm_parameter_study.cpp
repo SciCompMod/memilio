@@ -202,8 +202,8 @@ int main()
     // The first lambda ("create_simulation" argument) sets up the simulation, the second ("process_simulation_result")
     // allows us to process each simulations result. Be mindful of the memory used for storing these results!
     auto ensemble_results = study.run(
-        [](auto&& model, auto t0_, auto, size_t run_idx) {
-            auto copy = model;
+        [](auto&& model_, auto t0_, auto, size_t run_idx) {
+            auto copy = model_;
             // using half of the RNG counter for the run index (soft-) limits both the number of runs and RNG draws
             // per person to 2^16 = 65536
             copy.reset_rng(mio::Counter<uint32_t>(run_idx << 16));
