@@ -8,11 +8,11 @@ MEmilio Generation
     * **Model Generator:** generates a C++ compartmental model with Python bindings from a YAML/TOML configuration file. See :doc:`m-modelgenerator`.
     * **Bindings Generator:** automatically generates Python bindings from existing C++ model source files using libclang. Described on this page.
 
-Model Generator
-------------------
+.. toctree::
+   :maxdepth: 1
+   :hidden:
 
-The **Model Generator** generates a complete C++ compartmental model and Python bindings from a YAML/TOML
-configuration file. No C++ knowledge is required. See :doc:`m-modelgenerator` for full documentation.
+   m-modelgenerator
 
 .. _bindings-generator:
 

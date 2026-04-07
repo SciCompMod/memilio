@@ -56,16 +56,15 @@ from .validator import Validator
 
 
 class Generator:
-    """
-    Parses a YAML configuration and renders all model source files.
-
-    Parameters
-    ----------
-    config:
-        Fully-validated `ModelConfig` instance.
-    """
+    """Parse model configurations and render model source files."""
 
     def __init__(self, config: ModelConfig):
+        """
+        Initialize a generator from a validated model configuration.
+
+        :param config: Fully validated model configuration.
+        :type config: ModelConfig
+        """
         self._config = config
         self._env = Environment(
             loader=PackageLoader("memilio.modelgenerator", "templates"),
@@ -78,16 +77,12 @@ class Generator:
     @classmethod
     def from_yaml(cls, yaml_path: str | Path) -> Generator:
         """
-        Build a `Generator` from a YAML file.
+        Build a generator from a YAML configuration file.
 
-        Parameters
-        ----------
-        yaml_path:
-            Path to the ``.yaml`` configuration file.
-
-        Returns
-        -------
-        Generator
+        :param yaml_path: Path to a ``.yaml`` configuration file.
+        :type yaml_path: str | Path
+        :returns: Generator initialized from the parsed YAML configuration.
+        :rtype: Generator
         """
         with open(yaml_path, encoding="utf-8") as fh:
             raw = yaml.safe_load(fh)
@@ -99,16 +94,12 @@ class Generator:
     @classmethod
     def from_toml(cls, toml_path: str | Path) -> Generator:
         """
-        Build a `Generator` from a TOML file.
+        Build a generator from a TOML configuration file.
 
-        Parameters
-        ----------
-        toml_path:
-            Path to the ``.toml`` configuration file.
-
-        Returns
-        -------
-        Generator
+        :param toml_path: Path to a ``.toml`` configuration file.
+        :type toml_path: str | Path
+        :returns: Generator initialized from the parsed TOML configuration.
+        :rtype: Generator
         """
         with open(toml_path, "rb") as fh:
             raw = tomllib.load(fh)
@@ -120,12 +111,12 @@ class Generator:
     @classmethod
     def from_dict(cls, raw: dict) -> Generator:
         """
-        Build a `Generator` from an already-loaded dictionary.
+        Build a generator from an already loaded dictionary.
 
-        Parameters
-        ----------
-        raw:
-            Dictionary as returned by ``yaml.safe_load``.
+        :param raw: Dictionary as returned by ``yaml.safe_load``.
+        :type raw: dict
+        :returns: Generator initialized from ``raw``.
+        :rtype: Generator
         """
         Validator.validate(raw)
         config = cls._parse(raw)
@@ -133,13 +124,14 @@ class Generator:
 
     def render(self) -> dict[str, str]:
         """
-        Render all new files and return a mapping of
+        Render all generated files.
 
-        ``relative_output_path  to  file_content``
+        Keys in the returned mapping are paths relative to the MEmilio
+        repository root. Use :meth:`render_patches` for in-place edits of
+        existing CMake files.
 
-        The paths are relative to the MEmilio repository root.
-        Use `render_patches` for the in-place edits to existing
-        CMakeLists files.
+        :returns: Mapping from relative output path to rendered file content.
+        :rtype: dict[str, str]
         """
         cfg = self._config
         prefix = cfg.meta.prefix
@@ -165,10 +157,15 @@ class Generator:
 
     def render_patches(self, output_dir: Path) -> dict[str, str | None]:
         """
-        Compute the patched content of the two existing CMakeLists files.
+        Compute patch content for existing project files.
 
-        Returns a dict ``{relative_path: new_content | None}`` where
-        ``None`` means the entry is already present (no change needed).
+        ``None`` in the result means no change is needed because the entry
+        already exists.
+
+        :param output_dir: Repository root directory.
+        :type output_dir: Path
+        :returns: Mapping from relative path to patched content or ``None``.
+        :rtype: dict[str, str | None]
         """
         prefix = self._config.meta.prefix
         namespace = self._config.meta.namespace
@@ -230,26 +227,16 @@ class Generator:
 
     def write(self, output_dir: str | Path, overwrite: bool = False) -> None:
         """
-        Write all rendered files under *output_dir* and patch the two
-        existing CMakeLists files.
+        Write rendered files and apply required project-file patches.
 
         Directories are created as needed.
 
-        Parameters
-        ----------
-        output_dir:
-            Root of the MEmilio repository (or any target directory).
-        overwrite:
-            If ``False`` (default) and the model directory
-            ``cpp/models/<prefix>`` already exists, an error is raised to
-            prevent accidentally overwriting an existing handwritten model.
-            Set to ``True`` to allow overwriting.
-
-        Raises
-        ------
-        FileExistsError
-            When *overwrite* is ``False`` and the target model directory
-            already exists.
+        :param output_dir: Root of the target MEmilio repository.
+        :type output_dir: str | Path
+        :param overwrite: Allow overwriting an existing model directory.
+        :type overwrite: bool
+        :raises FileExistsError: If model directory exists and ``overwrite`` is
+            ``False``.
         """
         output_dir = Path(output_dir)
         prefix = self._config.meta.prefix
@@ -291,7 +278,11 @@ class Generator:
         for p in raw["parameters"]:
             bounds_raw = p.get("bounds")
             if bounds_raw is not None:
-                bounds = (bounds_raw[0], bounds_raw[1])
+                lower = bounds_raw[0]
+                upper = bounds_raw[1]
+                if p["type"] == ParameterType.TIME:
+                    lower = 1e-1 if lower is None else max(float(lower), 1e-1)
+                bounds = (lower, upper)
             else:
                 if p["type"] == ParameterType.PROBABILITY:
                     bounds = (0.0, 1.0)

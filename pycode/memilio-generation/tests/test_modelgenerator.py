@@ -93,6 +93,21 @@ class TestParsing(unittest.TestCase):
         self.assertAlmostEqual(time_exp.bounds[0], 0.1)
         self.assertIsNone(time_exp.bounds[1])
 
+    def test_time_bound_lower_floor_applied(self):
+        d = {
+            "model": {"name": "X", "namespace": "ox", "prefix": "ode_x"},
+            "infection_states": ["S", "I"],
+            "parameters": [
+                {"name": "Rate", "description": "d",
+                    "type": "time", "default": 1.0, "bounds": [0.01, None]}
+            ],
+            "transitions": [
+                {"from": "S", "to": "I", "type": "linear", "parameter": "Rate"}
+            ],
+        }
+        gen = Generator.from_dict(d)
+        self.assertAlmostEqual(gen._config.parameters[0].bounds[0], 0.1)
+
 
 # TOML loading
 class TestTomlLoading(unittest.TestCase):
@@ -199,7 +214,25 @@ class TestParametersTemplate(unittest.TestCase):
             "TransmissionProbabilityOnContact<FP>>()[i] < 0.0", self.content)
 
     def test_time_constraint(self):
-        self.assertIn("tol_times", self.content)
+        self.assertIn("lower_bound_TimeExposed", self.content)
+        self.assertIn("lower_bound_TimeInfected", self.content)
+
+    def test_time_upper_bound_constraint(self):
+        d = {
+            "model": {"name": "SI", "namespace": "osi", "prefix": "ode_si"},
+            "infection_states": ["S", "I"],
+            "parameters": [
+                {"name": "Rate", "description": "d", "type": "time",
+                 "default": 5.0, "bounds": [0.5, 7.5]}
+            ],
+            "transitions": [
+                {"from": "S", "to": "I", "type": "linear", "parameter": "Rate"}
+            ],
+        }
+        content = Generator.from_dict(
+            d).render()["cpp/models/ode_si/parameters.h"]
+        self.assertIn("upper_bound_Rate", content)
+        self.assertIn("greater", content)
 
     def test_default_values_in_get_default(self):
         # TimeExposed default = 5.2, TimeInfected = 6.0
@@ -603,6 +636,18 @@ class TestValidation(unittest.TestCase):
             {"from": "S", "to": "I", "type": "infection", "parameter": "Rate",
              "infectious_state": "I", "infectious_states": ["I"]}
         ]
+        with self.assertRaises(ValidationError):
+            Generator.from_dict(d)
+
+    def test_invalid_bounds_order_rejected(self):
+        d = self._base()
+        d["parameters"][0]["bounds"] = [2.0, 1.0]
+        with self.assertRaises(ValidationError):
+            Generator.from_dict(d)
+
+    def test_time_upper_bound_below_floor_rejected(self):
+        d = self._base()
+        d["parameters"][0]["bounds"] = [None, 0.05]
         with self.assertRaises(ValidationError):
             Generator.from_dict(d)
 

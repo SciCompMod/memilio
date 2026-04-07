@@ -128,7 +128,7 @@ Default value are passed to a function which only serves as a fallback solution 
 
 Depending on the type and bounds provided by the user, MEmilio introduces a parameter constraint checking functionalism.
 - ``probability``: constraint check enforces ``[0.0, 1.0]``
-- ``time``: constraint check enforces ``[0.1, ∞)``. The threshold of 0.1 days is hardcoded in the generated C++ constraint check and cannot be changed via the ``bounds`` field. It is chosen to prevent unreasonably short compartment stays that would drastically increase the run time of the ODE solver.
+- ``time``: constraint check uses the configured ``bounds``. If ``bounds`` are omitted, the default is ``[0.1, null]``. Values below ``0.1`` days are always raised to ``0.1`` days in the generated C++ constraint check to avoid unreasonably short compartment stays that drastically increase ODE solver run time.
 - ``custom``: no automatic constraint check is generated
 
 .. note::

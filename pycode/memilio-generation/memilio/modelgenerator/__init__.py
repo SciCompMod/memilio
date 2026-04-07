@@ -24,11 +24,11 @@ MEmilio Model Generator.
 Automatically generates C++ source files and pybind11 bindings for MEmilio ODE
 compartment models from a YAML configuration file.
 
-Example
--------
->>> from memilio.modelgenerator import Generator
->>> gen = Generator.from_yaml("examples/seir.yaml")
->>> gen.write(output_dir="/path/to/memilio")
+Example::
+
+    from memilio.modelgenerator import Generator
+    gen = Generator.from_yaml("examples/seir.yaml")
+    gen.write(output_dir="/path/to/memilio")
 """
 
 from .schema import ModelConfig, ParameterConfig, TransitionConfig

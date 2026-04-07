@@ -42,24 +42,16 @@ class ValidationError(Exception):
 
 
 class Validator:
-    """
-    Validates a raw dictionary loaded from YAML.
-
-    Usage::
-
-        Validator.validate(raw_dict)   # raises ValidationError on failure
-    """
+    """Validate raw model dictionaries loaded from YAML or TOML."""
 
     @staticmethod
     def validate(data: dict[str, Any]) -> None:
         """
-        Validate *data* and raise `ValidationError` if any problem
-        is found.
+        Validate ``data``.
 
-        Parameters
-        ----------
-        data:
-            Dictionary as returned by ``yaml.safe_load``.
+        :param data: Dictionary as returned by ``yaml.safe_load``.
+        :type data: dict[str, Any]
+        :raises ValidationError: If one or more validation errors are found.
         """
         errors: list[str] = []
 
@@ -132,6 +124,16 @@ class Validator:
                     errors.append(
                         f"'{loc}.bounds' must be a list of two numbers or null, e.g. [0.0, 1.0]."
                     )
+                else:
+                    lower, upper = bounds
+                    if lower is not None and upper is not None and lower > upper:
+                        errors.append(
+                            f"'{loc}.bounds' lower value must be <= upper value (got {lower} > {upper})."
+                        )
+                    if ptype == ParameterType.TIME and upper is not None and upper < 0.1:
+                        errors.append(
+                            f"'{loc}.bounds' upper value for type 'time' must be >= 0.1."
+                        )
 
         if len(param_names) != len(set(param_names)):
             errors.append("'parameters' contains duplicate 'name' entries.")

@@ -41,14 +41,12 @@ from memilio.simulation.{{ cfg.meta.namespace }} import (
 def run_simulation(t0=0.0, tmax=10.0, dt=0.1):
     """Run a {{ cfg.meta.name }} simulation and print a result table.
 
-    Parameters
-    ----------
-    t0 : float
-        Start time in days.
-    tmax : float
-        End time in days.
-    dt : float
-        Integration step size in days.
+    :param t0: Start time in days.
+    :type t0: float
+    :param tmax: End time in days.
+    :type tmax: float
+    :param dt: Integration step size in days.
+    :type dt: float
     """
     num_groups = 1
     model = Model(num_groups)

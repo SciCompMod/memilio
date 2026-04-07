@@ -60,7 +60,6 @@ If you use MEmilio, please :doc:`cite our work<citation>`.
       python/m-epidata
       python/m-surrogate
       python/m-generation
-      python/m-modelgenerator
       python/m-plot
 
    .. toctree::

@@ -21,9 +21,7 @@
 """
 Command-line interface for the model generator.
 
-Usage
------
-::
+Usage::
 
     memilio-modelgenerator path/to/model.yaml [--output-dir DIR] [--preview]
 """
@@ -39,6 +37,14 @@ from .validator import ValidationError
 
 
 def main(argv=None) -> int:
+    """
+    Run the model-generator command-line interface.
+
+    :param argv: Optional argument vector. If ``None``, ``sys.argv`` is used.
+    :type argv: list[str] | None
+    :returns: Process exit code.
+    :rtype: int
+    """
     parser = argparse.ArgumentParser(
         prog="memilio-modelgenerator",
         description="Generate MEmilio C++ model files and pybind11 bindings from a YAML config.",

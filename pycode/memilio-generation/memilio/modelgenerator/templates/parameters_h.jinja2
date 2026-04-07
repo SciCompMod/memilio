@@ -119,24 +119,36 @@ public:
      */
     bool apply_constraints()
     {
-{% set has_time_params = cfg.parameters | selectattr('type', 'equalto', 'time') | list | length > 0 %}
-{% if has_time_params %}
-        const FP tol_times = 1e-1;
+{% for param in cfg.parameters %}
+{% if param.type == 'time' %}
+        const FP lower_bound_{{ param.name }} = {{ "%.17g"|format(param.bounds[0]) }};
+{% if param.bounds[1] is not none %}
+        const FP upper_bound_{{ param.name }} = {{ "%.17g"|format(param.bounds[1]) }};
 {% endif %}
+{% endif %}
+{% endfor %}
         int corrected = false;
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 {% for param in cfg.parameters %}
 {% if param.type == 'time' %}
-            if (this->template get<{{ param.name }}<FP>>()[i] < tol_times) {
+            if (this->template get<{{ param.name }}<FP>>()[i] < lower_bound_{{ param.name }}) {
                 log_warning(
                     "Constraint check: Parameter {{ param.name }} changed from {} to {}. Please note that "
                     "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                     "and reset parameters.",
-                    this->template get<{{ param.name }}<FP>>()[i], tol_times);
-                this->template get<{{ param.name }}<FP>>()[i] = tol_times;
+                    this->template get<{{ param.name }}<FP>>()[i], lower_bound_{{ param.name }});
+                this->template get<{{ param.name }}<FP>>()[i] = lower_bound_{{ param.name }};
                 corrected                                      = true;
             }
+{% if param.bounds[1] is not none %}
+            if (this->template get<{{ param.name }}<FP>>()[i] > upper_bound_{{ param.name }}) {
+                log_warning("Constraint check: Parameter {{ param.name }} changed from {} to {}",
+                            this->template get<{{ param.name }}<FP>>()[i], upper_bound_{{ param.name }});
+                this->template get<{{ param.name }}<FP>>()[i] = upper_bound_{{ param.name }};
+                corrected                                      = true;
+            }
+{% endif %}
 {% elif param.type == 'probability' %}
             if (this->template get<{{ param.name }}<FP>>()[i] < 0.0 ||
                 this->template get<{{ param.name }}<FP>>()[i] > 1.0) {
@@ -157,21 +169,33 @@ public:
      */
     bool check_constraints() const
     {
-{% if has_time_params %}
-        const FP tol_times = 1e-1;
+{% for param in cfg.parameters %}
+{% if param.type == 'time' %}
+        const FP lower_bound_{{ param.name }} = {{ "%.17g"|format(param.bounds[0]) }};
+{% if param.bounds[1] is not none %}
+        const FP upper_bound_{{ param.name }} = {{ "%.17g"|format(param.bounds[1]) }};
 {% endif %}
+{% endif %}
+{% endfor %}
 
         for (auto i = AgeGroup(0); i < m_num_groups; i++) {
 {% for param in cfg.parameters %}
 {% if param.type == 'time' %}
-            if (this->template get<{{ param.name }}<FP>>()[i] < tol_times) {
+            if (this->template get<{{ param.name }}<FP>>()[i] < lower_bound_{{ param.name }}) {
                 log_warning(
-                    "Constraint check: Parameter {{ param.name }} {} smaller or equal {}. Please note that "
+                    "Constraint check: Parameter {{ param.name }} {} smaller than {}. Please note that "
                     "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                     "and reset parameters.",
-                    this->template get<{{ param.name }}<FP>>()[i], tol_times);
+                    this->template get<{{ param.name }}<FP>>()[i], lower_bound_{{ param.name }});
                 return true;
             }
+{% if param.bounds[1] is not none %}
+            if (this->template get<{{ param.name }}<FP>>()[i] > upper_bound_{{ param.name }}) {
+                log_error("Constraint check: Parameter {{ param.name }} {} greater {}",
+                          this->template get<{{ param.name }}<FP>>()[i], upper_bound_{{ param.name }});
+                return true;
+            }
+{% endif %}
 {% elif param.type == 'probability' %}
             if (this->template get<{{ param.name }}<FP>>()[i] < 0.0 ||
                 this->template get<{{ param.name }}<FP>>()[i] > 1.0) {
