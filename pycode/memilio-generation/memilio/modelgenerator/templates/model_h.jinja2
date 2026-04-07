@@ -117,7 +117,11 @@ public:
                     InfectionState::{{ t.from_state }},
                     InfectionState::{{ t.to_state }}>(i)] +=
                     coeff_{{ t.from_state }}_to_{{ t.to_state }} *
-                    y[idx_{{ t.from_state }}_i] * pop[idx_{{ t.infectious_state }}_j];
+                    y[idx_{{ t.from_state }}_i] * (
+{% for inf_state in t.infectious_states %}
+                        pop[idx_{{ inf_state }}_j]{% if not loop.last %} +{% endif %}
+{% endfor %}
+                    );
             }
 {% endfor %}
 {% endif %}

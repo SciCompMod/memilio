@@ -181,11 +181,52 @@ class Validator:
                     )
 
             if ttype == TransitionType.INFECTION:
-                inf_state = t.get("infectious_state")
-                if inf_state not in state_set:
+                has_singular = "infectious_state" in t
+                has_plural = "infectious_states" in t
+                if has_singular and has_plural:
                     errors.append(
-                        f"'{loc}.infectious_state' references unknown state {inf_state!r}."
+                        f"'{loc}' must define only one of 'infectious_state' or 'infectious_states'."
                     )
+                    continue
+
+                key = "infectious_states" if has_plural else "infectious_state"
+                inf_raw = t.get(key)
+
+                if inf_raw is None:
+                    errors.append(
+                        f"'{loc}.{key}' must be provided for infection transitions."
+                    )
+                    continue
+
+                if isinstance(inf_raw, str):
+                    inf_states = [inf_raw]
+                elif isinstance(inf_raw, list):
+                    if len(inf_raw) == 0:
+                        errors.append(f"'{loc}.{key}' must not be empty.")
+                        continue
+                    inf_states = []
+                    for j, s in enumerate(inf_raw):
+                        if not isinstance(s, str) or not s.strip():
+                            errors.append(
+                                f"'{loc}.{key}[{j}]' must be a non-empty string."
+                            )
+                        else:
+                            inf_states.append(s)
+                    if len(inf_states) != len(set(inf_states)):
+                        errors.append(
+                            f"'{loc}.{key}' contains duplicate entries."
+                        )
+                else:
+                    errors.append(
+                        f"'{loc}.{key}' must be a string or a non-empty list of strings."
+                    )
+                    continue
+
+                for s in inf_states:
+                    if s not in state_set:
+                        errors.append(
+                            f"'{loc}.{key}' references unknown state {s!r}."
+                        )
 
         if errors:
             raise ValidationError(errors)

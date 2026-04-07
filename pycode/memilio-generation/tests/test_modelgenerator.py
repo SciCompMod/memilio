@@ -250,6 +250,50 @@ class TestModelTemplate(unittest.TestCase):
         self.assertIn("ContactPatterns<FP>", self.content)
         self.assertIn("get_cont_freq_mat", self.content)
 
+    def test_infection_flow_supports_multiple_infectious_states(self):
+        d = {
+            "model": {"name": "SEIIR", "namespace": "oseiir", "prefix": "ode_seiir"},
+            "infection_states": ["S", "E", "I1", "I2", "R"],
+            "parameters": [
+                {"name": "Beta", "description": "b",
+                    "type": "probability", "default": 0.5},
+                {"name": "TimeExposed", "description": "t",
+                    "type": "time", "default": 4.0},
+            ],
+            "transitions": [
+                {"from": "S", "to": "E", "type": "infection", "parameter": "Beta",
+                 "infectious_state": ["I1", "I2"]},
+                {"from": "E", "to": "R", "type": "linear",
+                    "parameter": "TimeExposed"},
+            ],
+        }
+        content = Generator.from_dict(
+            d).render()["cpp/models/ode_seiir/model.h"]
+        self.assertIn("pop[idx_I1_j] +", content)
+        self.assertIn("pop[idx_I2_j]", content)
+
+    def test_infection_flow_supports_infectious_states_key(self):
+        d = {
+            "model": {"name": "SEIIR", "namespace": "oseiir", "prefix": "ode_seiir"},
+            "infection_states": ["S", "E", "I1", "I2", "R"],
+            "parameters": [
+                {"name": "Beta", "description": "b",
+                    "type": "probability", "default": 0.5},
+                {"name": "TimeExposed", "description": "t",
+                    "type": "time", "default": 4.0},
+            ],
+            "transitions": [
+                {"from": "S", "to": "E", "type": "infection", "parameter": "Beta",
+                 "infectious_states": ["I1", "I2"]},
+                {"from": "E", "to": "R", "type": "linear",
+                    "parameter": "TimeExposed"},
+            ],
+        }
+        content = Generator.from_dict(
+            d).render()["cpp/models/ode_seiir/model.h"]
+        self.assertIn("pop[idx_I1_j] +", content)
+        self.assertIn("pop[idx_I2_j]", content)
+
     def test_linear_flows(self):
         self.assertIn("TimeExposed<FP>>()[i]", self.content)
         self.assertIn("TimeInfected<FP>>()[i]", self.content)
@@ -523,6 +567,42 @@ class TestValidation(unittest.TestCase):
         d["parameters"].append(
             {"name": "Rate", "description": "dup", "type": "time", "default": 2.0}
         )
+        with self.assertRaises(ValidationError):
+            Generator.from_dict(d)
+
+    def test_infectious_state_list_accepts_multiple_states(self):
+        d = self._base()
+        d["infection_states"] = ["S", "I1", "I2"]
+        d["transitions"] = [
+            {"from": "S", "to": "I1", "type": "infection",
+             "parameter": "Rate", "infectious_state": ["I1", "I2"]}
+        ]
+        Generator.from_dict(d)
+
+    def test_infectious_states_key_accepts_multiple_states(self):
+        d = self._base()
+        d["infection_states"] = ["S", "I1", "I2"]
+        d["transitions"] = [
+            {"from": "S", "to": "I1", "type": "infection",
+             "parameter": "Rate", "infectious_states": ["I1", "I2"]}
+        ]
+        Generator.from_dict(d)
+
+    def test_empty_infectious_state_list_rejected(self):
+        d = self._base()
+        d["transitions"] = [
+            {"from": "S", "to": "I", "type": "infection",
+             "parameter": "Rate", "infectious_state": []}
+        ]
+        with self.assertRaises(ValidationError):
+            Generator.from_dict(d)
+
+    def test_conflicting_infectious_state_keys_rejected(self):
+        d = self._base()
+        d["transitions"] = [
+            {"from": "S", "to": "I", "type": "infection", "parameter": "Rate",
+             "infectious_state": "I", "infectious_states": ["I"]}
+        ]
         with self.assertRaises(ValidationError):
             Generator.from_dict(d)
 

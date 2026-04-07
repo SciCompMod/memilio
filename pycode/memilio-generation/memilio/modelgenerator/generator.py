@@ -313,13 +313,27 @@ class Generator:
 
         transitions = []
         for t in raw["transitions"]:
+            raw_infectious_states = t.get("infectious_states")
+            raw_infectious_state = t.get("infectious_state")
+            if isinstance(raw_infectious_states, list):
+                infectious_states = list(raw_infectious_states)
+            elif raw_infectious_states is not None:
+                infectious_states = [raw_infectious_states]
+            elif isinstance(raw_infectious_state, list):
+                infectious_states = list(raw_infectious_state)
+            elif raw_infectious_state is not None:
+                infectious_states = [raw_infectious_state]
+            else:
+                infectious_states = []
+
             transitions.append(
                 TransitionConfig(
                     from_state=t["from"],
                     to_state=t["to"],
                     type=t["type"],
                     parameter=t.get("parameter"),
-                    infectious_state=t.get("infectious_state"),
+                    infectious_state=infectious_states[0] if infectious_states else None,
+                    infectious_states=infectious_states,
                     custom_formula=t.get("custom_formula"),
                 )
             )

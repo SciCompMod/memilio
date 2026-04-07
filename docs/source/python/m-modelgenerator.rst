@@ -197,7 +197,7 @@ In order to allow the on-the-fly computation of newly infected (or hospitalized 
      - Name of the driving parameter (must be in ``parameters``)
    * - ``infectious_state``
      - for ``infection``
-     - Compartment whose population drives the force of infection (e.g. ``Infected``). Currently, only a single compartment can be specified. If your model has multiple infectious compartments, you can add further ``infection`` transitions, one per infectious compartment. Support for a list of infectious states may be added in a future version.
+     - Compartment whose population drives the force of infection (e.g. ``Infected``). You can pass a single state or a list of states (e.g. ``[InfectedNoSymptoms, InfectedSymptoms]``), in which case their populations are summed in the force of infection.
    * - ``custom_formula``
      - no
      - Optional hint placed in a ``TODO`` comment in the generated code
@@ -414,7 +414,7 @@ Common validation errors:
 * Missing or empty ``model``, ``infection_states``, ``parameters``, or ``transitions`` section
 * Fewer than two infection states, or duplicate state names
 * Parameter ``type`` is not one of ``probability``, ``time``, ``custom``
-* ``parameter`` or ``infectious_state`` in a transition references an unknown name
+* ``parameter`` or ``infectious_state`` / ``infectious_states`` in a transition references an unknown name
 * A transition has the same ``from`` and ``to`` state (self-loop)
 
 Development and extension

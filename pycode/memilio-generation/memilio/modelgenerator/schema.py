@@ -119,7 +119,14 @@ class TransitionConfig:
     infectious_state: str | None = None
     """
     For ``type == "infection"``: the compartment whose population drives
-    infection (typically ``"Infected"``).
+    infection (typically ``"Infected"``). Kept as a compatibility alias
+    for the first entry of ``infectious_states``.
+    """
+
+    infectious_states: list[str] = field(default_factory=list)
+    """
+    For ``type == "infection"``: list of compartments whose populations
+    are summed to drive infection.
     """
 
     custom_formula: str | None = None
