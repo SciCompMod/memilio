@@ -5,18 +5,13 @@ set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "Don't install benchmark" FORCE)
 set(BENCHMARK_DOWNLOAD_DEPENDENCIES OFF CACHE BOOL "Don't download dependencies" FORCE)
 set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "Disable Google Test in benchmark" FORCE)
 
+message(STATUS "Downloading GoogleBenchmark library")
 include(FetchContent)
 FetchContent_Declare(benchmark
+    SOURCE_SUBDIR this_directory_name_does_not_exist
     GIT_REPOSITORY https://github.com/google/benchmark.git
     GIT_TAG v1.6.1)
-FetchContent_GetProperties(benchmark)
-
-if(NOT benchmark_POPULATED)
-    FetchContent_Populate(benchmark)
-    set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS 1 CACHE BOOL "")
-    add_subdirectory(${benchmark_SOURCE_DIR} ${benchmark_BINARY_DIR} EXCLUDE_FROM_ALL)
-    unset(CMAKE_SUPPRESS_DEVELOPER_WARNINGS)
-endif()
+FetchContent_MakeAvailable(benchmark)
 
 set_target_properties(benchmark PROPERTIES FOLDER "Extern")
 
