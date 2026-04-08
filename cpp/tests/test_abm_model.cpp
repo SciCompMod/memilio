@@ -17,6 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/location_id.h"
+#include "abm/person_id.h"
+#include "memilio/utils/random_number_generator.h"
 #include "utils.h"
 #include "abm/location.h"
 #include "abm/location_type.h"
@@ -30,7 +33,9 @@
 #include "memilio/utils/abstract_parameter_distribution.h"
 #include "memilio/utils/parameter_distributions.h"
 #include "random_number_test.h"
+#include <algorithm>
 #include <cstddef>
+#include <cstdint>
 
 using TestModel = RandomNumberTest;
 
@@ -1102,4 +1107,49 @@ TEST_F(TestModel, personCanDieInHospital)
     // Check the severely infected person dies and got burried
     model.evolve(t + dt, dt);
     EXPECT_EQ(model.get_location(p_severe.get_id()).get_type(), mio::abm::LocationType::Cemetery);
+}
+
+TEST_F(TestModel, reset_rng)
+{
+    const int num_samples = 100; // number of samples used for comparing random sequences
+    auto model            = mio::abm::Model(num_age_groups);
+    model.get_rng()       = this->get_rng();
+    // add two generic persons
+    {
+        // use DefaultFactory to avoid using the RNG in the Person ctor
+        auto p = mio::DefaultFactory<mio::abm::Person>::create();
+        p.set_location(mio::abm::LocationType::Cemetery, mio::abm::LocationId(0), 0);
+        model.add_person(mio::abm::Person(p, mio::abm::PersonId(0)));
+        model.add_person(mio::abm::Person(p, mio::abm::PersonId(1)));
+    }
+    auto& p0 = model.get_persons()[0];
+    auto& p1 = model.get_persons()[1];
+    // shorthand for drawing a random vector using a personal RNG
+    const auto draw_samples = [](mio::abm::PersonalRandomNumberGenerator&& rng) {
+        std::vector<mio::abm::PersonalRandomNumberGenerator::result_type> samples(num_samples);
+        std::ranges::generate(samples, rng);
+        return samples;
+    };
+
+    // case: draw independent samples from each person; expect the same random sequence for both persons after a reset
+    const auto reference_samples0      = draw_samples({model.get_rng(), p0});
+    const auto reference_samples0_cont = draw_samples({model.get_rng(), p0}); // used for next case
+    const auto reference_samples1      = draw_samples({model.get_rng(), p1});
+    model.reset_rng();
+    EXPECT_EQ(reference_samples1, draw_samples({model.get_rng(), p1})); // reverse order to check independence
+    EXPECT_EQ(reference_samples0, draw_samples({model.get_rng(), p0}));
+
+    // case: draw samples twice from one person;
+    //   expect the same random sequence after resetting with the counter set to num_samples
+    model.reset_rng(mio::Counter<uint32_t>(num_samples));
+    EXPECT_EQ(reference_samples0_cont, draw_samples({model.get_rng(), p0}));
+
+    // case: reset with seed and counter; expect seed and counter to be set accordingly
+    // this is a very simplistic test, as the main behaviour of the reset function is covered sufficiently above
+    const std::vector<uint32_t> test_seed{1, 2, 3, 4, 5, 6};
+    const mio::Counter<uint32_t> test_ctr(7);
+    model.reset_rng(test_seed, test_ctr);
+    EXPECT_EQ(model.get_rng().get_seeds(), test_seed);
+    EXPECT_EQ(p0.get_rng_counter(), test_ctr);
+    EXPECT_EQ(p1.get_rng_counter(), test_ctr);
 }
