@@ -180,7 +180,7 @@ const ScalarType t0 = 0.0;
 // const ScalarType t_max = 0.2;
 // const ScalarType dt    = 0.1;
 
-const ScalarType t_max = 50.0;
+const ScalarType t_max = 10.0;
 const ScalarType dt    = 0.5;
 
 const ScalarType t_max_phi = 1;
@@ -206,7 +206,7 @@ static BenchSetupPrinter bench_setup_printer;
 // const std::vector<int> age_group_counts      = {1, 2, 3, 4, 5, 6};
 
 const std::vector<int> commuter_group_counts = {256, 512, 1024, 2048, 4096, 8192, 16384};
-const std::vector<int> age_group_counts      = {1, 3, 6}; //, 8, 12, 16};
+const std::vector<int> age_group_counts      = {1, 3, 4, 6, 8}; //, 8, 12, 16};
 const std::vector<int> core_counts           = {1, 7, 14, 28, 56};
 
 static void bench_auxiliary_euler(::benchmark::State& state)
@@ -469,7 +469,7 @@ static void bench_standard_lagrangian_euler(::benchmark::State& state)
 // ============================================================================
 // OpenMP-parallel stage-aligned RK4: the outer patch loop runs in parallel.
 //
-// All NP = num_commuter_groups + 1 patches share the same model type
+// All P = num_commuter_groups + 1 patches share the same model parameters
 // and are independent of each other, so they can be computed simultaneously
 // across all available CPU threads.
 // ============================================================================
@@ -528,7 +528,6 @@ static void bench_stage_aligned_rk4_omp(::benchmark::State& state)
             ps.current_totals = proto;
             ps.mobile_pops.assign(num_commuter_groups, init_mob);
             ps.lambda.assign(4, std::vector<double>(num_age_groups, 0.0));
-
             ps.y0.resize(NC);
             ps.y0.setZero();
             ps.y1.resize(NC);
@@ -561,10 +560,6 @@ static void bench_stage_aligned_rk4_omp(::benchmark::State& state)
             ps.Xc4.setZero();
         }
 
-        // ---- Pre-compute contact*beta matrix ----
-        // Doing this once before the parallel region avoids calling
-        // get_matrix_at() inside the loop, where all 36 OMP threads would
-        // simultaneously call it.
         std::vector<double> contact_beta(num_age_groups * num_age_groups, 0.0);
         for (size_t i = 0; i < num_age_groups; ++i) {
             const double beta_i =
@@ -576,7 +571,6 @@ static void bench_stage_aligned_rk4_omp(::benchmark::State& state)
                     beta_i;
             }
         }
-
         auto compute_lambda = [&](const Eigen::VectorXd& y, std::vector<double>& lam_out) {
             for (size_t i = 0; i < num_age_groups; ++i)
                 lam_out[i] = 0.0;
@@ -589,8 +583,6 @@ static void bench_stage_aligned_rk4_omp(::benchmark::State& state)
             }
         };
 
-        // Computes lambda AND the totals RHS and
-        // avoids calling model.get_derivatives() inside the parallel part.
         auto compute_rhs_and_lambda = [&](const Eigen::VectorXd& y, Eigen::VectorXd& k_out,
                                           std::vector<double>& lam_out) {
             compute_lambda(y, lam_out);
@@ -608,91 +600,100 @@ static void bench_stage_aligned_rk4_omp(::benchmark::State& state)
 
         // ---- MEASURED: parallel time integration over all patches ----
         state.ResumeTiming();
+
+#pragma omp parallel
+        {
 #ifdef LIKWID_PERFMON
-        LIKWID_MARKER_START("omp_rk4_hot");
+            LIKWID_MARKER_START("omp_rk4_hot");
 #endif
 
-#pragma omp parallel for schedule(static)
-        for (int p = 0; p < num_patches; ++p) {
-            PatchState& ps = patches[static_cast<size_t>(p)];
+#pragma omp for schedule(static)
+            for (int p = 0; p < num_patches; ++p) {
+                PatchState& ps = patches[static_cast<size_t>(p)];
 
-            for (ScalarType t = t0; t < t_max; t += dt) {
+                for (ScalarType t = t0; t < t_max; t += dt) {
 
-                // --- Totals RK4 + lambda per stage (no heap allocations) ---
-                ps.y0 = ps.current_totals;
-                compute_rhs_and_lambda(ps.y0, ps.k0, ps.lambda[0]);
+                    // --- Totals RK4 + lambda per stage (no heap allocations) ---
+                    ps.y0 = ps.current_totals;
+                    compute_rhs_and_lambda(ps.y0, ps.k0, ps.lambda[0]);
 
-                ps.y1 = ps.y0 + (dt * 0.5) * ps.k0;
-                compute_rhs_and_lambda(ps.y1, ps.k1, ps.lambda[1]);
+                    ps.y1 = ps.y0 + (dt * 0.5) * ps.k0;
+                    compute_rhs_and_lambda(ps.y1, ps.k1, ps.lambda[1]);
 
-                ps.y2 = ps.y0 + (dt * 0.5) * ps.k1;
-                compute_rhs_and_lambda(ps.y2, ps.k2, ps.lambda[2]);
+                    ps.y2 = ps.y0 + (dt * 0.5) * ps.k1;
+                    compute_rhs_and_lambda(ps.y2, ps.k2, ps.lambda[2]);
 
-                ps.y3 = ps.y0 + dt * ps.k2;
-                compute_rhs_and_lambda(ps.y3, ps.k3, ps.lambda[3]);
+                    ps.y3 = ps.y0 + dt * ps.k2;
+                    compute_rhs_and_lambda(ps.y3, ps.k3, ps.lambda[3]);
 
-                const Eigen::VectorXd next_totals =
-                    ps.current_totals + (dt / 6.0) * (ps.k0 + 2.0 * ps.k1 + 2.0 * ps.k2 + ps.k3);
+                    const Eigen::VectorXd next_totals =
+                        ps.current_totals + (dt / 6.0) * (ps.k0 + 2.0 * ps.k1 + 2.0 * ps.k2 + ps.k3);
 
-                // --- Commuter RK4 ---
-                for (int cg = 0; cg < num_commuter_groups; ++cg) {
-                    Eigen::Ref<Eigen::VectorXd> Xc = ps.mobile_pops[static_cast<size_t>(cg)];
+                    // --- Commuter RK4 ---
+                    for (int cg = 0; cg < num_commuter_groups; ++cg) {
+                        Eigen::Ref<Eigen::VectorXd> Xc = ps.mobile_pops[static_cast<size_t>(cg)];
 
-                    for (size_t g = 0; g < num_age_groups; ++g) {
-                        const int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
-                        const double fSE = ps.lambda[0][g] * Xc[iS];
-                        const double fEI = rate_E[g] * Xc[iE];
-                        const double fIR = rate_I[g] * Xc[iI];
-                        ps.k1c[iS]       = -fSE;
-                        ps.k1c[iE]       = fSE - fEI;
-                        ps.k1c[iI]       = fEI - fIR;
-                        ps.k1c[iR]       = fIR;
+#pragma omp simd
+                        for (size_t g = 0; g < num_age_groups; ++g) {
+                            const int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
+                            const double fSE = ps.lambda[0][g] * Xc[iS];
+                            const double fEI = rate_E[g] * Xc[iE];
+                            const double fIR = rate_I[g] * Xc[iI];
+                            ps.k1c[iS]       = -fSE;
+                            ps.k1c[iE]       = fSE - fEI;
+                            ps.k1c[iI]       = fEI - fIR;
+                            ps.k1c[iR]       = fIR;
+                        }
+
+                        ps.Xc2 = Xc + (dt * 0.5) * ps.k1c;
+#pragma omp simd
+                        for (size_t g = 0; g < num_age_groups; ++g) {
+                            const int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
+                            const double fSE = ps.lambda[1][g] * ps.Xc2[iS];
+                            const double fEI = rate_E[g] * ps.Xc2[iE];
+                            const double fIR = rate_I[g] * ps.Xc2[iI];
+                            ps.k2c[iS]       = -fSE;
+                            ps.k2c[iE]       = fSE - fEI;
+                            ps.k2c[iI]       = fEI - fIR;
+                            ps.k2c[iR]       = fIR;
+                        }
+
+                        ps.Xc3 = Xc + (dt * 0.5) * ps.k2c;
+#pragma omp simd
+                        for (size_t g = 0; g < num_age_groups; ++g) {
+                            const int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
+                            const double fSE = ps.lambda[2][g] * ps.Xc3[iS];
+                            const double fEI = rate_E[g] * ps.Xc3[iE];
+                            const double fIR = rate_I[g] * ps.Xc3[iI];
+                            ps.k3c[iS]       = -fSE;
+                            ps.k3c[iE]       = fSE - fEI;
+                            ps.k3c[iI]       = fEI - fIR;
+                            ps.k3c[iR]       = fIR;
+                        }
+
+                        ps.Xc4 = Xc + dt * ps.k3c;
+#pragma omp simd
+                        for (size_t g = 0; g < num_age_groups; ++g) {
+                            const int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
+                            const double fSE = ps.lambda[3][g] * ps.Xc4[iS];
+                            const double fEI = rate_E[g] * ps.Xc4[iE];
+                            const double fIR = rate_I[g] * ps.Xc4[iI];
+                            ps.k4c[iS]       = -fSE;
+                            ps.k4c[iE]       = fSE - fEI;
+                            ps.k4c[iI]       = fEI - fIR;
+                            ps.k4c[iR]       = fIR;
+                        }
+
+                        Xc += (dt / 6.0) * (ps.k1c + 2.0 * ps.k2c + 2.0 * ps.k3c + ps.k4c);
                     }
-
-                    ps.Xc2 = Xc + (dt * 0.5) * ps.k1c;
-                    for (size_t g = 0; g < num_age_groups; ++g) {
-                        const int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
-                        const double fSE = ps.lambda[1][g] * ps.Xc2[iS];
-                        const double fEI = rate_E[g] * ps.Xc2[iE];
-                        const double fIR = rate_I[g] * ps.Xc2[iI];
-                        ps.k2c[iS]       = -fSE;
-                        ps.k2c[iE]       = fSE - fEI;
-                        ps.k2c[iI]       = fEI - fIR;
-                        ps.k2c[iR]       = fIR;
-                    }
-
-                    ps.Xc3 = Xc + (dt * 0.5) * ps.k2c;
-                    for (size_t g = 0; g < num_age_groups; ++g) {
-                        const int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
-                        const double fSE = ps.lambda[2][g] * ps.Xc3[iS];
-                        const double fEI = rate_E[g] * ps.Xc3[iE];
-                        const double fIR = rate_I[g] * ps.Xc3[iI];
-                        ps.k3c[iS]       = -fSE;
-                        ps.k3c[iE]       = fSE - fEI;
-                        ps.k3c[iI]       = fEI - fIR;
-                        ps.k3c[iR]       = fIR;
-                    }
-
-                    ps.Xc4 = Xc + dt * ps.k3c;
-                    for (size_t g = 0; g < num_age_groups; ++g) {
-                        const int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
-                        const double fSE = ps.lambda[3][g] * ps.Xc4[iS];
-                        const double fEI = rate_E[g] * ps.Xc4[iE];
-                        const double fIR = rate_I[g] * ps.Xc4[iI];
-                        ps.k4c[iS]       = -fSE;
-                        ps.k4c[iE]       = fSE - fEI;
-                        ps.k4c[iI]       = fEI - fIR;
-                        ps.k4c[iR]       = fIR;
-                    }
-
-                    Xc += (dt / 6.0) * (ps.k1c + 2.0 * ps.k2c + 2.0 * ps.k3c + ps.k4c);
+                    ps.current_totals = next_totals;
                 }
-                ps.current_totals = next_totals;
-            }
-        } // end omp parallel for
+            } // end omp for
+
 #ifdef LIKWID_PERFMON
-        LIKWID_MARKER_STOP("omp_rk4_hot");
+            LIKWID_MARKER_STOP("omp_rk4_hot");
 #endif
+        } // end omp parallel
 
         benchmark::DoNotOptimize(patches);
     }
@@ -1171,14 +1172,14 @@ static void bench_matrix_phi_reconstruction_blockdiag(::benchmark::State& state)
 //         }
 //     }) -> Name("matrix_phi_reconstruction(Euler)") -> Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(mio::benchmark_mio::bench_stage_aligned_rk4)
-    ->Apply([](auto* b) {
-        for (int i : mio::benchmark_mio::commuter_group_counts) {
-            for (int g : mio::benchmark_mio::age_group_counts) {
-                b->Args({i, g});
-            }
-        }
-    }) -> Name("stage-aligned(RK4)") -> Unit(::benchmark::kMicrosecond);
+// BENCHMARK(mio::benchmark_mio::bench_stage_aligned_rk4)
+//     ->Apply([](auto* b) {
+//         for (int i : mio::benchmark_mio::commuter_group_counts) {
+//             for (int g : mio::benchmark_mio::age_group_counts) {
+//                 b->Args({i, g});
+//             }
+//         }
+//     }) -> Name("stage-aligned(RK4)") -> Unit(::benchmark::kMicrosecond);
 
 #ifdef _OPENMP
 BENCHMARK(mio::benchmark_mio::bench_stage_aligned_rk4_omp)
@@ -1190,7 +1191,7 @@ BENCHMARK(mio::benchmark_mio::bench_stage_aligned_rk4_omp)
                 }
             }
         }
-    }) -> Name("stage-aligned-omp(RK4)") -> Unit(::benchmark::kMicrosecond);
+    }) -> Name("stage-aligned-omp(RK4)") -> Unit(::benchmark::kMicrosecond) -> Iterations(1);
 #endif
 
 // BENCHMARK(mio::benchmark_mio::bench_stage_aligned_euler)
