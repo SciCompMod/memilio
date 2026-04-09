@@ -68,15 +68,17 @@ public:
     ScalarType sum_part1_weight(size_t n, size_t j);
     ScalarType sum_part2_weight(size_t n, size_t j);
 
-    ScalarType compute_phi_deriv(ScalarType dt, size_t j, size_t fd_order = 1);
-    ScalarType phi_deriv_analytical(ScalarType current_time, ScalarType damping_type);
+    ScalarType compute_phi_deriv(ScalarType dt, size_t j, size_t fd_order, ScalarType current_time,
+                                 ScalarType damping_time);
+    ScalarType phi_deriv_analytical(ScalarType current_time, ScalarType damping_time, ScalarType smoother_window = 1.);
 
     // Returns the number of iterations needed in fixed point iteration.
     size_t compute_S(ScalarType s_init, ScalarType dt, size_t t0_index = 0, size_t fd_order_contacts = 1,
-                     ScalarType damping_time = 1000., ScalarType tol = 1e-14, size_t max_iterations = 100);
+                     ScalarType damping_time = 1000., bool split_integral = false, ScalarType tol = 1e-14,
+                     size_t max_iterations = 100);
 
     ScalarType fixed_point_function(ScalarType s, ScalarType dt, size_t t0_index, size_t fd_order_contacts = 1,
-                                    ScalarType damping_time = 1000.);
+                                    ScalarType damping_time = 1000., bool split_integral = false);
 
     size_t compute_S_reformulated(ScalarType s_init, ScalarType dt, size_t t0_index = 0, ScalarType tol = 1e-14,
                                   size_t max_iterations = 100);
