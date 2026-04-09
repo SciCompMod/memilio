@@ -155,7 +155,7 @@ target_link_libraries(messina_example_extended_detailed_init PRIVATE memilio ide
 target_compile_options(messina_example_extended_detailed_init PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(detailed_init_exponential convergence/detailed_init_exponential.cpp)
-target_link_libraries(detailed_init_exponential PRIVATE memilio ide_sir)
+target_link_libraries(detailed_init_exponential PRIVATE memilio ide_sir ode_sir)
 target_compile_options(detailed_init_exponential PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(detailed_init_linear_decay convergence/detailed_init_linear_decay.cpp)
@@ -169,6 +169,10 @@ target_compile_options(detailed_init_exponential_complement PRIVATE ${MEMILIO_CX
 add_executable(detailed_init_exponential_s_groundtruth convergence/detailed_init_exponential_s_groundtruth.cpp)
 target_link_libraries(detailed_init_exponential_s_groundtruth PRIVATE memilio ide_sir)
 target_compile_options(detailed_init_exponential_s_groundtruth PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(polynomial convergence/polynomial.cpp)
+target_link_libraries(polynomial PRIVATE memilio ide_sir)
+target_compile_options(polynomial PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(analytical_example_S_deriv convergence/analytical_example_S_deriv.cpp)
 target_link_libraries(analytical_example_S_deriv PRIVATE memilio ide_sir_analytical_S_deriv)

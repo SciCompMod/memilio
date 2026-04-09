@@ -4,12 +4,16 @@ add_library(ide_sir
     model.cpp
     model_simplified.h
     model_simplified.cpp
+    model_polynomial.h
+    model_polynomial.cpp
     simulation.h
     simulation.cpp
     simulation_s_groundtruth.h
     simulation_s_groundtruth.cpp
     simulation_simplified.h
     simulation_simplified.cpp
+    simulation_polynomial.h
+    simulation_polynomial.cpp
     parameters.h
     gregory_weights.h 
     gregory_weights.cpp
