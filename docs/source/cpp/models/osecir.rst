@@ -13,7 +13,7 @@ and, mostly, early epidemic phases.
 
 The infection states and the transitions (also see next two sections) are visualized in the following graph.
 
-.. image:: https://github.com/SciCompMod/memilio/assets/70579874/46b09e8a-d083-4ef9-8328-21975890b60f
+.. image:: https://martinkuehn.eu/research/images/secir.png
    :alt: secir_model
 
 Infection States
@@ -125,6 +125,10 @@ The model implements the following parameters:
    * - :math:`\mu_{I_{Sev}}^{I_{Cr}}`
      - ``CriticalPerSevere``
      - Probability of transition from compartment InfectedSevere to InfectedCritical.
+   * - :math:`\mu_{I_{Sev}}^{D}`
+     - ``DeathsPerSevere``
+     - Probability of dying when in compartment InfectedSevere, independent of ICU capacity. When ICU capacity is
+       exceeded, additional deaths from InfectedSevere may occur through the ICU overflow mechanism.
    * - :math:`\mu_{I_{Cr}}^{D}`
      - ``DeathsPerCritical``
      - Probability of dying when in compartment InfectedCritical.

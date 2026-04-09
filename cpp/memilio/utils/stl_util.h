@@ -34,6 +34,22 @@
 #include <cassert>
 #include <memory>
 
+/// @brief Stream operator for writing std::vector to an std::ostream. Requires that T has a viable overload itself.
+template <class T>
+std::ostream& operator<<(std::ostream& out, const std::vector<T>& vec)
+{
+    out << "{";
+    // use size - 1 and handle the last entry separately, for nicer separator usage
+    for (size_t i = 0; i < vec.size() - 1; i++) {
+        out << vec[i] << ", ";
+    }
+    if (!vec.empty()) {
+        out << vec.back();
+    }
+    out << "}";
+    return out;
+}
+
 namespace mio
 {
 

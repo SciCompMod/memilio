@@ -192,13 +192,13 @@ TimeSeries<FP> interpolate_simulation_result(const TimeSeries<FP>& simulation_re
     const auto t0    = simulation_result.get_time(0);
     const auto t_max = simulation_result.get_last_time();
     // add an additional day, if the first time point is within tolerance of floor(t0)
-    const auto day0 = ceil(t0 - abs_tol);
+    const auto day0 = static_cast<int>(ceil(t0 - abs_tol));
     // add an additional day, if the last time point is within tolerance of ceil(tmax)
-    const auto day_max = floor(t_max + abs_tol);
+    const auto day_max = static_cast<int>(floor(t_max + abs_tol));
 
     // create interpolation_times vector with all days between day0 and day_max
-    std::vector<FP> tps(static_cast<int>(day_max) - static_cast<int>(day0) + 1);
-    std::iota(tps.begin(), tps.end(), day0);
+    std::vector<FP> tps(day_max - day0 + 1);
+    std::iota(tps.begin(), tps.end(), FP(day0));
 
     return interpolate_simulation_result<FP>(simulation_result, tps);
 }
