@@ -4,11 +4,11 @@ Getting started
 Overview
 --------
 
-.. note:: This project is under active development.
+.. note:: This project is under active development with approximately 10 full time developers. Any content provided in the repository has been extensively reviewed and can be considered stable. Regular function extensions can be expected. New features are, if possible, integrated in a backward-stable manner but interfaces might change over time.
 
 
 MEmilio is an extensive framework for tasks around infectious disease modeling. It supports a multitude of :ref:`model <model-faq>` types 
-including :doc:`equation-based<cpp/aggregated_models>`, :doc:`agent-based <cpp/individual_models>`, 
+including :doc:`equation-based or compartmental<cpp/aggregated_models>`, :doc:`agent-based <cpp/individual_models>`, 
 and :doc:`hybrid graph-ODE-based models <cpp/graph_metapop>`. It furthermore provides ready-to-use tools for data integration and visualizations. 
 Among the equation-based models, we provide models based on :doc:`ordinary differential equations <cpp/ode>`,
 :doc:`the linear chain trick (LCT), <cpp/lct>` and a recent :doc:`generalized LCT <cpp/glct>`, :doc:`integro-differential equations <cpp/ide>` 
@@ -29,7 +29,7 @@ as infection or mobility data. More about this and our other Python packages can
 of this documentation.
 
 A few things are not represented in this documentation, but are part of the `GitHub repository <https://github.com/SciCompMod/memilio>`__. 
-In the `data <https://github.com/SciCompMod/memilio/tree/main/data>`__ folder you can find some regularly used data 
+In the `data <https://github.com/SciCompMod/memilio/tree/main/data>`_ folder you can find some regularly used data 
 for simulations of a pathogen's spread, currently mostly for Germany. 
 
 Why to use MEmilio
@@ -37,6 +37,12 @@ Why to use MEmilio
 
 In computationaly epidemiology and infectious disease dynamics, models are often implemented in Python or R. However, this approach often limits the possibility to build large-scale models including an advanced level of detail, e.g., in demography, spatial resolution, or even individual immunity or to run many simulations in a short time frame. 
 MEmilio addresses this challenge by providing a high-performance framework implemented in C++ that allows for large-scale modeling in short time frames to be used in research, policy advice, and education.
+
+In the following figure, we representatively show an excerpt of Fig. 6 of `Bicker et al. (2026), DOI: 10.48550/arXiv.2602.11381 <https://doi.org/10.48550/arXiv.2602.11381>`_ showing the performance of population and metapopulation models implemented in R and in C++ in MEmilio. While for large numbers of regions, the R model based on the C-implemented routine desolve comes close to MEmilio's C++ routine performance, both interfaces (C++ and Python) of MEmilio realize significant speedups (factor 100 and more) for most applications.
+
+.. image:: http://martinkuehn.eu/research/images/speedup_memilio.png
+   :alt: Performance of population and metapopulation models implemented in R and in C++ in MEmilio.
+   :width: 100%
 
 The use of a particular model is generally driven by the research question at hand. The distinction of MEmilio is the provision of a wide range of models, from simple compartmental models to complex integro-differential and agent-based models, allowing users to select the most appropriate model for their specific needs.
 
@@ -54,9 +60,172 @@ For Python, please see, e.g., :doc:`ODE-based SECIRTS model <python/m-simulation
 
 When individual-level interactions and heterogeneity are crucial, :doc:`individual-based models <cpp/individual_models>` provide a detailed representation of disease dynamics. These models can capture complex behaviors and interactions, making them valuable for understanding transmission dynamics in specific settings. Individual-based models are computationally intensive but offer unparalleled detail for certain research questions such as in-household transmission or vaccination and testing strategies targeting individuals that satisfy specific properties with respect to age, previous infections, immunity levels, or particular workplaces. The most versatile individual-based model in MEmilio is the :doc:`(mobility-based) agent-based model <cpp/mobility_based_abm>`.
 
+A quick tour through MEmilio
+-----------------------------
 
-How to use MEmilio
-------------------
+While MEmilio harmonizes much of its structures across all model classes, we first distinguish between :doc:`compartmental or aggregated models<cpp/aggregated_models>` based on ODEs (ordinary differential equations) without and with Linear Chain Trick, IDEs (integro-differential equations), and SDEs (stochastic differential equations) and :doc:`Agent-based models<cpp/individual_models>`. The following subsections give a brief overview on essential functionality, each presented in a particular and function-specific tutorial. While several tutorials build on previous tutorials, experienced users or users interested in other models might also want jump to later parts of this walkthrough guide. 
+
+An additional overview on MEmilio's elementary model structure is given by the following figure.
+
+.. image:: http://martinkuehn.eu/research/images/model_structure.png
+   :alt: Overview on MEmilio's model structure.
+   :width: 100%
+
+MEmilio benefits from a harmonized description of its models in infection states and parameters, and, potentially, a list of flows between the compartments; see the following figure for a motivation. All models derive their infection states from a flexible and simple list of InfectionStates. For FlowModels (see below for an explanation), particular transitions are defined evenly flexible as a list of flows between the states. Parameters are also generally defined in an identical fashion. 
+
+.. image:: http://martinkuehn.eu/research/images/uniform.png
+   :alt: MEmilio's uniform model description.
+   :width: 100%
+
+Below we guide you through several tutorials on using MEmilio's models through its Python interface. More experience users might directly start with the `Python exercises <https://github.com/SciCompMod/memilio-tutorials/tree/main/exercises>`_ which are derived versions from the tutorials or with `tutorial and exercises in C++ <https://github.com/SciCompMod/memilio-tutorials/tree/main/cpp-tutorials>`_. For more advanced aggregated models using the Linear Chain Trick or IDE-formulations, we currently only provided tutorials and exercises in C++. For the individual- or agent-based model (ABM), we currently only provide `ABM tutorials in C++ <https://github.com/SciCompMod/memilio-tutorials/tree/main/cpp-tutorials/abm>`_. 
+
+
+Simple compartmental models
+****************************
+
+Most of MEmilio's compartmental or aggregated models share the same interface derived from a high-level **CompartmentalModel** (see above). It defines the fundamental structure for epidemiological models with compartments (e.g., SEIR, SECIR, SIRS, etc.).
+
+In `Tutorial 01 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial01.py>`_, we show how set up and simulate a simple setting for our :doc:`ODE-SECIR model <models/osecir>`. The result of the tutorial is a figure of a well-known epidemic outcome.
+
+.. image:: http://martinkuehn.eu/research/images/tutorial01.png
+   :alt: A well-known epidemic outcome as a result of Tutorial 01.
+   :width: 100%
+
+
+Flows between compartments
+**************************
+
+Often, modelers might be interested not only in the estimated number of individuals in a state of the disease but also on the number of recent or current transitions between different states such as the number of new hospitalizations. As modelers could introduce additional compartments only following those transitions or do complex post-processing, MEmilio directly computes all transitions between compartments by default. This is realized through MEmilio's **FlowModel** structure which is a still generic but refined specification of the **CompartmentalModel**. Through an optimized backend, the overhead for computing transitions (i.e. flows) and compartmental values is less than 10 %.
+
+In `Tutorial 02 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial02.py>`_, we show how to obtain the numbers of newly symptomatic and hospitalized individuals for our :doc:`ODE-SECIR model <models/osecir>`. TThe result of the tutorial is shown in the following figure.
+
+.. image:: http://martinkuehn.eu/research/images/tutorial02.png
+   :alt: Newly symptomatic and hospitalized individuals as obtained from Tutorial 02.
+   :width: 100%
+
+
+Demography and contact structures
+*********************************
+
+As motivated in the following figure, MEmilio's models are implemented in a way that they can be stratified by age groups (or other dimensions such as sex) in a single line.
+
+.. image:: http://martinkuehn.eu/research/images/contacts.png
+   :alt: Module for flexible demographic stratification by age groups.
+   :width: 100%
+
+In `Tutorial 05 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial05.py>`_, we show how to distinguish individuals of three different age groups by their susceptibility with respect to severe and critical infections and simulate outcomes for our :doc:`ODE-SECIR model <models/osecir>`. The result of the tutorial is shown in the following figure.
+
+.. image:: http://martinkuehn.eu/research/images/tutorial05.png
+   :alt: Different epidemic curves for six different age groups.
+   :width: 100%
+
+Metapopulation and mobility
+***************************
+
+As motivated in the following figure, MEmilio's aggregated models can be extended to metapopulation models by using a graph structure.
+
+.. image:: http://martinkuehn.eu/research/images/mobility.png
+   :alt: Module for flexible spatial resolution in metapopulation models.
+   :width: 100%
+
+In `Tutorial 07 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial07.py>`_, we show how an epidemic with our :doc:`ODE-SECIR model <models/osecir>` evolves with a delay between two different spatial entities. The result of the tutorial is shown in the following figure.
+
+.. image:: http://martinkuehn.eu/research/images/tutorial07.png
+   :alt: Delayed epidemic spreading through metapopulation coupling of two regions.
+   :width: 100%
+
+Fixed time-point interventions
+******************************
+
+In order to control and mitigate epidemic developments, MEmilio provides the ability to introduce non-pharmaceutical interventions (NPIs) or measures as `Dampings` to the contact frequencies. In `Tutorial 03 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial03.py>`_, we show how an epidemic with our :doc:`ODE-SECIR model <models/osecir>` can be first mitigated before a reopening event takes place. The result of the tutorial is shown in the following figure.
+
+.. image:: http://martinkuehn.eu/research/images/tutorial03.png
+   :alt: Changed epidemic outcome through interventions at fixed time points.
+   :width: 100%
+
+
+Location-specific interventions
+*******************************
+
+Often interventions are targeted to specific types of locations such as schools, workplaces, or social gatherings. In order to most realistically model contact structures and NPIs across different locations, MEmilio uses simple and flexible lists of contact locations. In `Tutorial 10 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial10.py>`_, we explain with our :doc:`ODE-SECIR model <models/osecir>` contact structures can be stratified by locations and NPIs implemented in a location-specific way. The result of the tutorial is shown in the following figure.
+
+.. image:: http://martinkuehn.eu/research/images/tutorial10.png
+   :alt: Changed epidemic outcome through interventions at specific locations.
+   :width: 100%
+
+Dynamic interventions
+*********************
+
+Eventually, NPIs might often be bound to a threshold or criterion upon which its get activated, e.g., the number of new symptomatic (here, reported) infections over the last days. In order to allow dynamic, threshold-dependent NPIs, MEmilio implements a structure denoted `DynamicNPIs`. In `Tutorial 11 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial11.py>`_, we explain with our :doc:`ODE-SECIR model <models/osecir>` how to set up and simulate dynamic interventions based on symptomatic infections. The result of the tutorial is shown in the following figure. 
+
+Note that the DynamicNPI feature is currently fixed to interventions based on symptomatic infections but if you are interested in using it for other applications, please get in touch with us, as the change could be done by us in very short time.
+
+.. image:: http://martinkuehn.eu/research/images/tutorial11.png
+   :alt: Changed epidemic outcome through dynamically activated interventions.
+   :width: 100%
+
+Fitting MEmilio's models
+************************
+
+As parameter inference is a research topic of its own, MEmilio does not provide methods for parameter inference but instead provides well designed interfaces to established tools and packages dedicated to model calibration and parameter inference.
+
+`Tutorial 04 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial04.py>`_ and `Tutorial 06 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial06.py>`_, we introduce usage of Approximate Bayesian Computation (ABC) with MEmilio and `pyABC <https://pyabc.readthedocs.io/en/latest/>`_ for likelihood-free inference. 
+
+The result of Tutorial 04 are the projections of the calibrated model using pyABC:
+
+.. image:: http://martinkuehn.eu/research/images/tutorial04.png
+   :alt: Projections of the calibrated model using pyABC.
+   :width: 100%
+
+The result of Tutorial 06 are the posterior distributions for the model parameters using pyABC:
+
+.. image:: http://martinkuehn.eu/research/images/tutorial06.png
+   :alt: Posterior distributions for the model parameters using pyABC.
+   :width: 100%
+
+In `Tutorial 09 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial09.py>`_ we use `Bayesflow <https://bayesflow.org/main/index.html>`_, a state of the art python library for Bayesian inference with deep learning. The result of Tutorial 09 is the region- and age-specific calibration using BayesFlow:
+
+.. image:: http://martinkuehn.eu/research/images/tutorial09.png
+   :alt: Region- and age-specific calibration using BayesFlow.
+   :width: 100%
+
+Linear Chain Trick
+*******************
+
+As among others shown in `Plötzke et al. (2026), DOI: 10.1016/j.matcom.2025.07.045 <https://doi.org/10.1016/j.matcom.2025.07.045>`_, exponentially distributed stay times can lead to (substantially) deviating peak timings and values; see also the following figure extracted from Fig. 8 of the mentioned paper.
+
+.. image:: http://martinkuehn.eu/research/images/lct.png
+   :alt: Deviating peaks with exponential distribution assumptions (ODE) versus Linear Chain Trick with Erlang/Gamma distributions.
+   :width: 100%
+
+In the `LCT Tutorial <https://github.com/SciCompMod/memilio-tutorials/blob/main/cpp-tutorials/tutorial_lct.cpp>`_, we show a minimalistic example of an LCT model within MEmilio. Parameters, contact structures, and NPIs can basically be used as in the introductions to simple ODE models. If you are interested in using LCT models with different courses of the disease, please get in touch with us.
+
+IDE-based models
+*****************
+
+While LCT models generalize assumptions from exponential to Gamma, IDE formulations such as presented `Wendler et al. (2026), DOI: 10.1016/j.amc.2025.129636 <https://doi.org/10.1016/j.amc.2025.129636>`_ allow the full flexibility to use any data-driven transition distribution.
+
+In the `IDE Tutorial <https://github.com/SciCompMod/memilio-tutorials/blob/main/cpp-tutorials/tutorial_ide.cpp>`_, we show a minimalistic example of an IDE model within MEmilio. Parameters, contact structures, and NPIs can basically be used as in the introductions to simple ODE models. If you are interested in using IDE models with different courses of the disease, please get in touch with us.
+
+
+Agent- or individual-based model
+********************************
+
+As motivated in Fig. 5 of `Bicker et al. (2026), DOI: 10.48550/arXiv.2602.11381 <https://doi.org/10.48550/arXiv.2602.11381>`_ and shown here below, different types of models with their implicit or flexible assumptions can lead to all type of epidemic projections.
+
+.. image:: http://martinkuehn.eu/research/images/model_comparisons.png
+   :alt: Results of infectious disease spread with different models and model assumptions.
+   :width: 100%
+
+A major advantage of agent-based models (ABMs) is the possibility to model individuals with individual properties. In the MEmilio-ABM populations are set up straightforward with household structures. Testing and vaccination strategies can be targeted to individuals at particular locations or of selected age groups.
+
+- In the `tutorial on households <https://github.com/SciCompMod/memilio-tutorials/blob/main/cpp-tutorials/abm/tutorial_abm_households.cpp>`_, we show how particular populations and household structures can be set up with the MEmilio-ABM.
+- In the `tutorial on testing <https://github.com/SciCompMod/memilio-tutorials/blob/main/cpp-tutorials/abm/tutorial_abm_testing.cpp>`_, we show how different testing strategies with particular testing schemes can be realized.
+- In the `tutorial on vaccination <https://github.com/SciCompMod/memilio-tutorials/blob/main/cpp-tutorials/abm/tutorial_abm_vaccination.cpp>`_, we show how different vaccination strategies can be realized.
+
+
+Download and installation
+-------------------------
 
 The installation and use of MEmilio might look overwhelming at first due to the many features and models included. 
 We have structured this documentation to guide you step-by-step through the installation and usage process.
