@@ -60,7 +60,7 @@ public:
     using ActivenessIterator      = std::vector<bool>::iterator;
     using ConstActivenessIterator = std::vector<bool>::const_iterator;
     using MobilityRuleType        = LocationType (*)(PersonalRandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
-                                              const Parameters&);
+                                                     const Parameters&);
 
     using Compartments = mio::abm::InfectionState;
     /**
@@ -333,11 +333,39 @@ public:
     * Get the RandomNumberGenerator used by this Model for random events.
     * Persons use their own generators with the same key as the global one. 
     * @return The random number generator.
+    * @{
     */
     RandomNumberGenerator& get_rng()
     {
         return m_rng;
     }
+    const RandomNumberGenerator& get_rng() const
+    {
+        return m_rng;
+    }
+    /** @} */
+
+    /**
+     * @brief Sets the RNG counters of the model and all persons to 0 (or to the optional counter argument).
+     * @param[in] seeds Optional argument used to overwrite the current seed.
+     * @param[in] counter Optional argument used as base value for each RNG counter.
+     * Note: Both the model's and each person's RNG uses a 64 bit counter. Since the persons reserve half of the
+     * counter for their ID, we only allow specifying the first 32 bits here, even for the model.
+     * @{
+     */
+    void reset_rng(Counter<uint32_t> counter = {})
+    {
+        m_rng.set_counter(Counter<uint64_t>(static_cast<uint64_t>(counter.get())));
+        for (Person& person : get_persons()) {
+            person.get_rng_counter() = counter;
+        }
+    }
+    void reset_rng(const std::vector<uint32_t>& seeds, Counter<uint32_t> counter = {})
+    {
+        m_rng.seed(seeds);
+        reset_rng(counter);
+    }
+    /** @} */
 
     /**
      * Get the model id. Is only relevant for graph abm or hybrid model.
@@ -609,7 +637,7 @@ protected:
             compute_exposure_caches(t, dt);
             m_are_exposure_caches_valid = true;
         }
-        auto personal_rng = PersonalRandomNumberGenerator(person);
+        auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
         auto location     = person.get_location();
         mio::abm::interact(personal_rng, person, get_location(location),
                            m_local_population_by_age_cache[location.get()], m_air_exposure_rates_cache[location.get()],
