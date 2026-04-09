@@ -41,7 +41,6 @@
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/contact_matrix.h"
-#include "memilio/epidemiology/uncertain_matrix.h"
 
 #include <algorithm>
 #include <limits>
