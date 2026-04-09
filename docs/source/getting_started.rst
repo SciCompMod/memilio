@@ -85,7 +85,7 @@ Before you can install MEmilio, you need to install some common development tool
 *   **Git:** This is a version control system used to download the project's source code.
 
     *   **Windows:** By default, Git is not installed. Download and install it from `git-scm.com <https://git-scm.com/downloads/win>`__.
-    *   **macOS & Linux:** Git is usually preinstalled. You can check by opening a terminal and typing ``git --version``.
+    *   **macOS & Linux:** Git is sometimes preinstalled. You can check by opening a terminal and typing ``git --version``. Otherwise, you can find instructions `here <https://git-scm.com/install/>`__.
 
 *   **Python:** Required for the Python packages.
 
@@ -95,7 +95,7 @@ Before you can install MEmilio, you need to install some common development tool
 
     *   **Windows:** The easiest way is to install **Visual Studio Community**. This includes a C++ compiler, CMake, and Git all in one.
     *   **macOS:** One option is installing the **Xcode Command Line Tools** by running ``xcode-select --install`` in your terminal.
-    *   **Linux:** On Linux, essential build tools and CMake might be preinstalled. Otherwise, on Debian/Ubuntu, you could execute the installation by running ``sudo apt-get install cmake gcc g++`` in your terminal.
+    *   **Linux:** To install the required build tools on Debian or Ubuntu, you can run ``sudo apt install cmake gcc g++`` in your terminal. Most other Linux distributions let you install these through their package manager as well, though the package names may differ.
 
 Step 1: Download the MEmilio source code
 ****************************************
