@@ -130,10 +130,9 @@ rng = np.random.default_rng()
 for person in model.persons:
     infection_state = abm.InfectionState(rng.choice(
         len(infection_distribution), p=infection_distribution))
-    prng = abm.PersonalRandomNumberGenerator(person)
 
     if infection_state != abm.InfectionState.Susceptible:
-        person.add_new_infection(prng, abm.VirusVariant.Wildtype,
+        person.add_new_infection(model, abm.VirusVariant.Wildtype,
                                  person.age, model.parameters, start_date, infection_state)
 
 # Assign locations

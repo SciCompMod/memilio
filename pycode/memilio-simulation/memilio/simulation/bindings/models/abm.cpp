@@ -164,17 +164,14 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_property_readonly("is_in_quarantine", &mio::abm::Person::is_in_quarantine)
         .def_property_readonly("id", &mio::abm::Person::get_id)
         .def("add_new_infection",
-             [](mio::abm::Person& self, mio::abm::PersonalRandomNumberGenerator& rng, mio::abm::VirusVariant variant,
-                mio::AgeGroup age, mio::abm::Parameters& parameters, mio::abm::TimePoint start_date,
+             [](mio::abm::Person& self, mio::abm::Model& model, mio::abm::VirusVariant variant, mio::AgeGroup age,
+                mio::abm::Parameters& parameters, mio::abm::TimePoint start_date,
                 mio::abm::InfectionState infection_state) {
+                 mio::abm::PersonalRandomNumberGenerator person_rng(model.get_rng(), self);
                  self.add_new_infection(
-                     mio::abm::Infection(rng, variant, age, parameters, start_date, infection_state));
+                     mio::abm::Infection(person_rng, variant, age, parameters, start_date, infection_state));
              })
         .def("add_new_vaccination", &mio::abm::Person::add_new_vaccination, py::return_value_policy::reference_internal)
-        // .def("add_new_vaccination",
-        //      [](mio::abm::Person& self, mio::abm::ProtectionType type, mio::abm::TimePoint start_date) {
-        //          self.add_new_vaccination(type, start_date);
-        //      })
         .def("get_infection_state", &mio::abm::Person::get_infection_state)
         .def_property_readonly("vaccinations", py::overload_cast<>(&mio::abm::Person::get_vaccinations, py::const_));
 
@@ -303,10 +300,6 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_property_readonly("num_members", &mio::abm::Household::get_total_number_of_members);
 
     m.def("add_household_group_to_model", &mio::abm::add_household_group_to_model);
-
-    pymio::bind_class<mio::abm::PersonalRandomNumberGenerator, pymio::EnablePickling::Never>(
-        m, "PersonalRandomNumberGenerator")
-        .def(py::init<mio::abm::Person&>(), py::arg("person"));
 
     pymio::bind_class<mio::abm::Infection, pymio::EnablePickling::Never>(m, "Infection");
 
