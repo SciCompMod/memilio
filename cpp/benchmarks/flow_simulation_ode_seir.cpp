@@ -19,13 +19,13 @@
 */
 #include "benchmarks/simulation.h"
 #include "memilio/compartments/flow_simulation.h"
+#include "memilio/compartments/simulation.h"
+#include "memilio/utils/base_dir.h"
 #include "ode_seir/model.h"
+
 #include <string>
 
-const std::string config_path = "../../benchmarks/simulation.config";
-
-#include "memilio/compartments/simulation.h"
-#include "models/ode_seir/model.h"
+const std::string config_path = mio::base_dir() + "cpp/benchmarks/simulation.config";
 
 namespace mio
 {
