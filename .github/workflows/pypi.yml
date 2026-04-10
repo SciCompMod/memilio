@@ -1,5 +1,7 @@
-name: Build wheels 
+name: memilio-simulation PyPI
 
+# on: [release]
+# remove following line before merge: 
 on: [pull_request, release]
 
 jobs:
