@@ -1,6 +1,6 @@
 # MEmilio - a high performance Modular EpideMIcs simuLatIOn software #
 
-![memilio_logo](https://github.com/SciCompMod/memilio/blob/main/docs/memilio-small.png)
+![memilio_logo](https://github.com/SciCompMod/memilio/blob/main/docs/memilio-small.png?raw=true)
 
 [![CI](https://github.com/SciCompMod/memilio/actions/workflows/main.yml/badge.svg)](https://github.com/SciCompMod/memilio/actions/workflows/main.yml)
 [![codecov](https://codecov.io/gh/SciCompMod/memilio/branch/main/graph/badge.svg?token=DVQXIQJHBM)](https://codecov.io/gh/SciCompMod/memilio)
