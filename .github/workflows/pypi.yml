@@ -1,8 +1,8 @@
-name: memilio-simulation PyPI
+name: PyPI
 
-# on: [release]
+on: [release]
 # remove following line before merge: 
-on: [pull_request, release]
+# on: [pull_request, release]
 
 jobs:
 
@@ -58,4 +58,4 @@ jobs:
         with:
           skip-existing: true
           # To test uploads to TestPyPI, uncomment the following:
-          repository-url: https://test.pypi.org/legacy/
+          # repository-url: https://test.pypi.org/legacy/
