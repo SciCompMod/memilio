@@ -6,7 +6,10 @@ inputs:
     required: true
 runs:
   using: "composite"
-  steps:    
+  steps:
+    - name: Configure Git safe directory
+      shell: bash 
+      run: git config --global --add safe.directory "${{ github.workspace }}"    
     - name: Install dependencies
       shell: bash
       run: yum install ninja-build cmake git -qy

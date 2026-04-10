@@ -5,7 +5,7 @@ version = "2.3.0"
 description = "Part of MEmilio project, Python bindings to the C++ libraries that contain the models and simulations."
 readme = "README.md"
 requires-python = ">=3.8"
-license = { text = "Apache-2.0" }
+license = { "Apache-2.0" }
 authors = [{ name = "MEmilio Team" }]
 maintainers = [
   { email = "martin.kuehn@dlr.de" }
