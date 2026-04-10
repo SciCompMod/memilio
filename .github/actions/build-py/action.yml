@@ -14,16 +14,18 @@ runs:
       shell: bash
       run: |
         if [ "${{ inputs.package }}" != "simulation" ]; then
-          cd pycode/memilio-${inputs.package}/
-        // else stay in root directory
+          cd pycode/memilio-${{ inputs.package }}
+        else 
+        // stay in root directory
         fi
         mkdir wheelhouse
     - name: Build Python Wheels
       shell: bash
       run: |
         if [ "${{ inputs.package }}" != "simulation" ]; then
-          cd pycode/memilio-${inputs.package}/
-        // else stay in root directory
+          cd pycode/memilio-${{ inputs.package }}/
+        else
+        // stay in root directory
         fi
         /opt/python/cp38-cp38/bin/python -m pip install --upgrade pip setuptools wheel
         /opt/python/cp38-cp38/bin/python -m pip install scikit-build scikit-build-core
