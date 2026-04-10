@@ -290,53 +290,71 @@ public:
     Eigen::Ref<Eigen::VectorX<FP>> advance(FP tmax)
     {
         using std::min;
-        auto& t_end_dyn_npis   = this->get_model().parameters.get_end_dynamic_npis();
-        auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
+        auto& dyn_npis = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
+
+        // If no dynamic NPI thresholds are set, directly use the base advance
+        if (dyn_npis.get_thresholds().size() == 0) {
+            return BaseT::advance(tmax);
+        }
+
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns<FP>>();
 
-        FP delay_npi_implementation; // delay which is needed to implement a NPI that is criterion-dependent
-        FP t        = BaseT::get_result().get_last_time();
-        const FP dt = dyn_npis.get_thresholds().size() > 0 ? FP(dyn_npis.get_interval().get()) : FP(tmax);
-
+        FP delay_npi_implementation;
+        FP t = BaseT::get_result().get_last_time();
         while (t < tmax) {
-            FP dt_eff = min<FP>(dt, tmax - t);
-            dt_eff    = min<FP>(dt_eff, m_t_last_npi_check + dt - t);
-
-            BaseT::advance(t + dt_eff);
             if (t > 0) {
-                delay_npi_implementation =
-                    this->get_model().parameters.template get<DynamicNPIsImplementationDelay<FP>>();
+                delay_npi_implementation = FP(dyn_npis.get_implementation_delay());
             }
-            else { // DynamicNPIs for t=0 are 'misused' to be from-start NPIs. I.e., do not enforce delay.
+            else { // DynamicNPIs for t=0 are treated as 'from-start NPIs'. I.e., do not enforce delay.
                 delay_npi_implementation = 0;
             }
-            t = t + dt_eff;
 
             if (dyn_npis.get_thresholds().size() > 0) {
-                if (floating_point_greater_equal<FP>(t, m_t_last_npi_check + dt)) {
-                    if (t < t_end_dyn_npis) {
-                        auto inf_rel = get_infections_relative<FP>(*this, t, this->get_result().get_last_value()) *
-                                       dyn_npis.get_base_value();
-                        auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
-                        if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
-                            (exceeded_threshold->first > m_dynamic_npi.first ||
-                             t > FP(m_dynamic_npi.second))) { //old npi was weaker or is expired
+                FP direc_begin = FP(dyn_npis.get_directive_begin());
+                FP direc_end   = FP(dyn_npis.get_directive_end());
+                if (floating_point_greater_equal(t, direc_begin, 1e-10) && t < direc_end) {
+                    auto inf_rel = get_infections_relative<FP>(*this, t, this->get_result().get_last_value()) *
+                                   dyn_npis.get_base_value();
+                    auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
+                    if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
+                        (exceeded_threshold->first > m_dynamic_npi.first ||
+                         t > FP(m_dynamic_npi.second))) { // old npi was weaker or is expired
 
-                            auto t_start  = SimulationTime<FP>(t + delay_npi_implementation);
-                            auto t_end    = t_start + SimulationTime<FP>(FP(dyn_npis.get_duration()));
+                        // Keep-alive: if the NPI expired but the threshold is still exceeded at the
+                        // same level, renew immediately without delay to avoid a gap.
+                        // Apply implementation delay only if stronger NPI needed.
+                        bool is_expiry_renewal =
+                            (t > FP(m_dynamic_npi.second)) && !(exceeded_threshold->first > m_dynamic_npi.first);
+                        FP effective_delay = is_expiry_renewal ? FP(0) : delay_npi_implementation;
+                        if (t + effective_delay < direc_end) {
+                            auto t_start = SimulationTime<FP>(t + effective_delay);
+                            // set the end to the minimum of start+duration and the end of the directive
+                            auto t_end = SimulationTime<FP>(min<FP>(direc_end, FP(t_start + dyn_npis.get_duration())));
                             m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
+                            // For new NPIs (t_start > 0): shift t_start_damping by +1 so the smooth
+                            // transition window [t_start, t_start+1] lies in the future, consistent with
+                            // predefined dampings.  For t_start = 0 (global t0): the window [-1, 0]
+                            // is in the past and no shift is needed.
+                            // For keep-alive renewals (is_expiry_renewal): do not shift t_start_damping.
+                            // Since t_start == t_end_damping_old, the new start damping has the same
+                            // (time, level, type) as the previous entry.
+                            // Therefore, the contact matrix stays constant at the NPI level with no dip.
+                            auto t_start_damping = (!is_expiry_renewal && FP(t_start) > FP(0))
+                                                       ? SimulationTime<FP>(FP(t_start) + FP(1))
+                                                       : t_start;
+                            auto t_end_damping = (FP(t_start) > FP(0)) ? SimulationTime<FP>(FP(t_end) + FP(1)) : t_end;
                             implement_dynamic_npis<FP>(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
-                                                       t_start, t_end, [](auto& g) {
+                                                       t_start_damping, t_end_damping, [](auto& g) {
                                                            return make_contact_damping_matrix(g);
                                                        });
                         }
                     }
-                    m_t_last_npi_check = t;
                 }
             }
-            else {
-                m_t_last_npi_check = t;
-            }
+
+            FP dt_eff = min<FP>(1.0, tmax - t);
+            BaseT::advance(t + dt_eff);
+            t = t + dt_eff;
         }
 
         return this->get_result().get_last_value();

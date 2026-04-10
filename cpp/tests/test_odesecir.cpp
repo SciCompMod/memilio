@@ -1197,13 +1197,6 @@ TEST(TestOdeSecir, check_constraints_parameters)
     model.parameters.get<mio::osecir::DeathsPerSevere<double>>()[(mio::AgeGroup)0] = 0.3;
     model.parameters.set<mio::osecir::DeathsPerCritical<double>>(1.1);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
-
-    model.parameters.set<mio::osecir::DeathsPerCritical<double>>(1.0);
-    model.parameters.set<mio::osecir::DynamicNPIsImplementationDelay<double>>(-4);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
-
-    model.parameters.set<mio::osecir::DynamicNPIsImplementationDelay<double>>(3);
-    EXPECT_EQ(model.parameters.check_constraints(), 0);
 }
 
 TEST(TestOdeSecir, apply_constraints_parameters)
@@ -1292,12 +1285,6 @@ TEST(TestOdeSecir, apply_constraints_parameters)
     model.parameters.set<mio::osecir::DeathsPerCritical<double>>(1.1);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecir::DeathsPerCritical<double>>()[indx_agegroup], 0);
-
-    model.parameters.set<mio::osecir::DynamicNPIsImplementationDelay<double>>(-4);
-    EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecir::DynamicNPIsImplementationDelay<double>>(), 0);
-
-    EXPECT_EQ(model.parameters.apply_constraints(), 0);
 }
 
 #if defined(MEMILIO_HAS_JSONCPP)

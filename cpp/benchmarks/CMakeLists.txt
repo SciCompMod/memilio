@@ -34,5 +34,8 @@ target_link_libraries(simulation_benchmark PRIVATE memilio ode_secir benchmark::
 add_executable(graph_simulation_benchmark graph_simulation.cpp)
 target_link_libraries(graph_simulation_benchmark PRIVATE memilio ode_secirvvs benchmark::benchmark)
 
+add_executable(secirvvs_advance_benchmark secirvvs_advance.cpp)
+target_link_libraries(secirvvs_advance_benchmark PRIVATE memilio ode_secirvvs benchmark::benchmark)
+
 add_executable(abm_benchmark abm.cpp)
 target_link_libraries(abm_benchmark PRIVATE abm benchmark::benchmark)
