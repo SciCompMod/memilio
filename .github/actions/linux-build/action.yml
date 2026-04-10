@@ -31,6 +31,10 @@ inputs:
     description: "Enable Multithreading with OpenMP (ON or OFF, default OFF). If ON, adds `-omp` to the name of the artifact."
     required: false
     default: "OFF"
+  benchmarks:
+    description: "Build benchmarks (ON or OFF, default OFF)."
+    required: false
+    default: "OFF"
 runs:
   using: "composite"
   steps:
@@ -97,7 +101,7 @@ runs:
           exit 1
         fi
         mkdir -p build && cd build
-        cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=ON -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitizers }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitizers }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DMEMILIO_ENABLE_OPENMP=${{ inputs.openmp }} -DMEMILIO_ENABLE_HDF5=${{ inputs.optional-dependencies }} ..
+        cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=ON -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitizers }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitizers }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DMEMILIO_ENABLE_OPENMP=${{ inputs.openmp }} -DMEMILIO_ENABLE_HDF5=${{ inputs.optional-dependencies }} -DMEMILIO_BUILD_BENCHMARKS=${{ inputs.benchmarks }} ..
         make -j4
     - name: create build dir archive
       shell: bash
