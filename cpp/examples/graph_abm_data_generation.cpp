@@ -459,7 +459,7 @@ void initialize_persons(mio::GraphABModel& model,
             mio::DiscreteDistribution<size_t>::get_instance()(model.get_rng(), infection_dist));
 
         if (infection_state != mio::abm::InfectionState::Susceptible) {
-            auto rng = mio::abm::PersonalRandomNumberGenerator(person);
+            auto rng = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          model.parameters, start_date, infection_state));
         }
