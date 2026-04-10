@@ -8,7 +8,6 @@ set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "Disable Google Test in benchmar
 message(STATUS "Downloading GoogleBenchmark library")
 include(FetchContent)
 FetchContent_Declare(benchmark
-    SOURCE_SUBDIR this_directory_name_does_not_exist
     GIT_REPOSITORY https://github.com/google/benchmark.git
     GIT_TAG v1.6.1)
 FetchContent_MakeAvailable(benchmark)
