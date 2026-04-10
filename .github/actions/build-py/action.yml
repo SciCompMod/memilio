@@ -44,7 +44,11 @@ runs:
           # no auditwheel necessary for pure python packages, so only copy the wheels to the same output directory 
           cp dist/*.whl wheelhouse
         fi
-        cp -r wheelhouse ..
+        if [ "${{ inputs.package }}" != "simulation" ]; then
+          cp -r wheelhouse ..
+        else
+          cp -r wheelhouse pycode
+        fi 
     - name: Upload Python Wheels
       uses: actions/upload-artifact@v6
       with:
