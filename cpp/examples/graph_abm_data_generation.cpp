@@ -791,9 +791,7 @@ int main(int argc, char* argv[])
         set_infection_parameters(model, sim_params);
 
         // Create population via households
-        // Vary population slightly across nodes
-        double pop_variation = std::uniform_real_distribution<double>(0.8, 1.2)(rng);
-        size_t node_pop      = static_cast<size_t>(cfg.persons_per_node * pop_variation);
+        size_t node_pop = cfg.persons_per_node;
         create_population(model, node_pop, hh_members);
 
         // Create shared locations (contact rates from sim_params)
