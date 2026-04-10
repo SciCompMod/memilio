@@ -68,7 +68,7 @@ mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list
 
     //infections and masks
     for (auto& person : model.get_persons()) {
-        auto prng = mio::abm::PersonalRandomNumberGenerator(person);
+        auto prng = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
         //some % of people are infected, large enough to have some infection activity without everyone dying
         auto pct_infected = 0.05;
         if (mio::UniformDistribution<ScalarType>::get_instance()(prng, 0.0, 1.0) < pct_infected) {

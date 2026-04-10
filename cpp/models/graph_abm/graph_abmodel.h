@@ -94,7 +94,7 @@ private:
         for (uint32_t person_index = 0; person_index < num_persons; ++person_index) {
             if (Base::m_activeness_statuses[person_index]) {
                 Person& person    = Base::m_persons[person_index];
-                auto personal_rng = PersonalRandomNumberGenerator(person);
+                auto personal_rng = PersonalRandomNumberGenerator(Base::get_rng(), person);
 
                 auto try_mobility_rule = [&](auto rule) -> bool {
                     //run mobility rule and check if change of location can actually happen
@@ -160,7 +160,7 @@ private:
             auto& trip        = Base::m_trip_list.get_next_trip();
             auto& person      = get_person(trip.person_id);
             auto person_index = Base::get_person_index(trip.person_id);
-            auto personal_rng = PersonalRandomNumberGenerator(person);
+            auto personal_rng = PersonalRandomNumberGenerator(Base::get_rng(), person);
             // skip the trip if the person is in quarantine or is dead
             if (person.is_in_quarantine(t, parameters) || person.get_infection_state(t) == InfectionState::Dead) {
                 continue;
