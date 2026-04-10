@@ -158,6 +158,10 @@ add_executable(graph_abm_example graph_abm.cpp)
 target_link_libraries(graph_abm_example PRIVATE memilio graph_abm abm)
 target_compile_options(graph_abm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(graph_abm_data_generation graph_abm_data_generation.cpp)
+target_link_libraries(graph_abm_data_generation PRIVATE memilio graph_abm abm)
+target_compile_options(graph_abm_data_generation PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(dabm_example d_abm.cpp)
 target_link_libraries(dabm_example PRIVATE memilio d_abm)
 target_compile_options(dabm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
