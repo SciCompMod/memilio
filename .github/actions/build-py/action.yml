@@ -25,11 +25,10 @@ runs:
     - name: Build Python Wheels
       shell: bash
       run: |
-        # if [ "${{ inputs.package }}" != "simulation" ]; then
-        #   cd pycode/memilio-${{ inputs.package }}/
-        # # else stay in root directory
-        # fi
-        cd pycode/memilio-${{ inputs.package }}/
+        if [ "${{ inputs.package }}" != "simulation" ]; then
+          cd pycode/memilio-${{ inputs.package }}/
+        # else stay in root directory
+        fi
         /opt/python/cp38-cp38/bin/python -m pip install --upgrade pip setuptools wheel
         /opt/python/cp38-cp38/bin/python -m pip install scikit-build scikit-build-core
         # /opt/python/cp38-cp38/bin/python -m pip install setuptools-scm
@@ -46,12 +45,11 @@ runs:
           # no auditwheel necessary for pure python packages, so only copy the wheels to the same output directory 
           cp dist/*.whl wheelhouse
         fi
-        # if [ "${{ inputs.package }}" != "simulation" ]; then
-        #   cp -r wheelhouse ..
-        # else
-        #   cp -r wheelhouse pycode
-        # fi 
-        cp -r wheelhouse ..
+        if [ "${{ inputs.package }}" != "simulation" ]; then
+          cp -r wheelhouse ..
+        else
+          cp -r wheelhouse pycode
+        fi 
     - name: Upload Python Wheels
       uses: actions/upload-artifact@v4
       with:
