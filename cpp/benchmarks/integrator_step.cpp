@@ -22,6 +22,7 @@
 
 #include "memilio/math/adapt_rk.h"
 #include "memilio/math/stepper_wrapper.h"
+#include "memilio/utils/base_dir.h"
 
 template <class Integrator>
 void integrator_step(::benchmark::State& state)
@@ -32,7 +33,8 @@ void integrator_step(::benchmark::State& state)
     // with "num_agegroups" agegroups, and taking "yt" as the state of the simulation at "t_init"
     // NOTE: yt must have #agegroups * #compartments entries
     // benchmark setup
-    auto cfg = mio::benchmark::IntegratorStepConfig::initialize("benchmarks/integrator_step.config");
+    auto cfg =
+        mio::benchmark::IntegratorStepConfig::initialize(mio::base_dir() + "cpp/benchmarks/integrator_step.config");
     //auto cfg = mio::benchmark::IntegratorStepConfig::initialize();
     auto model = mio::benchmark::model::SecirAgeres(cfg.num_agegroups);
     // set deriv function and integrator

@@ -21,10 +21,11 @@
 #include "benchmarks/flow_simulation_ode_secirvvs.h"
 #include "memilio/compartments/flow_simulation.h"
 #include "memilio/compartments/simulation.h"
+#include "memilio/utils/base_dir.h"
 #include "ode_secirvvs/model.h"
 #include <string>
 
-const std::string config_path = "../../benchmarks/simulation.config";
+const std::string config_path = mio::base_dir() + "cpp/benchmarks/simulation.config";
 
 // simulation without flows (not in Model definition and not calculated by Simulation)
 void flowless_sim(::benchmark::State& state)
