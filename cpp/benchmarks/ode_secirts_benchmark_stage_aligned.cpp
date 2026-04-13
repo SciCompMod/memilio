@@ -23,11 +23,11 @@ namespace benchmark_mio
 {
 
 const ScalarType t0    = 0.0;
-const ScalarType t_max = 0.5;
-const ScalarType dt    = 0.1;
+const ScalarType t_max = 10.0;
+const ScalarType dt    = 1.0;
 
-const ScalarType t_max_phi = 0.5;
-const ScalarType dt_phi    = 0.1;
+const ScalarType t_max_phi = 10.0;
+const ScalarType dt_phi    = 1.0;
 
 namespace
 {

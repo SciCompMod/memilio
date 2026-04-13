@@ -171,14 +171,11 @@ void setup_explicit_model_benchmark(mio::oseir::StandardModelLagrangian& model_e
 }
 
 const ScalarType t0    = 0.0;
-const ScalarType t_max = 0.2;
-const ScalarType dt    = 0.1;
+const ScalarType t_max = 10.0;
+const ScalarType dt    = 1.0;
 
-// const ScalarType t_max = 50.0;
-// const ScalarType dt    = 0.5;
-
-const ScalarType t_max_phi = 0.5;
-const ScalarType dt_phi    = 0.1;
+const ScalarType t_max_phi = 10.0;
+const ScalarType dt_phi    = 1.0;
 
 namespace
 {
@@ -186,70 +183,18 @@ struct BenchSetupPrinter {
     BenchSetupPrinter()
     {
         std::cout << "Benchmark setup:\n";
-        std::cout << "  t_max (normal)    = " << t_max << "\n";
-        std::cout << "  dt (normal)       = " << dt << "\n";
-        std::cout << "  t_max_phi (phi)   = " << t_max_phi << "\n";
-        std::cout << "  dt_phi (phi)      = " << dt_phi << "\n";
+        std::cout << "  t_max     = " << t_max << "\n";
+        std::cout << "  dt        = " << dt << "\n";
+        std::cout << "  t_max_phi = " << t_max_phi << "\n";
+        std::cout << "  dt_phi    = " << dt_phi << "\n";
         std::cout << std::flush;
     }
 };
 static BenchSetupPrinter bench_setup_printer;
 } // namespace
-// Define the number of commuter groups for the benchmark
-// const std::vector<int> commuter_group_counts = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
-// const std::vector<int> age_group_counts      = {1, 2, 3, 4, 5, 6};
 
 const std::vector<int> commuter_group_counts = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
 const std::vector<int> age_group_counts      = {1, 2, 3, 4, 5, 6, 8, 12, 16};
-
-static void bench_auxiliary_euler(::benchmark::State& state)
-{
-    const int num_commuter_groups = state.range(0);
-    const size_t num_age_groups   = static_cast<size_t>(state.range(1));
-    const auto num_patches        = num_commuter_groups + 1;
-    mio::set_log_level(mio::LogLevel::critical);
-
-    for (auto _ : state) {
-        for (auto patch = 0; patch < num_patches; patch++) {
-            state.PauseTiming();
-            ModelType model(num_age_groups);
-            setup_model_benchmark(model);
-            SimType sim(model, t0, dt);
-            auto integrator_rk =
-                std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta4>>();
-            sim.set_integrator(integrator_rk);
-            state.ResumeTiming();
-
-            sim.advance(t_max);
-
-            state.PauseTiming();
-            const auto& seir_res              = sim.get_result();
-            double mobile_population_fraction = 0.1 * num_commuter_groups;
-            Eigen::VectorXd initial_mobile_pop =
-                seir_res.get_value(0) * (mobile_population_fraction / num_commuter_groups);
-            const auto step_size_ref = seir_res.get_time(1) - seir_res.get_time(0);
-
-            std::vector<Eigen::VectorXd> mobile_pops(num_commuter_groups, initial_mobile_pop);
-            state.ResumeTiming();
-
-            for (ScalarType t = t0; t < t_max; t += dt) {
-                if (t + dt > t_max + 1e-10)
-                    break;
-
-                const auto closest_idx_total = static_cast<size_t>(std::round(t / step_size_ref));
-                if (closest_idx_total >= static_cast<size_t>(seir_res.get_num_time_points()))
-                    break;
-
-                const auto& total_pop = seir_res.get_value(closest_idx_total);
-
-                for (int i = 0; i < num_commuter_groups; ++i) {
-                    mio::oseir::integrate_mobile_population_euler(mobile_pops[i], sim, total_pop, t, dt);
-                }
-            }
-            benchmark::DoNotOptimize(mobile_pops);
-        }
-    }
-}
 
 static void bench_stage_aligned_rk4(::benchmark::State& state)
 {
@@ -948,15 +893,6 @@ BENCHMARK(mio::benchmark_mio::bench_stage_aligned_euler)
             }
         }
     }) -> Name("stage-aligned(Euler)") -> Unit(::benchmark::kMicrosecond);
-
-BENCHMARK(mio::benchmark_mio::bench_auxiliary_euler)
-    ->Apply([](auto* b) {
-        for (int i : mio::benchmark_mio::commuter_group_counts) {
-            for (int g : mio::benchmark_mio::age_group_counts) {
-                b->Args({i, g});
-            }
-        }
-    }) -> Name("auxiliary_Euler") -> Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(mio::benchmark_mio::bench_stage_aligned_hybrid)
     ->Apply([](auto* b) {
