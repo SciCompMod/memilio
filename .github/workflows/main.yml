@@ -77,7 +77,7 @@ jobs:
           version: latest
           config: Release
           openmp: ON
-          benchmarks: ON
+          benchmarks: ON # benchmarks are only built to catch build errors, not run in CI
 
   build-cpp-msvc:
     if: github.event.pull_request.draft == false
