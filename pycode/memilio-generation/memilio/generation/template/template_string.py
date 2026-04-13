@@ -39,7 +39,7 @@ def handle_all_bindings(intermed_repr: IntermediateRepresentation) -> str:
     result = ""
     for bindings in intermed_repr.found_bindings:
         if bindings.type == "class":
-            if bindings.cursorkind == "CLASS_TEMPLATE":
+            if bindings.cursorkind == "CLASS_TEMPLATE" and needs_template(bindings, intermed_repr):
                 result += template_class_wrapper(intermed_repr, bindings)
             else:
                 result += bind_classes(intermed_repr, bindings)
@@ -47,6 +47,50 @@ def handle_all_bindings(intermed_repr: IntermediateRepresentation) -> str:
         elif bindings.type == "function":
             result += bind_functions(intermed_repr, bindings)
     return result.strip()
+
+
+def needs_template(bindings: binding_type_info, intermed_repr: IntermediateRepresentation) -> bool:
+    """ Check if a template wrapper is needed for a class.
+
+    :param bindings: A dataclass entry representing a class node from the AST.
+    :param intermed_repr: Dataclass holding the model features.
+    :return: True if a template wrapper should be generated, False otherwise.
+    """
+    # Extract the globally defined scalar type
+    scalartype = ScalarType(intermed_repr)
+
+    template_args = set(bindings.template_args)
+
+    # If there are no template parameters, it is not a template class, so no template wrapper is needed
+    if not bindings.template_args:
+        return False
+
+    template_used = False
+
+    # If a base class depends on a template parameter → template is required
+    for base in ensure_list(bindings.base_classes):
+        if any(arg in base for arg in template_args):
+            template_used = True
+            break
+
+    # If any method uses template parameters → template is required
+    if not template_used:
+        for method in bindings.methods:
+            arg_types = ensure_list(method.arg_types)
+
+            for types in arg_types:
+                if any(arg in str(types) for arg in template_args):
+                    template_used = True
+                    break
+
+    if not template_used:
+        return False
+
+    # If a concrete scalar type exists, templates are already resolved, so no template wrapper is needed
+    if scalartype is not None:
+        return False
+
+    return False
 
 
 def template_class_wrapper(intermed_repr: IntermediateRepresentation, bindings: binding_type_info) -> str:
@@ -100,10 +144,10 @@ def bind_classes(intermed_repr: IntermediateRepresentation, bindings: binding_ty
             base_template = ", ".join(
                 f"{class_namespace}{base_class.replace('FP', scalarType)}" for base_class in ensure_list(base_classes))
             class_block += (
-                f'py::class_<{template_params}, {base_template}>(m, name.c_str());\n')
+                f'py::class_<{template_params}, {base_template}>(m, name.c_str())\n')
         else:
             class_block += (
-                f'py::class_<{template_params}>(m, name.c_str());\n')
+                f'py::class_<{template_params}>(m, name.c_str())\n')
     else:
         if base_classes:
             base_template = ", ".join(
@@ -188,7 +232,7 @@ def needs_lambda_binding(bindings: binding_type_info) -> bool:
     :return: True if a lambda binding should be generated, False otherwise.
     """
     name = bindings.name
-    return bool(bindings.is_member and name.startswith("get") or name.startswith("set"))
+    return bool(bindings.is_member and (name.startswith("get") or name.startswith("set")))
 
 
 def lambda_binding(name: str, namespace: str, scalartype: str, class_name: str = "") -> str:
@@ -212,7 +256,7 @@ def lambda_binding(name: str, namespace: str, scalartype: str, class_name: str =
         setter = (
             f',\n'
             f'\t\t[]({qualified_class}& self, {scalartype} value) {{\n'
-            f'\t\t\tself.{name}() = value;\n'
+            f'\t\t\tself.{name}(value);\n'
             f'\t\t\t}}'
         )
     else:
