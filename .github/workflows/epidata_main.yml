@@ -111,8 +111,6 @@ jobs:
     needs: build-py-epidata
     runs-on: ubuntu-latest
     continue-on-error: true
-    env:
-      MPLBACKEND: Agg
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
@@ -133,16 +131,9 @@ jobs:
         run: |
           for pkg in `ls pycode/wheelhouse/*cp312*.whl`; do python -m pip install $pkg; done # packages that contain native extensions are version specific
           for pkg in `ls pycode/wheelhouse/*py3*.whl`; do python -m pip install $pkg; done # pure python packages are not version specific
-      - name: Debug pip environment
-        run: |
-          pip list | grep -i qt
-      - name: Remove Qt bindings
-        run: |
-          pip uninstall -y PyQt5 PyQt6 PyQt6-Qt6 PyQt6_sip || true
       - name: Download Data
         run: |
           mkdir -p data_dl
-          python -c "import matplotlib; matplotlib.use('Agg')"
           getcasedata -o data_dl --no-progress-indicators
           getpopuldata -o data_dl --no-progress-indicators
           getjhdata -o data_dl --no-progress-indicators
