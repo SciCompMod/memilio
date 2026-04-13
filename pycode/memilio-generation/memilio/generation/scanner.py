@@ -71,9 +71,58 @@ class Scanner:
         intermed_repr = IntermediateRepresentation()
 
         self.find_node(root_cursor, intermed_repr, general_bindings_dict)
+        self.validate_binding_entry(
+            general_bindings_dict, intermed_repr.found_bindings)
         self.finalize(intermed_repr)
         self.check_parameter_space(intermed_repr)
         return intermed_repr
+
+    def validate_binding_entry(self: Self, expected_binding_list: list[dict], found_binding_list: list[binding_type_info]) -> None:
+        """ Validate the found bindings and raise an print output if a binding is not in the list.
+
+        :param expected_binding_list: List of found bindings to be validated.
+        :param found_binding_list: List of expected bindings that should be found in the model.
+        """
+        missing: list[str] = []
+
+        for expected in expected_binding_list:
+            expected_name = expected.get("name", "")
+            expected_cursorkind = expected.get("cursorkind", "")
+            expected_type = expected.get("type", "")
+            expected_methods = expected.get("methods", [])
+
+            found_binding: binding_type_info | None = None
+
+            for binding in found_binding_list:
+                if (
+                    binding.type == expected_type
+                    and binding.name == expected_name
+                    and binding.cursorkind == expected_cursorkind
+                ):
+                    found_binding = binding
+                    break
+
+            if found_binding is None:
+                missing.append(
+                    f"Required {expected_type} '{expected_name}' is not available in the current model."
+                )
+                continue
+
+            if expected_type == "class":
+                found_method_names = {
+                    method.name for method in found_binding.methods}
+
+                for expected_method_name in expected_methods:
+                    if expected_method_name not in found_method_names:
+                        missing.append(
+                            f"Class '{found_binding.name}' does not provide method '{expected_method_name}'"
+                        )
+
+        if missing:
+            error_message = "Model does not fully satisfy required interfaces:\n" + \
+                "\n".join(missing)
+            print(error_message +
+                  "\nContinuing execution with available model features...")
 
     def search_binding_target(self: Self, binding_list: list[dict], node: Cursor,
                               intermed_repr: IntermediateRepresentation, namespace: str) -> list:
