@@ -22,6 +22,7 @@
 #define MIO_FARM_GRAPH_SIMULATION_H
 
 #include "memilio/config.h"
+#include "memilio/geography/distance.h"
 #include "memilio/mobility/farm_simulation.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/mobility/trade.h"
@@ -88,7 +89,7 @@ public:
                     n.property.set_infection_status(true);
                 }
             }
-            update_force_of_infection(graph);
+            stepwise_force_of_infection(graph);
             for (auto& n : graph.nodes()) {
                 Base::m_node_func(Base::m_t, dt, n.property);
             }
@@ -194,6 +195,63 @@ private:
             node.property.get_simulation().get_model().parameters.template get<AdoptionRate>()[3].factor =
                 infection_pressure;
         }
+    }
+
+    /**
+    * @brief Update the force of infection for all farms based on their infected neighbors.
+    * 
+    * @param graph 
+    */
+    void stepwise_force_of_infection(Graph& graph)
+    {
+        using Model        = std::decay_t<decltype(Base::m_graph.nodes()[0].property.get_simulation().get_model())>;
+        using AdoptionRate = mio::smm::AdoptionRates<ScalarType, typename Model::Status, mio::regions::Region>;
+        std::vector<ScalarType> dampings = {1.0, 1.0, 1.0, 1.0, 1.0};
+        ScalarType baseline              = m_infection_baseline;
+        if (Base::m_t > m_new_regulations_day) {
+            dampings = m_dampings;
+            baseline = 0.0;
+        }
+        for (auto& node : graph.nodes()) {
+            // Skip calculation for nodes without animals
+            if (node.property.get_result().get_last_value().sum() == 0) {
+                continue;
+            }
+            auto infection_pressure = 0.0;
+            auto neighbors          = node.property.get_regional_neighbors();
+            // Iterate over all neighbours in third neighbourhood layer
+            for (size_t index = 0; index < neighbors[m_twentyfive_km_radius_index].size(); ++index) {
+                auto& neighbour = graph.nodes()[neighbors[m_twentyfive_km_radius_index][index]];
+                // Only count infected neighbours
+                if (neighbour.id != node.id && neighbour.property.get_infection_status()) {
+                    infection_pressure +=
+                        m_foi_inner_factor[neighbour.property.get_type()] * dampings[neighbour.property.get_type()] *
+                        stepwise_function(node.property.get_location().distance(neighbour.property.get_location()));
+                }
+            }
+            infection_pressure *= m_foi_outer_factor[node.property.get_type()] * dampings[node.property.get_type()];
+            // If in HRZ and if broiler 2 or organic (4 or 0) then add baseline infections
+            if (node.property.get_in_hrz() && node.property.get_type() % 4 == 0) {
+                infection_pressure += baseline;
+            }
+            infection_pressure *= node.property.get_capacity();
+            node.property.get_simulation().get_model().parameters.template get<AdoptionRate>()[3].factor =
+                infection_pressure;
+        }
+    }
+
+    auto stepwise_function(mio::geo::Distance distance)
+    {
+        if (distance.meters() < m_cutoff_1) {
+            return 1.0;
+        }
+        else if (distance.meters() < m_cutoff_2) {
+            return m_value2;
+        }
+        else if (distance.meters() < m_cutoff_3) {
+            return m_value3;
+        }
+        return 0.0;
     }
 
     void update_population(Node& node, size_t id)
@@ -777,19 +835,24 @@ public:
      * @param foi_inner_factors
      * @param foi_outer_factors
      */
-    void set_parameters(ScalarType suspicion_threshold, ScalarType sensitivity, ScalarType h0, ScalarType r0,
-                        ScalarType alpha, ScalarType infection_baseline, ScalarType culling_factor,
-                        std::vector<Timepoint> infection_dates, std::vector<ScalarType> foi_inner_factors,
-                        std::vector<ScalarType> foi_outer_factors,
+    void set_parameters(ScalarType suspicion_threshold, ScalarType sensitivity, ScalarType infection_baseline,
+                        ScalarType culling_factor, ScalarType cutoff1, ScalarType cutoff2, ScalarType cutoff3,
+                        ScalarType value2, ScalarType value3, std::vector<Timepoint> infection_dates,
+                        std::vector<ScalarType> foi_inner_factors, std::vector<ScalarType> foi_outer_factors,
                         std::vector<ScalarType> dampings = {1.0, 1.0, 1.0, 1.0, 1.0})
     {
-        m_suspicion_threshold      = suspicion_threshold;
-        m_sensitivity              = sensitivity;
-        m_h0                       = h0;
-        m_r0                       = r0;
-        m_alpha                    = alpha;
+        m_suspicion_threshold = suspicion_threshold;
+        m_sensitivity         = sensitivity;
+        // m_h0                       = h0;
+        // m_r0                       = r0;
+        // m_alpha                    = alpha;
         m_infection_baseline       = infection_baseline;
         m_culling_capacity_per_day = 64116 * culling_factor;
+        m_cutoff_1                 = cutoff1;
+        m_cutoff_2                 = cutoff2;
+        m_cutoff_3                 = cutoff3;
+        m_value2                   = value2;
+        m_value3                   = value3;
         m_infection_dates          = infection_dates;
         m_foi_inner_factor         = foi_inner_factors;
         m_foi_outer_factor         = foi_outer_factors;
@@ -851,6 +914,11 @@ private:
     static const constexpr size_t m_twentyfive_km_radius_index = 3;
     std::vector<ScalarType> m_dampings                         = {0.5, 1.0, 1.0, 1.0, 0.5};
     ScalarType m_infection_baseline                            = 0.0001;
+    ScalarType m_cutoff_1                                      = 1000;
+    ScalarType m_cutoff_2                                      = 5000;
+    ScalarType m_value2                                        = 0.5;
+    ScalarType m_cutoff_3                                      = 10000;
+    ScalarType m_value3                                        = 0.2;
 };
 
 /**
