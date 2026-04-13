@@ -165,6 +165,9 @@ private:
         if (Base::m_t > m_new_regulations_day) {
             dampings = m_dampings;
             baseline = 0.0;
+            if (Base::m_t > m_lift_duck_confinement) {
+                dampings[0] = 1.0;
+            }
         }
         for (auto& node : graph.nodes()) {
             // Skip calculation for nodes without animals
@@ -188,7 +191,7 @@ private:
             }
             infection_pressure *= m_foi_outer_factor[node.property.get_type()] * dampings[node.property.get_type()];
             // If in HRZ and if broiler 2 or organic (4 or 0) then add baseline infections
-            if (node.property.get_in_hrz() && node.property.get_type() % 4 == 0) {
+            if (node.property.get_in_hrz() && node.property.get_type() % 4 == 0 && Base::m_t < m_end_migratory_birds) {
                 infection_pressure += baseline;
             }
             infection_pressure *= node.property.get_capacity();
@@ -211,6 +214,9 @@ private:
         if (Base::m_t > m_new_regulations_day) {
             dampings = m_dampings;
             baseline = 0.0;
+            if (Base::m_t > m_lift_duck_confinement) {
+                dampings[0] = 1.0;
+            }
         }
         for (auto& node : graph.nodes()) {
             // Skip calculation for nodes without animals
@@ -231,7 +237,7 @@ private:
             }
             infection_pressure *= m_foi_outer_factor[node.property.get_type()] * dampings[node.property.get_type()];
             // If in HRZ and if broiler 2 or organic (4 or 0) then add baseline infections
-            if (node.property.get_in_hrz() && node.property.get_type() % 4 == 0) {
+            if (node.property.get_in_hrz() && node.property.get_type() % 4 == 0 && Base::m_t < m_end_migratory_birds) {
                 infection_pressure += baseline;
             }
             infection_pressure *= node.property.get_capacity();
@@ -919,6 +925,8 @@ private:
     ScalarType m_value2                                        = 0.5;
     ScalarType m_cutoff_3                                      = 10000;
     ScalarType m_value3                                        = 0.2;
+    ScalarType m_end_migratory_birds                           = 79;
+    ScalarType m_lift_duck_confinement                         = 64;
 };
 
 /**
