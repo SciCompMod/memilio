@@ -50,7 +50,7 @@ runs:
           cp -r wheelhouse pycode
         fi 
     - name: Upload Python Wheels
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v4
       with:
         name: python-wheels-${{ inputs.package }}
         path: pycode/wheelhouse
