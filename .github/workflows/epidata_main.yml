@@ -111,6 +111,8 @@ jobs:
     needs: build-py-epidata
     runs-on: ubuntu-latest
     continue-on-error: true
+    env:
+      MPLBACKEND: Agg
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
