@@ -33,13 +33,7 @@ if(MEMILIO_USE_BUNDLED_SPDLOG)
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
         GIT_TAG v${MEMILIO_SPDLOG_VERSION}
     )
-    FetchContent_GetProperties(spdlog)
-
-    if(NOT spdlog_POPULATED)
-        FetchContent_Populate(spdlog)
-
-        add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR} EXCLUDE_FROM_ALL)
-    endif()
+    FetchContent_MakeAvailable(spdlog)
 
 else()
     find_package(spdlog REQUIRED)
@@ -50,14 +44,14 @@ if(MEMILIO_USE_BUNDLED_EIGEN)
     message(STATUS "Downloading Eigen library")
 
     include(FetchContent)
+    # Set SOURCE_SUBDIR to prevent MakeAvailable from calling add_subdirectory. We do not want to run Eigen's
+    # CMakeLists.txt, as it is not set up to be used like that. Instead, we need to manually add a library with the
+    # source files below (this is sufficient, as Eigen is a header-only library)
     FetchContent_Declare(eigen
+        SOURCE_SUBDIR this_directory_name_does_not_exist
         GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
         GIT_TAG ${MEMILIO_EIGEN_VERSION})
-    FetchContent_GetProperties(eigen)
-
-    if(NOT eigen_POPULATED)
-        FetchContent_Populate(eigen)
-    endif()
+    FetchContent_MakeAvailable(eigen)
 
     add_library(eigen INTERFACE)
     target_include_directories(eigen SYSTEM INTERFACE ${eigen_SOURCE_DIR})
@@ -86,15 +80,10 @@ if(MEMILIO_USE_BUNDLED_BOOST)
 
     include(FetchContent)
     FetchContent_Declare(boost
-
         # don't use the URL from github, that download isn't complete and requires more setup (subrepositories, bootstrapping)
         URL https://archives.boost.io/release/${MEMILIO_BOOST_VERSION}/source/boost_${MEMILIO_BOOST_VERSION_UNDERSC}.tar.gz
     )
-    FetchContent_GetProperties(boost)
-
-    if(NOT boost_POPULATED)
-        FetchContent_Populate(boost)
-    endif()
+    FetchContent_MakeAvailable(boost)
 
     add_library(boost INTERFACE)
     add_dependencies(boost boost-bootstrap)
@@ -157,31 +146,21 @@ endif()
 
 # ## JSONCPP
 if(MEMILIO_USE_BUNDLED_JSONCPP)
-    message(STATUS "Downloading jsoncpp library")
+    message(STATUS "Downloading JsonCpp library")
+
+    # set jsoncpp configurations
+    set(JSONCPP_WITH_TESTS OFF)
+    set(JSONCPP_WITH_POST_BUILD_UNITTEST OFF)
 
     include(FetchContent)
     FetchContent_Declare(
         jsoncpp
         URL https://github.com/open-source-parsers/jsoncpp/archive/${MEMILIO_JSONCPP_VERSION}.tar.gz
     )
-    FetchContent_GetProperties(jsoncpp)
+    FetchContent_MakeAvailable(jsoncpp)
 
-    if(NOT jsoncpp_POPULATED)
-        FetchContent_Populate(jsoncpp)
-
-        # set jsoncpp configurations
-        set(JSONCPP_WITH_TESTS "Compile and (for jsoncpp_check) run JsonCpp test executables" OFF)
-        set(JSONCPP_WITH_POST_BUILD_UNITTEST "Automatically run unit-tests as a post build step" ON)
-
-        add_subdirectory(${jsoncpp_SOURCE_DIR} ${jsoncpp_BINARY_DIR} EXCLUDE_FROM_ALL)
-
-        # unset global cache variables to avoid clashes with our code
-        unset(BUILD_OBJECT_LIBS CACHE)
-        unset(CMAKE_ARCHIVE_OUTPUT_DIRECTORY CACHE)
-        unset(CMAKE_ARCHIVE_OUTPUT_DIRECTORY CACHE)
-        unset(CMAKE_PDB_OUTPUT_DIRECTORY CACHE)
-        unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY CACHE)
-    endif()
+    # unset global cache variables to avoid clashes with our code
+    unset(BUILD_OBJECT_LIBS CACHE)
 
     if(BUILD_SHARED_LIBS)
         add_library(JsonCpp::JsonCpp ALIAS jsoncpp_lib)
@@ -222,14 +201,8 @@ message(STATUS "Downloading Random123 library")
 include(FetchContent)
 FetchContent_Declare(Random123
     GIT_REPOSITORY https://github.com/DEShawResearch/random123
-    GIT_TAG ${MEMILIO_RANDOM123_VERSION}
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND "")
-FetchContent_GetProperties(Random123)
-
-if(NOT Random123_POPULATED)
-    FetchContent_Populate(Random123)
-endif()
+    GIT_TAG ${MEMILIO_RANDOM123_VERSION})
+FetchContent_MakeAvailable(Random123)
 
 add_library(Random123 INTERFACE)
 target_include_directories(Random123 INTERFACE ${random123_SOURCE_DIR}/include)
