@@ -142,6 +142,7 @@ jobs:
       - name: Download Data
         run: |
           mkdir -p data_dl
+          python -c "import matplotlib; matplotlib.use('Agg')"
           getcasedata -o data_dl --no-progress-indicators
           getpopuldata -o data_dl --no-progress-indicators
           getjhdata -o data_dl --no-progress-indicators
