@@ -22,12 +22,15 @@ namespace mio
 namespace benchmark_mio
 {
 
-const ScalarType t0    = 0.0;
-const ScalarType t_max = 10.0;
-const ScalarType dt    = 1.0;
+const ScalarType t0         = 0.0;
+static ScalarType t_max     = 10.0;
+static ScalarType dt        = 1.0;
+static ScalarType t_max_phi = 10.0;
+static ScalarType dt_phi    = 1.0;
 
-const ScalarType t_max_phi = 10.0;
-const ScalarType dt_phi    = 1.0;
+static const std::vector<ScalarType> dt_sweep_values = {0.05, 0.1, 0.2, 0.5, 1.0, 2.0};
+static constexpr int dt_sweep_nc                     = 512;
+static constexpr int dt_sweep_ng                     = 6;
 
 namespace
 {
@@ -647,6 +650,81 @@ BENCHMARK(mio::benchmark_mio::bench_matrix_phi_blockdiag_euler)
             }
         }
     }) -> Name("matrix_phi_blockdiag(Euler)") -> Unit(::benchmark::kMicrosecond);
+
+// fix nc, ng; vary dt via state.range(2).
+namespace
+{
+
+struct DtOverrideSecirts {
+    ScalarType prev_dt, prev_t_max, prev_dt_phi, prev_t_max_phi;
+    DtOverrideSecirts(ScalarType new_dt, ScalarType new_t_max)
+    {
+        prev_dt                       = mio::benchmark_mio::dt;
+        prev_t_max                    = mio::benchmark_mio::t_max;
+        prev_dt_phi                   = mio::benchmark_mio::dt_phi;
+        prev_t_max_phi                = mio::benchmark_mio::t_max_phi;
+        mio::benchmark_mio::dt        = new_dt;
+        mio::benchmark_mio::t_max     = new_t_max;
+        mio::benchmark_mio::dt_phi    = new_dt;
+        mio::benchmark_mio::t_max_phi = new_t_max;
+    }
+    ~DtOverrideSecirts()
+    {
+        mio::benchmark_mio::dt        = prev_dt;
+        mio::benchmark_mio::t_max     = prev_t_max;
+        mio::benchmark_mio::dt_phi    = prev_dt_phi;
+        mio::benchmark_mio::t_max_phi = prev_t_max_phi;
+    }
+};
+
+constexpr ScalarType SWEEP_T_MAX = 10.0;
+
+} // namespace
+
+static void bench_lagrange_rk4_dt(::benchmark::State& state)
+{
+    DtOverrideSecirts ov(mio::benchmark_mio::dt_sweep_values[state.range(2)], SWEEP_T_MAX);
+    mio::benchmark_mio::bench_standard_lagrangian_rk4(state);
+}
+static void bench_stage_aligned_rk4_dt(::benchmark::State& state)
+{
+    DtOverrideSecirts ov(mio::benchmark_mio::dt_sweep_values[state.range(2)], SWEEP_T_MAX);
+    mio::benchmark_mio::bench_stage_aligned_rk4(state);
+}
+static void bench_matrix_phi_rk4_dt(::benchmark::State& state)
+{
+    DtOverrideSecirts ov(mio::benchmark_mio::dt_sweep_values[state.range(2)], SWEEP_T_MAX);
+    mio::benchmark_mio::bench_matrix_phi_rk4(state);
+}
+static void bench_matrix_phi_blockdiag_rk4_dt(::benchmark::State& state)
+{
+    DtOverrideSecirts ov(mio::benchmark_mio::dt_sweep_values[state.range(2)], SWEEP_T_MAX);
+    mio::benchmark_mio::bench_matrix_phi_blockdiag_rk4(state);
+}
+
+static void register_dt_sweep(::benchmark::internal::Benchmark* b)
+{
+    for (size_t k = 0; k < mio::benchmark_mio::dt_sweep_values.size(); ++k) {
+        b->Args({mio::benchmark_mio::dt_sweep_nc, mio::benchmark_mio::dt_sweep_ng, static_cast<int64_t>(k)});
+    }
+}
+
+BENCHMARK(bench_lagrange_rk4_dt)->Apply(register_dt_sweep)->Name("lagrange_rk4/dt")->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(bench_stage_aligned_rk4_dt)
+    ->Apply(register_dt_sweep)
+    ->Name("stage-aligned(RK4)/dt")
+    ->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(bench_matrix_phi_rk4_dt)
+    ->Apply(register_dt_sweep)
+    ->Name("matrix_phi(RK4)/dt")
+    ->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(bench_matrix_phi_blockdiag_rk4_dt)
+    ->Apply(register_dt_sweep)
+    ->Name("matrix_phi_blockdiag(RK4)/dt")
+    ->Unit(::benchmark::kMicrosecond);
 
 // run all benchmarks
 BENCHMARK_MAIN();
