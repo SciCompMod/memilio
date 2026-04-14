@@ -174,6 +174,10 @@ add_executable(polynomial convergence/polynomial.cpp)
 target_link_libraries(polynomial PRIVATE memilio ide_sir)
 target_compile_options(polynomial PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(polynomial_extended convergence/polynomial_extended.cpp)
+target_link_libraries(polynomial_extended PRIVATE memilio ide_sir)
+target_compile_options(polynomial_extended PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(analytical_example_S_deriv convergence/analytical_example_S_deriv.cpp)
 target_link_libraries(analytical_example_S_deriv PRIVATE memilio ide_sir_analytical_S_deriv)
 target_compile_options(analytical_example_S_deriv PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
