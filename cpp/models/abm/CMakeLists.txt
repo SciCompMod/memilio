@@ -29,7 +29,7 @@ add_library(abm
     lockdown_rules.h
     infection.cpp
     infection.h
-    infection_state.h
+    symptom_state.h
     virus_variant.h
     protection_event.h
     mask.h

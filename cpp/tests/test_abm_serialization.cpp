@@ -19,7 +19,7 @@
 */
 #include "matchers.h"
 #include "abm/config.h"
-#include "abm/infection_state.h"
+#include "abm/symptom_state.h"
 #include "abm/parameters.h"
 #include "abm/test_type.h"
 #include "abm/testing_strategy.h"

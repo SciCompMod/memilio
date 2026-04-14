@@ -22,7 +22,7 @@
 
 #include "abm/mask_type.h"
 #include "abm/time.h"
-#include "abm/infection_state.h"
+#include "abm/symptom_state.h"
 #include "abm/virus_variant.h"
 #include "abm/protection_event.h"
 #include "abm/protection_event.h"
@@ -52,24 +52,9 @@ namespace abm
 {
 
 /**
- * @brief Time that a Person is infected but not yet infectious in day unit
- */
-struct TimeExposedToNoSymptoms {
-    using Type = CustomIndexArray<AbstractParameterDistribution, VirusVariant, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type({VirusVariant::Count, size}, AbstractParameterDistribution(ParameterDistributionLogNormal(1., 1.)));
-    }
-    static std::string name()
-    {
-        return "TimeExposedToNoSymptoms";
-    }
-};
-
-/**
 * @brief Time that a Person is infected but presymptomatic in day unit
 */
-struct TimeInfectedNoSymptomsToSymptoms {
+struct TimeInfectedNoSymptomsToModerate {
     using Type = CustomIndexArray<AbstractParameterDistribution, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -77,7 +62,7 @@ struct TimeInfectedNoSymptomsToSymptoms {
     }
     static std::string name()
     {
-        return "TimeInfectedNoSymptomsToSymptoms";
+        return "TimeInfectedNoSymptomsToModerate";
     }
 };
 
@@ -100,7 +85,7 @@ struct TimeInfectedNoSymptomsToRecovered {
 * @brief Time that a Person is infected and symptomatic but
 *        who do not need to be hospitalized yet in day unit
 */
-struct TimeInfectedSymptomsToSevere {
+struct TimeInfectedModerateToSevere {
     using Type = CustomIndexArray<AbstractParameterDistribution, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -115,7 +100,7 @@ struct TimeInfectedSymptomsToSevere {
 /**
 * @brief Time that a Person is infected and symptomatic who will recover in day unit
 */
-struct TimeInfectedSymptomsToRecovered {
+struct TimeInfectedModerateToRecovered {
     using Type = CustomIndexArray<AbstractParameterDistribution, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -697,16 +682,16 @@ struct AgeGroupGotoWork {
 };
 
 using ParametersBase =
-    ParameterSet<TimeExposedToNoSymptoms, TimeInfectedNoSymptomsToSymptoms, TimeInfectedNoSymptomsToRecovered,
-                 TimeInfectedSymptomsToSevere, TimeInfectedSymptomsToRecovered, TimeInfectedSevereToCritical,
-                 TimeInfectedSevereToRecovered, TimeInfectedSevereToDead, TimeInfectedCriticalToDead,
-                 TimeInfectedCriticalToRecovered, SymptomsPerInfectedNoSymptoms, SeverePerInfectedSymptoms,
-                 CriticalPerInfectedSevere, DeathsPerInfectedSevere, DeathsPerInfectedCritical, ViralLoadDistributions,
-                 ViralShedParameters, ViralShedFactor, InfectionRateFromViralShed, MaskProtection,
-                 AerosolTransmissionRates, LockdownDate, QuarantineDuration, QuarantineEffectiveness, SocialEventRate,
-                 BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum,
-                 GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork,
-                 InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor, TestData>;
+    ParameterSet<TimeInfectedNoSymptomsToModerate, TimeInfectedNoSymptomsToRecovered, TimeInfectedModerateToSevere,
+                 TimeInfectedModerateToRecovered, TimeInfectedSevereToCritical, TimeInfectedSevereToRecovered,
+                 TimeInfectedSevereToDead, TimeInfectedCriticalToDead, TimeInfectedCriticalToRecovered,
+                 SymptomsPerInfectedNoSymptoms, SeverePerInfectedSymptoms, CriticalPerInfectedSevere,
+                 DeathsPerInfectedSevere, DeathsPerInfectedCritical, ViralLoadDistributions, ViralShedParameters,
+                 ViralShedFactor, InfectionRateFromViralShed, MaskProtection, AerosolTransmissionRates, LockdownDate,
+                 QuarantineDuration, QuarantineEffectiveness, SocialEventRate, BasicShoppingRate, WorkRatio,
+                 SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum,
+                 AgeGroupGotoSchool, AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor,
+                 HighViralLoadProtectionFactor, TestData>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
@@ -795,16 +780,8 @@ public:
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
             for (auto&& v : enum_members<VirusVariant>()) {
 
-                if (this->get<TimeExposedToNoSymptoms>()[{v, i}].params()[0] < 0) {
-                    log_error("Constraint check: Mean of parameter TimeExposedToNoSymptoms of virus variant {} and "
-                              "age group {} smaller "
-                              "than {}",
-                              (uint32_t)v, (size_t)i, 0);
-                    return true;
-                }
-
-                if (this->get<TimeInfectedNoSymptomsToSymptoms>()[{v, i}].params()[0] < 0.0) {
-                    log_error("Constraint check: Mean of parameter TimeInfectedNoSymptomsToSymptoms "
+                if (this->get<TimeInfectedNoSymptomsToModerate>()[{v, i}].params()[0] < 0.0) {
+                    log_error("Constraint check: Mean of parameter TimeInfectedNoSymptomsToModerate "
                               "of virus variant "
                               "{} and age group {} smaller "
                               "than {}",
@@ -821,8 +798,8 @@ public:
                     return true;
                 }
 
-                if (this->get<TimeInfectedSymptomsToSevere>()[{v, i}].params()[0] < 0.0) {
-                    log_error("Constraint check: Mean of parameter TimeInfectedSymptomsToSevere of virus "
+                if (this->get<TimeInfectedModerateToSevere>()[{v, i}].params()[0] < 0.0) {
+                    log_error("Constraint check: Mean of parameter TimeInfectedModerateToSevere of virus "
                               "variant {} "
                               "and age group {} smaller "
                               "than {}",
@@ -830,8 +807,8 @@ public:
                     return true;
                 }
 
-                if (this->get<TimeInfectedSymptomsToRecovered>()[{v, i}].params()[0] < 0.0) {
-                    log_error("Constraint check: Mean of parameter TimeInfectedSymptomsToRecovered of virus "
+                if (this->get<TimeInfectedModerateToRecovered>()[{v, i}].params()[0] < 0.0) {
+                    log_error("Constraint check: Mean of parameter TimeInfectedModerateToRecovered of virus "
                               "variant {} "
                               "and age group {} smaller "
                               "than {}",

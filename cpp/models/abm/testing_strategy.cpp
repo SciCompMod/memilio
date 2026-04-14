@@ -28,26 +28,26 @@ namespace mio
 namespace abm
 {
 
-TestingCriteria::TestingCriteria(const std::vector<AgeGroup>& ages, const std::vector<InfectionState>& infection_states)
+TestingCriteria::TestingCriteria(const std::vector<AgeGroup>& ages, const std::vector<SymptomState>& symptom_states)
 {
     for (auto age : ages) {
         m_ages.set(static_cast<size_t>(age), true);
     }
-    for (auto infection_state : infection_states) {
-        m_infection_states.set(static_cast<size_t>(infection_state), true);
+    for (auto symptom_state : symptom_states) {
+        m_symptom_states.set(static_cast<size_t>(symptom_state), true);
     }
 }
 
 bool TestingCriteria::operator==(const TestingCriteria& other) const
 {
-    return m_ages == other.m_ages && m_infection_states == other.m_infection_states;
+    return m_ages == other.m_ages && m_symptom_states == other.m_symptom_states;
 }
 
 bool TestingCriteria::evaluate(const Person& p, TimePoint t) const
 {
-    // An empty vector of ages or none bitset of #InfectionStates% means that no condition on the corresponding property is set.
+    // An empty vector of ages or none bitset of #SymptomStates% means that no condition on the corresponding property is set.
     return (m_ages.none() || m_ages[static_cast<size_t>(p.get_age())]) &&
-           (m_infection_states.none() || m_infection_states[static_cast<size_t>(p.get_infection_state(t))]);
+           (m_symptom_states.none() || m_symptom_states[static_cast<size_t>(p.get_symptom_state(t))]);
 }
 
 TestingScheme::TestingScheme(const TestingCriteria& testing_criteria, TimeSpan validity_period, TimePoint start_date,
