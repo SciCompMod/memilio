@@ -238,7 +238,7 @@ private:
 /**
  * @brief Concept to check if a type is a valid FlowModel.
  * Note that Model must be the first template argument 
- * @tparam Model A type that may or may not be a FlowModel.
+ * @tparam Model A type that may or may not be a flow model.
  * @tparam FP A floating point type, e.g. double.
  */
 template <class Model, typename FP>
