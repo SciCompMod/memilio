@@ -1,8 +1,11 @@
 name: PyPI
 
-on: [release]
+# on:  
+#   release:  
+#     types:  
+#       - published
 # remove following line before merge: 
-# on: [pull_request, release]
+on: [pull_request, release]
 
 jobs:
 
@@ -13,13 +16,13 @@ jobs:
         os: [ubuntu-latest, windows-latest]
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: pypa/cibuildwheel@v2.16
+      - uses: pypa/cibuildwheel@v3.4.1
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v4
         with:
           name: cibw-wheels-${{ matrix.os }}
           path: ./wheelhouse/*.whl
@@ -28,13 +31,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v4
       with:
-          fetch-depth: 0
+        fetch-depth: 0
 
     - run: pipx run build --sdist
 
-    - uses: actions/upload-artifact@v6
+    - uses: actions/upload-artifact@v4
       with:
         name: cibw-sdist
         path: dist/*.tar.gz
@@ -47,7 +50,7 @@ jobs:
       id-token: write
       
     steps:
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@v4
         with:
           # unpacks all CIBW artifacts into dist/
           pattern: cibw-*
@@ -58,4 +61,4 @@ jobs:
         with:
           skip-existing: true
           # To test uploads to TestPyPI, uncomment the following:
-          # repository-url: https://test.pypi.org/legacy/
+          repository-url: https://test.pypi.org/legacy/
