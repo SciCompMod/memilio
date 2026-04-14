@@ -29,8 +29,8 @@ static ScalarType t_max_phi = 10.0;
 static ScalarType dt_phi    = 1.0;
 
 static const std::vector<ScalarType> dt_sweep_values = {0.05, 0.1, 0.2, 0.5, 1.0, 2.0};
-static constexpr int dt_sweep_nc                     = 512;
-static constexpr int dt_sweep_ng                     = 6;
+static constexpr int dt_sweep_nc                     = 1024;
+static constexpr int dt_sweep_ng                     = 1;
 
 namespace
 {
