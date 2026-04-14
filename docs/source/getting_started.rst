@@ -77,7 +77,7 @@ MEmilio benefits from a harmonized description of its models in infection states
    :alt: MEmilio's uniform model description.
    :width: 100%
 
-Below we guide you through several tutorials on using MEmilio's models through its Python interface. More experience users might directly start with the `Python exercises <https://github.com/SciCompMod/memilio-tutorials/tree/main/exercises>`_ which are derived versions from the tutorials or with `tutorial and exercises in C++ <https://github.com/SciCompMod/memilio-tutorials/tree/main/cpp-tutorials>`_. For more advanced aggregated models using the Linear Chain Trick or IDE-formulations, we currently only provide tutorials and exercises in C++. For the individual- or agent-based model (ABM), we currently only provide `ABM tutorials in C++ <https://github.com/SciCompMod/memilio-tutorials/tree/main/cpp-tutorials/abm>`_. 
+Below we guide you through several tutorials on using MEmilio's models through its Python interface. More experienced users might directly start with the `Python exercises <https://github.com/SciCompMod/memilio-tutorials/tree/main/exercises>`_ which are derived versions from the tutorials or with `tutorial and exercises in C++ <https://github.com/SciCompMod/memilio-tutorials/tree/main/cpp-tutorials>`_. For more advanced aggregated models using the Linear Chain Trick or IDE-formulations, we currently only provide tutorials and exercises in C++. For the individual- or agent-based model (ABM), we currently only provide `ABM tutorials in C++ <https://github.com/SciCompMod/memilio-tutorials/tree/main/cpp-tutorials/abm>`_. 
 
 
 Simple compartmental models

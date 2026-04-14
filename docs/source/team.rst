@@ -457,9 +457,6 @@ Paul Johannssen
 Paul Johannssen studied mathematics at the University of Bonn. He worked on the MEmilio project from March 2023 to March 2024 as a working student. In this time, he manually derived and implemented formulas in closed form for the computation of reproduction numbers in the ODE-based SEIR, SECIR, and SECIRVVS models.
 
 
-We thank all contributors, who have contributed to MEmilio. For a complete list of contributors, please see our `GitHub Contributors page <https://github.com/SciCompMod/memilio/graphs/contributors>`__.
-
-
 Vincent Wieland
 ^^^^^^^^^^^^^^^^
 
@@ -483,6 +480,9 @@ Vincent Wieland is a PhD student at the Center for Mathematical Life Sciences in
 
    * `Google Scholar Profile <https://scholar.google.com/citations?user=24SwK1EAAAAJ&hl=en&oi=sra>`__
    * `ORCID Profile: 0009-0003-9592-8871 <https://orcid.org/0009-0003-9592-8871>`__
+
+
+We thank all contributors, who have contributed to MEmilio. For a complete list of contributors, please see our `GitHub Contributors page <https://github.com/SciCompMod/memilio/graphs/contributors>`__.
 
 
 .. _collaboration:
