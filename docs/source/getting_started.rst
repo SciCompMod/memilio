@@ -85,7 +85,7 @@ Simple compartmental models
 
 Most of MEmilio's compartmental or aggregated models share the same interface derived from a high-level **CompartmentalModel** (see above). It defines the fundamental structure for epidemiological models with compartments (e.g., SEIR, SECIR, SIRS, etc.).
 
-In `Tutorial 01 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial01.py>`_, we show how to set up and simulate a simple setting for our :doc:`ODE-SECIR model <models/osecir>`. The result of the tutorial is a figure of a well-known epidemic outcome.
+In `Tutorial 01 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial01.py>`_, we show how to set up and simulate a simple setting for our :doc:`ODE-SECIR model <cpp/models/osecir>`. The result of the tutorial is a figure of a well-known epidemic outcome.
 
 .. image:: http://martinkuehn.eu/research/images/tutorial01.png
    :alt: A well-known epidemic outcome as a result of Tutorial 01.
@@ -128,7 +128,7 @@ As motivated in the following figure, MEmilio's aggregated models can be extende
    :alt: Module for flexible spatial resolution in metapopulation models.
    :width: 100%
 
-In `Tutorial 07 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial07.py>`_, we show how an epidemic with our :doc:`ODE-SECIR model <models/osecir>` evolves with a delay between two different spatial entities. The result of the tutorial is shown in the following figure.
+In `Tutorial 07 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial07.py>`_, we show how an epidemic with our :doc:`ODE-SECIR model <cpp/models/osecir>` evolves with a delay between two different spatial entities. The result of the tutorial is shown in the following figure.
 
 .. image:: http://martinkuehn.eu/research/images/tutorial07.png
    :alt: Delayed epidemic spreading through metapopulation coupling of two regions.
@@ -137,7 +137,7 @@ In `Tutorial 07 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutor
 Fixed time-point interventions
 ******************************
 
-In order to control and mitigate epidemic developments, MEmilio provides the ability to introduce non-pharmaceutical interventions (NPIs) or measures as `Dampings` to the contact frequencies. In `Tutorial 03 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial03.py>`_, we show how an epidemic with our :doc:`ODE-SECIR model <models/osecir>` can be first mitigated before a reopening event takes place. The result of the tutorial is shown in the following figure.
+In order to control and mitigate epidemic developments, MEmilio provides the ability to introduce non-pharmaceutical interventions (NPIs) or measures as `Dampings` to the contact frequencies. In `Tutorial 03 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial03.py>`_, we show how an epidemic with our :doc:`ODE-SECIR model <cpp/models/osecir>` can be first mitigated before a reopening event takes place. The result of the tutorial is shown in the following figure.
 
 .. image:: http://martinkuehn.eu/research/images/tutorial03.png
    :alt: Changed epidemic outcome through interventions at fixed time points.
@@ -156,7 +156,7 @@ Often interventions are targeted to specific types of locations such as schools,
 Dynamic interventions
 *********************
 
-Eventually, NPIs might often be bound to a threshold or criterion upon which its get activated, e.g., the number of new symptomatic (here, reported) infections over the last days. In order to allow dynamic, threshold-dependent NPIs, MEmilio implements a structure denoted `DynamicNPIs`. In `Tutorial 11 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial11.py>`_, we explain with our :doc:`ODE-SECIR model <models/osecir>` how to set up and simulate dynamic interventions based on symptomatic infections. The result of the tutorial is shown in the following figure. 
+Eventually, NPIs might often be bound to a threshold or criterion upon which its get activated, e.g., the number of new symptomatic (here, reported) infections over the last days. In order to allow dynamic, threshold-dependent NPIs, MEmilio implements a structure denoted `DynamicNPIs`. In `Tutorial 11 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial11.py>`_, we explain with our :doc:`ODE-SECIR model <cpp/models/osecir>` how to set up and simulate dynamic interventions based on symptomatic infections. The result of the tutorial is shown in the following figure. 
 
 Note that the DynamicNPI feature is currently fixed to interventions based on symptomatic infections but if you are interested in using it for other applications, please get in touch with us, as the change could be done by us in very short time.
 
