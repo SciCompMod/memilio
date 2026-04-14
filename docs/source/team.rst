@@ -254,7 +254,7 @@ equation-based models.
    :animate: fade-in-slide-down
 
    * |MEmilio_citation|
-   * |traveler_estimation|  
+   * |Traveler_estimation|
    * |Novel_travel_time_aware_metapopulation_models|
    * |Hybrid_metapopulation_agent-based|
    * |Integrating_Human_Mobility_Models|
