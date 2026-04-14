@@ -26,7 +26,16 @@ import matplotlib.pyplot as plt
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 
-def plot_susceptibles(files, fileending, save_dir=""):
+def polynomial(time):
+    return time**5
+
+
+def polynomial_extended(time, alpha, N, init_time):
+
+    return alpha/30 * time**6 + (1-alpha*time)/5 * time**5 - (1-alpha*(time-init_time))*N*time - alpha*N/2.*time**2
+
+
+def plot_susceptibles(files, fileending, save_dir="", alpha=0., N=1e6, init_time=0.):
     """
     Plots simulation results of Susceptibles.
 
@@ -77,7 +86,7 @@ def plot_susceptibles(files, fileending, save_dir=""):
             #                 timepoint**3 + timepoint**2 for timepoint in dates_groundtruth], label=labels[0],  linestyle=linestyles[0], color=colors[0], linewidth=linewidth)
             axs[0].plot(dates_groundtruth,
                         [
-                            timepoint**5 for timepoint in dates_groundtruth], label=labels[0],  linestyle=linestyles[0], color=colors[0], linewidth=linewidth)
+                            polynomial_extended(timepoint, alpha, N, init_time) for timepoint in dates_groundtruth], label=labels[0],  linestyle=linestyles[0], color=colors[0], linewidth=linewidth)
             axs[1].plot(dates_groundtruth,
                         [
                             0. for timepoint in dates_groundtruth], label=labels[0],  linestyle=linestyles[0], color=colors[0], linewidth=linewidth)
@@ -129,10 +138,21 @@ def subfolders_scandir(path):
 
 if __name__ == '__main__':
 
+    alpha = 0.5
+    N = 1e2
+    init_time = 2.
+
+    single_integral = False
+
+    if single_integral:
+        single_int_str = "true"
+    else:
+        single_int_str = "false"
+
     # dir_name = "detailed_init_exponential_t0ide=50_tmax=51_finite_diff=1_tolexp=8"
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
-    main_dir = "2026-04-09/convergence_polynomial_order5/double_integral"
+    main_dir = f"2026-04-14/convergence_polynomial_ext_alpha={alpha}_singleint={single_int_str}"
     relevant_dir = os.path.join(root_dir, main_dir)
 
     sub_dirs = subfolders_scandir(relevant_dir)
@@ -153,4 +173,4 @@ if __name__ == '__main__':
             for gregory_order in gregory_orders:
                 plot_susceptibles([
                     os.path.join(result_dir, f"result_ide_dt=1e-{ide_exponent}_gregoryorder={gregory_order}")],
-                    fileending=f"dt=1e-{ide_exponent}_gregory={gregory_order}", save_dir=plot_dir)
+                    fileending=f"dt=1e-{ide_exponent}_gregory={gregory_order}", save_dir=plot_dir, alpha=alpha, N=N, init_time=init_time)

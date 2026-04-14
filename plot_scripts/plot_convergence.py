@@ -210,8 +210,8 @@ def compute_errors_l2(groundtruth, results, groundtruth_exponent, timesteps_ide,
             scale_timesteps = timestep/pow(10, -groundtruth_exponent)
             num_timepoints = len(results[i])
 
-            difference = groundtruth[0][int(
-                pow(10, groundtruth_exponent)*(t0_ide))::int(scale_timesteps)][:, compartment]-results[i][int(t0_ide/timestep)::][:, compartment]
+            difference = groundtruth[0][int(np.ceil(
+                pow(10, groundtruth_exponent)*(t0_ide)))::int(np.ceil(scale_timesteps))][:, compartment]-results[i][int(np.ceil(t0_ide/timestep))::][:, compartment]
 
             if relative_error:
                 norm_groundtruth = compute_l2_norm(groundtruth[0][int(
@@ -304,8 +304,8 @@ def compute_errors_max(groundtruth, results, groundtruth_exponent, timesteps_ide
             timestep = timesteps_ide[i]
             scale_timesteps = timestep/pow(10, -groundtruth_exponent)
 
-            difference = groundtruth[0][int(
-                pow(10, groundtruth_exponent)*(t0_ide))::int(scale_timesteps)][:, compartment]-results[i][int(t0_ide/timestep)::][:, compartment]
+            difference = groundtruth[0][int(np.ceil(
+                pow(10, groundtruth_exponent)*(t0_ide)))::int(np.ceil(scale_timesteps))][:, compartment]-results[i][int(np.ceil(t0_ide/timestep))::][:, compartment]
 
             if relative_error:
                 norm_groundtruth = compute_max_norm(groundtruth[0][int(
@@ -384,12 +384,12 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
         figsize_x = 5
     else:
         num_plots = 3
-        figsize_x = 12
+        figsize_x = 10
 
     num_plotted_results = len(gregory_orders_simulation)
 
     fig, axs = plt.subplots(1, num_plots, sharex=True,
-                            figsize=(figsize_x, 3))
+                            figsize=(figsize_x, 3.5))
     secir_dict = {0: 'Susceptible', 1:  'Infected', 2:  'Recovered'}
     labels = [
         f"Gregory order {gregory_order}" for gregory_order in gregory_orders_simulation]
@@ -404,7 +404,10 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
     # Define colors.
     colors_ = [plt.cm.viridis(x)
                for x in np.linspace(0, 1, num_plotted_results)]
-    colors = ["darkorange", colors_[1], "darkred"]
+    if len(colors_) > 2:
+        colors = ["darkorange", colors_[1], "darkred"]
+    else:
+        colors = ["darkred"]
 
     for i in range(num_plots):
 
@@ -466,14 +469,21 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
         ax_obj.set_title(secir_dict[i], fontsize=10)
         ax_obj.grid(True, linestyle='--', alpha=0.6)
 
-    fig.supxlabel(r'Time step $\Delta t$', fontsize=12)
+    # fig.supxlabel(r'Time step $\Delta t$', fontsize=12, labelpad=20)
+    axs[1].set_xlabel(r'Time step $\Delta t$', fontsize=12, labelpad=15)
     ylabel = fig.supylabel(
         r"$err$", fontsize=12)
 
     # print(handles)
 
-    legend = fig.legend(handles=handles, labels=labels, ncol=2,  loc='lower right',
-                        fontsize=8, bbox_transform=fig.transFigure, bbox_to_anchor=(1., -0.1))  # bbox_to_anchor=(0.5, -0.06),
+    labels_reordered = [labels[0], labels[4], labels[1],
+                        labels[5], labels[2], labels[6], labels[3], labels[7]]
+
+    handles_reordered = [handles[0], handles[4], handles[1],
+                         handles[5], handles[2], handles[6], handles[3], handles[7]]
+
+    legend = fig.legend(handles=handles_reordered, labels=labels_reordered, ncol=4,  loc='lower center',
+                        fontsize=8, bbox_transform=fig.transFigure, bbox_to_anchor=(0.53, -0.1))  # bbox_to_anchor=(0.5, -0.2), # bbox_to_anchor=(1., -0.1)
     fig.tight_layout()
 
     if save_dir != "":
@@ -601,11 +611,11 @@ def get_t0_ide_from_dir_name(dir_name):
 
 def main():
 
-    groundtruth_exponent = 6
+    groundtruth_exponent = 5
     groundtruth_ode = True
     only_S = False
 
-    main_dir = "2026-01-29/test"
+    main_dir = "2026-04-10/split_integral=false_fdordercontacts=4_smootherwindow=0.01"
 
     ##############################################
 
@@ -632,7 +642,7 @@ def main():
 
         # Path where plots will be stored.
         plot_dir = os.path.join(os.path.dirname(
-            __file__),  f"../plots/{main_dir}/{dir_name}/")
+            __file__),  f"../plots/{main_dir}/{dir_name}")
 
         # # Read groundtruth.
         groundtruth = read_groundtruth(
@@ -648,7 +658,7 @@ def main():
 
         # Get exponents for which IDE simulations have been computed for considered subdirectory.
         # ide_exponents = get_ide_exponents(result_dir)
-        ide_exponents = [0, 1, 2, 3]
+        ide_exponents = [0, 1, 2]
 
         # Calculate time steps resulting from ide_exponents.
         timesteps_ide = []
@@ -671,8 +681,8 @@ def main():
                 groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, False)
             errors_all_gregory_orders_max_abs.append(errors_max_abs)
 
-            plot_difference_per_timestep(
-                groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, gregory_order_simulation, plot_dir)
+            # plot_difference_per_timestep(
+            #     groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, gregory_order_simulation, plot_dir)
 
             print()
             # print(f"Gregory order {gregory_order_simulation}")

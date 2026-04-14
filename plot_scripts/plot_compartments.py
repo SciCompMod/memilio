@@ -110,15 +110,16 @@ def subfolders_scandir(path):
 
 if __name__ == '__main__':
 
-    # dir_name = "detailed_init_exponential_t0ide=50_tmax=51_finite_diff=1_tolexp=8"
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
-    main_dir = "2026-03-01/damped_iteration_alpha=0.95_smoother=1"
-    relevant_dir = os.path.join(root_dir, main_dir)
+    main_dir = "2026-04-13/test_fdordercontacts=4"
 
+    relevant_dir = os.path.join(root_dir, main_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
     # sub_dirs = [
     #     "nonconst_contacts_t0=0_tinit=20_tmax=30_scalingtime=25_damping=0.5"]
+
+    gregory_order = 3
 
     for sub_dir in sub_dirs:
         print(main_dir + "/" + sub_dir)
@@ -132,9 +133,9 @@ if __name__ == '__main__':
 
         files = os.listdir(result_dir)
         for exponent in range(3):
-            if f'result_{"ide"}_dt=1e-{exponent}.h5' in files:
+            if f'result_{"ide"}_dt=1e-{exponent}_gregoryorder=3.h5' in files:
                 ide_exponent = exponent
 
-                plot_susceptibles([os.path.join(result_dir, f"result_ode"),
-                                   os.path.join(result_dir, f"result_ide_dt=1e-{ide_exponent}")],
+                plot_susceptibles([os.path.join(result_dir, f"result_ode_dt=1e-5"),
+                                   os.path.join(result_dir, f"result_ide_dt=1e-{ide_exponent}_gregoryorder={gregory_order}")],
                                   fileending=f"_dt=1e-{ide_exponent}", save_dir=plot_dir)

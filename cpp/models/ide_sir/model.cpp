@@ -192,14 +192,10 @@ ScalarType ModelMessinaExtendedDetailedInit::phi_deriv_analytical(ScalarType cur
         return 0.;
     }
 
-    // std::cout << "damping_time: " << damping_time << std::endl;
-
     ScalarType yleft =
         parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(SimulationTime<ScalarType>(xleft))(0, 0);
     ScalarType yright =
         parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(SimulationTime<ScalarType>(xright))(0, 0);
-
-    // std::cout << "yleft, right: " << yleft << ", " << yright << std::endl;
 
     ScalarType deriv = -0.5 * (yleft - yright) / (xright - xleft) * std::numbers::pi_v<ScalarType> *
                        std::sin(std::numbers::pi_v<ScalarType> / (xright - xleft) * (current_time - xleft));
@@ -217,8 +213,6 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
     ScalarType current_time   = populations.get_last_time();
     size_t current_time_index = populations.get_num_time_points() - 1;
     size_t damping_index      = std::min(t0_index + (size_t)std::ceil(damping_time / dt), current_time_index);
-
-    std::cout << "damping index: " << damping_index << std::endl;
 
     // Compute first part of sum where already known initial values of Susceptibles are used.
     ScalarType sum = 0.;
@@ -315,10 +309,7 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
             // Compute inner sum
             ScalarType inner_sum = 0.;
 
-            // ScalarType current_time = populations.get_last_time();
             ScalarType phi_deriv = compute_phi_deriv(dt, j, fd_order_contacts, current_time, damping_time);
-            // ScalarType phi_deriv = phi_deriv_analytical(current_time, damping_time);
-            // if (phi_deriv > 1e-15) {
             for (size_t k = 0; k <= j; k++) {
                 ScalarType gregory_weight_inner_sum   = 0.;
                 size_t switch_weights_index_inner_sum = std::min(j, m_gregory_order);
@@ -364,12 +355,14 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
             }
 
             // For each index, the corresponding summand is computed here.
+            ScalarType init_time = populations.get_time(0);
+            // std::cout << "init time: " << init_time << std::endl;
 
             sum += -dt * gregory_weight * m_transmissionproboncontact_vector[current_time_index - j] *
                        m_riskofinffromsymptomatic_vector[current_time_index - j] *
                        m_transitiondistribution_vector[current_time_index - j] *
                        (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                            SimulationTime<ScalarType>(current_time - (j + t0_index) * dt))(0, 0) -
+                            SimulationTime<ScalarType>((current_time_index - j) * dt + init_time))(0, 0) -
                         (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
                              SimulationTime<ScalarType>(current_time))(0, 0) /
                          m_N) *
@@ -386,7 +379,6 @@ size_t ModelMessinaExtendedDetailedInit::compute_S(ScalarType s_init, ScalarType
                                                    bool split_integral, ScalarType tol, size_t max_iterations)
 {
     size_t iter_counter = 0;
-    std::cout << "iteration, s_init: " << iter_counter << ", " << s_init << std::endl;
     while (iter_counter < max_iterations) {
 
         ScalarType s_new = fixed_point_function(s_init, dt, t0_index, fd_order_contacts, damping_time, split_integral);
@@ -398,7 +390,6 @@ size_t ModelMessinaExtendedDetailedInit::compute_S(ScalarType s_init, ScalarType
         s_init = s_new;
 
         iter_counter++;
-        std::cout << "iteration, s_init: " << iter_counter << ", " << s_init << std::endl;
     }
 
     if (iter_counter == max_iterations) {

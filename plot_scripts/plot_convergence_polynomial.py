@@ -28,7 +28,16 @@ from matplotlib.markers import MarkerStyle
 from matplotlib.transforms import Affine2D
 
 
-def define_groundtruth(timesteps, t0, tmax):
+def polynomial(time):
+    return time**5
+
+
+def polynomial_extended(time, alpha, N, init_time):
+
+    return alpha/30 * time**6 + (1-alpha*time)/5 * time**5 - (1-alpha*(time-init_time))*N*time - alpha*N/2.*time**2
+
+
+def define_groundtruth(timesteps, t0, tmax, alpha, N, init_time):
 
     model = 'ode'
     results = {model: []}
@@ -40,7 +49,7 @@ def define_groundtruth(timesteps, t0, tmax):
             if compartment == 0:
                 # groundtruth_at_timepoints.append([timepoint**3 + timepoint**2
                 #                                   for timepoint in timepoints])  # np.cosh(timepoint)
-                groundtruth_at_timepoints.append([timepoint**5
+                groundtruth_at_timepoints.append([polynomial_extended(timepoint, alpha, N, init_time)
                                                   for timepoint in timepoints])
             if compartment == 1:
                 groundtruth_at_timepoints.append([
@@ -93,7 +102,7 @@ def compute_l2_norm(timeseries, timestep):
     return norm
 
 
-def compute_errors_l2(groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, relative_error=True, cut_off=0):
+def compute_errors_l2(groundtruth, results, timesteps_ide, t0_ide, relative_error=True, cut_off=0):
     """ Computes relative L2 norm of the difference between time series from ODE and time series
     from IDE for all compartments/flows.
 
@@ -113,8 +122,6 @@ def compute_errors_l2(groundtruth, results, groundtruth_exponent, timesteps_ide,
         errors.append([])
         for compartment in range(num_errors):
             timestep = timesteps_ide[i]
-            scale_timesteps = timestep/pow(10, -groundtruth_exponent)
-            num_timepoints = len(results['ide'][i])
 
             result_ode = np.array(groundtruth['ode'][i][compartment][int(
                 t0_ide/timestep)+cut_off::])
@@ -146,7 +153,7 @@ def compute_max_norm(timeseries):
     return norm
 
 
-def compute_errors_max(groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, relative_error=True, cut_off=0):
+def compute_errors_max(groundtruth, results,  timesteps_ide, t0_ide, relative_error=True, cut_off=0):
     """ Computes relative maximum norm of the difference between time series from ODE and time series
     from IDE for all compartments.
     """
@@ -159,7 +166,6 @@ def compute_errors_max(groundtruth, results, groundtruth_exponent, timesteps_ide
         errors.append([])
         for compartment in range(num_errors):
             timestep = timesteps_ide[i]
-            scale_timesteps = timestep/pow(10, -groundtruth_exponent)
 
             difference = groundtruth['ode'][i][compartment][int(
                 t0_ide/timestep)+cut_off::]-results['ide'][i][int(t0_ide/timestep)+cut_off::][:, compartment]
@@ -295,7 +301,7 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
     plt.close()
 
 
-def plot_difference_per_timestep(groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, gregory_order, cut_off=0, save_dir=""):
+def plot_difference_per_timestep(groundtruth, results, timesteps_ide, t0_ide, gregory_order, cut_off=0, save_dir=""):
     num_errors = 3
 
     errors = []
@@ -314,7 +320,6 @@ def plot_difference_per_timestep(groundtruth, results, groundtruth_exponent, tim
 
         errors.append([])
         for compartment in range(num_errors):
-            scale_timesteps = timestep/pow(10, -groundtruth_exponent)
 
             # difference = groundtruth[0][int(
             #     pow(10, groundtruth_exponent)*(t0_ide))::int(scale_timesteps)][:, compartment]-results[i][int(t0_ide/timestep)::][:, compartment]
@@ -376,11 +381,18 @@ def get_ide_exponents(data_dir):
     return range(max_exponent+1)
 
 
-def get_t0_ide_from_dir_name(dir_name):
+def get_t0_from_dir_name(dir_name):
     t0_string = [x for x in dir_name.split("_") if "t0" in x]
     t0 = int(t0_string[0].split("=")[-1])
 
     return t0
+
+
+def get_tinit_from_dir_name(dir_name):
+    tinit_string = [x for x in dir_name.split("_") if "tinit" in x]
+    tinit = int(tinit_string[0].split("=")[-1])
+
+    return tinit
 
 
 def get_tmax_from_dir_name(dir_name):
@@ -392,11 +404,19 @@ def get_tmax_from_dir_name(dir_name):
 
 def main():
 
-    groundtruth_exponent = 6
+    alpha = 0.1
+    N = 1e2
+
+    single_integral = True
+
+    if single_integral:
+        single_int_str = "true"
+    else:
+        single_int_str = "false"
 
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
-    main_dir = "2026-04-09/convergence_polynomial_order5/double_integral"
+    main_dir = f"2026-04-14/convergence_polynomial_ext_alpha={alpha}_singleint={single_int_str}"
     relevant_dir = os.path.join(root_dir, main_dir)
     # print(relevant_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
@@ -409,7 +429,8 @@ def main():
     for dir_index, dir_name in enumerate(sub_dirs):
         print(dir_name)
 
-        t0 = get_t0_ide_from_dir_name(dir_name)
+        t0 = get_t0_from_dir_name(dir_name)
+        tinit = get_tinit_from_dir_name(dir_name)
         tmax = get_tmax_from_dir_name(dir_name)
 
         # Path where simulation results are stored.
@@ -435,7 +456,8 @@ def main():
         for exp in ide_exponents:
             timesteps_ide.append(pow(10, -exp))
 
-        groundtruth = define_groundtruth(timesteps_ide, t0, tmax)
+        groundtruth = define_groundtruth(
+            timesteps_ide, t0, tmax, alpha, N, tinit)
 
         # Compute errors and total population at end of simulation.
         for gregory_order_simulation in gregory_orders_simulation:
@@ -447,14 +469,14 @@ def main():
             # errors_l2_rel = compute_errors_l2(
             #     groundtruth, results, groundtruth_exponent, timesteps_ide, t0, True)
             errors_l2_abs = compute_errors_l2(
-                groundtruth, results, groundtruth_exponent, timesteps_ide, t0, False, cut_off)
+                groundtruth, results, timesteps_ide, t0, False, cut_off)
             # errors_all_gregory_orders_l2_rel.append(errors_l2_rel)
             errors_all_gregory_orders_l2_abs.append(errors_l2_abs)
 
             # errors_max_rel = compute_errors_max(
             #     groundtruth, results, groundtruth_exponent, timesteps_ide, t0, True)
             errors_max_abs = compute_errors_max(
-                groundtruth, results, groundtruth_exponent, timesteps_ide, t0, False, cut_off)
+                groundtruth, results, timesteps_ide, t0, False, cut_off)
             # errors_all_gregory_orders_max_rel.append(errors_max_rel)
             errors_all_gregory_orders_max_abs.append(errors_max_abs)
 
