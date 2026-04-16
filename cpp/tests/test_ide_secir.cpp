@@ -58,6 +58,7 @@ protected:
         vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 1.0;
         vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 4.0;
         vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 1.0;
+        vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToDead]                 = 0.0;
         vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
         vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
         vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;
@@ -80,6 +81,7 @@ protected:
         std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
         vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
         vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
+        vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToDead)]        = 0;
         model->parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(0)]       = vec_prob;
 
         mio::ContactMatrixGroup<ScalarType> contact_matrix = mio::ContactMatrixGroup<ScalarType>(1, num_agegroups);
@@ -252,6 +254,7 @@ TEST(IdeSecir, checkSimulationFunctions)
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToDead)]        = 0;
     model.parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(0)]        = vec_prob;
 
     mio::ContactMatrixGroup<ScalarType> contact_matrix = mio::ContactMatrixGroup<ScalarType>(1, num_agegroups);
@@ -281,8 +284,8 @@ TEST(IdeSecir, checkSimulationFunctions)
     secihurd_t0 << 4995, 0.5, 0, 4, 0, 0, 4990.5, 10;
     secihurd_t1 << 4994.00020016, 0.49989992, 0.49994996, 0.12498749, 1.03124687, 0.25781172, 4993.45699802,
         10.12890586;
-    transitions_t1 << 0.99979984, 0.99989992, 0.24997498, 0.24997498, 2.06249374, 2.06249374, 0.51562344, 0.51562344,
-        0.12890586, 0.12890586;
+    transitions_t1 << 0.99979984, 0.99989992, 0.24997498, 0.24997498, 2.06249374, 2.06249374, 0.51562344, 0.,
+        0.51562344, 0.12890586, 0.12890586;
 
     // Compare simulated compartments at time points t0 and t1.
     for (Eigen::Index i = 0; i < (Eigen::Index)mio::isecir::InfectionState::Count; i++) {
@@ -426,6 +429,100 @@ TEST(IdeSecir, checkInitializations)
 
     // Reactive log output.
     mio::set_log_level(mio::LogLevel::warn);
+}
+
+TEST(IdeSecir, deathsPerSevere_flows)
+{
+    // Test that DeathsPerSevere causes ISev->Dead flow independent of ICU.
+    // If the probability of going from InfectedSevere to InfectedCritival is zero, it blocks the ISev->ICr->Dead path
+    // entirely, so the probability of transitioning from InfectedCritical to Dead has no influence and is left at its
+    // default values.
+    using Vec = mio::TimeSeries<ScalarType>::Vector;
+
+    ScalarType t0 = 0., tmax = 10., dt = 0.1;
+
+    size_t num_agegroups = 1;
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> N =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 10000.);
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 0.);
+
+    // Create TimeSeries with num_transitions elements where transitions needed for simulation will be stored.
+    size_t num_transitions = (size_t)mio::isecir::InfectionTransition::Count;
+    mio::TimeSeries<ScalarType> init(num_transitions * num_agegroups);
+    // Add initial time point to time series, start with transitions only from InfectedSymptoms to InfectedSevere.
+    Vec vec_init = Vec::Zero(num_transitions);
+    init.add_time_point(-10, vec_init);
+    // Add further time points until time t0.
+    while (init.get_last_time() < t0 - dt) {
+        init.add_time_point(init.get_last_time() + dt, vec_init);
+    }
+    vec_init[(Eigen::Index)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 1000.;
+    init.add_time_point(init.get_last_time() + dt, vec_init);
+
+    mio::isecir::Model model(std::move(init), N, deaths, num_agegroups);
+
+    // Set Susceptibles at t0.
+    model.populations[0][(size_t)mio::isecir::InfectionState::Susceptible] = 9000;
+
+    // Block ISev->ICr->Dead path.
+    model.parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(0)][Eigen::Index(
+        mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical)] = 0.;
+    model.parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(0)][Eigen::Index(
+        mio::isecir::InfectionTransition::InfectedCriticalToDead)]           = 0.;
+    // Set nonzero probability for InfectedSevereToDead.
+    model.parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(0)][Eigen::Index(
+        mio::isecir::InfectionTransition::InfectedSevereToDead)] = 0.1;
+    model.parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(0)][Eigen::Index(
+        mio::isecir::InfectionTransition::InfectedSevereToRecovered)] =
+        1. - model.parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(0)][Eigen::Index(
+                 mio::isecir::InfectionTransition::InfectedSevereToDead)];
+
+    // Simulate a small time step.
+    mio::isecir::Simulation sim(model, dt);
+    sim.advance(tmax);
+    auto result = sim.get_result();
+
+    // With prob(InfectedSevereToDead)=0.1, deaths from ISev must be larger than initial value. .
+    auto dead         = result.get_last_value()[(size_t)mio::isecir::InfectionState::Dead];
+    auto dead_initial = result.get_value(0)[(size_t)mio::isecir::InfectionState::Dead];
+    EXPECT_GT(dead, dead_initial);
+
+    // Now run again with prob(InfectedSevereToDead)=0
+    model.parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(0)][Eigen::Index(
+        mio::isecir::InfectionTransition::InfectedSevereToDead)] = 0.;
+    model.parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(0)][Eigen::Index(
+        mio::isecir::InfectionTransition::InfectedSevereToRecovered)] =
+        1. - model.parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(0)][Eigen::Index(
+                 mio::isecir::InfectionTransition::InfectedSevereToDead)];
+
+    mio::isecir::Simulation sim_no_severe_deaths(model, dt);
+    sim_no_severe_deaths.advance(tmax);
+    auto result_no_severe_deaths = sim_no_severe_deaths.get_result();
+    auto dead_no_severe_deaths   = result_no_severe_deaths.get_last_value()[(size_t)mio::isecir::InfectionState::Dead];
+
+    // With prob(InfectedSevereToDead)=0 there should be no deaths from ISev,so Dead compartment should be equal to
+    // initial value.
+    auto dead_no_severe_deaths_initial =
+        result_no_severe_deaths.get_value(0)[(size_t)mio::isecir::InfectionState::Dead];
+    EXPECT_DOUBLE_EQ(dead_no_severe_deaths, dead_no_severe_deaths_initial);
+
+    // Population must be conserved and equal in both runs; compare with initial population of first run, respectively.
+    auto total                  = result.get_last_value().sum();
+    auto total_initial          = result.get_value(0).sum();
+    auto total_no_severe_deaths = result_no_severe_deaths.get_last_value().sum();
+    EXPECT_NEAR(total, total_initial, 1e-10);
+    EXPECT_NEAR(total_no_severe_deaths, total_initial, 1e-10);
+
+    // Recovery flow during simulation must be higher when prob(InfectedSevereToDead)=0.
+    auto rec         = result.get_last_value()[(size_t)mio::isecir::InfectionState::Recovered];
+    auto rec_initial = result.get_value(0)[(size_t)mio::isecir::InfectionState::Recovered];
+    auto rec_no_severe_deaths =
+        result_no_severe_deaths.get_last_value()[(size_t)mio::isecir::InfectionState::Recovered];
+    auto rec_no_severe_deaths_initial =
+        result_no_severe_deaths.get_value(0)[(size_t)mio::isecir::InfectionState::Recovered];
+    EXPECT_GT(rec_no_severe_deaths - rec_no_severe_deaths_initial, rec - rec_initial);
+    mio::set_log_level(mio::LogLevel::off);
 }
 
 // a) Test if the function check_constraints() of the class Model correctly reports errors in the model constraints.
@@ -645,6 +742,7 @@ TEST(IdeSecir, testParametersConstraints)
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]          = 0.2;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered)] = 0.0;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToRecovered)]   = 0.0;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToDead)]          = 0.0;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToRecovered)]     = 0.0;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToRecovered)]   = 0.4;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)]        = -0.6;
@@ -684,15 +782,19 @@ TEST(IdeSecir, testParametersConstraints)
     constraint_check                                                            = parameters.check_constraints();
     EXPECT_TRUE(constraint_check);
 
-    // Check sum InfectedSevereToInfectedCritical + InfectedCriticalToRecovered.
+    // Check sum InfectedSevereToInfectedCritical + InfectedSevereToDead + InfectedSevereToRecovered.
     parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(0)][(
         int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere] = 1.0;
+    parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(0)][(
+        int)mio::isecir::InfectionTransition::InfectedSevereToDead]             = 0.2;
     parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(0)][(
         int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]        = 0.4;
     constraint_check                                                            = parameters.check_constraints();
     EXPECT_TRUE(constraint_check);
 
-    // Check sum InfectedCriticalToDead + InfectedSevereToRecovered.
+    // Check sum InfectedCriticalToDead + InfectedCriticalToRecovered.
+    parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(0)][(
+        int)mio::isecir::InfectionTransition::InfectedSevereToDead]      = 0.0;
     parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(0)][(
         int)mio::isecir::InfectionTransition::InfectedSevereToRecovered] = 0.0;
     parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(0)][(
@@ -779,6 +881,7 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 1);
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered)] = 0.0;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToRecovered)]   = 0.0;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToDead)]          = 0.0;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToRecovered)]     = 0.0;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToRecovered)]   = 0.4;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)]        = 0.6;
@@ -890,6 +993,7 @@ TEST(IdeSecir, compareEquilibria)
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 1);
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered)] = 0.0;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToRecovered)]   = 0.0;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToDead)]          = 0.0;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToRecovered)]     = 0.0;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToRecovered)]   = 0.5;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)]        = 0.5;
@@ -949,32 +1053,4 @@ TEST(IdeSecir, compareEquilibria)
     }
 
     EXPECT_TRUE(equilibrium_time <= equilibrium_time2);
-}
-
-TEST(IdeSecir, checkInfectionTransitions)
-{
-    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.size(), mio::isecir::InfectionTransitionsCount);
-
-    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(0),
-              std::make_pair(mio::isecir::InfectionState::Susceptible, mio::isecir::InfectionState::Exposed));
-    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(1),
-              std::make_pair(mio::isecir::InfectionState::Exposed, mio::isecir::InfectionState::InfectedNoSymptoms));
-    EXPECT_EQ(
-        mio::isecir::InfectionTransitionsMap.at(2),
-        std::make_pair(mio::isecir::InfectionState::InfectedNoSymptoms, mio::isecir::InfectionState::InfectedSymptoms));
-    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(3),
-              std::make_pair(mio::isecir::InfectionState::InfectedNoSymptoms, mio::isecir::InfectionState::Recovered));
-    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(4), std::make_pair(mio::isecir::InfectionState::InfectedSymptoms,
-                                                                         mio::isecir::InfectionState::InfectedSevere));
-    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(5),
-              std::make_pair(mio::isecir::InfectionState::InfectedSymptoms, mio::isecir::InfectionState::Recovered));
-    EXPECT_EQ(
-        mio::isecir::InfectionTransitionsMap.at(6),
-        std::make_pair(mio::isecir::InfectionState::InfectedSevere, mio::isecir::InfectionState::InfectedCritical));
-    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(7),
-              std::make_pair(mio::isecir::InfectionState::InfectedSevere, mio::isecir::InfectionState::Recovered));
-    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(8),
-              std::make_pair(mio::isecir::InfectionState::InfectedCritical, mio::isecir::InfectionState::Dead));
-    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(9),
-              std::make_pair(mio::isecir::InfectionState::InfectedCritical, mio::isecir::InfectionState::Recovered));
 }

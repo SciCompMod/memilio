@@ -194,9 +194,9 @@ private:
      *              Sometimes the second index is not needed, e.g., if probability[idx_TransitionDistribution1]=1.
      */
 
-    void compute_compartment_from_flows(ScalarType dt, Eigen::Index idx_InfectionState, AgeGroup group,
-                                        Eigen::Index idx_IncomingFlow, int idx_TransitionDistribution1,
-                                        int idx_TransitionDistribution2 = 0);
+    void compute_compartment_from_flows(ScalarType dt, InfectionState infectionState,
+                                        std::vector<InfectionTransition> const& IncomingFlows,
+                                        std::vector<InfectionTransition> const& OutgoingFlows, AgeGroup group);
 
     /**
      * @brief Computes the values of the infection compartments subset at initialization.
