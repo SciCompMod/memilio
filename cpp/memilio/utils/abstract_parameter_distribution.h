@@ -35,7 +35,6 @@ namespace mio
 template <class T>
 concept HasSampleFunction = requires(T t) {
     { t.get_sample(std::declval<RandomNumberGenerator&>()) } -> std::convertible_to<ScalarType>;
-    { t.get_sample(std::declval<abm::PersonalRandomNumberGenerator&>()) } -> std::convertible_to<ScalarType>;
 };
 
 /**

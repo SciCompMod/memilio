@@ -35,9 +35,6 @@ for age_group in range(num_age_groups):
     model.parameters.TimeExposedToNoSymptoms[abm.VirusVariant.Wildtype, AgeGroup(age_group)] = mio.AbstractParameterDistribution(mio.ParameterDistributionLogNormal(
         4., 1.))
 
-    model.parameters.AgeGroupGotoSchool[AgeGroup(age_group)] = False
-    model.parameters.AgeGroupGotoWork[AgeGroup(age_group)] = False
-
 model.parameters.AgeGroupGotoSchool[AgeGroup(1)] = True
 model.parameters.AgeGroupGotoWork[AgeGroup(2)] = True
 model.parameters.AgeGroupGotoWork[AgeGroup(3)] = True
@@ -126,14 +123,13 @@ model.testing_strategy.add_scheme(
 # Seed infections
 
 infection_distribution = [0.5, 0.3, 0.05, 0.05, 0.05, 0.05, 0.0, 0.0]
-rng = np.random.default_rng()
 for person in model.persons:
-    infection_state = abm.InfectionState(rng.choice(
-        len(infection_distribution), p=infection_distribution))
-
+    infection_state = abm.InfectionState(
+        mio.DiscreteDistribution.get_instance()(model.rng, infection_distribution))
+    prng = abm.PersonalRandomNumberGenerator(model.rng, person)
     if infection_state != abm.InfectionState.Susceptible:
-        person.add_new_infection(model, abm.VirusVariant.Wildtype,
-                                 person.age, model.parameters, start_date, infection_state)
+        person.add_new_infection(mio.abm.Infection(
+            prng, abm.VirusVariant.Wildtype, person.age, model.parameters, start_date, infection_state))
 
 # Assign locations
 

@@ -39,7 +39,12 @@ void bind_random_number_generator(py::module_& m, std::string const& name)
 void bind_discrete_distribution(py::module_& m, std::string const& name)
 {
     bind_class<mio::DiscreteDistribution<int>, EnablePickling::Never>(m, name.c_str())
-        .def("get_instance", &mio::DiscreteDistribution<int>::get_instance,
-             py::return_value_policy::reference_internal);
+        .def_static("get_instance", &mio::DiscreteDistribution<int>::get_instance,
+                    py::return_value_policy::
+                        reference) // Note: reference_internal cannot be used here because this is a static function
+        .def("__call__", [](mio::DiscreteDistribution<int>& self, mio::RandomNumberGenerator& rng,
+                            std::vector<double> distribution) {
+            return self(rng, distribution);
+        });
 }
 } // namespace pymio

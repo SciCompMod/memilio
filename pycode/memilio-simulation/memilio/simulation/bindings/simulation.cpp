@@ -39,6 +39,7 @@
 #include "utils/index.h"
 #include "utils/custom_index_array.h"
 #include "utils/random_number_generator.h"
+#include "geography/geolocation.cpp"
 
 //Includes from MEmilio
 #include "memilio/mobility/metapopulation_mobility_instant.h"
@@ -162,8 +163,11 @@ PYBIND11_MODULE(_simulation, m)
     });
 
     pymio::bind_random_number_generator(m, "RandomNumberGenerator");
+    pymio::bind_discrete_distribution(m, "DiscreteDistribution");
 
     pymio::bind_time_series_functor(m, "TimeSeriesFunctor");
+
+    pymio::bind_geolocation(m, "GeographicalLocation");
 
     m.attr("__version__") = "dev";
 }
