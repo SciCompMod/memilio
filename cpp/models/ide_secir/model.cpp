@@ -27,7 +27,6 @@
 #include "memilio/math/eigen.h"
 
 #include "vector"
-#include <Eigen/src/Core/util/Meta.h>
 #include <algorithm>
 #include <cstddef>
 #include <numbers>

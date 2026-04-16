@@ -434,7 +434,7 @@ TEST(IdeSecir, checkInitializations)
 TEST(IdeSecir, deathsPerSevere_flows)
 {
     // Test that DeathsPerSevere causes ISev->Dead flow independent of ICU.
-    // If the probability of going from InfectedSevere to InfectedCritival is zero, it blocks the ISev->ICr->Dead path
+    // If the probability of going from InfectedSevere to InfectedCritical is zero, it blocks the ISev->ICr->Dead path
     // entirely, so the probability of transitioning from InfectedCritical to Dead has no influence and is left at its
     // default values.
     using Vec = mio::TimeSeries<ScalarType>::Vector;
@@ -483,7 +483,7 @@ TEST(IdeSecir, deathsPerSevere_flows)
     sim.advance(tmax);
     auto result = sim.get_result();
 
-    // With prob(InfectedSevereToDead)=0.1, deaths from ISev must be larger than initial value. .
+    // With prob(InfectedSevereToDead)=0.1, deaths from ISev must be larger than initial value.
     auto dead         = result.get_last_value()[(size_t)mio::isecir::InfectionState::Dead];
     auto dead_initial = result.get_value(0)[(size_t)mio::isecir::InfectionState::Dead];
     EXPECT_GT(dead, dead_initial);
@@ -501,7 +501,7 @@ TEST(IdeSecir, deathsPerSevere_flows)
     auto result_no_severe_deaths = sim_no_severe_deaths.get_result();
     auto dead_no_severe_deaths   = result_no_severe_deaths.get_last_value()[(size_t)mio::isecir::InfectionState::Dead];
 
-    // With prob(InfectedSevereToDead)=0 there should be no deaths from ISev,so Dead compartment should be equal to
+    // With prob(InfectedSevereToDead)=0 there should be no deaths from ISev, so Dead compartment should be equal to
     // initial value.
     auto dead_no_severe_deaths_initial =
         result_no_severe_deaths.get_value(0)[(size_t)mio::isecir::InfectionState::Dead];
