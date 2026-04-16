@@ -389,8 +389,8 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     bind_timeserieswriter_history<mio::abm::LogInfectionState>(m, "TimeSeriesWriterLogInfectionStateHistory");
     bind_datawriter_history<mio::abm::LogLocationInformation>(m, "DataWriterLogLocationInformationHistory");
-    bind_datawriter_history<mio::abm::LogPersonInformation>(m, "DataWriterLogInfectionStateHistory");
-    bind_datawriter_history<mio::abm::LogDataForMobility>(m, "DataWriterLogInfectionStateHistory");
+    bind_datawriter_history<mio::abm::LogPersonInformation>(m, "DataWriterLogPersonInformationHistory");
+    bind_datawriter_history<mio::abm::LogDataForMobility>(m, "DataWriterLogDataForMobilityHistory");
 
     pymio::bind_class<mio::abm::PersonalRandomNumberGenerator, pymio::EnablePickling::Never>(
         m, "PersonalRandomNumberGenerator")
