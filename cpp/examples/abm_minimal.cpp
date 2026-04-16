@@ -41,7 +41,6 @@ int main()
     model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() = mio::ParameterDistributionLogNormal(4., 1.);
 
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    model.parameters.get<mio::abm::AgeGroupGotoSchool>()                    = false;
     model.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 and 35-59)
     model.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
