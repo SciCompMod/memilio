@@ -23,6 +23,8 @@
 
 #include "memilio/ad/ad.h"
 
+#include "memilio/io/directories.h"
+#include "memilio/io/io.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "ode_seair/model.h"
 #include "ode_seair/infection_state.h"
@@ -512,18 +514,20 @@ void Seair_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n, co
     }
     mio::oseair::Model<FP> model;
 
+    const auto result_dir = mio::create_directory_or_exit(mio::example_results_dir("ode_seair_optimization"));
+
     //open files for parameter output
-    std::ofstream outFileSocialDistancing("SocialDistancing.txt");
-    std::ofstream outFileQuarantined("Quarantined.txt");
-    std::ofstream outFileTestingRate("TestingRate.txt");
+    std::ofstream outFileSocialDistancing(result_dir + "SocialDistancing.txt");
+    std::ofstream outFileQuarantined(result_dir + "Quarantined.txt");
+    std::ofstream outFileTestingRate(result_dir + "TestingRate.txt");
 
     //open files for state output
-    std::ofstream outFileSusceptible("Susceptible.txt");
-    std::ofstream outFileExposed("Exposed.txt");
-    std::ofstream outFileAsymptomatic("Asymptomatic.txt");
-    std::ofstream outFileInfected("Infected.txt");
-    std::ofstream outFileRecovered("Recovered.txt");
-    std::ofstream outFileDead("Dead.txt");
+    std::ofstream outFileSusceptible(result_dir + "Susceptible.txt");
+    std::ofstream outFileExposed(result_dir + "Exposed.txt");
+    std::ofstream outFileAsymptomatic(result_dir + "Asymptomatic.txt");
+    std::ofstream outFileInfected(result_dir + "Infected.txt");
+    std::ofstream outFileRecovered(result_dir + "Recovered.txt");
+    std::ofstream outFileDead(result_dir + "Dead.txt");
 
     set_initial_values(model);
     int gridindex = 0;
