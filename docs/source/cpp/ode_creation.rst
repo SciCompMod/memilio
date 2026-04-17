@@ -230,7 +230,7 @@ where the flows :math:`f_{Z_i \rightarrow Z_j} \gt 0` are the amount of populati
 :math:`Z_i` to :math:`Z_j` at time :math:`t`. So the first sum accumulates all inflows, the second subtracts all
 outflows.
 
-The SIRD model from above can be expressed as a FlowModel with only three flows:
+The SIRD model from above can be expressed as a ``FlowModel`` with only three flows:
 
 .. math::  
 
@@ -261,12 +261,12 @@ compute non-negative outflows. Hence, we only list the flow :math:`S \rightarrow
 InfectionStates, Parameters and Population
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Since a FlowModel is just a special case of a CompartmentalModel, all of these are defined exactly as described above.
+Since a ``FlowModel`` is just a special case of a ``CompartmentalModel``, all of these are defined exactly as described above.
 
 Define a FlowModel class
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-With the flows and classes also used by the CompartmentalModel, we can define a FlowModel as such: 
+With the flows and classes also used by the ``CompartmentalModel``, we can define a ``FlowModel`` as such: 
 
 .. code-block:: cpp
 
@@ -294,7 +294,7 @@ With the flows and classes also used by the CompartmentalModel, we can define a 
         }
     };
 
-This is mostly analogous to the definition of a CompartmentalModel, with a few important differences. First, we now
+This is mostly analogous to the definition of a ``CompartmentalModel``, with a few important differences. First, we now
 inherit from ``FlowModel``, which gets the ``Flows`` as an additional template argument. The ``Base`` alias changes
 accordingly. Secondly, the function we implement is called ``get_flows`` and computes the derivative of y in terms of
 its flows.
