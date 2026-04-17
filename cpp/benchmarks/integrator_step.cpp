@@ -22,7 +22,7 @@
 
 #include "memilio/math/adapt_rk.h"
 #include "memilio/math/stepper_wrapper.h"
-#include "memilio/utils/base_dir.h"
+#include "memilio/io/directories.h"
 
 template <class Integrator>
 void integrator_step(::benchmark::State& state)

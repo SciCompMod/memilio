@@ -20,7 +20,7 @@
 #include "benchmarks/simulation.h"
 #include "memilio/compartments/flow_simulation.h"
 #include "memilio/compartments/simulation.h"
-#include "memilio/utils/base_dir.h"
+#include "memilio/io/directories.h"
 #include "ode_seir/model.h"
 
 #include <string>

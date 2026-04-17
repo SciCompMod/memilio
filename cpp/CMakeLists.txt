@@ -27,8 +27,18 @@ option(MEMILIO_ENABLE_WARNINGS_AS_ERRORS "Build memilio with warnings as errors.
 option(MEMILIO_ENABLE_IPOPT "Enable numerical optimization with Ipopt, requires a Fortran compiler." OFF)
 option(MEMILIO_ENABLE_PROFILING "Enable runtime performance profiling of memilio." OFF)
 option(MEMILIO_ENABLE_LIKWID_MARKER "Enable performance measuring with likwid markers." OFF)
+option(MEMILIO_BASE_DIR "Path to the MEmilio project root, used for file I/O. Set to overwrite default." "")
+option(MEMILIO_DATA_DIR "Path to the MEmilio data directory. Set to overwrite default." "")
 
-mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
+mark_as_advanced(
+    MEMILIO_USE_BUNDLED_SPDLOG
+    MEMILIO_SANITIZE_ADDRESS
+    MEMILIO_SANITIZE_UNDEFINED
+    MEMILIO_BUILD_SHARED_LIBS
+    MEMILIO_BUILD_STATIC_LIBS
+    MEMILIO_BASE_DIR
+    MEMILIO_DATA_DIR
+    )
 
 # try to treat AppleClang as Clang, but warn about missing support
 if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
@@ -76,8 +86,14 @@ set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_INSTALL_RPATH "${CMAKE_BINARY_DIR}/lib" "${CMAKE_BINARY_DIR}/bin")
 
-# sets MEMILIO_BASE_DIR to the directory containing cpp (i.e., the root of the git repo)
-cmake_path(CONVERT "${PROJECT_SOURCE_DIR}/.." TO_CMAKE_PATH_LIST MEMILIO_BASE_DIR NORMALIZE)
+# if undefined, set MEMILIO_BASE_DIR to the directory containing cpp (i.e., the root of the git repo)
+if(MEMILIO_BASE_DIR STREQUAL "")
+    cmake_path(CONVERT "${PROJECT_SOURCE_DIR}/.." TO_CMAKE_PATH_LIST MEMILIO_BASE_DIR NORMALIZE)
+endif()
+# if undefined, set MEMILIO_DATA_DIR to the projects data directory 
+if(MEMILIO_DATA_DIR STREQUAL "")
+    cmake_path(CONVERT "${PROJECT_SOURCE_DIR}/../data" TO_CMAKE_PATH_LIST MEMILIO_DATA_DIR NORMALIZE)
+endif()
 
 # code coverage analysis
 # Note: this only works under linux and with make
