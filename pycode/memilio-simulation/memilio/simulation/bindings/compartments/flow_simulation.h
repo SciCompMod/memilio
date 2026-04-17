@@ -48,7 +48,7 @@ void bind_Flow_Simulation(pybind11::module_& m, std::string const& name)
         .def_property("integrator", pybind11::overload_cast<>(&FlowSimulation::get_integrator_core, pybind11::const_),
                       &FlowSimulation::set_integrator_core, pybind11::return_value_policy::reference_internal)
         .def("advance", &FlowSimulation::advance, pybind11::arg("tmax"))
-        .doc() = "A class for the simulation of a flow model.";
+        .doc() = "A class for the simulation of a FlowModel.";
 }
 
 } // namespace pymio
