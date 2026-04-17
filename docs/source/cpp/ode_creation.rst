@@ -219,7 +219,7 @@ Continue :doc:`here<ode>` to learn how to use this model, or read on if you want
 Implement the ODE model using flows
 -----------------------------------
 
-A FlowModel is a special case of a CompartmentalModel, where the derivative of each compartment over time
+A ``FlowModel`` is a special case of a ``CompartmentalModel``, where the derivative of each compartment over time
 :math:`Z_i'(t)` can be written as
 
 .. math::
@@ -245,7 +245,7 @@ Note that all other possible flows, like :math:`f_{I \rightarrow S}`, are consta
 Flows
 ~~~~~
 
-To use a FlowModel, we need to create a list of all flows. These are used by the model to automatically assemble the
+To use a ``FlowModel``, we need to create a list of all flows. These are used by the model to automatically assemble the
 compartments. We use a :code:`mio::TypeList` with a :code:`mio::Flow` for each mathematical flow. For the SIRD model
 we get:
 

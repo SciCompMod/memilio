@@ -83,7 +83,7 @@ Below we guide you through several tutorials on using MEmilio's models through i
 Simple compartmental models
 ****************************
 
-Most of MEmilio's compartmental or aggregated models share the same interface derived from a high-level **CompartmentalModel** (see above). It defines the fundamental structure for epidemiological models with compartments (e.g., SEIR, SECIR, SIRS, etc.).
+Most of MEmilio's compartmental or aggregated models share the same interface derived from a high-level ``CompartmentalModel`` (see above). It defines the fundamental structure for epidemiological models with compartments (e.g., SEIR, SECIR, SIRS, etc.).
 
 In `Tutorial 01 <https://github.com/SciCompMod/memilio-tutorials/blob/main/tutorial01.py>`_, we show how to set up and simulate a simple setting for our :doc:`ODE-SECIR model <cpp/models/osecir>`. The result of the tutorial is a figure of a well-known epidemic outcome.
 
