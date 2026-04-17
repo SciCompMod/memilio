@@ -869,19 +869,27 @@ IOResult<T> deserialize(IOContext& io, Tag<T> tag)
 std::string get_current_dir_name();
 
 /**
- * @brief Creates a directory in the file system
- * @param rel_path path of directory relative to current working directory.
- * @param abs_path Will contain the absolute path of the directory.
+ * @brief Creates a directory in the file system.
+ * @param[in] path Path of a directory. Can be relative to current working directory or absolute.
+ * @param[out] abs_path Will contain the absolute path of the directory.
  * @return true if the directory was created, false if it already exists, or any errors that occured.
  */
-IOResult<bool> create_directory(std::string const& rel_path, std::string& abs_path);
+IOResult<bool> create_directory(std::string const& path, std::string& abs_path);
 
 /**
- * @brief Creates a directory in the file system
- * @param rel_path path of directory relative to current working directory.
- * @return true if the directory was created, false if it already exists, or any errors that occured.
+ * @brief Creates a directory in the file system.
+ * @param[in] path Path of a directory. Can be relative to current working directory or absolute.
+ * @return True if the directory was created, false if it already exists, or any errors that occured.
  */
-IOResult<bool> create_directory(std::string const& rel_path);
+IOResult<bool> create_directory(std::string const& path);
+
+/**
+ * @brief Creates a directory in the file system, or exits the program with an error code.
+ * @param[in] path Path of a directory. Can be relative to current working directory or absolute.
+ * @return The absolute path to the given directory.
+ * Any error messages during creation will be logged at `LogLevel::Critical`. 
+ */
+std::string create_directory_or_exit(std::string const& path);
 
 /**
  * Check if a file exists.

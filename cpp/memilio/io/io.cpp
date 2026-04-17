@@ -51,7 +51,7 @@ IOResult<bool> create_directory(std::string const& rel_path, std::string& abs_pa
         log_info("Directory '{:s}' was created.", dir.string());
     }
     else {
-        log_info("Directory '{:s}' already exists.", dir.string(), mio::get_current_dir_name());
+        log_info("Directory '{:s}' already exists.", dir.string());
     }
 
     return success(created);
@@ -61,6 +61,17 @@ IOResult<bool> create_directory(std::string const& rel_path)
 {
     std::string abs_path;
     return create_directory(rel_path, abs_path);
+}
+
+std::string create_directory_or_exit(std::string const& path)
+{
+    std::string abs_path;
+    auto result = create_directory(path, abs_path);
+    if (!result) {
+        log_critical("Could not create directory \"{}\": {}", path, result.error().message());
+        exit(result.error().code().value());
+    }
+    return abs_path;
 }
 
 bool file_exists(std::string const& rel_path, std::string& abs_path)
