@@ -6,10 +6,10 @@ This package contains Python bindings for the MEmilio C++ library. It enables se
 
 This project is configured via ``pyproject.toml`` and is built with [scikit-build-core](https://scikit-build-core.readthedocs.io). CMake and Ninja must be available on the system. The package uses the [Pybind11 C++ library](https://pybind11.readthedocs.io) to create the bindings.
 
-To install the package, use the command (from the directory containing ``pyproject.toml``)
+To install the package, use the command
 
 ```bash
-pip install .
+pip install memilio-simulation
 ```
 
 This builds the C++ library and C++ Python extension module and copies everything required to your site-packages.
@@ -30,7 +30,7 @@ Alternatively, edit the `CMakeCache.txt` in the directory created by scikit-buil
 
 ## Development
 
-For developement of the cpp bindings use
+For developement of the cpp bindings use the following command from the root of this repository (i.e. the directory containing ``pyproject.toml``)
 
 ```bash
 pip install -e .[dev]

@@ -300,25 +300,33 @@ Option A: Installing the Python packages (Recommended for nonexperienced users o
 
 You can run simulations, download data, or create plots, by only installing our Python packages.
 
+If you want to use the simulation package ``memilio-simulation``, you can install it directly via:
+
+.. code-block:: 
+
+   pip install memilio-simulation
+
+For the other packages, you can proceed as follows. 
+
 1.  Navigate to the directory containing our Python code:
 
     .. code-block:: console
 
        cd pycode
 
-2.  To install the simulation package ``memilio-simulation``, from here you can do:
+2.  To install the simulation package ``memilio-epidata``, from here you can do:
 
     .. code-block:: console
 
-       cd memilio-simulation
+       cd memilio-epidata
        pip install -e .
 
-3.  For afterwards installing the ``memilio-epidata`` package for data downloading and handling, run:
+3.  For afterwards installing the ``memilio-surrogatemodel`` package for data downloading and handling, run:
 
     .. code-block:: console
 
        cd ..  # Go back to the pycode directory
-       cd memilio-epidata
+       cd memilio-surrogatemodel
        pip install -e .
 
 .. tip:: For Contributors: Installing development packages
@@ -331,7 +339,8 @@ You can run simulations, download data, or create plots, by only installing our 
 
       pip install -e .[dev]
 
-   For regular use, the simple ``pip install -e .`` is sufficient.
+   For regular use, the simple ``pip install -e .`` is sufficient. For development of the ``memilio-simulation`` package, 
+   please also use this command from the root of the MEmilio repository for installation. 
 
 To install other packages, see the items below *Python Interface* in the menu on the left hand side.
 
