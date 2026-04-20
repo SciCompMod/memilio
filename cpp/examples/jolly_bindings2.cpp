@@ -66,7 +66,10 @@ simulate_with_init(std::string farm_file, ScalarType tmax, ScalarType dt, Scalar
                    ScalarType foi_outer_factor2, ScalarType foi_inner_factor3, ScalarType foi_outer_factor3,
                    ScalarType foi_inner_factor4, ScalarType foi_outer_factor4, ScalarType damping0, ScalarType damping1,
                    ScalarType damping2, ScalarType damping3, ScalarType damping4, ScalarType first_infection_day,
-                   ScalarType second_infection_day, ScalarType third_infection_day, u_int seed)
+                   ScalarType second_infection_day, ScalarType third_infection_day, u_int seed,
+                   std::string distance_kernel = "stepwise", ScalarType logistic_h0 = 0.0002,
+                   ScalarType logistic_r0 = 4000, ScalarType logistic_alpha = 10, ScalarType pareto_xmin = 100,
+                   ScalarType pareto_alpha = 0.01, ScalarType power_law_delta = 100, ScalarType power_law_rho = 1.0)
 {
     const auto t0 = 0.;
 
@@ -191,7 +194,9 @@ simulate_with_init(std::string farm_file, ScalarType tmax, ScalarType dt, Scalar
                        value2, value3, {first_infection_day, second_infection_day, third_infection_day},
                        {foi_inner_factor0, foi_inner_factor1, foi_inner_factor2, foi_inner_factor3, foi_inner_factor4},
                        {foi_outer_factor0, foi_outer_factor1, foi_outer_factor2, foi_outer_factor3, foi_outer_factor4},
-                       {damping0, damping1, damping2, damping3, damping4});
+                       {damping0, damping1, damping2, damping3, damping4},
+                       mio::parse_farm_distance_kernel(distance_kernel), logistic_h0, logistic_r0, logistic_alpha,
+                       pareto_xmin, pareto_alpha, power_law_delta, power_law_rho);
     sim.advance(tmax);
 
     return sim;
@@ -216,7 +221,10 @@ simulate_continued(
     ScalarType foi_inner_factor3, ScalarType foi_outer_factor3, ScalarType foi_inner_factor4,
     ScalarType foi_outer_factor4, ScalarType damping0, ScalarType damping1, ScalarType damping2, ScalarType damping3,
     ScalarType damping4, ScalarType first_infection_day, ScalarType second_infection_day,
-    ScalarType third_infection_day, u_int seed)
+    ScalarType third_infection_day, u_int seed, std::string distance_kernel = "stepwise",
+    ScalarType logistic_h0 = 0.0002, ScalarType logistic_r0 = 4000, ScalarType logistic_alpha = 10,
+    ScalarType pareto_xmin = 100, ScalarType pareto_alpha = 0.01, ScalarType power_law_delta = 100,
+    ScalarType power_law_rho = 1.0)
 {
     using Status = mio::Index<InfState>;
     using mio::regions::Region;
@@ -355,7 +363,9 @@ simulate_continued(
                        value2, value3, {first_infection_day, second_infection_day, third_infection_day},
                        {foi_inner_factor0, foi_inner_factor1, foi_inner_factor2, foi_inner_factor3, foi_inner_factor4},
                        {foi_outer_factor0, foi_outer_factor1, foi_outer_factor2, foi_outer_factor3, foi_outer_factor4},
-                       {damping0, damping1, damping2, damping3, damping4});
+                       {damping0, damping1, damping2, damping3, damping4},
+                       mio::parse_farm_distance_kernel(distance_kernel), logistic_h0, logistic_r0, logistic_alpha,
+                       pareto_xmin, pareto_alpha, power_law_delta, power_law_rho);
 
     sim.advance(tmax);
 

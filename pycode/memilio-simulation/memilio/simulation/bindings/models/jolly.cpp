@@ -75,7 +75,9 @@ PYBIND11_MODULE(_simulation_jolly, m)
           py::arg("foi_outer_factor4") = 1.0, py::arg("damping0") = 1.0, py::arg("damping1") = 1.0,
           py::arg("damping2") = 1.0, py::arg("damping3") = 1.0, py::arg("damping4") = 1.0,
           py::arg("first_infection_day") = 0, py::arg("second_infection_day") = 2, py::arg("third_infection_day") = 2,
-          py::arg("seed") = 42);
+          py::arg("seed") = 42, py::arg("distance_kernel") = "stepwise", py::arg("logistic_h0") = 0.0002,
+          py::arg("logistic_r0") = 4000, py::arg("logistic_alpha") = 10, py::arg("pareto_xmin") = 100,
+          py::arg("pareto_alpha") = 0.01, py::arg("power_law_delta") = 100, py::arg("power_law_rho") = 1.0);
 
     m.def("simulate_with_init", &simulate_with_init, "Simulates the jolly model with initialization from farm file",
           py::arg("farm_file"), py::arg("tmax"), py::arg("dt"), py::arg("suspicion_threshold"), py::arg("sensitivity"),
@@ -90,7 +92,10 @@ PYBIND11_MODULE(_simulation_jolly, m)
           py::arg("foi_outer_factor3"), py::arg("foi_inner_factor4"), py::arg("foi_outer_factor4"), py::arg("damping0"),
           py::arg("damping1"), py::arg("damping2"), py::arg("damping3"), py::arg("damping4"),
           py::arg("first_infection_day"), py::arg("second_infection_day"), py::arg("third_infection_day"),
-          py::arg("seed"), pybind11::return_value_policy::reference_internal);
+          py::arg("seed"), py::arg("distance_kernel") = "stepwise", py::arg("logistic_h0") = 0.0002,
+          py::arg("logistic_r0") = 4000, py::arg("logistic_alpha") = 10, py::arg("pareto_xmin") = 100,
+          py::arg("pareto_alpha") = 0.01, py::arg("power_law_delta") = 100, py::arg("power_law_rho") = 1.0,
+          pybind11::return_value_policy::reference_internal);
 
     m.def("simulate_continued", &simulate_continued, "Simulates the jolly model continued from other simulation",
           py::arg("sim_to_copy"), py::arg("t_start"), py::arg("tmax"), py::arg("dt"), py::arg("suspicion_threshold"),
@@ -105,7 +110,10 @@ PYBIND11_MODULE(_simulation_jolly, m)
           py::arg("foi_inner_factor3"), py::arg("foi_outer_factor3"), py::arg("foi_inner_factor4"),
           py::arg("foi_outer_factor4"), py::arg("damping0"), py::arg("damping1"), py::arg("damping2"),
           py::arg("damping3"), py::arg("damping4"), py::arg("first_infection_day"), py::arg("second_infection_day"),
-          py::arg("third_infection_day"), py::arg("seed"), pybind11::return_value_policy::reference_internal);
+          py::arg("third_infection_day"), py::arg("seed"), py::arg("distance_kernel") = "stepwise",
+          py::arg("logistic_h0") = 0.0002, py::arg("logistic_r0") = 4000, py::arg("logistic_alpha") = 10,
+          py::arg("pareto_xmin") = 100, py::arg("pareto_alpha") = 0.01, py::arg("power_law_delta") = 100,
+          py::arg("power_law_rho") = 1.0, pybind11::return_value_policy::reference_internal);
 
     m.def(
         "get_result",
