@@ -505,7 +505,7 @@ TEST(DynamicNPIs, secir_delayed_implementation)
               0);
 
     // start with t0 = 0.0 so dynamicNPIs are active from the start
-    // t0=0 is special: delay is not enforced, t_start=0, smooth window [-1, 0] -> full effect at t=0
+    // t0=0: delay not enforced, t_start=0, smooth window [-1,0] -> full effect at t=0
     npis.set_implementation_delay(mio::SimulationTime<double>(3.0));
     model.parameters.get<mio::osecir::DynamicNPIsInfectedSymptoms<double>>() = npis;
     mio::osecir::Simulation<double, mio_test::MockSimulation<mio::osecir::Model>> sim(model, 0.0);
@@ -516,26 +516,25 @@ TEST(DynamicNPIs, secir_delayed_implementation)
     EXPECT_EQ(contact_matrix.get_matrix_at(mio::SimulationTime<double>(1.0))(0, 0), 0.5);
     EXPECT_EQ(contact_matrix.get_matrix_at(mio::SimulationTime<double>(3.0))(0, 0), 0.5);
 
-    // second simulation with t0 = 1.0: NPI check at t=1, delay=2 -> t_start=3, damping at t_start+1=4
-    // smooth window [3, 4]: at t=3 still 1.0, at t=4 full effect 0.5
+    // second simulation with t0 = 1.0: t_start=3, t_start_damping=4, smooth window [3,4]
+    // -> at t=3 still 1.0, at t=4 full effect 0.5
     npis.set_implementation_delay(mio::SimulationTime<double>(2.0));
     model.parameters.get<mio::osecir::DynamicNPIsInfectedSymptoms<double>>() = npis;
     mio::osecir::Simulation<double, mio_test::MockSimulation<mio::osecir::Model>> sim_2(model, 1.0);
     sim_2.advance(5.0);
     mio::ContactMatrixGroup<double> const& contact_matrix_sim_2 =
         sim_2.get_model().parameters.template get<mio::osecir::ContactPatterns<double>>();
-    EXPECT_EQ(contact_matrix_sim_2.get_matrix_at(mio::SimulationTime<double>(2.0))(0, 0), 1.0); // before ramp
+    EXPECT_EQ(contact_matrix_sim_2.get_matrix_at(mio::SimulationTime<double>(3.0))(0, 0), 1.0); // ramp start
     EXPECT_EQ(contact_matrix_sim_2.get_matrix_at(mio::SimulationTime<double>(4.0))(0, 0), 0.5); // full effect
 
-    // third simulation: delay=10 -> t_start=11, damping at t_start+1=12
-    // smooth window [11, 12]: at t=11 still 1.0, at t=12 full effect 0.5
+    // third simulation: delay=10 -> t_start=11, t_start_damping=12
     npis.set_implementation_delay(mio::SimulationTime<double>(10.0));
     model.parameters.get<mio::osecir::DynamicNPIsInfectedSymptoms<double>>() = npis;
     mio::osecir::Simulation<double, mio_test::MockSimulation<mio::osecir::Model>> sim_3(model, 1.0);
     sim_3.advance(4.0);
     mio::ContactMatrixGroup<double> const& contact_matrix_sim_3 =
         sim_3.get_model().parameters.template get<mio::osecir::ContactPatterns<double>>();
-    EXPECT_EQ(contact_matrix_sim_3.get_matrix_at(mio::SimulationTime<double>(11.0))(0, 0), 1.0); // before ramp
+    EXPECT_EQ(contact_matrix_sim_3.get_matrix_at(mio::SimulationTime<double>(11.0))(0, 0), 1.0); // ramp start
     EXPECT_EQ(contact_matrix_sim_3.get_matrix_at(mio::SimulationTime<double>(12.0))(0, 0), 0.5); // full effect
 }
 
@@ -583,11 +582,9 @@ TEST(DynamicNPIs, secir_implementation_with_directives)
     sim_2.advance(3.0);
     mio::ContactMatrixGroup<double> const& contact_matrix_sim_2 =
         sim_2.get_model().parameters.template get<mio::osecir::ContactPatterns<double>>();
-    EXPECT_EQ(contact_matrix_sim_2.get_matrix_at(mio::SimulationTime<double>(0.0))(0, 0),
-              0.5); // full effect at t=0 (window in past)
+    EXPECT_EQ(contact_matrix_sim_2.get_matrix_at(mio::SimulationTime<double>(0.0))(0, 0), 0.5);
     EXPECT_EQ(contact_matrix_sim_2.get_matrix_at(mio::SimulationTime<double>(4.0))(0, 0), 0.5);
-    EXPECT_EQ(contact_matrix_sim_2.get_matrix_at(mio::SimulationTime<double>(6.0))(0, 0),
-              1.0); // lifted after duration+1
+    EXPECT_EQ(contact_matrix_sim_2.get_matrix_at(mio::SimulationTime<double>(6.0))(0, 0), 1.0); // lifted at t_end+1=6
 
     // directive begin is satisfied but directive end ends the NPI earlier
     // t_start=0, t_end=min(3,5)=3, t_end_damping=4: window [3,4] -> 1.0 at t=4
@@ -601,9 +598,8 @@ TEST(DynamicNPIs, secir_implementation_with_directives)
     EXPECT_EQ(contact_matrix_sim_3.get_matrix_at(mio::SimulationTime<double>(2.0))(0, 0), 0.5);
     EXPECT_EQ(contact_matrix_sim_3.get_matrix_at(mio::SimulationTime<double>(4.0))(0, 0), 1.0); // lifted at t_end+1=4
 
-    // directive begin is satisfied (now with delay>0 as t0=1)
-    // t_start=3, t_start_damping=4, smooth window [3,4] -> 0.5 at t=4
-    // duration=5 -> t_end=8, t_end_damping=9, smooth window [8,9] -> 1.0 at t=9
+    // directive begin is satisfied (with delay > 0 as t0 = 1)
+    // t_start=3, t_start_damping=4: 0.5 at t=4; t_end=8, t_end_damping=9: 1.0 at t=9
     npis.set_implementation_delay(mio::SimulationTime<double>(2.0));
     npis.set_directive_begin(mio::SimulationTime<double>(0.0));
     npis.set_directive_end(mio::SimulationTime<double>(1000000.));
@@ -612,13 +608,13 @@ TEST(DynamicNPIs, secir_implementation_with_directives)
     sim_4.advance(5.0);
     mio::ContactMatrixGroup<double> const& contact_matrix_sim_4 =
         sim_4.get_model().parameters.template get<mio::osecir::ContactPatterns<double>>();
-    EXPECT_EQ(contact_matrix_sim_4.get_matrix_at(mio::SimulationTime<double>(3.0))(0, 0), 1.0); // ramp not yet done
+    EXPECT_EQ(contact_matrix_sim_4.get_matrix_at(mio::SimulationTime<double>(3.0))(0, 0), 1.0); // ramp start
     EXPECT_EQ(contact_matrix_sim_4.get_matrix_at(mio::SimulationTime<double>(4.0))(0, 0), 0.5); // full effect
     EXPECT_EQ(contact_matrix_sim_4.get_matrix_at(mio::SimulationTime<double>(8.0))(0, 0), 0.5); // still active
     EXPECT_EQ(contact_matrix_sim_4.get_matrix_at(mio::SimulationTime<double>(9.0))(0, 0), 1.0); // lifted at t_end+1=9
 
-    // directive begin is satisfied but directive end ends the NPI earlier (now with delay>0 as t0=1)
-    // t_start=3, t_end=min(4,8)=4, t_end_damping=5: 1.0 at t=5
+    // directive begin is satisfied but directive end ends the NPI earlier (with delay > 0 as t0 = 1)
+    // t_end=min(4,8)=4, t_end_damping=5: 1.0 at t=5
     npis.set_directive_end(mio::SimulationTime<double>(4.0));
     model.parameters.get<mio::osecir::DynamicNPIsInfectedSymptoms<double>>() = npis;
     mio::osecir::Simulation<double, mio_test::MockSimulation<mio::osecir::Model>> sim_5(model, 1.0);
@@ -834,6 +830,8 @@ TEST(DynamicNPIs, secirvvs_delayed_implementation)
 
     // start with t0 = 0.0 so dynamicNPIs are active from the start
     // t0=0: delay not enforced, t_start=0, smooth window [-1,0] -> full effect at t=0
+    npis.set_implementation_delay(mio::SimulationTime<double>(3.0));
+    model.parameters.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms<double>>() = npis;
     mio::osecirvvs::Simulation<double, mio_test::MockSimulation<mio::osecirvvs::Model>> sim(model, 0.0);
     sim.advance(3.0);
     mio::ContactMatrixGroup<double> const& contact_matrix =
@@ -850,7 +848,7 @@ TEST(DynamicNPIs, secirvvs_delayed_implementation)
     sim_2.advance(5.0);
     mio::ContactMatrixGroup<double> const& contact_matrix_sim_2 =
         sim_2.get_model().parameters.template get<mio::osecirvvs::ContactPatterns<double>>();
-    EXPECT_EQ(contact_matrix_sim_2.get_matrix_at(mio::SimulationTime<double>(3.0))(0, 0), 1.0); // ramp not yet done
+    EXPECT_EQ(contact_matrix_sim_2.get_matrix_at(mio::SimulationTime<double>(3.0))(0, 0), 1.0); // ramp start
     EXPECT_EQ(contact_matrix_sim_2.get_matrix_at(mio::SimulationTime<double>(4.0))(0, 0), 0.5); // full effect
 
     // third simulation: delay=10 -> t_start=11, t_start_damping=12
@@ -913,7 +911,7 @@ TEST(DynamicNPIs, secirvvs_implementation_with_directives)
     EXPECT_EQ(contact_matrix_sim_2.get_matrix_at(mio::SimulationTime<double>(4.0))(0, 0), 0.5);
     EXPECT_EQ(contact_matrix_sim_2.get_matrix_at(mio::SimulationTime<double>(6.0))(0, 0), 1.0); // lifted at t_end+1=6
 
-    // directive begin satisfied but directive end cuts NPI earlier
+    // directive begin is satisfied but directive end ends the NPI earlier
     // t_start=0, t_end=min(3,5)=3, t_end_damping=4: 1.0 at t=4
     npis.set_directive_end(mio::SimulationTime<double>(3.0));
     model.parameters.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms<double>>() = npis;
@@ -925,7 +923,7 @@ TEST(DynamicNPIs, secirvvs_implementation_with_directives)
     EXPECT_EQ(contact_matrix_sim_3.get_matrix_at(mio::SimulationTime<double>(2.0))(0, 0), 0.5);
     EXPECT_EQ(contact_matrix_sim_3.get_matrix_at(mio::SimulationTime<double>(4.0))(0, 0), 1.0); // lifted at t_end+1=4
 
-    // directive begin satisfied (with delay > 0 as t0 = 1)
+    // directive begin is satisfied (with delay > 0 as t0 = 1)
     // t_start=3, t_start_damping=4: 0.5 at t=4; t_end=8, t_end_damping=9: 1.0 at t=9
     npis.set_implementation_delay(mio::SimulationTime<double>(2.0));
     npis.set_directive_begin(mio::SimulationTime<double>(0.0));
@@ -940,7 +938,7 @@ TEST(DynamicNPIs, secirvvs_implementation_with_directives)
     EXPECT_EQ(contact_matrix_sim_4.get_matrix_at(mio::SimulationTime<double>(8.0))(0, 0), 0.5); // still active
     EXPECT_EQ(contact_matrix_sim_4.get_matrix_at(mio::SimulationTime<double>(9.0))(0, 0), 1.0); // lifted at t_end+1=9
 
-    // directive begin satisfied but directive end cuts NPI earlier (with delay > 0 as t0 = 1)
+    // directive begin is satisfied but directive end ends the NPI earlier (with delay > 0 as t0 = 1)
     // t_end=min(4,8)=4, t_end_damping=5: 1.0 at t=5
     npis.set_directive_end(mio::SimulationTime<double>(4.0));
     model.parameters.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms<double>>() = npis;
@@ -985,7 +983,10 @@ TEST(DynamicNPIs, osecirts_delayed_implementation)
     EXPECT_EQ(
         model.parameters.get<mio::osecirts::ContactPatterns<double>>().get_cont_freq_mat()[0].get_dampings().size(), 0);
 
-    // start with t0 = 0.0: delay not enforced, t_start=0, smooth window [-1,0] -> full effect at t=0
+    // start with t0 = 0.0 so dynamicNPIs are active from the start
+    // t0=0: delay not enforced, t_start=0, smooth window [-1,0] -> full effect at t=0
+    npis.set_implementation_delay(mio::SimulationTime<double>(3.0));
+    model.parameters.get<mio::osecirts::DynamicNPIsInfectedSymptoms<double>>() = npis;
     mio::osecirts::Simulation<double, mio_test::MockSimulation<mio::osecirts::Model>> sim(model, 0.0);
     sim.advance(3.0);
     mio::ContactMatrixGroup<double> const& contact_matrix =
@@ -1008,12 +1009,12 @@ TEST(DynamicNPIs, osecirts_delayed_implementation)
     // third simulation: delay=10 -> t_start=11, t_start_damping=12
     npis.set_implementation_delay(mio::SimulationTime<double>(10.0));
     model.parameters.get<mio::osecirts::DynamicNPIsInfectedSymptoms<double>>() = npis;
-    mio::osecirts::Simulation<double, mio_test::MockSimulation<mio::osecirts::Model>> sim_3_secirts(model, 1.0);
-    sim_3_secirts.advance(4.0);
-    mio::ContactMatrixGroup<double> const& contact_matrix_sim_3_secirts =
-        sim_3_secirts.get_model().parameters.template get<mio::osecirts::ContactPatterns<double>>();
-    EXPECT_EQ(contact_matrix_sim_3_secirts.get_matrix_at(mio::SimulationTime<double>(11.0))(0, 0), 1.0); // ramp start
-    EXPECT_EQ(contact_matrix_sim_3_secirts.get_matrix_at(mio::SimulationTime<double>(12.0))(0, 0), 0.5); // full effect
+    mio::osecirts::Simulation<double, mio_test::MockSimulation<mio::osecirts::Model>> sim_3(model, 1.0);
+    sim_3.advance(4.0);
+    mio::ContactMatrixGroup<double> const& contact_matrix_sim_3 =
+        sim_3.get_model().parameters.template get<mio::osecirts::ContactPatterns<double>>();
+    EXPECT_EQ(contact_matrix_sim_3.get_matrix_at(mio::SimulationTime<double>(11.0))(0, 0), 1.0); // ramp start
+    EXPECT_EQ(contact_matrix_sim_3.get_matrix_at(mio::SimulationTime<double>(12.0))(0, 0), 0.5); // full effect
 }
 
 TEST(DynamicNPIs, osecirts_implementation_with_directives)
@@ -1081,7 +1082,7 @@ TEST(DynamicNPIs, osecirts_implementation_with_directives)
     EXPECT_EQ(contact_matrix_sim_3.get_matrix_at(mio::SimulationTime<double>(2.0))(0, 0), 0.5);
     EXPECT_EQ(contact_matrix_sim_3.get_matrix_at(mio::SimulationTime<double>(4.0))(0, 0), 1.0); // lifted at t_end+1=4
 
-    // directive begin is satisfied (now with delay>0 as t0=1)
+    // directive begin is satisfied (with delay > 0 as t0 = 1)
     // t_start=3, t_start_damping=4: 0.5 at t=4; t_end=8, t_end_damping=9: 1.0 at t=9
     npis.set_implementation_delay(mio::SimulationTime<double>(2.0));
     npis.set_directive_begin(mio::SimulationTime<double>(0.0));
@@ -1096,7 +1097,7 @@ TEST(DynamicNPIs, osecirts_implementation_with_directives)
     EXPECT_EQ(contact_matrix_sim_4.get_matrix_at(mio::SimulationTime<double>(8.0))(0, 0), 0.5); // still active
     EXPECT_EQ(contact_matrix_sim_4.get_matrix_at(mio::SimulationTime<double>(9.0))(0, 0), 1.0); // lifted at t_end+1=9
 
-    // directive end ends the NPI earlier (now with delay>0 as t0=1)
+    // directive begin is satisfied but directive end ends the NPI earlier (with delay > 0 as t0 = 1)
     // t_end=min(4,8)=4, t_end_damping=5: 1.0 at t=5
     npis.set_directive_end(mio::SimulationTime<double>(4.0));
     model.parameters.get<mio::osecirts::DynamicNPIsInfectedSymptoms<double>>() = npis;
