@@ -51,7 +51,7 @@ Currently, the contact matrix is set globally, so it is the same for every regio
     
     model.parameters.get<mio::oseirmetapop::TimeExposed<>>()[{mio::regions::Region(0), mio::AgeGroup(0)}] = 3.
 
-Construct an ``Eigen::MatrixXd`` of size :math:`n_{regions} \times n_{regions}` which describes the fraction of individuals commuting from one region to another. The matrix should satifsy the sum of each row equal to 1.0, e.g.:
+Construct an ``Eigen::MatrixXd`` of size :math:`n_{regions} \times n_{regions}` which describes the fraction of individuals commuting from one region to another. The matrix should satisfy the sum of each row equal to 1.0, e.g.:
 
 .. code-block:: cpp
 
