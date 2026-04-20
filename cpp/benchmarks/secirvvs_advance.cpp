@@ -26,6 +26,7 @@
 
 #include "ode_secirvvs/model.h"
 #include "memilio/compartments/simulation.h"
+#include "memilio/math/euler.h"
 #include "memilio/utils/logging.h"
 #include "benchmark/benchmark.h"
 
@@ -56,12 +57,14 @@ static Model make_model(bool with_npis = false)
 }
 
 // Generic advance: single integrator call for the full [t0, tmax] range.
+// Uses the fixed-step Euler integrator so that the number of integration steps
+// is deterministic and independent of contact-rate changes.
 static void BM_generic(benchmark::State& state)
 {
     mio::set_log_level(mio::LogLevel::off);
     auto model = make_model();
     for (auto _ : state) {
-        mio::simulate<FP, Model>(0., 10., 0.1, model);
+        mio::simulate<FP, Model>(0., 10., 0.1, model, std::make_unique<mio::EulerIntegratorCore<FP>>());
     }
 }
 
@@ -72,7 +75,7 @@ static void BM_secirvvs_no_npis(benchmark::State& state)
     mio::set_log_level(mio::LogLevel::off);
     auto model = make_model(/*with_npis=*/false);
     for (auto _ : state) {
-        mio::osecirvvs::simulate<FP>(0., 10., 0.1, model);
+        mio::osecirvvs::simulate<FP>(0., 10., 0.1, model, std::make_unique<mio::EulerIntegratorCore<FP>>());
     }
 }
 
@@ -83,7 +86,7 @@ static void BM_secirvvs_with_npis(benchmark::State& state)
     mio::set_log_level(mio::LogLevel::off);
     auto model = make_model(/*with_npis=*/true);
     for (auto _ : state) {
-        mio::osecirvvs::simulate<FP>(0., 10., 0.1, model);
+        mio::osecirvvs::simulate<FP>(0., 10., 0.1, model, std::make_unique<mio::EulerIntegratorCore<FP>>());
     }
 }
 
