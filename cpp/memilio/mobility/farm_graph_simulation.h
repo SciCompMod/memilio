@@ -246,6 +246,52 @@ private:
         }
     }
 
+    /**
+    * @brief Update the force of infection for all farms based on their infected neighbors.
+    * 
+    * @param graph 
+    */
+    void pareto_force_of_infection(Graph& graph)
+    {
+        using Model        = std::decay_t<decltype(Base::m_graph.nodes()[0].property.get_simulation().get_model())>;
+        using AdoptionRate = mio::smm::AdoptionRates<ScalarType, typename Model::Status, mio::regions::Region>;
+        std::vector<ScalarType> dampings = {1.0, 1.0, 1.0, 1.0, 1.0};
+        ScalarType baseline              = m_infection_baseline;
+        if (Base::m_t > m_new_regulations_day) {
+            dampings = m_dampings;
+            baseline = 0.0;
+            if (Base::m_t > m_lift_duck_confinement) {
+                dampings[0] = 1.0;
+            }
+        }
+        for (auto& node : graph.nodes()) {
+            // Skip calculation for nodes without animals
+            if (node.property.get_result().get_last_value().sum() == 0) {
+                continue;
+            }
+            auto infection_pressure = 0.0;
+            auto neighbors          = node.property.get_regional_neighbors();
+            // Iterate over all neighbours in third neighbourhood layer
+            for (size_t index = 0; index < neighbors[m_twentyfive_km_radius_index].size(); ++index) {
+                auto& neighbour = graph.nodes()[neighbors[m_twentyfive_km_radius_index][index]];
+                // Only count infected neighbours
+                if (neighbour.id != node.id && neighbour.property.get_infection_status()) {
+                    infection_pressure +=
+                        m_foi_inner_factor[neighbour.property.get_type()] * dampings[neighbour.property.get_type()] *
+                        pareto_function(node.property.get_location().distance(neighbour.property.get_location()));
+                }
+            }
+            infection_pressure *= m_foi_outer_factor[node.property.get_type()] * dampings[node.property.get_type()];
+            // If in HRZ and if broiler 2 or organic (4 or 0) then add baseline infections
+            if (node.property.get_in_hrz() && node.property.get_type() % 4 == 0 && Base::m_t < m_end_migratory_birds) {
+                infection_pressure += baseline;
+            }
+            infection_pressure *= node.property.get_capacity();
+            node.property.get_simulation().get_model().parameters.template get<AdoptionRate>()[3].factor =
+                infection_pressure;
+        }
+    }
+
     auto stepwise_function(mio::geo::Distance distance)
     {
         if (distance.meters() < m_cutoff_1) {
@@ -258,6 +304,16 @@ private:
             return m_value3;
         }
         return 0.0;
+    }
+
+    auto pareto_function(mio::geo::Distance distance)
+    {
+        if (distance.meters() < m_xmin) {
+            return 1.0;
+        }
+        else {
+            return pow(m_xmin / distance.meters(), m_alpha_pareto + 1.0);
+        }
     }
 
     void update_population(Node& node, size_t id)
@@ -845,7 +901,8 @@ public:
                         ScalarType culling_factor, ScalarType cutoff1, ScalarType cutoff2, ScalarType cutoff3,
                         ScalarType value2, ScalarType value3, std::vector<Timepoint> infection_dates,
                         std::vector<ScalarType> foi_inner_factors, std::vector<ScalarType> foi_outer_factors,
-                        std::vector<ScalarType> dampings = {1.0, 1.0, 1.0, 1.0, 1.0})
+                        std::vector<ScalarType> dampings = {1.0, 1.0, 1.0, 1.0, 1.0}, ScalarType xmin = 5000,
+                        ScalarType alpha_pareto = 1)
     {
         m_suspicion_threshold = suspicion_threshold;
         m_sensitivity         = sensitivity;
@@ -863,6 +920,8 @@ public:
         m_foi_inner_factor         = foi_inner_factors;
         m_foi_outer_factor         = foi_outer_factors;
         m_dampings                 = dampings;
+        m_xmin                     = xmin;
+        m_alpha_pareto             = alpha_pareto;
     }
 
     void copy_parameters_from_simulation(const FarmSimulation<Graph, Timepoint, Timespan, edge_f, node_f>& other)
@@ -927,6 +986,8 @@ private:
     ScalarType m_value3                                        = 0.2;
     ScalarType m_end_migratory_birds                           = 79;
     ScalarType m_lift_duck_confinement                         = 64;
+    ScalarType m_xmin                                          = 5000; // Cut-off for Pareto distance kernel
+    ScalarType m_alpha_pareto                                  = 1; // Alpha for Pareto distance kernel
 };
 
 /**
