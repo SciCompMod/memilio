@@ -27,7 +27,7 @@
 #include "memilio/data/analyze_result.h"
 #include "memilio/io/io.h"
 #include "memilio/io/result_io.h"
-#include "memilio/utils/base_dir.h"
+#include "memilio/io/directories.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/miompi.h"
 #include "memilio/utils/random_number_generator.h"
@@ -192,11 +192,7 @@ int main()
     mio::ParameterStudy study(std::move(model), t0, tmax, mio::abm::TimeSpan(0), num_runs);
     study.get_rng() = rng; // use the same RNG as the model
 
-    const std::string result_dir = mio::path_join(mio::base_dir(), "example_results");
-    if (!mio::create_directory(result_dir)) {
-        mio::log_error("Could not create result directory \"{}\".", result_dir);
-        return 1;
-    }
+    const std::string result_dir = mio::create_directory_or_exit(mio::example_results_dir("abm_parameter_study"));
 
     // Run the study
     // The first lambda ("create_simulation" argument) sets up the simulation, the second ("process_simulation_result")

@@ -20,9 +20,10 @@
 #include "memilio/compartments/parameter_studies.h"
 #include "memilio/config.h"
 #include "memilio/io/cli.h"
+#include "memilio/io/io.h"
 #include "memilio/io/mobility_io.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
-#include "memilio/utils/base_dir.h"
+#include "memilio/io/directories.h"
 
 #include "memilio/utils/stl_util.h"
 #include "ode_secir/model.h"
@@ -34,6 +35,8 @@
 int main(int argc, char** argv)
 {
     mio::set_log_level(mio::LogLevel::critical);
+
+    const std::string result_dir = mio::create_directory_or_exit(mio::example_results_dir("ode_secir_read_graph"));
 
     auto parameters =
         mio::cli::ParameterSetBuilder()
@@ -129,7 +132,7 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Writing Json Files..." << std::flush;
-    auto write_status = mio::write_graph(graph, "graph_parameters");
+    auto write_status = mio::write_graph(graph, result_dir + "graph_parameters");
     if (!write_status) {
         std::cout << "\n" << write_status.error().formatted_message();
         return 0;
@@ -137,7 +140,8 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Reading Json Files..." << std::flush;
-    auto graph_read_result = mio::read_graph<ScalarType, mio::osecir::Model<ScalarType>>("graph_parameters");
+    auto graph_read_result =
+        mio::read_graph<ScalarType, mio::osecir::Model<ScalarType>>(result_dir + "graph_parameters");
 
     if (!graph_read_result) {
         std::cout << "\n" << graph_read_result.error().formatted_message();

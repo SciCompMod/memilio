@@ -21,7 +21,7 @@
 #include "benchmarks/flow_simulation_ode_secirvvs.h"
 #include "memilio/compartments/flow_simulation.h"
 #include "memilio/compartments/simulation.h"
-#include "memilio/utils/base_dir.h"
+#include "memilio/io/directories.h"
 #include "ode_secirvvs/model.h"
 #include <string>
 

@@ -21,6 +21,7 @@
 #include "abm/lockdown_rules.h"
 #include "abm/model.h"
 #include "abm/common_abm_loggers.h"
+#include "memilio/io/directories.h"
 
 #include <fstream>
 
@@ -165,10 +166,11 @@ int main()
     // The first column is Time. The other columns correspond to the number of people with a certain infection state at this Time:
     // Time = Time in days, S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
     // I_Crit = InfectedCritical, R = Recovered, D = Dead
-    std::ofstream outfile("abm_minimal.txt");
+    auto outpath = mio::create_directory_or_exit(mio::example_results_dir("abm_minimal")) + "history.txt";
+    std::ofstream outfile(outpath);
     std::get<0>(historyTimeSeries.get_log())
         .print_table(outfile, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4);
-    std::cout << "Results written to abm_minimal.txt" << std::endl;
+    std::cout << "Results written to " << outpath << std::endl;
 
     return 0;
 }

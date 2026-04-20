@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2026 MEmilio
 *
-* Authors: Julia Bicker
+* Authors: Julia Bicker, Rene Schmieding
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,10 +17,11 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_BASE_DIR_H
-#define MIO_BASE_DIR_H
+#ifndef MIO_UTILS_DIRECTORIES_H
+#define MIO_UTILS_DIRECTORIES_H
 
 #include "memilio/config.h" // IWYU pragma: keep
+#include "memilio/utils/stl_util.h"
 
 #include <string>
 
@@ -32,9 +33,27 @@ namespace mio
  */
 const static std::string base_dir()
 {
-    return MEMILIO_BASE_DIR;
+    return details::MEMILIO_BASE_DIR;
+}
+
+/**
+ * @brief Returns the absolute path to the project directory.
+ */
+[[maybe_unused]] const static std::string data_dir()
+{
+    return details::MEMILIO_DATA_DIR;
+}
+
+/**
+ * @brief Returns the absolute path to a common ouput directory for the code examples.
+ */
+[[maybe_unused]] const static std::string example_results_dir(const std::string& example_name)
+{
+    // the last empty string is used to end the output path in a /
+    const static std::string dir = path_join(base_dir(), "example_results", example_name, "");
+    return dir;
 }
 
 } // namespace mio
 
-#endif // MIO_BASE_DIR_H
+#endif // MIO_UTILS_DIRECTORIES_H

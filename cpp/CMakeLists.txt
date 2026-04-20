@@ -28,7 +28,21 @@ option(MEMILIO_ENABLE_IPOPT "Enable numerical optimization with Ipopt, requires 
 option(MEMILIO_ENABLE_PROFILING "Enable runtime performance profiling of memilio." OFF)
 option(MEMILIO_ENABLE_LIKWID_MARKER "Enable performance measuring with likwid markers." OFF)
 
-mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
+cmake_path(CONVERT "${PROJECT_SOURCE_DIR}/.." TO_CMAKE_PATH_LIST PROJECT_ROOT_NORMALIZED NORMALIZE)
+set(MEMILIO_BASE_DIR "${PROJECT_ROOT_NORMALIZED}" CACHE PATH
+    "Path to the MEmilio project root, used for file I/O. Can be used through mio::base_dir().")
+set(MEMILIO_DATA_DIR "${PROJECT_ROOT_NORMALIZED}/data" CACHE PATH
+    "Path to the MEmilio data directory. Can be used through mio::data_dir().")
+
+mark_as_advanced(
+    MEMILIO_USE_BUNDLED_SPDLOG
+    MEMILIO_SANITIZE_ADDRESS
+    MEMILIO_SANITIZE_UNDEFINED
+    MEMILIO_BUILD_SHARED_LIBS
+    MEMILIO_BUILD_STATIC_LIBS
+    MEMILIO_BASE_DIR
+    MEMILIO_DATA_DIR
+    )
 
 # try to treat AppleClang as Clang, but warn about missing support
 if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
@@ -75,9 +89,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_INSTALL_RPATH "${CMAKE_BINARY_DIR}/lib" "${CMAKE_BINARY_DIR}/bin")
-
-# sets MEMILIO_BASE_DIR to the directory containing cpp (i.e., the root of the git repo)
-cmake_path(CONVERT "${PROJECT_SOURCE_DIR}/.." TO_CMAKE_PATH_LIST MEMILIO_BASE_DIR NORMALIZE)
 
 # code coverage analysis
 # Note: this only works under linux and with make
