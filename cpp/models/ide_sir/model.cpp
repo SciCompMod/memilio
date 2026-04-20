@@ -217,6 +217,20 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
     // Compute first part of sum where already known initial values of Susceptibles are used.
     ScalarType sum = 0.;
 
+    // Use current guess for S and values from last time step for I and R
+    // m_N = susceptibles + populations.get_value(current_time_index - 1)[(Eigen::Index)InfectionState::Infected] +
+    //       populations.get_value(current_time_index - 1)[(Eigen::Index)InfectionState::Recovered];
+    // std::cout << "S: " << susceptibles << std::endl;
+    // std::cout << "I: " << populations.get_value(current_time_index - 1)[(Eigen::Index)InfectionState::Infected]
+    //           << std::endl;
+    // std::cout << "R: " << populations.get_value(current_time_index - 1)[(Eigen::Index)InfectionState::Recovered]
+    //           << std::endl;
+    // std::cout << "sum: "
+    //           << susceptibles + populations.get_value(current_time_index - 1)[(Eigen::Index)InfectionState::Infected] +
+    //                  populations.get_value(current_time_index - 1)[(Eigen::Index)InfectionState::Recovered]
+    //           << std::endl;
+    // std::cout << "N: " << m_N << std::endl << std::endl;
+
     if (split_integral) {
         // Diese Summe wird nicht aufgesplittet, weil ContactPatterns nur von current_time_index und nicht von j abhängen,
         // der Integarnd ist stetig

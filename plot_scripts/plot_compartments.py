@@ -112,7 +112,7 @@ if __name__ == '__main__':
 
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
-    main_dir = "2026-04-13/test_fdordercontacts=4"
+    main_dir = "2026-04-19/test_convergence"
 
     relevant_dir = os.path.join(root_dir, main_dir)
     sub_dirs = subfolders_scandir(relevant_dir)

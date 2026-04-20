@@ -615,7 +615,7 @@ def main():
     groundtruth_ode = True
     only_S = False
 
-    main_dir = "2026-04-10/split_integral=false_fdordercontacts=4_smootherwindow=0.01"
+    main_dir = "2026-04-19/test_convergence"
 
     ##############################################
 
@@ -624,7 +624,7 @@ def main():
     relevant_dir = os.path.join(root_dir, main_dir)
     print(relevant_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
-    # sub_dirs = [sub_dirs[2]]
+    # sub_dirs = [sub_dirs[-1]]
 
     total_pop_reference = 0
     total_pop_all_fd_orders = []

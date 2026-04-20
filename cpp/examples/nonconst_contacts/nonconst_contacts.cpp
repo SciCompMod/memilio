@@ -44,7 +44,7 @@ ScalarType RiskOfInfectionFromSymptomatic   = 1.;
 ScalarType Seasonality                      = 0.;
 
 ScalarType cont_freq    = 1.;
-ScalarType damping      = 0.1;
+ScalarType damping      = 0.;
 ScalarType scaling_time = 8.;
 
 ScalarType S0               = 999000.;
@@ -219,7 +219,7 @@ int main()
 
     bool split_integral = false;
 
-    std::vector<size_t> gregory_orders = {3};
+    std::vector<size_t> gregory_orders = {1, 2, 3};
     size_t finite_difference_order     = 4;
     size_t fd_order_contacts           = 4;
 
@@ -227,9 +227,9 @@ int main()
     ScalarType ode_exponent               = 5.;
     std::vector<ScalarType> ide_exponents = {0., 1., 2.};
 
-    std::string save_dir = fmt::format("../../simulation_results/2026-04-14/test_fdordercontacts={}/"
+    std::string save_dir = fmt::format("../../simulation_results/2026-04-19/test_convergence/"
                                        "nonconst_contacts_t0={}_tinit={}_tmax={}_scalingtime={}_damping={}/",
-                                       fd_order_contacts, t0_ode, t0_ide, tmax, scaling_time, damping);
+                                       t0_ode, t0_ide, tmax, scaling_time, damping);
 
     // Make folder if not existent yet.
     boost::filesystem::path dir(save_dir);
