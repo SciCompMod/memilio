@@ -52,7 +52,7 @@ broadly). The number of age groups is specified in the constructor:
 
 .. code-block:: cpp
 
-	mio::oseirv::Model<double> model(num_agegroups);
+	mio::oseirv::Model<ScalarType> model(num_agegroups);
 
 For stratifications with two or more dimensions, see :doc:`Model Creation <../ode_creation>`.
 
@@ -127,12 +127,12 @@ Initial conditions are handled via the **Populations** class. Example for a sing
 
 .. code-block:: cpp
 
-	mio::oseirv::Model<double> model(1);
+	mio::oseirv::Model<ScalarType> model(1);
 	// Set total population in age group 0
 	model.populations.set_total(total0);
 
 	// Initialize vaccinated susceptibles (simple example)
-	double vc0 = 0.4; // vaccination coverage
+	ScalarType vc0 = 0.4; // vaccination coverage
 	model.populations[{mio::AgeGroup(0), mio::oseirv::InfectionState::SusceptibleVaccinated}] = vc0 * total0;
 	model.populations[{mio::AgeGroup(0), mio::oseirv::InfectionState::Infected}] = initial_infected;
 	model.populations[{mio::AgeGroup(0), mio::oseirv::InfectionState::Exposed}]  = initial_exposed;
@@ -166,9 +166,9 @@ same pattern. Example with a Runge–Kutta integrator:
 
 .. code-block:: cpp
 
-	double t0   = 0.0;  // start (weeks)
-	double tmax = 20.0; // end
-	double dt   = 0.1;  // initial step size
+	ScalarType t0   = 0.0;  // start (weeks)
+	ScalarType tmax = 20.0; // end
+	ScalarType dt   = 0.1;  // initial step size
 
 	auto integrator = std::make_unique<mio::RKIntegratorCore>();
 	integrator->set_dt_min(0.01);
@@ -195,7 +195,7 @@ The result of a standard simulation is a ``mio::TimeSeries``:
 
 	auto n_points = static_cast<size_t>(sim.get_num_time_points());
 	Eigen::VectorXd val_i = sim.get_value(i);
-	double time_i = sim.get_time(i);
+	ScalarType time_i = sim.get_time(i);
 	auto last_val = sim.get_last_value();
 
 Printing and CSV export:
@@ -217,8 +217,8 @@ Time-dependent changes of contact patterns (holidays, interventions) can be mode
 
 .. code-block:: cpp
 
-	mio::ContactMatrixGroup<ScalarType>& cm_h = model.parameters.get<mio::oseirv::ContactPatternsHealthy<double>>();
-	mio::ContactMatrixGroup<ScalarType>& cm_s = model.parameters.get<mio::oseirv::ContactPatternsSick<double>>();
+	mio::ContactMatrixGroup<ScalarType>& cm_h = model.parameters.get<mio::oseirv::ContactPatternsHealthy<ScalarType>>();
+	mio::ContactMatrixGroup<ScalarType>& cm_s = model.parameters.get<mio::oseirv::ContactPatternsSick<ScalarType>>();
 	cm_h[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, base_contacts));
 	cm_s[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, base_contacts_sick));
 
