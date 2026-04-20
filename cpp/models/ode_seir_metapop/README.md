@@ -6,4 +6,4 @@ or the code example:
 
 - [examples/ode_seir_metapop.cpp](../../examples/ode_seir_metapop.cpp)
 
-For the metapopulation model approach that models the mobility explicitly, have a look at the [corresponding documentation])(https://memilio.readthedocs.io/en/latest/cpp/graph_metapop.html).
+For the metapopulation model approach that models the mobility explicitly, have a look at the [corresponding documentation](https://memilio.readthedocs.io/en/latest/cpp/graph_metapop.html).
