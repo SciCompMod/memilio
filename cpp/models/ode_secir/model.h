@@ -276,7 +276,6 @@ public:
      */
     Simulation(mio::osecir::Model<FP> const& model, FP t0 = 0., FP dt = 0.1)
         : BaseT(model, t0, dt)
-        , m_t_last_npi_check(t0)
     {
     }
 
@@ -353,6 +352,12 @@ public:
             }
 
             FP dt_eff = min<FP>(1.0, tmax - t);
+            // Clamp step size at the NPI end time to avoid stepping over the lifting phase.
+            // This ensures the keep-alive check activates exactly at t_end, preventing a brief dip.
+            FP npi_end = FP(m_dynamic_npi.second);
+            if (t < npi_end) {
+                dt_eff = min<FP>(dt_eff, npi_end - t);
+            }
             BaseT::advance(t + dt_eff);
             t = t + dt_eff;
         }
@@ -361,7 +366,6 @@ public:
     }
 
 private:
-    FP m_t_last_npi_check;
     std::pair<FP, SimulationTime<FP>> m_dynamic_npi = {-std::numeric_limits<FP>::max(), mio::SimulationTime<FP>(0)};
 };
 

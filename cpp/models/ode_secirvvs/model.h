@@ -581,7 +581,6 @@ public:
      */
     Simulation(mio::osecirvvs::Model<FP> const& model, FP t0 = 0., FP dt = 0.1)
         : BaseT(model, t0, dt)
-        , m_t_last_npi_check(t0)
     {
     }
 
@@ -740,16 +739,22 @@ public:
                                                        ? SimulationTime<FP>(FP(t_start) + FP(1))
                                                        : t_start;
                             auto t_end_damping = (FP(t_start) > FP(0)) ? SimulationTime<FP>(FP(t_end) + FP(1)) : t_end;
-                            implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
-                                                   t_start_damping, t_end_damping, [](auto& g) {
-                                                       return make_contact_damping_matrix(g);
-                                                   });
+                            implement_dynamic_npis<FP>(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
+                                                       t_start_damping, t_end_damping, [](auto& g) {
+                                                           return make_contact_damping_matrix(g);
+                                                       });
                         }
                     }
                 }
             }
 
             FP dt_eff = min<FP>(1.0, tmax - t);
+            // Clamp step size at the NPI end time to avoid stepping over the lifting phase.
+            // This ensures the keep-alive check activates exactly at t_end, preventing a brief dip.
+            FP npi_end = FP(m_dynamic_npi.second);
+            if (t < npi_end) {
+                dt_eff = min<FP>(dt_eff, npi_end - t);
+            }
             BaseT::advance(t + dt_eff);
             if (t + 0.5 + dt_eff - floor(t + 0.5) >= 1) {
                 this->apply_vaccination(t + 0.5 + dt_eff);
@@ -765,7 +770,6 @@ public:
     }
 
 private:
-    FP m_t_last_npi_check;
     std::pair<FP, SimulationTime<FP>> m_dynamic_npi = {-std::numeric_limits<FP>::max(), SimulationTime<FP>(0)};
 };
 
