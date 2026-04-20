@@ -73,7 +73,7 @@ int main()
     auto model = mio::abm::Model(num_age_groups);
     mio::ParameterDistributionLogNormal log_norm(4., 1.);
     // Set same infection parameter for all age groups. For example, the incubation period is log normally distributed with parameters 4 and 1.
-    model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() = mio::ParameterDistributionLogNormal(4., 1.);
+    model.parameters.get<mio::abm::TimeInfectedNoSymptomsToModerate>() = mio::ParameterDistributionLogNormal(4., 1.);
 
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
     model.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
@@ -144,11 +144,11 @@ int main()
     auto persons = model.get_persons();
     for (auto& person : persons) {
         auto rng = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
-        mio::abm::InfectionState infection_state =
-            (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
-        if (infection_state != mio::abm::InfectionState::Susceptible)
+        mio::abm::SymptomState symptom_state =
+            (mio::abm::SymptomState)(rand() % ((uint32_t)mio::abm::SymptomState::Count));
+        if (symptom_state != mio::abm::SymptomState::Count)
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
-                                                         model.parameters, start_date, infection_state));
+                                                         model.parameters, start_date, symptom_state));
     }
 
     // Assign locations to the people

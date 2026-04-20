@@ -188,7 +188,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
         auto& person      = get_person(trip.person_id);
         auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
         // skip the trip if the person is in quarantine or is dead
-        if (person.is_in_quarantine(t, parameters) || person.get_infection_state(t) == InfectionState::Dead) {
+        if (person.is_in_quarantine(t, parameters) || person.get_symptom_state(t) == SymptomState::Dead) {
             continue;
         }
         auto& target_location = get_location(trip.destination);
@@ -289,7 +289,7 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
         const auto num_persons   = m_persons.size();
 
         // 1) reset all cached values
-        // Note: we cannot easily reuse values, as they are time dependent (get_infection_state)
+        // Note: we cannot easily reuse values, as they are time dependent (get_symptom_state)
         PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_locations; ++i) {
             mio::abm::adjust_contact_rates(m_locations[i], parameters.get_num_groups());
@@ -378,7 +378,7 @@ LocationId Model::find_location(LocationType type, const PersonId person) const
     return find_location(type, get_person(person));
 }
 
-size_t Model::get_subpopulation_combined(TimePoint t, InfectionState s) const
+size_t Model::get_subpopulation_combined(TimePoint t, SymptomState s) const
 {
     return std::accumulate(m_locations.begin(), m_locations.end(), (size_t)0,
                            [t, s, this](size_t running_sum, const Location& loc) {
@@ -386,7 +386,7 @@ size_t Model::get_subpopulation_combined(TimePoint t, InfectionState s) const
                            });
 }
 
-size_t Model::get_subpopulation_combined_per_location_type(TimePoint t, InfectionState s, LocationType type) const
+size_t Model::get_subpopulation_combined_per_location_type(TimePoint t, SymptomState s, LocationType type) const
 {
     return std::accumulate(
         m_locations.begin(), m_locations.end(), (size_t)0, [t, s, type, this](size_t running_sum, const Location& loc) {

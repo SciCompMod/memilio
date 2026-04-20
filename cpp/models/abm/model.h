@@ -20,7 +20,7 @@
 #ifndef MIO_ABM_MODEL_H
 #define MIO_ABM_MODEL_H
 
-#include "abm/infection_state.h"
+#include "abm/symptom_state.h"
 #include "abm/model_functions.h"
 #include "abm/location_type.h"
 #include "abm/mobility_data.h"
@@ -62,7 +62,7 @@ public:
     using MobilityRuleType        = LocationType (*)(PersonalRandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
                                                      const Parameters&);
 
-    using Compartments = mio::abm::InfectionState;
+    using Compartments = mio::abm::SymptomState;
     /**
      * @brief Create a Model.
      * @param[in] num_agegroups The number of AgeGroup%s in the simulated Model. Must be less than MAX_NUM_AGE_GROUPS.
@@ -262,19 +262,19 @@ public:
     }
 
     /**
-     * @brief Get the number of Persons in one #InfectionState at all Location%s.
+     * @brief Get the number of Persons in one #SymptomState at all Location%s.
      * @param[in] t Specified #TimePoint.
-     * @param[in] s Specified #InfectionState.
+     * @param[in] s Specified #SymptomState.
      */
-    size_t get_subpopulation_combined(TimePoint t, InfectionState s) const;
+    size_t get_subpopulation_combined(TimePoint t, SymptomState s) const;
 
     /**
-     * @brief Get the number of Persons in one #InfectionState at all Location%s of a type.
+     * @brief Get the number of Persons in one #SymptomState at all Location%s of a type.
      * @param[in] t Specified #TimePoint.
-     * @param[in] s Specified #InfectionState.
+     * @param[in] s Specified #SymptomState.
      * @param[in] type Specified #LocationType.
      */
-    size_t get_subpopulation_combined_per_location_type(TimePoint t, InfectionState s, LocationType type) const;
+    size_t get_subpopulation_combined_per_location_type(TimePoint t, SymptomState s, LocationType type) const;
 
     /**
      * @brief Get the mobility data.
@@ -392,17 +392,16 @@ public:
     }
 
     /**
-     * @brief Get the number of Person%s of a particular #InfectionState for all Cell%s.
+     * @brief Get the number of Person%s of a particular #SymptomState for all Cell%s.
      * @param[in] location A LocationId from the Model.
      * @param[in] t TimePoint of querry.
-     * @param[in] state #InfectionState of interest.
-     * @return Amount of Person%s of the #InfectionState in all Cell%s of the Location.
+     * @param[in] state #SymptomState of interest.
+     * @return Amount of Person%s of the #SymptomState in all Cell%s of the Location.
      */
-    size_t get_subpopulation(LocationId location, TimePoint t, InfectionState state) const
+    size_t get_subpopulation(LocationId location, TimePoint t, SymptomState state) const
     {
         return std::count_if(m_persons.begin(), m_persons.end(), [&](auto&& p) {
-            return p.get_location_model_id() == m_id && p.get_location() == location &&
-                   p.get_infection_state(t) == state;
+            return p.get_location_model_id() == m_id && p.get_location() == location && p.get_symptom_state(t) == state;
         });
     }
 
