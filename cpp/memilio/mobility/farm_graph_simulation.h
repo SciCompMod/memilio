@@ -901,8 +901,8 @@ public:
                         ScalarType culling_factor, ScalarType cutoff1, ScalarType cutoff2, ScalarType cutoff3,
                         ScalarType value2, ScalarType value3, std::vector<Timepoint> infection_dates,
                         std::vector<ScalarType> foi_inner_factors, std::vector<ScalarType> foi_outer_factors,
-                        std::vector<ScalarType> dampings = {1.0, 1.0, 1.0, 1.0, 1.0}, ScalarType xmin = 5000,
-                        ScalarType alpha_pareto = 1)
+                        std::vector<ScalarType> dampings = {1.0, 1.0, 1.0, 1.0, 1.0}, ScalarType xmin = 100,
+                        ScalarType alpha_pareto = 0.01)
     {
         m_suspicion_threshold = suspicion_threshold;
         m_sensitivity         = sensitivity;
@@ -986,8 +986,8 @@ private:
     ScalarType m_value3                                        = 0.2;
     ScalarType m_end_migratory_birds                           = 79;
     ScalarType m_lift_duck_confinement                         = 64;
-    ScalarType m_xmin                                          = 5000; // Cut-off for Pareto distance kernel
-    ScalarType m_alpha_pareto                                  = 1; // Alpha for Pareto distance kernel
+    ScalarType m_xmin                                          = 100; // Cut-off for Pareto distance kernel
+    ScalarType m_alpha_pareto                                  = 0.01; // Alpha for Pareto distance kernel
 };
 
 /**
