@@ -61,4 +61,4 @@ jobs:
         with:
           skip-existing: true
           # To test uploads to TestPyPI, uncomment the following:
-          repository-url: https://test.pypi.org/legacy/
+          # repository-url: https://test.pypi.org/legacy/
