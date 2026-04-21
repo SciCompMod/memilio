@@ -27,7 +27,7 @@ parameter to the model.
 
     using LctStateGroup1 = mio::LctInfectionState<ScalarType, ListofInfectionStates, NumberofsubcompartmentsofState1, NumberofsubcompartmentsofState2, ...>;
 
-The model is implemented as **CompartmentalModel**.
+The model is implemented as :code:`CompartmentalModel`.
 
 
 Parameters

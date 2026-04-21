@@ -35,7 +35,7 @@ The model contains the following list of **InfectionState**\s:
 Infection State transitions
 ---------------------------
 
-The ODE-SIR model is implemented as a **CompartmentalModel**, which defines the derivative of the aggregated compartment
+The ODE-SIR model is implemented as a :code:`CompartmentalModel`, which defines the derivative of the aggregated compartment
 values in time.
 
 

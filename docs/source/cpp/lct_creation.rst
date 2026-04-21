@@ -119,7 +119,7 @@ example being adding age groups.
 Define the model
 ^^^^^^^^^^^^^^^^
 
-Now we can define the model as a **CompartmentalModel** in the file "model.h":  
+Now we can define the model as a :code:`CompartmentalModel` in the file "model.h":  
 
 .. code-block:: cpp
 

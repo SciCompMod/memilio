@@ -29,7 +29,7 @@ parameter to the model.
                                                                                          `Number of subcompartments of State2`, 
                                                                                          `...`>;
 
-The model is implemented as **CompartmentalModel**.
+The model is implemented as :code:`CompartmentalModel`.
 
 
 
