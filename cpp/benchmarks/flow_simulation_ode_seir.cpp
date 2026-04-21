@@ -25,7 +25,7 @@
 
 #include <string>
 
-const std::string config_path = mio::base_dir() + "cpp/benchmarks/simulation.config";
+const std::string config_path = (mio::base_dir() / "cpp/benchmarks/simulation.config").string();
 
 namespace mio
 {
