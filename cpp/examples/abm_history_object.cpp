@@ -45,7 +45,7 @@ void write_log_to_file(const T& history)
     auto loc_id      = std::get<1>(logg);
     auto time_points = std::get<0>(logg);
     std::string input;
-    std::ofstream myfile(mio::create_directory_or_exit(mio::example_results_dir("abm_history_object")) +
+    std::ofstream myfile(mio::create_directories_or_exit(mio::example_results_dir("abm_history_object")) /
                          "test_output.txt");
     myfile << "Locations as numbers:\n";
     for (auto&& id : loc_id[0]) {

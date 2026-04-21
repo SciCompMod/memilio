@@ -30,9 +30,9 @@ option(MEMILIO_ENABLE_LIKWID_MARKER "Enable performance measuring with likwid ma
 
 cmake_path(CONVERT "${PROJECT_SOURCE_DIR}/.." TO_CMAKE_PATH_LIST PROJECT_ROOT_NORMALIZED NORMALIZE)
 set(MEMILIO_BASE_DIR "${PROJECT_ROOT_NORMALIZED}" CACHE PATH
-    "Path to the MEmilio project root, used for file I/O. Can be used through mio::base_dir().")
+    "Path to the MEmilio project root, used for file I/O. Accessed via mio::base_dir().")
 set(MEMILIO_DATA_DIR "${PROJECT_ROOT_NORMALIZED}/data" CACHE PATH
-    "Path to the MEmilio data directory. Can be used through mio::data_dir().")
+    "Path to the MEmilio data directory. Accessed via mio::data_dir().")
 
 mark_as_advanced(
     MEMILIO_USE_BUNDLED_SPDLOG

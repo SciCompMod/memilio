@@ -36,12 +36,12 @@ int main(int argc, char** argv)
 {
     mio::set_log_level(mio::LogLevel::critical);
 
-    const std::string result_dir = mio::create_directory_or_exit(mio::example_results_dir("ode_secir_read_graph"));
+    const auto result_dir = mio::create_directories_or_exit(mio::example_results_dir("ode_secir_read_graph"));
 
     auto parameters =
         mio::cli::ParameterSetBuilder()
             .add<"MobilityFile">(
-                mio::path_join(mio::base_dir(), "data", "Germany", "mobility", "commuter_mobility_2022.txt"),
+                mio::base_dir() / "data" / "Germany" / "mobility" / "commuter_mobility_2022.txt",
                 {.description = "Create the mobility file with MEmilio Epidata's getCommuterMobility.py file."})
             .build();
 
@@ -132,7 +132,7 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Writing Json Files..." << std::flush;
-    auto write_status = mio::write_graph(graph, result_dir + "graph_parameters");
+    auto write_status = mio::write_graph(graph, result_dir / "graph_parameters");
     if (!write_status) {
         std::cout << "\n" << write_status.error().formatted_message();
         return 0;
@@ -141,7 +141,7 @@ int main(int argc, char** argv)
 
     std::cout << "Reading Json Files..." << std::flush;
     auto graph_read_result =
-        mio::read_graph<ScalarType, mio::osecir::Model<ScalarType>>(result_dir + "graph_parameters");
+        mio::read_graph<ScalarType, mio::osecir::Model<ScalarType>>(result_dir / "graph_parameters");
 
     if (!graph_read_result) {
         std::cout << "\n" << graph_read_result.error().formatted_message();

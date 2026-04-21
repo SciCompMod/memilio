@@ -28,7 +28,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 template <size_t Tag>
 struct CategoryTag : public mio::Index<CategoryTag<Tag>> {
@@ -193,10 +193,10 @@ TEST(TestUtils, LogLevelOverride)
 
 TEST(TestUtils, base_dir)
 {
-    auto base_dir = boost::filesystem::path(mio::base_dir());
+    auto base_dir = std::filesystem::path(mio::base_dir());
     // check that the path exists
-    EXPECT_TRUE(boost::filesystem::exists(base_dir));
+    EXPECT_TRUE(std::filesystem::exists(base_dir));
     // check that the path is correct, by sampling some fixed paths from project files
-    EXPECT_TRUE(boost::filesystem::exists(base_dir / "cpp" / "memilio"));
-    EXPECT_TRUE(boost::filesystem::exists(base_dir / "pycode" / "memilio-epidata"));
+    EXPECT_TRUE(std::filesystem::exists(base_dir / "cpp" / "memilio"));
+    EXPECT_TRUE(std::filesystem::exists(base_dir / "pycode" / "memilio-epidata"));
 }

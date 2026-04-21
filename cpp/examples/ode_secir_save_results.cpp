@@ -85,7 +85,7 @@ int main()
     std::vector<mio::TimeSeries<ScalarType>> results_from_sim = {result_from_sim, result_from_sim};
     std::vector<int> ids                                      = {1, 2};
 
-    const std::string result_dir = mio::create_directory_or_exit(mio::example_results_dir("ode_secir_save_results"));
+    const auto result_dir = mio::create_directories_or_exit(mio::example_results_dir("ode_secir_save_results"));
     auto save_result_status =
-        mio::save_result(results_from_sim, ids, (int)(size_t)nb_groups, result_dir + "test_result.h5");
+        mio::save_result(results_from_sim, ids, (int)(size_t)nb_groups, result_dir / "test_result.h5");
 }

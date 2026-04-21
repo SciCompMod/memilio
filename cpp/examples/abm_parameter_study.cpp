@@ -192,7 +192,7 @@ int main()
     mio::ParameterStudy study(std::move(model), t0, tmax, mio::abm::TimeSpan(0), num_runs);
     study.get_rng() = rng; // use the same RNG as the model
 
-    const std::string result_dir = mio::create_directory_or_exit(mio::example_results_dir("abm_parameter_study"));
+    const auto result_dir = mio::create_directories_or_exit(mio::example_results_dir("abm_parameter_study"));
 
     // Run the study
     // The first lambda ("create_simulation" argument) sets up the simulation, the second ("process_simulation_result")
@@ -208,7 +208,7 @@ int main()
         },
         [&result_dir](auto&& sim, auto&& run_idx) {
             auto interpolated_result = mio::interpolate_simulation_result(sim.get_result());
-            std::string outpath = mio::path_join(result_dir, "abm_minimal_run_" + std::to_string(run_idx) + ".txt");
+            std::string outpath      = result_dir / ("abm_minimal_run_" + std::to_string(run_idx) + ".txt");
             std::ofstream outfile_run(outpath);
             sim.get_result().print_table(outfile_run, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4);
             std::cout << "Results written to " << outpath << std::endl;
@@ -218,7 +218,7 @@ int main()
     // The study collects all results on the root rank, so we only process the results there
     if (mio::mpi::is_root()) {
         const auto write_percentile = [&](double p) {
-            std::ofstream out(mio::path_join(result_dir, fmt::format("Results_p{:0<4.2}.txt", p)));
+            std::ofstream out(result_dir / fmt::format("Results_p{:0<4.2}.txt", p));
             auto ensemble_percentiles = ensemble_percentile(ensemble_results, p);
             ensemble_percentiles.front().print_table(out, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7,
                                                      4);

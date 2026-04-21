@@ -514,20 +514,20 @@ void Seair_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n, co
     }
     mio::oseair::Model<FP> model;
 
-    const auto result_dir = mio::create_directory_or_exit(mio::example_results_dir("ode_seair_optimization"));
+    const auto result_dir = mio::create_directories_or_exit(mio::example_results_dir("ode_seair_optimization"));
 
     //open files for parameter output
-    std::ofstream outFileSocialDistancing(result_dir + "SocialDistancing.txt");
-    std::ofstream outFileQuarantined(result_dir + "Quarantined.txt");
-    std::ofstream outFileTestingRate(result_dir + "TestingRate.txt");
+    std::ofstream outFileSocialDistancing(result_dir / "SocialDistancing.txt");
+    std::ofstream outFileQuarantined(result_dir / "Quarantined.txt");
+    std::ofstream outFileTestingRate(result_dir / "TestingRate.txt");
 
     //open files for state output
-    std::ofstream outFileSusceptible(result_dir + "Susceptible.txt");
-    std::ofstream outFileExposed(result_dir + "Exposed.txt");
-    std::ofstream outFileAsymptomatic(result_dir + "Asymptomatic.txt");
-    std::ofstream outFileInfected(result_dir + "Infected.txt");
-    std::ofstream outFileRecovered(result_dir + "Recovered.txt");
-    std::ofstream outFileDead(result_dir + "Dead.txt");
+    std::ofstream outFileSusceptible(result_dir / "Susceptible.txt");
+    std::ofstream outFileExposed(result_dir / "Exposed.txt");
+    std::ofstream outFileAsymptomatic(result_dir / "Asymptomatic.txt");
+    std::ofstream outFileInfected(result_dir / "Infected.txt");
+    std::ofstream outFileRecovered(result_dir / "Recovered.txt");
+    std::ofstream outFileDead(result_dir / "Dead.txt");
 
     set_initial_values(model);
     int gridindex = 0;

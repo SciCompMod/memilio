@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2026 MEmilio
 *
-* Authors: Julia Bicker, Rene Schmieding
+* Authors: Rene Schmieding, Julia Bicker
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -21,8 +21,8 @@
 #define MIO_UTILS_DIRECTORIES_H
 
 #include "memilio/config.h" // IWYU pragma: keep
-#include "memilio/utils/stl_util.h"
 
+#include <filesystem>
 #include <string>
 
 namespace mio
@@ -31,7 +31,7 @@ namespace mio
 /**
  * @brief Returns the absolute path to the project directory.
  */
-const static std::string base_dir()
+const static std::filesystem::path base_dir()
 {
     return details::MEMILIO_BASE_DIR;
 }
@@ -39,7 +39,7 @@ const static std::string base_dir()
 /**
  * @brief Returns the absolute path to the project directory.
  */
-[[maybe_unused]] const static std::string data_dir()
+[[maybe_unused]] const static std::filesystem::path data_dir()
 {
     return details::MEMILIO_DATA_DIR;
 }
@@ -47,10 +47,10 @@ const static std::string base_dir()
 /**
  * @brief Returns the absolute path to a common ouput directory for the code examples.
  */
-[[maybe_unused]] const static std::string example_results_dir(const std::string& example_name)
+[[maybe_unused]] const static std::filesystem::path example_results_dir(const std::string& example_name)
 {
     // the last empty string is used to end the output path in a /
-    const static std::string dir = path_join(base_dir(), "example_results", example_name, "");
+    const static std::filesystem::path dir = base_dir() / "example_results" / example_name;
     return dir;
 }
 

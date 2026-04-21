@@ -31,6 +31,7 @@
 #include <bitset>
 #include <concepts>
 #include <cstddef>
+#include <filesystem>
 #include <string>
 #include <tuple>
 #include <iostream>
@@ -609,6 +610,40 @@ IOResult<Tup<T...>> deserialize_internal(IOContext& io, Tag<Tup<T...>> tag)
 }
 
 /**
+ * @brief Serialize an std::filesystem::path.
+ * @tparam IOContext A type that models the IOContext concept.
+ * @param io A reference to an IOContext.
+ * @param path An instance of std::filesystem::path.
+ */
+template <class IOContext>
+void serialize_internal(IOContext& io, const std::filesystem::path& path)
+{
+    auto obj = io.create_object("Path");
+    obj.add_element("path", path.native());
+}
+
+/**
+ * @brief Deerialize an std::filesystem::path.
+ * @tparam IOContext A type that models the IOContext concept.
+ * @param io A reference to an IOContext.
+ * @param path An instance of std::filesystem::path.
+ * @return The path if successful, an error otherwise.
+ */
+template <class IOContext>
+IOResult<std::filesystem::path> deserialize_internal(IOContext& io, Tag<std::filesystem::path>)
+{
+    auto obj = io.expect_object("Path");
+    auto str = obj.expect_element("path", Tag<std::string>{});
+
+    return apply(
+        io,
+        [](auto&& str_) {
+            return std::filesystem::path(str_);
+        },
+        str);
+}
+
+/**
  * serialize an Eigen matrix expression.
  * @tparam IOContext a type that models the IOContext concept.
  * @tparam M the type of Eigen matrix expression to be deserialized.
@@ -872,24 +907,28 @@ std::string get_current_dir_name();
  * @brief Creates a directory in the file system.
  * @param[in] path Path of a directory. Can be relative to current working directory or absolute.
  * @param[out] abs_path Will contain the absolute path of the directory.
+ * @param[in] create_parents When true, create all directories in the path instead of only the last. Default: false.
  * @return true if the directory was created, false if it already exists, or any errors that occured.
  */
-IOResult<bool> create_directory(std::string const& path, std::string& abs_path);
+IOResult<bool> create_directory(const std::filesystem::path& path, std::string& abs_path, bool create_parents = false);
 
 /**
  * @brief Creates a directory in the file system.
  * @param[in] path Path of a directory. Can be relative to current working directory or absolute.
+ * @param[in] create_parents When true, create all directories in the path instead of only the last. Default: false.
  * @return True if the directory was created, false if it already exists, or any errors that occured.
  */
-IOResult<bool> create_directory(std::string const& path);
+IOResult<bool> create_directory(const std::filesystem::path& path, bool create_parents = false);
 
 /**
- * @brief Creates a directory in the file system, or exits the program with an error code.
+ * @brief Creates directories in the file system, or exits the program with an error code.
+ * In contrast to create_directory, this method creates parent directories by default.
  * @param[in] path Path of a directory. Can be relative to current working directory or absolute.
+ * @param[in] create_parents When true, create all directories in the path instead of only the last. Default: true.
  * @return The absolute path to the given directory.
  * Any error messages during creation will be logged at `LogLevel::Critical`. 
  */
-std::string create_directory_or_exit(std::string const& path);
+std::filesystem::path create_directories_or_exit(const std::filesystem::path& path, bool create_parents = true);
 
 /**
  * Check if a file exists.

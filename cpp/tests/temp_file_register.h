@@ -20,9 +20,11 @@
 #ifndef MIO_TESTS_TMP_FILE_REGISTER_H
 #define MIO_TESTS_TMP_FILE_REGISTER_H
 
-#include "memilio/io/io.h"
 #include "memilio/utils/logging.h"
-#include "boost/filesystem.hpp"
+#include "memilio/utils/random_number_generator.h"
+#include "memilio/utils/string_literal.h"
+
+#include <filesystem>
 
 /**
  * Stores paths of files or directories that will be removed when the register is destroyed.
@@ -37,8 +39,8 @@ public:
     ~TempFileRegister()
     {
         for (auto&& file : m_files) {
-            boost::system::error_code ec;
-            boost::filesystem::remove_all(file, ec);
+            std::error_code ec;
+            std::filesystem::remove_all(file, ec);
             if (ec) {
                 //just log a warning, failed cleanup should not be considered a test failure.
                 mio::log_warning("Failed to remove temporary file {}:{}", file.string(), ec.message());
@@ -57,26 +59,41 @@ public:
      */
     std::string get_unique_path(const std::string& model = "%%%%-%%%%-%%%%-%%%%")
     {
+        // this is an in-place replacement for boost::filesystem::unique_path, as it was removed from std::filesystem
+        // due to security concerns: https://wg21.cmeerw.net/lwg/issue2633
+        // as this storage is used for testing only, the paths created here should not pose any security risks
+        const auto random_char = []() {
+            static constexpr mio::StringLiteral char_table{"0123456789"
+                                                           "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                                           "abcdefghijklmnopqrstuvwxyz"};
+            // this rng does not share a seed with the rest of the tests, so paths are not (trivially) predictable
+            static mio::RandomNumberGenerator rng;
+            return char_table.data()[rng() % char_table.size()];
+        };
+        std::string random_path = model;
+        for (char& c : random_path) {
+            if (c == '%')
+                c = random_char();
+        }
         auto tmp_path  = get_tmp_path();
-        auto file_name = boost::filesystem::unique_path(model);
-        auto file_path = tmp_path / file_name;
+        auto file_path = tmp_path / random_path;
         m_files.push_back(file_path);
         return file_path.string();
     }
 
 private:
     //get the system temp directory if available, otherwise the current working directory
-    boost::filesystem::path get_tmp_path()
+    std::filesystem::path get_tmp_path()
     {
-        boost::system::error_code ec;
-        auto path = boost::filesystem::temp_directory_path(ec);
+        std::error_code ec;
+        auto path = std::filesystem::temp_directory_path(ec);
         if (ec) {
-            path = boost::filesystem::current_path();
+            path = std::filesystem::current_path();
         }
         return path;
     }
 
-    std::vector<boost::filesystem::path> m_files;
+    std::vector<std::filesystem::path> m_files;
 };
 
 #endif // MIO_TESTS_TMP_FILE_REGISTER_H

@@ -316,7 +316,7 @@ int main()
         }
         // create directory for results.
         const auto result_dir =
-            mio::create_directory_or_exit(mio::example_results_dir("ode_secir_parameter_study_graph"));
+            mio::create_directories_or_exit(mio::example_results_dir("ode_secir_parameter_study_graph"));
 
         auto county_ids          = std::vector<int>{1001, 1002, 1003};
         auto save_results_status = save_results(ensemble_results, ensemble_params, county_ids, result_dir, false);

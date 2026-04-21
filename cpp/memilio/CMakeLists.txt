@@ -130,7 +130,7 @@ target_include_directories(memilio PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-target_link_libraries(memilio PUBLIC spdlog::spdlog Eigen3::Eigen Boost::boost Boost::filesystem Boost::disable_autolinking Random123 AD::AD)
+target_link_libraries(memilio PUBLIC spdlog::spdlog Eigen3::Eigen Boost::boost Boost::disable_autolinking Random123 AD::AD)
 target_compile_options(memilio
     PRIVATE
     ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS}
