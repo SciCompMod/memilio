@@ -21,7 +21,7 @@ The infection states and the transitions are visualized in the following graph.
 Infection States
 ----------------
 
-The model contains the following list of :code:`InfectionState`\s:
+The model contains the following list of ``InfectionState``\s:
 
 .. code-block:: RST
 
@@ -48,7 +48,7 @@ Sociodemographic Stratification
 -------------------------------
 
 In the ODE-SEIR model, the population can be stratified by one sociodemographic dimension. This dimension is denoted
-:code:`AgeGroup` but can also be used for other interpretations. For stratifications with two or more dimensions, see
+``AgeGroup`` but can also be used for other interpretations. For stratifications with two or more dimensions, see
 :doc:`Model Creation <../ode_creation>`.
 
 The number of age groups is specified in the model constructor and the model can be initialized with
@@ -91,7 +91,7 @@ Initial Conditions
 ------------------
 
 The initial conditions of the model are defined by the class :code:`Populations` which defines the number of individuals in
-each sociodemographic group and :code:`InfectionState`. Before running a simulation, you need to set the initial values for
+each sociodemographic group and ``InfectionState``. Before running a simulation, you need to set the initial values for
 each compartment:
 
 .. code-block:: cpp
@@ -190,7 +190,7 @@ For both simulation types, you can also specify a custom integrator:
 Output
 ------
 
-The output of the :code:`Simulation` is a ``TimeSeries`` containing the sizes of each compartment at each time point. For A
+The output of the ``Simulation`` is a ``TimeSeries`` containing the sizes of each compartment at each time point. For A
 standard simulation, you can access the results as follows:
 
 .. code-block:: cpp
@@ -206,7 +206,7 @@ standard simulation, you can access the results as follows:
     Eigen::VectorXd last_value = result_sim.get_last_value();
     double last_time = result_sim.get_last_time();
 
-For flow simulations, the result consists of two :code:`TimeSeries` objects, one for compartment sizes and one for flows:
+For flow simulations, the result consists of two ``TimeSeries`` objects, one for compartment sizes and one for flows:
 
 .. code-block:: cpp
 

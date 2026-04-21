@@ -6,11 +6,11 @@ MEmilio provides a set of input/output (IO) functionalities to read and write da
 Aggregated output
 -----------------
 
-All aggregated models save their results in a :code:`mio::TimeSeries` that contains all subpopulations for every time 
-point, see :doc:`data_types` for a description of the :code:`mio::TimeSeries` data type. The time series can be printed 
+All aggregated models save their results in a ``TimeSeries`` that contains all subpopulations for every time 
+point, see :doc:`data_types` for a description of the ``TimeSeries`` data type. The time series can be printed 
 to the terminal with the :code:`TimeSeries::print_table()` function and exported to a CSV file using :code:`TimeSeries::export_csv`. 
 As e.g. for the ODE-based models adaptive step size methods are used, the time series will not be necessarily available 
-on equidistant time points or days. To obtain a  :code:`mio::TimeSeries` interpolated on days or user-defined time points, 
+on equidistant time points or days. To obtain a  ``TimeSeries`` interpolated on days or user-defined time points, 
 the :code:`mio::interpolate_simulation_result()` can be used.
 
 This document describes utilities for reading and writing data from and to files in different formats, in cases where

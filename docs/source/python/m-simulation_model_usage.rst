@@ -236,8 +236,8 @@ The integrator can be changed as the last parameter of the simulate function.
 Output and visualization
 -------------------------
 
-The result returned from the simulation is a :code:`TimeSeries` object containing the number of people per age group in each infection state at each time step.
-The :code:`TimeSeries` provides alot of interfaces to interact with it, but can also be transformed into a multidimensional numpy matrix for a more
+The result returned from the simulation is a ``TimeSeries`` object containing the number of people per age group in each infection state at each time step.
+The ``TimeSeries`` provides alot of interfaces to interact with it, but can also be transformed into a multidimensional numpy matrix for a more
 pythonic interface.
 
 .. code-block:: python

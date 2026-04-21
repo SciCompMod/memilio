@@ -87,8 +87,8 @@ We also define a parameter ``ContactPatterns`` determining the contacts of the d
 Avoid using the mathematical symbol of a constant as name for the struct. Their connection can be noted down in the
 documentation of these structs.
 
-Finally, define a type :code:`Parameters` by listing all parameter structs as template arguments of a
-:code:`mio::ParameterSet`:
+Finally, define a type ``Parameters`` by listing all parameter structs as template arguments of a
+``mio::ParameterSet``:
 
 .. code-block:: cpp
 
@@ -96,7 +96,7 @@ Finally, define a type :code:`Parameters` by listing all parameter structs as te
     using Parameters = mio::ParameterSet<TimeInfectious, RecoveryRate, LethalityRate, ContactRate,
                                          TransmissionRisk>;
 
-For more complex models, :code:`Parameters` allows passing arguments from its constructor to the :code:`get_default`
+For more complex models, ``Parameters`` allows passing arguments from its constructor to the :code:`get_default`
 functions. Make sure that all of these functions take the exact types as function arguments that you want to pass to
 the constructor.
 
@@ -119,7 +119,7 @@ example being adding age groups.
 Define the model
 ^^^^^^^^^^^^^^^^
 
-Now we can define the model as a :code:`CompartmentalModel` in the file "model.h":  
+Now we can define the model as a ``CompartmentalModel`` in the file "model.h":  
 
 .. code-block:: cpp
 
@@ -177,8 +177,8 @@ The function ``get_derivatives()`` evaluates the right-hand-side of the ODE :mat
 
 It is also useful to implement the following methods within the model:
 
-- A function ``calculate_compartments()`` that accumulates the :code:`TimeSeries` containing simulation results that are divided 
-into subcompartments to a :code:`TimeSeries` that conatins the simulation results according to the infection states without subcompartments. 
+- A function ``calculate_compartments()`` that accumulates the ``TimeSeries`` containing simulation results that are divided 
+into subcompartments to a ``TimeSeries`` that conatins the simulation results according to the infection states without subcompartments. 
 For an example, see the implementation within the LCT-SECIR model.
 - A function ``check_constraints()`` that checks that the model satisfies sensible constraints regarding parameters and initial conditions. 
 For an example, see the implementation within the LCT-SECIR model. 

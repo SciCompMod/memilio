@@ -14,7 +14,7 @@ The infection states and transitions are illustrated in the following figure.
 Infection States
 ----------------
 
-The model contains the following :code:`InfectionState`\s:
+The model contains the following ``InfectionState``\s:
 
 .. code-block:: RST
 
@@ -47,7 +47,7 @@ recoveries) are computed explicitly in addition to compartment values. The defin
 Sociodemographic Stratification
 --------------------------------
 
-The population can be stratified by one sociodemographic dimension denoted :code:`AgeGroup` (can be interpreted more
+The population can be stratified by one sociodemographic dimension denoted ``AgeGroup`` (can be interpreted more
 broadly). The number of age groups is specified in the constructor:
 
 .. code-block:: cpp

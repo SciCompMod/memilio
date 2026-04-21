@@ -11,7 +11,7 @@ An overview of nonstandard but often used data types can be found under :doc:`da
 Infection states
 ----------------
 
-The model contains a list of :code:`InfectionState`\s that define particular features of the subpopulations in the particular state.
+The model contains a list of ``InfectionState``\s that define particular features of the subpopulations in the particular state.
 
 .. code-block:: RST
 
@@ -19,8 +19,8 @@ The model contains a list of :code:`InfectionState`\s that define particular fea
     `State2`
     `...`
 
-To make use of the LCT, we additionally need to define the numbers of subcompartments for each :code:`InfectionState`.
-This is done by creating an :code:`LctInfectionState` object for each group. These objects are then passed as template 
+To make use of the LCT, we additionally need to define the numbers of subcompartments for each ``InfectionState``.
+This is done by creating an ``LctInfectionState`` object for each group. These objects are then passed as template 
 parameter to the model. 
 
 .. code-block:: cpp
@@ -29,7 +29,7 @@ parameter to the model.
                                                                                          `Number of subcompartments of State2`, 
                                                                                          `...`>;
 
-The model is implemented as :code:`CompartmentalModel`.
+The model is implemented as ``CompartmentalModel``.
 
 
 
@@ -47,10 +47,10 @@ The parameters of the model are defined as structs and are combined in a class `
 We use different types of parameters to represent epidemiological parameters such as the mean stay times in a 
 compartment or the contact rates between different age groups. Most model parameters are constants that describe 
 pathogen-specific characteristics (possibly resolved by sociodemographic groups) and are represented by a vector with a value for each sociodemographic group. 
-To model different contact rates between different sociodemographic groups, we use a parameter denoted :code:`ContactPatterns` of type :code:`UncertainContactMatrix`. 
+To model different contact rates between different sociodemographic groups, we use a parameter denoted ``ContactPatterns`` of type :code:`UncertainContactMatrix`. 
 The :code:`UncertainContactMatrix` contains an arbitrary large set of contact matrices which can represent the different contact locations in the model like 
 schools, workplaces, or homes. The matrices can be loaded or stored in the particular example.
-In the :code:`ContactPatterns`, each matrix element stores baseline contact rates :math:`c_{i,j}` between sociodemographic group :math:`i` to group :math:`j`. 
+In the ``ContactPatterns``, each matrix element stores baseline contact rates :math:`c_{i,j}` between sociodemographic group :math:`i` to group :math:`j`. 
 The dimension of the matrix is automatically defined by the model initialization and is reduced to one value if no stratification is used. 
 The values can be adjusted during the simulation, e.g., through implementing nonpharmaceutical interventions, 
 see the section on :ref:`Nonpharmaceutical Interventions LCT`.
@@ -61,14 +61,14 @@ Parameters can be accessed via ``model.parameters.get<Param<double>>()`` and set
 Initial conditions
 ------------------
 
-The initial conditions of the model are represented by a class :code:`LctPopulations` that gives the number of individuals in each sociodemographic group and each subcompartment for each :code:`InfectionState`. For more details, see :doc:`Model Creation <lct_creation>`. Before the simulation, the initial conditions for each :code:`InfectionState` and sociodemographic group must be set.
+The initial conditions of the model are represented by a class :code:`LctPopulations` that gives the number of individuals in each sociodemographic group and each subcompartment for each ``InfectionState``. For more details, see :doc:`Model Creation <lct_creation>`. Before the simulation, the initial conditions for each ``InfectionState`` and sociodemographic group must be set.
 
 
 .. _Nonpharmaceutical Interventions LCT:
 Nonpharmaceutical interventions
 -------------------------------
 
-Contact rates can be adjusted during the simulation to model nonpharmaceutical interventions (NPIs) such as lockdowns, school closures, or social distancing. This is done by adding :code:`Damping`\s to the :code:`ContactPatterns` of the model. A :code:`Damping` is defined by a time point at which the intervention starts and a matrix of the same size as the :code:`ContactMatrix`. 
+Contact rates can be adjusted during the simulation to model nonpharmaceutical interventions (NPIs) such as lockdowns, school closures, or social distancing. This is done by adding ``Damping``\s to the ``ContactPatterns`` of the model. A ``Damping`` is defined by a time point at which the intervention starts and a matrix of the same size as the ``ContactMatrix``. 
 While in many cases, the reduction matrix is given by a constant matrix with factor :math:`r`, also 
 group-specific reductions are possible through setting particular rows or columns differently. With a constant 
 reduction factor :math:`r`, the reduced contact rate is :math:`(1-r) * c_{i,j}`.
@@ -90,14 +90,14 @@ reduction factor :math:`r`, the reduced contact rate is :math:`(1-r) * c_{i,j}`.
 Simulation
 ----------
 
-Once the model is set up, one can run a simple simulation from time ``t0`` to ``tmax`` with initial step size ``dt`` using the ``mio::simulate()`` function. This will run a simulation of type :code:`Simulation` that saves the sizes of each subcompartment over time. 
+Once the model is set up, one can run a simple simulation from time ``t0`` to ``tmax`` with initial step size ``dt`` using the ``mio::simulate()`` function. This will run a simulation of type ``Simulation`` that saves the sizes of each subcompartment over time. 
 You can run a simulation using either fixed or adaptive integration schemes with an absolute or relative tolerance. By default, the simulation uses an adaptive solution scheme of the boost library with an absolute tolerance of 1e-10 and a relative tolerance of 1e-5. For more details on the possible integration schemes, see <numerical integrator stuff>.
 
 
 Output
 ------
 
-The output of the :code:`Simulation` is a ``TimeSeries`` containing the sizes of each subcompartment at each time point. 
+The output of the ``Simulation`` is a ``TimeSeries`` containing the sizes of each subcompartment at each time point. 
 To obtain a result with respect to the compartments, the subcompartments can be accumulated via the function 
 ``calculate_compartments()``. A simple table can be printed using the ``print_table()`` function of the 
 ``mio::TimeSeries`` class. The compartment sizes can be printed with ``model.calculate_compartments(result).print_table()``. 

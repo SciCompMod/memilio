@@ -15,7 +15,7 @@ Below is an overview of the model architecture and its compartments.
 Infection States
 ----------------
 
-The model extends the basic ODE-SECIR model by dividing the compartments based on immunity levels. It contains the following list of :code:`InfectionState`\s:
+The model extends the basic ODE-SECIR model by dividing the compartments based on immunity levels. It contains the following list of ``InfectionState``\s:
 
 .. code-block:: RST
 
@@ -83,13 +83,13 @@ For each immunity level (Naive, PartialImmunity, ImprovedImmunity), the followin
 
 Where * stands for the immunity level suffix (Naive, PartialImmunity, or ImprovedImmunity).
 
-**Important:** Vaccinations are not implemented as flows between compartments but are handled discretely by the simulation. At the beginning of each simulated day, susceptible individuals are moved between immunity levels according to the specified daily vaccination parameters. This discrete process is separate from the ODE system and is managed by the `apply_vaccination` function in the model specific :code:`Simulation` class.
+**Important:** Vaccinations are not implemented as flows between compartments but are handled discretely by the simulation. At the beginning of each simulated day, susceptible individuals are moved between immunity levels according to the specified daily vaccination parameters. This discrete process is separate from the ODE system and is managed by the `apply_vaccination` function in the model specific ``Simulation`` class.
 
 Sociodemographic Stratification
 -------------------------------
 
 Like the basic ODE-SECIR model, the ODE-SECIRVVS model can be stratified by one sociodemographic dimension, typically age groups. This stratification is important for modeling different vaccination rates, symptom severities, and mortality risks across age groups. The dimension is denoted 
-:code:`AgeGroup` but can also be used for other interpretations.
+``AgeGroup`` but can also be used for other interpretations.
 For stratifications with two or more dimensions, see :doc:`Model Creation <../ode_creation>`.
 
 Parameters
@@ -220,7 +220,7 @@ The model includes all parameters from the basic ODE-SECIR model plus additional
 Initial conditions
 ------------------
 
-The initial conditions of the model are represented by the class ``Populations`` which defines the number of individuals in each sociodemographic group and :code:`InfectionState`. Before running a simulation, you should set the initial values for each compartment across all immunity levels.
+The initial conditions of the model are represented by the class ``Populations`` which defines the number of individuals in each sociodemographic group and ``InfectionState``. Before running a simulation, you should set the initial values for each compartment across all immunity levels.
 
 Below is an example showing how to initialize all compartments for the ODE-SECIRVVS model:
 
@@ -377,7 +377,7 @@ For both simulation types, you can also specify a custom integrator:
 Output
 ------
 
-The output of the simulation is a :code:`TimeSeries` object containing the sizes of each compartment at each time point. For a standard simulation, you can access the results as follows:
+The output of the simulation is a ``TimeSeries`` object containing the sizes of each compartment at each time point. For a standard simulation, you can access the results as follows:
 
 .. code-block:: cpp
 

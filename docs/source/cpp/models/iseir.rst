@@ -19,7 +19,7 @@ Bachelor's thesis, University of Cologne. `https://elib.dlr.de/143504/ <https://
 Infection States
 ----------------
 
-The model contains the following list of :code:`InfectionState`\s:
+The model contains the following list of ``InfectionState``\s:
 
 .. code-block:: RST
 
@@ -125,7 +125,7 @@ The values of the remaining compartments :math:`E`, :math:`I` and :math:`R` are 
 Output
 ------
 
-The output of the simulationis a :code:`TimeSeries` object containing the size of the compartments at all time 
+The output of the simulationis a ``TimeSeries`` object containing the size of the compartments at all time 
 points. You can access the results as follows:
 
 .. code-block:: cpp

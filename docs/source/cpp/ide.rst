@@ -15,7 +15,7 @@ An overview of nonstandard but often used data types can be found under :doc:`da
 Infection states
 ----------------
 
-Every model contains a list of :code:`InfectionState`\s that define particular features of the subpopulations in the particular state.
+Every model contains a list of ``InfectionState``\s that define particular features of the subpopulations in the particular state.
 
 .. code-block:: RST
 
@@ -27,8 +27,8 @@ Every model contains a list of :code:`InfectionState`\s that define particular f
 Infection state transitions
 ---------------------------
 
-Additionally, we define :code:`InfectionTransition`\s that define the possible transitions between the :code:`InfectionState`\s.
-When solving the model, we obtain results for the :code:`InfectionTransition`\s as well.
+Additionally, we define ``InfectionTransition``\s that define the possible transitions between the ``InfectionState``\s.
+When solving the model, we obtain results for the ``InfectionTransition``\s as well.
 
 .. code-block:: RST
 
@@ -40,7 +40,7 @@ When solving the model, we obtain results for the :code:`InfectionTransition`\s 
 Sociodemographic stratification
 -------------------------------
 
-For the IDE-SECIR model, the population can also be stratified by one sociodemographic dimension. This dimension is denoted :code:`AgeGroup` but can also be used for other interpretations. 
+For the IDE-SECIR model, the population can also be stratified by one sociodemographic dimension. This dimension is denoted ``AgeGroup`` but can also be used for other interpretations. 
 
 Parameters
 ----------
@@ -50,11 +50,11 @@ We use different types of parameters to represent epidemiological parameters suc
 compartment or the contact rates between different sociodemographic groups. Most model parameters are constants that describe 
 pathogen-specific characteristics (possibly resolved by sociodemographic groups) and are represented by a vector with a
 value for each group. To model different contact rates between different sociodemographic groups, we
-use a parameter denoted :code:`ContactPatterns` of type :code:`UncertainContactMatrix`. The :code:`UncertainContactMatrix` contains an
+use a parameter denoted ``ContactPatterns`` of type ``UncertainContactMatrix``. The ``UncertainContactMatrix`` contains an
 arbitrary large set of contact matrices which can represent the different contact locations in the model like 
 schools, workplaces, or homes. The matrices can be loaded or stored in the particular example.
 
-In the :code:`ContactPatterns`, each matrix element stores baseline contact rates :math:`c_{i,j}` between sociodemographic 
+In the ``ContactPatterns``, each matrix element stores baseline contact rates :math:`c_{i,j}` between sociodemographic 
 group :math:`i` and group :math:`j`. The dimension of the matrix is automatically defined by the model initiation and it is reduced 
 to one value if no stratification is used. The values can be adjusted during the simulation, e.g., through implementing 
 nonpharmaceutical interventions, see the section on :ref:`Nonpharmaceutical Interventions IDE`. 
@@ -85,9 +85,9 @@ Nonpharmaceutical interventions
 -------------------------------
 
 Contact rates can be adjusted during the simulation to model nonpharmaceutical interventions (NPIs) such as lockdowns, 
-school closures, or social distancing. This is done by adding :code:`Damping`\s to the :code:`ContactPatterns` of the model. A 
-:code:`Damping` is defined by a time point at which the intervention starts and a matrix of the same size as the 
-:code:`ContactMatrix`. While in many cases, the reduction matrix is given by a constant matrix with factor :math:`r`, also 
+school closures, or social distancing. This is done by adding ``Damping``\s to the ``ContactPatterns`` of the model. A 
+``Damping`` is defined by a time point at which the intervention starts and a matrix of the same size as the 
+``ContactMatrix``. While in many cases, the reduction matrix is given by a constant matrix with factor :math:`r`, also 
 group-specific reductions are possible through setting particular rows or columns differently. With a constant 
 reduction factor :math:`r`, the reduced contact rate is :math:`(1-r) * c_{i,j}`.
 
@@ -116,9 +116,9 @@ uses a nonstandard numerical scheme to solve the IDEs that is implemented in MEm
 Output
 ------
 
-The output of the simulation ``sim`` is a :code:`TimeSeries` containing the sizes of each compartment at each time point 
-and a :code:`TimeSeries` containing the flows within a time step for each time point. A simple table can be printed using the 
-``print_table()`` function of the :code:`TimeSeries` class. The compartment sizes can be printed with 
+The output of the simulation ``sim`` is a ``TimeSeries`` containing the sizes of each compartment at each time point 
+and a ``TimeSeries`` containing the flows within a time step for each time point. A simple table can be printed using the 
+``print_table()`` function of the ``TimeSeries`` class. The compartment sizes can be printed with 
 ``sim.get_result().print_table()`` and the flows with ``sim.get_transitions().print_table()``. 
 As the time step may be small it may be useful to obtain outputs on days or user-defined time points. You can interpolate 
 the results to days or any other series of times points with ``mio::interpolate_simulation_result()``.

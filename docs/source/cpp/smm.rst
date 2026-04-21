@@ -179,7 +179,7 @@ are drawn. Then the time is advanced until the time point of the next event - wh
 infection state adoption - and the event takes places. The waiting times of the other events are updated and a new waiting 
 time for the event that just happened is drawn. The simulation saves the system state in discrete time steps.
 
-To simulate the model from ``t0`` to ``tmax`` with given step size ``dt``, a :code:`Simulation` has to be created and advanced 
+To simulate the model from ``t0`` to ``tmax`` with given step size ``dt``, a ``Simulation`` has to be created and advanced 
 until ``tmax``. The step size is only used to regularly save the system state during the simulation.
 
 .. code-block:: cpp

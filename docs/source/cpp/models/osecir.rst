@@ -19,7 +19,7 @@ The infection states and the transitions (also see next two sections) are visual
 Infection States
 ----------------
 
-The model contains the following list of :code:`InfectionState`\s:
+The model contains the following list of ``InfectionState``\s:
 
 .. code-block:: RST
 
@@ -67,7 +67,7 @@ Sociodemographic Stratification
 -------------------------------
 
 In the ODE-SECIR model, the population can be stratified by one sociodemographic dimension. This dimension is denoted 
-:code:`AgeGroup` but can also be used for other interpretations. For stratifications with two or more dimensions, 
+``AgeGroup`` but can also be used for other interpretations. For stratifications with two or more dimensions, 
 see :doc:`Model Creation <../ode_creation>`.
 
 
@@ -137,7 +137,7 @@ The model implements the following parameters:
 Initial conditions
 ------------------
 
-The initial conditions of the model are represented by the class :code:`Populations` which defines the number of individuals in each sociodemographic group and :code:`InfectionState`. Before running a simulation, you need to set the initial values for each compartment:
+The initial conditions of the model are represented by the class :code:`Populations` which defines the number of individuals in each sociodemographic group and ``InfectionState``. Before running a simulation, you need to set the initial values for each compartment:
 
 .. code-block:: cpp
 
@@ -320,7 +320,7 @@ For both simulation types, you can also specify a custom integrator:
 Output
 ------
 
-The output of the simulation is a :code:`TimeSeries` object containing the sizes of each compartment at each time point. For a basic simulation, you can access the results as follows:
+The output of the simulation is a ``TimeSeries`` object containing the sizes of each compartment at each time point. For a basic simulation, you can access the results as follows:
 
 .. code-block:: cpp
 
@@ -335,7 +335,7 @@ The output of the simulation is a :code:`TimeSeries` object containing the sizes
     Eigen::VectorXd last_value = secir.get_last_value();
     double last_time = secir.get_last_time();
 
-For flow simulations, the result consists of two :code:`TimeSeries` objects, one for compartment sizes and one for flows:
+For flow simulations, the result consists of two ``TimeSeries`` objects, one for compartment sizes and one for flows:
 
 .. code-block:: cpp
 

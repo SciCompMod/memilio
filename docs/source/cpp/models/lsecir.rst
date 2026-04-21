@@ -27,7 +27,7 @@ For a detailed description and application of the model, see:
 Infection States
 ----------------
 
-The model contains the following list of :code:`InfectionState`\s:
+The model contains the following list of ``InfectionState``\s:
 
 .. code-block:: RST
 
@@ -307,7 +307,7 @@ The simulation result is stratefied by subcompartments. The function ``calculate
 
     mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_compartments(result);
 
-You can access the data in the :code:`TimeSeries` object as follows:
+You can access the data in the ``TimeSeries`` object as follows:
 
 .. code-block:: cpp
 

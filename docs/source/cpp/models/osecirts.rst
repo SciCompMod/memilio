@@ -20,7 +20,7 @@ Below is an overview of the model architecture and its compartments.
 Infection States
 ----------------
 
-The model extends the ODE-SECIRVVS model by adding temporary immunity states and flow paths for waning immunity. It contains the following list of :code:`InfectionState`\s:
+The model extends the ODE-SECIRVVS model by adding temporary immunity states and flow paths for waning immunity. It contains the following list of ``InfectionState``\s:
 
 .. code-block:: RST
 
@@ -115,7 +115,7 @@ Sociodemographic Stratification
 -------------------------------
 
 Like the other ODE-SECIR models, the ODE-SECIRTS model can be stratified by one sociodemographic dimension, typically age groups. This stratification is important for modeling different vaccination rates, symptom severities, mortality risks, and immunity waning rates across age groups. The dimension is denoted 
-:code:`AgeGroup` but can also be used for other interpretations.
+``AgeGroup`` but can also be used for other interpretations.
 For stratifications with two or more dimensions, see :doc:`Model Creation <../ode_creation>`.
 
 Parameters
@@ -234,7 +234,7 @@ The model includes all parameters from the ODE-SECIRVVS model as well as additio
 Initial conditions
 ------------------
 
-The initial conditions of the model are represented by the class :code:`Populations` which defines the number of individuals in each sociodemographic group and :code:`InfectionState`. Before running a simulation, the initial values for each compartment across all immunity levels have to be set. This can be done via:
+The initial conditions of the model are represented by the class :code:`Populations` which defines the number of individuals in each sociodemographic group and ``InfectionState``. Before running a simulation, the initial values for each compartment across all immunity levels have to be set. This can be done via:
 
 .. code-block:: cpp
 
@@ -363,7 +363,7 @@ For both simulation types, you can also specify a custom integrator:
 Output
 ------
 
-The output of the simulation is a :code:`TimeSeries` object containing the sizes of each compartment at each time point. For a standard simulation, you can access the results as follows:
+The output of the simulation is a ``TimeSeries`` object containing the sizes of each compartment at each time point. For a standard simulation, you can access the results as follows:
 
 .. code-block:: cpp
 

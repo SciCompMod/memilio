@@ -24,7 +24,7 @@ states **S**\usceptible, **I**\nfectious, **R**\ecovered, **D**\eceased, also ca
 How to implement an ODE model
 -----------------------------
 
-To define an ODE model in MEmilio, there are two options. You can define a :code:`CompartmentalModel` or a :code:`FlowModel`, which
+To define an ODE model in MEmilio, there are two options. You can define a ``CompartmentalModel`` or a :code:`FlowModel`, which
 use different methods to define the right-hand side of the mathematical model above. Both classes need definitions for
 the infection states, population and parameters it uses. The :code:`FlowModel` additionally requires a list of flows.
 
@@ -162,7 +162,7 @@ example being adding :code:`mio::AgeGroups` to the template.
     where we use ``populations.get_flat_index`` to get the correct index in the flat state and derivative vectors.
     You may also want to change the Parameters to use age groups, check out the available ODE models as reference. 
 
-Define a :code:`CompartmentalModel` class
+Define a ``CompartmentalModel`` class
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Now we can define the model:

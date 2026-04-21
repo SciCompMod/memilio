@@ -39,7 +39,7 @@ All infectious classes (I1..I4) contribute equally to transmission in the basic 
 Infection State Transitions
 ---------------------------
 
-The model is implemented as a :code:`CompartmentalModel`, which defines the derivative of the aggregated compartment
+The model is implemented as a ``CompartmentalModel``, which defines the derivative of the aggregated compartment
 values in time. The following transitions occur:
 
 - Births enter M and some enter S1

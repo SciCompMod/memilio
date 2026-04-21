@@ -7,7 +7,7 @@ additional function to compute the random noise, as can be seen :doc:`here <sde_
 SDE models are used exactly like ODE-based models. They mostly differ in how they are simulated, see the :ref:`Simulation SDE`
 section below. For everything else, check out the page on :doc:`ODE-based model usage <ode>`.
 
-The class used for implementing SDE models is called :code:`StochasticModel`. It is derived from a :code:`CompartmentalModel`
+The class used for implementing SDE models is called :code:`StochasticModel`. It is derived from a ``CompartmentalModel``
 (or optionally a :code:`FlowModel`) for the representation of the deterministic part of the model equations. Check out
 :doc:`SDE model creation <sde_creation>` for more details.
 
@@ -16,7 +16,7 @@ Simulation
 ----------
 
 Once the model is set up, one can run a simple simulation from time ``t0`` to ``tmax`` with an initial step size ``dt``
-using the ``mio::simulate_stochastic()`` function. This will run a simulation of type :code:`StochasticSimulation` that
+using the ``mio::simulate_stochastic()`` function. This will run a simulation of type ``StochasticSimulation`` that
 saves the sizes of each compartment over time.
 The simulation uses an Euler-Maruyama scheme by default, so the step size does not change over time.
 
