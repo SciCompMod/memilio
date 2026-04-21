@@ -116,9 +116,9 @@ uses a nonstandard numerical scheme to solve the IDEs that is implemented in MEm
 Output
 ------
 
-The output of the simulation ``sim`` is a :code:`mio::TimeSeries` containing the sizes of each compartment at each time point 
-and a :code:`mio::TimeSeries` containing the flows within a time step for each time point. A simple table can be printed using the 
-``print_table()`` function of the :code:`mio::TimeSeries` class. The compartment sizes can be printed with 
+The output of the simulation ``sim`` is a :code:`TimeSeries` containing the sizes of each compartment at each time point 
+and a :code:`TimeSeries` containing the flows within a time step for each time point. A simple table can be printed using the 
+``print_table()`` function of the :code:`TimeSeries` class. The compartment sizes can be printed with 
 ``sim.get_result().print_table()`` and the flows with ``sim.get_transitions().print_table()``. 
 As the time step may be small it may be useful to obtain outputs on days or user-defined time points. You can interpolate 
 the results to days or any other series of times points with ``mio::interpolate_simulation_result()``.

@@ -117,7 +117,7 @@ Additionally, a feedback simulation is available, which allows for dynamic adjus
 Output
 ------
 
-The output of the :code:`Simulation` is a ``mio::TimeSeries`` containing the sizes of each compartment at each time point. A 
+The output of the :code:`Simulation` is a ``TimeSeries`` containing the sizes of each compartment at each time point. A 
 simple table can be printed using the ``print_table()`` function of the ``TimeSeries`` class. The output of the 
 :code:`FlowSimulation` additionally contains the flows between compartments at each time point. The compartment sizes can 
 be printed with ``result[0].print_table()`` and the flows with ``result[1].print_table()``. 

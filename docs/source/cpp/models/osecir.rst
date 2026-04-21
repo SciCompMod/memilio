@@ -335,7 +335,7 @@ The output of the simulation is a :code:`TimeSeries` object containing the sizes
     Eigen::VectorXd last_value = secir.get_last_value();
     double last_time = secir.get_last_time();
 
-For flow simulations, the result consists of two :code:`mio::TimeSeries` objects, one for compartment sizes and one for flows:
+For flow simulations, the result consists of two :code:`TimeSeries` objects, one for compartment sizes and one for flows:
 
 .. code-block:: cpp
 

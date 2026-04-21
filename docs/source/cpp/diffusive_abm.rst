@@ -161,7 +161,7 @@ The model holds a vector containing all agents that can be accessed via
 
     sim.get_model().populations
 
-Additionally, the agents are automatically aggregated by region and infection state in a :code:`mio::TimeSeries` object which can be accessed and printed as follows:
+Additionally, the agents are automatically aggregated by region and infection state in a :code:`TimeSeries` object which can be accessed and printed as follows:
 
 .. code-block:: cpp
 

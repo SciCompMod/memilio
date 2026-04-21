@@ -408,7 +408,7 @@ The simulation result is stratefied by subcompartments. The function ``calculate
 
     mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_compartments(result);
 
-You can access the data in the :code:`mio::TimeSeries` object as follows:
+You can access the data in the :code:`TimeSeries` object as follows:
 
 .. code-block:: cpp
 

@@ -190,7 +190,7 @@ For both simulation types, you can also specify a custom integrator:
 Output
 ------
 
-The output of the :code:`Simulation` is a ``mio::TimeSeries`` containing the sizes of each compartment at each time point. For A
+The output of the :code:`Simulation` is a ``TimeSeries`` containing the sizes of each compartment at each time point. For A
 standard simulation, you can access the results as follows:
 
 .. code-block:: cpp
@@ -206,7 +206,7 @@ standard simulation, you can access the results as follows:
     Eigen::VectorXd last_value = result_sim.get_last_value();
     double last_time = result_sim.get_last_time();
 
-For flow simulations, the result consists of two :code:`mio::TimeSeries` objects, one for compartment sizes and one for flows:
+For flow simulations, the result consists of two :code:`TimeSeries` objects, one for compartment sizes and one for flows:
 
 .. code-block:: cpp
 

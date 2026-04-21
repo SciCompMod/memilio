@@ -220,7 +220,7 @@ The model includes all parameters from the basic ODE-SECIR model plus additional
 Initial conditions
 ------------------
 
-The initial conditions of the model are represented by the class **Populations** which defines the number of individuals in each sociodemographic group and :code:`InfectionState`. Before running a simulation, you should set the initial values for each compartment across all immunity levels.
+The initial conditions of the model are represented by the class ``Populations`` which defines the number of individuals in each sociodemographic group and :code:`InfectionState`. Before running a simulation, you should set the initial values for each compartment across all immunity levels.
 
 Below is an example showing how to initialize all compartments for the ODE-SECIRVVS model:
 
@@ -377,7 +377,7 @@ For both simulation types, you can also specify a custom integrator:
 Output
 ------
 
-The output of the simulation is a :code:`mio::TimeSeries` object containing the sizes of each compartment at each time point. For a standard simulation, you can access the results as follows:
+The output of the simulation is a :code:`TimeSeries` object containing the sizes of each compartment at each time point. For a standard simulation, you can access the results as follows:
 
 .. code-block:: cpp
 

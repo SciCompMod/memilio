@@ -363,7 +363,7 @@ For both simulation types, you can also specify a custom integrator:
 Output
 ------
 
-The output of the simulation is a :code:`mio::TimeSeries` object containing the sizes of each compartment at each time point. For a standard simulation, you can access the results as follows:
+The output of the simulation is a :code:`TimeSeries` object containing the sizes of each compartment at each time point. For a standard simulation, you can access the results as follows:
 
 .. code-block:: cpp
 
