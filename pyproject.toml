@@ -2,9 +2,7 @@
 # Note that this file is only installing the memilio-simulation package. For installing the other Python packages, 
 # please go to the respective folder pycode/memilio-* and install from there. 
 name = "memilio-simulation"
-# dynamic = ["version"] 
-# remove following line before merge: 
-version = "2.3.0"
+dynamic = ["version"] 
 description = "Part of MEmilio project, Python bindings to the C++ libraries that contain the models and simulations."
 readme = "README.md"
 requires-python = ">=3.8"

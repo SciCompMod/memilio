@@ -1,11 +1,9 @@
 name: PyPI
 
-# on:  
-#   release:  
-#     types:  
-#       - published
-# remove following line before merge: 
-on: [pull_request, release]
+on:  
+  release:  
+    types:  
+      - published
 
 jobs:
 
