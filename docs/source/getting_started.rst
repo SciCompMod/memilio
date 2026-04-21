@@ -300,38 +300,69 @@ Option A: Installing the Python packages (Recommended for nonexperienced users o
 
 You can run simulations, download data, or create plots, by only installing our Python packages.
 
+Installing ``memilio-simulation``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The simulation package ``memilio-simulation`` provides two installation options depending on your use case:
+
+**Option A.1: Install from PyPI (Recommended - no C++ compiler required)**
+
+If you just want to run simulations with the latest released version, install the pre-built wheel directly from PyPI:
+
+.. code-block:: console
+
+   pip install memilio-simulation
+
+This requires no C++ compiler or CMake. Pre-built wheels are provided for Linux and Windows on Python 3.8 to 3.13.
+
+**Option A.2: Install from source (for the latest development version)**
+
+If you need the latest (unreleased) code, or want to contribute to the package, you need to build from source.
+This requires a **C++20 compiler** (e.g. GCC or Clang), **CMake** (>= 3.18), and **Ninja**.
+
+.. code-block:: console
+
+   pip install -e .[dev]
+
+This command must be run from the **root of the MEmilio repository** (the directory containing the top-level ``pyproject.toml``).
+This is necessary because the C++ build requires access to the ``cpp/`` directory.
+Note that this only installs ``memilio-simulation`` and not any other Python packages. The root-level ``pyproject.toml`` belongs exclusively to ``memilio-simulation``.
+
+.. warning::
+   C++ code changes always require re-running ``pip install -e .[dev]`` to recompile.
+
+Installing other Python packages
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 1.  Navigate to the directory containing our Python code:
 
     .. code-block:: console
 
        cd pycode
 
-2.  To install the simulation package ``memilio-simulation``, from here you can do:
+2.  To install the ``memilio-epidata`` package for data downloading and handling:
 
     .. code-block:: console
 
-       cd memilio-simulation
+       cd memilio-epidata
        pip install -e .
 
-3.  For afterwards installing the ``memilio-epidata`` package for data downloading and handling, run:
+3.  To install the ``memilio-surrogatemodel`` package for surrogate models:
 
     .. code-block:: console
 
        cd ..  # Go back to the pycode directory
-       cd memilio-epidata
+       cd memilio-surrogatemodel
        pip install -e .
 
 .. tip:: For Contributors: Installing development packages
 
    The ``-e`` flag installs the package in a mode, which links the installation to your local source code folder.
-
-   If you plan to contribute to MEmilio, you can also install all the necessary development dependencies by adding ``[dev]`` to the command:
+   If you plan to contribute to any package, install all development dependencies by adding ``[dev]``:
 
    .. code-block:: console
 
       pip install -e .[dev]
-
-   For regular use, the simple ``pip install -e .`` is sufficient.
 
 To install other packages, see the items below *Python Interface* in the menu on the left hand side.
 
