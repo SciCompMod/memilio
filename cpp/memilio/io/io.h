@@ -619,7 +619,7 @@ template <class IOContext>
 void serialize_internal(IOContext& io, const std::filesystem::path& path)
 {
     auto obj = io.create_object("Path");
-    obj.add_element("path", path.native());
+    obj.add_element("path", path.string());
 }
 
 /**

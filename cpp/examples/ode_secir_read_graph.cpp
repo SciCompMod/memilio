@@ -41,7 +41,7 @@ int main(int argc, char** argv)
     auto parameters =
         mio::cli::ParameterSetBuilder()
             .add<"MobilityFile">(
-                mio::base_dir() / "data" / "Germany" / "mobility" / "commuter_mobility_2022.txt",
+                (mio::base_dir() / "data" / "Germany" / "mobility" / "commuter_mobility_2022.txt").string(),
                 {.description = "Create the mobility file with MEmilio Epidata's getCommuterMobility.py file."})
             .build();
 

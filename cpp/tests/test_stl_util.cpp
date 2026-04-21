@@ -156,7 +156,7 @@ TEST(TestPathJoin, joinOne)
 
 std::string native(std::string_view dir)
 {
-    return std::filesystem::path(dir).native();
+    return std::filesystem::path(dir).string();
 }
 
 TEST(TestPathJoin, joinTwoMixedClasses)
