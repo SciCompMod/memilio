@@ -287,14 +287,14 @@ int main()
             auto params = std::vector<mio::osecir::Model<ScalarType>>{};
             params.reserve(results_graph.nodes().size());
             std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
-                           [](auto&& node) {
+                                         [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
 
             auto edges = std::vector<mio::TimeSeries<ScalarType>>{};
             edges.reserve(results_graph.edges().size());
             std::transform(results_graph.edges().begin(), results_graph.edges().end(), std::back_inserter(edges),
-                           [](auto&& edge) {
+                                         [](auto&& edge) {
                                return edge.property.get_mobility_results();
                            });
 
@@ -316,7 +316,7 @@ int main()
         }
         // create directory for results.
         const auto result_dir =
-            mio::create_directories_or_exit(mio::example_results_dir("ode_secir_parameter_study_graph"));
+            mio::create_directories_or_exit(mio::example_results_dir("ode_secir_parameter_study_graph")).string();
 
         auto county_ids          = std::vector<int>{1001, 1002, 1003};
         auto save_results_status = save_results(ensemble_results, ensemble_params, county_ids, result_dir, false);

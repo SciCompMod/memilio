@@ -154,21 +154,26 @@ TEST(TestPathJoin, joinOne)
     EXPECT_EQ(mio::path_join("."), ".");
 }
 
+std::string native(std::string_view dir)
+{
+    return std::filesystem::path(dir).native();
+}
+
 TEST(TestPathJoin, joinTwoMixedClasses)
 {
-    EXPECT_EQ(mio::path_join(".", "dir"), "./dir");
-    EXPECT_EQ(mio::path_join("./", std::string("dir")), "./dir");
-    EXPECT_EQ(mio::path_join(std::string("/"), "dir"), "/dir");
-    EXPECT_EQ(mio::path_join(std::string("."), std::string("dir")), "./dir");
+    EXPECT_EQ(mio::path_join(".", "dir"), native("./dir"));
+    EXPECT_EQ(mio::path_join("./", std::string("dir")), native("./dir"));
+    EXPECT_EQ(mio::path_join(std::string("/"), "dir"), native("/dir"));
+    EXPECT_EQ(mio::path_join(std::string("."), std::string("dir")), native("./dir"));
 }
 
 TEST(TestPathJoin, ignoreEmpty)
 {
-    EXPECT_EQ(mio::path_join(""), "");
-    EXPECT_EQ(mio::path_join("", "dir"), "dir");
-    EXPECT_EQ(mio::path_join("", "", "dir"), "dir");
-    EXPECT_EQ(mio::path_join(".", "", "", "dir"), "./dir");
-    EXPECT_EQ(mio::path_join("./", "", "", "dir"), "./dir");
+    EXPECT_EQ(mio::path_join(""), native(""));
+    EXPECT_EQ(mio::path_join("", "dir"), native("dir"));
+    EXPECT_EQ(mio::path_join("", "", "dir"), native("dir"));
+    EXPECT_EQ(mio::path_join(".", "", "", "dir"), native("./dir"));
+    EXPECT_EQ(mio::path_join("./", "", "", "dir"), native("./dir"));
 }
 
 namespace

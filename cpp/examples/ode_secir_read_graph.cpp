@@ -132,7 +132,7 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Writing Json Files..." << std::flush;
-    auto write_status = mio::write_graph(graph, result_dir / "graph_parameters");
+    auto write_status = mio::write_graph(graph, (result_dir / "graph_parameters").string());
     if (!write_status) {
         std::cout << "\n" << write_status.error().formatted_message();
         return 0;
@@ -141,7 +141,7 @@ int main(int argc, char** argv)
 
     std::cout << "Reading Json Files..." << std::flush;
     auto graph_read_result =
-        mio::read_graph<ScalarType, mio::osecir::Model<ScalarType>>(result_dir / "graph_parameters");
+        mio::read_graph<ScalarType, mio::osecir::Model<ScalarType>>((result_dir / "graph_parameters").string());
 
     if (!graph_read_result) {
         std::cout << "\n" << graph_read_result.error().formatted_message();

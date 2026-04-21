@@ -239,7 +239,7 @@ template <class String, class... Strings>
 std::string path_join(String&& base, Strings&&... app)
 {
     std::filesystem::path p(base);
-    ((p /= app), ...);
+    ((p /= std::filesystem::path(app)), ...);
     return p.string();
 }
 

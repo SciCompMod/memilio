@@ -208,10 +208,10 @@ int main()
         },
         [&result_dir](auto&& sim, auto&& run_idx) {
             auto interpolated_result = mio::interpolate_simulation_result(sim.get_result());
-            std::string outpath      = result_dir / ("abm_minimal_run_" + std::to_string(run_idx) + ".txt");
+            auto outpath             = result_dir / ("abm_minimal_run_" + std::to_string(run_idx) + ".txt");
             std::ofstream outfile_run(outpath);
             sim.get_result().print_table(outfile_run, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4);
-            std::cout << "Results written to " << outpath << std::endl;
+            std::cout << "Results written to " << outpath.string() << std::endl;
             return std::vector{interpolated_result};
         });
 
