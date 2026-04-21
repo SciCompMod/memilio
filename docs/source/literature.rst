@@ -18,11 +18,11 @@
 .. |Hybrid_metapopulation_agent-based_DOI| replace:: DOI:10.1016/j.idm.2024.12.015
 .. _Hybrid_metapopulation_agent-based_DOI: https://doi.org/10.1016/j.idm.2024.12.015
 
-.. |Graph_Neural_Network_Surrogates| replace:: Schmidt A, Zunker H, Heinlein A, Kühn MJ. (2026). *Graph neural network surrogates to leverage mechanistic expert knowledge towards reliable and immediate pandemic response*. *Scientific Reports*. |Graph_Neural_Network_Surrogates_DOI|_
+.. |Graph_Neural_Network_Surrogates| replace:: Schmidt A, Zunker H, Heinlein A, Kühn MJ. (2026). *Graph neural network surrogates to leverage mechanistic expert knowledge towards reliable and immediate pandemic response*. *Scientific Reports* 16, 6361. |Graph_Neural_Network_Surrogates_DOI|_
 .. |Graph_Neural_Network_Surrogates_DOI| replace:: DOI:10.1038/s41598-026-39431-5
 .. _Graph_Neural_Network_Surrogates_DOI: https://doi.org/10.1038/s41598-026-39431-5
 
-.. |Revisiting_the_Linear_Chain| replace:: Plötzke L, Wendler A, Schmieding R, Kühn MJ. (2024). *Revisiting the Linear Chain Trick in epidemiological models: Implications of underlying assumptions for numerical solutions*. Mathematics and Computers in Simulation 239, pp. 823-844 (2026). |Revisiting_the_Linear_Chain_DOI|_
+.. |Revisiting_the_Linear_Chain| replace:: Plötzke L, Wendler A, Schmieding R, Kühn MJ. (2026). *Revisiting the Linear Chain Trick in epidemiological models: Implications of underlying assumptions for numerical solutions*. *Mathematics and Computers in Simulation* 239, pp. 823-844. |Revisiting_the_Linear_Chain_DOI|_
 .. |Revisiting_the_Linear_Chain_DOI| replace:: DOI:10.1016/j.matcom.2025.07.045
 .. _Revisiting_the_Linear_Chain_DOI: https://doi.org/10.1016/j.matcom.2025.07.045
 
@@ -62,6 +62,11 @@
 .. |Coupled_Epidemiological_and_Wastewater_DOI| replace:: DOI:10.1101/2025.09.25.25336633
 .. _Coupled_Epidemiological_and_Wastewater_DOI: https://doi.org/10.1101/2025.09.25.25336633
 
-.. |Missing_Transmission_Chains| replace:: Korf S, Wagner S J, Köster G, Kühn M J (2025). *On the Effect of Missing Transmission Chain Information in Agent-Based Models: Outcomes of Superspreading Events and Workplace Transmission*. arXiv. |Missing_Transmission_Chains_DOI|_
-.. |Missing_Transmission_Chains_DOI| replace:: DOI:10.48550/ARXIV.2512.06189
-.. _Missing_Transmission_Chains_DOI: https://doi.org/10.48550/ARXIV.2512.06189
+.. |Missing_Transmission_Chains| replace:: Korf S, Wagner S J, Köster G, Kühn M J (2026). *On the Effect of Missing Transmission Chain Information in Agent-Based Models: Outcomes of Superspreading Events and Workplace Transmission*. *Chaos, Solitons & Fractals* 208 (2), July 2026, 118179. |Missing_Transmission_Chains_DOI|_
+.. |Missing_Transmission_Chains_DOI| replace:: DOI:10.1016/j.chaos.2026.118179
+.. _Missing_Transmission_Chains_DOI: https://doi.org/10.1016/j.chaos.2026.118179
+
+.. |Traveler_estimation| replace:: Zunker H, Schmieding R, Hasenauer J, Kühn M J (2026). *Efficient numerical computation of traveler states in explicit mobility-based metapopulation models: Mathematical theory and application to epidemics*. arXiv. |Traveler_estimation_DOI|_
+.. |Traveler_estimation_DOI| replace:: DOI:10.1016/10.48550/arXiv.2603.11275
+.. _Traveler_estimation_DOI: https://doi.org/10.48550/arXiv.2603.11275
+

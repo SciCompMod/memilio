@@ -30,6 +30,8 @@ Martin Kühn studied at University of Cologne, Germany, and Université de Montr
    :animate: fade-in-slide-down
 
    * |MEmilio_citation|
+   * |Traveler_estimation|   
+   * |Missing_Transmission_Chains|
    * |Graph_Neural_Network_Surrogates|
    * |A_nonstandard_numerical_scheme|
    * |Revisiting_the_Linear_Chain|
@@ -66,6 +68,7 @@ Henrik Zunker is a PhD student at the Institute of Software Technology at the Ge
    :animate: fade-in-slide-down
 
    * |MEmilio_citation|
+   * |Traveler_estimation|     
    * |Risk-mediated_dynamic_regulation|
    * |Graph_Neural_Network_Surrogates|
    * |Novel_travel_time_aware_metapopulation_models|
@@ -97,9 +100,9 @@ His background is in numerical mathematics, where he studied at the University o
    :animate: fade-in-slide-down
 
    * |MEmilio_citation|
+   * |Missing_Transmission_Chains|
    * |Agent-based_modeling_for|
    * |Integrating_Human_Mobility_Models|
-   * |Missing_Transmission_Chains|
 
 .. dropdown:: Links
    :animate: fade-in-slide-down
@@ -251,6 +254,7 @@ equation-based models.
    :animate: fade-in-slide-down
 
    * |MEmilio_citation|
+   * |Traveler_estimation|
    * |Novel_travel_time_aware_metapopulation_models|
    * |Hybrid_metapopulation_agent-based|
    * |Integrating_Human_Mobility_Models|
@@ -312,6 +316,70 @@ Daniel Abele is a research software engineer at the Institute of Software Techno
    :animate: fade-in-slide-down
 
    * `ORCID Profile: 0000-0001-7021-1573 <https://orcid.org/0000-0001-7021-1573>`__
+
+
+Lena Plötzke
+^^^^^^^^^^^
+
+.. image:: _static/team/max_mustermann.jpg
+   :alt: NAME
+   :width: 150px
+   :align: left
+   :class: developer-photo
+
+**Research Focus:** High-Performance Computing, Mathematical Modeling, Scientific Computing, Linear Chain Trick (LCT), Integro-Differential Equations (IDEs)
+
+Lena Plötzke received her Bachelor's and Master's degrees from the University of Cologne in collaboration with the German Aerospace Center (DLR). Her bachelor's thesis examined models using integro-differential equations and her master's thesis focused on the Linear Chain Trick. She later authored a paper based on this research. Lena worked on the MEmilio software from September 2021 to January 2025.
+
+.. dropdown:: Selected Publications
+   :animate: fade-in-slide-down
+
+   * |MEmilio_citation|
+   * |A_nonstandard_numerical_scheme|
+   * |Revisiting_the_Linear_Chain|
+
+.. dropdown:: Links
+   :animate: fade-in-slide-down
+
+   * `ORCID Profile: 0000-0003-0440-1429 <https://orcid.org/0000-0003-0440-1429>`__
+
+
+
+Khoa Nguyen
+^^^^^^^^^^^
+ 
+.. image:: https://martinkuehn.eu/research/images/khoa.png
+   :alt: Khoa Nguyen
+   :width: 150px
+   :align: left
+   :class: developer-photo
+ 
+**Research Focus:**
+ 
+Agent-Based Modeling, Computational Social Science, Mobility and Energy Transitions, Epidemiological Simulation, Policy-Oriented Simulation, Behavioural Decision Modeling
+
+Khoa Nguyen obtained an MEng in Computing from Imperial College London and a PhD in Computer Science from Utrecht University, with a thesis on behavioural decision-making frameworks for agent-based models. He has held research positions at HES-SO Valais-Wallis, the Helmholtz Centre for Infection Research, and UniSanté in Lausanne, working at the intersection of computational modeling, public policy, and applied AI. His research focuses on the development and application of simulation models to study complex socio-technical systems, particularly in the domains of mobility, energy, infectious disease, and health services. Over the years, he contributed to developing and analyzing models for Swiss mobility demand (BedDeM), epidemic spread based on population mobility (PANDEMOS), and AI-driven digital navigation platforms in healthcare (UniSanté). His work spans multi-agent systems, micro–macro model coupling, and policy-oriented scenario analysis, leveraging agent-based, metapopulation-style, and hybrid approaches alongside modern data and AI pipelines.
+
+ 
+.. dropdown:: Selected Publications
+   :animate: fade-in-slide-down
+
+   * |MEmilio_citation|
+   * |Agent-based_modeling_for|
+   * Nguyen, K. (2023). A Behavioural Decision-Making Framework For Agent-Based Models. PhD thesis, Utrecht University. https://dspace.library.uu.nl/handle/1874/425798.
+   * Nguyen, K., Piana, V., and Schumann, R. (2022). Simulating bounded rationality in decision-making: an agent-based choice modelling of vehicle purchasing. In Conference of the European Social Simulation Association, pages 421–433. Springer. DOI: http://dx.doi.org/10.1007/978-3-031-34920-1_34 
+   * Nguyen, K. and Schumann, R. (2021). An exploratory comparison of behavioural determinants in mobility modal choices. In Ahrweiler, P. and Neumann, M., editors, Advances in Social Simulation, pages 569–581, Cham. Springer International Publishing. DOI: https://doi.org/10.1007/978-3-030-61503-1_54
+   * Nguyen, K. and Schumann, R. (2021). A socio-psychological approach to simulate trust and reputation in modal choices. In Uchiya, T., Bai, Q., and Marsá Maestre, I., editors, PRIMA 2020: Principles and Practice of Multi-Agent Systems, Lecture Notes in Computer Science, pages 39–54, Cham. Springer International Publishing. https://doi.org/10.1007/978-3-030-69322-0_3
+   * Nguyen, K. and Schumann, R. (2020). A socio-psychological modal choice approach to modelling mobility and energy demand for electric vehicles. In Nguyen, K., Roman, R., and Schumann, R., editors, Proceedings of the 9th DACH+ Conference on Energy Informatics, volume 3 of Energy Informatics. Springer. DOI: https://doi.org/10.1186/s42162-020-00123-7
+   * Nguyen, K. and Schumann, R. (2020). On developing a more comprehensive decision-making architecture for empirical social research: Lesson from agent-based simulation of mobility demands in Switzerland. In Paolucci, M., Sichman, J. S., and Verhagen, H., editors, Multi-Agent-Based Simulation XX, volume XX of International Workshop on Multi-Agent Systems and Agent-Based Simulation, pages 39–54, Cham. Springer International Publishing. DOI: https://doi.org/10.1007/978-3-030-60843-9_4
+ 
+ 
+.. dropdown:: Links
+   :animate: fade-in-slide-down
+ 
+   * `Google Scholar Profile <https://scholar.google.com/citations?user=tVkA0eUAAAAJ>`__
+   * `ORCID Profile: 0000-0002-3123-602X <https://orcid.org/0000-0002-3123-602X>`__
+
 
 
 Margrit Klitz
@@ -389,7 +457,33 @@ Paul Johannssen
 Paul Johannssen studied mathematics at the University of Bonn. He worked on the MEmilio project from March 2023 to March 2024 as a working student. In this time, he manually derived and implemented formulas in closed form for the computation of reproduction numbers in the ODE-based SEIR, SECIR, and SECIRVVS models.
 
 
+Vincent Wieland
+^^^^^^^^^^^^^^^^
+
+.. image:: https://martinkuehn.eu/research/images/vincent.png
+   :alt: Vincent Wieland
+   :width: 150px
+   :align: left
+   :class: developer-photo
+
+**Research Focus:** Stochastic Modeling, Bayesian Inference, Clinical Trajectory Analysis, Infectious Disease Modeling
+
+Vincent Wieland is a PhD student at the Center for Mathematical Life Sciences in Bonn since 2023. Vincent holds a B.Sc. and a M.Sc. in Mathematics from the University of Bonn. In his Masters he focused on stochastic analysis and joined the group of Prof. Jan Hasenauer for his Master thesis. After the completion, he continued his education as a PhD student in the group working on stochastic modelling of disease progression and application to clinical data. 
+
+.. dropdown:: Selected Publications
+   :animate: fade-in-slide-down
+
+   * |MEmilio_citation|
+
+.. dropdown:: Links
+   :animate: fade-in-slide-down
+
+   * `Google Scholar Profile <https://scholar.google.com/citations?user=24SwK1EAAAAJ&hl=en&oi=sra>`__
+   * `ORCID Profile: 0009-0003-9592-8871 <https://orcid.org/0009-0003-9592-8871>`__
+
+
 We thank all contributors, who have contributed to MEmilio. For a complete list of contributors, please see our `GitHub Contributors page <https://github.com/SciCompMod/memilio/graphs/contributors>`__.
+
 
 .. _collaboration:
 

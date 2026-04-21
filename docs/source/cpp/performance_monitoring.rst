@@ -23,7 +23,7 @@ Run ``likwid-perfctr ./bin/my_example`` to measure the performance of the entire
 
     LIKWID_MARKER_CLOSE;
 
-Set the CMake variable ``MEMILIO_USE_LIKWID=ON`` to enable LIKWID support and run ``likwid-perfctr -m ./bin/my_example``.
+Set the CMake variable ``MEMILIO_ENABLE_LIKWID_MARKER=ON`` to enable LIKWID support and run ``likwid-perfctr -m ./bin/my_example``.
 For more details see the LIKWID documentation, available `here <https://github.com/RRZE-HPC/likwid/wiki/likwid-perfctr>`_.
 
 
