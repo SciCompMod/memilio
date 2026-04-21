@@ -5,12 +5,52 @@ MEmilio Simulation is a Python interface to the MEmilio C++ library. Using pytho
 
 The package is contained inside the folder `pycode/memilio-simulation <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-simulation>`_.
 
+Installation
+------------
+
+The ``memilio-simulation`` package can be installed in two ways depending on your use case.
+
+**Option 1: Install from PyPI (Recommended - no C++ compiler required)**
+
+Pre-built wheels are provided for Linux and Windows on Python 3.8 to 3.13.
+
+.. code-block:: console
+
+   pip install memilio-simulation
+
+This is the easiest way to get started. No C++ compiler or CMake is needed.
+
+.. note::
+   macOS is currently not supported with pre-built wheels. macOS users must install from source (see Option 2).
+
+**Option 2: Install from source (latest development version, macOS, or contributing)**
+
+If you need the latest unreleased code, want to modify the bindings, or are on macOS, build from source.
+
+Requirements:
+
+* A **C++20 compiler**
+* **CMake** >= 3.18
+* **Ninja** build tool
+* All :doc:`C++ library dependencies <../getting_started>`
+
+Install from the **root of the MEmilio repository** (the directory containing the top-level ``pyproject.toml``):
+
+.. code-block:: console
+
+   pip install -e .[dev]
+
+This is necessary because the C++ build requires access to the ``cpp/`` directory.
+Note that this only installs ``memilio-simulation`` and not any other Python packages.The ``-e`` flag links the installation to your local source code so Python changes are reflected immediately.
+C++ changes require re-running this command to recompile.
+
 Dependencies
 ------------
 
-Required Python packages:
+Required Python packages (installed automatically):
 
-* scikit-build
+* numpy >= 1.22 (not 1.25.*)
+* pandas >= 2.0.0
 
 For a successful build, the development libraries for Python need to be installed, i.e. python3.x-dev. 
 Additionally, as this package builds upon the MEmilio C++ library, 
