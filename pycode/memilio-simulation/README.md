@@ -12,11 +12,9 @@ Pre-built wheels are provided for Linux and Windows on Python 3.8 to 3.13.
 pip install memilio-simulation
 ```
 
-**Note:** macOS is currently not supported with pre-built wheels. macOS users must install from source (see Option 2).
+### Option 2: Install from source (latest code or development)
 
-### Option 2: Install from source (latest code, macOS, or development)
-
-Use this option if you need the latest unreleased code, want to modify the C++ bindings, or use macOS.
+Use this option if you need the latest unreleased code, or want to modify the C++ bindings.
 
 This project is configured via `pyproject.toml`. The following tools must be available on the system:
 

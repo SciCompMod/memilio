@@ -20,12 +20,9 @@ Pre-built wheels are provided for Linux and Windows on Python 3.8 to 3.13.
 
 This is the easiest way to get started. No C++ compiler or CMake is needed.
 
-.. note::
-   macOS is currently not supported with pre-built wheels. macOS users must install from source (see Option 2).
+**Option 2: Install from source (latest development version, or contributing)**
 
-**Option 2: Install from source (latest development version, macOS, or contributing)**
-
-If you need the latest unreleased code, want to modify the bindings, or are on macOS, build from source.
+If you need the latest unreleased code, or want to modify the bindings, build from source.
 
 Requirements:
 

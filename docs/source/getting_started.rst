@@ -146,12 +146,9 @@ If you just want to run simulations with the latest released version, install th
 
 This requires no C++ compiler or CMake. Pre-built wheels are provided for Linux and Windows on Python 3.8 to 3.13.
 
-.. note::
-   macOS is currently not supported with pre-built wheels. macOS users can install from source (see Option A.2 below).
+**Option A.2: Install from source (for the latest development version)**
 
-**Option A.2: Install from source (for the latest development version or macOS)**
-
-If you need the latest (unreleased) code, want to contribute to the package, or are on macOS, you need to build from source.
+If you need the latest (unreleased) code, or want to contribute to the package, you need to build from source.
 This requires a **C++20 compiler** (e.g. GCC or Clang), **CMake** (>= 3.18), and **Ninja**.
 
 .. code-block:: console
