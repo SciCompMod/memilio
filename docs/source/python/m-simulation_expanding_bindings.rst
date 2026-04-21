@@ -16,7 +16,7 @@ For a deeper look at common patterns you may encounter with the C++ MEmilio libr
 Expanding the simulation packages
 ---------------------------------
 
-All bindings are located inside the folder `bindings <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-simulation/memilio/simulation/bindings>`_. The simulation package is defined over modules. A main module `memilio.simulation` contains the general functionalities of the MEmilio library like the TimeSeries class, different integrators, dampings or IO functions. 
+All bindings are located inside the folder `bindings <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-simulation/memilio/simulation/bindings>`_. The simulation package is defined over modules. A main module `memilio.simulation` contains the general functionalities of the MEmilio library like the :code:`TimeSeries` class, different integrators, dampings or IO functions. 
 Additionally, each model is located into its own submodule, where model specific bindings are written. 
 
 Python doesn't provide an interface for templates. Therefore, templated functions or classes need to be defined explicitly for each template argument that should be usable.

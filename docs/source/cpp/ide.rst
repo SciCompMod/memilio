@@ -74,10 +74,10 @@ Parameters can get accessed via ``model.parameters.get<Param<ScalarType>>()`` an
 Initial conditions
 ------------------
 
-The initial conditions consist of a **TimeSeries** that contains the flows per time step for some time interval before 
+The initial conditions consist of a time series that contains the flows per time step for some time interval before 
 the simulation start. The length of this time interval depends on the chosen transition distributions and takes into 
 account how long there is a relevant fraction of individuals remaining in the compartments. For more information, see 
-the documentation of **StateAgeFunction**. Note that the last time point of the initial **TimeSeries** determines the 
+the documentation of ``StateAgeFunction``. Note that the last time point of the initial time series determines the 
 start time of the simulation. 
 
 
@@ -117,9 +117,9 @@ uses a nonstandard numerical scheme to solve the IDEs that is implemented in MEm
 Output
 ------
 
-The output of the **Simulation** ``sim`` is a ``TimeSeries`` containing the sizes of each compartment at each time point 
-and a ``TimeSeries`` containing the flows within a time step for each time point. A simple table can be printed using the 
-``print_table()`` function of the ``TimeSeries`` class. The compartment sizes can be printed with 
+The output of the simulation ``sim`` is a :code:`mio::TimeSeries` containing the sizes of each compartment at each time point 
+and a :code:`mio::TimeSeries` containing the flows within a time step for each time point. A simple table can be printed using the 
+``print_table()`` function of the :code:`mio::TimeSeries` class. The compartment sizes can be printed with 
 ``sim.get_result().print_table()`` and the flows with ``sim.get_transitions().print_table()``. 
 As the time step may be small it may be useful to obtain outputs on days or user-defined time points. You can interpolate 
 the results to days or any other series of times points with ``mio::interpolate_simulation_result()``.

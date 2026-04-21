@@ -305,7 +305,7 @@ until :math:`t_{\max}`, which is done as follows.
 Output
 ------
 
-The output of the simulation are two `TimeSeries` objects, one containing the size of the compartments at all time 
+The output of the simulation are two :code:`TimeSeries` objects, one containing the size of the compartments at all time 
 points and one containing the number of transitions within a time step. You can access the results as follows:
 
 .. code-block:: cpp
@@ -318,7 +318,7 @@ points and one containing the number of transitions within a time step. You can 
 
 The order of the compartments and transitions follows the definition in the **InfectionState** and **InfectionTransition** enums, respectively.
 
-You can access the data in the `TimeSeries` objects as follows:
+You can access the data in the :code:`TimeSeries` objects as follows:
 
 .. code-block:: cpp
 

@@ -125,7 +125,7 @@ The values of the remaining compartments :math:`E`, :math:`I` and :math:`R` are 
 Output
 ------
 
-The output of the simulationis a `TimeSeries` object containing the size of the compartments at all time 
+The output of the simulationis a :code:`TimeSeries` object containing the size of the compartments at all time 
 points. You can access the results as follows:
 
 .. code-block:: cpp
