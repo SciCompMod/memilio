@@ -71,7 +71,7 @@ An additional overview on MEmilio's elementary model structure is given by the f
    :alt: Overview on MEmilio's model structure.
    :width: 100%
 
-MEmilio benefits from a harmonized description of its models in infection states and parameters, and, potentially, a list of flows between the compartments; see the following figure for a motivation. All models derive their infection states from a flexible and simple list of InfectionStates. For FlowModels (see below for an explanation), particular transitions are defined evenly flexible as a list of flows between the states. Parameters are also generally defined in an identical fashion. 
+MEmilio benefits from a harmonized description of its models in infection states and parameters, and, potentially, a list of flows between the compartments; see the following figure for a motivation. All models derive their infection states from a flexible and simple list of :code:`InfectionStates`. For :code:`FlowModels` (see below for an explanation), particular transitions are defined evenly flexible as a list of flows between the states. Parameters are also generally defined in an identical fashion. 
 
 .. image:: http://martinkuehn.eu/research/images/uniform.png
    :alt: MEmilio's uniform model description.
