@@ -19,6 +19,7 @@
 */
 #include "memilio/utils/stl_util.h"
 #include "memilio/utils/compiler_diagnostics.h"
+#include <filesystem>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -156,7 +157,7 @@ TEST(TestPathJoin, joinOne)
 
 std::string native(std::string_view dir)
 {
-    return std::filesystem::path(dir).string();
+    return std::filesystem::path(dir, std::filesystem::path::format::generic_format).string();
 }
 
 TEST(TestPathJoin, joinTwoMixedClasses)
