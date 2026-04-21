@@ -23,7 +23,7 @@ The infection states and the transitions are visualized in the following image.
 Infection States 
 ----------------
 
-The model contains the following list of **InfectionState**\s:
+The model contains the following list of :code:`InfectionState`\s:
 
 .. code-block:: RST
 
@@ -43,7 +43,7 @@ Sociodemographic Stratification
 -------------------------------
 
 In the ODE-SIR model, the population can be stratified by one sociodemographic dimension. This dimension is denoted 
-**AgeGroup** but can also be used for other interpretations. For stratification with two or more dimensions, see 
+:code:`AgeGroup` but can also be used for other interpretations. For stratification with two or more dimensions, see 
 :doc:`Model Creation <../ode_creation>`.
 
 The number of age groups is specified in the model constructor and the model can be initialized with:
@@ -82,8 +82,8 @@ The model implements the following parameters.
 Initial conditions
 ------------------
 
-The initial conditions of the model are defined by the class **Populations** which defines the number of individuals in
-each sociodemographic group and **InfectionState**. Before running a simulation, you need to set the initial values for
+The initial conditions of the model are defined by the class :code:`Populations` which defines the number of individuals in
+each sociodemographic group and :code:`InfectionState`. Before running a simulation, you need to set the initial values for
 each compartment:
 
 .. code-block:: cpp

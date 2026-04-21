@@ -60,7 +60,7 @@ due to extensive isolation of the hospitalized individuals.
 Infection States
 ----------------
 
-The model contains the following list of **InfectionState**\s:
+The model contains the following list of :code:`InfectionState`\s:
 
 .. code-block:: RST
 

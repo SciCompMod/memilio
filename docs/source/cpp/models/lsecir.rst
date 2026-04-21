@@ -27,7 +27,7 @@ For a detailed description and application of the model, see:
 Infection States
 ----------------
 
-The model contains the following list of **InfectionState**\s:
+The model contains the following list of :code:`InfectionState`\s:
 
 .. code-block:: RST
 

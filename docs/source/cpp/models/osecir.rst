@@ -19,7 +19,7 @@ The infection states and the transitions (also see next two sections) are visual
 Infection States
 ----------------
 
-The model contains the following list of **InfectionState**\s:
+The model contains the following list of :code:`InfectionState`\s:
 
 .. code-block:: RST
 
@@ -67,7 +67,7 @@ Sociodemographic Stratification
 -------------------------------
 
 In the ODE-SECIR model, the population can be stratified by one sociodemographic dimension. This dimension is denoted 
-**AgeGroup** but can also be used for other interpretations. For stratifications with two or more dimensions, 
+:code:`AgeGroup` but can also be used for other interpretations. For stratifications with two or more dimensions, 
 see :doc:`Model Creation <../ode_creation>`.
 
 
@@ -137,7 +137,7 @@ The model implements the following parameters:
 Initial conditions
 ------------------
 
-The initial conditions of the model are represented by the class **Populations** which defines the number of individuals in each sociodemographic group and **InfectionState**. Before running a simulation, you need to set the initial values for each compartment:
+The initial conditions of the model are represented by the class :code:`Populations` which defines the number of individuals in each sociodemographic group and :code:`InfectionState`. Before running a simulation, you need to set the initial values for each compartment:
 
 .. code-block:: cpp
 
@@ -259,7 +259,7 @@ A complex lockdown scenario with multiple interventions starting on a specific d
     contact_dampings.push_back(social_events(start_lockdown, 0.6, 0.8));
     contact_dampings.push_back(physical_distancing(start_lockdown, 0.4, 0.6));
 
-A more advanced structure to automatically activate interventions based on threshold criteria is given by **DynamicNPIs**.
+A more advanced structure to automatically activate interventions based on threshold criteria is given by :code:`DynamicNPIs`.
 Dynamic NPIs can be configured to trigger when the number of symptomatic infected individuals exceeds a certain relative threshold in the population. 
 In contrast to static NPIs which are active as long as no other NPI gets implemented, dynamic NPIs are checked at regular intervals and get 
 activated for a defined duration when the threshold is exceeded. As above, different dampings `contact_dampings` can be assigned to different contact locations

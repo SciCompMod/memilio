@@ -65,7 +65,7 @@ The following features are the most important not supported features:
     - The ``^`` operator for exponentiation in functions. This will produce errors during compilation of the generated code, but can then be changed manually.
 
 As in an SBML file all species have to be given separately, it is unfortunately also not possible to automatically use 
-the **Population** in MEmilio to stratify the population into different compartments.
+the :code:`Population` in MEmilio to stratify the population into different compartments.
 
 In general: Please check your models after the conversion to ensure that everything is working as expected.
 

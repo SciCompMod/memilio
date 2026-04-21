@@ -21,7 +21,7 @@ The infection states and the transitions are visualized in the following graph.
 Infection States
 ----------------
 
-The model contains the following list of **InfectionState**\s:
+The model contains the following list of :code:`InfectionState`\s:
 
 .. code-block:: RST
 
@@ -48,7 +48,7 @@ Sociodemographic Stratification
 -------------------------------
 
 In the ODE-SEIR model, the population can be stratified by one sociodemographic dimension. This dimension is denoted
-**AgeGroup** but can also be used for other interpretations. For stratifications with two or more dimensions, see
+:code:`AgeGroup` but can also be used for other interpretations. For stratifications with two or more dimensions, see
 :doc:`Model Creation <../ode_creation>`.
 
 The number of age groups is specified in the model constructor and the model can be initialized with
@@ -90,8 +90,8 @@ The model implements the following parameters:
 Initial Conditions
 ------------------
 
-The initial conditions of the model are defined by the class **Populations** which defines the number of individuals in
-each sociodemographic group and **InfectionState**. Before running a simulation, you need to set the initial values for
+The initial conditions of the model are defined by the class :code:`Populations` which defines the number of individuals in
+each sociodemographic group and :code:`InfectionState`. Before running a simulation, you need to set the initial values for
 each compartment:
 
 .. code-block:: cpp
@@ -190,7 +190,7 @@ For both simulation types, you can also specify a custom integrator:
 Output
 ------
 
-The output of the **Simulation** is a ``mio::TimeSeries`` containing the sizes of each compartment at each time point. For A
+The output of the :code:`Simulation` is a ``mio::TimeSeries`` containing the sizes of each compartment at each time point. For A
 standard simulation, you can access the results as follows:
 
 .. code-block:: cpp

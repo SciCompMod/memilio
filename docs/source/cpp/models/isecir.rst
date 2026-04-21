@@ -26,7 +26,7 @@ A detailed investigation of the IDE-SECIR model and numerical experiments can be
 Infection States
 ----------------
 
-The model contains the following list of **InfectionState**\s:
+The model contains the following list of :code:`InfectionState`\s:
 
 .. code-block:: RST
 
@@ -42,7 +42,7 @@ The model contains the following list of **InfectionState**\s:
 Infection State Transitions
 ---------------------------
 
-The possible transitions between the **InfectionState**\s are:
+The possible transitions between the :code:`InfectionState`\s are:
 
 .. code-block:: RST
   
@@ -62,7 +62,7 @@ Sociodemographic Stratification
 -------------------------------
 
 In the IDE-SECIR model, the population can be stratified by one sociodemographic dimension. This dimension is denoted 
-**AgeGroup** but can also be used for other interpretations. 
+:code:`AgeGroup` but can also be used for other interpretations. 
 
 
 Parameters
@@ -291,7 +291,7 @@ Before the simulation, we check if all constraints of the model are satisfied so
     model.check_constraints(dt);
 
 To simulate the model from :math:`t_0` (that is determined by the initial flows provided to the constructor) to 
-:math:`t_{\max}` with given step size :math:`dt`, a object of the **Simulation** class has to be created and advanced 
+:math:`t_{\max}` with given step size :math:`dt`, a object of the :code:`Simulation` class has to be created and advanced 
 until :math:`t_{\max}`, which is done as follows.
 
 .. code-block:: cpp
@@ -316,7 +316,7 @@ points and one containing the number of transitions within a time step. You can 
     // Access transitions between compartments.
     auto transitions = sim.get_transitions();
 
-The order of the compartments and transitions follows the definition in the **InfectionState** and **InfectionTransition** enums, respectively.
+The order of the compartments and transitions follows the definition in the :code:`InfectionState` and :code:`InfectionTransition` enums, respectively.
 
 You can access the data in the :code:`TimeSeries` objects as follows:
 

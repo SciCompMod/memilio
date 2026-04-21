@@ -19,7 +19,7 @@ Bachelor's thesis, University of Cologne. `https://elib.dlr.de/143504/ <https://
 Infection States
 ----------------
 
-The model contains the following list of **InfectionState**\s:
+The model contains the following list of :code:`InfectionState`\s:
 
 .. code-block:: RST
 
