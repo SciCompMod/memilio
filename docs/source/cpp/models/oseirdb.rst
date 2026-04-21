@@ -28,7 +28,7 @@ The model contains the following list of **InfectionState**\s:
 Infection State Transitions
 ---------------------------
 
-The ODE-SEIRDB model is implemented as a **FlowModel**, which defines the derivatives of each flow between compartments.
+The ODE-SEIRDB model is implemented as a :code:`FlowModel`, which defines the derivatives of each flow between compartments.
 This allows for explicit computation of new transmissions, infections, recoveries, deaths, and burials. Additionally,
 the aggregated compartment values can be computed with minimal overhead. The defined transitions `FromState, ToState` are:
 

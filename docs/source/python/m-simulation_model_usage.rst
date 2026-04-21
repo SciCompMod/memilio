@@ -251,7 +251,7 @@ Additional resources
 ---------------------
 
 Further examples are provided at `examples/simulation <https://github.com/SciCompMod/memilio/blob/main/pycode/examples/simulation/>`_. 
-They include the usage of a FlowModel, introducing a graph model for regional differences or parameter studies for simulating under uncertainty.
+They include the usage of a :code:`FlowModel`, introducing a graph model for regional differences or parameter studies for simulating under uncertainty.
 
 
 

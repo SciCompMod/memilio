@@ -16,11 +16,11 @@ Simulation
 ----------
 
 Once the model is set up, one can run a simple simulation from time ``t0`` to ``tmax`` with an initial step size ``dt``
-using the ``mio::simulate_stochastic()`` function. This will run a simulation of type **StochasticSimulation** that
+using the ``mio::simulate_stochastic()`` function. This will run a simulation of type :code:`StochasticSimulation` that
 saves the sizes of each compartment over time.
 The simulation uses an Euler-Maruyama scheme by default, so the step size does not change over time.
 
-Flow information cannot be obtained even when the **StochasticModel** is defined using a **FlowModel**, as the
+Flow information cannot be obtained even when the :code:`StochasticModel` is defined using a :code:`FlowModel`, as the
 integrator may need to rescale results with respect to compartments to avoid negative values.
 
 List of models
