@@ -53,6 +53,7 @@ The possible transitions between the **InfectionState**\s are:
     `InfectedSymptomsToInfectedSevere`
     `InfectedSymptomsToRecovered`
     `InfectedSevereToInfectedCritical`
+    `InfectedSevereToDead`
     `InfectedSevereToRecovered`
     `InfectedCriticalToDead`
     `InfectedCriticalToRecovered`
@@ -153,6 +154,7 @@ Then we can define the initial flows as follows.
     vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 1.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 4.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 1.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToDead]                 = 0.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;
