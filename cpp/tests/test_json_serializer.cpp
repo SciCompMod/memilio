@@ -196,6 +196,13 @@ TEST(TestJsonSerializer, string)
     check_serialization_of_basic_type(std::string("Hello, World!"));
 }
 
+TEST(TestJsonSerializer, path)
+{
+    check_serialization_of_basic_type(std::filesystem::path());
+    check_serialization_of_basic_type(std::filesystem::path("Hello/World"));
+    check_serialization_of_basic_type(std::filesystem::path("Hello\\World"));
+}
+
 namespace jsontest
 {
 enum class E : int

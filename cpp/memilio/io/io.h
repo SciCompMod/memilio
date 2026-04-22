@@ -618,8 +618,7 @@ IOResult<Tup<T...>> deserialize_internal(IOContext& io, Tag<Tup<T...>> tag)
 template <class IOContext>
 void serialize_internal(IOContext& io, const std::filesystem::path& path)
 {
-    auto obj = io.create_object("Path");
-    obj.add_element("path", path.string());
+    serialize_internal(io, path.generic_string());
 }
 
 /**
@@ -632,15 +631,13 @@ void serialize_internal(IOContext& io, const std::filesystem::path& path)
 template <class IOContext>
 IOResult<std::filesystem::path> deserialize_internal(IOContext& io, Tag<std::filesystem::path>)
 {
-    auto obj = io.expect_object("Path");
-    auto str = obj.expect_element("path", Tag<std::string>{});
-
-    return apply(
-        io,
-        [](auto&& str_) {
-            return std::filesystem::path(str_);
-        },
-        str);
+    auto result = deserialize_internal(io, Tag<std::string>{});
+    if (result) {
+        return success(result.value());
+    }
+    else {
+        return failure(result.error());
+    }
 }
 
 /**
