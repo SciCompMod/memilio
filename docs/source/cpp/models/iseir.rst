@@ -141,7 +141,7 @@ points. You can access the results as follows:
     Eigen::VectorX last_value = result.get_last_value();
     ScalarType last_time = result.get_last_time();
 
-The order of the compartments follows the definition in the `InfectionState` enum.
+The order of the compartments follows the definition in the ``InfectionState`` enum.
 
 You can print the simulation results as a formatted table:
 

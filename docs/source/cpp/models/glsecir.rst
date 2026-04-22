@@ -420,13 +420,13 @@ You can also specify a custom integrator:
 Output
 ------
 
-The simulation result is divided by subcompartments. The function ``calculate_compartments()`` aggregates the subcompartments by `InfectionState`\s .
+The simulation result is divided by subcompartments. The function ``calculate_compartments()`` aggregates the subcompartments by infection states .
 
 .. code-block:: cpp
 
     mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_compartments(result);
 
-You can access the data in the `mio::TimeSeries` object as follows:
+You can access the data in the ``TimeSeries`` object as follows:
 
 .. code-block:: cpp
 

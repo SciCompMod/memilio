@@ -402,7 +402,7 @@ You can print the simulation results as a formatted table:
     std::vector<std::string> labels = {"S_naive", ... };
     result.print_table(std::cout, labels);
 
-The order of the compartments is as defined in the `InfectionState` enum.
+The order of the compartments is as defined in the ``InfectionState`` enum.
 
 Additionally, you can export the results to a CSV file for further analysis or visualization:
 

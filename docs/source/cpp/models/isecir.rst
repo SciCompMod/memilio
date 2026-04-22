@@ -184,13 +184,13 @@ There are different options for initializing a fictional scenario. Regardless of
 
     In that case, we have three possible options for initializing:
 
-        - You can set the number of people in the `Susceptible` compartment at time :math:`t_0` via `populations`. Initial values of the other compartments are derived in the model before starting the simulation.
+        - You can set the number of people in the `Susceptible` compartment at time :math:`t_0` via ``populations``. Initial values of the other compartments are derived in the model before starting the simulation.
 
         .. code-block:: cpp
 
             model.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000.;
 
-        - You can set the number of people in the `Recovered` compartment at time :math:`t_0` via `populations`. Initial values of the other compartments are derived in the model before starting the simulation.
+        - You can set the number of people in the `Recovered` compartment at time :math:`t_0` via ``populations``. Initial values of the other compartments are derived in the model before starting the simulation.
 
         .. code-block:: cpp
 

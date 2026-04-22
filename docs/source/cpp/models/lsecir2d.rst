@@ -304,7 +304,7 @@ that contains a vector with initial values for the respective subcompartments.
         {0},    {0},     {100},       {0, 0},    {0, 0},    {0, 0},     {0},       {0}};
 
     
-We assert that the vector has the correct size by checking that the number of `InfectionState`\s and the numbers of subcompartments are correct.
+We assert that the vector has the correct size by checking that the number of infection states and the numbers of subcompartments are correct.
 
 .. code-block:: cpp
 
@@ -402,7 +402,7 @@ We can simulate the model from :math:`t_0` to :math:`t_{\max}` with initial step
 Output
 ------
 
-The simulation result is stratefied by subcompartments. The function ``calculate_compartments()`` aggregates the subcompartments by `InfectionState`\s.
+The simulation result is stratefied by subcompartments. The function ``calculate_compartments()`` aggregates the subcompartments by infection states.
 
 .. code-block:: cpp
 

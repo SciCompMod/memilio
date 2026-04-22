@@ -384,7 +384,7 @@ You can print the simulation results as a formatted table:
     // Print results to console with default formatting
     result.print_table();
 
-The order of the compartments follows the definition in the `InfectionState` enum.
+The order of the compartments follows the definition in the ``InfectionState`` enum.
 
 Additionally, you can export the results to a CSV file for further analysis or visualization:
 

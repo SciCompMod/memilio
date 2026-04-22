@@ -149,7 +149,7 @@ We start with constructing a vector ``initial_populations`` that we will pass on
         std::vector<std::vector<ScalarType>> initial_populations = {{750}, {30, 20},          {20, 10, 10}, {50},
                                                                     {50},  {10, 10, 5, 3, 2}, {20},         {10}};
 
-We assert that the vector has the correct size by checking that the number of `InfectionState`\s and the numbers of subcompartments are correct.
+We assert that the vector has the correct size by checking that the number of infection states and the numbers of subcompartments are correct.
 
 .. code-block:: cpp
 
@@ -301,7 +301,7 @@ You can also specify a custom integrator:
 Output
 ------
 
-The simulation result is stratefied by subcompartments. The function ``calculate_compartments()`` aggregates the subcompartments by `InfectionState`\s.
+The simulation result is stratefied by subcompartments. The function ``calculate_compartments()`` aggregates the subcompartments by infection states.
 
 .. code-block:: cpp
 
