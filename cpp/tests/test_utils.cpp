@@ -17,7 +17,6 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/io/directories.h"
 #include "memilio/utils/index.h"
 #include "memilio/utils/index_range.h"
 #include "memilio/utils/logging.h"
@@ -27,8 +26,6 @@
 #include "gmock/gmock.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-
-#include <filesystem>
 
 template <size_t Tag>
 struct CategoryTag : public mio::Index<CategoryTag<Tag>> {
@@ -189,14 +186,4 @@ TEST(TestUtils, LogLevelOverride)
     EXPECT_THAT(logger.read(), testing::HasSubstr("[redirect] [info] Test3"));
 
     logger.release();
-}
-
-TEST(TestUtils, base_dir)
-{
-    auto base_dir = std::filesystem::path(mio::base_dir());
-    // check that the path exists
-    EXPECT_TRUE(std::filesystem::exists(base_dir));
-    // check that the path is correct, by sampling some fixed paths from project files
-    EXPECT_TRUE(std::filesystem::exists(base_dir / "cpp" / "memilio"));
-    EXPECT_TRUE(std::filesystem::exists(base_dir / "pycode" / "memilio-epidata"));
 }

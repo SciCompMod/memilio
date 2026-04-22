@@ -60,7 +60,7 @@ public:
     std::string get_unique_path(const std::string& model = "%%%%-%%%%-%%%%-%%%%")
     {
         // this is an in-place replacement for boost::filesystem::unique_path, as it was removed from std::filesystem
-        // due to security concerns: https://wg21.cmeerw.net/lwg/issue2633
+        // due to (unfixable) security concerns: https://wg21.cmeerw.net/lwg/issue2633
         // as this storage is used for testing only, the paths created here should not pose any security risks
         const auto random_char = []() {
             static constexpr mio::StringLiteral char_table{"0123456789"
@@ -70,13 +70,12 @@ public:
             static mio::RandomNumberGenerator rng;
             return char_table.data()[rng() % char_table.size()];
         };
-        std::string random_path = model;
-        for (char& c : random_path) {
+        std::string random_name = model;
+        for (char& c : random_name) {
             if (c == '%')
                 c = random_char();
         }
-        auto tmp_path  = get_tmp_path();
-        auto file_path = tmp_path / random_path;
+        auto file_path = get_tmp_path() / std::filesystem::path(random_name);
         m_files.push_back(file_path);
         return file_path.string();
     }
