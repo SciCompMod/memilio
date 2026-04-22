@@ -28,7 +28,7 @@ The following table lists the dependencies that are used. Most of them are requi
 
 | Library | Version  | Required | Bundled               | Notes |
 |---------|----------|----------|-----------------------|-------|
-| spdlog  | 1.15.0   | Yes      | Yes (git repo)        | https://github.com/gabime/spdlog |
+| spdlog  | 1.17.0   | Yes      | Yes (git repo)        | https://github.com/gabime/spdlog |
 | Eigen   | 3.4.0    | Yes      | Yes (git repo)        | http://gitlab.com/libeigen/eigen |
 | Boost   | 1.84.0   | Yes      | Yes (git repo)        | https://github.com/boostorg/boost |
 | JsonCpp | 1.9.6    | No       | Yes (git repo)        | https://github.com/open-source-parsers/jsoncpp |
