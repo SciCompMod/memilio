@@ -112,7 +112,7 @@ Before advancing the simulation until `tmax`, a switching condition has to be de
     double tmax = 30.;
     hybrid_sim.advance(tmax, condition);
 
-The result ``mio::TimeSeries`` objects of the two models used (which are returned by the above defined result functions) can be accessed and printed via
+The result ``TimeSeries`` objects of the two models used (which are returned by the above defined result functions) can be accessed and printed via
 
 .. code-block:: cpp
 
@@ -123,7 +123,7 @@ The result ``mio::TimeSeries`` objects of the two models used (which are returne
     ts_abm.print_table({"S", "E", "Ins", "Isy", "Isev", "Icri", "R", "D"});
     ts_ode.print_table({"S", "E", "Ins", "Ins_confirmed", "Isy", "Isy_confirmed", "Isev", "Icri", "R", "D"});
 
-Additionally, the individual results of the models can be merged to one joint ``mio::TimeSeries``:
+Additionally, the individual results of the models can be merged to one joint ``TimeSeries``:
 
 .. code-block:: cpp
 

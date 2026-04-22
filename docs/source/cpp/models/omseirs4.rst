@@ -131,7 +131,7 @@ Run a standard simulation via:
 Output
 ------
 
-The output is a ``mio::TimeSeries`` of compartment sizes over time. Use ``print_table`` or export to CSV as needed.
+The output is a ``TimeSeries`` of compartment sizes over time. Use ``print_table`` or export to CSV as needed.
 
 Notes
 -----

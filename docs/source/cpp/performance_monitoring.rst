@@ -36,11 +36,11 @@ Here we present MEmilio's own timing framework.
 Timer usage
 ~~~~~~~~~~~
 
-In this section we present how to use the AutoTimer class. This is the preferred way of using the timing framework, as
+In this section we present how to use the ``AutoTimer`` class. This is the preferred way of using the timing framework, as
 the class takes care of running the timer, managing its lifetime for later evaluation, and ensuring thread safety with
-OpenMP. The AutoTimer class uses some other classes that are listed and explained in :ref:`Classes and their responsibilities`.
+OpenMP. The ``AutoTimer`` class uses some other classes that are listed and explained in :ref:`Classes and their responsibilities`.
 
-An AutoTimer starts when it is created, and stops when it is destroyed - which usually happens at the next closing
+An ``AutoTimer`` starts when it is created, and stops when it is destroyed - which usually happens at the next closing
 bracket :code:`}` or the next :code:`return`. This design, automating the starting and stopping of a timer, is
 intentionally limiting, because it helps to avoid several issues or mistakes that can arise when manually running
 timers. 
@@ -84,7 +84,7 @@ Timing in the library
 ^^^^^^^^^^^^^^^^^^^^^
 
 Adding timers in the library is not much different to adding timers in main, but avoiding name collisions can be more
-difficult. Hence, we use the optional second template argument of AutoTimer to specify its scope, as shown in the
+difficult. Hence, we use the optional second template argument of ``AutoTimer`` to specify its scope, as shown in the
 following examples.
 
 To measure the time a class member function takes, add a timer like this:
@@ -121,7 +121,7 @@ Or, when timing a free function:
 
     } // namespace foo
 
-The first string given to AutoTimer is the timer's name, the second the scope it is in. They are used in combination
+The first string given to ``AutoTimer`` is the timer's name, the second the scope it is in. They are used in combination
 to identify the timer, similar to a map key, so they must be unique. This can be effectively guaranteed, if the name
 matches the function and the scope contains all enclosing namespaces, like in the examples above.
 
@@ -143,9 +143,9 @@ General recommendations
 
 - **Time entire functions.**
   Adding scopes for timing parts of main is fine, but you should avoid segmenting functions, either with scopes for
-  AutoTimer or with manually run timers. The reason for this is related less to timers and more to code design, because
+  ``AutoTimer`` or with manually run timers. The reason for this is related less to timers and more to code design, because
   if you can segment the function into multiple distinct parts, it is probably doing too many things, and should be
-  separated into smaller functions. Also, adding scope (and thus indents) for AutoTimer does make code slightly harder
+  separated into smaller functions. Also, adding scope (and thus indents) for ``AutoTimer`` does make code slightly harder
   to read.
 
 
@@ -157,8 +157,8 @@ without having to plan around them. This means that accessing, starting and stop
 possible, while the interfaces of the classes or functions that are to be timed should not change. Additionally, the
 timer should work in parallel environments.
 
-The solution to this is AutoTimer, whose usage was already shown above. There are, of course, some drawbacks. For
-example, NamedTimer (the class used by AutoTimer) cannot be instantiated dynamically, as their name (and scope) have to
+The solution to this is ``AutoTimer``, whose usage was already shown above. There are, of course, some drawbacks. For
+example, ``NamedTimer`` (the class used by ``AutoTimer``) cannot be instantiated dynamically, as their name (and scope) have to
 be known at compile time. This also means that adding a lot of timers will impact the time it takes to compile the code,
 though a couple hundred timers should only take around an additional second.
 
@@ -170,46 +170,46 @@ In this section, we describe the main components of the timing framework and how
 specific component, view its API documentation. 
 
 - **BasicTimer**:
-  The foundation of the timing framework. BasicTimer is a very simple class, that defines the methods start, stop,
+  The foundation of the timing framework. ``BasicTimer`` is a very simple class, that defines the methods start, stop,
   reset, and get_elapsed_time. These are used by all other classes in this framework. It uses a wall clock, so if compute
   resources are shared with other tasks, the timing results may be higher than expected. In debug builds, it will log
   errors whenever a member function was used incorrectly, e.g. when start was called twice.
 
 - **TimerRegistration**:
   This simple struct is used to keep track of timers and some additional information, but does not manage their storage.
-  It consists of two strings for name and scope, a reference to a BasicTimer, and a thread id. The thread id specifies
+  It consists of two strings for name and scope, a reference to a ``BasicTimer``, and a thread id. The thread id specifies
   which thread the timer is used in, which could differ from the thread it is created by.
 
 - **Printer**:
-  A pure virtual class defining a print method to evaluate and output timing results via a list of TimerRegistrations.
-  Implemented by TablePrinter and ListPrinter.
+  A pure virtual class defining a print method to evaluate and output timing results via a list of ``TimerRegistration``s.
+  Implemented by ``TablePrinter`` and ``ListPrinter``.
 
 - **TimerRegistrar**:
-  Keeps track of timers via a list of TimerRegistrations, and holds a Printer that can be used to display all
-  registered timers after the end of main. Timers can be registered by passing a TimerRegistration to its add_timer
+  Keeps track of timers via a list of ``TimerRegistration``s, and holds a ``Printer`` that can be used to display all
+  registered timers after the end of main. Timers can be registered by passing a ``TimerRegistration`` to its add_timer
   method. Uses a singleton pattern to provide global access to the same object, that is, the only way to obtain a
   TimerRegistrar object is by using its get_instance method, which returns a reference to a static object. Importantly,
   this class does not manage or own timer objects, and there is intentionally no methods that retrieve or delete
-  TimerRegistrations.
+  ``TimerRegistration``s.
 
 - **NamedTimer**:
-  Inherits from BasicTimer, with the main purpose of managing the lifetime, access, and registration of a timer.
+  Inherits from ``BasicTimer``, with the main purpose of managing the lifetime, access, and registration of a timer.
   This is done using a singleton pattern, similar to TimerRegistrar, but the reference returned by get_instance is
-  thread_local as well as static. The template parameters Name and Scope allow using more than one NamedTimer, since
+  thread_local as well as static. The template parameters Name and Scope allow using more than one ``NamedTimer``, since
   different template arguments define a different type. This effectively creates a global compile-time map, mapping a
-  Name and Scope to a BasicTimer. Additionally, the NamedTimer registers itself automatically, and will only be
+  Name and Scope to a ``BasicTimer``. Additionally, the ``NamedTimer`` registers itself automatically, and will only be
   destroyed after the TimerRegistrar.
 
 - **AutoTimer**:
   Automates running an existing timer, by calling start in its constructor, and stop in its destructor. The timer used
-  can be either specified via the Name and Scope template, fetching the corresponding NamedTimer internally, or by
-  passing an lvalue reference to a BasicTimer.
+  can be either specified via the Name and Scope template, fetching the corresponding ``NamedTimer`` internally, or by
+  passing an lvalue reference to a ``BasicTimer``.
 
-Using NamedTimer and BasicTimer
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Using ``NamedTimer`` and ``BasicTimer``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Preferably, you should use AutoTimer where possible, as its limiting design helps to avoid common errors, for example
-with parallel regions. But, if you have to, you can use a NamedTimer directly without any extra work:
+Preferably, you should use ``AutoTimer`` where possible, as its limiting design helps to avoid common errors, for example
+with parallel regions. But, if you have to, you can use a ``NamedTimer`` directly without any extra work:
 
 .. code-block:: cpp
 
@@ -229,11 +229,11 @@ with parallel regions. But, if you have to, you can use a NamedTimer directly wi
     
     } // namespace foo
 
-This will behave exactly like the AutoTimer in the example above, while also allowing you to use the reset or
-get_elapsed_time methods defined by BasicTimer.
+This will behave exactly like the ``AutoTimer`` in the example above, while also allowing you to use the reset or
+get_elapsed_time methods defined by ``BasicTimer``.
 
-Last but not least, you can also use a BasicTimer directly. This means that you will have to manually take care of
-the timer object, threading and evaluation. If you add such a BasicTimer to the TimerRegistrar, you will probably need
+Last but not least, you can also use a ``BasicTimer`` directly. This means that you will have to manually take care of
+the timer object, threading and evaluation. If you add such a ``BasicTimer`` to the TimerRegistrar, you will probably need
 to disable the final timer summary, and call print manually. Of course, you can also make your own list of registrations
 and use a Printer directly.
 

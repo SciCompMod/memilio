@@ -189,7 +189,7 @@ Flow simulation (when explicit flows are required):
 Output
 ------
 
-The result of a standard simulation is a ``mio::TimeSeries``:
+The result of a standard simulation is a ``TimeSeries``:
 
 .. code-block:: cpp
 

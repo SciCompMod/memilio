@@ -100,7 +100,7 @@ Output
 The output of the ``Simulation`` is a ``TimeSeries`` containing the sizes of each subcompartment at each time point. 
 To obtain a result with respect to the compartments, the subcompartments can be accumulated via the function 
 ``calculate_compartments()``. A simple table can be printed using the ``print_table()`` function of the 
-``mio::TimeSeries`` class. The compartment sizes can be printed with ``model.calculate_compartments(result).print_table()``. 
+``TimeSeries`` class. The compartment sizes can be printed with ``model.calculate_compartments(result).print_table()``. 
 As adaptive step size methods are used by default, the output will not be available on equidistant time points like `dt` or days. To obtain outputs on days or user-defined time points, you can interpolate the results to days or any other series of times points with ``mio::interpolate_simulation_result()``.
 
 
