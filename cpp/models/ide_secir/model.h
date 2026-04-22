@@ -173,8 +173,8 @@ public:
 private:
     // ---- Functionality to calculate the sizes of the compartments for time t0. ----
     /**
-     * @brief Compute the compartment specified in infectionState at the current time -- only using historic flow 
-     * values and disrespecting a potential, previous compartment value.
+     * @brief Compute the compartment infectionState at the current time -- only using historic flow 
+     * values while ignoring a potential, previous compartment value.
      * 
      * The computation is meaningful for all compartments except Susceptible, Recovered and Dead
      * and mostly needed for initialization. 
