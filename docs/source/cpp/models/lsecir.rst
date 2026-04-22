@@ -135,9 +135,9 @@ To initialize the model, we start by defining the number of subcompartments and 
     constexpr size_t NumExposed = 2, NumInfectedNoSymptoms = 3, NumInfectedSymptoms = 1, NumInfectedSevere = 1,
                      NumInfectedCritical = 5;
     using InfState                       = mio::lsecir::InfectionState;
-    using LctState = mio::LctInfectionState<InfState, 1, NumExposed, NumInfectedNoSymptoms, NumInfectedSymptoms,
-                                            NumInfectedSevere, NumInfectedCritical, 1, 1>;
-    using Model    = mio::lsecir::Model<LctState>;
+    using LctState = mio::LctInfectionState<ScalarType, InfState, 1, NumExposed, NumInfectedNoSymptoms,
+                                            NumInfectedSymptoms, NumInfectedSevere, NumInfectedCritical, 1, 1>;
+    using Model    = mio::lsecir::Model<ScalarType, LctState>;
     Model model;
 
 For the simulation, we need initial values for all (sub)compartments. If we do not set the initial values manually, these are set to :math:`0` by default.
@@ -146,46 +146,42 @@ We start with constructing a vector ``initial_populations`` that we will pass on
     
 .. code-block:: cpp
 
-        std::vector<std::vector<ScalarType>> initial_populations = {{750}, {30, 20},          {20, 10, 10}, {50},
-                                                                    {50},  {10, 10, 5, 3, 2}, {20},         {10}};
+    std::vector<std::vector<ScalarType>> initial_populations = {{750}, {30, 20},          {20, 10, 10}, {50},
+                                                                {50},  {10, 10, 5, 3, 2}, {20},         {10}};
 
 We assert that the vector has the correct size by checking that the number of `InfectionState`\s and the numbers of subcompartments are correct.
 
 .. code-block:: cpp
 
-        if (initial_populations.size() != (size_t)InfState::Count) {
-            mio::log_error(
-                "The number of vectors in initial_populations does not match the number of InfectionStates.");
-            return 1;
-        }
-        if ((initial_populations[(size_t)InfState::Susceptible].size() !=
-             LctState::get_num_subcompartments<InfState::Susceptible>()) ||
-            (initial_populations[(size_t)InfState::Exposed].size() != NumExposed) ||
-            (initial_populations[(size_t)InfState::InfectedNoSymptoms].size() != NumInfectedNoSymptoms) ||
-            (initial_populations[(size_t)InfState::InfectedSymptoms].size() != NumInfectedSymptoms) ||
-            (initial_populations[(size_t)InfState::InfectedSevere].size() != NumInfectedSevere) ||
-            (initial_populations[(size_t)InfState::InfectedCritical].size() != NumInfectedCritical) ||
-            (initial_populations[(size_t)InfState::Recovered].size() !=
-             LctState::get_num_subcompartments<InfState::Recovered>()) ||
-            (initial_populations[(size_t)InfState::Dead].size() !=
-             LctState::get_num_subcompartments<InfState::Dead>())) {
-            mio::log_error(
-                "The length of at least one vector in initial_populations does not match the related number of "
-                "subcompartments.");
-            return 1;
-        }
+    if (initial_populations.size() != (size_t)InfState::Count) {
+        mio::log_error("The number of vectors in initial_populations does not match the number of InfectionStates.");
+        return 1;
+    }
+    if ((initial_populations[(size_t)InfState::Susceptible].size() !=
+         LctState::get_num_subcompartments<InfState::Susceptible>()) ||
+        (initial_populations[(size_t)InfState::Exposed].size() != NumExposed) ||
+        (initial_populations[(size_t)InfState::InfectedNoSymptoms].size() != NumInfectedNoSymptoms) ||
+        (initial_populations[(size_t)InfState::InfectedSymptoms].size() != NumInfectedSymptoms) ||
+        (initial_populations[(size_t)InfState::InfectedSevere].size() != NumInfectedSevere) ||
+        (initial_populations[(size_t)InfState::InfectedCritical].size() != NumInfectedCritical) ||
+        (initial_populations[(size_t)InfState::Recovered].size() !=
+         LctState::get_num_subcompartments<InfState::Recovered>()) ||
+        (initial_populations[(size_t)InfState::Dead].size() != LctState::get_num_subcompartments<InfState::Dead>())) {
+        mio::log_error("The length of at least one vector in initial_populations does not match the related number of "
+                       "subcompartments.");
+        return 1;
+    }
 
 The initial populations in the model are set via:
 
 .. code-block:: cpp
 
-        std::vector<ScalarType> flat_initial_populations;
-        for (auto&& vec : initial_populations) {
-            flat_initial_populations.insert(flat_initial_populations.end(), vec.begin(), vec.end());
-        }
-        for (size_t i = 0; i < LctState::Count; i++) {
-            model.populations[i] = flat_initial_populations[i];
-        }
+    std::vector<ScalarType> flat_initial_populations;
+    for (auto&& vec : initial_populations) {
+        flat_initial_populations.insert(flat_initial_populations.end(), vec.begin(), vec.end());
+    }
+    for (size_t i = 0; i < LctState::Count; i++) {
+        model.populations[i] = flat_initial_populations[i];
     }
 
     
@@ -207,22 +203,24 @@ Basic dampings can be added to the contact matrix as follows:
 
     // Create a contact matrix with constant contact rates between all groups.
     ScalarType cont_freq = 10.;
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
-    
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.get<mio::lsecir::ContactPatterns<ScalarType>>();
+    contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, cont_freq));
+
     // Add a uniform damping across all age groups.
-    contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime<ScalarType>(30.));
 
 For age-resolved models, you can apply different dampings to different groups:
 
 .. code-block:: cpp
 
     ScalarType cont_freq = 10.;
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, cont_freq));
-    
+    contact_matrix[0] =
+    mio::ContactMatrix<ScalarType>(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, cont_freq));
+
     // Add a damping that reduces contacts within the same age group by 70% starting at day 30.
-    contact_matrix.add_damping(Eigen::VectorX<ScalarType>::Constant(num_agegroups, 0.7).asDiagonal(),
-                             mio::SimulationTime(30.));
+    Eigen::MatrixX<ScalarType> damping_matrix = Eigen::VectorX<ScalarType>::Constant(num_agegroups, 0.7).asDiagonal();
+    contact_matrix[0].add_damping(damping_matrix, mio::SimulationTime<ScalarType>(30.));
 
 For more complex scenarios, such as real-world venue closures or lockdown modeling, you can implement detailed NPIs with location-specific dampings. The LCT-SECIR model supports contact matrices for different locations (e.g., home, school, work, other) and can apply different dampings to each location.
 
@@ -280,22 +278,22 @@ We can simulate the model from :math:`t_0` to :math:`t_{\max}` with initial step
 
 .. code-block:: cpp
 
-    ScalarType t0 = 0;
-    ScalarType tmax = 10;
-    ScalarType dt = 0.5;
+    ScalarType t0                      = 0;
+    ScalarType tmax                    = 10;
+    ScalarType dt                      = 0.5;
     mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(t0, tmax, dt, model);
 
 You can also specify a custom integrator:
 
 .. code-block:: cpp
 
-    auto integrator = std::make_unique<mio::RKIntegratorCore>();
+    auto integrator = std::make_unique<mio::RKIntegratorCore<ScalarType>>();
     integrator->set_dt_min(0.3);
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
-    
-    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(t0, tmax, dt, model, std::move(integrator));
+
+    result = mio::simulate<ScalarType, Model>(t0, tmax, dt, model, std::move(integrator));
 
 
 Output
@@ -313,14 +311,15 @@ You can access the data in the `mio::TimeSeries` object as follows:
 
     // Get the number of time points.
     auto num_points = static_cast<size_t>(result.get_num_time_points());
-    
-    // Access data at a specific time point.
-    Eigen::VectorX value_at_time_i = result.get_value(i);
-    ScalarType time_i = result.get_time(i);
-    
+
+    // Access data at a specific time point, e.g. i=0.
+    size_t i                                   = 0;
+    Eigen::VectorX<ScalarType> value_at_time_i = result.get_value(i);
+    ScalarType time_i                          = result.get_time(i);
+
     // Access the last time point.
-    Eigen::VectorX last_value = result.get_last_value();
-    ScalarType last_time = result.get_last_time();
+    Eigen::VectorX<ScalarType> last_value = result.get_last_value();
+    ScalarType last_time                  = result.get_last_time();
 
 
 You can print the simulation results as a formatted table:
@@ -339,7 +338,7 @@ Additionally, you can export the results to a CSV file:
 .. code-block:: cpp
 
     // Export results to CSV with default settings.
-    result.export_csv("simulation_results.csv");
+    auto result_status = result.export_csv("simulation_results.csv");
 
 
 Visualization

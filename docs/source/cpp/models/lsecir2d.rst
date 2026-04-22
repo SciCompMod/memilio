@@ -274,21 +274,26 @@ To initialize the model, we start by defining the number of subcompartments for 
 
 .. code-block:: cpp
     
-    constexpr size_t NumExposed_1a = 1, NumInfectedNoSymptoms_1a = 1, NumInfectedSymptoms_1a = 1,
-                     NumInfectedSevere_1a = 1, NumInfectedCritical_1a = 1, NumExposed_2a = 1,
-                     NumInfectedNoSymptoms_2a = 1, NumInfectedSymptoms_2a = 1, NumInfectedSevere_2a = 1,
-                     NumInfectedCritical_2a = 1, NumExposed_1b = 1, NumInfectedNoSymptoms_1b = 1,
-                     NumInfectedSymptoms_1b = 1, NumInfectedSevere_1b = 1, NumInfectedCritical_1b = 1,
-                     NumExposed_2b = 1, NumInfectedNoSymptoms_2b = 1, NumInfectedSymptoms_2b = 1,
-                     NumInfectedSevere_2b = 1, NumInfectedCritical_2b = 1;
-    using InfState = mio::lsecir2d::InfectionState;
-    using LctState = mio::LctInfectionState<
-        InfState, 1, NumExposed_1a, NumInfectedNoSymptoms_1a, NumInfectedSymptoms_1a, NumInfectedSevere_1a,
-        NumInfectedCritical_1a, 1, 1, NumExposed_2a, NumInfectedNoSymptoms_2a, NumInfectedSymptoms_2a,
-        NumInfectedSevere_2a, NumInfectedCritical_2a, NumExposed_1b, NumInfectedNoSymptoms_1b, NumInfectedSymptoms_1b,
-        NumInfectedSevere_1b, NumInfectedCritical_1b, 1, 1, NumExposed_2b, NumInfectedNoSymptoms_2b,
-        NumInfectedSymptoms_2b, NumInfectedSevere_2b, NumInfectedCritical_2b, 1>;
-    using Model = mio::lsecir2d::Model<LctState>;
+    constexpr size_t NumExposed_1a = 2, NumInfectedNoSymptoms_1a = 3, NumInfectedSymptoms_1a = 3,
+                     NumInfectedSevere_1a = 3, NumInfectedCritical_1a = 2, NumExposed_2a = 1,
+                     NumInfectedNoSymptoms_2a = 2, NumInfectedSymptoms_2a = 2, NumInfectedSevere_2a = 2,
+                     NumInfectedCritical_2a = 1, NumExposed_1b = 2, NumInfectedNoSymptoms_1b = 3,
+                     NumInfectedSymptoms_1b = 3, NumInfectedSevere_1b = 3, NumInfectedCritical_1b = 2,
+                     NumExposed_2b = 1, NumInfectedNoSymptoms_2b = 2, NumInfectedSymptoms_2b = 2,
+                     NumInfectedSevere_2b = 2, NumInfectedCritical_2b = 1;
+    // The compartment for Susceptible people and all compartments for Dead and Recovered people must have exactly one subcompartment:
+    constexpr size_t NumSusceptible = 1, NumDead_a = 1, NumDead_b = 1, NumRecovered_1a = 1, NumRecovered_1b = 1,
+                     NumRecovered_2ab = 1;
+    using InfState                    = mio::lsecir2d::InfectionState;
+    using LctState =
+        mio::LctInfectionState<ScalarType, InfState, NumSusceptible, NumExposed_1a, NumInfectedNoSymptoms_1a,
+                               NumInfectedSymptoms_1a, NumInfectedSevere_1a, NumInfectedCritical_1a, NumRecovered_1a,
+                               NumDead_a, NumExposed_2a, NumInfectedNoSymptoms_2a, NumInfectedSymptoms_2a,
+                               NumInfectedSevere_2a, NumInfectedCritical_2a, NumExposed_1b, NumInfectedNoSymptoms_1b,
+                               NumInfectedSymptoms_1b, NumInfectedSevere_1b, NumInfectedCritical_1b, NumRecovered_1b,
+                               NumDead_b, NumExposed_2b, NumInfectedNoSymptoms_2b, NumInfectedSymptoms_2b,
+                               NumInfectedSevere_2b, NumInfectedCritical_2b, NumRecovered_2ab>;
+    using Model = mio::lsecir2d::Model<ScalarType, LctState>;
     Model model;
 
 For the simulation, we need initial values for all (sub)compartments. If we do not set the initial values manually, these are set to :math:`0` by default.
@@ -298,7 +303,7 @@ that contains a vector with initial values for the respective subcompartments.
 
 .. code-block:: cpp
     
-    std::vector<std::vector<ScalarType>> initial_populations = {  
+    std::vector<std::vector<ScalarType>> initial_populations = {
         {200},  {0, 0},  {30, 10, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0},     {0},       {0},       {0},
         {0, 0}, {10, 0}, {0, 0},      {0},       {10, 0},   {30, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0},
         {0},    {0},     {100},       {0, 0},    {0, 0},    {0, 0},     {0},       {0}};
@@ -324,8 +329,8 @@ We assert that the vector has the correct size by checking that the number of `I
         (initial_populations[(size_t)InfState::InfectedSymptoms_2a].size() != NumInfectedSymptoms_2a) ||
         (initial_populations[(size_t)InfState::InfectedSevere_2a].size() != NumInfectedSevere_2a) ||
         (initial_populations[(size_t)InfState::InfectedCritical_2a].size() != NumInfectedCritical_2a) ||
-        (initial_populations[(size_t)InfState::Recovered_a].size() !=
-         LctState::get_num_subcompartments<InfState::Recovered_a>()) ||
+        (initial_populations[(size_t)InfState::Recovered_1a].size() !=
+         LctState::get_num_subcompartments<InfState::Recovered_1a>()) ||
         (initial_populations[(size_t)InfState::Dead_a].size() !=
          LctState::get_num_subcompartments<InfState::Dead_a>()) ||
         (initial_populations[(size_t)InfState::Exposed_1b].size() != NumExposed_1b) ||
@@ -338,12 +343,12 @@ We assert that the vector has the correct size by checking that the number of `I
         (initial_populations[(size_t)InfState::InfectedSymptoms_2b].size() != NumInfectedSymptoms_2b) ||
         (initial_populations[(size_t)InfState::InfectedSevere_2b].size() != NumInfectedSevere_2b) ||
         (initial_populations[(size_t)InfState::InfectedCritical_2b].size() != NumInfectedCritical_2b) ||
-        (initial_populations[(size_t)InfState::Recovered_ab].size() !=
-         LctState::get_num_subcompartments<InfState::Recovered_ab>())) {
-            mio::log_error("The length of at least one vector in initial_populations does not match the related number of "
-                          "subcompartments.");
-            return 1;
-        }
+        (initial_populations[(size_t)InfState::Recovered_2ab].size() !=
+         LctState::get_num_subcompartments<InfState::Recovered_2ab>())) {
+        mio::log_error("The length of at least one vector in initial_populations does not match the related number of "
+                       "subcompartments.");
+        return 1;
+    }
 
 The initial populations in the model are set via:
 
@@ -369,22 +374,23 @@ Basic dampings can be added to the contact matrix as follows:
 .. code-block:: cpp
 
     // Create a contact matrix with constant contact rate 10 (one age group).
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir2d::ContactPatterns>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.get<mio::lsecir2d::ContactPatterns<ScalarType>>();
+    contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, 10));
 
     // From SimulationTime 5, the contact pattern is reduced to 30% of the initial value.
-    contact_matrix[0].add_damping(0.7, mio::SimulationTime(5.));
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime<ScalarType>(5.));
 
 For age-resolved models, you can apply different dampings to different groups:
 
 .. code-block:: cpp
 
     // Create a contact matrix with constant contact rate 10 between all age groups
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, 10));
-    
+    contact_matrix[0]    = mio::ContactMatrix<ScalarType>(Eigen::MatrixX::Constant(num_agegroups, num_agegroups, 10));
+
     // Add a damping that reduces contacts within the same age group by 70% starting at day 5.
-    contact_matrix.add_damping(Eigen::VectorX<ScalarType>::Constant(num_agegroups, 0.7).asDiagonal(),
-                             mio::SimulationTime(5.));
+    Eigen::MatrixX<ScalarType> damping_matrix = Eigen::VectorX<ScalarType>::Constant(num_agegroups, 0.7).asDiagonal();
+    contact_matrix.add_damping(damping_matrix, mio::SimulationTime<ScalarType>(5.));
 
 Simulation
 ----------
@@ -393,11 +399,10 @@ We can simulate the model from :math:`t_0` to :math:`t_{\max}` with initial step
 
 .. code-block:: cpp
 
-    ScalarType t0 = 0;
-    ScalarType tmax = 10;
-    ScalarType dt = 0.5;
+    ScalarType t0                      = 0;
+    ScalarType tmax                    = 10;
+    ScalarType dt                      = 0.5;
     mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(t0, tmax, dt, model);
-
 
 Output
 ------
@@ -414,14 +419,15 @@ You can access the data in the `mio::TimeSeries` object as follows:
 
     // Get the number of time points.
     auto num_points = static_cast<size_t>(result.get_num_time_points());
-    
-    // Access data at a specific time point.
-    Eigen::VectorX value_at_time_i = result.get_value(i);
-    ScalarType time_i = result.get_time(i);
-    
+
+    // Access data at a specific time point, e.g. i=0.
+    size_t i                                   = 0;
+    Eigen::VectorX<ScalarType> value_at_time_i = result.get_value(i);
+    ScalarType time_i                          = result.get_time(i);
+
     // Access the last time point.
-    Eigen::VectorX last_value = result.get_last_value();
-    ScalarType last_time = result.get_last_time();
+    Eigen::VectorX<ScalarType> last_value = result.get_last_value();
+    ScalarType last_time                  = result.get_last_time();
 
 
 You can print the simulation results as a formatted table:
@@ -430,20 +436,19 @@ You can print the simulation results as a formatted table:
 
     // Print results to console with default formatting.
     result.print_table();
-    
+
     // Print with custom column labels and width, and custom number of decimals.
-    results.print_table({"   S",   "   E1a", "   C1a", "   I1a", "   H1a", "   U1a", "   Ra",
-                                      "   Da",  "   E2a", "   C2a", "   I2a", "   H2a", "   U2a", "   E1b",
-                                      "   C1b", "   I1b", "   H1b", "   U1b", "   Rb",  "   Db",  "   E2b",
-                                      "   C2b", "   I2b", "   H2b", "   U2b", "   Rab"},
-                                     6, 2);
+    result.print_table({"   S",   "   E1a", "   C1a", "   I1a", "   H1a", "   U1a", "   R1a",  "   Da",  "   E2a",
+                        "   C2a", "   I2a", "   H2a", "   U2a", "   E1b", "   C1b", "   I1b", "   H1b", "   U1b",
+                        "   R1b",  "   Db",  "   E2b", "   C2b", "   I2b", "   H2b", "   U2b", "   R2ab"},
+                       6, 2);
 
 Additionally, you can export the results to a CSV file:
 
 .. code-block:: cpp
 
     // Export results to CSV with default settings.
-    result.export_csv("simulation_results.csv");
+    auto export_status = result.export_csv("simulation_results.csv");
 
 
 Visualization
