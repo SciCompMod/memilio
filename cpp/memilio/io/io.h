@@ -610,37 +610,6 @@ IOResult<Tup<T...>> deserialize_internal(IOContext& io, Tag<Tup<T...>> tag)
 }
 
 /**
- * @brief Serialize an std::filesystem::path.
- * @tparam IOContext A type that models the IOContext concept.
- * @param io A reference to an IOContext.
- * @param path An instance of std::filesystem::path.
- */
-template <class IOContext>
-void serialize_internal(IOContext& io, const std::filesystem::path& path)
-{
-    serialize_internal(io, path.generic_string());
-}
-
-/**
- * @brief Deerialize an std::filesystem::path.
- * @tparam IOContext A type that models the IOContext concept.
- * @param io A reference to an IOContext.
- * @param path An instance of std::filesystem::path.
- * @return The path if successful, an error otherwise.
- */
-template <class IOContext>
-IOResult<std::filesystem::path> deserialize_internal(IOContext& io, Tag<std::filesystem::path>)
-{
-    auto result = deserialize_internal(io, Tag<std::string>{});
-    if (result) {
-        return success(result.value());
-    }
-    else {
-        return failure(result.error());
-    }
-}
-
-/**
  * serialize an Eigen matrix expression.
  * @tparam IOContext a type that models the IOContext concept.
  * @tparam M the type of Eigen matrix expression to be deserialized.
