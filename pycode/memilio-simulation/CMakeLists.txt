@@ -21,6 +21,8 @@ elseif(UNIX)
     )
 endif()
 
+set(PYMIO_INSTALL_RPATH "${CMAKE_INSTALL_RPATH}")
+
 # keep build RPATH separate and avoid putting build paths into installed wheels
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
@@ -63,7 +65,7 @@ function(add_pymio_module target_name)
 
     # Set RPATH so extension can find the C++ libraries in lib subdirectory
     set_target_properties(${target_name} PROPERTIES
-        INSTALL_RPATH "$ORIGIN/lib"
+        INSTALL_RPATH "${PYMIO_INSTALL_RPATH}"
     )
 
     # Make sure to install shared and static libraries (LIBRARY and ARCHIVE) and the executables (RUNTIME).
@@ -140,7 +142,7 @@ list(REMOVE_DUPLICATES PYMIO_MEMILIO_LIBS_LIST)
 foreach(target_name IN LISTS PYMIO_MEMILIO_LIBS_LIST)
     if(TARGET ${target_name})
         set_target_properties(${target_name} PROPERTIES
-            INSTALL_RPATH "$ORIGIN;$ORIGIN/lib"
+            INSTALL_RPATH "${PYMIO_INSTALL_RPATH}"
         )
     endif()
 endforeach()
