@@ -196,11 +196,19 @@ TEST(TestJsonSerializer, string)
     check_serialization_of_basic_type(std::string("Hello, World!"));
 }
 
+// workaround for some msvc versions not supporting cast from path to string
+struct PathToStringConverter : public std::string {
+    PathToStringConverter(const std::filesystem::path& p)
+        : std::string(p.generic_string())
+    {
+    }
+};
+
 TEST(TestJsonSerializer, path)
 {
-    check_serialization_of_basic_type(std::filesystem::path());
-    check_serialization_of_basic_type(std::filesystem::path("Hello/World"));
-    check_serialization_of_basic_type(std::filesystem::path("Hello\\World"));
+    check_serialization_of_basic_type<std::filesystem::path, PathToStringConverter>({});
+    check_serialization_of_basic_type<std::filesystem::path, PathToStringConverter>({"Hello/World"});
+    check_serialization_of_basic_type<std::filesystem::path, PathToStringConverter>({"Hello\\World"});
 }
 
 namespace jsontest
