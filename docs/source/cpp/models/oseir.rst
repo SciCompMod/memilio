@@ -33,7 +33,7 @@ The model contains the following list of ``InfectionState``\s:
 Infection State Transitions
 ---------------------------
 
-The ODE-SEIR model is implemented as a :code:`FlowModel`, which defines the derivatives of each flow between compartments.
+The ODE-SEIR model is implemented as a ``FlowModel``, which defines the derivatives of each flow between compartments.
 This allows for explicit computation of new transmissions, infections, and recoveries. Additionally, the aggregated
 compartment values can be computed with minimal overhead. The defined transitions `FromState, ToState` are:
 
@@ -90,7 +90,7 @@ The model implements the following parameters:
 Initial Conditions
 ------------------
 
-The initial conditions of the model are defined by the class :code:`Populations` which defines the number of individuals in
+The initial conditions of the model are defined by the class ``Populations`` which defines the number of individuals in
 each sociodemographic group and ``InfectionState``. Before running a simulation, you need to set the initial values for
 each compartment:
 

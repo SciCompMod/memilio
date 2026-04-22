@@ -47,8 +47,8 @@ The parameters of the model are defined as structs and are combined in a class `
 We use different types of parameters to represent epidemiological parameters such as the mean stay times in a 
 compartment or the contact rates between different age groups. Most model parameters are constants that describe 
 pathogen-specific characteristics (possibly resolved by sociodemographic groups) and are represented by a vector with a value for each sociodemographic group. 
-To model different contact rates between different sociodemographic groups, we use a parameter denoted ``ContactPatterns`` of type :code:`UncertainContactMatrix`. 
-The :code:`UncertainContactMatrix` contains an arbitrary large set of contact matrices which can represent the different contact locations in the model like 
+To model different contact rates between different sociodemographic groups, we use a parameter denoted ``ContactPatterns`` of type ``UncertainContactMatrix``. 
+The ``UncertainContactMatrix`` contains an arbitrary large set of contact matrices which can represent the different contact locations in the model like 
 schools, workplaces, or homes. The matrices can be loaded or stored in the particular example.
 In the ``ContactPatterns``, each matrix element stores baseline contact rates :math:`c_{i,j}` between sociodemographic group :math:`i` to group :math:`j`. 
 The dimension of the matrix is automatically defined by the model initialization and is reduced to one value if no stratification is used. 
@@ -61,7 +61,7 @@ Parameters can be accessed via ``model.parameters.get<Param<double>>()`` and set
 Initial conditions
 ------------------
 
-The initial conditions of the model are represented by a class :code:`LctPopulations` that gives the number of individuals in each sociodemographic group and each subcompartment for each ``InfectionState``. For more details, see :doc:`Model Creation <lct_creation>`. Before the simulation, the initial conditions for each ``InfectionState`` and sociodemographic group must be set.
+The initial conditions of the model are represented by a class ``LctPopulations`` that gives the number of individuals in each sociodemographic group and each subcompartment for each ``InfectionState``. For more details, see :doc:`Model Creation <lct_creation>`. Before the simulation, the initial conditions for each ``InfectionState`` and sociodemographic group must be set.
 
 
 .. _Nonpharmaceutical Interventions LCT:

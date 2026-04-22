@@ -40,7 +40,7 @@ current implementation and detection is only modeled implicitly through detectio
 Infection State Transitions
 ---------------------------
 
-The ODE-SECIR model is implemented as a :code:`FlowModel`, which defines the derivatives of each flow between compartments.
+The ODE-SECIR model is implemented as a ``FlowModel``, which defines the derivatives of each flow between compartments.
 This allows for explicit computation of new transmissions, infections, and hospitalizations. Additionally, the aggregated
 compartment values can be computed with minimal overhead. The defined transitions `FromState, ToState` are:
 
@@ -137,7 +137,7 @@ The model implements the following parameters:
 Initial conditions
 ------------------
 
-The initial conditions of the model are represented by the class :code:`Populations` which defines the number of individuals in each sociodemographic group and ``InfectionState``. Before running a simulation, you need to set the initial values for each compartment:
+The initial conditions of the model are represented by the class ``Populations`` which defines the number of individuals in each sociodemographic group and ``InfectionState``. Before running a simulation, you need to set the initial values for each compartment:
 
 .. code-block:: cpp
 
@@ -259,7 +259,7 @@ A complex lockdown scenario with multiple interventions starting on a specific d
     contact_dampings.push_back(social_events(start_lockdown, 0.6, 0.8));
     contact_dampings.push_back(physical_distancing(start_lockdown, 0.4, 0.6));
 
-A more advanced structure to automatically activate interventions based on threshold criteria is given by :code:`DynamicNPIs`.
+A more advanced structure to automatically activate interventions based on threshold criteria is given by ``DynamicNPIs``.
 Dynamic NPIs can be configured to trigger when the number of symptomatic infected individuals exceeds a certain relative threshold in the population. 
 In contrast to static NPIs which are active as long as no other NPI gets implemented, dynamic NPIs are checked at regular intervals and get 
 activated for a defined duration when the threshold is exceeded. As above, different dampings `contact_dampings` can be assigned to different contact locations

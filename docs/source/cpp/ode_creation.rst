@@ -24,9 +24,9 @@ states **S**\usceptible, **I**\nfectious, **R**\ecovered, **D**\eceased, also ca
 How to implement an ODE model
 -----------------------------
 
-To define an ODE model in MEmilio, there are two options. You can define a ``CompartmentalModel`` or a :code:`FlowModel`, which
+To define an ODE model in MEmilio, there are two options. You can define a ``CompartmentalModel`` or a ``FlowModel``, which
 use different methods to define the right-hand side of the mathematical model above. Both classes need definitions for
-the infection states, population and parameters it uses. The :code:`FlowModel` additionally requires a list of flows.
+the infection states, population and parameters it uses. The ``FlowModel`` additionally requires a list of flows.
 
 We start by creating a new directory for our model under "cpp/models", in this case we can call it "ode_sird". The name
 must be unique and start with "ode\_", so the type of model is obvious. The rest usually contains the compartments or
@@ -106,7 +106,7 @@ The template :code:`FP` and the type :code:`UncertainValue<FP>` in these example
 :code:`FP` is a floating point type, usually :code:`double`. An :code:`UncertainValue<FP>` holds a value of type
 :code:`FP` as well as (optionally) a distribution to sample new values from, e.g. for a parameter study.
 
-Finally, define a type :code:`Parameters` by listing all parameter structs as template arguments of a
+Finally, define a type ``Parameters`` by listing all parameter structs as template arguments of a
 :code:`mio::ParameterSet`:
 
 .. code-block:: cpp
@@ -115,7 +115,7 @@ Finally, define a type :code:`Parameters` by listing all parameter structs as te
     using Parameters = mio::ParameterSet<TimeInfectious<FP>, RecoveryRate<FP>, LethalityRate<FP>, ContactRate<FP>,
                                          TransmissionRisk<FP>>;
 
-For more complex models, :code:`Parameters` allows passing arguments from its constructor to the :code:`get_default`
+For more complex models, ``Parameters`` allows passing arguments from its constructor to the :code:`get_default`
 functions. Make sure that all of these functions take the exact types as function arguments that you want to pass to
 the constructor.
 
@@ -131,7 +131,7 @@ The population will be stored in a vector, with a component for each infection s
     using Population = mio::Populations<FP, InfectionState>;
 
 Importantly, this class allows further stratifying the population vector, with the most common
-example being adding :code:`mio::AgeGroups` to the template.
+example being adding ``mio::AgeGroup``\s to the template.
 
 .. dropdown:: :fa:`gears` Expert's settings
 

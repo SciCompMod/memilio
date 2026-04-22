@@ -17,7 +17,7 @@ This implementation is designed for Respiratory Syncytial Virus (RSV) and is bas
 Infection States
 ----------------
 
-The model contains the following :code:`InfectionStates`:
+The model contains the following ``InfectionState``\s:
 
 - `MaternalImmune` (M)
 - `S1`, `S2`, `S3`, `S4` (susceptible classes by infection history)

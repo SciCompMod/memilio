@@ -82,7 +82,7 @@ The model implements the following parameters.
 Initial conditions
 ------------------
 
-The initial conditions of the model are defined by the class :code:`Populations` which defines the number of individuals in
+The initial conditions of the model are defined by the class ``Populations`` which defines the number of individuals in
 each sociodemographic group and ``InfectionState``. Before running a simulation, you need to set the initial values for
 each compartment:
 

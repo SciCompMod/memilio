@@ -28,7 +28,7 @@ Every model contains a list of ``InfectionState``\s that define particular featu
 Infection state transitions
 ---------------------------
 
-Our ODE-based models are either implemented as :code:`FlowModel` or as ``CompartmentalModel``. In a :code:`FlowModel`, flows 
+Our ODE-based models are either implemented as ``FlowModel`` or as ``CompartmentalModel``. In a ``FlowModel``, flows 
 ``Flow<State1, State2>`` between ``InfectionState``\s **State1** and **State2** are defined. Instead of a standard 
 solution of an ODE-based model, this implementation additionally realizes the solution of the transitions or flows 
 between states and directly enables users to access new transmissions or hospitalizations at any time point. 
@@ -49,7 +49,7 @@ We use different types of parameters to represent epidemiological parameters suc
 compartment or the contact rates between different age groups. Most model parameters are constants that describe 
 pathogen-specific characteristics (possibly resolved by sociodemographic groups) and are represented by a vector with a
 value for each sociodemographic group. To model different contact rates between different sociodemographic groups, we
-use a parameter denoted ``ContactPatterns`` of type :code:`UncertainContactMatrix`. The :code:`UncertainContactMatrix` contains
+use a parameter denoted ``ContactPatterns`` of type ``UncertainContactMatrix``. The ``UncertainContactMatrix`` contains
 a set of contact matrices of arbitrary length which can represent different contact locations in the model like 
 schools, workplaces, or homes. The matrices can be loaded or stored in the particular example.
 In the ``ContactPatterns`` parameter, each matrix element stores baseline contact rates :math:`c_{i,j}` between sociodemographic 
@@ -69,7 +69,7 @@ Parameters can get accessed via ``model.parameters.get<Param<double>>()`` and se
 Initial conditions
 ------------------
 
-The initial conditions of the model are represented by a class :code:`Populations` that gives the number of individuals in 
+The initial conditions of the model are represented by a class ``Populations`` that gives the number of individuals in 
 each sociodemographic group and ``InfectionState``. For more details, see :doc:`Model Creation <ode_creation>`. Before 
 the simulation, set the initial conditions via ``model.populations[{AgeGroup::Age, InfectionState::State}] = value`` for
 each ``InfectionState`` and sociodemographic group.
@@ -106,7 +106,7 @@ Simulation
 
 Once the model is set up, one can run a simple simulation from time ``t0`` to ``tmax`` with an initial step size ``dt`` using the 
 ``mio::simulate()`` function. This will run a simulation of type ``Simulation`` that saves the sizes of each compartment over time. 
-To also save the flow information, make sure to use a :code:`FlowModel` and run a simulation of type ``FlowSimulation`` with the ``mio::simulate_flows()`` function.
+To also save the flow information, make sure to use a ``FlowModel`` and run a simulation of type ``FlowSimulation`` with the ``mio::simulate_flows()`` function.
 You can run a simulation using either fixed or adaptive integration schemes with an absolute or relative tolerance. By 
 default, the simulation uses an adaptive integration scheme of the boost library with an absolute tolerance of 1e-10 and a 
 relative tolerance of 1e-5.

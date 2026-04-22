@@ -66,7 +66,7 @@ The model extends the ODE-SECIRVVS model by adding temporary immunity states and
 Infection State Transitions
 ---------------------------
 
-The ODE-SECIRTS model is implemented as a :code:`FlowModel`, which defines the derivatives of each flow between compartments. A key difference from the ODE-SECIRVVS model is that vaccinations in the ODE-SECIRTS model are implemented as flows within the ODE system rather than discrete events.
+The ODE-SECIRTS model is implemented as a ``FlowModel``, which defines the derivatives of each flow between compartments. A key difference from the ODE-SECIRVVS model is that vaccinations in the ODE-SECIRTS model are implemented as flows within the ODE system rather than discrete events.
 
 The model has the following state trnsitions:
 
@@ -234,7 +234,7 @@ The model includes all parameters from the ODE-SECIRVVS model as well as additio
 Initial conditions
 ------------------
 
-The initial conditions of the model are represented by the class :code:`Populations` which defines the number of individuals in each sociodemographic group and ``InfectionState``. Before running a simulation, the initial values for each compartment across all immunity levels have to be set. This can be done via:
+The initial conditions of the model are represented by the class ``Populations`` which defines the number of individuals in each sociodemographic group and ``InfectionState``. Before running a simulation, the initial values for each compartment across all immunity levels have to be set. This can be done via:
 
 .. code-block:: cpp
 

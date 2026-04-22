@@ -31,7 +31,7 @@ The model contains the following ``InfectionState``\s:
 Infection State Transitions
 ---------------------------
 
-The SEIRV model is implemented as a :code:`FlowModel`. Thus, in each time step, the flows (new infections, progressions,
+The SEIRV model is implemented as a ``FlowModel``. Thus, in each time step, the flows (new infections, progressions,
 recoveries) are computed explicitly in addition to compartment values. The defined transitions `FromState, ToState` are:
 
 .. code-block:: RST
@@ -123,7 +123,7 @@ differential infection hazards.
 Initial Conditions
 ------------------
 
-Initial conditions are handled via the :code:`Populations` class. Example for a single age group:
+Initial conditions are handled via the ``Populations`` class. Example for a single age group:
 
 .. code-block:: cpp
 
