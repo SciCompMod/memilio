@@ -195,7 +195,7 @@ It will be active for at least 14 days and checked every 3 days. If the last che
    dampings = []
    # increased from [0.4, 0.6] in Nov
    dampings.append(contacts_at_home(0, 0.6, 0.8))
-   dampings.append(school_closure(0, 0.25, 0.25))  # see paper
+   dampings.append(school_closure(0, 0.25, 0.25))  #see paper
    dampings.append(home_office(0, 0.2, 0.3))
    dampings.append(social_events(0, 0.6, 0.8))
    dampings.append(social_events_work(0, 0.1, 0.2))
