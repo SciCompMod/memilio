@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/activity_type.h"
 #include "abm/location_type.h"
 #include "abm/mobility_rules.h"
 #include "abm/person.h"
@@ -32,9 +33,10 @@ TEST_F(TestMobilityRules, random_mobility)
 {
     int t = 0, dt = 1;
     auto default_type = mio::abm::LocationType::Cemetery;
-    auto person       = mio::abm::Person(this->get_rng(), default_type, 0, 0, age_group_15_to_34);
-    auto p_rng        = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person);
-    auto params       = mio::abm::Parameters(num_age_groups);
+    auto person =
+        mio::abm::Person(this->get_rng(), default_type, mio::abm::ActivityType::Cemetery, 0, 0, age_group_15_to_34);
+    auto p_rng  = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person);
+    auto params = mio::abm::Parameters(num_age_groups);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>> mock_exp_dist;
     EXPECT_CALL(mock_exp_dist.get_mock(), invoke)
@@ -84,10 +86,10 @@ TEST_F(TestMobilityRules, student_goes_to_school)
         .WillRepeatedly(testing::Return(1.0));
 
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    auto p_child =
-        mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), home.get_model_id(), age_group_5_to_14);
-    auto p_adult =
-        mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), home.get_model_id(), age_group_15_to_34);
+    auto p_child = mio::abm::Person(this->get_rng(), home.get_type(), mio::abm::ActivityType::Home, home.get_id(),
+                                    home.get_model_id(), age_group_5_to_14);
+    auto p_adult = mio::abm::Person(this->get_rng(), home.get_type(), mio::abm::ActivityType::Home, home.get_id(),
+                                    home.get_model_id(), age_group_15_to_34);
 
     auto t_morning              = mio::abm::TimePoint(0) + mio::abm::hours(7);
     auto t_weekend              = mio::abm::TimePoint(0) + mio::abm::days(5) + mio::abm::hours(7);
@@ -134,12 +136,12 @@ TEST_F(TestMobilityRules, students_go_to_school_in_different_times)
         .WillRepeatedly(testing::Return(1.0));
 
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    auto p_child_goes_to_school_at_6 =
-        mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), home.get_model_id(), age_group_5_to_14);
+    auto p_child_goes_to_school_at_6 = mio::abm::Person(this->get_rng(), home.get_type(), mio::abm::ActivityType::Home,
+                                                        home.get_id(), home.get_model_id(), age_group_5_to_14);
     auto rng_child_goes_to_school_at_6 =
         mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_child_goes_to_school_at_6);
-    auto p_child_goes_to_school_at_8 =
-        mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), home.get_model_id(), age_group_5_to_14);
+    auto p_child_goes_to_school_at_8 = mio::abm::Person(this->get_rng(), home.get_type(), mio::abm::ActivityType::Home,
+                                                        home.get_id(), home.get_model_id(), age_group_5_to_14);
     auto rng_child_goes_to_school_at_8 =
         mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_child_goes_to_school_at_8);
 
@@ -200,14 +202,15 @@ TEST_F(TestMobilityRules, students_go_to_school_in_different_times_with_smaller_
 
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
     // First student goes to school at 6:00 AM
-    auto p_child_goes_to_school_at_6 =
-        mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), home.get_model_id(), age_group_5_to_14);
+    auto p_child_goes_to_school_at_6 = mio::abm::Person(this->get_rng(), home.get_type(), mio::abm::ActivityType::Home,
+                                                        home.get_id(), home.get_model_id(), age_group_5_to_14);
     auto rng_child_goes_to_school_at_6 =
         mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_child_goes_to_school_at_6);
 
     // Second student goes to school at 8:30 AM
     auto p_child_goes_to_school_at_8_30 =
-        mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), home.get_model_id(), age_group_5_to_14);
+        mio::abm::Person(this->get_rng(), home.get_type(), mio::abm::ActivityType::Home, home.get_id(),
+                         home.get_model_id(), age_group_5_to_14);
     auto rng_child_goes_to_school_at_8_30 =
         mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_child_goes_to_school_at_8_30);
 
@@ -245,8 +248,8 @@ TEST_F(TestMobilityRules, students_go_to_school_in_different_times_with_smaller_
 TEST_F(TestMobilityRules, school_return)
 {
     mio::abm::Location school(mio::abm::LocationType::School, 0, num_age_groups);
-    auto p_child =
-        mio::abm::Person(this->get_rng(), school.get_type(), school.get_id(), school.get_model_id(), age_group_5_to_14);
+    auto p_child = mio::abm::Person(this->get_rng(), school.get_type(), mio::abm::ActivityType::School, school.get_id(),
+                                    school.get_model_id(), age_group_5_to_14);
     auto rng_child = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_child);
 
     // Simulate a time point after school hours
@@ -278,12 +281,12 @@ TEST_F(TestMobilityRules, worker_goes_to_work)
         .WillOnce(testing::Return(0.))
         .WillRepeatedly(testing::Return(1.0));
 
-    auto p_retiree =
-        mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), home.get_model_id(), age_group_60_to_79);
+    auto p_retiree   = mio::abm::Person(this->get_rng(), home.get_type(), mio::abm::ActivityType::Home, home.get_id(),
+                                        home.get_model_id(), age_group_60_to_79);
     auto rng_retiree = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_retiree);
-    auto p_adult =
-        mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), home.get_model_id(), age_group_15_to_34);
-    auto rng_adult = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_adult);
+    auto p_adult     = mio::abm::Person(this->get_rng(), home.get_type(), mio::abm::ActivityType::Home, home.get_id(),
+                                        home.get_model_id(), age_group_15_to_34);
+    auto rng_adult   = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_adult);
 
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::hours(8);
     auto t_night   = mio::abm::TimePoint(0) + mio::abm::days(1) + mio::abm::hours(4);
@@ -328,12 +331,12 @@ TEST_F(TestMobilityRules, worker_goes_to_work_with_non_dividable_timespan)
         .WillRepeatedly(testing::Return(1.0));
 
     // Set up two people: one retiree and one working adult.
-    auto p_retiree =
-        mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), home.get_model_id(), age_group_60_to_79);
+    auto p_retiree   = mio::abm::Person(this->get_rng(), home.get_type(), mio::abm::ActivityType::Home, home.get_id(),
+                                        home.get_model_id(), age_group_60_to_79);
     auto rng_retiree = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_retiree);
-    auto p_adult =
-        mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), home.get_model_id(), age_group_15_to_34);
-    auto rng_adult = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_adult);
+    auto p_adult     = mio::abm::Person(this->get_rng(), home.get_type(), mio::abm::ActivityType::Home, home.get_id(),
+                                        home.get_model_id(), age_group_15_to_34);
+    auto rng_adult   = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_adult);
 
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::hours(8);
     auto t_night   = mio::abm::TimePoint(0) + mio::abm::days(1) + mio::abm::hours(4);
@@ -383,12 +386,12 @@ TEST_F(TestMobilityRules, workers_go_to_work_in_different_times)
         .WillRepeatedly(testing::Return(1.0));
 
     // Create two workers: one goes to work at 6 AM and the other at 8 AM.
-    auto p_adult_goes_to_work_at_6 =
-        mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), home.get_model_id(), age_group_15_to_34);
+    auto p_adult_goes_to_work_at_6 = mio::abm::Person(this->get_rng(), home.get_type(), mio::abm::ActivityType::Home,
+                                                      home.get_id(), home.get_model_id(), age_group_15_to_34);
     auto rng_adult_goes_to_work_at_6 =
         mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_adult_goes_to_work_at_6);
-    auto p_adult_goes_to_work_at_8 =
-        mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), home.get_model_id(), age_group_15_to_34);
+    auto p_adult_goes_to_work_at_8 = mio::abm::Person(this->get_rng(), home.get_type(), mio::abm::ActivityType::Home,
+                                                      home.get_id(), home.get_model_id(), age_group_15_to_34);
     auto rng_adult_goes_to_work_at_8 =
         mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_adult_goes_to_work_at_8);
 
@@ -432,8 +435,8 @@ TEST_F(TestMobilityRules, work_return)
 {
     mio::abm::Location work(mio::abm::LocationType::Work, 0, num_age_groups);
     // Set up a random number generator and a worker who is currently at work
-    auto p_adult =
-        mio::abm::Person(this->get_rng(), work.get_type(), work.get_id(), work.get_model_id(), age_group_35_to_59);
+    auto p_adult   = mio::abm::Person(this->get_rng(), work.get_type(), mio::abm::ActivityType::Work, work.get_id(),
+                                      work.get_model_id(), age_group_35_to_59);
     auto rng_adult = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_adult);
     // Set the time to 5 PM (17:00) when the worker should return home
     auto t  = mio::abm::TimePoint(0) + mio::abm::hours(17);
@@ -455,23 +458,23 @@ TEST_F(TestMobilityRules, quarantine)
     mio::abm::Location work(mio::abm::LocationType::Work, 0, num_age_groups);
     mio::abm::Location hospital(mio::abm::LocationType::Hospital, 0, num_age_groups);
 
-    auto p_inf1 =
-        make_test_person(this->get_rng(), work, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms, t);
+    auto p_inf1   = make_test_person(this->get_rng(), work, mio::abm::ActivityType::Work, age_group_15_to_34,
+                                     mio::abm::InfectionState::InfectedSymptoms, t);
     auto rng_inf1 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_inf1);
     p_inf1.get_tested(rng_inf1, t, test_params);
     // Check detected infected person quarantines at home
     EXPECT_EQ(mio::abm::go_to_quarantine(rng_inf1, p_inf1, t, dt, mio::abm::Parameters(num_age_groups)),
               mio::abm::LocationType::Home);
 
-    auto p_inf2 =
-        make_test_person(this->get_rng(), work, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms, t);
+    auto p_inf2   = make_test_person(this->get_rng(), work, mio::abm::ActivityType::Work, age_group_15_to_34,
+                                     mio::abm::InfectionState::InfectedSymptoms, t);
     auto rng_inf2 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_inf2);
     // Check that undetected infected person does not quaratine
     EXPECT_EQ(mio::abm::go_to_quarantine(rng_inf2, p_inf2, t, dt, mio::abm::Parameters(num_age_groups)),
               mio::abm::LocationType::Work);
 
-    auto p_inf3 =
-        make_test_person(this->get_rng(), hospital, age_group_15_to_34, mio::abm::InfectionState::InfectedSevere, t);
+    auto p_inf3   = make_test_person(this->get_rng(), hospital, mio::abm::ActivityType::Hospital, age_group_15_to_34,
+                                     mio::abm::InfectionState::InfectedSevere, t);
     auto rng_inf3 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_inf3);
     p_inf1.get_tested(rng_inf3, t, test_params);
     // Check that detected infected person does not leave hospital to quarantine
@@ -485,18 +488,18 @@ TEST_F(TestMobilityRules, quarantine)
 TEST_F(TestMobilityRules, hospital)
 {
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    auto t  = mio::abm::TimePoint(12346);
-    auto dt = mio::abm::hours(1);
-    auto p_inf =
-        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::InfectionState::InfectedSevere, t);
+    auto t       = mio::abm::TimePoint(12346);
+    auto dt      = mio::abm::hours(1);
+    auto p_inf   = make_test_person(this->get_rng(), home, mio::abm::ActivityType::Home, age_group_15_to_34,
+                                    mio::abm::InfectionState::InfectedSevere, t);
     auto rng_inf = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_inf);
 
     // Ensure person goes to the hospital when severely infected
     EXPECT_EQ(mio::abm::go_to_hospital(rng_inf, p_inf, t, dt, mio::abm::Parameters(num_age_groups)),
               mio::abm::LocationType::Hospital);
 
-    auto p_car =
-        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms);
+    auto p_car   = make_test_person(this->get_rng(), home, mio::abm::ActivityType::Home, age_group_15_to_34,
+                                    mio::abm::InfectionState::InfectedSymptoms);
     auto rng_car = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_car);
     // Ensure person has infection symptoms still stay at home
     EXPECT_EQ(mio::abm::go_to_hospital(rng_car, p_car, t, dt, mio::abm::Parameters(num_age_groups)),
@@ -517,12 +520,12 @@ TEST_F(TestMobilityRules, go_shopping)
     auto dt        = mio::abm::hours(1);
 
     // Create an infected child in the hospital
-    auto p_hosp   = make_test_person(this->get_rng(), hospital, age_group_0_to_4,
+    auto p_hosp   = make_test_person(this->get_rng(), hospital, mio::abm::ActivityType::Hospital, age_group_0_to_4,
                                      mio::abm::InfectionState::InfectedSymptoms, t_weekday);
     auto rng_hosp = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_hosp);
     // Create a healthy elderly person at home
-    auto p_home =
-        mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), home.get_model_id(), age_group_60_to_79);
+    auto p_home   = mio::abm::Person(this->get_rng(), home.get_type(), mio::abm::ActivityType::Home, home.get_id(),
+                                     home.get_model_id(), age_group_60_to_79);
     auto rng_home = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_home);
 
     // Check that an infected person stays in the hospital and doesn't go shopping
@@ -555,8 +558,8 @@ TEST_F(TestMobilityRules, shop_return)
 
     // Create a person at a basic shop who is asymptomatically infected
     mio::abm::Location shop(mio::abm::LocationType::BasicsShop, 0, num_age_groups);
-    auto p =
-        make_test_person(this->get_rng(), shop, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+    auto p     = make_test_person(this->get_rng(), shop, mio::abm::ActivityType::BasicsShop, age_group_15_to_34,
+                                  mio::abm::InfectionState::InfectedNoSymptoms, t);
     auto rng_p = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p);
     // Simulate the person spending 1 hour at the shop
     p.add_time_at_location(dt);
@@ -573,12 +576,12 @@ TEST_F(TestMobilityRules, go_event)
 {
     // Initialize two people, one at work and one at home
     mio::abm::Location work(mio::abm::LocationType::Work, 0, num_age_groups);
-    auto p_work =
-        mio::abm::Person(this->get_rng(), work.get_type(), work.get_id(), work.get_model_id(), age_group_35_to_59);
+    auto p_work   = mio::abm::Person(this->get_rng(), work.get_type(), mio::abm::ActivityType::Work, work.get_id(),
+                                     work.get_model_id(), age_group_35_to_59);
     auto rng_work = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_work);
     mio::abm::Location home(mio::abm::LocationType::Home, 1, num_age_groups);
-    auto p_home =
-        mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), home.get_model_id(), age_group_60_to_79);
+    auto p_home   = mio::abm::Person(this->get_rng(), home.get_type(), mio::abm::ActivityType::Home, home.get_id(),
+                                     home.get_model_id(), age_group_60_to_79);
     auto rng_home = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_home);
 
     auto t_weekday  = mio::abm::TimePoint(0) + mio::abm::days(4) + mio::abm::hours(20);
@@ -587,23 +590,23 @@ TEST_F(TestMobilityRules, go_event)
     auto dt         = mio::abm::hours(1);
 
     // Check that person at work should not go to an event during a weekday evening, so they stay at work
-    EXPECT_EQ(mio::abm::go_to_event(rng_work, p_work, t_weekday, dt, mio::abm::Parameters(num_age_groups)),
-              mio::abm::LocationType::Work);
+    EXPECT_EQ(mio::abm::go_to_recreation(rng_work, p_work, t_weekday, dt, mio::abm::Parameters(num_age_groups)),
+              mio::abm::ActivityType::Work);
     // Check that person at home during nighttime should not go to an event, so they stay at home
-    EXPECT_EQ(mio::abm::go_to_event(rng_home, p_home, t_night, dt, mio::abm::Parameters(num_age_groups)),
-              mio::abm::LocationType::Home);
+    EXPECT_EQ(mio::abm::go_to_recreation(rng_home, p_home, t_night, dt, mio::abm::Parameters(num_age_groups)),
+              mio::abm::ActivityType::Home);
     // Mock the random distribution to simulate event participation based on random draw
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.01));
     // Check that person at home goes to a social event on a weekday evening based on a low random value
-    EXPECT_EQ(mio::abm::go_to_event(rng_home, p_home, t_weekday, dt, mio::abm::Parameters(num_age_groups)),
-              mio::abm::LocationType::SocialEvent);
+    EXPECT_EQ(mio::abm::go_to_recreation(rng_home, p_home, t_weekday, dt, mio::abm::Parameters(num_age_groups)),
+              mio::abm::ActivityType::Recreation);
 
     // Check that person at home goes to a social event on a Saturday morning based on a low random value
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.01));
-    EXPECT_EQ(mio::abm::go_to_event(rng_home, p_home, t_saturday, dt, mio::abm::Parameters(num_age_groups)),
-              mio::abm::LocationType::SocialEvent);
+    EXPECT_EQ(mio::abm::go_to_recreation(rng_home, p_home, t_saturday, dt, mio::abm::Parameters(num_age_groups)),
+              mio::abm::ActivityType::Recreation);
 }
 
 /**
@@ -616,15 +619,15 @@ TEST_F(TestMobilityRules, event_return)
     auto dt     = mio::abm::hours(3);
 
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location social_event(mio::abm::LocationType::SocialEvent, 1, num_age_groups);
+    mio::abm::Location social_event(mio::abm::LocationType::Recreation, 1, num_age_groups);
     // Initialize the person at the social event location
-    auto p     = mio::abm::Person(this->get_rng(), social_event.get_type(), social_event.get_id(),
-                                  social_event.get_model_id(), age_group_15_to_34);
+    auto p     = mio::abm::Person(this->get_rng(), social_event.get_type(), mio::abm::ActivityType::Recreation,
+                                  social_event.get_id(), social_event.get_model_id(), age_group_15_to_34);
     auto rng_p = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p);
     // Simulate the person spending 3 hours at the social event
     p.add_time_at_location(dt);
     // After spending the time at the social event, the person should return home
-    EXPECT_EQ(mio::abm::go_to_event(rng_p, p, t, dt, params), mio::abm::LocationType::Home);
+    EXPECT_EQ(mio::abm::go_to_recreation(rng_p, p, t, dt, params), mio::abm::LocationType::Home);
 }
 
 /**
@@ -633,10 +636,10 @@ TEST_F(TestMobilityRules, event_return)
 TEST_F(TestMobilityRules, icu)
 {
     mio::abm::Location hospital(mio::abm::LocationType::Hospital, 0, num_age_groups);
-    auto t  = mio::abm::TimePoint(12346);
-    auto dt = mio::abm::hours(1);
-    auto p_hosp =
-        make_test_person(this->get_rng(), hospital, age_group_15_to_34, mio::abm::InfectionState::InfectedCritical, t);
+    auto t        = mio::abm::TimePoint(12346);
+    auto dt       = mio::abm::hours(1);
+    auto p_hosp   = make_test_person(this->get_rng(), hospital, mio::abm::ActivityType::Hospital, age_group_15_to_34,
+                                     mio::abm::InfectionState::InfectedCritical, t);
     auto rng_hosp = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_hosp);
 
     // Ensure critically infected person goes to the ICU
@@ -644,8 +647,8 @@ TEST_F(TestMobilityRules, icu)
               mio::abm::LocationType::ICU);
 
     mio::abm::Location work(mio::abm::LocationType::Work, 1, num_age_groups);
-    auto p_work =
-        make_test_person(this->get_rng(), work, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms, t);
+    auto p_work   = make_test_person(this->get_rng(), work, mio::abm::ActivityType::Work, age_group_15_to_34,
+                                     mio::abm::InfectionState::InfectedSymptoms, t);
     auto rng_work = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_work);
     // Ensure infected with symptions person can still go to work
     EXPECT_EQ(mio::abm::go_to_icu(rng_work, p_work, t, dt, mio::abm::Parameters(num_age_groups)),
@@ -658,13 +661,13 @@ TEST_F(TestMobilityRules, icu)
 TEST_F(TestMobilityRules, recover)
 {
     mio::abm::Location hospital(mio::abm::LocationType::Hospital, 0);
-    auto t  = mio::abm::TimePoint(12346);
-    auto dt = mio::abm::hours(1);
-    auto p_rec =
-        make_test_person(this->get_rng(), hospital, age_group_60_to_79, mio::abm::InfectionState::Recovered, t);
+    auto t       = mio::abm::TimePoint(12346);
+    auto dt      = mio::abm::hours(1);
+    auto p_rec   = make_test_person(this->get_rng(), hospital, mio::abm::ActivityType::Hospital, age_group_60_to_79,
+                                    mio::abm::InfectionState::Recovered, t);
     auto rng_rec = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_rec);
-    auto p_inf =
-        make_test_person(this->get_rng(), hospital, age_group_60_to_79, mio::abm::InfectionState::InfectedSevere, t);
+    auto p_inf   = make_test_person(this->get_rng(), hospital, mio::abm::ActivityType::Hospital, age_group_60_to_79,
+                                    mio::abm::InfectionState::InfectedSevere, t);
     auto rng_inf = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_inf);
     // Ensure recovered person returns home and infected severe person stay in hospital
     EXPECT_EQ(mio::abm::return_home_when_recovered(rng_rec, p_rec, t, dt, {num_age_groups}),
@@ -681,7 +684,8 @@ TEST_F(TestMobilityRules, dead)
     mio::abm::Location icu(mio::abm::LocationType::ICU, 0);
     auto t      = mio::abm::TimePoint(12346);
     auto dt     = mio::abm::hours(1);
-    auto p_dead = make_test_person(this->get_rng(), icu, age_group_60_to_79, mio::abm::InfectionState::Dead, t);
+    auto p_dead = make_test_person(this->get_rng(), icu, mio::abm::ActivityType::ICU, age_group_60_to_79,
+                                   mio::abm::InfectionState::Dead, t);
     auto p_rng  = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_dead);
 
     EXPECT_EQ(mio::abm::get_buried(p_rng, p_dead, t, dt, {num_age_groups}), mio::abm::LocationType::Cemetery);

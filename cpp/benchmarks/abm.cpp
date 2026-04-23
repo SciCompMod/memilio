@@ -51,7 +51,7 @@ mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list
 
     //create other locations
     for (auto loc_type :
-         {mio::abm::LocationType::School, mio::abm::LocationType::Work, mio::abm::LocationType::SocialEvent,
+         {mio::abm::LocationType::School, mio::abm::LocationType::Work, mio::abm::LocationType::Recreation,
           mio::abm::LocationType::BasicsShop, mio::abm::LocationType::Hospital, mio::abm::LocationType::ICU}) {
 
         const auto num_locs = std::max(size_t(1), num_persons / 2'000);
@@ -112,7 +112,7 @@ mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list
     };
 
     model.get_testing_strategy().add_scheme(
-        {mio::abm::LocationType::School, mio::abm::LocationType::Work, mio::abm::LocationType::SocialEvent,
+        {mio::abm::LocationType::School, mio::abm::LocationType::Work, mio::abm::LocationType::Recreation,
          mio::abm::LocationType::Home},
         mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
                                 mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));

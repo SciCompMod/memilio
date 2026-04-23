@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2026 MEmilio
 *
-* Authors: Sascha Korf
+* Authors: Julia Bicker
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,9 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-
-#ifndef ABM_MOBILITY_DATA_H
-#define ABM_MOBILITY_DATA_H
+#ifndef MIO_ABM_ACTIVITY_TYPE_H
+#define MIO_ABM_ACTIVITY_TYPE_H
 
 #include <cstdint>
 
@@ -29,36 +28,24 @@ namespace abm
 {
 
 /**
- * @brief Mode of Transport.
+ * @brief Type of an Activity. This is used to determine the type of an Activity that a Person does at a Location. It is similar to LocationType, but is not necessarily the same as Persons can do different activities at the same location e.g. "Work" and "School" at a Location of LocationType "School".
  */
-enum class TransportMode : uint32_t
+enum class ActivityType : std::uint32_t
 {
-    Unknown = 0,
-    Bike,
-    CarDriver,
-    CarPassenger,
-    PublicTransport,
-    Walking,
-    Other,
-    Count //last!!
-};
+    Home = 0,
+    School,
+    Work,
+    Recreation, // TODO: differentiate different kinds
+    BasicsShop, // groceries and other necessities
+    Hospital,
+    ICU,
+    Cemetery, // Location for all the dead persons. It is created once for the Model.
 
-// /**
-//  * @brief Type of the activity.
-//  */
-// enum class ActivityType : uint32_t
-// {
-//     Workplace,
-//     Education,
-//     Shopping,
-//     Leisure,
-//     PrivateMatters,
-//     OtherActivity,
-//     Home,
-//     UnknownActivity
-// };
+    Count, //last!
+    Invalid
+};
 
 } // namespace abm
 } // namespace mio
 
-#endif //ABM_MOBILITY_DATA_H
+#endif

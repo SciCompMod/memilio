@@ -91,7 +91,7 @@ mio::abm::Model make_model(const mio::RandomNumberGenerator& rng)
 
     // Add one social event with 5 maximum contacts.
     // Maximum contacts limit the number of people that a person can infect while being at this location.
-    auto event = model.add_location(mio::abm::LocationType::SocialEvent);
+    auto event = model.add_location(mio::abm::LocationType::Recreation);
     model.get_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
     // Add hospital and ICU with 5 maximum contacs.
     auto hospital = model.add_location(mio::abm::LocationType::Hospital);

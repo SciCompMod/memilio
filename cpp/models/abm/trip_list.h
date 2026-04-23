@@ -20,6 +20,7 @@
 #ifndef MIO_ABM_TRIP_LIST_H
 #define MIO_ABM_TRIP_LIST_H
 
+#include "abm/activity_type.h"
 #include "abm/location_id.h"
 #include "abm/mobility_data.h"
 #include "abm/person.h"
@@ -44,6 +45,7 @@ struct Trip {
     Model, where all Person%s are saved.*/
     TimePoint trip_time; ///< Daytime at which a Person changes the Location.
     LocationId destination; ///< Location where the Person changes to.
+    ActivityType activity; ///< Activity the person does at the destination location.
     int destination_model_id; ///< Model id of destination Location.
     TransportMode trip_mode; ///< Mode of transportation. See TransportMode for all possible modes of transportation.
     std::vector<uint32_t> cells; /**< If destination consists of different Cell%s, this gives the index of the
@@ -54,17 +56,19 @@ struct Trip {
      * @param[in] id ID of the Person that makes the Trip.
      * @param[in] time Time at which a Person changes the Location this currently cant be set for s specific day just a timepoint in a day.
      * @param[in] destination Location where the Person changes to.
-     * @param[in] destination_model_id Model the Person changes to.
+     * @param[in] actvty Activity the person does at the destination location.
+     * @param[in] dest_model_id Model the Person changes to.
      * @param[in] origin Location where the person starts the Trip.
      * @param[in] origin_model_id Model the Person starts the Trip.
      * @param[in] input_cells The index of the Cell%s the Person changes to.
      */
-    Trip(PersonId id, const TimePoint time, const LocationId dest, const int dest_model_id = 0,
+    Trip(PersonId id, const TimePoint time, const LocationId dest, ActivityType actvty, const int dest_model_id = 0,
          const TransportMode mode_of_transport    = mio::abm::TransportMode::Unknown,
          const std::vector<uint32_t>& input_cells = {})
         : person_id(id)
         , trip_time(mio::abm::TimePoint(time.time_since_midnight().seconds()))
         , destination(dest)
+        , activity(actvty)
         , destination_model_id(dest_model_id)
         , trip_mode(mode_of_transport)
         , cells(input_cells)
@@ -78,7 +82,8 @@ struct Trip {
     bool operator==(const Trip& other) const
     {
         return (person_id == other.person_id) && (trip_time == other.trip_time) && (destination == other.destination) &&
-               (destination_model_id == other.destination_model_id) && (trip_mode == other.trip_mode);
+               (activity == other.activity) && (destination_model_id == other.destination_model_id) &&
+               (trip_mode == other.trip_mode);
     }
 
     auto default_serialize()
@@ -87,6 +92,7 @@ struct Trip {
             .add("person_id", person_id)
             .add("trip_time", trip_time)
             .add("destination", destination)
+            .add("activity", activity)
             .add("model_id", destination_model_id)
             .add("trip_mode", trip_mode);
     }
@@ -173,7 +179,7 @@ template <>
 struct DefaultFactory<abm::Trip> {
     static abm::Trip create()
     {
-        return abm::Trip{abm::PersonId{}, abm::TimePoint{}, abm::LocationId{}};
+        return abm::Trip{abm::PersonId{}, abm::TimePoint{}, abm::LocationId{}, abm::ActivityType::Count};
     }
 };
 
