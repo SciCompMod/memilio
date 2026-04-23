@@ -17,9 +17,11 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/activity_type.h"
 #include "abm/simulation.h"
 
 #include "benchmark/benchmark.h"
+#include <utility>
 
 mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list<uint32_t> seeds)
 {
@@ -44,25 +46,28 @@ mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list
 
         auto age    = mio::AgeGroup(mio::UniformIntDistribution<size_t>::get_instance()(
             model.get_rng(), size_t(0), model.parameters.get_num_groups() - 1));
-        auto person = model.add_person(home, age);
-        model.assign_location(uint32_t(i), home);
+        auto person = model.add_person(home, age, mio::abm::ActivityType::Home);
+        model.assign_location(uint32_t(i), home, mio::abm::ActivityType::Home);
         home_size++;
     }
 
     //create other locations
-    for (auto loc_type :
-         {mio::abm::LocationType::School, mio::abm::LocationType::Work, mio::abm::LocationType::Recreation,
-          mio::abm::LocationType::BasicsShop, mio::abm::LocationType::Hospital, mio::abm::LocationType::ICU}) {
+    for (auto types : {std::make_pair(mio::abm::LocationType::School, mio::abm::ActivityType::School),
+                       std::make_pair(mio::abm::LocationType::Work, mio::abm::ActivityType::Work),
+                       std::make_pair(mio::abm::LocationType::Recreation, mio::abm::ActivityType::Recreation),
+                       std::make_pair(mio::abm::LocationType::BasicsShop, mio::abm::ActivityType::BasicsShop),
+                       std::make_pair(mio::abm::LocationType::Hospital, mio::abm::ActivityType::Hospital),
+                       std::make_pair(mio::abm::LocationType::ICU, mio::abm::ActivityType::ICU)}) {
 
         const auto num_locs = std::max(size_t(1), num_persons / 2'000);
         std::vector<mio::abm::LocationId> locs(num_locs);
         std::generate(locs.begin(), locs.end(), [&] {
-            return model.add_location(loc_type);
+            return model.add_location(types.first);
         });
         for (size_t p = 0; p < num_persons; ++p) {
             auto loc_idx =
                 mio::UniformIntDistribution<size_t>::get_instance()(model.get_rng(), size_t(0), num_locs - 1);
-            model.assign_location(uint32_t(p), locs[loc_idx]);
+            model.assign_location(uint32_t(p), locs[loc_idx], types.second);
         }
     }
 
