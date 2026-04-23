@@ -48,26 +48,15 @@ IOResult<bool> create_directory(const std::filesystem::path& rel_path, std::stri
 IOResult<bool> create_directory(const std::filesystem::path& rel_path, bool create_parents)
 {
     std::error_code ec;
-    bool created;
-
-    if (create_parents) {
-        created = std::filesystem::create_directories(rel_path, ec);
-    }
-    else {
-        created = std::filesystem::create_directory(rel_path, ec);
-    }
+    bool created = create_parents ? std::filesystem::create_directories(rel_path, ec)
+                                  : std::filesystem::create_directory(rel_path, ec);
 
     if (ec) {
         const std::string with_parents = create_parents ? " (with parents)" : "";
         return failure(ec, "Failed to create directory " + rel_path.string() + with_parents);
     }
 
-    if (created) {
-        log_info("Directory '{:s}' was created.", rel_path);
-    }
-    else {
-        log_info("Directory '{:s}' already exists.", rel_path);
-    }
+    log_info("Directory '{}' {}.", rel_path, created ? "was created" : "already exists");
 
     return success(created);
 }
