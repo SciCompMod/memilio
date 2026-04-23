@@ -180,7 +180,7 @@ A complex lockdown scenario with multiple interventions starting on a specific d
       dampings.append(physical_distancing_home_school(start_spring, 0.4, 0.6))
       dampings.append(physical_distancing_work_other(start_spring, 0.4, 0.6))
 
-A more advances structure to automatically activate interventions based on threshold criteria is given by ``DynamicNPIs``.
+A more advanced structure to automatically activate interventions based on threshold criteria is given by ``DynamicNPIs``.
 Dynamic NPIs can be configured to trigger when the number of symptomatic infected individuals exceeds a certain relative threshold in the population. 
 In contrast to static NPIs which are active as long as no other NPI gets implemented, dynamic NPIs are checked at regular intervals and get 
 activated for a defined duration when the threshold is exceeded. As above, different dampings `dampings` can be assigned to different contact locations
@@ -237,7 +237,7 @@ Output and visualization
 -------------------------
 
 The result returned from the simulation is a ``TimeSeries`` object containing the number of people per age group in each infection state at each time step.
-The ``TimeSeries`` provides alot of interfaces to interact with it, but can also be transformed into a multidimensional numpy matrix for a more
+The ``TimeSeries`` provides a lot of interfaces to interact with it, but can also be transformed into a multidimensional numpy matrix for a more
 pythonic interface.
 
 .. code-block:: python
