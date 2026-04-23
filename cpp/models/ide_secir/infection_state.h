@@ -58,26 +58,12 @@ enum class InfectionTransition
     InfectedSymptomsToInfectedSevere     = 4,
     InfectedSymptomsToRecovered          = 5,
     InfectedSevereToInfectedCritical     = 6,
-    InfectedSevereToRecovered            = 7,
-    InfectedCriticalToDead               = 8,
-    InfectedCriticalToRecovered          = 9,
-    Count                                = 10
+    InfectedSevereToDead                 = 7,
+    InfectedSevereToRecovered            = 8,
+    InfectedCriticalToDead               = 9,
+    InfectedCriticalToRecovered          = 10,
+    Count                                = 11
 };
-
-// This is an alternative implementation for the infection transitions; currently not used.
-static constexpr size_t InfectionTransitionsCount = 10;
-
-static const std::array<std::pair<InfectionState, InfectionState>, InfectionTransitionsCount> InfectionTransitionsMap =
-    {std::make_pair(InfectionState::Susceptible, InfectionState::Exposed),
-     std::make_pair(InfectionState::Exposed, InfectionState::InfectedNoSymptoms),
-     std::make_pair(InfectionState::InfectedNoSymptoms, InfectionState::InfectedSymptoms),
-     std::make_pair(InfectionState::InfectedNoSymptoms, InfectionState::Recovered),
-     std::make_pair(InfectionState::InfectedSymptoms, InfectionState::InfectedSevere),
-     std::make_pair(InfectionState::InfectedSymptoms, InfectionState::Recovered),
-     std::make_pair(InfectionState::InfectedSevere, InfectionState::InfectedCritical),
-     std::make_pair(InfectionState::InfectedSevere, InfectionState::Recovered),
-     std::make_pair(InfectionState::InfectedCritical, InfectionState::Dead),
-     std::make_pair(InfectionState::InfectedCritical, InfectionState::Recovered)};
 
 } // namespace isecir
 } // namespace mio

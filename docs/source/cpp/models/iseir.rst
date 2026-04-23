@@ -19,7 +19,7 @@ Bachelor's thesis, University of Cologne. `https://elib.dlr.de/143504/ <https://
 Infection States
 ----------------
 
-The model contains the following list of **InfectionState**\s:
+The model contains the following list of ``InfectionState``\s:
 
 .. code-block:: RST
 
@@ -124,7 +124,7 @@ The values of the remaining compartments :math:`E`, :math:`I` and :math:`R` are 
 Output
 ------
 
-The output of the simulationis a `TimeSeries` object containing the size of the compartments at all time 
+The output of the simulation is a ``TimeSeries`` object containing the size of the compartments at all time 
 points. You can access the results as follows:
 
 .. code-block:: cpp
@@ -141,7 +141,7 @@ points. You can access the results as follows:
     Eigen::VectorX<ScalarType> last_value = result.get_last_value();
     ScalarType last_time = result.get_last_time();
 
-The order of the compartments follows the definition in the `InfectionState` enum.
+The order of the compartments follows the definition in the ``InfectionState`` enum.
 
 You can print the simulation results as a formatted table:
 

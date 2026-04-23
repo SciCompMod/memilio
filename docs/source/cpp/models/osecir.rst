@@ -19,7 +19,7 @@ The infection states and the transitions (also see next two sections) are visual
 Infection States
 ----------------
 
-The model contains the following list of **InfectionState**\s:
+The model contains the following list of ``InfectionState``\s:
 
 .. code-block:: RST
 
@@ -40,7 +40,7 @@ current implementation and detection is only modeled implicitly through detectio
 Infection State Transitions
 ---------------------------
 
-The ODE-SECIR model is implemented as a **FlowModel**, which defines the derivatives of each flow between compartments.
+The ODE-SECIR model is implemented as a ``FlowModel``, which defines the derivatives of each flow between compartments.
 This allows for explicit computation of new transmissions, infections, and hospitalizations. Additionally, the aggregated
 compartment values can be computed with minimal overhead. The defined transitions `FromState, ToState` are:
 
@@ -67,7 +67,7 @@ Sociodemographic Stratification
 -------------------------------
 
 In the ODE-SECIR model, the population can be stratified by one sociodemographic dimension. This dimension is denoted 
-**AgeGroup** but can also be used for other interpretations. For stratifications with two or more dimensions, 
+``AgeGroup`` but can also be used for other interpretations. For stratifications with two or more dimensions, 
 see :doc:`Model Creation <../ode_creation>`.
 
 
@@ -137,7 +137,7 @@ The model implements the following parameters:
 Initial conditions
 ------------------
 
-The initial conditions of the model are represented by the class **Populations** which defines the number of individuals in each sociodemographic group and **InfectionState**. Before running a simulation, you need to set the initial values for each compartment:
+The initial conditions of the model are represented by the class ``Populations`` which defines the number of individuals in each sociodemographic group and ``InfectionState``. Before running a simulation, you need to set the initial values for each compartment:
 
 .. code-block:: cpp
 
@@ -259,7 +259,7 @@ A complex lockdown scenario with multiple interventions starting on a specific d
     contact_dampings.push_back(social_events(start_lockdown, 0.6, 0.8));
     contact_dampings.push_back(physical_distancing(start_lockdown, 0.4, 0.6));
 
-A more advanced structure to automatically activate interventions based on threshold criteria is given by **DynamicNPIs**.
+A more advanced structure to automatically activate interventions based on threshold criteria is given by ``DynamicNPIs``.
 Dynamic NPIs can be configured to trigger when the number of symptomatic infected individuals exceeds a certain relative threshold in the population. 
 In contrast to static NPIs which are active as long as no other NPI gets implemented, dynamic NPIs are checked at regular intervals and get 
 activated for a defined duration when the threshold is exceeded. As above, different dampings `contact_dampings` can be assigned to different contact locations
@@ -320,7 +320,7 @@ For both simulation types, you can also specify a custom integrator:
 Output
 ------
 
-The output of the simulation is a `TimeSeries` object containing the sizes of each compartment at each time point. For a basic simulation, you can access the results as follows:
+The output of the simulation is a ``TimeSeries`` object containing the sizes of each compartment at each time point. For a basic simulation, you can access the results as follows:
 
 .. code-block:: cpp
 
@@ -335,7 +335,7 @@ The output of the simulation is a `TimeSeries` object containing the sizes of ea
     Eigen::VectorXd last_value = secir.get_last_value();
     ScalarType last_time = secir.get_last_time();
 
-For flow simulations, the result consists of two `mio::TimeSeries` objects, one for compartment sizes and one for flows:
+For flow simulations, the result consists of two ``TimeSeries`` objects, one for compartment sizes and one for flows:
 
 .. code-block:: cpp
 

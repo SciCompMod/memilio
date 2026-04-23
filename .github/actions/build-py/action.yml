@@ -6,24 +6,38 @@ inputs:
     required: true
 runs:
   using: "composite"
-  steps:    
+  steps:
+    - name: Configure Git safe directory
+      shell: bash 
+      run: git config --global --add safe.directory /__w/memilio/memilio    
     - name: Install dependencies
       shell: bash
       run: yum install ninja-build cmake git -qy
     - name: Make artifact dir
       shell: bash
       run: |
-        cd pycode/memilio-${{ inputs.package }}/
+        if [ "${{ inputs.package }}" != "simulation" ]; then
+          cd pycode/memilio-${{ inputs.package }}/
+        # else stay in root directory
+        fi
         mkdir wheelhouse
     - name: Build Python Wheels
       shell: bash
       run: |
-        cd pycode/memilio-${{ inputs.package }}/
+        if [ "${{ inputs.package }}" != "simulation" ]; then
+          cd pycode/memilio-${{ inputs.package }}/
+        # else stay in root directory
+        fi
         /opt/python/cp38-cp38/bin/python -m pip install --upgrade pip setuptools wheel
-        /opt/python/cp38-cp38/bin/python -m pip install scikit-build scikit-build-core
-        /opt/python/cp38-cp38/bin/python -m build --no-isolation --wheel
         /opt/python/cp312-cp312/bin/python -m pip install --upgrade pip setuptools wheel
+        /opt/python/cp38-cp38/bin/python -m pip install scikit-build scikit-build-core 
         /opt/python/cp312-cp312/bin/python -m pip install scikit-build scikit-build-core
+        # Install setuptools-scm only for memilio-simulation
+        if [ "${{ inputs.package }}" == "simulation" ]; then
+          /opt/python/cp38-cp38/bin/python -m pip install setuptools-scm
+          /opt/python/cp312-cp312/bin/python -m pip install setuptools-scm
+        fi
+        /opt/python/cp38-cp38/bin/python -m build --no-isolation --wheel
         /opt/python/cp312-cp312/bin/python -m build --no-isolation --wheel
         # Exclude memilio-generation, because its a pure python package, cmake is only used in the build process to retrieve data from cpp
         if [[ -f "CMakeLists.txt" ]] && [ "${{ inputs.package }}" != "generation" ]; then 
@@ -33,7 +47,11 @@ runs:
           # no auditwheel necessary for pure python packages, so only copy the wheels to the same output directory 
           cp dist/*.whl wheelhouse
         fi
-        cp -r wheelhouse ..
+        if [ "${{ inputs.package }}" != "simulation" ]; then
+          cp -r wheelhouse ..
+        else
+          cp -r wheelhouse pycode
+        fi 
     - name: Upload Python Wheels
       uses: actions/upload-artifact@v4
       with:
