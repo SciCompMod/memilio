@@ -114,11 +114,11 @@ A list of model parameters. Each parameter entry will be encapsulated in a parti
      - no: No bound checking or enforcing of the parameter will be done.
      - ``[lower, upper]`` -- use ``null`` for an unbound parameter. 
      
-Default value are passed to a function which only serves as a fallback solution if no value is set. If the users pays attention to always set the parameters, the default value can be ignored (i.e. set to a simple value like 0 or 1)
+Default value are passed to a function which only serves as a fallback solution if no value is set. If the users pays attention to always set the parameters, the default value can be ignored (i.e. set to a simple value like 0 or 1),
     
 .. dropdown:: :fa:`gears` Explanations for experienced C++ users
 
-    Each parameter will obtain its own `struct`. Default value are passed to a ``get_default()`` function which 
+    Each parameter will obtain its own `struct`. Default values are passed to a ``get_default()`` function which 
     only serves as a fallback solution if no value is set. If stratification by age_groups is desired (`true` value) a 
     ``CustomIndexArray<UncertainValue, AgeGroup>`` is used, otherwise the parameter will be represented by 
     MEmilio's custom-built ``UncertainValue`` which acts as a double value but also allows storing a parameter 
@@ -127,6 +127,7 @@ Default value are passed to a function which only serves as a fallback solution 
 **Built-in types and their bounds:**
 
 Depending on the type and bounds provided by the user, MEmilio introduces a parameter constraint checking functionalism.
+
 - ``probability``: constraint check enforces ``[0.0, 1.0]``
 - ``time``: constraint check uses the configured ``bounds``. If ``bounds`` are omitted, the default is ``[0.1, null]``. Values below ``0.1`` days are always raised to ``0.1`` days in the generated C++ constraint check to avoid unreasonably short compartment stays that drastically increase ODE solver run time.
 - ``custom``: no automatic constraint check is generated
@@ -143,7 +144,7 @@ Depending on the type and bounds provided by the user, MEmilio introduces a para
         model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.ones((num_groups, num_groups))
         model.parameters.ContactPatterns.cont_freq_mat[0].minimum  = np.zeros((num_groups, num_groups))
         
-The minimum contact pattern is a critical parameter as it defines a minimum contact frequency under which we cannot go below in the simulation, no matter the strictness of a nonpharmaceutical intervention. It should only be set if a good estimation is available. Otherwise, set it to zero.
+The minimum contact pattern is a parameter that should be handled with extreme caution (or avoided otherwise) as it defines a minimum contact frequency under which we cannot go below in the simulation, no matter the strictness of a nonpharmaceutical intervention. It should only be set if a good estimation is available. Otherwise, set it to zero.
 
 The parameters that need to be provided for the SEIR model are as follows.
 
@@ -391,7 +392,7 @@ After generation
    The patched ``cpp/CMakeLists.txt`` picks up the new model directory automatically.
    See :doc:`/cpp/installation` for details on configuring and building with CMake.
 
-3. **Install the Python bindings** by reinstalling ``memilio-simulation``:
+3. **Install the Python bindings** by (re)installing ``memilio-simulation`` from the main directory:
 
    .. code-block:: console
 
