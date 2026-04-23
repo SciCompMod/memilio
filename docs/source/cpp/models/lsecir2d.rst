@@ -60,7 +60,7 @@ due to extensive isolation of the hospitalized individuals.
 Infection States
 ----------------
 
-The model contains the following list of **InfectionState**\s:
+The model contains the following list of ``InfectionState``\s:
 
 .. code-block:: RST
 
@@ -304,7 +304,7 @@ that contains a vector with initial values for the respective subcompartments.
         {0},    {0},     {100},       {0, 0},    {0, 0},    {0, 0},     {0},       {0}};
 
     
-We assert that the vector has the correct size by checking that the number of `InfectionState`\s and the numbers of subcompartments are correct.
+We assert that the vector has the correct size by checking that the number of infection states and the numbers of subcompartments are correct.
 
 .. code-block:: cpp
 
@@ -402,13 +402,13 @@ We can simulate the model from :math:`t_0` to :math:`t_{\max}` with initial step
 Output
 ------
 
-The simulation result is stratefied by subcompartments. The function ``calculate_compartments()`` aggregates the subcompartments by `InfectionState`\s.
+The simulation result is stratified by subcompartments. The function ``calculate_compartments()`` aggregates the subcompartments by infection states.
 
 .. code-block:: cpp
 
     mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_compartments(result);
 
-You can access the data in the `mio::TimeSeries` object as follows:
+You can access the data in the ``TimeSeries`` object as follows:
 
 .. code-block:: cpp
 

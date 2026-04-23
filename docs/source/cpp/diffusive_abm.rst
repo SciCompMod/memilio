@@ -10,7 +10,7 @@ The features of an agent are its position and its infection state. The evolution
 
 with :math:`X` the vector of all agents' positions and :math:`Z` the vector of all agents' infection states. The operator :math:`G` defines the infection state adoptions and only acts on :math:`Z`, while :math:`L` defines movement, i.e. location changes, only acting on :math:`X`. Infection state adoptions are modeled with independent Poisson processes given by adoption rate functions. Movement is modeled with independent diffusion processes. A temporal Gillespie algorithm (a direct method without rejection sampling) is used for simulation. Therefore, :math:`G` and :math:`L` are not implemented explicitly, instead their effects are sampled via the `move` and `adoption_rate` functions, respectively.
 
-The Model class needs an Implementation class as template argument which provides the domain agents move and interact in. A quadwell potential and a singlewell potential given in the classes **QuadWell** and **SingleWell** respectively are implemented, but any other suitable potential can be used as implementation. 
+The Model class needs an Implementation class as template argument which provides the domain agents move and interact in. A quadwell potential and a singlewell potential given in the classes ``QuadWell`` and ``SingleWell`` respectively are implemented, but any other suitable potential can be used as implementation. 
 
 In the following, we present more details of the diffusive agent-based model, including code examples. 
 An overview of nonstandard but often used data types can be found under :doc:`data_types`.
@@ -40,7 +40,7 @@ Using the infection states Susceptible (S), Exposed (E), Carrier (C), Infected (
 Infection state transitions
 ---------------------------
 
-The infection state transitions are explicitly given by the adoption rates and are therefore subject to user input. Adoption rates always depend on their source infection state. If an adoption event requires interaction of agents (e.g. disease transmission), the corresponding rate depends not only on the source infection state, but also on other infection states, the **Influence**\s. An adoption rate that only depends on the source infection state, e.g. recovery or worsening of disease symptoms, is called `first-order` adoption rate and an adoption rate that has influences is called `second-order` adoption rate. Adoption rates are region-dependent; therefore it is possible to have different rates in two regions for the same state transition which can be useful when having e.g. region-dependent interventions or contact behavior.
+The infection state transitions are explicitly given by the adoption rates and are therefore subject to user input. Adoption rates always depend on their source infection state. If an adoption event requires interaction of agents (e.g. disease transmission), the corresponding rate depends not only on the source infection state, but also on other infection states, the ``Influence``\s. An adoption rate that only depends on the source infection state, e.g. recovery or worsening of disease symptoms, is called `first-order` adoption rate and an adoption rate that has influences is called `second-order` adoption rate. Adoption rates are region-dependent; therefore it is possible to have different rates in two regions for the same state transition which can be useful when having e.g. region-dependent interventions or contact behavior.
 
 Using the infection states from above and only one region, there are five first-order and one second-order adoption rate that can be set via: 
 
@@ -134,7 +134,7 @@ Simulation
 
 The simulation runs in discrete time steps. In every step the model is advanced until the next infection state adoption event. Then the corresponding agent's infection state is adopted and a new waiting time until the next adoption event is drawn. If the waiting time until the next adoption event is bigger than the remaining time in the time step, we advance the model until the end of the time step.
 
-To simulate the model from `t0` to `tmax` with given step size `dt`, a **Simulation** has to be created and advanced until `tmax`, which is done as follows:
+To simulate the model from `t0` to `tmax` with given step size `dt`, a ``Simulation`` has to be created and advanced until `tmax`, which is done as follows:
 
 .. code-block:: cpp
 
@@ -161,7 +161,7 @@ The model holds a vector containing all agents that can be accessed via
 
     sim.get_model().populations
 
-Additionally, the agents are automatically aggregated by region and infection state in a ``mio::TimeSeries`` object which can be accessed and printed as follows:
+Additionally, the agents are automatically aggregated by region and infection state in a ``TimeSeries`` object which can be accessed and printed as follows:
 
 .. code-block:: cpp
 
@@ -171,7 +171,7 @@ Additionally, the agents are automatically aggregated by region and infection st
     //Print result object to console. Infection state "Xi" with i=0,...,3 is the number of agents having infection state X in region i
     result.print_table({"S0", "E0", "C0", "I0", "R0", "D0", "S1", "E1", "C1", "I1", "R1", "D1", "S2", "E2", "C2", "I2", "R2", "D2", "S3", "E3", "C3", "I3", "R3", "D3"})
 
-If one wants to interpolate the aggregated results to a ``mio::TimeSeries`` containing only full days, this can be done by
+If one wants to interpolate the aggregated results to a ``TimeSeries`` containing only full days, this can be done by
 
 .. code-block:: cpp
 

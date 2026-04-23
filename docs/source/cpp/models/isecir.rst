@@ -26,7 +26,7 @@ A detailed investigation of the IDE-SECIR model and numerical experiments can be
 Infection States
 ----------------
 
-The model contains the following list of **InfectionState**\s:
+The model contains the following list of ``InfectionState``\s:
 
 .. code-block:: RST
 
@@ -42,7 +42,7 @@ The model contains the following list of **InfectionState**\s:
 Infection State Transitions
 ---------------------------
 
-The possible transitions between the **InfectionState**\s are:
+The possible transitions between the ``InfectionState``\s are:
 
 .. code-block:: RST
   
@@ -63,7 +63,7 @@ Sociodemographic Stratification
 -------------------------------
 
 In the IDE-SECIR model, the population can be stratified by one sociodemographic dimension. This dimension is denoted 
-**AgeGroup** but can also be used for other interpretations. 
+``AgeGroup`` but can also be used for other interpretations. 
 
 
 Parameters
@@ -186,13 +186,13 @@ There are different options for initializing a fictional scenario. Regardless of
 
     In that case, we have three possible options for initializing:
 
-        - You can set the number of people in the `Susceptible` compartment at time :math:`t_0` via `populations`. Initial values of the other compartments are derived in the model before starting the simulation.
+        - You can set the number of people in the `Susceptible` compartment at time :math:`t_0` via ``populations``. Initial values of the other compartments are derived in the model before starting the simulation.
 
         .. code-block:: cpp
 
             model.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000.;
 
-        - You can set the number of people in the `Recovered` compartment at time :math:`t_0` via `populations`. Initial values of the other compartments are derived in the model before starting the simulation.
+        - You can set the number of people in the `Recovered` compartment at time :math:`t_0` via ``populations``. Initial values of the other compartments are derived in the model before starting the simulation.
 
         .. code-block:: cpp
 
@@ -293,7 +293,7 @@ Before the simulation, we check if all constraints of the model are satisfied so
     model.check_constraints(dt);
 
 To simulate the model from :math:`t_0` (that is determined by the initial flows provided to the constructor) to 
-:math:`t_{\max}` with given step size :math:`dt`, a object of the **Simulation** class has to be created and advanced 
+:math:`t_{\max}` with given step size :math:`dt`, a object of the ``Simulation`` class has to be created and advanced 
 until :math:`t_{\max}`, which is done as follows.
 
 .. code-block:: cpp
@@ -307,7 +307,7 @@ until :math:`t_{\max}`, which is done as follows.
 Output
 ------
 
-The output of the simulation are two `TimeSeries` objects, one containing the size of the compartments at all time 
+The output of the simulation are two ``TimeSeries`` objects, one containing the size of the compartments at all time 
 points and one containing the number of transitions within a time step. You can access the results as follows:
 
 .. code-block:: cpp
@@ -318,9 +318,9 @@ points and one containing the number of transitions within a time step. You can 
     // Access transitions between compartments.
     auto transitions = sim.get_transitions();
 
-The order of the compartments and transitions follows the definition in the **InfectionState** and **InfectionTransition** enums, respectively.
+The order of the compartments and transitions follows the definition in the ``InfectionState`` and ``InfectionTransition`` enums, respectively.
 
-You can access the data in the `TimeSeries` objects as follows:
+You can access the data in the ``TimeSeries`` objects as follows:
 
 .. code-block:: cpp
 
