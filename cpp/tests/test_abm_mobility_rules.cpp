@@ -32,9 +32,9 @@ using TestMobilityRules = RandomNumberTest;
 TEST_F(TestMobilityRules, random_mobility)
 {
     int t = 0, dt = 1;
-    auto default_type = mio::abm::LocationType::Cemetery;
-    auto person =
-        mio::abm::Person(this->get_rng(), default_type, mio::abm::ActivityType::Cemetery, 0, 0, age_group_15_to_34);
+    auto default_type = mio::abm::ActivityType::Cemetery;
+    auto person = mio::abm::Person(this->get_rng(), mio::abm::LocationType::Cemetery, mio::abm::ActivityType::Cemetery,
+                                   0, 0, age_group_15_to_34);
     auto p_rng  = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person);
     auto params = mio::abm::Parameters(num_age_groups);
 
@@ -106,11 +106,11 @@ TEST_F(TestMobilityRules, student_goes_to_school)
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_35_to_59] = true;
 
     // Test that child goes to school
-    EXPECT_EQ(mio::abm::go_to_school(child_rng, p_child, t_morning, dt, params), mio::abm::LocationType::School);
+    EXPECT_EQ(mio::abm::go_to_school(child_rng, p_child, t_morning, dt, params), mio::abm::ActivityType::School);
     // Test that adult does not go to school
-    EXPECT_EQ(mio::abm::go_to_school(adult_rng, p_adult, t_morning, dt, params), mio::abm::LocationType::Home);
+    EXPECT_EQ(mio::abm::go_to_school(adult_rng, p_adult, t_morning, dt, params), mio::abm::ActivityType::Home);
     // Test that child goes back home after school
-    EXPECT_EQ(mio::abm::go_to_school(child_rng, p_child, t_weekend, dt, params), mio::abm::LocationType::Home);
+    EXPECT_EQ(mio::abm::go_to_school(child_rng, p_child, t_weekend, dt, params), mio::abm::ActivityType::Home);
 }
 
 /**
@@ -161,16 +161,16 @@ TEST_F(TestMobilityRules, students_go_to_school_in_different_times)
     // Mock randomness ensures children leave home at various school start times.
     EXPECT_EQ(
         mio::abm::go_to_school(rng_child_goes_to_school_at_6, p_child_goes_to_school_at_6, t_morning_6, dt, params),
-        mio::abm::LocationType::School);
+        mio::abm::ActivityType::School);
     EXPECT_EQ(
         mio::abm::go_to_school(rng_child_goes_to_school_at_6, p_child_goes_to_school_at_6, t_morning_8, dt, params),
-        mio::abm::LocationType::Home);
+        mio::abm::ActivityType::Home);
     EXPECT_EQ(
         mio::abm::go_to_school(rng_child_goes_to_school_at_8, p_child_goes_to_school_at_8, t_morning_6, dt, params),
-        mio::abm::LocationType::Home);
+        mio::abm::ActivityType::Home);
     EXPECT_EQ(
         mio::abm::go_to_school(rng_child_goes_to_school_at_8, p_child_goes_to_school_at_8, t_morning_8, dt, params),
-        mio::abm::LocationType::School);
+        mio::abm::ActivityType::School);
 }
 
 /**
@@ -230,17 +230,17 @@ TEST_F(TestMobilityRules, students_go_to_school_in_different_times_with_smaller_
     // Check that the first student goes to school at 6:00 AM
     EXPECT_EQ(
         mio::abm::go_to_school(rng_child_goes_to_school_at_6, p_child_goes_to_school_at_6, t_morning_6, dt, params),
-        mio::abm::LocationType::School);
+        mio::abm::ActivityType::School);
     EXPECT_EQ(
         mio::abm::go_to_school(rng_child_goes_to_school_at_6, p_child_goes_to_school_at_6, t_morning_8_30, dt, params),
-        mio::abm::LocationType::Home);
+        mio::abm::ActivityType::Home);
     // Check that the second student goes to school at 8:30 AM
     EXPECT_EQ(mio::abm::go_to_school(rng_child_goes_to_school_at_8_30, p_child_goes_to_school_at_8_30, t_morning_6, dt,
                                      params),
-              mio::abm::LocationType::Home);
+              mio::abm::ActivityType::Home);
     EXPECT_EQ(mio::abm::go_to_school(rng_child_goes_to_school_at_8_30, p_child_goes_to_school_at_8_30, t_morning_8_30,
                                      dt, params),
-              mio::abm::LocationType::School);
+              mio::abm::ActivityType::School);
 }
 /**
  * @brief Test return home from school.
@@ -258,7 +258,7 @@ TEST_F(TestMobilityRules, school_return)
 
     // Ensure that the child returns home after school is over
     EXPECT_EQ(mio::abm::go_to_school(rng_child, p_child, t, dt, mio::abm::Parameters(num_age_groups)),
-              mio::abm::LocationType::Home);
+              mio::abm::ActivityType::Home);
 }
 
 /**
@@ -302,11 +302,11 @@ TEST_F(TestMobilityRules, worker_goes_to_work)
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_35_to_59] = true;
 
     // Check that the retiree (age group 60-79) should stay home and not go to work.
-    EXPECT_EQ(mio::abm::go_to_work(rng_retiree, p_retiree, t_morning, dt, params), mio::abm::LocationType::Home);
+    EXPECT_EQ(mio::abm::go_to_work(rng_retiree, p_retiree, t_morning, dt, params), mio::abm::ActivityType::Home);
     // Check that the adult (age group 15-34) should go to work at 8:00 AM.
-    EXPECT_EQ(mio::abm::go_to_work(rng_adult, p_adult, t_morning, dt, params), mio::abm::LocationType::Home);
+    EXPECT_EQ(mio::abm::go_to_work(rng_adult, p_adult, t_morning, dt, params), mio::abm::ActivityType::Home);
     // Check that during the night (4:00 AM), the adult should stay home and not go to work.
-    EXPECT_EQ(mio::abm::go_to_work(rng_adult, p_adult, t_night, dt, params), mio::abm::LocationType::Home);
+    EXPECT_EQ(mio::abm::go_to_work(rng_adult, p_adult, t_night, dt, params), mio::abm::ActivityType::Home);
 }
 
 /**
@@ -352,11 +352,11 @@ TEST_F(TestMobilityRules, worker_goes_to_work_with_non_dividable_timespan)
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_35_to_59] = true;
 
     // Check that the retiree (age group 60-79) should stay home and not go to work even with non-dividable time step.
-    EXPECT_EQ(mio::abm::go_to_work(rng_retiree, p_retiree, t_morning, dt, params), mio::abm::LocationType::Home);
+    EXPECT_EQ(mio::abm::go_to_work(rng_retiree, p_retiree, t_morning, dt, params), mio::abm::ActivityType::Home);
     // Check that the adult (age group 15-34) should still go to work at 8:00 AM even with the non-dividable time step.
-    EXPECT_EQ(mio::abm::go_to_work(rng_adult, p_adult, t_morning, dt, params), mio::abm::LocationType::Home);
+    EXPECT_EQ(mio::abm::go_to_work(rng_adult, p_adult, t_morning, dt, params), mio::abm::ActivityType::Home);
     // Check that during the night (4:00 AM), the adult should stay home and not go to work even with the non-dividable time step.
-    EXPECT_EQ(mio::abm::go_to_work(rng_adult, p_adult, t_night, dt, params), mio::abm::LocationType::Home);
+    EXPECT_EQ(mio::abm::go_to_work(rng_adult, p_adult, t_night, dt, params), mio::abm::ActivityType::Home);
 }
 
 /**
@@ -410,22 +410,22 @@ TEST_F(TestMobilityRules, workers_go_to_work_in_different_times)
 
     // Check that the worker going to work at 6 AM goes to work
     EXPECT_EQ(mio::abm::go_to_work(rng_adult_goes_to_work_at_6, p_adult_goes_to_work_at_6, t_morning_6, dt, params),
-              mio::abm::LocationType::Work);
+              mio::abm::ActivityType::Work);
     // Check that the worker going to work at 6 AM stays home at 8 AM (since they are already at work)
     EXPECT_EQ(mio::abm::go_to_work(rng_adult_goes_to_work_at_6, p_adult_goes_to_work_at_6, t_morning_8, dt, params),
-              mio::abm::LocationType::Home);
+              mio::abm::ActivityType::Home);
     // Check that the worker going to work at 6 AM returns home at night
     EXPECT_EQ(mio::abm::go_to_work(rng_adult_goes_to_work_at_6, p_adult_goes_to_work_at_6, t_night, dt, params),
-              mio::abm::LocationType::Home);
+              mio::abm::ActivityType::Home);
     // Check that the worker going to work at 8 AM stays home at 6 AM
     EXPECT_EQ(mio::abm::go_to_work(rng_adult_goes_to_work_at_8, p_adult_goes_to_work_at_8, t_morning_6, dt, params),
-              mio::abm::LocationType::Home);
+              mio::abm::ActivityType::Home);
     // Check that the worker going to work at 8 AM goes to work at 8 AM
     EXPECT_EQ(mio::abm::go_to_work(rng_adult_goes_to_work_at_8, p_adult_goes_to_work_at_8, t_morning_8, dt, params),
-              mio::abm::LocationType::Work);
+              mio::abm::ActivityType::Work);
     // Check that the worker going to work at 8 AM returns home at night
     EXPECT_EQ(mio::abm::go_to_work(rng_adult_goes_to_work_at_8, p_adult_goes_to_work_at_8, t_night, dt, params),
-              mio::abm::LocationType::Home);
+              mio::abm::ActivityType::Home);
 }
 
 /**
@@ -443,7 +443,7 @@ TEST_F(TestMobilityRules, work_return)
     auto dt = mio::abm::hours(1);
     // Test that the worker, who is currently at work, goes home after 5 PM
     EXPECT_EQ(mio::abm::go_to_work(rng_adult, p_adult, t, dt, mio::abm::Parameters(num_age_groups)),
-              mio::abm::LocationType::Home);
+              mio::abm::ActivityType::Home);
 }
 
 /**
@@ -464,14 +464,14 @@ TEST_F(TestMobilityRules, quarantine)
     p_inf1.get_tested(rng_inf1, t, test_params);
     // Check detected infected person quarantines at home
     EXPECT_EQ(mio::abm::go_to_quarantine(rng_inf1, p_inf1, t, dt, mio::abm::Parameters(num_age_groups)),
-              mio::abm::LocationType::Home);
+              mio::abm::ActivityType::Home);
 
     auto p_inf2   = make_test_person(this->get_rng(), work, mio::abm::ActivityType::Work, age_group_15_to_34,
                                      mio::abm::InfectionState::InfectedSymptoms, t);
     auto rng_inf2 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_inf2);
     // Check that undetected infected person does not quaratine
     EXPECT_EQ(mio::abm::go_to_quarantine(rng_inf2, p_inf2, t, dt, mio::abm::Parameters(num_age_groups)),
-              mio::abm::LocationType::Work);
+              mio::abm::ActivityType::Work);
 
     auto p_inf3   = make_test_person(this->get_rng(), hospital, mio::abm::ActivityType::Hospital, age_group_15_to_34,
                                      mio::abm::InfectionState::InfectedSevere, t);
@@ -479,7 +479,7 @@ TEST_F(TestMobilityRules, quarantine)
     p_inf1.get_tested(rng_inf3, t, test_params);
     // Check that detected infected person does not leave hospital to quarantine
     EXPECT_EQ(mio::abm::go_to_quarantine(rng_inf3, p_inf3, t, dt, mio::abm::Parameters(num_age_groups)),
-              mio::abm::LocationType::Hospital);
+              mio::abm::ActivityType::Hospital);
 }
 
 /**
@@ -496,14 +496,14 @@ TEST_F(TestMobilityRules, hospital)
 
     // Ensure person goes to the hospital when severely infected
     EXPECT_EQ(mio::abm::go_to_hospital(rng_inf, p_inf, t, dt, mio::abm::Parameters(num_age_groups)),
-              mio::abm::LocationType::Hospital);
+              mio::abm::ActivityType::Hospital);
 
     auto p_car   = make_test_person(this->get_rng(), home, mio::abm::ActivityType::Home, age_group_15_to_34,
                                     mio::abm::InfectionState::InfectedSymptoms);
     auto rng_car = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_car);
     // Ensure person has infection symptoms still stay at home
     EXPECT_EQ(mio::abm::go_to_hospital(rng_car, p_car, t, dt, mio::abm::Parameters(num_age_groups)),
-              mio::abm::LocationType::Home);
+              mio::abm::ActivityType::Home);
 }
 
 /**
@@ -530,13 +530,13 @@ TEST_F(TestMobilityRules, go_shopping)
 
     // Check that an infected person stays in the hospital and doesn't go shopping
     EXPECT_EQ(mio::abm::go_to_shop(rng_hosp, p_hosp, t_weekday, dt, mio::abm::Parameters(num_age_groups)),
-              mio::abm::LocationType::Hospital);
+              mio::abm::ActivityType::Hospital);
     // Check that a person at home doesn't go shopping on a Sunday
     EXPECT_EQ(mio::abm::go_to_shop(rng_home, p_home, t_sunday, dt, mio::abm::Parameters(num_age_groups)),
-              mio::abm::LocationType::Home);
+              mio::abm::ActivityType::Home);
     // Check that a person at home doesn't go shopping on a Sunday
     EXPECT_EQ(mio::abm::go_to_shop(rng_home, p_home, t_night, dt, mio::abm::Parameters(num_age_groups)),
-              mio::abm::LocationType::Home);
+              mio::abm::ActivityType::Home);
 
     // Mocking the random distribution to simulate a person going shopping on a weekday
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
@@ -544,7 +544,7 @@ TEST_F(TestMobilityRules, go_shopping)
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.01));
     // Test that a person goes to a basic shop on a weekday at 9 AM
     EXPECT_EQ(mio::abm::go_to_shop(rng_home, p_home, t_weekday, dt, mio::abm::Parameters(num_age_groups)),
-              mio::abm::LocationType::BasicsShop);
+              mio::abm::ActivityType::BasicsShop);
 }
 
 /**
@@ -566,7 +566,7 @@ TEST_F(TestMobilityRules, shop_return)
 
     // After spending sufficient time at the shop, the person should return home
     EXPECT_EQ(mio::abm::go_to_shop(rng_p, p, t, dt, mio::abm::Parameters(num_age_groups)),
-              mio::abm::LocationType::Home);
+              mio::abm::ActivityType::Home);
 }
 
 /**
@@ -627,7 +627,7 @@ TEST_F(TestMobilityRules, event_return)
     // Simulate the person spending 3 hours at the social event
     p.add_time_at_location(dt);
     // After spending the time at the social event, the person should return home
-    EXPECT_EQ(mio::abm::go_to_recreation(rng_p, p, t, dt, params), mio::abm::LocationType::Home);
+    EXPECT_EQ(mio::abm::go_to_recreation(rng_p, p, t, dt, params), mio::abm::ActivityType::Home);
 }
 
 /**
@@ -644,7 +644,7 @@ TEST_F(TestMobilityRules, icu)
 
     // Ensure critically infected person goes to the ICU
     EXPECT_EQ(mio::abm::go_to_icu(rng_hosp, p_hosp, t, dt, mio::abm::Parameters(num_age_groups)),
-              mio::abm::LocationType::ICU);
+              mio::abm::ActivityType::ICU);
 
     mio::abm::Location work(mio::abm::LocationType::Work, 1, num_age_groups);
     auto p_work   = make_test_person(this->get_rng(), work, mio::abm::ActivityType::Work, age_group_15_to_34,
@@ -652,7 +652,7 @@ TEST_F(TestMobilityRules, icu)
     auto rng_work = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_work);
     // Ensure infected with symptions person can still go to work
     EXPECT_EQ(mio::abm::go_to_icu(rng_work, p_work, t, dt, mio::abm::Parameters(num_age_groups)),
-              mio::abm::LocationType::Work);
+              mio::abm::ActivityType::Work);
 }
 
 /**
@@ -671,9 +671,9 @@ TEST_F(TestMobilityRules, recover)
     auto rng_inf = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_inf);
     // Ensure recovered person returns home and infected severe person stay in hospital
     EXPECT_EQ(mio::abm::return_home_when_recovered(rng_rec, p_rec, t, dt, {num_age_groups}),
-              mio::abm::LocationType::Home);
+              mio::abm::ActivityType::Home);
     EXPECT_EQ(mio::abm::return_home_when_recovered(rng_inf, p_inf, t, dt, {num_age_groups}),
-              mio::abm::LocationType::Hospital);
+              mio::abm::ActivityType::Hospital);
 }
 
 /**
@@ -688,5 +688,5 @@ TEST_F(TestMobilityRules, dead)
                                    mio::abm::InfectionState::Dead, t);
     auto p_rng  = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_dead);
 
-    EXPECT_EQ(mio::abm::get_buried(p_rng, p_dead, t, dt, {num_age_groups}), mio::abm::LocationType::Cemetery);
+    EXPECT_EQ(mio::abm::get_buried(p_rng, p_dead, t, dt, {num_age_groups}), mio::abm::ActivityType::Cemetery);
 }

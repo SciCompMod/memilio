@@ -35,6 +35,7 @@
 #include "models/abm/model.h"
 #include <bitset>
 #include <cstddef>
+#include <vector>
 
 #ifdef MEMILIO_HAS_JSONCPP
 
@@ -83,6 +84,7 @@ TEST(TestAbmSerialization, Trip)
     reference_json["destination"]          = Json::UInt(i++);
     reference_json["model_id"]             = Json::Int(i++);
     reference_json["trip_mode"]            = Json::UInt(i++);
+    reference_json["activity"]             = Json::UInt(i++);
 
     test_json_serialization<mio::abm::Trip>(reference_json);
 }
@@ -190,18 +192,23 @@ TEST(TestAbmSerialization, Person)
         return mio::serialize_json(values).value();
     };
 
+    auto json_uint_array_array = [](std::vector<std::vector<uint32_t>> values) {
+        return mio::serialize_json(values).value();
+    };
+
     unsigned i = 1; // counter s.t. members have different values
 
     Json::Value reference_json;
-    reference_json["age_group"]           = Json::UInt(i++);
-    reference_json["assigned_locations"]  = json_uint_array({i++, i++, i++, i++, i++, i++, i++, i++, i++, i++, i++});
-    reference_json["cells"]               = json_uint_array({i++});
-    reference_json["compliance"]          = json_double_array({(double)i++, (double)i++, (double)i++});
-    reference_json["infections"]          = Json::Value(Json::arrayValue);
-    reference_json["last_transport_mode"] = Json::UInt(i++);
-    reference_json["location"]            = Json::UInt(i++);
-    reference_json["location_type"]       = Json::UInt(0);
-    reference_json["mask"]["mask_type"]   = Json::UInt(0);
+    reference_json["age_group"] = Json::UInt(i++);
+    reference_json["assigned_locations"] =
+        json_uint_array_array({{i++, i++, i++, i++, i++, i++, i++, i++, i++, i++, i++}});
+    reference_json["cells"]                              = json_uint_array({i++});
+    reference_json["compliance"]                         = json_double_array({(double)i++, (double)i++, (double)i++});
+    reference_json["infections"]                         = Json::Value(Json::arrayValue);
+    reference_json["last_transport_mode"]                = Json::UInt(i++);
+    reference_json["location"]                           = Json::UInt(i++);
+    reference_json["location_type"]                      = Json::UInt(0);
+    reference_json["mask"]["mask_type"]                  = Json::UInt(0);
     reference_json["mask"]["time_first_used"]["seconds"] = Json::Int(i++);
     reference_json["home_isolation_start"]["seconds"]    = Json::Int(i++);
     reference_json["rnd_go_to_school_hour"]              = Json::Value((double)i++);

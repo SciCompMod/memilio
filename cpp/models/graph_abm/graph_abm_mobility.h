@@ -132,7 +132,7 @@ public:
                     target_type = model_to.get_location(target_id).get_type();
                 }
                 //set correct location for person
-                person.set_location(target_type, target_id, model_to.get_id());
+                person.set_location(person.get_activity_type(), target_type, target_id, model_to.get_id());
                 //add person to model_to
                 model_to.add_person(std::move(person));
                 //remove person from model_from

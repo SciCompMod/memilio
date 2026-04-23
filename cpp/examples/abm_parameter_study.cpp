@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/activity_type.h"
 #include "abm/result_simulation.h"
 #include "abm/household.h"
 #include "abm/lockdown_rules.h"
@@ -143,17 +144,17 @@ mio::abm::Model make_model(const mio::RandomNumberGenerator& rng)
     for (auto& person : model.get_persons()) {
         const auto id = person.get_id();
         //assign shop and event
-        model.assign_location(id, event);
-        model.assign_location(id, shop);
+        model.assign_location(id, event, mio::abm::ActivityType::Recreation);
+        model.assign_location(id, shop, mio::abm::ActivityType::BasicsShop);
         //assign hospital and ICU
-        model.assign_location(id, hospital);
-        model.assign_location(id, icu);
+        model.assign_location(id, hospital, mio::abm::ActivityType::Hospital);
+        model.assign_location(id, icu, mio::abm::ActivityType::ICU);
         //assign work/school to people depending on their age
         if (person.get_age() == age_group_5_to_14) {
-            model.assign_location(id, school);
+            model.assign_location(id, school, mio::abm::ActivityType::School);
         }
         if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
-            model.assign_location(id, work);
+            model.assign_location(id, work, mio::abm::ActivityType::Work);
         }
     }
 

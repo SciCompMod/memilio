@@ -106,27 +106,27 @@ TEST_F(TestPerson, setGetAssignedLocation)
     auto p_rng  = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person);
     // Assign and verify a location for the person.
     person.set_assigned_location(mio::abm::ActivityType::Work, location.get_id(), location.get_model_id());
-    EXPECT_EQ(person.get_assigned_location(mio::abm::ActivityType::Work, p_rng), mio::abm::LocationId(2));
+    EXPECT_EQ(person.get_assigned_location(mio::abm::ActivityType::Work, p_rng).first, mio::abm::LocationId(2));
     // Change the assigned location and verify.
     person.set_assigned_location(mio::abm::ActivityType::Work, mio::abm::LocationId(4), 0);
-    EXPECT_EQ(person.get_assigned_location(mio::abm::ActivityType::Work, p_rng), mio::abm::LocationId(4));
+    EXPECT_EQ(person.get_assigned_location(mio::abm::ActivityType::Work, p_rng).first, mio::abm::LocationId(4));
 
     // Fuzzing: assign random valid LocationId values and verify correctness.
     for (int i = 0; i < 100; ++i) {
         auto random_id   = this->random_integer(0, std::numeric_limits<int>::max());
         auto random_type = this->random_integer(0, (int)mio::abm::ActivityType::Count - 1);
         person.set_assigned_location((mio::abm::ActivityType)random_type, mio::abm::LocationId(random_id), 0);
-        EXPECT_EQ(person.get_assigned_location((mio::abm::ActivityType)random_type, p_rng),
+        EXPECT_EQ(person.get_assigned_location((mio::abm::ActivityType)random_type, p_rng).first,
                   mio::abm::LocationId(random_id));
     }
 
     // Boundary test cases: test with boundary LocationIds.
     person.set_assigned_location(mio::abm::ActivityType::Work, mio::abm::LocationId(0), 0);
-    EXPECT_EQ(person.get_assigned_location(mio::abm::ActivityType::Work, p_rng), mio::abm::LocationId(0));
+    EXPECT_EQ(person.get_assigned_location(mio::abm::ActivityType::Work, p_rng).first, mio::abm::LocationId(0));
 
     person.set_assigned_location(mio::abm::ActivityType::Work, mio::abm::LocationId(std::numeric_limits<int>::max()),
                                  0);
-    EXPECT_EQ(person.get_assigned_location(mio::abm::ActivityType::Work, p_rng),
+    EXPECT_EQ(person.get_assigned_location(mio::abm::ActivityType::Work, p_rng).first,
               mio::abm::LocationId(std::numeric_limits<int>::max()));
 }
 
@@ -175,13 +175,13 @@ TEST_F(TestPerson, quarantine)
     person.get_tested(rng_person, t_morning, test_params);
     EXPECT_EQ(person.get_infection_state(t_morning), mio::abm::InfectionState::InfectedSymptoms);
     EXPECT_EQ(mio::abm::go_to_work(rng_person, person, t_morning, dt, infection_parameters),
-              mio::abm::LocationType::Home);
+              mio::abm::ActivityType::Home);
     EXPECT_EQ(person.get_infection_state(t_morning + dt), mio::abm::InfectionState::Recovered);
 
     // Test removal from quarantine.
     person.remove_quarantine();
     EXPECT_EQ(mio::abm::go_to_work(rng_person, person, t_morning, dt, infection_parameters),
-              mio::abm::LocationType::Work);
+              mio::abm::ActivityType::Work);
 }
 
 /**
@@ -300,7 +300,7 @@ TEST_F(TestPerson, setWearMask)
 {
     auto t = mio::abm::TimePoint(0);
     mio::abm::Location location(mio::abm::LocationType::School, 0, num_age_groups);
-    auto person = make_test_person(this->get_rng(), location);
+    auto person = make_test_person(this->get_rng(), location, mio::abm::ActivityType::School);
 
     // Test setting and verifying different mask types.
     person.set_mask(mio::abm::MaskType::None, t);

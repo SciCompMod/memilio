@@ -103,8 +103,8 @@ TEST_F(TestTestingScheme, runScheme)
     mio::abm::Location loc_work(mio::abm::LocationType::Work, 0, num_age_groups);
     // Since tests are performed before start_date, the InfectionState of all the Person have to take into account the test's required_time
     auto person1 =
-        make_test_person(this->get_rng(), loc_home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms,
-                         start_date - test_params_pcr.required_time);
+        make_test_person(this->get_rng(), loc_home, mio::abm::ActivityType::Home, age_group_15_to_34,
+                         mio::abm::InfectionState::InfectedNoSymptoms, start_date - test_params_pcr.required_time);
     auto rng_person1 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person1);
     auto person2     = make_test_person(this->get_rng(), loc_home, mio::abm::ActivityType::Home, age_group_15_to_34,
                                         mio::abm::InfectionState::Recovered, start_date - test_params_pcr.required_time);
@@ -152,8 +152,8 @@ TEST_F(TestTestingScheme, initAndRunTestingStrategy)
     mio::abm::Location loc_work(mio::abm::LocationType::Work, 0);
     // Since tests are performed before start_date, the InfectionState of all the Person have to take into account the test's required_time
     auto person1 =
-        make_test_person(this->get_rng(), loc_work, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms,
-                         start_date - test_params_pcr.required_time);
+        make_test_person(this->get_rng(), loc_work, mio::abm::ActivityType::Work, age_group_15_to_34,
+                         mio::abm::InfectionState::InfectedNoSymptoms, start_date - test_params_pcr.required_time);
     auto rng_person1 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person1);
     auto person2     = make_test_person(this->get_rng(), loc_work, mio::abm::ActivityType::Work, age_group_15_to_34,
                                         mio::abm::InfectionState::Recovered, start_date - test_params_pcr.required_time);
