@@ -188,17 +188,17 @@ specific component, view its API documentation.
   Keeps track of timers via a list of ``TimerRegistration``s, and holds a ``Printer`` that can be used to display all
   registered timers after the end of main. Timers can be registered by passing a ``TimerRegistration`` to its add_timer
   method. Uses a singleton pattern to provide global access to the same object, that is, the only way to obtain a
-  TimerRegistrar object is by using its get_instance method, which returns a reference to a static object. Importantly,
+  ``TimerRegistrar`` object is by using its get_instance method, which returns a reference to a static object. Importantly,
   this class does not manage or own timer objects, and there is intentionally no methods that retrieve or delete
   ``TimerRegistration``s.
 
 - **NamedTimer**:
   Inherits from ``BasicTimer``, with the main purpose of managing the lifetime, access, and registration of a timer.
-  This is done using a singleton pattern, similar to TimerRegistrar, but the reference returned by get_instance is
+  This is done using a singleton pattern, similar to ``TimerRegistrar``, but the reference returned by get_instance is
   thread_local as well as static. The template parameters Name and Scope allow using more than one ``NamedTimer``, since
   different template arguments define a different type. This effectively creates a global compile-time map, mapping a
   Name and Scope to a ``BasicTimer``. Additionally, the ``NamedTimer`` registers itself automatically, and will only be
-  destroyed after the TimerRegistrar.
+  destroyed after the ``TimerRegistrar``.
 
 - **AutoTimer**:
   Automates running an existing timer, by calling start in its constructor, and stop in its destructor. The timer used

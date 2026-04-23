@@ -179,9 +179,11 @@ It is also useful to implement the following methods within the model:
 
 - A function ``calculate_compartments()`` that accumulates the ``TimeSeries`` containing simulation results that are divided 
 into subcompartments to a ``TimeSeries`` that contains the simulation results according to the infection states without subcompartments. 
-For an example, see the implementation within the LCT-SECIR model.
+For an example, see the implementation within the :CPP-API:`LCT-SECIR model <mio::lsecir::calculate_compartments>`.
+
+
 - A function ``check_constraints()`` that checks that the model satisfies sensible constraints regarding parameters and initial conditions. 
-For an example, see the implementation within the LCT-SECIR model. 
+For an example, see the implementation within the :CPP-API:`LCT-SECIR model <mio::lsecir::check_constraints>`.. 
 
 .. dropdown:: :fa:`gears` Expert's settings
 

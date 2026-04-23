@@ -29,7 +29,7 @@ Infection state transitions
 ---------------------------
 
 Our ODE-based models are either implemented as ``FlowModel`` or as ``CompartmentalModel``. In a ``FlowModel``, flows 
-``Flow<State1, State2>`` between ``InfectionState``\s **State1** and **State2** are defined. Instead of a standard 
+``Flow<State1, State2>`` between ``InfectionState``\s ``State1`` and ``State2`` are defined. Instead of a standard 
 solution of an ODE-based model, this implementation additionally realizes the solution of the transitions or flows 
 between states and directly enables users to access new transmissions or hospitalizations at any time point. 
 The simpler class ``CompartmentalModel`` only considers the states of the system and not the flows.

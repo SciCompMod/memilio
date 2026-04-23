@@ -131,7 +131,7 @@ The population will be stored in a vector, with a component for each infection s
     using Population = mio::Populations<FP, InfectionState>;
 
 Importantly, this class allows further stratifying the population vector, with the most common
-example being adding ``mio::AgeGroup``\s to the template.
+example being adding ``AgeGroup``\s to the template.
 
 .. dropdown:: :fa:`gears` Expert's settings
 
