@@ -301,7 +301,7 @@ You can also specify a custom integrator:
 Output
 ------
 
-The simulation result is stratefied by subcompartments. The function ``calculate_compartments()`` aggregates the subcompartments by infection states.
+The simulation result is stratified by subcompartments. The function ``calculate_compartments()`` aggregates the subcompartments by infection states.
 
 .. code-block:: cpp
 
