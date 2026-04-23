@@ -21,8 +21,10 @@
 import os
 import tempfile
 import unittest
+from pathlib import Path
 
 from memilio.modelgenerator import Generator
+from memilio.modelgenerator.cli import main as cli_main
 from memilio.modelgenerator.validator import ValidationError
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -72,6 +74,11 @@ class TestParsing(unittest.TestCase):
         self.assertEqual(custom[0].from_state, "Infected")
         self.assertEqual(custom[0].to_state, "Dead")
 
+    def test_seird_has_death_rate_parameter(self):
+        gen = Generator.from_yaml(SEIRD_YAML)
+        names = [p.name for p in gen._config.parameters]
+        self.assertIn("DeathRate", names)
+
     def test_has_infection_transition_flag(self):
         gen = Generator.from_yaml(SEIR_YAML)
         self.assertTrue(gen._config.has_infection_transition)
@@ -96,13 +103,13 @@ class TestParsing(unittest.TestCase):
     def test_time_bound_lower_floor_applied(self):
         d = {
             "model": {"name": "X", "namespace": "ox", "prefix": "ode_x"},
-            "infection_states": ["S", "I"],
+            "infection_states": ["E", "I"],
             "parameters": [
                 {"name": "Rate", "description": "d",
                     "type": "time", "default": 1.0, "bounds": [0.01, None]}
             ],
             "transitions": [
-                {"from": "S", "to": "I", "type": "linear", "parameter": "Rate"}
+                {"from": "E", "to": "I", "type": "linear", "parameter": "Rate"}
             ],
         }
         gen = Generator.from_dict(d)
@@ -219,18 +226,18 @@ class TestParametersTemplate(unittest.TestCase):
 
     def test_time_upper_bound_constraint(self):
         d = {
-            "model": {"name": "SI", "namespace": "osi", "prefix": "ode_si"},
-            "infection_states": ["S", "I"],
+            "model": {"name": "EI", "namespace": "oei", "prefix": "ode_ei"},
+            "infection_states": ["E", "I"],
             "parameters": [
                 {"name": "Rate", "description": "d", "type": "time",
                  "default": 5.0, "bounds": [0.5, 7.5]}
             ],
             "transitions": [
-                {"from": "S", "to": "I", "type": "linear", "parameter": "Rate"}
+                {"from": "E", "to": "I", "type": "linear", "parameter": "Rate"}
             ],
         }
         content = Generator.from_dict(
-            d).render()["cpp/models/ode_si/parameters.h"]
+            d).render()["cpp/models/ode_ei/parameters.h"]
         self.assertIn("upper_bound_Rate", content)
         self.assertIn("greater", content)
 
@@ -242,18 +249,18 @@ class TestParametersTemplate(unittest.TestCase):
     def test_no_contact_patterns_without_infection(self):
         # A model with only linear transitions must not get ContactPatterns
         d = {
-            "model": {"name": "SI", "namespace": "osi", "prefix": "ode_si"},
-            "infection_states": ["S", "I"],
+            "model": {"name": "EI", "namespace": "oei", "prefix": "ode_ei"},
+            "infection_states": ["E", "I"],
             "parameters": [
                 {"name": "Rate", "description": "d",
                     "type": "time", "default": 5.0}
             ],
             "transitions": [
-                {"from": "S", "to": "I", "type": "linear", "parameter": "Rate"}
+                {"from": "E", "to": "I", "type": "linear", "parameter": "Rate"}
             ],
         }
         content = Generator.from_dict(d).render()[
-            "cpp/models/ode_si/parameters.h"]
+            "cpp/models/ode_ei/parameters.h"]
         self.assertNotIn("ContactPatterns", content)
 
 
@@ -461,18 +468,18 @@ class TestExampleTemplate(unittest.TestCase):
 
     def test_no_damping_for_linear_only_model(self):
         d = {
-            "model": {"name": "SI", "namespace": "osi", "prefix": "ode_si"},
-            "infection_states": ["S", "I"],
+            "model": {"name": "EI", "namespace": "oei", "prefix": "ode_ei"},
+            "infection_states": ["E", "I"],
             "parameters": [
                 {"name": "Rate", "description": "d",
                     "type": "time", "default": 5.0}
             ],
             "transitions": [
-                {"from": "S", "to": "I", "type": "linear", "parameter": "Rate"}
+                {"from": "E", "to": "I", "type": "linear", "parameter": "Rate"}
             ],
         }
         content = Generator.from_dict(d).render()[
-            "pycode/examples/simulation/ode_si_simple.py"]
+            "pycode/examples/simulation/ode_ei_simple.py"]
         self.assertNotIn("Damping", content)
         self.assertNotIn("ContactPatterns", content)
 
@@ -518,13 +525,13 @@ class TestValidation(unittest.TestCase):
     def _base(self):
         return {
             "model": {"name": "X", "namespace": "ox", "prefix": "ode_x"},
-            "infection_states": ["S", "I"],
+            "infection_states": ["E", "I"],
             "parameters": [
                 {"name": "Rate", "description": "d",
                     "type": "time", "default": 1.0}
             ],
             "transitions": [
-                {"from": "S", "to": "I", "type": "linear", "parameter": "Rate"}
+                {"from": "E", "to": "I", "type": "linear", "parameter": "Rate"}
             ],
         }
 
@@ -554,26 +561,26 @@ class TestValidation(unittest.TestCase):
 
     def test_duplicate_states(self):
         d = self._base()
-        d["infection_states"] = ["S", "S"]
+        d["infection_states"] = ["E", "E"]
         with self.assertRaises(ValidationError):
             Generator.from_dict(d)
 
     def test_self_loop_transition(self):
         d = self._base()
-        d["transitions"][0]["to"] = "S"
+        d["transitions"][0]["to"] = "E"
         with self.assertRaises(ValidationError):
             Generator.from_dict(d)
 
     def test_too_few_states(self):
         d = self._base()
-        d["infection_states"] = ["S"]
+        d["infection_states"] = ["E"]
         with self.assertRaises(ValidationError):
             Generator.from_dict(d)
 
     def test_missing_infectious_state_for_infection_transition(self):
         d = self._base()
         d["transitions"] = [
-            {"from": "S", "to": "I", "type": "infection",
+            {"from": "E", "to": "I", "type": "infection",
              "parameter": "Rate", "infectious_state": "Unknown"}
         ]
         with self.assertRaises(ValidationError):
@@ -582,7 +589,7 @@ class TestValidation(unittest.TestCase):
     def test_validation_error_lists_all_errors(self):
         d = self._base()
         del d["model"]
-        d["infection_states"] = ["S"]
+        d["infection_states"] = ["E"]
         try:
             Generator.from_dict(d)
             self.fail("Expected ValidationError")
@@ -624,7 +631,7 @@ class TestValidation(unittest.TestCase):
     def test_empty_infectious_state_list_rejected(self):
         d = self._base()
         d["transitions"] = [
-            {"from": "S", "to": "I", "type": "infection",
+            {"from": "E", "to": "I", "type": "infection",
              "parameter": "Rate", "infectious_state": []}
         ]
         with self.assertRaises(ValidationError):
@@ -633,7 +640,7 @@ class TestValidation(unittest.TestCase):
     def test_conflicting_infectious_state_keys_rejected(self):
         d = self._base()
         d["transitions"] = [
-            {"from": "S", "to": "I", "type": "infection", "parameter": "Rate",
+            {"from": "E", "to": "I", "type": "infection", "parameter": "Rate",
              "infectious_state": "I", "infectious_states": ["I"]}
         ]
         with self.assertRaises(ValidationError):
@@ -687,7 +694,6 @@ class TestCMakePatching(unittest.TestCase):
 
     def _make_repo(self, cpp_cmake=_CPP_CMAKE_STUB, sim_cmake=_SIM_CMAKE_STUB,
                    sim_init=_SIM_INIT_STUB):
-        from pathlib import Path
         tmp = tempfile.mkdtemp()
         cpp_dir = os.path.join(tmp, "cpp")
         sim_dir = os.path.join(tmp, "pycode", "memilio-simulation")
@@ -706,7 +712,6 @@ class TestCMakePatching(unittest.TestCase):
         return Generator.from_yaml(SEIR_YAML)
 
     def test_cpp_cmake_gets_patched(self):
-        from pathlib import Path
         d = {
             "model": {"name": "SIR", "namespace": "osir_new", "prefix": "ode_sir_new"},
             "infection_states": ["Susceptible", "Infected", "Recovered"],
@@ -732,14 +737,12 @@ class TestCMakePatching(unittest.TestCase):
         self.assertIn("add_subdirectory(models/ode_seir)", patched)
 
     def test_cpp_cmake_no_duplicate(self):
-        from pathlib import Path
         gen = self._gen()
         tmp = self._make_repo()
         patches = gen.render_patches(Path(tmp))
         self.assertIsNone(patches[gen._CPP_CMAKE])
 
     def test_sim_cmake_gets_patched(self):
-        from pathlib import Path
         d = {
             "model": {"name": "SIR", "namespace": "osir_new", "prefix": "ode_sir_new"},
             "infection_states": ["Susceptible", "Infected", "Recovered"],
@@ -770,14 +773,12 @@ class TestCMakePatching(unittest.TestCase):
         self.assertIn("list(REMOVE_DUPLICATES", patched)
 
     def test_sim_cmake_no_duplicate(self):
-        from pathlib import Path
         gen = self._gen()
         tmp = self._make_repo()
         patches = gen.render_patches(Path(tmp))
         self.assertIsNone(patches[gen._SIM_CMAKE])
 
     def test_write_creates_all_files(self):
-        from pathlib import Path
         gen = self._gen()
         tmp = self._make_repo()
         gen.write(tmp)
@@ -794,7 +795,6 @@ class TestCMakePatching(unittest.TestCase):
                 (Path(tmp) / rel).exists(), f"Missing: {rel}")
 
     def test_write_raises_if_model_dir_exists(self):
-        from pathlib import Path
         gen = self._gen()
         tmp = self._make_repo()
         # First write succeeds
@@ -804,7 +804,6 @@ class TestCMakePatching(unittest.TestCase):
             gen.write(tmp)
 
     def test_write_overwrite_flag_allows_second_write(self):
-        from pathlib import Path
         gen = self._gen()
         tmp = self._make_repo()
         gen.write(tmp)
@@ -812,7 +811,6 @@ class TestCMakePatching(unittest.TestCase):
         gen.write(tmp, overwrite=True)
 
     def test_sim_init_gets_patched(self):
-        from pathlib import Path
         d = {
             "model": {"name": "SIR", "namespace": "osir_new", "prefix": "ode_sir_new"},
             "infection_states": ["Susceptible", "Infected", "Recovered"],
@@ -843,11 +841,78 @@ class TestCMakePatching(unittest.TestCase):
         self.assertIn("raise AttributeError", patched)
 
     def test_sim_init_no_duplicate(self):
-        from pathlib import Path
         gen = self._gen()  # namespace = oseir, already in stub
         tmp = self._make_repo()
         patches = gen.render_patches(Path(tmp))
         self.assertIsNone(patches[gen._SIM_INIT])
+
+
+class TestCLI(unittest.TestCase):
+    """Unit tests for the memilio-modelgenerator CLI."""
+
+    def _make_repo(self):
+        """Create a minimal tmp repo with the CMakeLists files."""
+        tmp = tempfile.mkdtemp()
+        cpp_dir = os.path.join(tmp, "cpp")
+        sim_dir = os.path.join(tmp, "pycode", "memilio-simulation")
+        sim_pkg_dir = os.path.join(sim_dir, "memilio", "simulation")
+        os.makedirs(cpp_dir)
+        os.makedirs(sim_pkg_dir)
+        with open(os.path.join(cpp_dir, "CMakeLists.txt"), "w") as f:
+            f.write(_CPP_CMAKE_STUB)
+        with open(os.path.join(sim_dir, "CMakeLists.txt"), "w") as f:
+            f.write(_SIM_CMAKE_STUB)
+        with open(os.path.join(sim_pkg_dir, "__init__.py"), "w") as f:
+            f.write(_SIM_INIT_STUB)
+        return tmp
+
+    def test_write_mode_returns_zero(self):
+        tmp = self._make_repo()
+        rc = cli_main([SEIR_YAML, "--output-dir", tmp])
+        self.assertEqual(rc, 0)
+
+    def test_write_creates_model_files(self):
+        tmp = self._make_repo()
+        cli_main([SEIR_YAML, "--output-dir", tmp])
+        self.assertTrue((Path(tmp) / "cpp/models/ode_seir/model.h").exists())
+
+    def test_preview_mode_returns_zero_without_writing(self):
+        tmp = self._make_repo()
+        rc = cli_main([SEIR_YAML, "--output-dir", tmp, "--preview"])
+        self.assertEqual(rc, 0)
+        # Files must NOT have been written in preview mode
+        self.assertFalse((Path(tmp) / "cpp/models/ode_seir/model.h").exists())
+
+    def test_force_flag_allows_overwrite(self):
+        tmp = self._make_repo()
+        # First write
+        cli_main([SEIR_YAML, "--output-dir", tmp])
+        # Second write without --force must fail (return 1)
+        rc = cli_main([SEIR_YAML, "--output-dir", tmp])
+        self.assertEqual(rc, 1)
+        # With --force it must succeed
+        rc = cli_main([SEIR_YAML, "--output-dir", tmp, "--force"])
+        self.assertEqual(rc, 0)
+
+    def test_missing_config_file_returns_one(self):
+        rc = cli_main(["nonexistent_config.yaml", "--output-dir", "/tmp"])
+        self.assertEqual(rc, 1)
+
+    def test_invalid_yaml_returns_one(self):
+        with tempfile.NamedTemporaryFile(suffix=".yaml", mode="w", delete=False) as f:
+            f.write("model:\n  name: Bad\n")  # missing sections
+            bad_path = f.name
+        try:
+            rc = cli_main([bad_path, "--output-dir", "/tmp"])
+            self.assertEqual(rc, 1)
+        finally:
+            os.unlink(bad_path)
+
+    def test_toml_input_detected_and_written(self):
+        tmp = self._make_repo()
+        rc = cli_main([SEIR_TOML, "--output-dir", tmp])
+        self.assertEqual(rc, 0)
+        self.assertTrue((Path(tmp) / "cpp/models/ode_seir/model.h").exists())
 
 
 if __name__ == "__main__":
