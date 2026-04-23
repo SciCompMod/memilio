@@ -65,9 +65,11 @@ Metadata about the model. For a SEIR model it could look as follows.
 .. code-block:: yaml
 
     model:
-      name: SEIR          # Human-readable name used in comments and doc-strings
-      namespace: oseir    # In C++, we define a namespace to directly refer to model properties. We suggest to use `o` + a name, all in small letters.
-      prefix: ode_seir    # Used for folder name and installation. We suggest to use the format `ode_` and a name all in small letters. 
+      name: SEIR       # Human-readable name used in comments and doc-strings
+      namespace: oseir # In C++, we define a namespace to directly refer to model
+                       # properties. We suggest to use `o` + a name, all in small letters.
+      prefix: ode_seir # Used for folder name and installation.
+                       # We suggest to use the format `ode_` and a name all in small letters.
 
 infection_states
 ^^^^^^^^^^^^^^^^
@@ -126,7 +128,8 @@ Default value are passed to a function which only serves as a fallback solution 
 
 **Built-in types and their bounds:**
 
-Depending on the type and bounds provided by the user, MEmilio introduces a parameter constraint checking functionalism.
+Depending on the type and bounds provided by the user, MEmilio introduces a
+parameter constraint checking functionality:
 
 - ``probability``: constraint check enforces ``[0.0, 1.0]``
 - ``time``: constraint check uses the configured ``bounds``. If ``bounds`` are omitted, the default is ``[0.1, null]``. Values below ``0.1`` days are always raised to ``0.1`` days in the generated C++ constraint check to avoid unreasonably short compartment stays that drastically increase ODE solver run time.
@@ -316,17 +319,7 @@ version of the SEIR model) can be found in
 Usage
 ~~~~~
 
-Installation
-^^^^^^^^^^^^
-
-Install the ``memilio-generation`` package from the repository root:
-
-.. code-block:: console
-
-    pip install -e pycode/memilio-generation
-
-The installation registers the ``memilio-modelgenerator`` command and makes the
-``memilio.modelgenerator`` Python module available.
+For installation, see the :doc:`MEmilio Generation <m-generation>` page.
 
 Command-line interface
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -420,6 +413,8 @@ Common validation errors:
 
 Development and extension
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This section is about extending the **Model Generator itself** (e.g. adding new transition types, template features or validation rules) and not about modifying a generated model. If you want to customize a generated model, edit the produced C++ files directly.
 
 Adding a new transition type or template feature:
 

@@ -18,7 +18,6 @@ maintainers = [
   { email = "martin.kuehn@dlr.de" }
 ]
 dependencies = [
-  "libclang==18.1.1",
   "dataclasses",
   "dataclasses_json",
   "graphviz",
@@ -29,6 +28,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+bindings = [
+  "libclang==18.1.1",
+]
 dev = []
 
 [project.urls]
