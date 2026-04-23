@@ -158,7 +158,7 @@ install(TARGETS ${PYMIO_MEMILIO_LIBS_LIST}
 # drop symlinks, so place real copies for each alias.
 if(TARGET jsoncpp_lib)
     set_target_properties(jsoncpp_lib PROPERTIES
-        INSTALL_RPATH "$ORIGIN"
+        INSTALL_RPATH "${PYMIO_INSTALL_RPATH}"
     )
     install(FILES
         $<TARGET_FILE:jsoncpp_lib>
@@ -173,7 +173,7 @@ if(TARGET spdlog)
 
     if(_SPDLOG_LIB_TYPE STREQUAL "SHARED_LIBRARY")
         set_target_properties(spdlog PROPERTIES
-            INSTALL_RPATH "$ORIGIN"
+            INSTALL_RPATH "${PYMIO_INSTALL_RPATH}"
         )
         install(FILES
             $<TARGET_FILE:spdlog>
