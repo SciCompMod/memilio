@@ -1,7 +1,7 @@
 .. include:: ../literature.rst
 
-Diffusive agent-based model
-===========================
+Agent-based model (with diffusion)
+===================================
 
 This agent-based model uses a Markov process to simulate disease dynamics. The Markov process is given by agent movement and the evolution of disease dynamics i.e. disease transmission and progression.
 The features of an agent are its position and its infection state. The evolution of the system state is determined by the following master equation

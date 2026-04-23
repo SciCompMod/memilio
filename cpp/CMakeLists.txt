@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.13)
+set(MEMILIO_CMAKE_MINIMUM_VERSION "3.18.0")
+cmake_minimum_required(VERSION ${MEMILIO_CMAKE_MINIMUM_VERSION})
 
 project(memilio VERSION 1.0.0)
 
@@ -190,6 +191,7 @@ if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/ode_seirdb)
     add_subdirectory(models/ode_seair)
     add_subdirectory(models/ode_sir)
+    add_subdirectory(models/ode_seir_metapop)
     add_subdirectory(models/sde_sir)
     add_subdirectory(models/sde_sirs)
     add_subdirectory(models/sde_seirvv)

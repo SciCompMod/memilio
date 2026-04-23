@@ -288,3 +288,6 @@ docs/source/cppapi
 .vscode/
 
 # End of https://www.gitignore.io/api/c++,node,python
+
+# Output directory from memilio examples
+example_results/

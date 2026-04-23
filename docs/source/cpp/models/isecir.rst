@@ -13,7 +13,7 @@ recovery. It is thus only suited for epidemic use cases and, mostly, early epide
 
 Below is a visualization of the infection states and transitions. The variables :math:`\sigma_{z_1}^{z_2}` refer to a transition from a compartment :math:`z_1` to a compartment :math:`z_2`.
 
-.. image:: https://github.com/SciCompMod/memilio/assets/70579874/3500421a-035c-4ce1-ae95-a54d8097be82
+.. image:: https://martinkuehn.eu/research/images/ide_secir.png
    :alt: tikzIDESECIR
 
 
@@ -53,6 +53,7 @@ The possible transitions between the **InfectionState**\s are:
     `InfectedSymptomsToInfectedSevere`
     `InfectedSymptomsToRecovered`
     `InfectedSevereToInfectedCritical`
+    `InfectedSevereToDead`
     `InfectedSevereToRecovered`
     `InfectedCriticalToDead`
     `InfectedCriticalToRecovered`
@@ -153,6 +154,7 @@ Then we can define the initial flows as follows.
     vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 1.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 4.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 1.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToDead]                 = 0.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;

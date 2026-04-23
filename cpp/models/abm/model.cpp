@@ -108,7 +108,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
     for (uint32_t person_index = 0; person_index < num_persons; ++person_index) {
         if (m_activeness_statuses[person_index]) {
             Person& person    = m_persons[person_index];
-            auto personal_rng = PersonalRandomNumberGenerator(person);
+            auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
 
             auto try_mobility_rule = [&](auto rule) -> bool {
                 // run mobility rule and check if change of location can actually happen
@@ -186,7 +186,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
          m_trip_list.increase_index()) {
         auto& trip        = m_trip_list.get_next_trip();
         auto& person      = get_person(trip.person_id);
-        auto personal_rng = PersonalRandomNumberGenerator(person);
+        auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
         // skip the trip if the person is in quarantine or is dead
         if (person.is_in_quarantine(t, parameters) || person.get_infection_state(t) == InfectionState::Dead) {
             continue;

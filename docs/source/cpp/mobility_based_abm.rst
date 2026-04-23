@@ -1,7 +1,7 @@
 .. include:: ../literature.rst
 
-Agent-based model
-=================
+Agent-based model (with activities and mobility)
+================================================
 
 This module models and simulates the epidemic using an agent-based model (*ABM*) approach. Unlike the compartmental models that use a system of ODEs, this model simulates
 the spread of an epidemic in a population with discrete persons (the agents) moving throughout locations in the
@@ -204,9 +204,8 @@ We can also set the contact rates for specific age groups at a location:
 
 .. code-block:: cpp
 
-   model.get_location(work)
-       .get_infection_parameters()
-       .get<mio::abm::ContactRates>()[{age_group_15_to_34, age_group_15_to_34}] = 10.0;
+   model.get_location(work).get_infection_parameters().get<mio::abm::ContactRates>().get_baseline()(
+        age_group_15_to_34.get(), age_group_15_to_34.get()) = 10.0;
 
 For a full list of parameters, see `here <https://memilio.readthedocs.io/en/latest/api/file__home_docs_checkouts_readthedocs.org_user_builds_memilio_checkouts_latest_cpp_models_abm_parameters.h.html>`_.
 
