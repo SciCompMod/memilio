@@ -43,21 +43,6 @@ enum class TransportMode : uint32_t
     Count //last!!
 };
 
-// /**
-//  * @brief Type of the activity.
-//  */
-// enum class ActivityType : uint32_t
-// {
-//     Workplace,
-//     Education,
-//     Shopping,
-//     Leisure,
-//     PrivateMatters,
-//     OtherActivity,
-//     Home,
-//     UnknownActivity
-// };
-
 } // namespace abm
 } // namespace mio
 
