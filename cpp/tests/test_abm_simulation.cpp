@@ -103,7 +103,7 @@ TEST(TestSimulation, advanceWithCommonHistory)
     model.assign_location(person1, basics_id, mio::abm::ActivityType::BasicsShop);
     model.assign_location(person2, basics_id, mio::abm::ActivityType::BasicsShop);
     model.assign_location(person3, basics_id, mio::abm::ActivityType::BasicsShop);
-    model.assign_location(person2, public_id, mio::abm::ActivityType::Invalid);
+    model.assign_location(person2, public_id, mio::abm::ActivityType::PublicTransport);
 
     mio::abm::TripList& trip_list = model.get_trip_list();
 

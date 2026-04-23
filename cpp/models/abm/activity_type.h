@@ -40,6 +40,7 @@ enum class ActivityType : std::uint32_t
     Hospital,
     ICU,
     Cemetery, // Location for all the dead persons. It is created once for the Model.
+    PublicTransport,
 
     Count, //last!
     Invalid

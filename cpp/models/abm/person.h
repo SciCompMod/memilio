@@ -419,6 +419,7 @@ public:
         return Members("Person")
             .add("location", m_location)
             .add("location_type", m_location_type)
+            .add("activity_type", m_activity_type)
             .add("assigned_locations", m_assigned_locations)
             .add("vaccinations", m_vaccinations)
             .add("infections", m_infections)

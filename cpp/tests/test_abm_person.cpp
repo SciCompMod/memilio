@@ -28,6 +28,7 @@
 #include "abm_helpers.h"
 #include "random_number_test.h"
 
+#include "gmock/gmock.h"
 #include <gtest/gtest.h>
 
 using TestPerson = RandomNumberTest;
@@ -100,6 +101,16 @@ TEST_F(TestPerson, change_location)
  */
 TEST_F(TestPerson, setGetAssignedLocation)
 {
+    // Mock assigned location draws
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformIntDistribution<size_t>>>>
+        mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::Exactly(4)) // 1 draw per get_assigned_location_draw
+        .WillOnce(testing::Return(0)) // LocationId(2)
+        .WillOnce(testing::Return(1)) // LocationId(4)
+        .WillOnce(testing::Return(2)) // LocationId(0)
+        .WillOnce(testing::Return(3)); // LocationId(max)
+
     mio::abm::Location location(mio::abm::LocationType::Work, 2, num_age_groups);
     auto person = mio::abm::Person(this->get_rng(), location.get_type(), mio::abm::ActivityType::Work,
                                    location.get_id(), location.get_model_id(), age_group_35_to_59);
@@ -111,15 +122,6 @@ TEST_F(TestPerson, setGetAssignedLocation)
     person.set_assigned_location(mio::abm::ActivityType::Work, mio::abm::LocationId(4), 0);
     EXPECT_EQ(person.get_assigned_location(mio::abm::ActivityType::Work, p_rng).first, mio::abm::LocationId(4));
 
-    // Fuzzing: assign random valid LocationId values and verify correctness.
-    for (int i = 0; i < 100; ++i) {
-        auto random_id   = this->random_integer(0, std::numeric_limits<int>::max());
-        auto random_type = this->random_integer(0, (int)mio::abm::ActivityType::Count - 1);
-        person.set_assigned_location((mio::abm::ActivityType)random_type, mio::abm::LocationId(random_id), 0);
-        EXPECT_EQ(person.get_assigned_location((mio::abm::ActivityType)random_type, p_rng).first,
-                  mio::abm::LocationId(random_id));
-    }
-
     // Boundary test cases: test with boundary LocationIds.
     person.set_assigned_location(mio::abm::ActivityType::Work, mio::abm::LocationId(0), 0);
     EXPECT_EQ(person.get_assigned_location(mio::abm::ActivityType::Work, p_rng).first, mio::abm::LocationId(0));
@@ -128,6 +130,17 @@ TEST_F(TestPerson, setGetAssignedLocation)
                                  0);
     EXPECT_EQ(person.get_assigned_location(mio::abm::ActivityType::Work, p_rng).first,
               mio::abm::LocationId(std::numeric_limits<int>::max()));
+
+    // Fuzzing: assign random valid LocationId values and verify correctness.
+    for (int i = 0; i < 100; ++i) {
+
+        EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).Times(testing::Exactly(1)).WillOnce(testing::Return(i + 4));
+
+        auto random_id = this->random_integer(0, std::numeric_limits<int>::max());
+        person.set_assigned_location(mio::abm::ActivityType::Work, mio::abm::LocationId(random_id), 0);
+        EXPECT_EQ(person.get_assigned_location(mio::abm::ActivityType::Work, p_rng).first,
+                  mio::abm::LocationId(random_id));
+    }
 }
 
 /**

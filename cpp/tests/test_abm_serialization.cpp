@@ -208,6 +208,7 @@ TEST(TestAbmSerialization, Person)
     reference_json["last_transport_mode"]                = Json::UInt(i++);
     reference_json["location"]                           = Json::UInt(i++);
     reference_json["location_type"]                      = Json::UInt(0);
+    reference_json["activity_type"]                      = Json::UInt(0);
     reference_json["mask"]["mask_type"]                  = Json::UInt(0);
     reference_json["mask"]["time_first_used"]["seconds"] = Json::Int(i++);
     reference_json["home_isolation_start"]["seconds"]    = Json::Int(i++);
