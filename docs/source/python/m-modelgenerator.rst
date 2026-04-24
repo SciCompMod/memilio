@@ -114,7 +114,7 @@ A list of model parameters. Each parameter entry will be encapsulated in a parti
      - ``true`` (default): For each age group, an individual parameter can be set.
    * - ``bounds``
      - no: No bound checking or enforcing of the parameter will be done.
-     - ``[lower, upper]`` -- use ``null`` for an unbound parameter. 
+     - ``[lower, upper]`` -- use ``null`` to leave a side unbounded (equivalent to Python's ``None``). Example: ``[0.1, null]`` means lower bound 0.1, no upper bound.
      
 Default value are passed to a function which only serves as a fallback solution if no value is set. If the users pays attention to always set the parameters, the default value can be ignored (i.e. set to a simple value like 0 or 1),
     
@@ -132,7 +132,7 @@ Depending on the type and bounds provided by the user, MEmilio introduces a
 parameter constraint checking functionality:
 
 - ``probability``: constraint check enforces ``[0.0, 1.0]``
-- ``time``: constraint check uses the configured ``bounds``. If ``bounds`` are omitted, the default is ``[0.1, null]``. Values below ``0.1`` days are always raised to ``0.1`` days in the generated C++ constraint check to avoid unreasonably short compartment stays that drastically increase ODE solver run time.
+- ``time``: constraint check uses the configured ``bounds``. If ``bounds`` are omitted, the default is ``[0.1, null]`` (``null`` meaning no upper bound). Values below ``0.1`` days are always raised to ``0.1`` days in the generated C++ constraint check to avoid unreasonably short compartment stays that drastically increase ODE solver run time.
 - ``custom``: no automatic constraint check is generated
 
 .. note::
@@ -166,14 +166,14 @@ The parameters that need to be provided for the SEIR model are as follows.
         type: time
         default: 5.2
         per_age_group: true
-        bounds: [0.1, null]
+        bounds: [0.1, null]  # null = no upper bound
 
       - name: TimeInfected
         description: the infectious time in day unit
         type: time
         default: 6.0
         per_age_group: true
-        bounds: [0.1, null]
+        bounds: [0.1, null]  # null = no upper bound
 
 transitions
 ^^^^^^^^^^^
@@ -286,14 +286,14 @@ The following YAML file fully specifies an SEIR model:
         type: time
         default: 5.2
         per_age_group: true
-        bounds: [0.1, null]
+        bounds: [0.1, null]  # null = no upper bound
 
       - name: TimeInfected
         description: the infectious time in day unit
         type: time
         default: 6.0
         per_age_group: true
-        bounds: [0.1, null]
+        bounds: [0.1, null]  # null = no upper bound
 
     transitions:
       - from: Susceptible
@@ -385,11 +385,15 @@ After generation
    The patched ``cpp/CMakeLists.txt`` picks up the new model directory automatically.
    See :doc:`/cpp/installation` for details on configuring and building with CMake.
 
-3. **Install the Python bindings** by (re)installing ``memilio-simulation`` from the main directory:
+3. **Install the Python bindings** by (re)installing ``memilio-simulation`` from the repository root:
 
    .. code-block:: console
 
        pip install -e pycode/memilio-simulation
+
+   .. note::
+
+       This step is required regardless of how ``memilio-simulation`` was originally installed (from PyPI or from source). The newly compiled binding is not on PyPI and must be picked up from the local build. If you installed from PyPI before, the ``-e`` flag above replaces that installation with a local editable one.
 
 4. **Run the generated example**:
 
