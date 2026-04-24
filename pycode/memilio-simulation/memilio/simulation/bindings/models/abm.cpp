@@ -27,6 +27,9 @@
 
 //Includes from MEmilio
 #include "abm/simulation.h"
+#include "abm/household.h"
+#include "abm/lockdown_rules.h"
+#include "abm/common_abm_loggers.h"
 
 #include "pybind11/attr.h"
 #include "pybind11/cast.h"
@@ -36,6 +39,91 @@
 #include <type_traits>
 
 namespace py = pybind11;
+
+// Define all combinations of histories
+using AdvanceCombinations =
+    std::tuple<std::tuple<>,
+               // Single History:
+               std::tuple<mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState>>,
+               std::tuple<mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation>>,
+               std::tuple<mio::History<mio::DataWriterToMemory, mio::abm::LogPersonInformation>>,
+               std::tuple<mio::History<mio::DataWriterToMemory, mio::abm::LogDataForMobility>>,
+               // Multiple Histories :
+               std::tuple<mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState>,
+                          mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation>>,
+               std::tuple<mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState>,
+                          mio::History<mio::DataWriterToMemory, mio::abm::LogPersonInformation>>,
+               std::tuple<mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState>,
+                          mio::History<mio::DataWriterToMemory, mio::abm::LogDataForMobility>>,
+               std::tuple<mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation>,
+                          mio::History<mio::DataWriterToMemory, mio::abm::LogPersonInformation>>,
+               std::tuple<mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation>,
+                          mio::History<mio::DataWriterToMemory, mio::abm::LogDataForMobility>>,
+               std::tuple<mio::History<mio::DataWriterToMemory, mio::abm::LogPersonInformation>,
+                          mio::History<mio::DataWriterToMemory, mio::abm::LogDataForMobility>>,
+               std::tuple<mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState>,
+                          mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation>,
+                          mio::History<mio::DataWriterToMemory, mio::abm::LogPersonInformation>>,
+               std::tuple<mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState>,
+                          mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation>,
+                          mio::History<mio::DataWriterToMemory, mio::abm::LogDataForMobility>>,
+               std::tuple<mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState>,
+                          mio::History<mio::DataWriterToMemory, mio::abm::LogPersonInformation>,
+                          mio::History<mio::DataWriterToMemory, mio::abm::LogDataForMobility>>,
+               std::tuple<mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation>,
+                          mio::History<mio::DataWriterToMemory, mio::abm::LogPersonInformation>,
+                          mio::History<mio::DataWriterToMemory, mio::abm::LogDataForMobility>>,
+               std::tuple<mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState>,
+                          mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation>,
+                          mio::History<mio::DataWriterToMemory, mio::abm::LogPersonInformation>,
+                          mio::History<mio::DataWriterToMemory, mio::abm::LogDataForMobility>>>
+
+    ;
+
+void bind_all_advances(py::class_<mio::abm::Simulation<>>& cls)
+{
+    // Bind a single advance overload for a specific set of History types
+    auto bind_one = [&]<typename... HistoryTypes>(std::tuple<HistoryTypes...>*) {
+        cls.def("advance", [](mio::abm::Simulation<>& sim, mio::abm::TimePoint tmax, HistoryTypes&... histories) {
+            sim.advance(tmax, histories...);
+        });
+    };
+
+    // Iterate over all combinations and bind one overload each
+    [&]<typename... Combinations>(std::tuple<Combinations...>*) {
+        (bind_one(static_cast<Combinations*>(nullptr)), ...);
+    }(static_cast<AdvanceCombinations*>(nullptr));
+}
+
+template <typename... Loggers>
+void bind_timeserieswriter_history(py::module_& m, const std::string& name)
+{
+    using HistoryType = mio::History<mio::abm::TimeSeriesWriter, Loggers...>;
+
+    pymio::bind_class<HistoryType, pymio::EnablePickling::Never>(m, name)
+        .def(py::init<mio::TimeSeries<double>>())
+        .def(
+            "get_log",
+            [](HistoryType& self) {
+                return self.get_log();
+            },
+            py::return_value_policy::reference_internal);
+}
+
+template <typename... Loggers>
+void bind_datawriter_history(py::module_& m, const std::string& name)
+{
+    using HistoryType = mio::History<mio::DataWriterToMemory, Loggers...>;
+
+    pymio::bind_class<HistoryType, pymio::EnablePickling::Never>(m, name)
+        .def(py::init<>())
+        .def(
+            "get_log",
+            [](HistoryType& self) {
+                return self.get_log();
+            },
+            py::return_value_policy::reference_internal);
+}
 
 PYBIND11_MODULE(_simulation_abm, m)
 {
@@ -127,12 +215,19 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::abm::VirusVariant, mio::AgeGroup>(
         m, "_AgeParameterArray");
+    pymio::bind_CustomIndexArray<mio::AbstractParameterDistribution, mio::abm::VirusVariant, mio::AgeGroup>(
+        m, "_DistAgeParameterArray");
+    pymio::bind_CustomIndexArray<bool, mio::AgeGroup>(m, "_boolAgeParameterArray");
+    pymio::bind_CustomIndexArray<int, mio::AgeGroup>(m, "_intAgeParameterArray");
+    pymio::bind_CustomIndexArray<double, mio::abm::VirusVariant>(m, "_doubleVirusVariantArray");
     pymio::bind_CustomIndexArray<mio::abm::TestParameters, mio::abm::TestType>(m, "_TestData");
-    pymio::bind_Index<mio::abm::ProtectionType>(m, "ProtectionTypeIndex");
+    pymio::bind_CustomIndexArray<mio::TimeSeriesFunctor<double>, mio::abm::ProtectionType, mio::AgeGroup,
+                                 mio::abm::VirusVariant>(m, "_ProtectionFactorArray");
     pymio::bind_ParameterSet<mio::abm::ParametersBase, pymio::EnablePickling::Never>(m, "ParametersBase");
     pymio::bind_class<mio::abm::Parameters, pymio::EnablePickling::Never, mio::abm::ParametersBase>(m, "Parameters")
-        .def(py::init<int>())
-        .def("check_constraints", &mio::abm::Parameters::check_constraints);
+        .def(py::init<size_t>())
+        .def("check_constraints", &mio::abm::Parameters::check_constraints)
+        .def_property_readonly("num_age_groups", &mio::abm::Parameters::get_num_groups);
 
     pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters, pymio::EnablePickling::Never>(
         m, "LocalInfectionParameters")
@@ -151,11 +246,22 @@ PYBIND11_MODULE(_simulation_abm, m)
                                           &mio::abm::Person::set_assigned_location))
         .def_property_readonly("location", py::overload_cast<>(&mio::abm::Person::get_location, py::const_))
         .def_property_readonly("age", &mio::abm::Person::get_age)
-        .def_property_readonly("is_in_quarantine", &mio::abm::Person::is_in_quarantine);
+        .def_property_readonly("is_in_quarantine", &mio::abm::Person::is_in_quarantine)
+        .def_property_readonly("id", &mio::abm::Person::get_id)
+        .def(
+            "add_new_infection",
+            [](mio::abm::Person& self, mio::abm::Infection infection) {
+                self.add_new_infection(std::move(infection));
+            },
+            py::return_value_policy::reference_internal)
+        .def("add_new_vaccination", &mio::abm::Person::add_new_vaccination, py::return_value_policy::reference_internal)
+        .def("get_infection_state", &mio::abm::Person::get_infection_state)
+        .def_property_readonly("vaccinations", py::overload_cast<>(&mio::abm::Person::get_vaccinations, py::const_));
 
     pymio::bind_class<mio::abm::TestingCriteria, pymio::EnablePickling::Never>(m, "TestingCriteria")
         .def(py::init<const std::vector<mio::AgeGroup>&, const std::vector<mio::abm::InfectionState>&>(),
-             py::arg("age_groups"), py::arg("infection_states"));
+             py::arg("age_groups"), py::arg("infection_states"))
+        .def(py::init<>());
 
     pymio::bind_class<mio::abm::TestingScheme, pymio::EnablePickling::Never>(m, "TestingScheme")
         .def(py::init<const mio::abm::TestingCriteria&, mio::abm::TimeSpan, mio::abm::TimePoint, mio::abm::TimePoint,
@@ -170,9 +276,18 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     pymio::bind_class<mio::abm::TestingStrategy, pymio::EnablePickling::Never>(m, "TestingStrategy")
         .def(py::init<const std::vector<mio::abm::TestingStrategy::LocalStrategy>&,
-                      const std::vector<mio::abm::TestingStrategy::LocalStrategy>&>());
+                      const std::vector<mio::abm::TestingStrategy::LocalStrategy>&>())
+        .def("add_scheme",
+             py::overload_cast<const mio::abm::LocationType&, const mio::abm::TestingScheme&>(
+                 &mio::abm::TestingStrategy::add_scheme),
+             py::arg("location_type"), py::arg("testing_scheme"))
+        .def("add_scheme",
+             py::overload_cast<const mio::abm::LocationId&, const mio::abm::TestingScheme&>(
+                 &mio::abm::TestingStrategy::add_scheme),
+             py::arg("location_id"), py::arg("testing_scheme"));
 
     pymio::bind_class<mio::abm::Location, pymio::EnablePickling::Never>(m, "Location")
+        .def(py::init<mio::abm::LocationType, mio::abm::LocationId>(), py::arg("location_type"), py::arg("loc_id"))
         .def_property_readonly("type", &mio::abm::Location::get_type)
         .def_property_readonly("id", &mio::abm::Location::get_id)
         .def_property("infection_parameters",
@@ -210,6 +325,8 @@ PYBIND11_MODULE(_simulation_abm, m)
                                py::keep_alive<1, 0>{}) //keep this model alive while contents are referenced in ranges
         .def_property_readonly("persons", py::overload_cast<>(&mio::abm::Model::get_persons, py::const_),
                                py::keep_alive<1, 0>{})
+        .def("get_location", py::overload_cast<mio::abm::LocationId>(&mio::abm::Model::get_location),
+             py::arg("location_id"), py::return_value_policy::reference_internal)
         .def_property(
             "trip_list", py::overload_cast<>(&mio::abm::Model::get_trip_list),
             [](mio::abm::Model& self, const mio::abm::TripList& list) {
@@ -224,14 +341,60 @@ PYBIND11_MODULE(_simulation_abm, m)
             [](mio::abm::Model& self, mio::abm::TestingStrategy strategy) {
                 self.get_testing_strategy() = strategy;
             },
-            py::return_value_policy::reference_internal);
+            py::return_value_policy::reference_internal)
+        .def("seed_rng",
+             [](mio::abm::Model& self, std::vector<uint32_t> seeds) {
+                 self.get_rng().seed(seeds);
+             })
+        .def_property_readonly("rng", py::overload_cast<>(&mio::abm::Model::get_rng, py::const_));
 
-    pymio::bind_class<mio::abm::Simulation<>, pymio::EnablePickling::Never>(m, "Simulation")
-        .def(py::init<mio::abm::TimePoint, size_t>())
-        .def("advance",
-             static_cast<void (mio::abm::Simulation<>::*)(mio::abm::TimePoint)>(&mio::abm::Simulation<>::advance),
-             py::arg("tmax"))
-        .def_property_readonly("model", py::overload_cast<>(&mio::abm::Simulation<>::get_model));
+    auto sim_cls = pymio::bind_class<mio::abm::Simulation<>, pymio::EnablePickling::Never>(m, "Simulation")
+                       .def(py::init<mio::abm::TimePoint, size_t>())
+                       .def(py::init([](mio::abm::TimePoint t, mio::abm::Model& model) {
+                                return mio::abm::Simulation(t, std::move(model));
+                            }),
+                            py::return_value_policy::reference_internal)
+                       .def_property_readonly("model", py::overload_cast<>(&mio::abm::Simulation<>::get_model));
+
+    bind_all_advances(sim_cls);
+
+    pymio::bind_class<mio::abm::HouseholdMember, pymio::EnablePickling::Never>(m, "HouseholdMember")
+        .def(py::init<size_t>(), py::arg("num_agegroups") = 1)
+        .def_property("age_weights", &mio::abm::HouseholdMember::get_age_weights,
+                      &mio::abm::HouseholdMember::set_age_weight);
+
+    pymio::bind_class<mio::abm::HouseholdGroup, pymio::EnablePickling::Never>(m, "HouseholdGroup")
+        .def(py::init<>())
+        .def("add_households", &mio::abm::HouseholdGroup::add_households)
+        .def_property_readonly("num_households", &mio::abm::HouseholdGroup::get_total_number_of_households);
+
+    pymio::bind_class<mio::abm::Household, pymio::EnablePickling::Never>(m, "Household")
+        .def(py::init<>())
+        .def("add_members", &mio::abm::Household::add_members)
+        .def_property_readonly("num_members", &mio::abm::Household::get_total_number_of_members);
+
+    m.def("add_household_group_to_model", &mio::abm::add_household_group_to_model);
+
+    pymio::bind_class<mio::abm::Infection, pymio::EnablePickling::Never>(m, "Infection")
+        .def(py::init<mio::abm::PersonalRandomNumberGenerator&, mio::abm::VirusVariant, mio::AgeGroup,
+                      mio::abm::Parameters, mio::abm::TimePoint, mio::abm::InfectionState, mio::abm::ProtectionEvent,
+                      bool>(),
+             py::arg("rng"), py::arg("virus"), py::arg("age"), py::arg("params"), py::arg("start_date"),
+             py::arg("start_state") = mio::abm::InfectionState::Exposed,
+             py::arg("latest_protection") =
+                 mio::abm::ProtectionEvent(mio::abm::ProtectionType::NoProtection, mio::abm::TimePoint(0)),
+             py::arg("detected") = false);
+
+    m.def("close_social_events", &mio::abm::close_social_events);
+
+    bind_timeserieswriter_history<mio::abm::LogInfectionState>(m, "TimeSeriesWriterLogInfectionStateHistory");
+    bind_datawriter_history<mio::abm::LogLocationInformation>(m, "DataWriterLogLocationInformationHistory");
+    bind_datawriter_history<mio::abm::LogPersonInformation>(m, "DataWriterLogPersonInformationHistory");
+    bind_datawriter_history<mio::abm::LogDataForMobility>(m, "DataWriterLogDataForMobilityHistory");
+
+    pymio::bind_class<mio::abm::PersonalRandomNumberGenerator, pymio::EnablePickling::Never>(
+        m, "PersonalRandomNumberGenerator")
+        .def(py::init<const mio::RandomNumberGenerator&, mio::abm::Person&>(), py::arg("model_rng"), py::arg("person"));
 
     m.attr("__version__") = "dev";
 }
