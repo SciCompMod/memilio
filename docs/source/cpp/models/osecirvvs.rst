@@ -265,19 +265,19 @@ After setting the initial populations, you also need to set the vaccination para
     
     // Prepare and resize vaccinations parameter for the entire simulation period
     const size_t daily_vaccinations = 10;
-    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().resize(
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<ScalarType>>().resize(
         mio::SimulationDay((size_t)tmax + 1));
-    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().resize(
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<ScalarType>>().resize(
         mio::SimulationDay((size_t)tmax + 1));
         
     // Set increasing number of vaccination over time
     for (size_t i = 0; i < tmax + 1; ++i) {
-        auto num_vaccinations = static_cast<double>(i * daily_vaccinations);
+        auto num_vaccinations = static_cast<ScalarType>(i * daily_vaccinations);
         model.parameters
-            .get<mio::osecirvvs::DailyPartialVaccinations<double>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
+            .get<mio::osecirvvs::DailyPartialVaccinations<ScalarType>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
             num_vaccinations;
         model.parameters
-            .get<mio::osecirvvs::DailyFullVaccinations<double>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
+            .get<mio::osecirvvs::DailyFullVaccinations<ScalarType>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
             num_vaccinations;
     }
 
@@ -293,7 +293,7 @@ Basic dampings can be added to the contact matrix as follows:
 .. code-block:: cpp
 
     // Create a contact matrix with baseline contact rates
-    auto& contacts = model.parameters.get<mio::osecirvvs::ContactPatterns<double>>();
+    auto& contacts = model.parameters.get<mio::osecirvvs::ContactPatterns<ScalarType>>();
     auto& contact_matrix = contacts.get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(0.5);
     contact_matrix[0].get_baseline().diagonal().setConstant(5.0);
@@ -331,7 +331,7 @@ The model also supports dynamic NPIs based on epidemic thresholds:
 .. code-block:: cpp
 
     // Configure dynamic NPIs
-    auto& dynamic_npis = params.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms<double>>();
+    auto& dynamic_npis = params.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms<ScalarType>>();
     dynamic_npis.set_interval(mio::SimulationTime(3.0));  // Check NPI every 3 days
     dynamic_npis.set_duration(mio::SimulationTime(14.0)); // Apply NPI for 14 days
     dynamic_npis.set_base_value(100'000);                // Base value to trigger NPI is population of 100,000
@@ -349,12 +349,12 @@ Basic simulation:
 
 .. code-block:: cpp
 
-    double t0 = 0;       // Start time
-    double tmax = 30;    // End time
-    double dt = 0.1;     // Time step
+    ScalarType t0 = 0;       // Start time
+    ScalarType tmax = 30;    // End time
+    ScalarType dt = 0.1;     // Time step
     
     // Run a standard simulation
-    mio::TimeSeries<double> result = mio::osecirvvs::simulate<double>(t0, tmax, dt, model);
+    mio::TimeSeries<ScalarType> result = mio::osecirvvs::simulate<ScalarType>(t0, tmax, dt, model);
 
 During simulation, the model handles several special processes:
 
@@ -372,7 +372,7 @@ For both simulation types, you can also specify a custom integrator:
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
     
-    mio::TimeSeries<double> result = mio::osecirvvs::simulate(t0, tmax, dt, model, std::move(integrator));
+    mio::TimeSeries<ScalarType> result = mio::osecirvvs::simulate(t0, tmax, dt, model, std::move(integrator));
 
 Output
 ------
@@ -386,7 +386,7 @@ The output of the simulation is a ``TimeSeries`` object containing the sizes of 
     
     // Access data at a specific time point
     Eigen::VectorXd value_at_time_i = result.get_value(i);
-    double time_i = result.get_time(i);
+    ScalarType time_i = result.get_time(i);
     
     // Access the last time point
     Eigen::VectorXd last_value = result.get_last_value();

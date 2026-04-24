@@ -139,14 +139,14 @@ Then we can define the initial flows as follows.
 
 .. code-block:: cpp
 
-    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
+    size_t num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
     // Create TimeSeries with num_transitions * num_agegroups elements where transitions needed for simulation will be
     // stored.
     mio::TimeSeries<ScalarType> init(num_transitions * num_agegroups);
 
-    // Define vector with flows. 
-    Vec vec_init(num_transitions * num_agegroups);
+    // Define vector with flows.
+    Eigen::VectorX<ScalarType> vec_init(num_transitions * num_agegroups);
     vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 25.0;
     vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
@@ -216,22 +216,24 @@ Basic dampings can be added to the contact matrix as follows:
 
     // Create a contact matrix with constant contact rates between all groups.
     ScalarType cont_freq = 10.;
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix = model.parameters.get<mio::isecir::ContactPatterns>();
+    contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, cont_freq));
     
     // Add a uniform damping across all age groups.
-    contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime<ScalarType>(30.));;
 
 For age-resolved models, you can apply different dampings to different groups:
 
 .. code-block:: cpp
 
     ScalarType cont_freq = 10.;
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, cont_freq));
+    contact_matrix[0] =
+        mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(num_agegroups, num_agegroups, cont_freq));
     
     // Add a damping that reduces contacts within the same age group by 70% starting at day 30.
-    contact_matrix.add_damping(Eigen::VectorX<ScalarType>::Constant(num_agegroups, 0.7).asDiagonal(),
-                             mio::SimulationTime(30.));
+    Eigen::MatrixX<ScalarType> damping_matrix = Eigen::VectorX<ScalarType>::Constant(num_agegroups, 0.7).asDiagonal();
+    contact_matrix[0].add_damping(damping_matrix, mio::SimulationTime<ScalarType>(30.));
+
 
 
 For more complex scenarios, such as real-world venue closures or lockdown modeling, you can implement detailed NPIs with location-specific dampings. The IDE-SECIR model supports contact matrices for different locations (e.g., home, school, work, other) and can apply different dampings to each location.
@@ -327,12 +329,13 @@ You can access the data in the ``TimeSeries`` objects as follows:
     // Get the number of time points.
     auto num_points = static_cast<size_t>(compartments.get_num_time_points());
     
-    // Access data at a specific time point.
-    Eigen::VectorX value_at_time_i = compartments.get_value(i);
-    ScalarType time_i = compartments.get_time(i);
+    // Access data at a specific time point, e.g. i=0.
+    size_t i                                   = 0;
+    Eigen::VectorX<ScalarType> value_at_time_i = compartments.get_value(i);
+    ScalarType time_i    
     
     // Access the last time point.
-    Eigen::VectorX last_value = compartments.get_last_value();
+    Eigen::VectorX<ScalarType> last_value = compartments.get_last_value();
     ScalarType last_time = compartments.get_last_time();
 
 
@@ -352,7 +355,7 @@ Additionally, you can export the results to a CSV file:
 .. code-block:: cpp
 
     // Export results to CSV with default settings.
-    compartments.export_csv("simulation_results.csv");
+    auto export_status = compartments.export_csv("simulation_results.csv");
 
 
 Visualization
