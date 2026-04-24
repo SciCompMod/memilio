@@ -110,7 +110,7 @@ int main()
 
     // Add one social event with 5 maximum contacts.
     // Maximum contacs limit the number of people that a person can infect while being at this location.
-    auto event = model.add_location(mio::abm::LocationType::SocialEvent);
+    auto event = model.add_location(mio::abm::LocationType::Recreation);
     model.get_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
     // Add hospital and ICU with 5 maximum contacs.
     auto hospital = model.add_location(mio::abm::LocationType::Hospital);
@@ -155,17 +155,17 @@ int main()
     for (auto& person : model.get_persons()) {
         const auto pid = person.get_id();
         //assign shop and event
-        model.assign_location(pid, event);
-        model.assign_location(pid, shop);
+        model.assign_location(pid, event, mio::abm::ActivityType::Recreation);
+        model.assign_location(pid, shop, mio::abm::ActivityType::BasicsShop);
         //assign hospital and ICU
-        model.assign_location(pid, hospital);
-        model.assign_location(pid, icu);
+        model.assign_location(pid, hospital, mio::abm::ActivityType::Hospital);
+        model.assign_location(pid, icu, mio::abm::ActivityType::ICU);
         //assign work/school to people depending on their age
         if (person.get_age() == age_group_5_to_14) {
-            model.assign_location(pid, school);
+            model.assign_location(pid, school, mio::abm::ActivityType::School);
         }
         if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
-            model.assign_location(pid, work);
+            model.assign_location(pid, work, mio::abm::ActivityType::Work);
         }
     }
 

@@ -21,6 +21,7 @@
 #ifndef MIO_ABM_GRAPH_ABMODEL_H
 #define MIO_ABM_GRAPH_ABMODEL_H
 
+#include "abm/activity_type.h"
 #include "abm/location_type.h"
 #include "abm/model.h"
 #include "abm/person_id.h"
@@ -48,7 +49,7 @@ public:
                  std::vector<Base::MobilityRuleType> mobility_rules =
                      std::vector<Base::MobilityRuleType>{&get_buried, &return_home_when_recovered, &go_to_hospital,
                                                          &go_to_icu, &go_to_school, &go_to_work, &go_to_shop,
-                                                         &go_to_event, &go_to_quarantine})
+                                                         &go_to_recreation, &go_to_quarantine})
         : Base(num_agegroups, id)
     {
         Base::m_mobility_rules = mobility_rules;
@@ -99,8 +100,9 @@ private:
                 auto try_mobility_rule = [&](auto rule) -> bool {
                     //run mobility rule and check if change of location can actually happen
                     auto target_type = rule(personal_rng, person, t, dt, parameters);
-                    if (person.get_assigned_location_model_id(target_type) == Base::m_id) {
-                        const Location& target_location = Base::get_location(Base::find_location(target_type, person));
+                    auto target      = person.get_assigned_location(target_type, personal_rng);
+                    if (target.second == Base::m_id) {
+                        const Location& target_location   = Base::get_location(target.first);
                         const LocationId current_location = person.get_location();
                         // the Person cannot move if they do not wear mask as required at targeted location
                         if (target_location.is_mask_required() &&
@@ -127,13 +129,12 @@ private:
                         else {
                             person.set_mask(MaskType::None, t);
                         }
-                        Base::change_location(person, target_location.get_id());
+                        Base::change_location(person, target_location.get_id(), target_type);
                         return true;
                     }
                     else { //person moves to other world
                         Base::m_activeness_statuses[person_index] = false;
-                        person.set_location(target_type, abm::LocationId::invalid_id(),
-                                            std::numeric_limits<int>::max());
+                        person.set_location(target_type, abm::LocationType::Invalid, target.first, target.second);
                         m_person_buffer.push_back(person_index);
                         m_are_exposure_caches_valid       = false;
                         m_is_local_population_cache_valid = false;
@@ -176,7 +177,7 @@ private:
                     continue;
                 }
                 // all requirements are met, move to target location
-                change_location(person, target_location.get_id(), trip.trip_mode);
+                change_location(person, target_location.get_id(), trip.activity, trip.trip_mode);
                 // update worn mask to target location's requirements
                 if (target_location.is_mask_required()) {
                     // if the current MaskProtection level is lower than required, the Person changes mask
@@ -191,7 +192,8 @@ private:
             }
             else { //person moves to other world
                 Base::m_activeness_statuses[person_index] = false;
-                person.set_location(abm::LocationType::Invalid, trip.destination, std::numeric_limits<int>::max());
+                person.set_location(trip.activity, abm::LocationType::Invalid, trip.destination,
+                                    trip.destination_model_id);
                 m_person_buffer.push_back(person_index);
                 m_are_exposure_caches_valid       = false;
                 m_is_local_population_cache_valid = false;

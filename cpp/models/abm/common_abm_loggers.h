@@ -57,21 +57,21 @@ constexpr mio::abm::ActivityType guess_activity_type(mio::abm::LocationType curr
     case mio::abm::LocationType::Home:
         return mio::abm::ActivityType::Home;
     case mio::abm::LocationType::Work:
-        return mio::abm::ActivityType::Workplace;
+        return mio::abm::ActivityType::Work;
     case mio::abm::LocationType::School:
-        return mio::abm::ActivityType::Education;
-    case mio::abm::LocationType::SocialEvent:
-        return mio::abm::ActivityType::Leisure;
+        return mio::abm::ActivityType::School;
+    case mio::abm::LocationType::Recreation:
+        return mio::abm::ActivityType::Recreation;
     case mio::abm::LocationType::BasicsShop:
-        return mio::abm::ActivityType::Shopping;
+        return mio::abm::ActivityType::BasicsShop;
     case mio::abm::LocationType::ICU:
-        return mio::abm::ActivityType::OtherActivity;
+        return mio::abm::ActivityType::ICU;
     case mio::abm::LocationType::Hospital:
-        return mio::abm::ActivityType::OtherActivity;
+        return mio::abm::ActivityType::Hospital;
     case mio::abm::LocationType::Cemetery:
-        return mio::abm::ActivityType::OtherActivity;
+        return mio::abm::ActivityType::Cemetery;
     default:
-        return mio::abm::ActivityType::UnknownActivity;
+        return mio::abm::ActivityType::Home;
     }
 }
 
@@ -126,7 +126,7 @@ struct LogPersonInformation : mio::LogOnce {
         person_information.reserve(sim.get_model().get_persons().size());
         for (auto& person : sim.get_model().get_persons()) {
             person_information.push_back(std::make_tuple(
-                person.get_id(), sim.get_model().find_location(mio::abm::LocationType::Home, person.get_id()),
+                person.get_id(), sim.get_model().find_locations(mio::abm::ActivityType::Home, person.get_id())[0],
                 person.get_age()));
         }
         return person_information;
