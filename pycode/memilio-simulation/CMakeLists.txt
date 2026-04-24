@@ -21,6 +21,10 @@ elseif(UNIX)
     )
 endif()
 
+# CMAKE_INSTALL_RPATH defaults to
+# - Linux: $ORIGIN;$ORIGIN/lib
+# - MacOS: @loader_path;@loader_path/lib
+# - Windows: empty
 set(PYMIO_INSTALL_RPATH "${CMAKE_INSTALL_RPATH}")
 
 # keep build RPATH separate and avoid putting build paths into installed wheels
