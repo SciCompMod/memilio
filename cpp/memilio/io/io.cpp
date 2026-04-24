@@ -21,53 +21,62 @@
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
 
-MSVC_WARNING_DISABLE_PUSH(4268)
-#include <boost/filesystem.hpp>
-MSVC_WARNING_POP()
+#include <filesystem>
 
 namespace mio
 {
 
 std::string get_current_dir_name()
 {
-    auto path = boost::filesystem::current_path();
+    auto path = std::filesystem::current_path();
     return path.string();
 }
 
-IOResult<bool> create_directory(std::string const& rel_path, std::string& abs_path)
+IOResult<bool> create_directory(const std::filesystem::path& rel_path, std::string& abs_path, bool create_parents)
 {
-    boost::filesystem::path dir(rel_path);
-    boost::system::error_code ec;
-    bool created = boost::filesystem::create_directory(dir, ec);
-    if (ec) {
-        return failure(ec, rel_path);
+    auto result = create_directory(rel_path, create_parents);
+    if (result) {
+        std::error_code ec;
+        abs_path = std::filesystem::canonical(rel_path, ec).string();
+        if (ec) {
+            return failure(ec, "Failed to get absolute path of " + rel_path.string());
+        }
     }
-    abs_path = boost::filesystem::canonical(dir, ec).string();
+    return result;
+}
+
+IOResult<bool> create_directory(const std::filesystem::path& rel_path, bool create_parents)
+{
+    std::error_code ec;
+    bool created = create_parents ? std::filesystem::create_directories(rel_path, ec)
+                                  : std::filesystem::create_directory(rel_path, ec);
+
     if (ec) {
-        return failure(ec, rel_path);
+        const std::string with_parents = create_parents ? " (with parents)" : "";
+        return failure(ec, "Failed to create directory " + rel_path.string() + with_parents);
     }
 
-    if (created) {
-        log_info("Directory '{:s}' was created.", dir.string());
-    }
-    else {
-        log_info("Directory '{:s}' already exists.", dir.string(), mio::get_current_dir_name());
-    }
+    log_info("Directory '{}' {}.", rel_path, created ? "was created" : "already exists");
 
     return success(created);
 }
 
-IOResult<bool> create_directory(std::string const& rel_path)
+std::filesystem::path create_directories_or_exit(const std::filesystem::path& path, bool create_parents)
 {
     std::string abs_path;
-    return create_directory(rel_path, abs_path);
+    auto result = create_directory(path, abs_path, create_parents);
+    if (!result) {
+        log_critical("Could not create directory \"{}\": {}", path, result.error().message());
+        exit(result.error().code().value());
+    }
+    return abs_path;
 }
 
 bool file_exists(std::string const& rel_path, std::string& abs_path)
 {
-    boost::filesystem::path dir(rel_path);
+    std::filesystem::path dir(rel_path);
     abs_path = dir.string();
-    return boost::filesystem::exists(dir);
+    return std::filesystem::exists(dir);
 }
 
 } // namespace mio

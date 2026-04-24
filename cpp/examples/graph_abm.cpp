@@ -47,7 +47,7 @@ struct Logger : mio::LogAlways {
     */
     using Type = std::vector<std::tuple<int, mio::abm::LocationType, mio::abm::LocationId, size_t,
                                         std::map<mio::abm::InfectionState, size_t>>>;
-    static Type log(const mio::abm::Simulation<mio::GraphABModel>& sim)
+    static Type log(const mio::abm::Simulation<mio::abm::GraphABModel>& sim)
     {
         Type location_information{};
         location_information.reserve(size_t(mio::abm::LocationType::Count));
@@ -76,7 +76,7 @@ int main()
     const auto age_group_adults   = mio::AgeGroup(1);
     const auto age_group_seniors  = mio::AgeGroup(2);
 
-    auto model1 = mio::GraphABModel(num_age_groups, 0);
+    auto model1 = mio::abm::GraphABModel(num_age_groups, 0);
 
     //Set infection parameters
     model1.parameters.get<mio::abm::TimeExposedToNoSymptoms>()           = mio::ParameterDistributionConstant(4.);
@@ -134,7 +134,7 @@ int main()
     add_household_group_to_model(model1, single_hh_group_m1);
     add_household_group_to_model(model1, family_hh_group_m1);
 
-    auto model2 = mio::GraphABModel(num_age_groups, 1);
+    auto model2 = mio::abm::GraphABModel(num_age_groups, 1);
 
     //Set infection parameters
     model2.parameters.get<mio::abm::TimeExposedToNoSymptoms>()           = mio::ParameterDistributionConstant(4.);

@@ -24,19 +24,12 @@
 #include "abm/simulation.h"
 #include "abm/time.h"
 #include "abm/location_type.h"
-#include "abm/parameters.h"
-#include "abm/person.h"
-#include "abm/person_id.h"
-#include "abm/model_functions.h"
 #include "graph_abm/graph_abmodel.h"
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/graph.h"
-#include "memilio/utils/compiler_diagnostics.h"
+
 #include <algorithm>
-#include <cstddef>
-#include <iostream>
 #include <utility>
-#include <vector>
 
 namespace mio
 {
@@ -48,7 +41,7 @@ class ABMSimulationNode
 {
 
 public:
-    using Sim = abm::Simulation<GraphABModel>;
+    using Sim = abm::Simulation<abm::GraphABModel>;
 
     template <class... Args, typename = std::enable_if_t<std::is_constructible<Sim, Args...>::value, void>>
     ABMSimulationNode(std::tuple<History...>&& history, Args&&... args)

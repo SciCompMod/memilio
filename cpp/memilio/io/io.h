@@ -31,6 +31,7 @@
 #include <bitset>
 #include <concepts>
 #include <cstddef>
+#include <filesystem>
 #include <string>
 #include <tuple>
 #include <iostream>
@@ -869,19 +870,31 @@ IOResult<T> deserialize(IOContext& io, Tag<T> tag)
 std::string get_current_dir_name();
 
 /**
- * @brief Creates a directory in the file system
- * @param rel_path path of directory relative to current working directory.
- * @param abs_path Will contain the absolute path of the directory.
+ * @brief Creates a directory in the file system.
+ * @param[in] path Path of a directory. Can be relative to current working directory or absolute.
+ * @param[out] abs_path Will contain the absolute path of the directory.
+ * @param[in] create_parents When true, create all directories in the path instead of only the last. Default: false.
  * @return true if the directory was created, false if it already exists, or any errors that occured.
  */
-IOResult<bool> create_directory(std::string const& rel_path, std::string& abs_path);
+IOResult<bool> create_directory(const std::filesystem::path& path, std::string& abs_path, bool create_parents = false);
 
 /**
- * @brief Creates a directory in the file system
- * @param rel_path path of directory relative to current working directory.
- * @return true if the directory was created, false if it already exists, or any errors that occured.
+ * @brief Creates a directory in the file system.
+ * @param[in] path Path of a directory. Can be relative to current working directory or absolute.
+ * @param[in] create_parents When true, create all directories in the path instead of only the last. Default: false.
+ * @return True if the directory was created, false if it already exists, or any errors that occured.
  */
-IOResult<bool> create_directory(std::string const& rel_path);
+IOResult<bool> create_directory(const std::filesystem::path& path, bool create_parents = false);
+
+/**
+ * @brief Creates directories in the file system, or exits the program with an error code.
+ * In contrast to create_directory, this method creates parent directories by default.
+ * @param[in] path Path of a directory. Can be relative to current working directory or absolute.
+ * @param[in] create_parents When true, create all directories in the path instead of only the last. Default: true.
+ * @return The absolute path to the given directory.
+ * Any error messages during creation will be logged at `LogLevel::Critical`. 
+ */
+std::filesystem::path create_directories_or_exit(const std::filesystem::path& path, bool create_parents = true);
 
 /**
  * Check if a file exists.

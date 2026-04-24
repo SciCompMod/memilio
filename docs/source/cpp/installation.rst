@@ -52,7 +52,7 @@ instead. Version compatibility needs to be ensured by the user, the version we c
       - Bundled               
       - Notes
     * - spdlog  
-      - 1.15.0   
+      - 1.17.0   
       - Yes      
       - Yes (git repo)        
       - https://github.com/gabime/spdlog

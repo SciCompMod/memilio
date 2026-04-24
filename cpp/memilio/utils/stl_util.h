@@ -22,6 +22,7 @@
 
 #include <array>
 #include <concepts>
+#include <filesystem>
 #include <numeric>
 #include <vector>
 #include <algorithm>
@@ -29,7 +30,6 @@
 #include <iterator>
 #include <iostream>
 #include <iomanip>
-#include <sstream>
 #include <cstring>
 #include <cassert>
 #include <memory>
@@ -223,51 +223,6 @@ Range(T&& range) -> Range<decltype(range.begin()), decltype(range.end())>;
 template <class T>
 concept HasOstreamOperator = requires(std::ostream os, T t) { os << t; };
 
-namespace details
-{
-/**
- * length of a null terminated C string
- */
-inline size_t string_length(const char* str)
-{
-    return std::strlen(str);
-}
-
-/**
- * length of a string (e.g std::string)
- */
-template <class String>
-size_t string_length(String&& str)
-{
-    return str.length();
-}
-
-/**
- * breaks the recursion of path_join_rec.
- */
-inline void path_join_rec(std::stringstream&, bool)
-{
-}
-
-/**
- * recursive template helper function to join paths
- * @param ss stream that collects the result
- * @param writeSeparator add separator before adding the next part of the path
- * @param head next part of the path to add
- * @param tail remaining parts of the path
- */
-template <class Head, class... Tail>
-void path_join_rec(std::stringstream& ss, bool writeSeparator, Head&& head, Tail&&... tail)
-{
-    if (writeSeparator) {
-        ss << '/';
-    }
-    ss << head;
-    path_join_rec(ss, string_length(head) > 0 && head[string_length(head) - 1] != '/', tail...);
-}
-
-} // namespace details
-
 /** join one ore more strings with path separators.
  * Accepts mixed C strings or std::strings. 
  * 
@@ -283,10 +238,9 @@ void path_join_rec(std::stringstream& ss, bool writeSeparator, Head&& head, Tail
 template <class String, class... Strings>
 std::string path_join(String&& base, Strings&&... app)
 {
-    std::stringstream ss;
-    details::path_join_rec(ss, false, base, app...);
-    auto path = ss.str();
-    return path;
+    std::filesystem::path p(base);
+    ((p /= std::filesystem::path(app)), ...);
+    return p.string();
 }
 
 /**

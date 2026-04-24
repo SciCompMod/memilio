@@ -33,6 +33,20 @@ MSVC_WARNING_DISABLE_PUSH(4996)
 #include <spdlog/spdlog.h>
 MSVC_WARNING_POP()
 
+#include <filesystem>
+
+/**
+ * @brief Make std::filesystem::path formattable as string.
+ */
+template <>
+struct fmt::formatter<std::filesystem::path> : formatter<std::string_view> {
+    template <typename FormatContext>
+    auto format(const std::filesystem::path& path, FormatContext& ctxt) const
+    {
+        return formatter<std::string_view>::format(path.string(), ctxt);
+    }
+};
+
 namespace mio
 {
 

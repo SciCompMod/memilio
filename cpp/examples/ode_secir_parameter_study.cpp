@@ -18,7 +18,8 @@
 * limitations under the License.
 */
 #include "memilio/config.h"
-#include "memilio/utils/base_dir.h"
+#include "memilio/io/directories.h"
+#include "memilio/io/io.h"
 #include "memilio/utils/miompi.h"
 #include "memilio/utils/stl_util.h"
 #include "ode_secir/model.h"
@@ -36,8 +37,9 @@
  */
 mio::IOResult<void> write_single_run_result(const size_t run, const mio::osecir::Simulation<ScalarType>& sim)
 {
-    std::string abs_path = mio::path_join(mio::base_dir(), "example_results");
-    BOOST_OUTCOME_TRY(auto&& created, mio::create_directory(abs_path));
+    std::string abs_path;
+    BOOST_OUTCOME_TRY(auto&& created,
+                      mio::create_directory(mio::example_results_dir("ode_secir_parameter_study"), abs_path));
 
     if (run == 0) {
         std::cout << "Results are stored in " << abs_path << '\n';
