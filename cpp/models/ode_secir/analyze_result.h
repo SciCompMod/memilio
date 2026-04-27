@@ -63,62 +63,65 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
         for (auto i = AgeGroup(0); i < AgeGroup(num_groups); i++) {
             //Population
             for (size_t compart = 0; compart < (size_t)InfectionState::Count; ++compart) {
-                param_percentil(node, [compart, i](auto&& model) -> auto& {
-                    return model.populations[{i, (InfectionState)compart}];
-                });
+                param_percentil(
+                    node, [ compart, i ](auto&& model) -> auto& {
+                        return model.populations[{i, (InfectionState)compart}];
+                    });
             }
             // times
-            param_percentil(node, [i](auto&& model) -> auto& {
-                return model.parameters.template get<TimeExposed<FP>>()[i];
-            });
-            param_percentil(node, [i](auto&& model) -> auto& {
-                return model.parameters.template get<TimeInfectedNoSymptoms<FP>>()[i];
-            });
-            param_percentil(node, [i](auto&& model) -> auto& {
-                return model.parameters.template get<TimeInfectedSymptoms<FP>>()[i];
-            });
-            param_percentil(node, [i](auto&& model) -> auto& {
-                return model.parameters.template get<TimeInfectedSevere<FP>>()[i];
-            });
-            param_percentil(node, [i](auto&& model) -> auto& {
-                return model.parameters.template get<TimeInfectedCritical<FP>>()[i];
-            });
+            param_percentil(
+                node, [i](auto&& model) -> auto& { return model.parameters.template get<TimeExposed<FP>>()[i]; });
+            param_percentil(
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<TimeInfectedNoSymptoms<FP>>()[i];
+                });
+            param_percentil(
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<TimeInfectedSymptoms<FP>>()[i];
+                });
+            param_percentil(
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<TimeInfectedSevere<FP>>()[i];
+                });
+            param_percentil(
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<TimeInfectedCritical<FP>>()[i];
+                });
             //probs
-            param_percentil(node, [i](auto&& model) -> auto& {
-                return model.parameters.template get<TransmissionProbabilityOnContact<FP>>()[i];
-            });
-            param_percentil(node, [i](auto&& model) -> auto& {
-                return model.parameters.template get<RelativeTransmissionNoSymptoms<FP>>()[i];
-            });
-            param_percentil(node, [i](auto&& model) -> auto& {
-                return model.parameters.template get<RiskOfInfectionFromSymptomatic<FP>>()[i];
-            });
-            param_percentil(node, [i](auto&& model) -> auto& {
-                return model.parameters.template get<MaxRiskOfInfectionFromSymptomatic<FP>>()[i];
-            });
-            param_percentil(node, [i](auto&& model) -> auto& {
-                return model.parameters.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i];
-            });
-            param_percentil(node, [i](auto&& model) -> auto& {
-                return model.parameters.template get<SeverePerInfectedSymptoms<FP>>()[i];
-            });
-            param_percentil(node, [i](auto&& model) -> auto& {
-                return model.parameters.template get<CriticalPerSevere<FP>>()[i];
-            });
-            param_percentil(node, [i](auto&& model) -> auto& {
-                return model.parameters.template get<DeathsPerCritical<FP>>()[i];
-            });
+            param_percentil(
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<TransmissionProbabilityOnContact<FP>>()[i];
+                });
+            param_percentil(
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<RelativeTransmissionNoSymptoms<FP>>()[i];
+                });
+            param_percentil(
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<RiskOfInfectionFromSymptomatic<FP>>()[i];
+                });
+            param_percentil(
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<MaxRiskOfInfectionFromSymptomatic<FP>>()[i];
+                });
+            param_percentil(
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i];
+                });
+            param_percentil(
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<SeverePerInfectedSymptoms<FP>>()[i];
+                });
+            param_percentil(
+                node, [i](auto&& model) -> auto& { return model.parameters.template get<CriticalPerSevere<FP>>()[i]; });
+            param_percentil(
+                node, [i](auto&& model) -> auto& { return model.parameters.template get<DeathsPerCritical<FP>>()[i]; });
         }
         // group independent params
-        param_percentil(node, [](auto&& model) -> auto& {
-            return model.parameters.template get<Seasonality<FP>>();
-        });
-        param_percentil(node, [](auto&& model) -> auto& {
-            return model.parameters.template get<TestAndTraceCapacity<FP>>();
-        });
-        param_percentil(node, [](auto&& model) -> auto& {
-            return model.parameters.template get<DynamicNPIsImplementationDelay<FP>>();
-        });
+        param_percentil(
+            node, [](auto&& model) -> auto& { return model.parameters.template get<Seasonality<FP>>(); });
+        param_percentil(
+            node, [](auto&& model) -> auto& { return model.parameters.template get<TestAndTraceCapacity<FP>>(); });
 
         for (size_t run = 0; run < num_runs; run++) {
             auto const& params = ensemble_params[run][node];

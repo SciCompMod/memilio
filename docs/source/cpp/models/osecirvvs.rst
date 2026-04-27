@@ -162,9 +162,6 @@ The model includes all parameters from the basic ODE-SECIR model plus additional
    * - :math:`TTC_{maxSym}`
      - ``TestAndTraceCapacityMaxRiskSymptoms``
      - Multiplier for test and trace capacity for symptomatic cases.
-   * - :math:`T_{dyndelay}`
-     - ``DynamicNPIsImplementationDelay``
-     - Delay in days for implementing dynamic NPIs after threshold exceedance.
    * - :math:`\lambda_{N,i}`
      - ``ext_inf_force_dummy``
      - Force of infection for susceptibles with naive immunity.
@@ -332,7 +329,7 @@ The model also supports dynamic NPIs based on epidemic thresholds:
 
     // Configure dynamic NPIs
     auto& dynamic_npis = params.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms<double>>();
-    dynamic_npis.set_interval(mio::SimulationTime(3.0));  // Check NPI every 3 days
+    dynamic_npis.set_implementation_delay(mio::SimulationTime(0.0));  // Simulate no implementation delay
     dynamic_npis.set_duration(mio::SimulationTime(14.0)); // Apply NPI for 14 days
     dynamic_npis.set_base_value(100'000);                // Base value to trigger NPI is population of 100,000
     dynamic_npis.set_threshold(200.0, dampings);         // Trigger at 200 cases per 100,000
