@@ -57,10 +57,10 @@ public:
     using ConstLocationIterator   = std::vector<Location>::const_iterator;
     using PersonIterator          = std::vector<Person>::iterator;
     using ConstPersonIterator     = std::vector<Person>::const_iterator;
-    using ActivenessIterator      = std::vector<bool>::iterator;
-    using ConstActivenessIterator = std::vector<bool>::const_iterator;
+    using ActivenessIterator      = std::vector<char>::iterator;
+    using ConstActivenessIterator = std::vector<char>::const_iterator;
     using MobilityRuleType        = LocationType (*)(PersonalRandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
-                                                     const Parameters&);
+                                              const Parameters&);
 
     using Compartments = mio::abm::InfectionState;
     /**
@@ -685,7 +685,7 @@ protected:
     int m_id; ///< Model id. Is only used for abm graph model or hybrid model.
     std::vector<Person> m_persons; ///< Vector of every Person.
     std::vector<Location> m_locations; ///< Vector of every Location.
-    std::vector<bool>
+    std::vector<char>
         m_activeness_statuses; ///< Vector with activeness status for every person. Is only used for abm graph model or hybrid model.
     std::bitset<size_t(LocationType::Count)>
         m_has_locations; ///< Flags for each LocationType, set if a Location of that type exists.
