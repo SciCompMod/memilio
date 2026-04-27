@@ -79,6 +79,20 @@ jobs:
           openmp: ON
           benchmarks: ON # benchmarks are only built to catch build errors, not run in CI
 
+  build-apple-clang:
+    if: github.event.pull_request.draft == false
+    strategy:
+      matrix:
+        config: ["Debug", "Release"]
+        version: ["current"]
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/apple-build
+        with:
+          config: ${{ matrix.config }}
+          version: ${{ matrix.version }}
+
   build-cpp-msvc:
     if: github.event.pull_request.draft == false
     strategy:
