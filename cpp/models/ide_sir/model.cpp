@@ -154,24 +154,24 @@ ScalarType ModelMessinaExtendedDetailedInit::compute_phi_deriv(ScalarType dt, si
 
     if (fd_order == 1) {
         deriv = (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                     SimulationTime<ScalarType>(j * dt))(0, 0) -
+                     SimulationTime<ScalarType>(ScalarType(j) * dt))(0, 0) -
                  parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                     SimulationTime<ScalarType>((j - 1) * dt))(0, 0)) /
+                     SimulationTime<ScalarType>((ScalarType(j) - 1.) * dt))(0, 0)) /
                 dt;
     }
 
     if (fd_order == 4) {
-        deriv = (25 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                          SimulationTime<ScalarType>(j * dt))(0, 0) -
-                 48 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                          SimulationTime<ScalarType>((j - 1) * dt))(0, 0) +
-                 36 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                          SimulationTime<ScalarType>((j - 2) * dt))(0, 0) -
-                 16 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                          SimulationTime<ScalarType>((j - 3) * dt))(0, 0) +
-                 3 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                         SimulationTime<ScalarType>((j - 4) * dt))(0, 0)) /
-                (12 * dt);
+        deriv = (25. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                           SimulationTime<ScalarType>((ScalarType)j * dt))(0, 0) -
+                 48. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                           SimulationTime<ScalarType>(((ScalarType)j - 1.) * dt))(0, 0) +
+                 36. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                           SimulationTime<ScalarType>(((ScalarType)j - 2.) * dt))(0, 0) -
+                 16. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                           SimulationTime<ScalarType>(((ScalarType)j - 3.) * dt))(0, 0) +
+                 3. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                          SimulationTime<ScalarType>(((ScalarType)j - 4.) * dt))(0, 0)) /
+                (12. * dt);
     }
 
     if (fd_order == 1000) {
@@ -211,7 +211,7 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
     unused(damping_time);
     // Get the index of the current time step.
     ScalarType current_time = populations.get_last_time();
-    std::cout << "current time: " << current_time << std::endl;
+    // std::cout << "current time: " << current_time << std::endl;
     size_t current_time_index = populations.get_num_time_points() - 1;
     size_t damping_index      = std::min(t0_index + (size_t)std::ceil(damping_time / dt), current_time_index);
 
@@ -319,14 +319,13 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
 
     else {
         for (size_t j = 0; j <= current_time_index; j++) {
-            std::cout << "j: " << j << std::endl;
 
             ScalarType relevant_susceptibles;
             // Compute inner sum
             ScalarType inner_sum = 0.;
 
             ScalarType phi_deriv = compute_phi_deriv(dt, j, fd_order_contacts, current_time, damping_time);
-            // std::cout << "phi deriv: " << phi_deriv << std::endl;
+
             for (size_t k = 0; k <= j; k++) {
                 ScalarType gregory_weight_inner_sum   = 0.;
                 size_t switch_weights_index_inner_sum = std::min(j, m_gregory_order);
@@ -373,23 +372,12 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
 
             // For each index, the corresponding summand is computed here.
             ScalarType init_time = populations.get_time(0);
-            // std::cout << "init time: " << init_time << std::endl;
-
-            std::cout << "t-x+bar{T}: " << (current_time_index - j) * dt + init_time << ", contact value: "
-                      << parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                             SimulationTime<ScalarType>((current_time_index - j) * dt + init_time))(0, 0)
-                      << std::endl;
-            std::cout << "t: " << current_time << ", contact value: "
-                      << parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                             SimulationTime<ScalarType>(current_time))(0, 0)
-                      << std::endl
-                      << std::endl;
 
             sum += -dt * gregory_weight * m_transmissionproboncontact_vector[current_time_index - j] *
                        m_riskofinffromsymptomatic_vector[current_time_index - j] *
                        m_transitiondistribution_vector[current_time_index - j] *
                        (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                            SimulationTime<ScalarType>((current_time_index - j) * dt + init_time))(0, 0) -
+                            SimulationTime<ScalarType>((current_time_index - (ScalarType)j) * dt + init_time))(0, 0) -
                         (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
                              SimulationTime<ScalarType>(current_time))(0, 0) /
                          m_N) *
@@ -397,7 +385,6 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
                    dt * dt * gregory_weight * phi_deriv / m_N * inner_sum;
         }
     }
-
     return populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible] * std::exp(sum);
 }
 

@@ -187,7 +187,7 @@ def compute_l2_norm(timeseries, timestep):
     return norm
 
 
-def compute_errors_l2(groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, relative_error=True):
+def compute_errors_l2(groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, tmax, relative_error=True):
     """ Computes relative L2 norm of the difference between time series from ODE and time series
     from IDE for all compartments/flows.
 
@@ -210,8 +210,8 @@ def compute_errors_l2(groundtruth, results, groundtruth_exponent, timesteps_ide,
             scale_timesteps = timestep/pow(10, -groundtruth_exponent)
             num_timepoints = len(results[i])
 
-            difference = groundtruth[0][int(np.ceil(
-                pow(10, groundtruth_exponent)*(t0_ide)))::int(np.ceil(scale_timesteps))][:, compartment]-results[i][int(np.ceil(t0_ide/timestep))::][:, compartment]
+            difference = groundtruth[0][int(
+                pow(10, groundtruth_exponent)*(t0_ide))::int(scale_timesteps)][:, compartment]-results[i][int(t0_ide/timestep)::][:, compartment]
 
             if relative_error:
                 norm_groundtruth = compute_l2_norm(groundtruth[0][int(
@@ -284,7 +284,7 @@ def compute_max_norm(timeseries):
     return norm
 
 
-def compute_errors_max(groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, relative_error=True):
+def compute_errors_max(groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, tmax,  relative_error=True):
     """ Computes relative maximum norm of the difference between time series from ODE and time series
     from IDE for all compartments.
     """
@@ -304,8 +304,8 @@ def compute_errors_max(groundtruth, results, groundtruth_exponent, timesteps_ide
             timestep = timesteps_ide[i]
             scale_timesteps = timestep/pow(10, -groundtruth_exponent)
 
-            difference = groundtruth[0][int(np.ceil(
-                pow(10, groundtruth_exponent)*(t0_ide)))::int(np.ceil(scale_timesteps))][:, compartment]-results[i][int(np.ceil(t0_ide/timestep))::][:, compartment]
+            difference = groundtruth[0][int(
+                pow(10, groundtruth_exponent)*(t0_ide))::int(scale_timesteps)][:, compartment]-results[i][int(t0_ide/timestep)::][:, compartment]
 
             if relative_error:
                 norm_groundtruth = compute_max_norm(groundtruth[0][int(
@@ -609,13 +609,21 @@ def get_t0_ide_from_dir_name(dir_name):
     return t0
 
 
+def get_tmax_ide_from_dir_name(dir_name):
+    tmax_string = [x for x in dir_name.split(
+        "_") if ("tmax" in x)]
+    tmax = int(tmax_string[0].split("=")[-1])
+
+    return tmax
+
+
 def main():
 
-    groundtruth_exponent = 5
+    groundtruth_exponent = 6
     groundtruth_ode = True
     only_S = False
 
-    main_dir = "2026-04-19/test_convergence"
+    main_dir = "2026-04-27/test_damping_after_odeexp=6_fdordercontacts=4"
 
     ##############################################
 
@@ -635,6 +643,7 @@ def main():
         print(dir_name)
 
         t0_ide = get_t0_ide_from_dir_name(dir_name)
+        tmax = get_tmax_ide_from_dir_name(dir_name)
 
         # Path where simulation results are stored.
         result_dir = os.path.join(os.path.dirname(
@@ -674,15 +683,15 @@ def main():
 
             # Compute errors of IDE results compared to groundtruth.
             errors_l2_abs = compute_errors_l2(
-                groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, False)
+                groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, tmax, False)
             errors_all_gregory_orders_l2_abs.append(errors_l2_abs)
 
             errors_max_abs = compute_errors_max(
-                groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, False)
+                groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, tmax, False)
             errors_all_gregory_orders_max_abs.append(errors_max_abs)
 
-            # plot_difference_per_timestep(
-            #     groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, gregory_order_simulation, plot_dir)
+            plot_difference_per_timestep(
+                groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, gregory_order_simulation, plot_dir)
 
             print()
             # print(f"Gregory order {gregory_order_simulation}")
@@ -729,12 +738,6 @@ def main():
         norm_of_sum = False
         plot_convergence(errors_all_gregory_orders_max_abs, timesteps_ide,
                          gregory_orders_simulation, fd_order, l2, maxnorm, norm_of_sum, relative_error, plot_dir, only_S)
-
-    # Path where plots will be stored.
-    # plot_dir = os.path.join(os.path.dirname(
-    #     __file__),  f"../plots/{main_dir}/")
-    # plot_total_pop_diff(gregory_orders_simulation, fd_orders, timesteps_ide,
-    #                     total_pop_all_fd_orders, total_pop_reference, plot_dir)
 
 
 if __name__ == '__main__':
