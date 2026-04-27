@@ -1,0 +1,26 @@
+name: "Apple Test"
+description: "Run the C++ unit tests on MacOS"
+inputs:
+  artifact-pattern:
+    description: "Name of the build artifact that contains the unit test binary, will also be used for upload artifacts."
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Download built test directory
+      uses: actions/download-artifact@v7
+      with:
+        name: build-cpp-mac-${{ inputs.artifact-pattern }}
+        path: cpp/build-mac/bin
+    - name: Run unit tests
+      shell: pwsh
+      run: |
+        cd cpp/build-mac/bin
+        ./memilio-test.exe --gtest_output="xml:report.xml"
+    - name: Upload report
+      uses: actions/upload-artifact@v7
+      with:
+        name: test-cpp-mac-report-${{ inputs.artifact-pattern }}
+        path: |
+          cpp/build-mac/bin/report.xml
+        retention-days: 1

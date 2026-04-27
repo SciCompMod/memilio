@@ -60,7 +60,7 @@ runs:
         #   exit 1
         # fi
         # mkdir -p build && cd build
-        cmake -B build -S cpp -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=ON -DMEMILIO_ENABLE_HDF5=OFF
+        cmake -B build -S cpp -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=OFF -DMEMILIO_ENABLE_HDF5=OFF
         cmake --build build/ -j$(sysctl -n hw.logicalcpu)
     - name: create build dir archive
       shell: bash

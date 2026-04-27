@@ -203,6 +203,20 @@ jobs:
           num-repeat: 10
           openmp: ON
 
+  test-cpp-apple:
+    if: github.event.pull_request.draft == false
+    needs: build-apple-clang
+    strategy:
+      matrix:
+        config: ["Debug", "Release"]
+        version: ["current"]
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/apple-test
+        with:
+          artifact-pattern: apple-clang-${{ matrix.version }}-${{ matrix.config }}
+
   test-cpp-msvc:
     if: github.event.pull_request.draft == false
     needs: build-cpp-msvc
