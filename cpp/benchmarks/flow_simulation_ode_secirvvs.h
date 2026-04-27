@@ -20,6 +20,7 @@
 #include "memilio/compartments/simulation.h"
 #include "models/ode_secirvvs/model.h"
 
+#include <algorithm>
 #include <numbers>
 
 namespace mio
