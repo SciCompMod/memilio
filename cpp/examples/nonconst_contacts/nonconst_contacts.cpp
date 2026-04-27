@@ -44,8 +44,8 @@ ScalarType RiskOfInfectionFromSymptomatic   = 1.;
 ScalarType Seasonality                      = 0.;
 
 ScalarType cont_freq    = 1.;
-ScalarType damping      = 0.;
-ScalarType scaling_time = 8.;
+ScalarType damping      = 0.5;
+ScalarType scaling_time = 4.;
 
 ScalarType S0               = 999000.;
 ScalarType I0               = 1000.;
@@ -95,8 +95,13 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent,
 
     std::unique_ptr<mio::OdeIntegratorCore<ScalarType>> integrator =
         std::make_unique<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_fehlberg78>>();
+    // std::unique_ptr<mio::OdeIntegratorCore<ScalarType>> integrator =
+    //     std::make_unique<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_fehlberg78>>(
+    //         1e-10, 1e-7, dt_ode, dt_ode);
 
     auto sir = simulate<ScalarType, mio::osir::Model<ScalarType>>(t0_ode, tmax, dt_ode, model, std::move(integrator));
+
+    std::cout << "Num tps ODE: " << sir.get_num_time_points() << std::endl;
 
     if (!save_dir.empty()) {
         // Save compartments.
@@ -119,8 +124,12 @@ mio::IOResult<void> simulate_ide(ScalarType ide_exponent, size_t gregory_order, 
                                  std::string save_dir = "",
                                  mio::TimeSeries<ScalarType> result_groundtruth =
                                      mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
-                                 size_t fd_order_contacts = 1, bool split_integral = false)
+                                 size_t fd_order_gamma = 1, size_t fd_order_contacts = 1, bool split_integral = false)
 {
+    unused(fd_order_contacts);
+    unused(split_integral);
+    unused(fd_order_gamma);
+
     using namespace params;
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
@@ -184,11 +193,12 @@ mio::IOResult<void> simulate_ide(ScalarType ide_exponent, size_t gregory_order, 
     mio::UncertainContactMatrix<ScalarType> contact_matrix = scale_contact_matrix(damping, scaling_time);
     model.parameters.get<mio::isir::ContactPatterns>()     = mio::UncertainContactMatrix(contact_matrix);
 
-    std::cout << "support max: " << model.compute_calctime(dt_ide, 1e-8) << std::endl;
+    std::cout << "support max: " << model.compute_calctime(dt_ide, 1e-6) << std::endl;
 
     // Carry out simulation.
     mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide);
     sim.advance(tmax, fd_order_contacts, scaling_time, split_integral);
+    // sim.advance_reformulated2(tmax, fd_order_gamma);
 
     if (!save_dir.empty()) {
         // Save compartments.
@@ -214,22 +224,24 @@ int main()
     ScalarType time_infected = 4.;
 
     ScalarType t0_ode = 0.;
-    ScalarType t0_ide = 5.;
-    ScalarType tmax   = 10.;
+    ScalarType t0_ide = 2.;
+    ScalarType tmax   = 2.2;
 
     bool split_integral = false;
 
-    std::vector<size_t> gregory_orders = {1, 2, 3};
+    std::vector<size_t> gregory_orders = {3};
     size_t finite_difference_order     = 4;
     size_t fd_order_contacts           = 4;
+    size_t fd_order_gamma              = 1;
 
     // Compute groundtruth with ODE model.
-    ScalarType ode_exponent               = 5.;
-    std::vector<ScalarType> ide_exponents = {0., 1., 2.};
+    ScalarType ode_exponent               = 6.;
+    std::vector<ScalarType> ide_exponents = {1.};
 
-    std::string save_dir = fmt::format("../../simulation_results/2026-04-19/test_convergence/"
-                                       "nonconst_contacts_t0={}_tinit={}_tmax={}_scalingtime={}_damping={}/",
-                                       t0_ode, t0_ide, tmax, scaling_time, damping);
+    std::string save_dir =
+        fmt::format("../../simulation_results/2026-04-27/test_damping_after_odeexp={}_fdordercontacts={}/"
+                    "nonconst_contacts_t0={}_tinit={}_tmax={}_scalingtime={}_damping={}/",
+                    ode_exponent, fd_order_contacts, t0_ode, t0_ide, tmax, scaling_time, damping);
 
     // Make folder if not existent yet.
     boost::filesystem::path dir(save_dir);
@@ -243,7 +255,7 @@ int main()
             std::cout << std::endl;
             mio::IOResult<void> result_ide =
                 simulate_ide(ide_exponent, gregory_order, finite_difference_order, t0_ode, t0_ide, tmax, time_infected,
-                             save_dir, result_ode, fd_order_contacts, split_integral);
+                             save_dir, result_ode, fd_order_gamma, fd_order_contacts, split_integral);
         }
     }
 }

@@ -172,7 +172,8 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 
         // Carry out simulation.
         mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide);
-        sim.advance(tmax);
+        size_t fd_order_contacts = 1;
+        sim.advance(tmax, fd_order_contacts);
 
         if (!save_dir.empty()) {
             // Save compartments.
@@ -215,9 +216,9 @@ int main()
 
     std::vector<ScalarType> num_days_vec = {10};
 
-    std::vector<size_t> finite_difference_orders = {1, 2, 3, 4};
+    std::vector<size_t> finite_difference_orders = {4};
 
-    std::vector<ScalarType> ide_exponents = {0, 1, 2};
+    std::vector<ScalarType> ide_exponents = {0, 1, 2, 3};
     std::vector<size_t> gregory_orders    = {1, 2, 3};
 
     for (int time_infected : time_infected_values) {
@@ -230,7 +231,7 @@ int main()
             for (size_t finite_difference_order : finite_difference_orders) {
                 std::cout << "FD order: " << finite_difference_order << std::endl;
 
-                std::string save_dir = fmt::format("../../simulation_results/2026-02-18/test_old_discretization_R/"
+                std::string save_dir = fmt::format("../../simulation_results/2026-04-20/test_convergence/"
                                                    "detailed_init_exponential_t0={}_tinit={}_tmax={}_finite_diff={}/",
                                                    t0, t_init, tmax, finite_difference_order);
 

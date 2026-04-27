@@ -72,18 +72,24 @@ public:
                                  ScalarType damping_time);
     ScalarType phi_deriv_analytical(ScalarType current_time, ScalarType damping_time, ScalarType smoother_window = 1.);
 
+    ScalarType compute_gamma_deriv(ScalarType dt, size_t time_point_index, size_t fd_order);
+
     // Returns the number of iterations needed in fixed point iteration.
     size_t compute_S(ScalarType s_init, ScalarType dt, size_t t0_index = 0, size_t fd_order_contacts = 1,
                      ScalarType damping_time = 1000., bool split_integral = false, ScalarType tol = 1e-14,
                      size_t max_iterations = 100);
-
-    ScalarType fixed_point_function(ScalarType s, ScalarType dt, size_t t0_index, size_t fd_order_contacts = 1,
-                                    ScalarType damping_time = 1000., bool split_integral = false);
+    ScalarType fixed_point_function(ScalarType susceptibles, ScalarType dt, size_t t0_index,
+                                    size_t fd_order_contacts = 1, ScalarType damping_time = 1000.,
+                                    bool split_integral = false);
 
     size_t compute_S_reformulated(ScalarType s_init, ScalarType dt, size_t t0_index = 0, ScalarType tol = 1e-14,
                                   size_t max_iterations = 100);
+    ScalarType fixed_point_function_reformulated(ScalarType susceptibles, ScalarType dt, size_t t0_index);
 
-    ScalarType fixed_point_function_reformulated(ScalarType s, ScalarType dt, size_t t0_index);
+    size_t compute_S_reformulated2(ScalarType s_init, ScalarType dt, size_t t0_index, size_t fd_order,
+                                   ScalarType tol = 1e-14, size_t max_iterations = 100);
+    ScalarType fixed_point_function_reformulated2(ScalarType susceptibles, ScalarType dt, size_t t0_index,
+                                                  size_t fd_order = 1);
 
     void compute_S_deriv(ScalarType dt, size_t time_point_index);
     void compute_S_deriv(ScalarType dt);

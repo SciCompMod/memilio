@@ -60,7 +60,7 @@ public:
     {
     }
 
-    virtual ~IntegratorCore() {};
+    virtual ~IntegratorCore(){};
 
     virtual std::unique_ptr<IntegratorCore<FP, Integrands...>> clone() const = 0;
 
@@ -188,8 +188,9 @@ public:
         using std::fabs;
         using std::max;
         using std::min;
-        const FP t0  = results.get_last_time();
-        const FP eps = Limits<FP>::zero_tolerance();
+        const FP t0 = results.get_last_time();
+        // const FP eps = Limits<FP>::zero_tolerance();
+        const FP eps = 1e-9;
         assert(tmax > t0);
         assert(dt > 0);
 
