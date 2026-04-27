@@ -25,7 +25,7 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version: 3.12
@@ -45,7 +45,7 @@ jobs:
             os: "ubuntu-22.04"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/linux-build
         with:
           compiler: ${{ matrix.compiler }}
@@ -58,7 +58,7 @@ jobs:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/linux-build
         with:
           compiler: gcc
@@ -70,7 +70,7 @@ jobs:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/linux-build
         with:
           compiler: gcc
@@ -92,7 +92,7 @@ jobs:
             os: "windows-2022"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/windows-build
         with:
           config: ${{ matrix.config }}
@@ -102,7 +102,7 @@ jobs:
     if: github.event.pull_request.draft == false
     runs-on: windows-2025
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/windows-build
         with:
           config: Release
@@ -124,7 +124,7 @@ jobs:
             os: "ubuntu-22.04"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/linux-test
         with:
           artifact-pattern: ${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}
@@ -135,7 +135,7 @@ jobs:
       needs: build-cpp-gcc_clang
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v6
         - uses: ./.github/actions/sbml-test
 
   merge-test-artifacts:
@@ -168,7 +168,7 @@ jobs:
     needs: build-cpp-gcc-no-optional-deps
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/linux-test
         with:
           artifact-pattern: gcc-latest-Release
@@ -182,7 +182,7 @@ jobs:
     env:
       OMP_NUM_THREADS: 4
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/linux-test
         with:
           artifact-pattern: gcc-latest-Release
@@ -203,7 +203,7 @@ jobs:
             os: "windows-2022"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/windows-test
         with:
           artifact-pattern: msvc-${{ matrix.version }}-${{ matrix.config }}
@@ -213,7 +213,7 @@ jobs:
     needs: build-cpp-msvc-no-optional-deps
     runs-on: windows-2025
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/windows-test
         with:
           artifact-pattern: msvc-latest-Release
@@ -234,7 +234,7 @@ jobs:
             os: "ubuntu-22.04"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/linux-run_examples
         with:
           build-artifact: build-cpp-linux-${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}
@@ -253,7 +253,7 @@ jobs:
             os: "windows-2022"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/windows-run_examples
         with:
           build-artifact: build-cpp-windows-msvc-${{ matrix.version }}-${{ matrix.config }}
@@ -263,7 +263,7 @@ jobs:
     runs-on: ubuntu-latest
     container: quay.io/pypa/manylinux_2_28_x86_64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/build-py
         with:
           package: generation
@@ -273,7 +273,7 @@ jobs:
     runs-on: ubuntu-latest
     container: quay.io/pypa/manylinux_2_28_x86_64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/build-py
         with:
           package: simulation
@@ -283,7 +283,7 @@ jobs:
     runs-on: ubuntu-latest
     container: quay.io/pypa/manylinux_2_28_x86_64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/build-py
         with:
           package: surrogatemodel
@@ -296,7 +296,7 @@ jobs:
     needs: build-py-generation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/test-py
         with:
           package: generation
@@ -309,7 +309,7 @@ jobs:
         version: ["3.8", "3.12"]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/test-py
         with:
           package: simulation
@@ -322,7 +322,7 @@ jobs:
         version: ["3.8", "3.12"]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/test-py
         with:
           version: ${{ matrix.version }}
@@ -334,17 +334,17 @@ jobs:
     needs: merge-test-artifacts
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install dependencies
         run: |
           sudo apt-get -qq update
           sudo apt-get -qq -y install git curl
       - name: Download python coverage report
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: test-py-coverage-reports-surrogatemodel
       - name: Download cpp coverage report
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: test-cpp-coverage-reports
       - name: Deploy to codecov.io
