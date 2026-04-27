@@ -506,10 +506,8 @@ class Simulation:
             masks_high = 0.0
             masks_narrow = 0.0
 
-        start_open = mio.Date(
-            2021, month_open, 1)
+        start_open = mio.Date(2021, month_open, 1)
         start_summer = start_open - self.start_date
-        params.end_dynamic_npis = start_summer
 
         if start_open < end_date:
             dampings.append(contacts_at_home(start_summer, 0.0, 0.0))
@@ -586,7 +584,8 @@ class Simulation:
             physical_distancing_other(0, 0.2 + narrow, 0.4 - narrow))
         dynamic_npi_dampings2.append(senior_awareness(0, 0.0, 0.0))
 
-        dynamic_npis.interval = 1.0
+        dynamic_npis.implementation_delay = 7.0
+        dynamic_npis.directive_end = start_summer
         dynamic_npis.duration = 14.0
         dynamic_npis.base_value = 100000
         dynamic_npis.set_threshold(35.0, dynamic_npi_dampings)

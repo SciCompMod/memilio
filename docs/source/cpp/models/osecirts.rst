@@ -316,7 +316,7 @@ The model also supports dynamic NPIs based on epidemic thresholds:
     
     // Set threshold-based triggers for NPIs
     auto& dynamic_npis = model.parameters.get<mio::osecirts::DynamicNPIsInfectedSymptoms<double>>();
-    dynamic_npis.set_interval(mio::SimulationTime(3.0));  // Check every 3 days
+    dynamic_npis.set_implementation_delay(mio::SimulationTime(0.0));  // Simulate no implementation delay
     dynamic_npis.set_duration(mio::SimulationTime(14.0)); // Apply for 14 days
     dynamic_npis.set_base_value(100'000);                // Per 100,000 population
     dynamic_npis.set_threshold(200.0, dampings);         // Trigger at 200 cases per 100,000

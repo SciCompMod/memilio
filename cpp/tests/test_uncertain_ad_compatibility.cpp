@@ -138,10 +138,9 @@ TEST(TestUncertainADCompatibility, create_model)
     mio::osecirvvs::Model<FP> model(num_age_groups);
     auto& params = model.parameters;
 
-    params.template get<mio::osecirvvs::ICUCapacity<FP>>()                    = 100;
-    params.template get<mio::osecirvvs::TestAndTraceCapacity<FP>>()           = 0.0143;
-    params.template get<mio::osecirvvs::Seasonality<FP>>()                    = 0.2;
-    params.template get<mio::osecirvvs::DynamicNPIsImplementationDelay<FP>>() = 7;
+    params.template get<mio::osecirvvs::ICUCapacity<FP>>()          = 100;
+    params.template get<mio::osecirvvs::TestAndTraceCapacity<FP>>() = 0.0143;
+    params.template get<mio::osecirvvs::Seasonality<FP>>()          = 0.2;
 
     using std::floor;
     size_t tmax_days = static_cast<size_t>(floor(tmax));
