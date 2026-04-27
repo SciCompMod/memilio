@@ -16,7 +16,7 @@ runs:
     # Pylint runs against the prebuilt wheels in pycode/wheelhouse/*cp312*.
     # So, use current latest supported Python version.
     - name: Set up Python 3.12
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: "3.12"
     - name: Download Python Wheels

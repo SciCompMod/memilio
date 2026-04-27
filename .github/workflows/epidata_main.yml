@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: 3.12
     - uses: pre-commit/action@v3.0.1
@@ -124,7 +124,7 @@ jobs:
           name: python-wheels-epidata
           path: pycode/wheelhouse
       - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.12
       - name: Install Python Wheels

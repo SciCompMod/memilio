@@ -43,7 +43,7 @@ runs:
         name: python-wheels-simulation
         path: pycode/wheelhouse
     - name: Set up Python ${{ inputs.version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ inputs.version }}
     - name: Install Python Wheels
