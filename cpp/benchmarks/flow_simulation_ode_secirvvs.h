@@ -578,7 +578,7 @@ public:
                             auto t_start = SimulationTime<ScalarType>(t + delay_npi_implementation);
                             // set the end to the minimum of start+delay and the end of the directive
                             auto t_end = SimulationTime<ScalarType>(
-                                min<ScalarType>(direc_end, ScalarType(t_start + dyn_npis.get_duration())));
+                                std::min<ScalarType>(direc_end, ScalarType(t_start + dyn_npis.get_duration())));
                             this->get_model().parameters.get_start_commuter_detection() = t_start.get();
                             this->get_model().parameters.get_end_commuter_detection()   = t_end.get();
                             m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
@@ -591,7 +591,7 @@ public:
                 }
             }
 
-            auto dt_eff = min<ScalarType>(1.0, tmax - t);
+            auto dt_eff = std::min<ScalarType>(1.0, tmax - t);
             Base::advance(t + dt_eff);
             if (t + 0.5 + dt_eff - std::floor(t + 0.5) >= 1) {
                 this->apply_vaccination(t + 0.5 + dt_eff);
