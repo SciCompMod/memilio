@@ -11,7 +11,9 @@ runs:
       uses: actions/download-artifact@v7
       with:
         name: build-cpp-mac-${{ inputs.artifact-pattern }}
-        path: cpp/build-mac/bin
+        path: |
+          cpp/build-mac/bin/
+          cpp/build-mac/lib/
     - name: Run unit tests
       shell: pwsh
       run: |
