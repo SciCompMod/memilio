@@ -1,5 +1,5 @@
 name: "Apple Build"
-description: "Build the C++ library on MacOS. Produces artifact build-apple-clang-$version-$config."
+description: "Build the C++ library on MacOS. Produces artifact build-cpp-mac-apple-clang-$version-$config."
 inputs:
   config:
     description: "Configuration to build (Release or Debug, see CMAKE_BUILD_TYPE)"
@@ -21,6 +21,6 @@ runs:
       uses: actions/upload-artifact@v7
       with:
         #artifacts in one pipeline must have a different name, so options must add a suffix to the artifact name if different values are used in the same pipeline
-        name: build-apple-clang-${{ inputs.version }}-${{ inputs.config }}${{ inputs.optional-dependencies == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
+        name: build-cpp-mac-apple-clang-${{ inputs.version }}-${{ inputs.config }}
         path: cpp/build-mac/bin/
         retention-days: 1
