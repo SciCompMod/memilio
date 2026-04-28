@@ -11,16 +11,11 @@ runs:
       uses: actions/download-artifact@v7
       with:
         name: ${{ inputs.build-artifact }}
-        path: |
-          cpp/build-mac/bin/
-          cpp/build-mac/lib/
+        path: cpp/build-mac/
     - name: Run examples
       shell: bash
       run: |
-        find . -name "memilio-test"
         cd cpp/build-mac/bin
-        pwd
-        ls
         sudo chmod -R a+x ./
         numberoffiles=$(ls -dq *_example | wc -l)
         if [[ "$numberoffiles" -gt "0" ]]; then 
