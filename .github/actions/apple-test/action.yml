@@ -16,6 +16,7 @@ runs:
       shell: bash
       run: |
         cd cpp/build-mac/bin
+        sudo chmod a+x memilio-test
         ./memilio-test --gtest_output="xml:report.xml"
     - name: Upload report
       uses: actions/upload-artifact@v7
