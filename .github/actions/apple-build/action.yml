@@ -22,5 +22,7 @@ runs:
       with:
         #artifacts in one pipeline must have a different name, so options must add a suffix to the artifact name if different values are used in the same pipeline
         name: build-cpp-mac-appleclang-${{ inputs.version }}-${{ inputs.config }}
-        path: cpp/build-mac/bin/
+        path: |
+          cpp/build-mac/bin/
+          cpp/build-mac/lib/
         retention-days: 1
