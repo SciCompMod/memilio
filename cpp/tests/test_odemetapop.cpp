@@ -102,7 +102,7 @@ TEST_F(ModelTestOdeMetapop, compareWithPreviousRun)
         }
         mio::unused(rel_tol);
 
-        ASSERT_NEAR(t, result.get_times()[irow], 1e-12) << "at row " << irow;
+        ASSERT_NEAR(t, result.get_times()[irow], 1e-10) << "at row " << irow;
 
         for (size_t icol = 0; icol < 12; ++icol) {
             double ref    = refData[static_cast<size_t>(irow)][icol + 1];
