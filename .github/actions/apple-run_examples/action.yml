@@ -17,6 +17,7 @@ runs:
     - name: Run examples
       shell: bash
       run: |
+        find . -name "memilio-test"
         cd cpp/build-mac/bin
         pwd
         ls
