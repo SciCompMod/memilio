@@ -13,7 +13,7 @@ runs:
         name: build-cpp-mac-${{ inputs.artifact-pattern }}
         path: cpp/build-mac/
     - name: Run unit tests
-      shell: pwsh
+      shell: bash
       run: |
         cd cpp/build-mac/bin
         ./memilio-test --gtest_output="xml:report.xml"
