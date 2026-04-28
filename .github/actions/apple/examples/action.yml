@@ -1,0 +1,27 @@
+name: "Apple Examples"
+description: "Run the C++ examples on MacOS."
+inputs:
+  build-artifact:
+    description: "Name of the build artifact that contains the example binaries."
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Download examples directory
+      uses: actions/download-artifact@v7
+      with:
+        name: ${{ inputs.build-artifact }}
+        path: cpp/build-mac/bin
+    - name: Run examples
+      shell: zsh
+      run: |
+        cd cpp/build-mac/bin
+        sudo chmod -R a+x ./
+        numberoffiles=$(ls -dq *_example | wc -l)
+        if [[ "$numberoffiles" -gt "0" ]]; then 
+          echo "Running Linux examples."
+          find . -name "*_example" -print0  | xargs -0 -n1 -P 1 -t zsh -c || exit 1   
+        else
+          echo "No Files found with name _example, abort."
+          exit 1
+        fi

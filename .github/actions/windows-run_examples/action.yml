@@ -2,7 +2,7 @@ name: "Windows Examples"
 description: "Run the C++ examples on Windows"
 inputs:
   build-artifact:
-    description: "Name of the build artifact that contains the example binary."
+    description: "Name of the build artifact that contains the example binaries."
     required: true
 runs:
   using: "composite"
