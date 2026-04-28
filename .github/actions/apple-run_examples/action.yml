@@ -13,14 +13,14 @@ runs:
         name: ${{ inputs.build-artifact }}
         path: cpp/build-mac/bin
     - name: Run examples
-      shell: zsh
+      shell: bash
       run: |
         cd cpp/build-mac/bin
         sudo chmod -R a+x ./
         numberoffiles=$(ls -dq *_example | wc -l)
         if [[ "$numberoffiles" -gt "0" ]]; then 
           echo "Running Linux examples."
-          find . -name "*_example" -print0  | xargs -0 -n1 -P 1 -t zsh -c || exit 1   
+          find . -name "*_example" -print0  | xargs -0 -n1 -P 1 -t bash -c || exit 1   
         else
           echo "No Files found with name _example, abort."
           exit 1

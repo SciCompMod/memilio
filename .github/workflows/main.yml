@@ -169,8 +169,8 @@ jobs:
       - name: merge-mac-artifacts
         uses: actions/upload-artifact/merge@v4
         with:
-          name: test-cpp-mac-report
-          pattern: test-cpp-mac-report-*
+          name: test-cpp-appleclang-report
+          pattern: test-cpp-appleclang-report-*
       - name: merge-windows-artifacts
         uses: actions/upload-artifact/merge@v4
         with:

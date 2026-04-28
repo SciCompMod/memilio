@@ -2,7 +2,7 @@ name: "Linux Examples"
 description: "Run the C++ examples on linux."
 inputs:
   build-artifact:
-    description: "Name of the build artifact that contains the unit test binary."
+    description: "Name of the build artifact that contains the example binaries."
     required: true
 runs:
   using: "composite"
