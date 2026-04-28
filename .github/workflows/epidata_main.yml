@@ -84,7 +84,7 @@ jobs:
     needs: [test-py-plot, test-py-epidata]
     steps:
       - name: merge epidata reports
-        uses: actions/upload-artifact/merge@v4
+        uses: actions/upload-artifact/merge@v7
         with:
           name: test-py-coverage-reports-${{ matrix.packages }}
           pattern: test-py-coverage-reports-${{ matrix.packages }}-*

@@ -157,27 +157,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: merge-coverage-artifacts
-        uses: actions/upload-artifact/merge@v4
+        uses: actions/upload-artifact/merge@v7
         with:
           name: test-cpp-coverage-reports
           pattern: test-cpp-coverage-reports-*
       - name: merge-linux-artifacts
-        uses: actions/upload-artifact/merge@v4
+        uses: actions/upload-artifact/merge@v7
         with:
           name: test-cpp-linux-report
           pattern: test-cpp-linux-report-*
       - name: merge-mac-artifacts
-        uses: actions/upload-artifact/merge@v4
+        uses: actions/upload-artifact/merge@v7
         with:
           name: test-cpp-appleclang-report
           pattern: test-cpp-appleclang-report-*
       - name: merge-windows-artifacts
-        uses: actions/upload-artifact/merge@v4
+        uses: actions/upload-artifact/merge@v7
         with:
           name: test-cpp-win-report
           pattern: test-cpp-win-report-*
       - name: merge python reports
-        uses: actions/upload-artifact/merge@v4
+        uses: actions/upload-artifact/merge@v7
         with:
           name: test-py-coverage-reports-surrogatemodel
           pattern: test-py-coverage-reports-surrogatemodel-*
@@ -395,7 +395,7 @@ jobs:
         with:
           name: test-cpp-coverage-reports
       - name: Deploy to codecov.io
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ./coverage_python
