@@ -18,6 +18,8 @@ runs:
       shell: bash
       run: |
         cd cpp/build-mac/bin
+        pwd
+        ls
         sudo chmod -R a+x ./
         numberoffiles=$(ls -dq *_example | wc -l)
         if [[ "$numberoffiles" -gt "0" ]]; then 
