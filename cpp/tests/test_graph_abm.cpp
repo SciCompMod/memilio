@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 
+#include "abm/activity_type.h"
 #include "abm/location.h"
 #include "abm/location_id.h"
 #include "abm/mobility_data.h"
@@ -52,11 +53,11 @@ TEST(TestGraphAbm, test_advance_node)
     auto home_id = model.add_location(mio::abm::LocationType::Home);
     auto& home   = model.get_location(home_id);
     auto work    = mio::abm::Location(mio::abm::LocationType::Work, mio::abm::LocationId(0), size_t(1), 2);
-    auto pid     = model.add_person(home_id, mio::AgeGroup(0));
+    auto pid     = model.add_person(home_id, mio::AgeGroup(0), mio::abm::ActivityType::Home);
     auto index   = model.get_person_index(pid);
     auto& p      = model.get_person(pid);
-    p.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
-    p.set_assigned_location(work.get_type(), work.get_id(), 2);
+    p.set_assigned_location(mio::abm::ActivityType::Home, home.get_id(), home.get_model_id());
+    p.set_assigned_location(mio::abm::ActivityType::Work, work.get_id(), 2);
     mio::ABMSimulationNode<MockHistory> node(MockHistory{}, t, std::move(model));
     EXPECT_EQ(node.get_simulation().get_model().get_activeness_statuses()[index], true);
     node.advance(t, dt);
@@ -87,8 +88,8 @@ TEST(TestGraphAbm, test_apply_mobility)
     auto home_id    = model1.add_location(mio::abm::LocationType::Home);
     auto work_id_2  = model2.add_location(mio::abm::LocationType::Work);
     auto work_id_3  = model3.add_location(mio::abm::LocationType::Work);
-    auto event_id_1 = model1.add_location(mio::abm::LocationType::SocialEvent);
-    auto event_id_2 = model2.add_location(mio::abm::LocationType::SocialEvent);
+    auto event_id_1 = model1.add_location(mio::abm::LocationType::Recreation);
+    auto event_id_2 = model2.add_location(mio::abm::LocationType::Recreation);
     auto& work_1    = model1.get_location(work_id_1);
     auto& work_2    = model2.get_location(work_id_2);
     auto& work_3    = model3.get_location(work_id_3);
@@ -100,32 +101,31 @@ TEST(TestGraphAbm, test_apply_mobility)
     EXPECT_EQ(work_2.get_model_id(), 2);
     EXPECT_EQ(work_3.get_model_id(), 3);
 
-    auto p1_id = model1.add_person(home_id, mio::AgeGroup(0));
-    auto p2_id = model1.add_person(home_id, mio::AgeGroup(0));
-    auto p3_id = model1.add_person(home_id, mio::AgeGroup(1));
-    auto p4_id = model1.add_person(home_id, mio::AgeGroup(1));
-    auto p5_id = model1.add_person(home_id, mio::AgeGroup(0));
+    auto p1_id = model1.add_person(home_id, mio::AgeGroup(0), mio::abm::ActivityType::Home);
+    auto p2_id = model1.add_person(home_id, mio::AgeGroup(0), mio::abm::ActivityType::Home);
+    auto p3_id = model1.add_person(home_id, mio::AgeGroup(1), mio::abm::ActivityType::Home);
+    auto p4_id = model1.add_person(home_id, mio::AgeGroup(1), mio::abm::ActivityType::Home);
+    auto p5_id = model1.add_person(home_id, mio::AgeGroup(0), mio::abm::ActivityType::Home);
     auto& p1   = model1.get_person(p1_id);
     auto& p2   = model1.get_person(p2_id);
     auto& p3   = model1.get_person(p3_id);
     auto& p4   = model1.get_person(p4_id);
     auto& p5   = model1.get_person(p5_id);
-    p1.set_assigned_location(work_1.get_type(), work_1.get_id(), work_1.get_model_id());
-    p2.set_assigned_location(work_2.get_type(), work_2.get_id(), work_2.get_model_id());
-    p5.set_assigned_location(work_3.get_type(), work_3.get_id(), work_3.get_model_id());
-    p1.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
-    p2.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
-    p3.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
-    p4.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
-    p5.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
-    p3.set_assigned_location(event_1.get_type(), event_1.get_id(), event_1.get_model_id());
-    p4.set_assigned_location(event_2.get_type(), event_2.get_id(), event_2.get_model_id());
-
+    p1.set_assigned_location(mio::abm::ActivityType::Work, work_1.get_id(), work_1.get_model_id());
+    p2.set_assigned_location(mio::abm::ActivityType::Work, work_2.get_id(), work_2.get_model_id());
+    p5.set_assigned_location(mio::abm::ActivityType::Work, work_3.get_id(), work_3.get_model_id());
+    p1.set_assigned_location(mio::abm::ActivityType::Home, home.get_id(), home.get_model_id());
+    p2.set_assigned_location(mio::abm::ActivityType::Home, home.get_id(), home.get_model_id());
+    p3.set_assigned_location(mio::abm::ActivityType::Home, home.get_id(), home.get_model_id());
+    p4.set_assigned_location(mio::abm::ActivityType::Home, home.get_id(), home.get_model_id());
+    p5.set_assigned_location(mio::abm::ActivityType::Home, home.get_id(), home.get_model_id());
+    p3.set_assigned_location(mio::abm::ActivityType::Recreation, event_1.get_id(), event_1.get_model_id());
+    p4.set_assigned_location(mio::abm::ActivityType::Recreation, event_2.get_id(), event_2.get_model_id());
     mio::abm::TripList& trips = model1.get_trip_list();
-    mio::abm::Trip trip1(p3.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), event_id_1, model1.get_id(),
-                         mio::abm::TransportMode::Unknown, {});
-    mio::abm::Trip trip2(p4.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), event_id_2, model2.get_id(),
-                         mio::abm::TransportMode::Unknown, {});
+    mio::abm::Trip trip1(p3.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), event_id_1,
+                         mio::abm::ActivityType::Recreation, model1.get_id(), mio::abm::TransportMode::Unknown, {});
+    mio::abm::Trip trip2(p4.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), event_id_2,
+                         mio::abm::ActivityType::Recreation, model2.get_id(), mio::abm::TransportMode::Unknown, {});
 
     auto tripsvec = std::vector<mio::abm::Trip>{trip1, trip2};
     trips.add_trips(tripsvec);
@@ -201,22 +201,22 @@ TEST(TestGraphABM, mask_compliance)
     //school and work require FFP2 masks
     school.set_required_mask(mio::abm::MaskType::FFP2);
     work.set_required_mask(mio::abm::MaskType::FFP2);
-    auto p_id1 = model.add_person(home_id, mio::AgeGroup(1));
-    auto p_id2 = model.add_person(home_id, mio::AgeGroup(0));
+    auto p_id1 = model.add_person(home_id, mio::AgeGroup(1), mio::abm::ActivityType::Home);
+    auto p_id2 = model.add_person(home_id, mio::AgeGroup(0), mio::abm::ActivityType::Home);
     auto& p1   = model.get_person(p_id1);
     auto& p2   = model.get_person(p_id2);
-    p1.set_assigned_location(work.get_type(), work.get_id(), work.get_model_id());
-    p1.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
-    p2.set_assigned_location(school.get_type(), school.get_id(), school.get_model_id());
-    p2.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
+    p1.set_assigned_location(mio::abm::ActivityType::Work, work.get_id(), work.get_model_id());
+    p1.set_assigned_location(mio::abm::ActivityType::Home, home.get_id(), home.get_model_id());
+    p2.set_assigned_location(mio::abm::ActivityType::School, school.get_id(), school.get_model_id());
+    p2.set_assigned_location(mio::abm::ActivityType::Home, home.get_id(), home.get_model_id());
     //person is not compliant with mask
     p1.set_compliance(mio::abm::InterventionType::Mask, 0.0);
     p2.set_compliance(mio::abm::InterventionType::Mask, 0.0);
 
     //add trips for p2
     mio::abm::TripList& trips = model.get_trip_list();
-    mio::abm::Trip trip1(p2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), school_id, model.get_id(),
-                         mio::abm::TransportMode::Unknown, {});
+    mio::abm::Trip trip1(p2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), school_id,
+                         mio::abm::ActivityType::School, model.get_id(), mio::abm::TransportMode::Unknown, {});
 
     trips.add_trips({trip1});
 
@@ -244,8 +244,8 @@ TEST(TestGraphABM, test_get_person)
     auto model = mio::GraphABModel(size_t(2), 0, std::vector<mio::abm::Model::MobilityRuleType>{&mio::abm::go_to_work});
     auto home  = model.add_location(mio::abm::LocationType::Home);
     auto work  = model.add_location(mio::abm::LocationType::Work);
-    auto pid1  = model.add_person(home, mio::AgeGroup(0));
-    auto pid2  = model.add_person(work, mio::AgeGroup(1));
+    auto pid1  = model.add_person(home, mio::AgeGroup(0), mio::abm::ActivityType::Home);
+    auto pid2  = model.add_person(work, mio::AgeGroup(1), mio::abm::ActivityType::Work);
 
     auto& p1 = model.get_person(pid1);
     EXPECT_EQ(p1.get_location(), home);

@@ -298,8 +298,8 @@ TEST_F(TestInfection, getPersonalProtectiveFactor)
     const ScalarType eps = 1e-4;
 
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0, num_age_groups);
-    auto person   = mio::abm::Person(this->get_rng(), location.get_type(), location.get_id(), location.get_model_id(),
-                                     age_group_15_to_34);
+    auto person   = mio::abm::Person(this->get_rng(), location.get_type(), mio::abm::ActivityType::School,
+                                     location.get_id(), location.get_model_id(), age_group_15_to_34);
     auto t0       = mio::abm::TimePoint(0);
     person.add_new_vaccination(mio::abm::ProtectionType::GenericVaccine, t0);
     auto latest_protection = person.get_latest_protection(t0);

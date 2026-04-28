@@ -17,6 +17,7 @@ add_library(abm
     model.cpp
     model.h
     location_type.h
+    activity_type.h
     parameters.h
     parameters.cpp
     mobility_rules.cpp

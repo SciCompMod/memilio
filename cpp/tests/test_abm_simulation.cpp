@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/activity_type.h"
 #include "abm/location_type.h"
 #include "abm/simulation.h"
 #include "abm/result_simulation.h"
@@ -33,15 +34,15 @@ TEST(TestSimulation, advance_random)
     auto model     = mio::abm::Model(num_age_groups);
     auto location1 = model.add_location(mio::abm::LocationType::School);
     auto location2 = model.add_location(mio::abm::LocationType::School);
-    auto p1        = model.add_person(location1, age_group_5_to_14);
-    auto p2        = model.add_person(location1, age_group_5_to_14);
-    auto p3        = model.add_person(location2, age_group_5_to_14);
-    auto p4        = model.add_person(location2, age_group_5_to_14);
+    auto p1        = model.add_person(location1, age_group_5_to_14, mio::abm::ActivityType::School);
+    auto p2        = model.add_person(location1, age_group_5_to_14, mio::abm::ActivityType::School);
+    auto p3        = model.add_person(location2, age_group_5_to_14, mio::abm::ActivityType::School);
+    auto p4        = model.add_person(location2, age_group_5_to_14, mio::abm::ActivityType::School);
 
-    model.assign_location(p1, location1);
-    model.assign_location(p2, location1);
-    model.assign_location(p3, location2);
-    model.assign_location(p4, location2);
+    model.assign_location(p1, location1, mio::abm::ActivityType::School);
+    model.assign_location(p2, location1, mio::abm::ActivityType::School);
+    model.assign_location(p3, location2, mio::abm::ActivityType::School);
+    model.assign_location(p4, location2, mio::abm::ActivityType::School);
 
     auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(model));
 
@@ -78,39 +79,49 @@ TEST(TestSimulation, advanceWithCommonHistory)
     auto icu_id      = model.add_location(mio::abm::LocationType::ICU);
     auto hospital_id = model.add_location(mio::abm::LocationType::Hospital);
     auto school_id   = model.add_location(mio::abm::LocationType::School);
-    auto social_id   = model.add_location(mio::abm::LocationType::SocialEvent);
+    auto social_id   = model.add_location(mio::abm::LocationType::Recreation);
     auto basics_id   = model.add_location(mio::abm::LocationType::BasicsShop);
     auto public_id   = model.add_location(mio::abm::LocationType::PublicTransport);
 
-    auto person1 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::Exposed);
-    auto person2 = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::Exposed);
-    auto person3 = add_test_person(model, home_id, age_group_35_to_59, mio::abm::InfectionState::Dead);
+    auto person1 = add_test_person(model, home_id, mio::abm::ActivityType::Home, age_group_5_to_14,
+                                   mio::abm::InfectionState::Exposed);
+    auto person2 = add_test_person(model, home_id, mio::abm::ActivityType::Home, age_group_15_to_34,
+                                   mio::abm::InfectionState::Exposed);
+    auto person3 = add_test_person(model, home_id, mio::abm::ActivityType::Home, age_group_35_to_59,
+                                   mio::abm::InfectionState::Dead);
 
-    model.assign_location(person1, home_id);
-    model.assign_location(person2, home_id);
-    model.assign_location(person3, home_id);
-    model.assign_location(person1, school_id);
-    model.assign_location(person2, work_id);
-    model.assign_location(person2, icu_id);
-    model.assign_location(person2, hospital_id);
-    model.assign_location(person1, social_id);
-    model.assign_location(person2, social_id);
-    model.assign_location(person3, social_id);
-    model.assign_location(person1, basics_id);
-    model.assign_location(person2, basics_id);
-    model.assign_location(person3, basics_id);
-    model.assign_location(person2, public_id);
+    model.assign_location(person1, home_id, mio::abm::ActivityType::Home);
+    model.assign_location(person2, home_id, mio::abm::ActivityType::Home);
+    model.assign_location(person3, home_id, mio::abm::ActivityType::Home);
+    model.assign_location(person1, school_id, mio::abm::ActivityType::School);
+    model.assign_location(person2, work_id, mio::abm::ActivityType::Work);
+    model.assign_location(person2, icu_id, mio::abm::ActivityType::ICU);
+    model.assign_location(person2, hospital_id, mio::abm::ActivityType::Hospital);
+    model.assign_location(person1, social_id, mio::abm::ActivityType::Recreation);
+    model.assign_location(person2, social_id, mio::abm::ActivityType::Recreation);
+    model.assign_location(person3, social_id, mio::abm::ActivityType::Recreation);
+    model.assign_location(person1, basics_id, mio::abm::ActivityType::BasicsShop);
+    model.assign_location(person2, basics_id, mio::abm::ActivityType::BasicsShop);
+    model.assign_location(person3, basics_id, mio::abm::ActivityType::BasicsShop);
+    model.assign_location(person2, public_id, mio::abm::ActivityType::PublicTransport);
 
     mio::abm::TripList& trip_list = model.get_trip_list();
 
     // We add trips for person two to test the history and if it is working correctly
-    mio::abm::Trip trip1(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(2), home_id);
-    mio::abm::Trip trip2(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id);
-    mio::abm::Trip trip3(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(4), home_id);
-    mio::abm::Trip trip4(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(5), home_id);
-    mio::abm::Trip trip5(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(6), home_id);
-    mio::abm::Trip trip6(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(7), home_id);
-    mio::abm::Trip trip7(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(8), home_id);
+    mio::abm::Trip trip1(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(2), home_id,
+                         mio::abm::ActivityType::Home);
+    mio::abm::Trip trip2(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id,
+                         mio::abm::ActivityType::Home);
+    mio::abm::Trip trip3(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(4), home_id,
+                         mio::abm::ActivityType::Home);
+    mio::abm::Trip trip4(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(5), home_id,
+                         mio::abm::ActivityType::Home);
+    mio::abm::Trip trip5(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(6), home_id,
+                         mio::abm::ActivityType::Home);
+    mio::abm::Trip trip6(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(7), home_id,
+                         mio::abm::ActivityType::Home);
+    mio::abm::Trip trip7(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(8), home_id,
+                         mio::abm::ActivityType::Home);
 
     // Add to one vector
     auto trips = std::vector<mio::abm::Trip>{trip1, trip2, trip3, trip4, trip5, trip6, trip7};
@@ -153,9 +164,9 @@ TEST(TestSimulation, ResultSimulation)
     // run a ResultSimulation on a minimal setup
     auto model    = mio::abm::Model(num_age_groups);
     auto location = model.add_location(mio::abm::LocationType::Home);
-    auto person   = model.add_person(location, age_group_15_to_34);
+    auto person   = model.add_person(location, age_group_15_to_34, mio::abm::ActivityType::Home);
 
-    model.assign_location(person, location);
+    model.assign_location(person, location, mio::abm::ActivityType::Home);
 
     const auto t0   = mio::abm::TimePoint(0) + mio::abm::hours(100);
     const auto tmax = t0 + mio::abm::hours(50);

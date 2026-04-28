@@ -19,6 +19,7 @@
 */
 
 #include "abm/model_functions.h"
+#include "abm/activity_type.h"
 #include "abm/location.h"
 #include "abm/person.h"
 #include "abm/random_events.h"
@@ -159,7 +160,7 @@ void normalize_exposure_contribution(ContactExposureRates& local_contact_exposur
     }
 }
 
-bool change_location(Person& person, const Location& destination, const TransportMode mode,
+bool change_location(Person& person, const Location& destination, ActivityType activity, const TransportMode mode,
                      const std::vector<uint32_t>& cells)
 {
     assert(std::all_of(cells.begin(), cells.end(), [&](const auto& cell) {
@@ -167,7 +168,7 @@ bool change_location(Person& person, const Location& destination, const Transpor
     })); // make sure cell indices are valid
 
     if (person.get_location() != destination.get_id()) {
-        person.set_location(destination.get_type(), destination.get_id(), destination.get_model_id());
+        person.set_location(activity, destination.get_type(), destination.get_id(), destination.get_model_id());
         person.get_cells() = cells;
         person.set_last_transport_mode(mode);
 
