@@ -37,6 +37,9 @@ dev = []
 Homepage = "https://github.com/SciCompMod/memilio"
 Team = "https://memilio.readthedocs.io/en/latest/team.html"
 
+[project.scripts]
+memilio-modelgenerator = "memilio.modelgenerator.cli:main"
+
 [tool.scikit-build]
 cmake.version = ">=3.13"
 wheel.packages = ["memilio"]
