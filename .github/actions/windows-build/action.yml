@@ -21,12 +21,15 @@ runs:
       run: choco install -y ninja
     - name: Install hdf5
       shell: pwsh
+      # the installation writes the library to C:\HDF5, avoiding version numbers past the download step 
       run: |
         if ("${{ inputs.optional-dependencies }}" -eq "ON") {
           Write-Output "Downloading HDF5 1.14.6";
-          Invoke-WebRequest -Uri "https://support.hdfgroup.org/releases/hdf5/v1_14/v1_14_6/downloads/hdf5-1.14.6-win-vs2022_cl.zip" -OutFile "hdf5.zip";
+          Invoke-WebRequest -Uri "https://github.com/HDFGroup/hdf5/releases/download/hdf5_1.14.6/hdf5-1.14.6-win-vs2022_cl.zip" -OutFile "hdf5-outer.zip";
           Write-Output "Extract HDF5";
-          7z x -y "hdf5.zip" "-oC:\"
+          7z x -y "hdf5-outer.zip" "-o.";                                       # hdf5 comes double zipped
+          7z x -y "hdf5/hdf5-*-win64.zip" "-oC:\";
+          Get-ChildItem -Path "C:\HDF5-*-win64" | Rename-Item -NewName "HDF5"   # rename to remove version from extracted directory
         }
     - name: Build
       shell: cmd /C call {0}
@@ -40,7 +43,7 @@ runs:
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" amd64
         )
         cmake --version
-        cmake -G "Ninja" -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DHDF5_USE_STATIC_LIBRARIES=ON -DHDF5_DIR="C:\hdf5" ..
+        cmake -G "Ninja" -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DHDF5_USE_STATIC_LIBRARIES=ON -DHDF5_DIR="C:\HDF5" ..
         cmake --build . -- -j 4
     - name: Upload build binary files
       uses: actions/upload-artifact@v7
