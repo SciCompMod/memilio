@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Rene Schmieding
 *
@@ -22,6 +22,7 @@
 
 #include "memilio/math/adapt_rk.h"
 #include "memilio/math/stepper_wrapper.h"
+#include "memilio/utils/base_dir.h"
 
 template <class Integrator>
 void integrator_step(::benchmark::State& state)
@@ -32,17 +33,18 @@ void integrator_step(::benchmark::State& state)
     // with "num_agegroups" agegroups, and taking "yt" as the state of the simulation at "t_init"
     // NOTE: yt must have #agegroups * #compartments entries
     // benchmark setup
-    auto cfg = mio::benchmark::IntegratorStepConfig::initialize("benchmarks/integrator_step.config");
+    auto cfg =
+        mio::benchmark::IntegratorStepConfig::initialize(mio::base_dir() + "cpp/benchmarks/integrator_step.config");
     //auto cfg = mio::benchmark::IntegratorStepConfig::initialize();
     auto model = mio::benchmark::model::SecirAgeres(cfg.num_agegroups);
     // set deriv function and integrator
-    mio::DerivFunction<ScalarType> f = [model](Eigen::Ref<const Eigen::VectorXd> x, double s,
-                                               Eigen::Ref<Eigen::VectorXd> dxds) {
+    mio::DerivFunction<ScalarType> f = [model](Eigen::Ref<const Eigen::VectorX<ScalarType>> x, ScalarType s,
+                                               Eigen::Ref<Eigen::VectorX<ScalarType>> dxds) {
         model.eval_right_hand_side(x, x, s, dxds);
     };
     auto I = Integrator(cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
 
-    double t, dt;
+    ScalarType t, dt;
     for (auto _ : state) {
         // This code gets timed
         t  = cfg.t_init;

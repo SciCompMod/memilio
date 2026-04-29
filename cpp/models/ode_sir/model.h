@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -37,7 +37,7 @@ namespace osir
  * define the model *
  ********************/
 
-template <typename FP = ScalarType>
+template <typename FP>
 class Model
     : public mio::CompartmentalModel<FP, InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>>
 {
@@ -61,9 +61,9 @@ public:
     void get_derivatives(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
                          Eigen::Ref<Eigen::VectorX<FP>> dydt) const override
     {
-        auto params                              = this->parameters;
-        AgeGroup n_agegroups                     = params.get_num_groups();
-        ContactMatrixGroup const& contact_matrix = params.template get<ContactPatterns<FP>>();
+        auto params                                  = this->parameters;
+        AgeGroup n_agegroups                         = params.get_num_groups();
+        ContactMatrixGroup<FP> const& contact_matrix = params.template get<ContactPatterns<FP>>();
 
         for (auto i = AgeGroup(0); i < n_agegroups; i++) {
 
@@ -77,12 +77,12 @@ public:
                 size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
                 size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
-                const ScalarType Nj    = pop[Sj] + pop[Ij] + pop[Rj];
-                const ScalarType divNj = (Nj < Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / Nj;
+                const FP Nj    = pop[Sj] + pop[Ij] + pop[Rj];
+                const FP divNj = (Nj < Limits<FP>::zero_tolerance()) ? FP(0.0) : FP(1.0 / Nj);
 
-                ScalarType coeffStoI = contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
-                                                                       static_cast<Eigen::Index>((size_t)j)) *
-                                       params.template get<TransmissionProbabilityOnContact<FP>>()[i] * divNj;
+                FP coeffStoI = contact_matrix.get_matrix_at(SimulationTime<FP>(t))(
+                                   static_cast<Eigen::Index>((size_t)i), static_cast<Eigen::Index>((size_t)j)) *
+                               params.template get<TransmissionProbabilityOnContact<FP>>()[i] * divNj;
 
                 dydt[Si] += -coeffStoI * y[Si] * pop[Ij];
                 dydt[Ii] += coeffStoI * y[Si] * pop[Ij];
@@ -93,7 +93,7 @@ public:
     }
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>

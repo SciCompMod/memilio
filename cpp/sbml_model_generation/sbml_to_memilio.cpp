@@ -863,12 +863,12 @@ mio::IOResult<void> create_example_cpp(Model& model, const std::string& filename
             }
         }
 
-        example << "std::shared_ptr<mio::IntegratorCore<ScalarType>> integrator = "
-                   "std::make_shared<mio::EulerIntegratorCore<ScalarType>>();"
+        example << "std::unique_ptr<mio::OdeIntegratorCore<ScalarType>> integrator = "
+                   "std::make_unique<mio::EulerIntegratorCore<ScalarType>>();"
                 << std::endl;
         example << "auto sim = mio::Simulation<ScalarType, mio::" << lowercase_name
                 << "::Model<ScalarType>>(model, t0, dt);" << std::endl;
-        example << "sim.set_integrator(integrator);" << std::endl;
+        example << "sim.set_integrator_core(std::move(integrator));" << std::endl;
         for (size_t i = 0; i < model.getListOfEvents()->size(); i++) {
             auto event                      = model.getListOfEvents()->get(i);
             auto trigger                    = *event->getTrigger()->getMath();

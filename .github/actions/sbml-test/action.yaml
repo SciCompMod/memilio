@@ -38,7 +38,7 @@ runs:
       shell: bash
       run: |
         cd cpp/build
-        cmake -DCMAKE_BUILD_TYPE=Release -Dsbml_DIR=/usr/lib/x86_64-linux-gnu/cmake ..
+        cmake -DCMAKE_BUILD_TYPE=Release -DMEMILIO_ENABLE_SBML=ON -Dsbml_DIR=/usr/lib/x86_64-linux-gnu/cmake ..
         cmake --build . -j 4
     - name: Run SBML importer
       shell: bash
@@ -49,5 +49,5 @@ runs:
       shell: bash
       run: |
         cd cpp/build
-        cmake -DCMAKE_BUILD_TYPE=Release -Dsbml_DIR=/usr/lib/x86_64-linux-gnu/cmake ..
+        cmake -DCMAKE_BUILD_TYPE=Release -DMEMILIO_ENABLE_SBML=ON -Dsbml_DIR=/usr/lib/x86_64-linux-gnu/cmake ..
         cmake --build . -j 4

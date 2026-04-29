@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Carlotta Gerstein, Martin J. Kuehn, Henrik Zunker
 *
@@ -20,14 +20,14 @@
 #ifndef ODESEIRMETAPOP_MODEL_H
 #define ODESEIRMETAPOP_MODEL_H
 
+#include <Eigen/Dense>
+
 #include "memilio/compartments/flow_model.h"
 #include "memilio/epidemiology/populations.h"
-#include "models/ode_seir_metapop/infection_state.h"
 #include "models/ode_seir_metapop/parameters.h"
+#include "models/ode_seir_metapop/infection_state.h"
 #include "memilio/geography/regions.h"
-#include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/time_series.h"
-#include "memilio/compartments/simulation.h"
 
 namespace mio
 {
@@ -43,7 +43,7 @@ using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Exposed
                        Flow<InfectionState::Infected, InfectionState::Recovered>>;
 
 /**
- * @brief The Model holds the Parameters and the initial Populations and defines the ordinary differential equations.
+ * @brief The Model holds the Parameters and the initial Populations for every region and defines the ordinary differential equations.
  */
 template <typename FP = ScalarType>
 class Model : public FlowModel<FP, InfectionState, mio::Populations<FP, mio::regions::Region, AgeGroup, InfectionState>,
@@ -58,7 +58,7 @@ public:
     using typename Base::Populations;
 
     /**
-     * @brief Create a Model with the given number of Region%s and AgeGroups.
+     * @brief Create a Model with the given number of Region%s and AgeGroup%s.
      * @param[in] num_regions The number of Region%s.
      * @param[in] num_agegroups The number of AgeGroup%s.
      */
@@ -78,10 +78,11 @@ public:
     void get_flows(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
                    Eigen::Ref<Eigen::VectorX<FP>> flows) const override
     {
+        using enum InfectionState;
         const auto& params     = this->parameters;
         const auto& population = this->populations;
         const Eigen::MatrixXd commuting_strengths =
-            params.template get<CommutingStrengths<>>().get_cont_freq_mat().get_matrix_at(t);
+            params.template get<CommutingStrengths<>>().get_cont_freq_mat().get_matrix_at(SimulationTime<FP>(t));
         const size_t n_age_groups = (size_t)params.get_num_agegroups();
         const size_t n_regions    = (size_t)params.get_num_regions();
 
@@ -89,7 +90,7 @@ public:
         for (size_t region_n = 0; region_n < n_regions; region_n++) {
             for (size_t age_i = 0; age_i < n_age_groups; age_i++) {
                 infected_pop(region_n, age_i) =
-                    pop[population.get_flat_index({Region(region_n), AgeGroup(age_i), InfectionState::Infected})];
+                    pop[population.get_flat_index({Region(region_n), AgeGroup(age_i), Infected})];
             }
         }
         Eigen::MatrixXd infectious_share_per_region = commuting_strengths.transpose() * infected_pop;
@@ -100,39 +101,33 @@ public:
             }
         }
         Eigen::MatrixXd infections_due_commuting = commuting_strengths * infectious_share_per_region;
-        for (size_t age_i = 0; age_i < n_age_groups; age_i++) {
-            for (size_t age_j = 0; age_j < n_age_groups; age_j++) {
-                for (size_t region_n = 0; region_n < n_regions; region_n++) {
-                    const size_t Ejn =
-                        population.get_flat_index({Region(region_n), AgeGroup(age_j), InfectionState::Exposed});
-                    const size_t Ijn =
-                        population.get_flat_index({Region(region_n), AgeGroup(age_j), InfectionState::Infected});
-                    const size_t Rjn =
-                        population.get_flat_index({Region(region_n), AgeGroup(age_j), InfectionState::Recovered});
-                    const size_t Sjn =
-                        population.get_flat_index({Region(region_n), AgeGroup(age_j), InfectionState::Susceptible});
+        for (size_t region = 0; region < n_regions; region++) {
+            for (size_t age_i = 0; age_i < n_age_groups; age_i++) {
+                for (size_t age_j = 0; age_j < n_age_groups; age_j++) {
+                    const size_t Ejn = population.get_flat_index({Region(region), AgeGroup(age_j), Exposed});
+                    const size_t Ijn = population.get_flat_index({Region(region), AgeGroup(age_j), Infected});
+                    const size_t Rjn = population.get_flat_index({Region(region), AgeGroup(age_j), Recovered});
+                    const size_t Sjn = population.get_flat_index({Region(region), AgeGroup(age_j), Susceptible});
 
-                    const double Nj_inv = 1.0 / (pop[Sjn] + pop[Ejn] + pop[Ijn] + pop[Rjn]);
-                    double coeffStoE =
+                    const FP Njn    = pop[Sjn] + pop[Ejn] + pop[Ijn] + pop[Rjn];
+                    const FP divNjn = (Njn < Limits<FP>::zero_tolerance()) ? FP(0.0) : FP(1.0 / Njn);
+                    FP coeffStoE =
                         0.5 *
-                        params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t)(age_i, age_j) *
-                        params.template get<TransmissionProbabilityOnContact<FP>>()[AgeGroup(age_i)];
+                        params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(
+                            SimulationTime<FP>(t))(age_i, age_j) *
+                        params.template get<TransmissionProbabilityOnContact<FP>>()[{Region(region), AgeGroup(age_i)}];
 
-                    flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(
-                        {Region(region_n), AgeGroup(age_i)})] +=
-                        (pop[Ijn] * Nj_inv + infections_due_commuting(region_n, age_j)) * coeffStoE *
-                        y[population.get_flat_index({Region(region_n), AgeGroup(age_i), InfectionState::Susceptible})];
+                    flows[Base::template get_flat_flow_index<Susceptible, Exposed>(
+                        {Region(region), AgeGroup(age_i)})] +=
+                        (pop[Ijn] * divNjn + infections_due_commuting(region, age_j)) * coeffStoE *
+                        y[population.get_flat_index({Region(region), AgeGroup(age_i), Susceptible})];
                 }
-            }
-            for (size_t region = 0; region < n_regions; region++) {
-                flows[Base::template get_flat_flow_index<InfectionState::Exposed, InfectionState::Infected>(
-                    {Region(region), AgeGroup(age_i)})] =
-                    y[population.get_flat_index({Region(region), AgeGroup(age_i), InfectionState::Exposed})] /
-                    params.template get<TimeExposed<FP>>()[AgeGroup(age_i)];
-                flows[Base::template get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>(
-                    {Region(region), AgeGroup(age_i)})] =
-                    y[population.get_flat_index({Region(region), AgeGroup(age_i), InfectionState::Infected})] /
-                    params.template get<TimeInfected<FP>>()[AgeGroup(age_i)];
+                flows[Base::template get_flat_flow_index<Exposed, Infected>({Region(region), AgeGroup(age_i)})] =
+                    y[population.get_flat_index({Region(region), AgeGroup(age_i), Exposed})] /
+                    params.template get<TimeExposed<FP>>()[{Region(region), AgeGroup(age_i)}];
+                flows[Base::template get_flat_flow_index<Infected, Recovered>({Region(region), AgeGroup(age_i)})] =
+                    y[population.get_flat_index({Region(region), AgeGroup(age_i), Infected})] /
+                    params.template get<TimeInfected<FP>>()[{Region(region), AgeGroup(age_i)}];
             }
         }
     }
@@ -157,9 +152,10 @@ public:
         constexpr size_t num_infected_compartments = 2;
         const size_t total_infected_compartments   = num_infected_compartments * num_age_groups * num_regions;
 
-        ContactMatrixGroup const& contact_matrix      = params.template get<ContactPatterns<ScalarType>>();
-        ContactMatrixGroup const& commuting_strengths = params.template get<CommutingStrengths<ScalarType>>();
-        Populations const& population_after_commuting = params.template get<PopulationAfterCommuting<ScalarType>>();
+        ContactMatrixGroup<ScalarType> const& contact_matrix = params.template get<ContactPatterns<ScalarType>>();
+        ContactMatrixGroup<ScalarType> const& commuting_strengths =
+            params.template get<CommutingStrengths<ScalarType>>();
+        auto const& population_after_commuting = params.template get<PopulationAfterCommuting<ScalarType>>();
 
         Eigen::MatrixXd F = Eigen::MatrixXd::Zero(total_infected_compartments, total_infected_compartments);
         Eigen::MatrixXd V = Eigen::MatrixXd::Zero(total_infected_compartments, total_infected_compartments);
@@ -173,8 +169,10 @@ public:
                         auto const population_region_age = population_region.template slice<AgeGroup>({j.get(), 1});
                         auto Njm = std::accumulate(population_region_age.begin(), population_region_age.end(), 0.);
 
-                        double coeffStoE = 0.5 * contact_matrix.get_matrix_at(y.get_time(t_idx))(i.get(), j.get()) *
-                                           params.template get<TransmissionProbabilityOnContact<ScalarType>>()[i];
+                        double coeffStoE =
+                            0.5 *
+                            contact_matrix.get_matrix_at(SimulationTime<FP>(y.get_time(t_idx)))(i.get(), j.get()) *
+                            params.template get<TransmissionProbabilityOnContact<ScalarType>>()[{n, i}];
                         if (n == m) {
                             F(i.get() * num_regions + n.get(), num_age_groups * num_regions + j.get() * num_regions +
                                                                    m.get()) += coeffStoE * y.get_value(t_idx)[Si] / Njm;
@@ -183,15 +181,17 @@ public:
                             F(i.get() * num_regions + n.get(),
                               num_age_groups * num_regions + j.get() * num_regions + m.get()) +=
                                 coeffStoE * y.get_value(t_idx)[Si] *
-                                commuting_strengths.get_matrix_at(y.get_time(t_idx))(n.get(), k.get()) *
-                                commuting_strengths.get_matrix_at(y.get_time(t_idx))(m.get(), k.get()) /
+                                commuting_strengths.get_matrix_at(SimulationTime<FP>(y.get_time(t_idx)))(n.get(),
+                                                                                                         k.get()) *
+                                commuting_strengths.get_matrix_at(SimulationTime<FP>(y.get_time(t_idx)))(m.get(),
+                                                                                                         k.get()) /
                                 population_after_commuting[{k, j}];
                         }
                     }
                 }
 
-                double T_Ei = params.template get<TimeExposed<ScalarType>>()[i];
-                double T_Ii = params.template get<TimeInfected<ScalarType>>()[i];
+                double T_Ei = params.template get<TimeExposed<ScalarType>>()[{n, i}];
+                double T_Ii = params.template get<TimeInfected<ScalarType>>()[{n, i}];
                 V(i.get() * num_regions + n.get(), i.get() * num_regions + n.get()) = 1.0 / T_Ei;
                 V(num_age_groups * num_regions + i.get() * num_regions + n.get(), i.get() * num_regions + n.get()) =
                     -1.0 / T_Ei;
@@ -206,18 +206,11 @@ public:
         NextGenMatrix                 = F * V;
 
         //Compute the largest eigenvalue in absolute value
-        Eigen::ComplexEigenSolver<Eigen::MatrixXd> ces;
-
+        Eigen::ComplexEigenSolver<Eigen::MatrixX<ScalarType>> ces;
         ces.compute(NextGenMatrix);
-        const Eigen::VectorXcd eigen_vals = ces.eigenvalues();
+        FP rho = ces.eigenvalues().cwiseAbs().maxCoeff();
 
-        Eigen::VectorXd eigen_vals_abs;
-        eigen_vals_abs.resize(eigen_vals.size());
-
-        for (int i = 0; i < eigen_vals.size(); i++) {
-            eigen_vals_abs[i] = std::abs(eigen_vals[i]);
-        }
-        return mio::success(eigen_vals_abs.maxCoeff());
+        return mio::success(rho);
     }
 
     /**
@@ -254,15 +247,14 @@ public:
         for (size_t region_n = 0; region_n < number_regions; ++region_n) {
             for (size_t age = 0; age < number_age_groups; ++age) {
                 double population_n = 0;
-                for (size_t state = 0; state < (size_t)mio::oseirmetapop::InfectionState::Count; state++) {
-                    population_n += population[{mio::oseirmetapop::Region(region_n), mio::AgeGroup(age),
-                                                mio::oseirmetapop::InfectionState(state)}];
+                for (size_t state = 0; state < (size_t)InfectionState::Count; state++) {
+                    population_n += population[{Region(region_n), mio::AgeGroup(age), InfectionState(state)}];
                 }
-                population_after_commuting[{mio::oseirmetapop::Region(region_n), mio::AgeGroup(age)}] += population_n;
+                population_after_commuting[{Region(region_n), mio::AgeGroup(age)}] += population_n;
                 for (size_t region_m = 0; region_m < number_regions; ++region_m) {
-                    population_after_commuting[{mio::oseirmetapop::Region(region_n), mio::AgeGroup(age)}] -=
+                    population_after_commuting[{Region(region_n), mio::AgeGroup(age)}] -=
                         commuting_strengths(region_n, region_m) * population_n;
-                    population_after_commuting[{mio::oseirmetapop::Region(region_m), mio::AgeGroup(age)}] +=
+                    population_after_commuting[{Region(region_m), mio::AgeGroup(age)}] +=
                         commuting_strengths(region_n, region_m) * population_n;
                 }
             }
@@ -280,9 +272,39 @@ public:
         auto number_regions = (size_t)this->parameters.get_num_regions();
         set_commuting_strengths(Eigen::MatrixXd::Identity(number_regions, number_regions));
     }
-}; // namespace oseirmetapop
+
+    /**
+     * serialize this.
+     * @see mio::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("Model");
+        obj.add_element("Parameters", this->parameters);
+        obj.add_element("Populations", this->populations);
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<Model> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("Model");
+        auto par = obj.expect_element("Parameters", Tag<ParameterSet>{});
+        auto pop = obj.expect_element("Populations", Tag<Populations>{});
+        return apply(
+            io,
+            [](auto&& par_, auto&& pop_) {
+                return Model{pop_, par_};
+            },
+            par, pop);
+    }
+};
 
 } // namespace oseirmetapop
 } // namespace mio
 
-#endif // ODESEIRMOBILITY_MODEL_H
+#endif // SEIRMETAPOP_MODEL_H

@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -18,7 +18,3 @@
 * limitations under the License.
 */
 #include "memilio/io/json_serializer.h"
-
-#ifdef MEMILIO_HAS_JSONCPP
-
-#endif //MEMILIO_HAS_JSONCPP

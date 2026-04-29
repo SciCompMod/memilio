@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Nils Wassmuth, Rene Schmieding, Martin J. Kuehn
 *
@@ -37,8 +37,9 @@ namespace ssir
 /**
  * @brief probability of getting infected from a contact
  */
+template <typename FP>
 struct TransmissionProbabilityOnContact {
-    using Type = UncertainValue<>;
+    using Type = UncertainValue<FP>;
     static Type get_default()
     {
         return Type(1.0);
@@ -52,8 +53,9 @@ struct TransmissionProbabilityOnContact {
 /**
  * @brief the infectious time in day unit
  */
+template <typename FP>
 struct TimeInfected {
-    using Type = UncertainValue<ScalarType>;
+    using Type = UncertainValue<FP>;
     static Type get_default()
     {
         return Type(6.0);
@@ -67,8 +69,9 @@ struct TimeInfected {
 /**
  * @brief the contact patterns within the society are modelled using a ContactMatrix
  */
+template <typename FP>
 struct ContactPatterns {
-    using Type = ContactMatrix;
+    using Type = ContactMatrix<FP>;
     static Type get_default()
     {
         return Type{1};
@@ -79,22 +82,24 @@ struct ContactPatterns {
     }
 };
 
-using ParametersBase = ParameterSet<TransmissionProbabilityOnContact, TimeInfected, ContactPatterns>;
+template <typename FP>
+using ParametersBase = ParameterSet<TransmissionProbabilityOnContact<FP>, TimeInfected<FP>, ContactPatterns<FP>>;
 
 /**
  * @brief Parameters of SIR model.
  */
-class Parameters : public ParametersBase
+template <typename FP>
+class Parameters : public ParametersBase<FP>
 {
 public:
     Parameters()
-        : ParametersBase()
+        : ParametersBase<FP>()
     {
     }
 
     /**
      * @brief Checks whether all Parameters satisfy their corresponding constraints and applies them, if they do not.
-     * Time spans cannot be negative and probabilities can only take values between [0,1]. 
+     * Time spans cannot be negative and probabilities can only take values between [0,1].
      *
      * Attention: This function should be used with care. It is necessary for some test problems to run through quickly,
      *            but in a manual execution of an example, check_constraints() may be preferred. Note that the apply_constraints()
@@ -103,60 +108,59 @@ public:
      *            (like 0 or 1 for probabilities or small positive values for time spans) values are set here and a manual adaptation
      *            may often be necessary to have set meaningful values.
      *
-     * @return Returns true if one ore more constraint were corrected, false otherwise.  
+     * @return Returns true if one ore more constraint were corrected, false otherwise.
      */
     bool apply_constraints()
     {
-        ScalarType tol_times = 1e-1;
+        FP tol_times = 1e-1;
 
         int corrected = false;
-        if (this->get<TimeInfected>() < tol_times) {
-            log_warning("Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
+        if (this->template get<TimeInfected<FP>>() < tol_times) {
+            log_warning("Constraint check: Parameter TimeInfected changed from {} to {}. Please note that "
                         "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                         "and reset parameters.",
-                        this->get<TimeInfected>(), tol_times);
-            this->get<TimeInfected>() = tol_times;
-            corrected                 = true;
+                        this->template get<TimeInfected<FP>>(), tol_times);
+            this->template get<TimeInfected<FP>>() = tol_times;
+            corrected                              = true;
         }
-        if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
-            this->get<TransmissionProbabilityOnContact>() > 1.0) {
-            log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
-                        this->get<TransmissionProbabilityOnContact>(), 0.0);
-            this->get<TransmissionProbabilityOnContact>() = 0.0;
-            corrected                                     = true;
+        if (this->template get<TransmissionProbabilityOnContact<FP>>() < 0.0 ||
+            this->template get<TransmissionProbabilityOnContact<FP>>() > 1.0) {
+            log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {} to {} ",
+                        this->template get<TransmissionProbabilityOnContact<FP>>(), 0.0);
+            this->template get<TransmissionProbabilityOnContact<FP>>() = 0.0;
+            corrected                                                  = true;
         }
         return corrected;
     }
 
     /**
-     * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error 
+     * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error
      * if constraints are not satisfied.
-     * @return Returns true if one constraint is not satisfied, otherwise false.   
+     * @return Returns true if one constraint is not satisfied, otherwise false.
      */
     bool check_constraints() const
     {
-        ScalarType tol_times = 1e-1;
+        FP tol_times = 1e-1;
 
-        if (this->get<TimeInfected>() < tol_times) {
-            log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
-                      "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
-                      "and reset parameters.",
-                      this->get<TimeInfected>(), 0.0);
+        if (this->template get<TimeInfected<FP>>() < tol_times) {
+            log_warning("Constraint check: Parameter TimeInfected {} smaller or equal {}. Please note that "
+                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                        "and reset parameters.",
+                        this->template get<TimeInfected<FP>>(), tol_times);
             return true;
         }
-        if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
-            this->get<TransmissionProbabilityOnContact>() > 1.0) {
-            log_error(
-                "Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or greater {:.4f}",
-                this->get<TransmissionProbabilityOnContact>(), 0.0, 1.0);
+        if (this->template get<TransmissionProbabilityOnContact<FP>>() < 0.0 ||
+            this->template get<TransmissionProbabilityOnContact<FP>>() > 1.0) {
+            log_error("Constraint check: Parameter TransmissionProbabilityOnContact {} smaller {} or greater {}",
+                      this->template get<TransmissionProbabilityOnContact<FP>>(), 0.0, 1.0);
             return true;
         }
         return false;
     }
 
 private:
-    Parameters(ParametersBase&& base)
-        : ParametersBase(std::move(base))
+    Parameters(ParametersBase<FP>&& base)
+        : ParametersBase<FP>(std::move(base))
     {
     }
 
@@ -168,7 +172,7 @@ public:
     template <class IOContext>
     static IOResult<Parameters> deserialize(IOContext& io)
     {
-        BOOST_OUTCOME_TRY(auto&& base, ParametersBase::deserialize(io));
+        BOOST_OUTCOME_TRY(auto&& base, ParametersBase<FP>::deserialize(io));
         return success(Parameters(std::move(base)));
     }
 };

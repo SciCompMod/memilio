@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -20,7 +20,7 @@
 #ifndef MIO_UTILS_MPI_H
 #define MIO_UTILS_MPI_H
 
-#include "memilio/config.h"
+#include "memilio/config.h" // IWYU pragma: keep
 
 #ifdef MEMILIO_ENABLE_MPI
 #include "mpi.h"
@@ -59,6 +59,18 @@ void finalize();
 * Returns true if the calling process is the root process.
 */
 bool is_root();
+
+/**
+ * @brief Return the rank of the calling process on the given communicator.
+ * @param comm An MPI communicator.
+ */
+int rank(Comm comm);
+
+/**
+ * @brief Return the size of the given communicator.
+ * @param comm An MPI communicator.
+ */
+int size(Comm comm);
 
 } // namespace mpi
 } // namespace mio

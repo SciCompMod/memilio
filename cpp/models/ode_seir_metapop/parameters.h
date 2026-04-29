@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Carlotta Gerstein
 *
@@ -26,7 +26,6 @@
 #include "memilio/utils/parameter_set.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/geography/regions.h"
-#include "Eigen/Sparse"
 
 #include <vector>
 
@@ -46,10 +45,10 @@ using Region = mio::regions::Region;
  */
 template <typename FP = ScalarType>
 struct TransmissionProbabilityOnContact {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(Region, AgeGroup size)
+    using Type = CustomIndexArray<UncertainValue<FP>, Region, AgeGroup>;
+    static Type get_default(Region size_region, AgeGroup size_age)
     {
-        return Type(size, 1.0);
+        return Type({size_region, size_age}, 1.0);
     }
     static std::string name()
     {
@@ -62,10 +61,10 @@ struct TransmissionProbabilityOnContact {
  */
 template <typename FP = ScalarType>
 struct TimeExposed {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(Region, AgeGroup size)
+    using Type = CustomIndexArray<UncertainValue<FP>, Region, AgeGroup>;
+    static Type get_default(Region size_region, AgeGroup size_age)
     {
-        return Type(size, 5.2);
+        return Type({size_region, size_age}, 5.2);
     }
     static std::string name()
     {
@@ -78,10 +77,10 @@ struct TimeExposed {
  */
 template <typename FP = ScalarType>
 struct TimeInfected {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(Region, AgeGroup size)
+    using Type = CustomIndexArray<UncertainValue<FP>, Region, AgeGroup>;
+    static Type get_default(Region size_region, AgeGroup size_age)
     {
-        return Type(size, 6.0);
+        return Type({size_region, size_age}, 6.0);
     }
     static std::string name()
     {
@@ -184,41 +183,40 @@ public:
      */
     bool apply_constraints()
     {
-        double tol_times = 1e-1;
-
-        int corrected = false;
+        const FP tol_times = 1e-1;
+        bool corrected     = false;
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_agegroups); i++) {
-            if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
-                log_warning(
-                    "Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
-                    "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
-                    "and reset parameters.",
-                    this->template get<TimeExposed<FP>>()[i], tol_times);
-                this->template get<TimeExposed<FP>>()[i] = tol_times;
-                corrected                                = true;
-            }
-            if (this->template get<TimeInfected<FP>>()[i] < tol_times) {
-                log_warning(
-                    "Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
-                    "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
-                    "and reset parameters.",
-                    this->template get<TimeInfected<FP>>()[i], tol_times);
-                this->template get<TimeInfected<FP>>()[i] = tol_times;
-                corrected                                 = true;
-            }
-            if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
-                this->template get<TransmissionProbabilityOnContact<FP>>()[i] > 1.0) {
-                log_warning(
-                    "Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
-                    this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0);
-                this->template get<TransmissionProbabilityOnContact<FP>>() = 0.0;
-                corrected                                                  = true;
-            }
             for (auto j = Region(0); j < Region(m_num_regions); j++) {
+                if (this->template get<TimeExposed<FP>>()[{j, i}] < tol_times) {
+                    log_warning(
+                        "Constraint check: Parameter TimeExposed changed from {} to {}. Please note that "
+                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                        "and reset parameters.",
+                        this->template get<TimeExposed<FP>>()[{j, i}], tol_times);
+                    this->template get<TimeExposed<FP>>()[{j, i}] = tol_times;
+                    corrected                                     = true;
+                }
+                if (this->template get<TimeInfected<FP>>()[{j, i}] < tol_times) {
+                    log_warning(
+                        "Constraint check: Parameter TimeInfected changed from {} to {}. Please note that "
+                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                        "and reset parameters.",
+                        this->template get<TimeInfected<FP>>()[{j, i}], tol_times);
+                    this->template get<TimeInfected<FP>>()[{j, i}] = tol_times;
+                    corrected                                      = true;
+                }
+                if (this->template get<TransmissionProbabilityOnContact<FP>>()[{j, i}] < 0.0 ||
+                    this->template get<TransmissionProbabilityOnContact<FP>>()[{j, i}] > 1.0) {
+                    log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {} to {} ",
+                                this->template get<TransmissionProbabilityOnContact<FP>>()[{j, i}], 0.0);
+                    this->template get<TransmissionProbabilityOnContact<FP>>() = 0.0;
+                    corrected                                                  = true;
+                }
+
                 if (this->template get<PopulationAfterCommuting<FP>>()[{j, i}] <= 0.0) {
                     log_warning(
-                        "Constraint check: Parameter PopulationAfterCommuting changed from {:.4f} to {:.4f}. Please "
+                        "Constraint check: Parameter PopulationAfterCommuting changed from {} to {}. Please "
                         "note that this only prevents division by zero. Consider to cancel and reset parameters.",
                         this->template get<PopulationAfterCommuting<FP>>()[{j, i}], 1.0);
                     this->template get<PopulationAfterCommuting<FP>>()[{j, i}] = 1.0;
@@ -226,12 +224,22 @@ public:
                 }
             }
         }
-        if ((this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).rowwise().sum() -
+        if ((this->template get<CommutingStrengths<FP>>()
+                 .get_cont_freq_mat()
+                 .get_matrix_at(SimulationTime<FP>(0))
+                 .rowwise()
+                 .sum() -
              Eigen::VectorXd::Ones((size_t)this->get_num_regions()))
                     .cwiseAbs()
                     .maxCoeff() > 1e-10 ||
-            this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).minCoeff() < 0.0 ||
-            this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).maxCoeff() > 1.0) {
+            this->template get<CommutingStrengths<FP>>()
+                    .get_cont_freq_mat()
+                    .get_matrix_at(SimulationTime<FP>(0))
+                    .minCoeff() < 0.0 ||
+            this->template get<CommutingStrengths<FP>>()
+                    .get_cont_freq_mat()
+                    .get_matrix_at(SimulationTime<FP>(0))
+                    .maxCoeff() > 1.0) {
             log_warning("Constraint check: Parameter CommutingStrengths does not ensure that the number of people "
                         "staying equals the complement of those leaving. Running without commuting.");
             this->template get<CommutingStrengths<FP>>().get_cont_freq_mat()[0].get_baseline() =
@@ -249,45 +257,55 @@ public:
     bool check_constraints() const
     {
         const double tol_times = 1e-1;
-
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_agegroups); i++) {
-            if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
-                log_error(
-                    "Constraint check: Parameter TimeExposed {:.4f} smaller or equal {:.4f}. Please note that "
-                    "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
-                    "and reset parameters.",
-                    this->template get<TimeExposed<FP>>()[i], 0.0);
-                return true;
-            }
-            if (this->template get<TimeInfected<FP>>()[i] < tol_times) {
-                log_error(
-                    "Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
-                    "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
-                    "and reset parameters.",
-                    this->template get<TimeInfected<FP>>()[i], 0.0);
-                return true;
-            }
-            if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
-                this->template get<TransmissionProbabilityOnContact<FP>>()[i] > 1.0) {
-                log_error("Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or "
-                          "greater {:.4f}",
-                          this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0, 1.0);
-                return true;
-            }
             for (auto j = Region(0); j < Region(m_num_regions); j++) {
+                if (this->template get<TimeExposed<FP>>()[{j, i}] < tol_times) {
+                    log_error(
+                        "Constraint check: Parameter TimeExposed {} smaller or equal {}. Please note that "
+                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                        "and reset parameters.",
+                        this->template get<TimeExposed<FP>>()[{j, i}], 0.0);
+                    return true;
+                }
+                if (this->template get<TimeInfected<FP>>()[{j, i}] < tol_times) {
+                    log_error(
+                        "Constraint check: Parameter TimeInfected {} smaller or equal {}. Please note that "
+                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                        "and reset parameters.",
+                        this->template get<TimeInfected<FP>>()[{j, i}], 0.0);
+                    return true;
+                }
+                if (this->template get<TransmissionProbabilityOnContact<FP>>()[{j, i}] < 0.0 ||
+                    this->template get<TransmissionProbabilityOnContact<FP>>()[{j, i}] > 1.0) {
+                    log_error("Constraint check: Parameter TransmissionProbabilityOnContact {} smaller {} or "
+                              "greater {:.4f}",
+                              this->template get<TransmissionProbabilityOnContact<FP>>()[{j, i}], 0.0, 1.0);
+                    return true;
+                }
+
                 if (this->template get<PopulationAfterCommuting<FP>>()[{j, i}] <= 0.0) {
-                    log_error("Constraint check: Parameter PopulationAfterCommuting {:.4f} smaller or equal {:.4f}",
+                    log_error("Constraint check: Parameter PopulationAfterCommuting {} smaller or equal {}",
                               this->template get<PopulationAfterCommuting<FP>>()[{j, i}], 0.0);
                     return true;
                 }
             }
         }
-        if ((this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).rowwise().sum() -
+        if ((this->template get<CommutingStrengths<FP>>()
+                 .get_cont_freq_mat()
+                 .get_matrix_at(SimulationTime<FP>(0))
+                 .rowwise()
+                 .sum() -
              Eigen::VectorXd::Ones((size_t)this->get_num_regions()))
                     .cwiseAbs()
                     .maxCoeff() > 1e-10 ||
-            this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).minCoeff() < 0.0 ||
-            this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).maxCoeff() > 1.0) {
+            this->template get<CommutingStrengths<FP>>()
+                    .get_cont_freq_mat()
+                    .get_matrix_at(SimulationTime<FP>(0))
+                    .minCoeff() < 0.0 ||
+            this->template get<CommutingStrengths<FP>>()
+                    .get_cont_freq_mat()
+                    .get_matrix_at(SimulationTime<FP>(0))
+                    .maxCoeff() > 1.0) {
             log_error("Constraint check: Parameter CommutingStrengths does not ensure that the number of people "
                       "staying equals the complement of those leaving.");
             return true;
@@ -324,4 +342,4 @@ private:
 } // namespace oseirmetapop
 } // namespace mio
 
-#endif // SEIR_PARAMETERS_H
+#endif // SEIRMETAPOP_PARAMETERS_H

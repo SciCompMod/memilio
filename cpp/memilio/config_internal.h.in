@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -31,6 +31,6 @@
 #cmakedefine MEMILIO_ENABLE_OPENMP
 #cmakedefine MEMILIO_ENABLE_PROFILING
 
-const char* const MEMILIO_BASE_DIR = "${MEMILIO_BASE_DIR}/";
+const char* const MEMILIO_BASE_DIR = "${MEMILIO_BASE_DIR}";
 
 #endif

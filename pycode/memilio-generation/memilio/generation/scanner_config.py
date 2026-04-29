@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2025 MEmilio
+# Copyright (C) 2020-2026 MEmilio
 #
 # Authors: Maximilian Betz
 #
@@ -39,7 +39,7 @@ class ScannerConfig:
         path_database: Path to the folder of the compile_commands.json
         namespace: C++ namespace of the model class
         python_module_name: Individual name for binded python module
-        python_generation_module_path: Path to the setup.py of the generation module
+        python_generation_module_path: Path to the ``pyproject.toml`` of the generation module
         skbuild_path_to_database: Path to compile_commands.json
         target_folder: Target folder for generated files
         optional: List with optional arguments

@@ -1,0 +1,3 @@
+cmake>=3.26
+ninja
+scikit-build>=0.18

@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Lena Ploetzke, Anna Wendler
 *
@@ -56,6 +56,9 @@ namespace isecir
 * using the means of the respective TransitionDistribution. 
 * The flow InfectedNoSymptomsToInfectedSymptoms is calculated with the standard formula from the IDE model
 * using the results for ExposedToInfectedNoSymptoms.
+* Throughout this RKI-based initialization, we assume that individuals can only die from InfectedCritical and not from 
+* InfectedSevere, i.e. this initialization routine assumes that the probability from transitioning from InfectedSevere 
+* to Dead is 0. 
 *
 * The number of deaths used in the model is computed by shifting the reported RKI data according to the mean values of the transitions 
 * InfectedSymptomsToInfectedSevere, InfectedSevereToInfectedCritical and InfectedCriticalToDead.
@@ -222,7 +225,7 @@ IOResult<void> set_initial_flows(Model& model, const ScalarType dt, const std::v
                 Eigen::Index(std::max(std::floor((offset - model.transitions.get_time(0) - 1) / dt), 0.));
             // Biggest index for which the entry is needed.
             idx_needed_last = Eigen::Index(std::min(std::ceil((offset - model.transitions.get_time(0) + 1) / dt),
-                                                    double(model.transitions.get_num_time_points() - 1)));
+                                                    ScalarType(model.transitions.get_num_time_points() - 1)));
 
             int INStISyi = model.get_transition_flat_index(
                 Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), group);

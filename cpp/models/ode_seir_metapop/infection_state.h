@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Carlotta Gerstein
 *
@@ -20,23 +20,14 @@
 #ifndef ODESEIRMETAPOP_INFECTIONSTATE_H
 #define ODESEIRMETAPOP_INFECTIONSTATE_H
 
+#include "models/ode_seir/infection_state.h"
+
 namespace mio
 {
 namespace oseirmetapop
 {
 
-/**
- * @brief The InfectionState enum describes the possible
- * categories for the infectious state of persons
- */
-enum class InfectionState
-{
-    Susceptible,
-    Exposed,
-    Infected,
-    Recovered,
-    Count
-};
+using mio::oseir::InfectionState;
 
 } // namespace oseirmetapop
 } // namespace mio

@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "memilio-plot"
+version = "1.0.0"
+description = "Part of MEmilio project, plots data to maps or visualizes simulation curves."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "Apache-2.0" }
+authors = [{ name = "MEmilio Team" }]
+maintainers = [
+  { email = "martin.kuehn@dlr.de" }
+]
+dependencies = [
+  "setuptools>=68",
+  "pandas>=1.2.2",
+  "matplotlib",
+  # smaller numpy versions cause a security issue, 1.25 does not work together with pyfakefs
+  "numpy>=1.22,!=1.25.*",
+  "openpyxl",
+  "xlrd",
+  "requests",
+  "pyxlsb",
+  "wget",
+  "folium",
+  "mapclassify",
+  "geopandas",
+  "h5py",
+  "imageio",
+  "datetime",
+  # first support of python 3.11
+  "pyfakefs>=4.6"
+]
+
+[project.optional-dependencies]
+dev = [
+  "coverage>=7.0.1",
+  "pylint>=3.0",
+  "pylint_json2html==0.5.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/SciCompMod/memilio"
+Team = "https://memilio.readthedocs.io/en/latest/team.html"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["memilio*"]

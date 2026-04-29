@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
@@ -189,10 +189,6 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             node, [](auto&& model) -> auto& { return model.parameters.template get<TestAndTraceCapacity<double>>(); });
         param_percentil(
             node, [](auto&& model) -> auto& { return model.parameters.template get<ICUCapacity<double>>(); });
-        param_percentil(
-            node, [](auto&& model) -> auto& {
-                return model.parameters.template get<DynamicNPIsImplementationDelay<double>>();
-            });
 
         for (size_t run = 0; run < num_runs; run++) {
             auto const& params = ensemble_params[run][node];

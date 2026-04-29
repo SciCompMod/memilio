@@ -17,6 +17,10 @@ on:
       - "**/memilio-epidata/**"
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
@@ -24,7 +28,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: 3.11
+          python-version: 3.12
       - uses: pre-commit/action@v3.0.1
 
   build-cpp-gcc_clang:
@@ -73,6 +77,7 @@ jobs:
           version: latest
           config: Release
           openmp: ON
+          benchmarks: ON # benchmarks are only built to catch build errors, not run in CI
 
   build-cpp-msvc:
     if: github.event.pull_request.draft == false
@@ -287,7 +292,7 @@ jobs:
     if: github.event.pull_request.draft == false
     strategy:
       matrix: 
-        version: ["3.8", "3.11"]
+        version: ["3.8", "3.12"]
     needs: build-py-generation
     runs-on: ubuntu-latest
     steps:
@@ -301,7 +306,7 @@ jobs:
     needs: build-py-simulation
     strategy:
       matrix: 
-        version: ["3.8", "3.11"]
+        version: ["3.8", "3.12"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -314,7 +319,7 @@ jobs:
     needs: [build-py-surrogatemodel, build-py-simulation]
     strategy:
       matrix: 
-        version: ["3.8", "3.11"]
+        version: ["3.8", "3.12"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

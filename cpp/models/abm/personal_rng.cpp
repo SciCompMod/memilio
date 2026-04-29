@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Khoa Nguyen, Rene Schmieding
 *
@@ -35,8 +35,9 @@ PersonalRandomNumberGenerator::PersonalRandomNumberGenerator(mio::Key<uint64_t> 
 {
 }
 
-PersonalRandomNumberGenerator::PersonalRandomNumberGenerator(Person& person)
-    : PersonalRandomNumberGenerator(person.get_rng_key(), person.get_rng_index(), person.get_rng_counter())
+PersonalRandomNumberGenerator::PersonalRandomNumberGenerator(const RandomNumberGenerator& model_rng, Person& person)
+    : PersonalRandomNumberGenerator(model_rng.get_key(), static_cast<uint32_t>(person.get_id().get()),
+                                    person.get_rng_counter())
 {
 }
 

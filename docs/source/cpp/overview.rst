@@ -2,9 +2,20 @@ Overview
 ============
 
 
+Model structure
+----------------
+
+The MEmilio library uses a modular organization of models where :doc:`compartmental or aggregated models<cpp/aggregated_models>` based on ODEs (ordinary differential equations) without and with Linear Chain Trick, IDEs (integro-differential equations), and SDEs (stochastic differential equations) share a maximum of properties and interfaces (implemented in the *memilio* folder) to allow simple and straightforward model adaption with, e.g., demographic or spatial stratification (e.g. found in the *memilio/mobility* folder to create :doc:`metapopulation models <metapop>`) as shown in the following figure. :doc:`Agent-based models <individual_models>` are furthermore harmonized with most structures such as parameters, contact patterns, and non-pharmaceutical interventions (e.g. found in *memilio/epidemiology*).
+
+.. image:: http://martinkuehn.eu/research/images/memilio_backend.png
+   :alt: Overview on MEmilio's model backend
+   :width: 100%
+
+For a quick run through MEmilio's functionality see :doc:`installation`.
+
 The MEmilio C++ project is organized as follows:
 
-Main Directory Structure
+Main directory structure
 ---------------------------
 
 The main directory structure in the ``cpp`` directory includes:
@@ -33,14 +44,8 @@ The main directory structure in the ``cpp`` directory includes:
 
 - **benchmarks/**: Analyzing runtime performance
 
-Build System
+Build system
 -------------
 
-The project uses CMake as a build system with various configuration options such as:
-
-- ``MEMILIO_BUILD_TESTS``: Enables building unit tests
-- ``MEMILIO_BUILD_EXAMPLES``: Enables building example applications
-- ``MEMILIO_BUILD_MODELS``: Enables building model libraries
-- ``MEMILIO_ENABLE_OPENMP``: Enables multithreading with OpenMP
-
-For more details on the build system, refer to TBD
+The project uses CMake as a build system with various configuration options. 
+For an explanation, refer to :doc:`installation`.

@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: René Schmieding
 *
@@ -30,7 +30,7 @@ public:
      * @brief Draws a uniformly distributed random number.
      * @tparam FP A floating point type, defaults to double.
      * @param[in] min, max Lower and upper bound to the uniform distribution.
-     * @return A random value between min and max. 
+     * @return A random value between min and max.
      */
     template <class FP = double>
     FP random_number(FP min = FP{-1e+3}, FP max = FP{1e+3})
@@ -42,7 +42,7 @@ public:
      * @brief Draws a uniformly distributed integer.
      * @tparam IntType A integer type, defaults to int.
      * @param[in] min, max Lower and upper bound to the uniform distribution.
-     * @return A random value between min and max. 
+     * @return A random value between min and max.
      */
     template <class IntType = int>
     IntType random_integer(IntType min = IntType{-1e+3}, IntType max = IntType{1e+3})
@@ -59,9 +59,9 @@ public:
 protected:
     void SetUp() override
     {
-        log_rng_seeds(m_rng, mio::LogLevel::warn);
+        m_rng.set_counter(mio::Counter<uint64_t>{0});
     }
 
 private:
-    mio::RandomNumberGenerator m_rng{}; ///< Seeded rng used by this test fixture.
+    static inline mio::RandomNumberGenerator m_rng = mio::thread_local_rng(); ///< Seeded rng used by this test fixture.
 };

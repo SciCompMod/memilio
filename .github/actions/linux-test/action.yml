@@ -27,7 +27,10 @@ runs:
       shell: bash
       run: |
         sudo apt-get -qq update
-        sudo apt-get -qq -y install libhdf5-10* wget gnupg lcov
+        sudo apt-get -qq -y install wget gnupg lcov
+        if [[ "${{ inputs.optional-deps }}" == "ON" ]]; then
+          sudo apt-get -qq -y install libhdf5-10*
+        fi
         sudo apt-get -qq update
     - name: Download built test directory
       uses: actions/download-artifact@v4

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_TIME_SERIES_H
-#define EPI_TIME_SERIES_H
+#ifndef MIO_UTILS_TIME_SERIES_H
+#define MIO_UTILS_TIME_SERIES_H
 
 #include "memilio/io/io.h"
 #include "memilio/utils/stl_util.h"
@@ -178,7 +178,7 @@ public:
     }
 
     /** move ctor and assignment */
-    TimeSeries(TimeSeries&& other) = default;
+    TimeSeries(TimeSeries&& other)            = default;
     TimeSeries& operator=(TimeSeries&& other) = default;
 
     /// Check if the time is strictly monotonic increasing.
@@ -450,44 +450,43 @@ public:
      * time at point 0 -> time at point 1 -> ...
      * 
      *********************/
-    Range<std::pair<time_iterator, time_iterator>> get_times()
+    Range<time_iterator> get_times()
     {
-        return make_range(time_iterator{&m_data, 0}, time_iterator{&m_data, m_num_time_points});
+        return {time_iterator{&m_data, 0}, time_iterator{&m_data, m_num_time_points}};
     }
 
-    Range<std::pair<const_time_iterator, const_time_iterator>> get_times() const
+    Range<const_time_iterator> get_times() const
     {
         return get_const_times();
     }
 
-    Range<std::pair<const_time_iterator, const_time_iterator>> get_const_times() const
+    Range<const_time_iterator> get_const_times() const
     {
-        return make_range(const_time_iterator{&m_data, 0}, const_time_iterator{&m_data, m_num_time_points});
+        return {const_time_iterator{&m_data, 0}, const_time_iterator{&m_data, m_num_time_points}};
     }
 
-    Range<std::pair<reverse_time_iterator, reverse_time_iterator>> get_reverse_times()
+    Range<reverse_time_iterator> get_reverse_times()
     {
         auto time_range = get_times();
-        return make_range(reverse_time_iterator{time_range.end()}, reverse_time_iterator{time_range.begin()});
+        return {reverse_time_iterator{time_range.end()}, reverse_time_iterator{time_range.begin()}};
     }
 
-    Range<std::pair<const_reverse_time_iterator, const_reverse_time_iterator>> get_reverse_times() const
+    Range<const_reverse_time_iterator> get_reverse_times() const
     {
         return get_const_reverse_times();
     }
 
-    Range<std::pair<const_reverse_time_iterator, const_reverse_time_iterator>> get_const_reverse_times() const
+    Range<const_reverse_time_iterator> get_const_reverse_times() const
     {
         auto time_range = get_const_times();
-        return make_range(const_reverse_time_iterator{time_range.end()},
-                          const_reverse_time_iterator{time_range.begin()});
+        return {const_reverse_time_iterator{time_range.end()}, const_reverse_time_iterator{time_range.begin()}};
     }
 
     /**
      * @brief Print out the TimeSeries as a table.
      *
-    * All row entries in the table are separated by the given separator, followed by additional spaces filling the width
-    * of the next entry. Each row is terminated by a newline character '\n'. The first row of the table starts with
+     * All row entries in the table are separated by the given separator, followed by additional spaces filling the width
+     * of the next entry. Each row is terminated by a newline character '\n'. The first row of the table starts with
      * "Time", followed by other column labels. Each row after that contains the time (see get_time) followed by the
      * value (see get_value) for every row (i.e. time point) in the TimeSeries.
      * The width parameter sets the minimum width of each table entry. For the numbers from the TimeSeries, this width
@@ -660,8 +659,9 @@ struct TimeSeriesIterTraits {
     }
     using Matrix      = typename TimeSeries<FP>::Matrix;
     using MatrixPtr   = std::conditional_t<IsConst, const Matrix, Matrix>*;
-    using VectorValue = typename decltype(
-        std::declval<MatrixPtr>()->col(std::declval<Eigen::Index>()).tail(std::declval<Eigen::Index>()))::PlainObject;
+    using VectorValue = typename decltype(std::declval<MatrixPtr>()
+                                              ->col(std::declval<Eigen::Index>())
+                                              .tail(std::declval<Eigen::Index>()))::PlainObject;
     using VectorReference =
         decltype(std::declval<MatrixPtr>()->col(std::declval<Eigen::Index>()).tail(std::declval<Eigen::Index>()));
     using TimeValue     = FP;
@@ -901,11 +901,11 @@ public:
  * @param rel_tol relative floating point tolerance for equality of time values
  * @return TimeSeries::reverse_iterator that points to ts[t_search] or ts.rend()
  */
-template <class TS, class FP>
+template <class FP, class TS>
 decltype(std::declval<TS>().rend()) find_value_reverse(TS&& ts, FP t_search, FP abs_tol = 0, FP rel_tol = 0)
 {
     auto iter_t = find_if(ts.get_reverse_times().begin(), ts.get_reverse_times().end(), [=](auto t) {
-        return floating_point_equal(t, t_search, abs_tol, rel_tol);
+        return floating_point_equal<FP>(t, t_search, abs_tol, rel_tol);
     });
     if (iter_t != ts.get_reverse_times().end()) {
         return ts.rbegin() + (iter_t - ts.get_reverse_times().begin());
@@ -915,4 +915,4 @@ decltype(std::declval<TS>().rend()) find_value_reverse(TS&& ts, FP t_search, FP 
 
 } // namespace mio
 
-#endif
+#endif // MIO_UTILS_TIME_SERIES_H

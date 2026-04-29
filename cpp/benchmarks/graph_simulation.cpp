@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Henrik Zunker
 *
@@ -17,15 +17,16 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "benchmark/benchmark.h"
 #include "benchmarks/graph_simulation.h"
 #include "memilio/compartments/simulation.h"
-#include "memilio/mobility/metapopulation_mobility_instant.h"
-#include "benchmark/benchmark.h"
-#include "ode_secirvvs/model.h"
 #include "memilio/math/adapt_rk.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
+#include "memilio/utils/base_dir.h"
+#include "ode_secirvvs/model.h"
 #include <string>
 
-const std::string config_path = "../../benchmarks/graph_simulation.config";
+const std::string config_path = mio::base_dir() + "cpp/benchmarks/graph_simulation.config";
 
 mio::osecirvvs::Model<ScalarType> create_model(size_t num_agegroups, const ScalarType tmax)
 {
@@ -78,7 +79,7 @@ mio::osecirvvs::Model<ScalarType> create_model(size_t num_agegroups, const Scala
     auto& contact_matrix = contacts.get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(0.5);
     contact_matrix[0].get_baseline().diagonal().setConstant(5.0);
-    contact_matrix[0].add_damping(0.3, mio::SimulationTime(5.0));
+    contact_matrix[0].add_damping(0.3, mio::SimulationTime<ScalarType>(5.0));
 
     for (mio::AgeGroup i = 0; i < (mio::AgeGroup)num_agegroups; i++) {
         //times
@@ -115,14 +116,14 @@ auto create_simulation()
 {
     auto cfg = mio::benchmark::GraphConfig::initialize(config_path);
 
-    mio::osecirvvs::Model model = create_model(cfg.num_agegroups, cfg.t_max);
+    mio::osecirvvs::Model<ScalarType> model = create_model(cfg.num_agegroups, cfg.t_max);
 
-    mio::Graph<mio::SimulationNode<mio::Simulation<ScalarType, mio::osecirvvs::Model<ScalarType>>>,
+    mio::Graph<mio::SimulationNode<ScalarType, mio::Simulation<ScalarType, mio::osecirvvs::Model<ScalarType>>>,
                mio::MobilityEdge<ScalarType>>
         g;
     for (size_t county_id = 0; county_id < cfg.num_regions; county_id++) {
         g.add_node(county_id, model, cfg.t0);
-        g.nodes()[county_id].property.get_simulation().set_integrator(std::make_shared<Integrator>());
+        g.nodes()[county_id].property.get_simulation().set_integrator_core(std::make_unique<Integrator>());
     }
 
     // Graph is always complete here
@@ -130,9 +131,9 @@ auto create_simulation()
         for (size_t county_idx_j = 0; county_idx_j < g.nodes().size(); ++county_idx_j) {
             if (county_idx_i == county_idx_j)
                 continue;
-            g.add_edge(
-                county_idx_i, county_idx_j,
-                Eigen::VectorXd::Constant((size_t)mio::osecirvvs::InfectionState::Count * cfg.num_agegroups, 0.01));
+            g.add_edge(county_idx_i, county_idx_j,
+                       Eigen::VectorX<ScalarType>::Constant(
+                           (size_t)mio::osecirvvs::InfectionState::Count * cfg.num_agegroups, 0.01));
         }
     }
 

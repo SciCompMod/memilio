@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: René Schmieding, Julia Bicker
 *
@@ -40,7 +40,7 @@ inline size_t well_index(const Position& p)
 }
 
 /**
- * @brief Implementation of diffusive ABM, see dabm::Model. 
+ * @brief Implementation of diffusive ABM, see dabm::Model.
  * This implementation defines a diffusion process for the potential F(x,y) = (x^2 -1)^2+(y^2-1)^2.
  * @tparam InfectionState An infection state enum.
  */
@@ -67,13 +67,13 @@ public:
      * @param[in] sigma Noise term for the diffusion process.
      * @param[in] non_moving_state InfectionStates that are excluded from movement e.g. Dead.
      */
-    QuadWell(const std::vector<Agent>& agents, const std::vector<mio::AdoptionRate<Status>>& rates,
-             double contact_radius = 0.4, double sigma = 0.4, std::vector<Status> non_moving_states = {})
+    QuadWell(const std::vector<Agent>& agents, const std::vector<mio::AdoptionRate<ScalarType, Status>>& rates,
+             ScalarType contact_radius = 0.4, ScalarType sigma = 0.4, std::vector<Status> non_moving_states = {})
         : populations(agents)
         , m_contact_radius(contact_radius)
         , m_sigma(sigma)
         , m_non_moving_states(non_moving_states)
-        , m_number_transitions(static_cast<size_t>(Status::Count), Eigen::MatrixXd::Zero(4, 4))
+        , m_number_transitions(static_cast<size_t>(Status::Count), Eigen::MatrixX<ScalarType>::Zero(4, 4))
     {
         for (auto& agent : populations) {
             mio::unused(agent);
@@ -100,9 +100,9 @@ public:
      * @param[in] new_status Target infection state of the adoption rate, see mio::AdoptionRate.to.
      * @return Value of agent-dependent AdoptionRate.
      */
-    double adoption_rate(const Agent& agent, const Status& new_status) const
+    ScalarType adoption_rate(const Agent& agent, const Status& new_status) const
     {
-        double rate = 0;
+        ScalarType rate = 0;
         // get the correct adoption rate
         const size_t well = well_index(agent.position);
         auto map_itr      = m_adoption_rates.find({well, agent.status, new_status});
@@ -143,15 +143,16 @@ public:
      * @param[in] dt Step size.
      * @param[in] agent Agent to be moved.
      */
-    void move(const double /*t*/, const double dt, Agent& agent)
+    void move(const ScalarType /*t*/, const ScalarType dt, Agent& agent)
     {
         const auto old_well = well_index(agent.position);
         if (std::find(m_non_moving_states.begin(), m_non_moving_states.end(), agent.status) ==
                 m_non_moving_states.end() &&
             std::find(m_non_moving_regions.begin(), m_non_moving_regions.end(), old_well) ==
                 m_non_moving_regions.end()) {
-            Position p = {mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(m_rng, 0.0, 1.0),
-                          mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(m_rng, 0.0, 1.0)};
+            Position p = {
+                mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(m_rng, 0.0, 1.0),
+                mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(m_rng, 0.0, 1.0)};
 
             agent.position      = agent.position - dt * grad_U(agent.position) + (m_sigma * std::sqrt(dt)) * p;
             const auto new_well = well_index(agent.position);
@@ -166,9 +167,9 @@ public:
      * @brief Calculate the current system state i.e. the populations for each region and infection state.
      * @return Vector containing the number of agents per infection state for each region.
      */
-    Eigen::VectorXd time_point() const
+    Eigen::VectorX<ScalarType> time_point() const
     {
-        Eigen::VectorXd val = Eigen::VectorXd::Zero(4 * static_cast<size_t>(Status::Count));
+        Eigen::VectorX<ScalarType> val = Eigen::VectorX<ScalarType>::Zero(4 * static_cast<size_t>(Status::Count));
         for (auto& agent : populations) {
             // split population into the wells given by grad_U
             auto position =
@@ -182,12 +183,12 @@ public:
      * @brief Get the  number of spatial transitions that happened until the current system state.
      * @return Matrix with entries (from_well, to_well) for every infection state.
      */
-    const std::vector<Eigen::MatrixXd>& number_transitions() const
+    const std::vector<Eigen::MatrixX<ScalarType>>& number_transitions() const
     {
         return m_number_transitions;
     }
 
-    std::vector<Eigen::MatrixXd>& number_transitions()
+    std::vector<Eigen::MatrixX<ScalarType>>& number_transitions()
     {
         return m_number_transitions;
     }
@@ -196,7 +197,8 @@ public:
      * @brief Get AdoptionRate mapping.
      * @return Map of AdoptionRates based on their region index and source and target infection state.
      */
-    std::map<std::tuple<mio::regions::Region, Status, Status>, mio::AdoptionRate<Status>>& get_adoption_rates()
+    std::map<std::tuple<mio::regions::Region, Status, Status>, mio::AdoptionRate<ScalarType, Status>>&
+    get_adoption_rates()
     {
         return m_adoption_rates;
     }
@@ -246,7 +248,7 @@ private:
                well_index(agent.position) == well_index(contact.position);
     }
 
-    /** 
+    /**
      * @brief Restrict domain to [-2, 2]^2 where "escaping" is impossible.
      * @param[in] p Position to check.
      * @return Boolean specifying whether p is in [-2, 2]^2.
@@ -256,13 +258,13 @@ private:
         return -2 <= p[0] && p[0] <= 2 && -2 <= p[1] && p[1] <= 2;
     }
 
-    std::map<std::tuple<mio::regions::Region, Status, Status>, mio::AdoptionRate<Status>>
+    std::map<std::tuple<mio::regions::Region, Status, Status>, mio::AdoptionRate<ScalarType, Status>>
         m_adoption_rates; ///< Map of AdoptionRates according to their region index and their from -> to infection states.
-    double m_contact_radius; ///< Agents' interaction radius. Within this radius agents are considered as contacts.
-    double m_sigma; ///< Noise term of the diffusion process.
+    ScalarType m_contact_radius; ///< Agents' interaction radius. Within this radius agents are considered as contacts.
+    ScalarType m_sigma; ///< Noise term of the diffusion process.
     std::vector<Status> m_non_moving_states; ///< Infection states within which agents do not change their location.
     std::vector<size_t> m_non_moving_regions{}; ///< Regions without movement.
-    std::vector<Eigen::MatrixXd>
+    std::vector<Eigen::MatrixX<ScalarType>>
         m_number_transitions; ///< Vector that contains for every infection state a matrix with entry (k,l) the number of spatial transitions from Region k to Regionl.
     mio::RandomNumberGenerator m_rng; ///< Model's random number generator.
 };

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio   
+* Copyright (C) 2020-2026 MEmilio   
 *
 * Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Khoa Nguyen
 *
@@ -110,9 +110,10 @@ LocationType go_to_event(PersonalRandomNumberGenerator& rng, const Person& perso
         ((t.day_of_week() <= 4 && t.hour_of_day() >= 19 && t.hour_of_day() < 22) ||
          (t.day_of_week() >= 5 && t.hour_of_day() >= 10 && t.hour_of_day() < 22)) &&
         !person.is_in_quarantine(t, params)) {
-        return random_transition(rng, current_loc, dt,
-                                 {{LocationType::SocialEvent,
-                                   params.get<SocialEventRate>().get_matrix_at(t.days())[(size_t)person.get_age()]}});
+        return random_transition(
+            rng, current_loc, dt,
+            {{LocationType::SocialEvent, params.get<SocialEventRate>().get_matrix_at(
+                                             SimulationTime<ScalarType>(t.days()))[(size_t)person.get_age()]}});
     }
 
     //return home

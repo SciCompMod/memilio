@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Henrik Zunker
 *
@@ -31,17 +31,41 @@
 namespace mio
 {
 
+/// @brief Sets the default log level on creation, and resets it to the previous level on destruction.
+class LogLevelOverride
+{
+public:
+    LogLevelOverride(LogLevel temporary_level)
+        : m_previous_level(spdlog::default_logger()->level())
+    {
+        set_log_level(temporary_level);
+    }
+
+    ~LogLevelOverride()
+    {
+        spdlog::set_level(m_previous_level);
+    }
+
+private:
+    spdlog::level::level_enum m_previous_level;
+};
+
 /// @brief Can be used to redirect an spdlog::logger. This may cause unintended side effects, like silencing errors!
 class RedirectLogger
 {
 public:
-    RedirectLogger()
+    /**
+     * @brief Create a logger that can temporarily capture another's output into a readable/viewable string stream.
+     * @param[in] level The LogLevel at which the redirect logger will record logs. Uses "warn" by default.
+     */
+    RedirectLogger(LogLevel level = LogLevel::warn)
         : m_is_captured(false)
         , m_output()
         , m_sink(std::make_shared<spdlog::sinks::ostream_sink_st>(m_output))
         , m_logger("redirect", m_sink)
         , m_target(nullptr)
     {
+        m_logger.set_level(details::get_spdlog_level(level));
     }
 
     ~RedirectLogger()
@@ -89,9 +113,10 @@ public:
     std::string read()
     {
         assert(m_is_captured);
-        std::string out = m_output.str();
-        m_output.str()  = "";
-        return out;
+        m_logger.flush();
+        std::ostringstream out;
+        std::swap(out, m_output);
+        return out.str();
     }
 
 private:

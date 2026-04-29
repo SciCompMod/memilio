@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Rene Schmieding
 *
@@ -22,6 +22,7 @@
 
 #include "memilio/math/adapt_rk.h"
 #include "memilio/math/stepper_wrapper.h"
+#include "memilio/utils/base_dir.h"
 
 template <class Integrator>
 void simulation(::benchmark::State& state)
@@ -29,15 +30,15 @@ void simulation(::benchmark::State& state)
     // suppress non-critical messages
     mio::set_log_level(mio::LogLevel::critical);
     // setup benchmark parameters
-    auto cfg = mio::benchmark::SimulationConfig::initialize("benchmarks/simulation.config");
+    auto cfg = mio::benchmark::SimulationConfig::initialize(mio::base_dir() + "cpp/benchmarks/simulation.config");
     //auto cfg = mio::benchmark::SimulationConfig::initialize(10);
     auto model = mio::benchmark::model::SecirAgeres(cfg.num_agegroups);
 
     for (auto _ : state) {
         // This code gets timed
-        std::shared_ptr<mio::IntegratorCore<ScalarType>> I =
-            std::make_shared<Integrator>(cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
-        simulate(cfg.t0, cfg.t_max, cfg.dt, model, I);
+        std::unique_ptr<mio::OdeIntegratorCore<ScalarType>> I =
+            std::make_unique<Integrator>(cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
+        simulate(cfg.t0, cfg.t_max, cfg.dt, model, std::move(I));
     }
 }
 

@@ -3,7 +3,6 @@ add_library(sde_sir
     model.h
     model.cpp
     parameters.h
-    simulation.h
 )
 target_link_libraries(sde_sir PUBLIC memilio)
 target_include_directories(sde_sir PUBLIC

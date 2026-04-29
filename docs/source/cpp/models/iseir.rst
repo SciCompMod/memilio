@@ -2,7 +2,7 @@ IDE-based SEIR-type model
 =========================
 
 The IDE-based SEIR type module models and simulates an epidemic using integro-differential equations. The model is 
-particularly suited for pathogens a latent infection state. The model assumes perfect immunity after recovery and is 
+particularly suited for pathogens with a latent infection state. The model assumes perfect immunity after recovery and is 
 thus only suited for epidemic use cases. In the following, we present the model in detail. Note that this model is 
 solved differently tha the IDE-SECIR model and the structure presented in :doc:`IDE models <../ide>` applies only partially.
 
@@ -19,7 +19,7 @@ Bachelor's thesis, University of Cologne. `https://elib.dlr.de/143504/ <https://
 Infection States
 ----------------
 
-The model contains the following list of **InfectionState**\s:
+The model contains the following list of ``InfectionState``\s:
 
 .. code-block:: RST
 
@@ -125,7 +125,7 @@ The values of the remaining compartments :math:`E`, :math:`I` and :math:`R` are 
 Output
 ------
 
-The output of the simulationis a `TimeSeries` object containing the size of the compartments at all time 
+The output of the simulation is a ``TimeSeries`` object containing the size of the compartments at all time 
 points. You can access the results as follows:
 
 .. code-block:: cpp
@@ -141,7 +141,7 @@ points. You can access the results as follows:
     Eigen::VectorX last_value = result.get_last_value();
     ScalarType last_time = result.get_last_time();
 
-The order of the compartments follows the definition in the `InfectionState` enum.
+The order of the compartments follows the definition in the ``InfectionState`` enum.
 
 You can print the simulation results as a formatted table:
 
@@ -165,7 +165,7 @@ Additionally, you can export the results to a CSV file:
 Visualization
 -------------
 
-To visualize the results of a simulation, you can use the Python package :doc:`memilio_plot <../../python/memilio_plot>`
+To visualize the results of a simulation, you can use the Python package :doc:`m-plot <../../python/m-plot>`
 and its documentation.
 
 You can export your simulation results to CSV format as described above.
@@ -178,8 +178,4 @@ An example can be found at:
 
 - `examples/ide_seir.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ide_seir.cpp>`_
 
-
-Overview of the ``iseir`` namespace:
------------------------------------------
-
-.. doxygennamespace:: mio::iseir
+The code documentation for the model can be found at :CPP-API:`mio::iseir` .

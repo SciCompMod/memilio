@@ -14,7 +14,7 @@ Important note on the solution: The numerical integration method is a Euler-Maru
 
 Below is an overview of the model architecture and its compartments.
 
-.. image:: https://github.com/SciCompMod/memilio/assets/69154294/8da7f468-4561-45ae-8034-4b54ebf8efa5
+.. image:: https://martinkuehn.eu/research/images/sir.png
     :alt: SIR_model
 
 =====================   ====================================      =====================================================================
@@ -30,7 +30,5 @@ Mathematical variable   C++ variable name                         Description
 
 An example can be found in `sde_sir.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/sde_sir.cpp>`_
 
-Overview of the ``SSIR`` namespace:
-------------------------------------
 
-.. doxygennamespace:: mio::ssir
+The code documentation for the model can be found at :CPP-API:`mio::ssir` .
