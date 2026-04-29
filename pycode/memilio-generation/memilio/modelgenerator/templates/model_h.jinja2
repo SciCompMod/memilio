@@ -171,7 +171,7 @@ public:
     template <class IOContext>
     static IOResult<Model> deserialize(IOContext& io)
     {
-        auto obj = io.create_object("Model");
+        auto obj = io.expect_object("Model");
         auto par = obj.expect_element("Parameters", Tag<ParameterSet>{});
         auto pop = obj.expect_element("Populations", Tag<Populations>{});
         return apply(
