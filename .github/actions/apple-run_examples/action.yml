@@ -15,6 +15,7 @@ runs:
     - name: Run examples
       shell: bash
       run: |
+        brew install hdf5
         cd cpp/build-mac/bin
         sudo chmod -R a+x ./
         numberoffiles=$(ls -dq *_example | wc -l)
