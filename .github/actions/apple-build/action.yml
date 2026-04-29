@@ -15,7 +15,7 @@ runs:
     - name: Build
       shell: bash
       run: |
-        brew install gcc@13 hdf5
+        brew install hdf5
         cmake -B cpp/build-mac/ -S cpp/ -DCMAKE_BUILD_TYPE=${{ inputs.config }}
         cmake --build cpp/build-mac/ -j$(sysctl -n hw.logicalcpu)
     - name: Upload build directory
