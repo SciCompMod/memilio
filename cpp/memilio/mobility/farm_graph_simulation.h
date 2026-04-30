@@ -565,7 +565,7 @@ private:
     void post_culling_test(Node& node)
     {
         // Find cases if there are at least 10 infected birds.
-        if (node.get_result().get_last_value()[3] >= 10) {
+        if (node.get_result().get_last_value()[2] >= 10) {
             node.set_date_confirmation(Base::m_t + 5.0);
             mio::log_debug("Post-culling");
         }
