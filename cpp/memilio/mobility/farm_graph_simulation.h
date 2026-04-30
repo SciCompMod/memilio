@@ -256,7 +256,7 @@ private:
             return m_value2;
         }
         else if (distance.meters() < m_cutoff_3) {
-            return m_value3;
+            return m_value3 * m_value2;
         }
         return 0.0;
     }
