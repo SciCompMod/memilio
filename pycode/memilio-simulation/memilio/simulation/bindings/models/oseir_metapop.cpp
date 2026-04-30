@@ -22,6 +22,7 @@
 #include "pybind_util.h"
 #include "compartments/simulation.h"
 #include "compartments/compartmental_model.h"
+#include "data/analyze_result.h"
 #include "epidemiology/age_group.h"
 #include "epidemiology/populations.h"
 #include "utils/custom_index_array.h"
@@ -53,6 +54,8 @@ inline std::string pretty_name<mio::oseirmetapop::InfectionState>()
 
 PYBIND11_MODULE(_simulation_oseir_metapop, m)
 {
+    pymio::bind_interpolate_result_methods(m);
+
     pymio::iterable_enum<mio::oseirmetapop::InfectionState>(m, "InfectionState")
         .value("Susceptible", mio::oseirmetapop::InfectionState::Susceptible)
         .value("Exposed", mio::oseirmetapop::InfectionState::Exposed)
@@ -61,6 +64,9 @@ PYBIND11_MODULE(_simulation_oseir_metapop, m)
 
     pymio::bind_ParameterSet<mio::oseirmetapop::ParametersBase<double>, pymio::EnablePickling::Required>(
         m, "ParametersBase");
+
+    pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::regions::Region, mio::AgeGroup>(
+        m, "RegionAgeGroupArray");
 
     pymio::bind_class<mio::oseirmetapop::Parameters<double>, pymio::EnablePickling::Never,
                       mio::oseirmetapop::ParametersBase<double>>(m, "Parameters")
