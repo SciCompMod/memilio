@@ -8,6 +8,8 @@ add_library(ide_sir
     model_polynomial.cpp
     model_polynomial_extended.h
     model_polynomial_extended.cpp
+    model_smoothercos.h
+    model_smoothercos.cpp
     simulation.h
     simulation.cpp
     simulation_s_groundtruth.h
@@ -18,6 +20,8 @@ add_library(ide_sir
     simulation_polynomial.cpp
     simulation_polynomial_extended.h
     simulation_polynomial_extended.cpp
+    simulation_smoothercos.h
+    simulation_smoothercos.cpp
     parameters.h
     gregory_weights.h 
     gregory_weights.cpp
