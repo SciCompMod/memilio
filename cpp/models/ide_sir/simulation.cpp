@@ -61,16 +61,16 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, size_t fd_o
 
     while (m_model->populations.get_last_time() < tmax - 1e-10) {
 
-        // // Print time.
-        // if (floating_point_equal(std::remainder(10 * m_model->populations.get_last_time(), tmax), 0., 1e-7)) {
-        //     std::cout << "Time pop: " << m_model->populations.get_last_time() << std::endl;
-        // }
-
         // Add new time point to populations.
         m_model->populations.add_time_point(m_model->populations.get_last_time() + m_dt,
                                             Vec::Constant((size_t)InfectionState::Count, 0.));
 
-        std::cout << "Time pop: " << m_model->populations.get_last_time() << std::endl;
+        // Print time.
+        if (floating_point_equal(std::remainder(10 * m_model->populations.get_last_time(), tmax), 0., 1e-7)) {
+            std::cout << "Time pop: " << m_model->populations.get_last_time() << std::endl;
+        }
+
+        // std::cout << "Time pop: " << m_model->populations.get_last_time() << std::endl;
 
         // Compute Susceptibles.
         size_t num_time_points = m_model->populations.get_num_time_points();
@@ -87,12 +87,12 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, size_t fd_o
     // Compute S' as well as I and R.
     while (m_model->flows.get_last_time() < tmax - 1e-10) {
 
+        m_model->flows.add_time_point(m_model->flows.get_last_time() + m_dt,
+                                      Vec::Constant((size_t)InfectionTransition::Count, 0.));
+
         if (floating_point_equal(std::remainder(10 * m_model->flows.get_last_time(), tmax), 0., 1e-7)) {
             std::cout << "Time flows: " << m_model->flows.get_last_time() << std::endl;
         }
-
-        m_model->flows.add_time_point(m_model->flows.get_last_time() + m_dt,
-                                      Vec::Constant((size_t)InfectionTransition::Count, 0.));
 
         // Compute S'.
         m_model->compute_S_deriv(m_dt);

@@ -325,10 +325,11 @@ def compute_errors_max(groundtruth, results, groundtruth_exponent, timesteps_ide
     return np.array(errors)
 
 
-def plot_difference_per_timestep(groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, gregory_order,  save_dir=""):
+def plot_difference_per_timestep(groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, gregory_order,  save_dir="", damping_time=-1):
     num_errors = 3
 
-    errors = []
+    # errors = []
+    # errors_zoom = []
 
     compartments = ["S", "I", "R"]
 
@@ -342,19 +343,35 @@ def plot_difference_per_timestep(groundtruth, results, groundtruth_exponent, tim
         fig, axs = plt.subplots(1, num_plots, sharex=True,
                                 figsize=(figsize_x, 3))
 
-        errors.append([])
+        if damping_time != -1:
+            fig_zoom, axs_zoom = plt.subplots(1, num_plots, sharex=True,
+                                              figsize=(figsize_x, 3))
+
         for compartment in range(num_errors):
             scale_timesteps = timestep/pow(10, -groundtruth_exponent)
 
             difference = groundtruth[0][int(
                 pow(10, groundtruth_exponent)*(t0_ide))::int(scale_timesteps)][:, compartment]-results[i][int(t0_ide/timestep)::][:, compartment]
 
-            indices = range(len(difference))
+            indices = np.linspace(
+                t0_ide, t0_ide+(len(difference)-1)*timestep, len(difference))
 
-            axs[compartment].scatter(indices[0:], difference[0:], s=1)
+            axs[compartment].scatter(indices, difference, s=1)
             axs[compartment].set_title(f"{compartments[compartment]}")
 
-        plt.show()
+            if damping_time != -1:
+
+                difference_zoom = difference[int((damping_time-t0_ide-1)/timestep):int(
+                    (damping_time-t0_ide)/timestep)+1]
+                indices_zoom = indices[int((damping_time-t0_ide-1)/timestep):int(
+                    (damping_time-t0_ide)/timestep)+1]
+
+                axs_zoom[compartment].scatter(
+                    indices_zoom, difference_zoom, s=1)
+                axs_zoom[compartment].set_title(f"{compartments[compartment]}")
+
+        fig.supxlabel("Time")
+        fig_zoom.supxlabel("Time")
 
         if save_dir != "":
             if not os.path.isdir(f"{save_dir}/differences"):
@@ -362,8 +379,17 @@ def plot_difference_per_timestep(groundtruth, results, groundtruth_exponent, tim
 
             filename = f"{save_dir}/differences/gregoryorder={gregory_order}_timestep={timestep}"
 
-            plt.savefig(filename + ".png", format='png',
+            fig.savefig(filename + ".png", format='png',
                         dpi=500)
+
+            if damping_time != -1:
+                if not os.path.isdir(f"{save_dir}/differences_zoom"):
+                    os.makedirs(f"{save_dir}/differences_zoom")
+
+                filename = f"{save_dir}/differences_zoom/gregoryorder={gregory_order}_timestep={timestep}"
+
+                fig_zoom.savefig(filename + ".png", format='png',
+                                 dpi=500)
 
         plt.close()
 
@@ -604,15 +630,23 @@ def get_ide_exponents(data_dir):
 def get_t0_ide_from_dir_name(dir_name):
     t0_string = [x for x in dir_name.split(
         "_") if ("t0ide" in x or "tinit" in x)]
-    t0 = int(t0_string[0].split("=")[-1])
+    t0 = float(t0_string[0].split("=")[-1])
 
     return t0
+
+
+def get_dampingtime_ide_from_dir_name(dir_name):
+    dampingtime_string = [x for x in dir_name.split(
+        "_") if ("dampingtime" in x)]
+    dampingtime = int(dampingtime_string[0].split("=")[-1])
+
+    return dampingtime
 
 
 def get_tmax_ide_from_dir_name(dir_name):
     tmax_string = [x for x in dir_name.split(
         "_") if ("tmax" in x)]
-    tmax = int(tmax_string[0].split("=")[-1])
+    tmax = float(tmax_string[0].split("=")[-1])
 
     return tmax
 
@@ -623,7 +657,7 @@ def main():
     groundtruth_ode = True
     only_S = False
 
-    main_dir = "2026-04-27/test_damping_after_odeexp=6_fdordercontacts=4"
+    main_dir = "2026-04-29/test_backwardsfd_fdordercontacts=4_smootherwindow=2"
 
     ##############################################
 
@@ -644,6 +678,7 @@ def main():
 
         t0_ide = get_t0_ide_from_dir_name(dir_name)
         tmax = get_tmax_ide_from_dir_name(dir_name)
+        damping_time = get_dampingtime_ide_from_dir_name(dir_name)
 
         # Path where simulation results are stored.
         result_dir = os.path.join(os.path.dirname(
@@ -691,7 +726,7 @@ def main():
             errors_all_gregory_orders_max_abs.append(errors_max_abs)
 
             plot_difference_per_timestep(
-                groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, gregory_order_simulation, plot_dir)
+                groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, gregory_order_simulation, plot_dir, damping_time)
 
             print()
             # print(f"Gregory order {gregory_order_simulation}")

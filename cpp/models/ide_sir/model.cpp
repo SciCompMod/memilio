@@ -160,6 +160,28 @@ ScalarType ModelMessinaExtendedDetailedInit::compute_phi_deriv(ScalarType dt, si
                 dt;
     }
 
+    if (fd_order == 2) {
+        deriv = (3 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                         SimulationTime<ScalarType>(ScalarType(j) * dt))(0, 0) -
+                 4 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                         SimulationTime<ScalarType>((ScalarType(j) - 1.) * dt))(0, 0) +
+                 1 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                         SimulationTime<ScalarType>(((ScalarType)j - 2.) * dt))(0, 0)) /
+                (2 * dt);
+    }
+
+    if (fd_order == 3) {
+        deriv = (11 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                          SimulationTime<ScalarType>(ScalarType(j) * dt))(0, 0) -
+                 18 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                          SimulationTime<ScalarType>((ScalarType(j) - 1.) * dt))(0, 0) +
+                 9 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                         SimulationTime<ScalarType>(((ScalarType)j - 2.) * dt))(0, 0) -
+                 2 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                         SimulationTime<ScalarType>(((ScalarType)j - 3.) * dt))(0, 0)) /
+                (6 * dt);
+    }
+
     if (fd_order == 4) {
         deriv = (25. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
                            SimulationTime<ScalarType>((ScalarType)j * dt))(0, 0) -
@@ -174,8 +196,87 @@ ScalarType ModelMessinaExtendedDetailedInit::compute_phi_deriv(ScalarType dt, si
                 (12. * dt);
     }
 
+    if (fd_order == 5) {
+        deriv = (137. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                            SimulationTime<ScalarType>((ScalarType)j * dt))(0, 0) -
+                 300. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                            SimulationTime<ScalarType>(((ScalarType)j - 1.) * dt))(0, 0) +
+                 300. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                            SimulationTime<ScalarType>(((ScalarType)j - 2.) * dt))(0, 0) -
+                 200. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                            SimulationTime<ScalarType>(((ScalarType)j - 3.) * dt))(0, 0) +
+                 75. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                           SimulationTime<ScalarType>(((ScalarType)j - 4.) * dt))(0, 0) -
+                 12. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                           SimulationTime<ScalarType>(((ScalarType)j - 5.) * dt))(0, 0)) /
+                (60. * dt);
+    }
+
     if (fd_order == 1000) {
         deriv = phi_deriv_analytical(current_time, damping_time);
+    }
+
+    return deriv;
+}
+
+ScalarType ModelMessinaExtendedDetailedInit::compute_phi_deriv_central(ScalarType dt, size_t j, size_t fd_order)
+{
+    ScalarType deriv = 0;
+
+    if (fd_order == 2) {
+        deriv = (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                     SimulationTime<ScalarType>(((ScalarType)j + 1.) * dt))(0, 0) -
+                 parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                     SimulationTime<ScalarType>(((ScalarType)j - 1.) * dt))(0, 0)) /
+                (2. * dt);
+    }
+
+    if (fd_order == 4) {
+        deriv = (-parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                     SimulationTime<ScalarType>(((ScalarType)j + 2.) * dt))(0, 0) +
+                 8. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                          SimulationTime<ScalarType>(((ScalarType)j + 1.) * dt))(0, 0) -
+                 8 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                         SimulationTime<ScalarType>(((ScalarType)j - 1.) * dt))(0, 0) +
+                 parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                     SimulationTime<ScalarType>(((ScalarType)j - 2.) * dt))(0, 0)) /
+                (12. * dt);
+    }
+
+    if (fd_order == 6) {
+        deriv = (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                     SimulationTime<ScalarType>(((ScalarType)j + 3.) * dt))(0, 0) -
+                 9. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                          SimulationTime<ScalarType>(((ScalarType)j + 2.) * dt))(0, 0) +
+                 45. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                           SimulationTime<ScalarType>(((ScalarType)j + 1.) * dt))(0, 0) -
+                 45. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                           SimulationTime<ScalarType>(((ScalarType)j - 1.) * dt))(0, 0) +
+                 9. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                          SimulationTime<ScalarType>(((ScalarType)j - 2.) * dt))(0, 0) -
+                 parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                     SimulationTime<ScalarType>(((ScalarType)j - 3.) * dt))(0, 0)) /
+                (60. * dt);
+    }
+
+    if (fd_order == 8) {
+        deriv = (-3. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                           SimulationTime<ScalarType>(((ScalarType)j + 4.) * dt))(0, 0) +
+                 8. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                          SimulationTime<ScalarType>(((ScalarType)j + 3.) * dt))(0, 0) -
+                 168. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                            SimulationTime<ScalarType>(((ScalarType)j + 2.) * dt))(0, 0) +
+                 672. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                            SimulationTime<ScalarType>(((ScalarType)j + 1.) * dt))(0, 0) -
+                 672. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                            SimulationTime<ScalarType>(((ScalarType)j - 1.) * dt))(0, 0) +
+                 168. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                            SimulationTime<ScalarType>(((ScalarType)j - 2.) * dt))(0, 0) -
+                 8. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                          SimulationTime<ScalarType>(((ScalarType)j - 3.) * dt))(0, 0) +
+                 3. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                          SimulationTime<ScalarType>(((ScalarType)j - 4.) * dt))(0, 0)) /
+                (840. * dt);
     }
 
     return deriv;
@@ -207,7 +308,6 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
                                                                   size_t t0_index, size_t fd_order_contacts,
                                                                   ScalarType damping_time, bool split_integral)
 {
-    unused(fd_order_contacts);
     unused(damping_time);
     // Get the index of the current time step.
     ScalarType current_time = populations.get_last_time();
@@ -325,6 +425,11 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
             ScalarType inner_sum = 0.;
 
             ScalarType phi_deriv = compute_phi_deriv(dt, j, fd_order_contacts, current_time, damping_time);
+            // ScalarType phi_deriv = compute_phi_deriv_central(dt, j, fd_order_contacts);
+            // if (phi_deriv < -1e-10 || phi_deriv > 1e-10) {
+            //     std::cout << "current time: " << current_time << ", j: " << j << std::endl;
+            //     std::cout << "phi_deriv: " << phi_deriv << std::endl;
+            // }
 
             for (size_t k = 0; k <= j; k++) {
                 ScalarType gregory_weight_inner_sum   = 0.;
