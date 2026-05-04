@@ -77,6 +77,16 @@ public:
         return m_model->populations;
     }
 
+    TimeSeries<ScalarType> get_groundtruth()
+    {
+        return m_model->groundtruth;
+    }
+
+    const TimeSeries<ScalarType>& get_groundtruth() const
+    {
+        return m_model->groundtruth;
+    }
+
     /**
      * @brief returns the simulation model used in simulation.
      */

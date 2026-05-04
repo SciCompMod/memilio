@@ -42,10 +42,13 @@ void SimulationSmootherCos::advance(ScalarType tmax)
         // Add new time point to populations.
         m_model->populations.add_time_point(m_model->populations.get_last_time() + m_dt,
                                             Vec::Constant((size_t)InfectionState::Count, 0.));
+        m_model->groundtruth.add_time_point(m_model->groundtruth.get_last_time() + m_dt,
+                                            Vec::Constant((size_t)InfectionState::Count, 0.));
 
-        m_model->compute_S();
-        m_model->compute_S_deriv_analytical(m_model->populations.get_last_time());
-        m_model->compute_S_deriv(m_dt);
+        ScalarType current_time = m_model->populations.get_last_time();
+        m_model->approximate_smoothercos(m_dt, current_time);
+        bool smoothercos_func = true;
+        m_model->set_groundtruth(current_time, smoothercos_func);
     }
 }
 
@@ -58,9 +61,13 @@ void SimulationSmootherCos::advance_smoothstep(ScalarType tmax)
         m_model->populations.add_time_point(m_model->populations.get_last_time() + m_dt,
                                             Vec::Constant((size_t)InfectionState::Count, 0.));
 
-        m_model->compute_S_smoothstep(m_model->populations.get_last_time());
-        m_model->compute_smoothstep_deriv_analytical(m_model->populations.get_last_time());
-        m_model->compute_smoothstep_deriv_numerical(m_model->populations.get_last_time(), m_dt);
+        m_model->groundtruth.add_time_point(m_model->groundtruth.get_last_time() + m_dt,
+                                            Vec::Constant((size_t)InfectionState::Count, 0.));
+
+        ScalarType current_time = m_model->populations.get_last_time();
+        m_model->approximate_smoothstep(m_dt, current_time);
+        bool smoothercos_func = false;
+        m_model->set_groundtruth(current_time, smoothercos_func);
     }
 }
 

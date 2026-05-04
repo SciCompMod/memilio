@@ -144,8 +144,10 @@ mio::IOResult<void> simulate_smoothercos(ScalarType ide_exponent, size_t finite_
 
     ScalarType dt = pow(10, -ide_exponent);
 
-    // Initialize S according to init_populations.
+    // Initial values for SIR model.
     mio::TimeSeries<ScalarType> init_populations((size_t)mio::isir::InfectionState::Count);
+    // Initial values for groundtruth.
+    mio::TimeSeries<ScalarType> groundtruth_ts((size_t)mio::isir::InfectionState::Count);
 
     mio::UncertainContactMatrix<ScalarType> contact_matrix = scale_contact_matrix(damping, damping_time);
     Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
@@ -168,6 +170,7 @@ mio::IOResult<void> simulate_smoothercos(ScalarType ide_exponent, size_t finite_
     }
 
     init_populations.add_time_point(t0_ode, vec_init);
+    groundtruth_ts.add_time_point(t0_ode, vec_init);
 
     while (init_populations.get_last_time() < t0_ide - 1e-10) {
         if (smoothercos_func) {
@@ -187,11 +190,12 @@ mio::IOResult<void> simulate_smoothercos(ScalarType ide_exponent, size_t finite_
                 init_populations.get_last_time() + dt, damping_time, damping, cont_freq, smoother_window);
         }
         init_populations.add_time_point(init_populations.get_last_time() + dt, vec_init);
+        groundtruth_ts.add_time_point(groundtruth_ts.get_last_time() + dt, vec_init);
     }
 
     // Initialize model.
-    mio::isir::ModelSmootherCos model(std::move(init_populations), finite_difference_order, damping_time, damping,
-                                      cont_freq, smoother_window);
+    mio::isir::ModelSmootherCos model(std::move(init_populations), std::move(groundtruth_ts), finite_difference_order,
+                                      damping_time, damping, cont_freq, smoother_window);
 
     model.parameters.get<mio::isir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
@@ -207,10 +211,10 @@ mio::IOResult<void> simulate_smoothercos(ScalarType ide_exponent, size_t finite_
             mio::save_result({compartments}, {0}, num_agegroups,
                              save_dir + "result_ide_dt=1e-" + fmt::format("{:.0f}", ide_exponent) + ".h5");
 
-        if (!save_result_status_ide) {
-            return mio::failure(mio::StatusCode::InvalidValue,
-                                "Error occured while saving the IDE simulation results.");
-        }
+        mio::TimeSeries<ScalarType> groundtruth = sim.get_groundtruth();
+        auto save_result_status_groundtruth =
+            mio::save_result({groundtruth}, {0}, num_agegroups,
+                             save_dir + "groundtruth_dt=1e-" + fmt::format("{:.0f}", ide_exponent) + ".h5");
     }
 
     return mio::success();
@@ -221,24 +225,24 @@ int main()
     using namespace params;
 
     ScalarType t0_ode = 0.;
-    ScalarType t0_ide = 5.;
-    ScalarType tmax   = 25.;
+    ScalarType t0_ide = 12.;
+    ScalarType tmax   = 20.;
 
     ScalarType damping      = 0.2;
-    ScalarType damping_time = 20.;
+    ScalarType damping_time = 10.;
 
-    size_t finite_difference_order = 2;
+    size_t finite_difference_order = 4;
 
-    ScalarType smoother_window = 10.;
+    ScalarType smoother_window = 2.;
 
-    bool smoothercos_func = false;
+    bool smoothercos_func = true;
 
     std::vector<ScalarType> ide_exponents = {0., 1., 2., 3., 4.};
 
-    std::string save_dir =
-        fmt::format("../../simulation_results/2026-04-30/smoothstep_fdordercontacts={}_smootherwindow={}/"
-                    "nonconst_contacts_t0={}_tinit={}_tmax={}_dampingtime={}_damping={}_contfreq={}/",
-                    finite_difference_order, smoother_window, t0_ode, t0_ide, tmax, damping_time, damping, cont_freq);
+    std::string save_dir = fmt::format(
+        "../../simulation_results/2026-05-04/c++_groundtruth_smoothercos_fdordercontacts={}_smootherwindow={}/"
+        "nonconst_contacts_t0={}_tinit={}_tmax={}_dampingtime={}_damping={}_contfreq={}/",
+        finite_difference_order, smoother_window, t0_ode, t0_ide, tmax, damping_time, damping, cont_freq);
 
     // Make folder if not existent yet.
     boost::filesystem::path dir(save_dir);

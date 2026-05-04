@@ -33,10 +33,12 @@ namespace mio
 {
 namespace isir
 {
-ModelSmootherCos::ModelSmootherCos(TimeSeries<ScalarType>&& populations_init, size_t fd_order, ScalarType damping_time,
-                                   ScalarType damping, ScalarType cont_freq, ScalarType smoother_window)
+ModelSmootherCos::ModelSmootherCos(TimeSeries<ScalarType>&& populations_init, TimeSeries<ScalarType>&& groundtruth_ts,
+                                   size_t fd_order, ScalarType damping_time, ScalarType damping, ScalarType cont_freq,
+                                   ScalarType smoother_window)
     : parameters{Parameters()}
     , populations{std::move(populations_init)}
+    , groundtruth(std::move(groundtruth_ts))
     , m_finite_difference_order(fd_order)
     , m_damping_time(damping_time)
     , m_damping(damping)
@@ -47,22 +49,36 @@ ModelSmootherCos::ModelSmootherCos(TimeSeries<ScalarType>&& populations_init, si
     assert(m_finite_difference_order > 0);
 }
 
-void ModelSmootherCos::compute_S()
+ScalarType ModelSmootherCos::smoothercos(ScalarType current_time)
 {
-    ScalarType current_time = populations.get_last_time();
-    populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] =
-        parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(SimulationTime<ScalarType>(current_time))(
-            0, 0);
+    ScalarType xleft  = m_damping_time - m_smoother_window;
+    ScalarType xright = m_damping_time;
+
+    ScalarType yleft  = m_cont_freq;
+    ScalarType yright = (1. - m_damping) * m_cont_freq;
+
+    if (current_time <= xleft) {
+        return yleft;
+    }
+
+    if (current_time >= xright) {
+        return yright;
+    }
+
+    else {
+        return 0.5 * (yleft - yright) *
+                   std::cos(std::numbers::pi_v<ScalarType> / (xright - xleft) * (current_time - xleft)) +
+               0.5 * (yleft + yright);
+    }
 }
 
-void ModelSmootherCos::compute_S_deriv_analytical(ScalarType current_time)
+ScalarType ModelSmootherCos::smoothercos_deriv(ScalarType current_time)
 {
-
     ScalarType xleft  = m_damping_time - m_smoother_window;
     ScalarType xright = m_damping_time;
 
     if (current_time <= xleft || current_time >= xright) {
-        return;
+        return 0.;
     }
 
     ScalarType yleft =
@@ -73,10 +89,24 @@ void ModelSmootherCos::compute_S_deriv_analytical(ScalarType current_time)
     ScalarType deriv = -0.5 * (yleft - yright) / (xright - xleft) * std::numbers::pi_v<ScalarType> *
                        std::sin(std::numbers::pi_v<ScalarType> / (xright - xleft) * (current_time - xleft));
 
-    populations.get_last_value()[(Eigen::Index)InfectionState::Infected] = deriv;
+    return deriv;
 }
 
-void ModelSmootherCos::compute_S_deriv(ScalarType dt, size_t j)
+// void ModelSmootherCos::compute_S()
+// {
+//     ScalarType current_time = populations.get_last_time();
+//     populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] =
+//         parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(SimulationTime<ScalarType>(current_time))(
+//             0, 0);
+// }
+
+// void ModelSmootherCos::compute_S_deriv_analytical(ScalarType current_time)
+// {
+
+//     populations.get_last_value()[(Eigen::Index)InfectionState::Infected] = smoothercos_deriv(current_time);
+// }
+
+void ModelSmootherCos::smoothercos_deriv_numerical(ScalarType dt, size_t j)
 {
     ScalarType deriv = 0;
 
@@ -143,11 +173,26 @@ void ModelSmootherCos::compute_S_deriv(ScalarType dt, size_t j)
     populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] = deriv;
 }
 
-void ModelSmootherCos::compute_S_deriv(ScalarType dt)
+void ModelSmootherCos::smoothercos_deriv_numerical(ScalarType dt)
 {
     // Use the number of time points to determine time_point_index, hence we are calculating S deriv for last time point.
     size_t j = populations.get_num_time_points() - 1;
-    compute_S_deriv(dt, j);
+    smoothercos_deriv_numerical(dt, j);
+}
+
+void ModelSmootherCos::approximate_smoothercos(ScalarType dt, ScalarType current_time)
+{
+
+    // S analytically in Susceptible compartment via contact matrix.
+    populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] =
+        parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(SimulationTime<ScalarType>(current_time))(
+            0, 0);
+
+    // S' analytically in Infected compartment.
+    populations.get_last_value()[(Eigen::Index)InfectionState::Infected] = smoothercos_deriv(current_time);
+
+    // S numerically in Recovered compartment.
+    smoothercos_deriv_numerical(dt);
 }
 
 ScalarType ModelSmootherCos::smoothstep(ScalarType current_time)
@@ -176,13 +221,7 @@ ScalarType ModelSmootherCos::smoothstep(ScalarType current_time)
     }
 }
 
-void ModelSmootherCos::compute_S_smoothstep(ScalarType current_time)
-{
-
-    populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] = smoothstep(current_time);
-}
-
-void ModelSmootherCos::compute_smoothstep_deriv_analytical(ScalarType current_time)
+ScalarType ModelSmootherCos::smoothstep_deriv(ScalarType current_time)
 {
     ScalarType xleft  = m_damping_time - m_smoother_window;
     ScalarType xright = m_damping_time;
@@ -190,20 +229,22 @@ void ModelSmootherCos::compute_smoothstep_deriv_analytical(ScalarType current_ti
     ScalarType yleft  = m_cont_freq;
     ScalarType yright = (1. - m_damping) * m_cont_freq;
 
+    ScalarType deriv = 0.;
+
     if (current_time <= xleft || current_time >= xright) {
-        populations.get_last_value()[(Eigen::Index)InfectionState::Infected] = 0.;
+        deriv = 0.;
     }
     else {
         ScalarType normalized_time       = (current_time - xleft) / (xright - xleft);
         ScalarType normalized_time_deriv = 1. / (xright - xleft);
-        ScalarType deriv                 = (yright - yleft) * (6. * normalized_time * normalized_time_deriv -
-                                               6 * std::pow(normalized_time, 2) * normalized_time_deriv);
-
-        populations.get_last_value()[(Eigen::Index)InfectionState::Infected] = deriv;
+        deriv                            = (yright - yleft) * (6. * normalized_time * normalized_time_deriv -
+                                    6 * std::pow(normalized_time, 2) * normalized_time_deriv);
     }
+
+    return deriv;
 }
 
-void ModelSmootherCos::compute_smoothstep_deriv_numerical(ScalarType current_time, ScalarType dt)
+void ModelSmootherCos::smoothstep_deriv_numerical(ScalarType current_time, ScalarType dt)
 {
     ScalarType deriv = 0;
 
@@ -238,6 +279,37 @@ void ModelSmootherCos::compute_smoothstep_deriv_numerical(ScalarType current_tim
     }
 
     populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] = deriv;
+}
+
+void ModelSmootherCos::approximate_smoothstep(ScalarType dt, ScalarType current_time)
+{
+    // S analytically in Susceptible compartment.
+    populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] = smoothstep(current_time);
+
+    // S' analytically in Infected compartment.
+    populations.get_last_value()[(Eigen::Index)InfectionState::Infected] = smoothstep_deriv(current_time);
+
+    // S numerically in Recovered compartment.
+    smoothstep_deriv_numerical(current_time, dt);
+}
+
+void ModelSmootherCos::set_groundtruth(ScalarType current_time, bool smoothercos_func)
+{
+    if (smoothercos_func) {
+        // Set to smoother function.
+        groundtruth.get_last_value()[(Eigen::Index)InfectionState::Susceptible] = smoothercos(current_time);
+        // Set to derivative of smoother function.
+        groundtruth.get_last_value()[(Eigen::Index)InfectionState::Infected]  = smoothercos_deriv(current_time);
+        groundtruth.get_last_value()[(Eigen::Index)InfectionState::Recovered] = smoothercos_deriv(current_time);
+    }
+
+    else {
+        // Set to smoother function.
+        groundtruth.get_last_value()[(Eigen::Index)InfectionState::Susceptible] = smoothstep(current_time);
+        // Set to derivative of smoother function.
+        groundtruth.get_last_value()[(Eigen::Index)InfectionState::Infected]  = smoothstep_deriv(current_time);
+        groundtruth.get_last_value()[(Eigen::Index)InfectionState::Recovered] = smoothstep_deriv(current_time);
+    }
 }
 
 } // namespace isir

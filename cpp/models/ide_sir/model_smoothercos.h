@@ -39,8 +39,9 @@ class ModelSmootherCos
     using ParameterSet = Parameters;
 
 public:
-    ModelSmootherCos(TimeSeries<ScalarType>&& populations_init, size_t fd_order, ScalarType damping_time,
-                     ScalarType damping, ScalarType cont_freq, ScalarType smoother_window);
+    ModelSmootherCos(TimeSeries<ScalarType>&& populations_init, TimeSeries<ScalarType>&& groundtruth_ts,
+                     size_t fd_order, ScalarType damping_time, ScalarType damping, ScalarType cont_freq,
+                     ScalarType smoother_window);
 
     ScalarType get_totalpop() const;
 
@@ -49,21 +50,27 @@ public:
         return m_finite_difference_order;
     }
 
-    // Returns the number of iterations needed in fixed point iteration.
-    void compute_S();
-    void compute_S_deriv(ScalarType dt, size_t j);
-    void compute_S_deriv(ScalarType dt);
-    void compute_S_deriv_analytical(ScalarType current_time);
+    // Functions for computing/approximating smoothercosine.
+    ScalarType smoothercos(ScalarType current_time);
+    ScalarType smoothercos_deriv(ScalarType current_time);
+    void smoothercos_deriv_numerical(ScalarType dt, size_t j);
+    void smoothercos_deriv_numerical(ScalarType dt);
+    void approximate_smoothercos(ScalarType dt, ScalarType current_time);
 
+    // Functions for computing/approximating smoothstep.
     ScalarType smoothstep(ScalarType current_time);
-    void compute_S_smoothstep(ScalarType current_time);
-    void compute_smoothstep_deriv_analytical(ScalarType current_time);
-    void compute_smoothstep_deriv_numerical(ScalarType current_time, ScalarType dt);
+    ScalarType smoothstep_deriv(ScalarType current_time);
+    void smoothstep_deriv_numerical(ScalarType current_time, ScalarType dt);
+    void approximate_smoothstep(ScalarType dt, ScalarType current_time);
+
+    // Set groundtruth.
+    void set_groundtruth(ScalarType current_time, bool smoothercos_func);
 
     // ---- Public parameters. ----
     ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
     TimeSeries<ScalarType> populations; ///< TimeSeries containing points of time and the corresponding number of
     // people in defined #InfectionState%s for every AgeGroup.
+    TimeSeries<ScalarType> groundtruth;
 
 private:
     // ---- Private parameters. ----

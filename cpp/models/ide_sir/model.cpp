@@ -166,7 +166,7 @@ ScalarType ModelMessinaExtendedDetailedInit::compute_phi_deriv(ScalarType dt, si
                  4 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
                          SimulationTime<ScalarType>((ScalarType(j) - 1.) * dt))(0, 0) +
                  1 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                         SimulationTime<ScalarType>(((ScalarType)j - 2.) * dt))(0, 0)) /
+                         SimulationTime<ScalarType>((ScalarType(j) - 2.) * dt))(0, 0)) /
                 (2 * dt);
     }
 
@@ -176,39 +176,39 @@ ScalarType ModelMessinaExtendedDetailedInit::compute_phi_deriv(ScalarType dt, si
                  18 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
                           SimulationTime<ScalarType>((ScalarType(j) - 1.) * dt))(0, 0) +
                  9 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                         SimulationTime<ScalarType>(((ScalarType)j - 2.) * dt))(0, 0) -
+                         SimulationTime<ScalarType>((ScalarType(j) - 2.) * dt))(0, 0) -
                  2 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                         SimulationTime<ScalarType>(((ScalarType)j - 3.) * dt))(0, 0)) /
+                         SimulationTime<ScalarType>((ScalarType(j) - 3.) * dt))(0, 0)) /
                 (6 * dt);
     }
 
     if (fd_order == 4) {
         deriv = (25. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                           SimulationTime<ScalarType>((ScalarType)j * dt))(0, 0) -
+                           SimulationTime<ScalarType>(ScalarType(j) * dt))(0, 0) -
                  48. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                           SimulationTime<ScalarType>(((ScalarType)j - 1.) * dt))(0, 0) +
+                           SimulationTime<ScalarType>((ScalarType(j) - 1.) * dt))(0, 0) +
                  36. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                           SimulationTime<ScalarType>(((ScalarType)j - 2.) * dt))(0, 0) -
+                           SimulationTime<ScalarType>((ScalarType(j) - 2.) * dt))(0, 0) -
                  16. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                           SimulationTime<ScalarType>(((ScalarType)j - 3.) * dt))(0, 0) +
+                           SimulationTime<ScalarType>((ScalarType(j) - 3.) * dt))(0, 0) +
                  3. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                          SimulationTime<ScalarType>(((ScalarType)j - 4.) * dt))(0, 0)) /
+                          SimulationTime<ScalarType>((ScalarType(j) - 4.) * dt))(0, 0)) /
                 (12. * dt);
     }
 
     if (fd_order == 5) {
         deriv = (137. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                            SimulationTime<ScalarType>((ScalarType)j * dt))(0, 0) -
+                            SimulationTime<ScalarType>(ScalarType(j) * dt))(0, 0) -
                  300. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                            SimulationTime<ScalarType>(((ScalarType)j - 1.) * dt))(0, 0) +
+                            SimulationTime<ScalarType>((ScalarType(j) - 1.) * dt))(0, 0) +
                  300. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                            SimulationTime<ScalarType>(((ScalarType)j - 2.) * dt))(0, 0) -
+                            SimulationTime<ScalarType>((ScalarType(j) - 2.) * dt))(0, 0) -
                  200. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                            SimulationTime<ScalarType>(((ScalarType)j - 3.) * dt))(0, 0) +
+                            SimulationTime<ScalarType>((ScalarType(j) - 3.) * dt))(0, 0) +
                  75. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                           SimulationTime<ScalarType>(((ScalarType)j - 4.) * dt))(0, 0) -
+                           SimulationTime<ScalarType>((ScalarType(j) - 4.) * dt))(0, 0) -
                  12. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                           SimulationTime<ScalarType>(((ScalarType)j - 5.) * dt))(0, 0)) /
+                           SimulationTime<ScalarType>((ScalarType(j) - 5.) * dt))(0, 0)) /
                 (60. * dt);
     }
 

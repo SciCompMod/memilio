@@ -106,7 +106,7 @@ def smoothstep_deriv(time, damping, damping_time, smootherwindow, cont_freq):
 
 def define_groundtruth(timesteps, t0, tmax, damping, damping_time, smootherwindow, cont_freq, smoothercos_func=True):
 
-    model = 'ode'
+    model = 'groundtruth'
     results = {model: []}
 
     for timestep in timesteps:
@@ -136,6 +136,34 @@ def define_groundtruth(timesteps, t0, tmax, damping, damping_time, smootherwindo
                         smoothstep_deriv(timepoint, damping, damping_time, smootherwindow, cont_freq) for timepoint in timepoints])
 
         results[model].append(groundtruth_at_timepoints)
+
+    return results
+
+
+def read_groundtruth(data_dir, ide_exponents):
+    """ Read data into a dict, where the keys correspond to the respective model.
+    At the moment we are only storing results of the IDE model here. There, we have an array that contains all results
+    obtained with the IDE model for all time points for each time step size that is investigated. The results can
+    either be compartments or flows as indicated by the flag 'flows'.
+    """
+    model = 'groundtruth'
+    results = {model: []}
+
+    for exponent in ide_exponents:
+
+        h5file = h5py.File(os.path.join(
+            data_dir, f'groundtruth_dt=1e-{exponent:.0f}.h5'), 'r')
+
+        data = h5file[list(h5file.keys())[0]]
+
+        if len(data['Total'][0]) == 3:
+            # As there should be only one Group, total is the simulation result.
+            results[model].append(data['Total'][:, :])
+        else:
+            raise gd.DataError(
+                "Expected a different size of vector in time series.")
+
+        h5file.close()
 
     return results
 
@@ -179,8 +207,8 @@ def compute_l2_norm(timeseries, timestep):
     return norm
 
 
-def compute_errors_l2(groundtruth, results, timesteps_ide, t0_ide, relative_error=True, cut_off=0):
-    """ Computes relative L2 norm of the difference between time series from ODE and time series
+def compute_errors_l2(groundtruth, results, timesteps_ide, t0_ide, cut_off=0):
+    """ Computes L2 norm of the difference between time series from ODE and time series
     from IDE for all compartments/flows.
 
     @param[in] groundtruth Result obtained with ODE model.
@@ -200,22 +228,15 @@ def compute_errors_l2(groundtruth, results, timesteps_ide, t0_ide, relative_erro
         for compartment in range(num_errors):
             timestep = timesteps_ide[i]
 
-            result_ode = np.array(groundtruth['ode'][i][compartment][int(
+            result_ode = np.array(groundtruth['groundtruth'][i][:, compartment][int(
                 t0_ide/timestep)+cut_off::])
             result_ide = np.array(results['ide'][i][int(
                 t0_ide/timestep)+cut_off::][:, compartment])
 
             difference = result_ode - result_ide
 
-            if relative_error:
-                norm_groundtruth = compute_l2_norm(
-                    result_ode, timestep)
-                errors[i].append(compute_l2_norm(
-                    difference, timestep)/norm_groundtruth)
-
-            else:
-                errors[i].append(compute_l2_norm(
-                    difference, timestep))
+            errors[i].append(compute_l2_norm(
+                difference, timestep))
 
     return np.array(errors)
 
@@ -230,8 +251,8 @@ def compute_max_norm(timeseries):
     return norm
 
 
-def compute_errors_max(groundtruth, results,  timesteps_ide, t0_ide, relative_error=True, cut_off=0):
-    """ Computes relative maximum norm of the difference between time series from ODE and time series
+def compute_errors_max(groundtruth, results,  timesteps_ide, t0_ide,  cut_off=0):
+    """ Computes maximum norm of the difference between time series from ODE and time series
     from IDE for all compartments.
     """
     num_errors = 3
@@ -244,24 +265,17 @@ def compute_errors_max(groundtruth, results,  timesteps_ide, t0_ide, relative_er
         for compartment in range(num_errors):
             timestep = timesteps_ide[i]
 
-            difference = groundtruth['ode'][i][compartment][int(
+            difference = groundtruth['groundtruth'][i][:, compartment][int(
                 t0_ide/timestep)+cut_off::]-results['ide'][i][int(t0_ide/timestep)+cut_off::][:, compartment]
 
-            if relative_error:
-                norm_groundtruth = compute_max_norm(
-                    groundtruth['ode'][i][int(t0_ide/timestep)::][compartment])
-                errors[i].append(compute_max_norm(
-                    difference)/norm_groundtruth)
-
-            else:
-                errors[i].append(compute_max_norm(
-                    difference))
+            errors[i].append(compute_max_norm(
+                difference))
 
     return np.array(errors)
 
 
 def plot_convergence(errors_all_gregory_orders, timesteps_ide,
-                     l2=True, maxnorm=False, relative_error=True, save_dir=""):
+                     l2=True, maxnorm=False, save_dir=""):
     """ Plots errors against timesteps with a subplot for each compartment /flow.
 
     @param[in] errors Array that contains computed errors of IDE model compared to groundtruth.
@@ -344,12 +358,9 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
         axs[i].grid(True, linestyle='--', alpha=0.6)
 
     fig.supxlabel(r'Time step $\Delta t$', fontsize=12)
-    if relative_error:
-        ylabel = fig.supylabel(
-            r"$err_\text{rel}$", fontsize=12)
-    else:
-        ylabel = fig.supylabel(
-            r"$err$", fontsize=12)
+
+    ylabel = fig.supylabel(
+        r"$err$", fontsize=12)
 
     # print(handles)
 
@@ -368,10 +379,7 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
         elif maxnorm:
             filename = f'{save_dir}/convergence_all_compartments_max'
 
-        if relative_error:
-            filename = filename + "_rel"
-        else:
-            filename = filename + "_abs"
+        filename = filename + "_abs"
 
         plt.savefig(filename + ".png", format='png', bbox_extra_artists=(legend, ylabel), bbox_inches='tight',
                     dpi=500)
@@ -402,7 +410,7 @@ def plot_difference_per_timestep(groundtruth, results, timesteps_ide, t0_ide, cu
         errors.append([])
         for compartment in range(num_errors):
 
-            difference = groundtruth['ode'][i][compartment][int(
+            difference = groundtruth['groundtruth'][i][:, compartment][int(
                 t0_ide/timestep)+cut_off::]-results['ide'][i][int(t0_ide/timestep)+cut_off::][:, compartment]
 
             indices = np.linspace(
@@ -529,13 +537,13 @@ def get_contfreq_from_dir_name(dir_name):
 def main():
 
     fdorder = 4
-    smootherwindow = 10
+    smootherwindow = 2
 
     smoothercos_func = False
 
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
-    main_dir = f"2026-04-30/smoothstep_fdordercontacts={fdorder}_smootherwindow={smootherwindow}"
+    main_dir = f"2026-05-04/c++_groundtruth_smoothercos_fdordercontacts=4_smootherwindow=2"
     relevant_dir = os.path.join(root_dir, main_dir)
     # print(relevant_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
@@ -577,37 +585,35 @@ def main():
         for exp in ide_exponents:
             timesteps_ide.append(pow(10, -exp))
 
-        groundtruth = define_groundtruth(
-            timesteps_ide, t0, tmax, damping, damping_time, smootherwindow, cont_freq, smoothercos_func)
-
+        # groundtruth = define_groundtruth(
+        #     timesteps_ide, t0, tmax, damping, damping_time, smootherwindow, cont_freq, smoothercos_func)
+        groundtruth = read_groundtruth(result_dir, ide_exponents)
         # Read results from IDE simulations.
         results = read_data(result_dir, ide_exponents)
 
         # Compute errors of IDE results compared to groundtruth.
         errors_l2_abs = compute_errors_l2(
-            groundtruth, results, timesteps_ide, t0, False, cut_off)
+            groundtruth, results, timesteps_ide, t0,  cut_off)
         errors_all_gregory_orders_l2_abs.append(errors_l2_abs)
 
         errors_max_abs = compute_errors_max(
-            groundtruth, results, timesteps_ide, t0, False, cut_off)
+            groundtruth, results, timesteps_ide, t0,  cut_off)
         errors_all_gregory_orders_max_abs.append(errors_max_abs)
 
         plot_difference_per_timestep(
             groundtruth, results, timesteps_ide, t0, cut_off, plot_dir, damping_time, smootherwindow)
 
-        relative_error = False
-
         # L2 norm
         l2 = True
         maxnorm = False
         plot_convergence(errors_all_gregory_orders_l2_abs, timesteps_ide,
-                         l2, maxnorm,  relative_error, plot_dir)
+                         l2, maxnorm,  plot_dir)
 
         # max norm
         l2 = False
         maxnorm = True
         plot_convergence(errors_all_gregory_orders_max_abs, timesteps_ide,
-                         l2, maxnorm, relative_error, plot_dir)
+                         l2, maxnorm,  plot_dir)
 
 
 if __name__ == '__main__':
