@@ -63,7 +63,6 @@ class Scanner:
 
         :param root_cursor: Represents the root node of the abstract syntax tree as a Cursor object from libclang.
         :returns: Information extracted from the model saved as an IntermediateRepresentation.
-
         """
         if self.config.model_class != default_dict["model"]:
             raise AssertionError("set a model name")
@@ -87,7 +86,6 @@ class Scanner:
 
         for expected in expected_binding_list:
             expected_name = expected.get("name", "")
-            expected_cursorkind = expected.get("cursorkind", "")
             expected_type = expected.get("type", "")
             expected_methods = expected.get("methods", [])
 
@@ -97,7 +95,6 @@ class Scanner:
                 if (
                     binding.type == expected_type
                     and binding.name == expected_name
-                    and binding.cursorkind == expected_cursorkind
                 ):
                     found_binding = binding
                     break
@@ -136,8 +133,6 @@ class Scanner:
         :returns: List of found bindings."""
 
         for binding in binding_list:
-            # name of the CursorKind
-            kind_name = binding.get("cursorkind")
 
             # name of the function or class that is going to be bound
             binding_name = binding.get("name")
@@ -145,18 +140,20 @@ class Scanner:
             # type of the binding, e.g. "class", "function"
             binding_type = binding.get("type")
 
-            if not kind_name or not binding_name:
+            if not binding_name or not binding_type:
                 continue
 
+            expected_cursorkindname = self.get_cursorKind(binding_type)
+
             try:
-                expected_kind = getattr(CursorKind, kind_name)
+                expected_kind = getattr(CursorKind, expected_cursorkindname)
             except AttributeError:
                 continue
 
             function_arguments = self.get_function_arguments(
                 node)
 
-            key = (binding_name, kind_name, tuple(function_arguments.get(
+            key = (binding_name, expected_cursorkindname, tuple(function_arguments.get(
                 "arg_types", [])), tuple(function_arguments.get("arg_names", [])), function_arguments.get("parent_name", ""))
 
             if key in self.handled_bindings:
@@ -172,6 +169,22 @@ class Scanner:
                         binding, node, intermed_repr, namespace)
 
         return intermed_repr.found_bindings
+
+    def get_cursorKind(self: Self, binding_type: str) -> str:
+        """ Map the binding type to the expected CursorKind name.
+
+        :param binding_type: Type of the binding, e.g. "class", "function".
+        :returns: Name of the expected CursorKind for the given binding type.
+        """
+
+        mapping = {
+            "class": "CLASS_TEMPLATE",
+            "klasse": "CLASS_TEMPLATE",
+            "function": "FUNCTION_TEMPLATE",
+            "funktion": "FUNCTION_TEMPLATE"
+        }
+
+        return mapping.get(binding_type.lower(), "")
 
     def handle_class_binding(self: Self, binding, node: Cursor, intermed_repr: IntermediateRepresentation, namespace: str):
         """ Handle the methods of a class.
