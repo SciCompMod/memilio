@@ -81,6 +81,22 @@ void SimulationSmootherCos::advance(ScalarType tmax, std::string smoother_func_s
             m_model->set_groundtruth(current_time, smoother_func_str);
         }
     }
+
+    else if (smoother_func_str == "sigmoid") {
+        while (m_model->populations.get_last_time() < tmax - 1e-10) {
+
+            // Add new time point to populations.
+            m_model->populations.add_time_point(m_model->populations.get_last_time() + m_dt,
+                                                Vec::Constant((size_t)InfectionState::Count, 0.));
+
+            m_model->groundtruth.add_time_point(m_model->groundtruth.get_last_time() + m_dt,
+                                                Vec::Constant((size_t)InfectionState::Count, 0.));
+
+            ScalarType current_time = m_model->populations.get_last_time();
+            m_model->approximate_sigmoid_smoother(m_dt, current_time);
+            m_model->set_groundtruth(current_time, smoother_func_str);
+        }
+    }
 }
 
 } // namespace isir

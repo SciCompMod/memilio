@@ -41,7 +41,7 @@ class ModelSmootherCos
 public:
     ModelSmootherCos(TimeSeries<ScalarType>&& populations_init, TimeSeries<ScalarType>&& groundtruth_ts,
                      size_t fd_order, ScalarType damping_time, ScalarType damping, ScalarType cont_freq,
-                     ScalarType smoother_window);
+                     ScalarType smoother_window, ScalarType k = 1);
 
     ScalarType get_totalpop() const;
 
@@ -70,6 +70,12 @@ public:
     ScalarType smoothstep_c2_deriv(ScalarType current_time);
     void approximate_smoothstep_c2(ScalarType dt, ScalarType current_time);
 
+    // Functions for computing/approximating smoothstep where the resulting function is C2.
+    ScalarType sigmoid(ScalarType current_time);
+    ScalarType sigmoid_smoother(ScalarType current_time);
+    ScalarType sigmoid_smoother_deriv(ScalarType current_time);
+    void approximate_sigmoid_smoother(ScalarType dt, ScalarType current_time);
+
     // Set groundtruth.
     void set_groundtruth(ScalarType current_time, std::string smoother_func_str);
 
@@ -86,6 +92,7 @@ private:
     ScalarType m_damping;
     ScalarType m_cont_freq;
     ScalarType m_smoother_window;
+    ScalarType m_k{1.}; /// Parameter of sigmoid function.
 };
 
 } // namespace isir

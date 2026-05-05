@@ -26,85 +26,7 @@ import matplotlib.pyplot as plt
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 
-def smoothercos(time, damping, damping_time, smootherwindow, cont_freq):
-
-    xleft = damping_time-smootherwindow
-    xright = damping_time
-
-    yleft = cont_freq
-    yright = (1.-damping)*cont_freq
-
-    if time <= xleft:
-        return yleft
-
-    if time >= xright:
-        return yright
-
-    else:
-        result = 0.5*(yleft-yright) * np.cos(np.pi/(xright-xleft)
-                                             * (time-xleft)) + 0.5 * (yleft + yright)
-        return result
-
-
-def smoothercos_deriv(time, damping, damping_time, smootherwindow, cont_freq):
-
-    xleft = damping_time-smootherwindow
-    xright = damping_time
-
-    yleft = cont_freq
-    yright = (1.-damping)*cont_freq
-
-    if time <= xleft or time >= xright:
-        return 0
-
-    else:
-        return -0.5 * (yleft-yright)/(xright-xleft) * np.pi * np.sin(np.pi / (xright-xleft)*(time-xleft))
-
-
-def smoothstep(time, damping, damping_time, smootherwindow, cont_freq):
-
-    xleft = damping_time-smootherwindow
-    xright = damping_time
-
-    yleft = cont_freq
-    yright = (1.-damping)*cont_freq
-
-    if time <= xleft:
-        return yleft
-
-    if time >= xright:
-        return yright
-
-    else:
-
-        normalized_time = (time - xleft) / (xright - xleft)
-
-        smoothed_value = yleft + (yright - yleft) * \
-            (3. * normalized_time**2 - 2 * normalized_time**3)
-
-        return smoothed_value
-
-
-def smoothstep_deriv(time, damping, damping_time, smootherwindow, cont_freq):
-
-    xleft = damping_time-smootherwindow
-    xright = damping_time
-
-    yleft = cont_freq
-    yright = (1.-damping)*cont_freq
-
-    if time <= xleft or time >= xright:
-        return 0
-
-    else:
-        normalized_time = (time - xleft) / (xright - xleft)
-        normalized_time_deriv = 1. / (xright - xleft)
-        deriv = (yright - yleft) * (6. * normalized_time * normalized_time_deriv -
-                                    6 * normalized_time ** 2 * normalized_time_deriv)
-        return deriv
-
-
-def plot_susceptibles(files, fileending, save_dir, damping, damping_time, smootherwindow, cont_freq, smoothercos_func=True):
+def plot_susceptibles(file, groundtruth, fileending, save_dir):
     """
     Plots simulation results of Susceptibles.
 
@@ -132,7 +54,7 @@ def plot_susceptibles(files, fileending, save_dir, damping, damping_time, smooth
     # Add results to plot.
 
     # Load data.
-    h5file = h5py.File(str(files[0]) + '.h5', 'r')
+    h5file = h5py.File(str(file) + '.h5', 'r')
 
     if (len(list(h5file.keys())) > 1):
         raise gd.DataError("File should contain one dataset.")
@@ -146,33 +68,25 @@ def plot_susceptibles(files, fileending, save_dir, damping, damping_time, smooth
 
     dates = data['Time'][:]
 
-    dates_groundtruth = np.linspace(
-        data['Time'][:][0], data['Time'][:][-1], 1000)
+    # Load groundtruth.
+    h5file_groundtruth = h5py.File(str(groundtruth) + '.h5', 'r')
 
-    if smoothercos_func:
-        axs[0].plot(dates_groundtruth,
-                    [
-                        smoothercos(timepoint, damping, damping_time, smootherwindow, cont_freq) for timepoint in dates_groundtruth], label=labels[0],  linestyle=linestyles[0], color=colors[0], linewidth=linewidth)
-        axs[1].plot(dates_groundtruth,
-                    [
-                        smoothercos_deriv(timepoint, damping, damping_time, smootherwindow, cont_freq) for timepoint in dates_groundtruth], label=labels[0],  linestyle=linestyles[0], color=colors[0], linewidth=linewidth)
-        axs[2].plot(dates_groundtruth,
-                    [
-                        smoothercos_deriv(timepoint, damping, damping_time, smootherwindow, cont_freq) for timepoint in dates_groundtruth], label=labels[0],  linestyle=linestyles[0], color=colors[0], linewidth=linewidth)
+    if (len(list(h5file_groundtruth.keys())) > 1):
+        raise gd.DataError("File should contain one dataset.")
+    if (len(list(h5file_groundtruth[list(h5file_groundtruth.keys())[0]].keys())) > 3):
+        raise gd.DataError("Expected only one group.")
 
-    else:
-        axs[0].plot(dates_groundtruth,
-                    [
-                        smoothstep(timepoint, damping, damping_time, smootherwindow, cont_freq) for timepoint in dates_groundtruth], label=labels[0],  linestyle=linestyles[0], color=colors[0], linewidth=linewidth)
-        axs[1].plot(dates_groundtruth,
-                    [
-                        smoothstep_deriv(timepoint, damping, damping_time, smootherwindow, cont_freq) for timepoint in dates_groundtruth], label=labels[0],  linestyle=linestyles[0], color=colors[0], linewidth=linewidth)
-        axs[2].plot(dates_groundtruth,
-                    [
-                        smoothstep_deriv(timepoint, damping, damping_time, smootherwindow, cont_freq) for timepoint in dates_groundtruth], label=labels[0],  linestyle=linestyles[0], color=colors[0], linewidth=linewidth)
+    data_groundtruth = h5file_groundtruth[list(h5file_groundtruth.keys())[0]]
+
+    # As there should be only one Group, total is the simulation result.
+    total_groundtruth = data_groundtruth['Total'][:, :]
+
+    dates_groundtruth = data_groundtruth['Time'][:]
 
     # Plot data.
     for i in range(num_plots):
+        axs[i].plot(dates_groundtruth,
+                    total_groundtruth[:, i], label=labels[0],  linestyle=linestyles[0], color=colors[0], linewidth=linewidth)
         axs[i].plot(dates,
                     total[:, i], label=labels[1],  linestyle=linestyles[1], color=colors[1], linewidth=linewidth)
 
@@ -236,15 +150,13 @@ def get_contfreq_from_dir_name(dir_name):
 
 if __name__ == '__main__':
 
-    fdorder = 4
-    smootherwindow = 10
-
-    smoothercos_func = False
+    # fdorder = 4
+    # smootherwindow = 2
 
     # dir_name = "detailed_init_exponential_t0ide=50_tmax=51_finite_diff=1_tolexp=8"
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
-    main_dir = f"2026-04-30/smoothstep_fdordercontacts={fdorder}_smootherwindow={smootherwindow}"
+    main_dir = f"2026-05-05/sigmoid_fdordercontacts=4_smootherwindow=5_sigmoidparam=5"
     relevant_dir = os.path.join(root_dir, main_dir)
 
     sub_dirs = subfolders_scandir(relevant_dir)
@@ -266,6 +178,7 @@ if __name__ == '__main__':
         cont_freq = get_contfreq_from_dir_name(dir_name)
 
         for ide_exponent in [0, 1, 2, 3, 4]:
-            plot_susceptibles([
-                os.path.join(result_dir, f"result_ide_dt=1e-{ide_exponent}")],
-                f"dt=1e-{ide_exponent}", plot_dir, damping, damping_time, smootherwindow, cont_freq, smoothercos_func)
+            plot_susceptibles(
+                os.path.join(result_dir, f"result_ide_dt=1e-{ide_exponent}"), os.path.join(
+                    result_dir, f"groundtruth_dt=1e-{ide_exponent}"),
+                f"dt=1e-{ide_exponent}", plot_dir)

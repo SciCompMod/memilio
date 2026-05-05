@@ -112,7 +112,8 @@ if __name__ == '__main__':
 
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
-    main_dir = "2026-04-19/test_convergence"
+
+    main_dir = "2026-04-28/test_fdordercontacts=8"
 
     relevant_dir = os.path.join(root_dir, main_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
@@ -136,6 +137,6 @@ if __name__ == '__main__':
             if f'result_{"ide"}_dt=1e-{exponent}_gregoryorder=3.h5' in files:
                 ide_exponent = exponent
 
-                plot_susceptibles([os.path.join(result_dir, f"result_ode_dt=1e-5"),
+                plot_susceptibles([os.path.join(result_dir, f"result_ode_dt=1e-6"),
                                    os.path.join(result_dir, f"result_ide_dt=1e-{ide_exponent}_gregoryorder={gregory_order}")],
                                   fileending=f"_dt=1e-{ide_exponent}", save_dir=plot_dir)

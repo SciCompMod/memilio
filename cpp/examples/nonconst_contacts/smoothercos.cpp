@@ -187,9 +187,69 @@ ScalarType smoothstep_c2_deriv(ScalarType current_time, ScalarType damping_time,
     return deriv;
 }
 
+ScalarType sigmoid(ScalarType x)
+{
+    return 1. / (1. + std::exp(-x));
+}
+
+ScalarType sigmoid_smoother(ScalarType current_time, ScalarType damping_time, ScalarType damping, ScalarType cont_freq,
+                            ScalarType smoother_window, ScalarType sigmoid_param)
+{
+
+    ScalarType xleft  = damping_time - smoother_window;
+    ScalarType xright = damping_time;
+
+    ScalarType yleft  = cont_freq;
+    ScalarType yright = (1. - damping) * cont_freq;
+
+    if (current_time <= xleft) {
+        return yleft;
+    }
+    if (current_time >= xright) {
+        return yright;
+    }
+
+    else {
+        ScalarType normalized_time = (current_time - xleft) / (xright - xleft);
+
+        ScalarType scaled_sigmoid = (sigmoid(sigmoid_param * (normalized_time - 0.5)) - sigmoid(-sigmoid_param * 0.5)) /
+                                    (sigmoid(sigmoid_param * 0.5) - sigmoid(-sigmoid_param * 0.5));
+
+        ScalarType smoothed_value = yleft + (yright - yleft) * scaled_sigmoid;
+
+        return smoothed_value;
+    }
+}
+
+ScalarType sigmoid_smoother_deriv(ScalarType current_time, ScalarType damping_time, ScalarType damping,
+                                  ScalarType cont_freq, ScalarType smoother_window, ScalarType sigmoid_param)
+{
+    ScalarType xleft  = damping_time - smoother_window;
+    ScalarType xright = damping_time;
+
+    ScalarType yleft  = cont_freq;
+    ScalarType yright = (1. - damping) * cont_freq;
+
+    ScalarType deriv = 0.;
+
+    if (current_time <= xleft || current_time >= xright) {
+        deriv = 0.;
+    }
+    else {
+        ScalarType normalized_time       = (current_time - xleft) / (xright - xleft);
+        ScalarType normalized_time_deriv = 1. / (xright - xleft);
+        deriv = (yright - yleft) / (sigmoid(sigmoid_param * 0.5) - sigmoid(-sigmoid_param * 0.5)) *
+                sigmoid(sigmoid_param * (normalized_time - 0.5)) *
+                (1. - sigmoid(sigmoid_param * (normalized_time - 0.5))) * sigmoid_param * normalized_time_deriv;
+    }
+
+    return deriv;
+}
+
 mio::IOResult<void> simulate(ScalarType ide_exponent, size_t finite_difference_order, ScalarType t0_ode,
                              ScalarType t0_ide, ScalarType tmax, ScalarType damping, ScalarType damping_time,
-                             ScalarType smoother_window, std::string save_dir = "", std::string smoother_func_str = "")
+                             ScalarType smoother_window, ScalarType sigmoid_param, std::string save_dir = "",
+                             std::string smoother_func_str = "")
 {
 
     using namespace params;
@@ -277,10 +337,37 @@ mio::IOResult<void> simulate(ScalarType ide_exponent, size_t finite_difference_o
             groundtruth_ts.add_time_point(groundtruth_ts.get_last_time() + dt, vec_init);
         }
     }
+    else if (smoother_func_str == "sigmoid") {
+        vec_init[(size_t)mio::isir::InfectionState::Susceptible] =
+            sigmoid_smoother(0., damping_time, damping, cont_freq, smoother_window, sigmoid_param);
+        vec_init[(size_t)mio::isir::InfectionState::Infected] =
+            sigmoid_smoother_deriv(0., damping_time, damping, cont_freq, smoother_window, sigmoid_param);
+        vec_init[(size_t)mio::isir::InfectionState::Recovered] =
+            sigmoid_smoother_deriv(0., damping_time, damping, cont_freq, smoother_window, sigmoid_param);
+
+        init_populations.add_time_point(t0_ode, vec_init);
+        groundtruth_ts.add_time_point(t0_ode, vec_init);
+
+        while (init_populations.get_last_time() < t0_ide - 1e-10) {
+
+            vec_init[(size_t)mio::isir::InfectionState::Susceptible] =
+                sigmoid_smoother(init_populations.get_last_time() + dt, damping_time, damping, cont_freq,
+                                 smoother_window, sigmoid_param);
+            vec_init[(size_t)mio::isir::InfectionState::Infected] =
+                sigmoid_smoother_deriv(init_populations.get_last_time() + dt, damping_time, damping, cont_freq,
+                                       smoother_window, sigmoid_param);
+            vec_init[(size_t)mio::isir::InfectionState::Recovered] =
+                sigmoid_smoother_deriv(init_populations.get_last_time() + dt, damping_time, damping, cont_freq,
+                                       smoother_window, sigmoid_param);
+
+            init_populations.add_time_point(init_populations.get_last_time() + dt, vec_init);
+            groundtruth_ts.add_time_point(groundtruth_ts.get_last_time() + dt, vec_init);
+        }
+    }
 
     // Initialize model.
     mio::isir::ModelSmootherCos model(std::move(init_populations), std::move(groundtruth_ts), finite_difference_order,
-                                      damping_time, damping, cont_freq, smoother_window);
+                                      damping_time, damping, cont_freq, smoother_window, sigmoid_param);
 
     model.parameters.get<mio::isir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
@@ -313,23 +400,26 @@ int main()
     ScalarType tmax   = 20.;
 
     ScalarType damping      = 0.2;
-    ScalarType damping_time = 10.;
+    ScalarType damping_time = 15.;
 
     size_t finite_difference_order = 4;
 
-    ScalarType smoother_window = 2.;
+    ScalarType smoother_window = 5.;
+
+    ScalarType sigmoid_param = 5.;
 
     // std::string smoother_func_str = "smoothercos";
     // std::string smoother_func_str = "smoothstep";
-    std::string smoother_func_str = "smoothstep_c2";
+    // std::string smoother_func_str = "smoothstep_c2";
+    std::string smoother_func_str = "sigmoid";
 
     std::vector<ScalarType> exponents = {0., 1., 2., 3., 4.};
 
     std::string save_dir =
-        fmt::format("../../simulation_results/2026-05-05/{}_fdordercontacts={}_smootherwindow={}/"
+        fmt::format("../../simulation_results/2026-05-05/{}_fdordercontacts={}_smootherwindow={}_sigmoidparam={}/"
                     "nonconst_contacts_t0={}_tinit={}_tmax={}_dampingtime={}_damping={}_contfreq={}/",
-                    smoother_func_str, finite_difference_order, smoother_window, t0_ode, t0_ide, tmax, damping_time,
-                    damping, cont_freq);
+                    smoother_func_str, finite_difference_order, smoother_window, sigmoid_param, t0_ode, t0_ide, tmax,
+                    damping_time, damping, cont_freq);
 
     // Make folder if not existent yet.
     boost::filesystem::path dir(save_dir);
@@ -339,7 +429,8 @@ int main()
 
     for (ScalarType exponent : exponents) {
         std::cout << std::endl;
-        mio::IOResult<void> result = simulate(exponent, finite_difference_order, t0_ode, t0_ide, tmax, damping,
-                                              damping_time, smoother_window, save_dir, smoother_func_str);
+        mio::IOResult<void> result =
+            simulate(exponent, finite_difference_order, t0_ode, t0_ide, tmax, damping, damping_time, smoother_window,
+                     sigmoid_param, save_dir, smoother_func_str);
     }
 }
