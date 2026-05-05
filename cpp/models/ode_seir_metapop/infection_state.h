@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ODESEIRMETAPOP_INFECTIONSTATE_H
-#define ODESEIRMETAPOP_INFECTIONSTATE_H
+#ifndef SEIRMETAPOP_INFECTIONSTATE_H
+#define SEIRMETAPOP_INFECTIONSTATE_H
 
 #include "models/ode_seir/infection_state.h"
 
@@ -32,4 +32,4 @@ using mio::oseir::InfectionState;
 } // namespace oseirmetapop
 } // namespace mio
 
-#endif // ODESEIR_INFECTIONSTATE_H
+#endif // SEIRMETAPOP_INFECTIONSTATE_H
