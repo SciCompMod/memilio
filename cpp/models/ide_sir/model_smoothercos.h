@@ -71,6 +71,11 @@ public:
     void approximate_smoothstep_c2(ScalarType dt, ScalarType current_time);
 
     // Functions for computing/approximating smoothstep where the resulting function is C2.
+    ScalarType smoothstep_c4(ScalarType current_time);
+    ScalarType smoothstep_c4_deriv(ScalarType current_time);
+    void approximate_smoothstep_c4(ScalarType dt, ScalarType current_time);
+
+    // Functions for computing/approximating smoothstep where the resulting function is C2.
     ScalarType sigmoid(ScalarType current_time);
     ScalarType sigmoid_smoother(ScalarType current_time);
     ScalarType sigmoid_smoother_deriv(ScalarType current_time);

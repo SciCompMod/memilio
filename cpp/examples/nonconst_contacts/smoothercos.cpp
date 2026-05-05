@@ -187,6 +187,62 @@ ScalarType smoothstep_c2_deriv(ScalarType current_time, ScalarType damping_time,
     return deriv;
 }
 
+ScalarType smoothstep_c4(ScalarType current_time, ScalarType damping_time, ScalarType damping, ScalarType cont_freq,
+                         ScalarType smoother_window)
+{
+
+    ScalarType xleft  = damping_time - smoother_window;
+    ScalarType xright = damping_time;
+
+    ScalarType yleft  = cont_freq;
+    ScalarType yright = (1. - damping) * cont_freq;
+
+    if (current_time <= xleft) {
+        return yleft;
+    }
+    if (current_time >= xright) {
+        return yright;
+    }
+
+    else {
+        ScalarType normalized_time = (current_time - xleft) / (xright - xleft);
+
+        ScalarType smoothed_value =
+            yleft + (yright - yleft) * (126. * std::pow(normalized_time, 5) - 420. * std::pow(normalized_time, 6) +
+                                        540. * std::pow(normalized_time, 7) - 315. * std::pow(normalized_time, 8) +
+                                        70. * std::pow(normalized_time, 9));
+
+        return smoothed_value;
+    }
+}
+
+ScalarType smoothstep_c4_deriv(ScalarType current_time, ScalarType damping_time, ScalarType damping,
+                               ScalarType cont_freq, ScalarType smoother_window)
+{
+    ScalarType xleft  = damping_time - smoother_window;
+    ScalarType xright = damping_time;
+
+    ScalarType yleft  = cont_freq;
+    ScalarType yright = (1. - damping) * cont_freq;
+
+    ScalarType deriv = 0.;
+
+    if (current_time <= xleft || current_time >= xright) {
+        deriv = 0.;
+    }
+    else {
+        ScalarType normalized_time       = (current_time - xleft) / (xright - xleft);
+        ScalarType normalized_time_deriv = 1. / (xright - xleft);
+        deriv                            = (yright - yleft) *
+                (630. * std::pow(normalized_time, 4) - 2520. * std::pow(normalized_time, 5) +
+                 3789. * std::pow(normalized_time, 6) - 2520. * std::pow(normalized_time, 7) +
+                 630. * std::pow(normalized_time, 8)) *
+                normalized_time_deriv;
+    }
+
+    return deriv;
+}
+
 ScalarType sigmoid(ScalarType x)
 {
     return 1. / (1. + std::exp(-x));
@@ -337,6 +393,30 @@ mio::IOResult<void> simulate(ScalarType ide_exponent, size_t finite_difference_o
             groundtruth_ts.add_time_point(groundtruth_ts.get_last_time() + dt, vec_init);
         }
     }
+    else if (smoother_func_str == "smoothstep_c4") {
+        vec_init[(size_t)mio::isir::InfectionState::Susceptible] =
+            smoothstep_c4(0., damping_time, damping, cont_freq, smoother_window);
+        vec_init[(size_t)mio::isir::InfectionState::Infected] =
+            smoothstep_c4_deriv(0., damping_time, damping, cont_freq, smoother_window);
+        vec_init[(size_t)mio::isir::InfectionState::Recovered] =
+            smoothstep_c4_deriv(0., damping_time, damping, cont_freq, smoother_window);
+
+        init_populations.add_time_point(t0_ode, vec_init);
+        groundtruth_ts.add_time_point(t0_ode, vec_init);
+
+        while (init_populations.get_last_time() < t0_ide - 1e-10) {
+
+            vec_init[(size_t)mio::isir::InfectionState::Susceptible] =
+                smoothstep_c4(init_populations.get_last_time() + dt, damping_time, damping, cont_freq, smoother_window);
+            vec_init[(size_t)mio::isir::InfectionState::Infected] = smoothstep_c4_deriv(
+                init_populations.get_last_time() + dt, damping_time, damping, cont_freq, smoother_window);
+            vec_init[(size_t)mio::isir::InfectionState::Recovered] = smoothstep_c4_deriv(
+                init_populations.get_last_time() + dt, damping_time, damping, cont_freq, smoother_window);
+
+            init_populations.add_time_point(init_populations.get_last_time() + dt, vec_init);
+            groundtruth_ts.add_time_point(groundtruth_ts.get_last_time() + dt, vec_init);
+        }
+    }
     else if (smoother_func_str == "sigmoid") {
         vec_init[(size_t)mio::isir::InfectionState::Susceptible] =
             sigmoid_smoother(0., damping_time, damping, cont_freq, smoother_window, sigmoid_param);
@@ -397,21 +477,22 @@ int main()
 
     ScalarType t0_ode = 0.;
     ScalarType t0_ide = 5.;
-    ScalarType tmax   = 20.;
+    ScalarType tmax   = 25.;
 
     ScalarType damping      = 0.2;
-    ScalarType damping_time = 15.;
+    ScalarType damping_time = 20.;
 
     size_t finite_difference_order = 4;
 
-    ScalarType smoother_window = 5.;
+    ScalarType smoother_window = 10.;
 
     ScalarType sigmoid_param = 5.;
 
     // std::string smoother_func_str = "smoothercos";
     // std::string smoother_func_str = "smoothstep";
     // std::string smoother_func_str = "smoothstep_c2";
-    std::string smoother_func_str = "sigmoid";
+    std::string smoother_func_str = "smoothstep_c4";
+    // std::string smoother_func_str = "sigmoid";
 
     std::vector<ScalarType> exponents = {0., 1., 2., 3., 4.};
 

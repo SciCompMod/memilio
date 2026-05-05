@@ -536,14 +536,14 @@ def get_contfreq_from_dir_name(dir_name):
 
 def main():
 
-    fdorder = 4
-    smootherwindow = 2
+    # fdorder = 4
+    smootherwindow = 10
 
     # smoother_func_str = "smoothercos"
 
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
-    main_dir = f"2026-05-05/sigmoid_fdordercontacts=4_smootherwindow=5_sigmoidparam=5"
+    main_dir = f"2026-05-05/smoothstep_c4_fdordercontacts=4_smootherwindow=10_sigmoidparam=5"
     relevant_dir = os.path.join(root_dir, main_dir)
     # print(relevant_dir)
     sub_dirs = subfolders_scandir(relevant_dir)

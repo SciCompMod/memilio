@@ -156,7 +156,7 @@ if __name__ == '__main__':
     # dir_name = "detailed_init_exponential_t0ide=50_tmax=51_finite_diff=1_tolexp=8"
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
-    main_dir = f"2026-05-05/sigmoid_fdordercontacts=4_smootherwindow=5_sigmoidparam=5"
+    main_dir = f"2026-05-05/smoothstep_c4_fdordercontacts=4_smootherwindow=10_sigmoidparam=5"
     relevant_dir = os.path.join(root_dir, main_dir)
 
     sub_dirs = subfolders_scandir(relevant_dir)

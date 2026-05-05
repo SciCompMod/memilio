@@ -283,6 +283,75 @@ void ModelSmootherCos::approximate_smoothstep_c2(ScalarType dt, ScalarType curre
         });
 }
 
+ScalarType ModelSmootherCos::smoothstep_c4(ScalarType current_time)
+{
+
+    ScalarType xleft  = m_damping_time - m_smoother_window;
+    ScalarType xright = m_damping_time;
+
+    ScalarType yleft  = m_cont_freq;
+    ScalarType yright = (1. - m_damping) * m_cont_freq;
+
+    if (current_time <= xleft) {
+        return yleft;
+    }
+    if (current_time >= xright) {
+        return yright;
+    }
+
+    else {
+        ScalarType normalized_time = (current_time - xleft) / (xright - xleft);
+
+        ScalarType smoothed_value =
+            yleft + (yright - yleft) * (126. * std::pow(normalized_time, 5) - 420. * std::pow(normalized_time, 6) +
+                                        540. * std::pow(normalized_time, 7) - 315. * std::pow(normalized_time, 8) +
+                                        70. * std::pow(normalized_time, 9));
+
+        return smoothed_value;
+    }
+}
+
+ScalarType ModelSmootherCos::smoothstep_c4_deriv(ScalarType current_time)
+{
+    ScalarType xleft  = m_damping_time - m_smoother_window;
+    ScalarType xright = m_damping_time;
+
+    ScalarType yleft  = m_cont_freq;
+    ScalarType yright = (1. - m_damping) * m_cont_freq;
+
+    ScalarType deriv = 0.;
+
+    if (current_time <= xleft || current_time >= xright) {
+        deriv = 0.;
+    }
+    else {
+        ScalarType normalized_time       = (current_time - xleft) / (xright - xleft);
+        ScalarType normalized_time_deriv = 1. / (xright - xleft);
+        deriv                            = (yright - yleft) *
+                (630. * std::pow(normalized_time, 4) - 2520. * std::pow(normalized_time, 5) +
+                 3780. * std::pow(normalized_time, 6) - 2520. * std::pow(normalized_time, 7) +
+                 630. * std::pow(normalized_time, 8)) *
+                normalized_time_deriv;
+    }
+
+    return deriv;
+}
+
+void ModelSmootherCos::approximate_smoothstep_c4(ScalarType dt, ScalarType current_time)
+{
+    // S analytically in Susceptible compartment.
+    populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] = smoothstep_c4(current_time);
+
+    // S' analytically in Infected compartment.
+    populations.get_last_value()[(Eigen::Index)InfectionState::Infected] = smoothstep_c4_deriv(current_time);
+
+    // S numerically in Recovered compartment.
+    populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] =
+        compute_deriv_numerical(dt, current_time, [this](ScalarType t) {
+            return smoothstep_c4(t);
+        });
+}
+
 ScalarType ModelSmootherCos::sigmoid(ScalarType x)
 {
     return 1. / (1 + std::exp(-x));
@@ -377,6 +446,13 @@ void ModelSmootherCos::set_groundtruth(ScalarType current_time, std::string smoo
         // Set to derivative of smoother function.
         groundtruth.get_last_value()[(Eigen::Index)InfectionState::Infected]  = smoothstep_c2_deriv(current_time);
         groundtruth.get_last_value()[(Eigen::Index)InfectionState::Recovered] = smoothstep_c2_deriv(current_time);
+    }
+    else if (smoother_func_str == "smoothstep_c4") {
+        // Set to smoother function.
+        groundtruth.get_last_value()[(Eigen::Index)InfectionState::Susceptible] = smoothstep_c4(current_time);
+        // Set to derivative of smoother function.
+        groundtruth.get_last_value()[(Eigen::Index)InfectionState::Infected]  = smoothstep_c4_deriv(current_time);
+        groundtruth.get_last_value()[(Eigen::Index)InfectionState::Recovered] = smoothstep_c4_deriv(current_time);
     }
     else if (smoother_func_str == "sigmoid") {
         // Set to smoother function.
