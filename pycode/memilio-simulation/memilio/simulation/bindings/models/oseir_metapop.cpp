@@ -65,19 +65,19 @@ PYBIND11_MODULE(_simulation_oseir_metapop, m)
     pymio::bind_ParameterSet<mio::oseirmetapop::ParametersBase<double>, pymio::EnablePickling::Required>(
         m, "ParametersBase");
 
-    pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::regions::Region, mio::AgeGroup>(
+    pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::oseirmetapop::Region, mio::AgeGroup>(
         m, "RegionAgeGroupArray");
 
     pymio::bind_class<mio::oseirmetapop::Parameters<double>, pymio::EnablePickling::Never,
                       mio::oseirmetapop::ParametersBase<double>>(m, "Parameters")
-        .def(py::init<mio::regions::Region, mio::AgeGroup>(), py::arg("num_regions"), py::arg("num_agegroups"))
+        .def(py::init<mio::oseirmetapop::Region, mio::AgeGroup>(), py::arg("num_regions"), py::arg("num_agegroups"))
         .def("check_constraints", &mio::oseirmetapop::Parameters<double>::check_constraints)
         .def("apply_constraints", &mio::oseirmetapop::Parameters<double>::apply_constraints)
         .def_property_readonly("num_regions", &mio::oseirmetapop::Parameters<double>::get_num_regions)
         .def_property_readonly("num_agegroups", &mio::oseirmetapop::Parameters<double>::get_num_agegroups);
 
     using Populations =
-        mio::Populations<double, mio::regions::Region, mio::AgeGroup, mio::oseirmetapop::InfectionState>;
+        mio::Populations<double, mio::oseirmetapop::Region, mio::AgeGroup, mio::oseirmetapop::InfectionState>;
 
     pymio::bind_Population(m, "Populations", mio::Tag<mio::oseirmetapop::Model<double>::Populations>{});
     pymio::bind_CompartmentalModel<mio::oseirmetapop::InfectionState, Populations,
