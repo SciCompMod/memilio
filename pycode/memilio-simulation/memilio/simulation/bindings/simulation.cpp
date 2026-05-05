@@ -39,7 +39,7 @@
 #include "utils/index.h"
 #include "utils/custom_index_array.h"
 #include "utils/random_number_generator.h"
-#include "geography/geolocation.cpp"
+#include "geography/geolocation.h"
 
 //Includes from MEmilio
 #include "memilio/mobility/metapopulation_mobility_instant.h"

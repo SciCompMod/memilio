@@ -18,6 +18,9 @@
 * limitations under the License.
 */
 
+#ifndef PYMIO_ABSTRACT_PARAMETER_DISTRIBUTION_H
+#define PYMIO_ABSTRACT_PARAMETER_DISTRIBUTION_H
+
 #include "memilio/utils/abstract_parameter_distribution.h"
 #include "memilio/utils/random_number_generator.h"
 #include "pybind_util.h"
@@ -38,3 +41,5 @@ void bind_abstract_parameter_distribution(py::module_& m, std::string const& nam
         .def("params", &mio::AbstractParameterDistribution::params);
 }
 } // namespace pymio
+
+#endif //PYMIO_ABSTRACT_PARAMETER_DISTRIBUTION_H

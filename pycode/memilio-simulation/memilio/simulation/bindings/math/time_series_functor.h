@@ -18,6 +18,9 @@
 * limitations under the License.
 */
 
+#ifndef PYMIO_TIME_SERIES_FUNCTOR_H
+#define PYMIO_TIME_SERIES_FUNCTOR_H
+
 #include "memilio/math/time_series_functor.h"
 #include "memilio/math/interpolation.h"
 
@@ -46,3 +49,5 @@ void bind_time_series_functor(py::module_& m, std::string const& name)
 }
 
 } // namespace pymio
+
+#endif //PYMIO_TIME_SERIES_FUNCTOR_H

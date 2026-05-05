@@ -18,6 +18,9 @@
 * limitations under the License.
 */
 
+#ifndef PYMIO_RANDOM_NUMBER_GENERATOR_H
+#define PYMIO_RANDOM_NUMBER_GENERATOR_H
+
 #include "memilio/utils/random_number_generator.h"
 #include "pybind_util.h"
 
@@ -48,3 +51,5 @@ void bind_discrete_distribution(py::module_& m, std::string const& name)
         });
 }
 } // namespace pymio
+
+#endif //PYMIO_RANDOM_NUMBER_GENERATOR_H
