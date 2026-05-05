@@ -134,19 +134,19 @@ for person in model.persons:
 # Assign locations
 
 for person in model.persons:
-    id = person.id
+    person_id = person.id
 
-    model.assign_location(id, event)
-    model.assign_location(id, shop)
+    model.assign_location(person_id, event)
+    model.assign_location(person_id, shop)
 
-    model.assign_location(id, hospital)
-    model.assign_location(id, icu)
+    model.assign_location(person_id, hospital)
+    model.assign_location(person_id, icu)
 
     if person.age == AgeGroup(1):
-        model.assign_location(id, school)
+        model.assign_location(person_id, school)
 
     if person.age == AgeGroup(2) or person.age == AgeGroup(3):
-        model.assign_location(id, work)
+        model.assign_location(person_id, work)
 
 # Vaccinations
 
@@ -163,10 +163,7 @@ for age in vaccination_priority:
 
     random.shuffle(indices)
 
-    temp = vacc_rate * len(indices)
     n_to_vaccinate = int(np.round(vacc_rate * len(indices)))
-
-    count = 0
     for i in range(n_to_vaccinate):
         person = model.persons[indices[i]]
         if person.get_infection_state(vaccination_time) == abm.InfectionState.Susceptible:

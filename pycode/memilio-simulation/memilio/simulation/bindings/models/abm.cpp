@@ -237,13 +237,10 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_property_readonly("age", &mio::abm::Person::get_age)
         .def_property_readonly("is_in_quarantine", &mio::abm::Person::is_in_quarantine)
         .def_property_readonly("id", &mio::abm::Person::get_id)
-        .def(
-            "add_new_infection",
-            [](mio::abm::Person& self, mio::abm::Infection infection) {
-                self.add_new_infection(std::move(infection));
-            },
-            py::return_value_policy::reference_internal)
-        .def("add_new_vaccination", &mio::abm::Person::add_new_vaccination, py::return_value_policy::reference_internal)
+        .def("add_new_infection", [](mio::abm::Person& self, mio::abm::Infection infection) {
+            self.add_new_infection(std::move(infection));
+        })
+        .def("add_new_vaccination", &mio::abm::Person::add_new_vaccination)
         .def("get_infection_state", &mio::abm::Person::get_infection_state)
         .def_property_readonly("vaccinations", py::overload_cast<>(&mio::abm::Person::get_vaccinations, py::const_));
 
@@ -335,11 +332,12 @@ PYBIND11_MODULE(_simulation_abm, m)
              [](mio::abm::Model& self, std::vector<uint32_t> seeds) {
                  self.get_rng().seed(seeds);
              })
-        .def_property_readonly("rng", py::overload_cast<>(&mio::abm::Model::get_rng, py::const_));
+        .def_property_readonly("rng", py::overload_cast<>(&mio::abm::Model::get_rng),
+                               py::return_value_policy::reference_internal);
 
     auto sim_cls = pymio::bind_class<mio::abm::Simulation<>, pymio::EnablePickling::Never>(m, "Simulation")
                        .def(py::init<mio::abm::TimePoint, size_t>())
-                       .def(py::init([](mio::abm::TimePoint t, mio::abm::Model& model) {
+                       .def(py::init([](mio::abm::TimePoint t, mio::abm::Model model) {
                                 return mio::abm::Simulation(t, std::move(model));
                             }),
                             py::return_value_policy::reference_internal)
