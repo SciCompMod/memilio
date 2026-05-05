@@ -185,7 +185,8 @@ sim = abm.Simulation(t0, model)
 
 history = abm.TimeSeriesWriterLogInfectionStateHistory(
     mio.TimeSeries(len(abm.InfectionState.values())))
+history2 = abm.DataWriterLogDataForMobilityHistory()
 
-sim.advance(tmax, history)
+sim.advance(tmax, history, history2)
 
-history.get_log().print_table()
+history.get_log()[0].print_table()

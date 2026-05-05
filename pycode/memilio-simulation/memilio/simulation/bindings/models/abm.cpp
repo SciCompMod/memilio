@@ -30,6 +30,7 @@
 #include "abm/household.h"
 #include "abm/lockdown_rules.h"
 #include "abm/common_abm_loggers.h"
+#include "memilio/utils/type_list.h"
 
 #include "pybind11/attr.h"
 #include "pybind11/cast.h"
@@ -40,59 +41,28 @@
 
 namespace py = pybind11;
 
-// Define all combinations of histories
-using AdvanceCombinations =
-    std::tuple<std::tuple<>,
-               // Single History:
-               std::tuple<mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState>>,
-               std::tuple<mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation>>,
-               std::tuple<mio::History<mio::DataWriterToMemory, mio::abm::LogPersonInformation>>,
-               std::tuple<mio::History<mio::DataWriterToMemory, mio::abm::LogDataForMobility>>,
-               // Multiple Histories :
-               std::tuple<mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState>,
-                          mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation>>,
-               std::tuple<mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState>,
-                          mio::History<mio::DataWriterToMemory, mio::abm::LogPersonInformation>>,
-               std::tuple<mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState>,
-                          mio::History<mio::DataWriterToMemory, mio::abm::LogDataForMobility>>,
-               std::tuple<mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation>,
-                          mio::History<mio::DataWriterToMemory, mio::abm::LogPersonInformation>>,
-               std::tuple<mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation>,
-                          mio::History<mio::DataWriterToMemory, mio::abm::LogDataForMobility>>,
-               std::tuple<mio::History<mio::DataWriterToMemory, mio::abm::LogPersonInformation>,
-                          mio::History<mio::DataWriterToMemory, mio::abm::LogDataForMobility>>,
-               std::tuple<mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState>,
-                          mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation>,
-                          mio::History<mio::DataWriterToMemory, mio::abm::LogPersonInformation>>,
-               std::tuple<mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState>,
-                          mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation>,
-                          mio::History<mio::DataWriterToMemory, mio::abm::LogDataForMobility>>,
-               std::tuple<mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState>,
-                          mio::History<mio::DataWriterToMemory, mio::abm::LogPersonInformation>,
-                          mio::History<mio::DataWriterToMemory, mio::abm::LogDataForMobility>>,
-               std::tuple<mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation>,
-                          mio::History<mio::DataWriterToMemory, mio::abm::LogPersonInformation>,
-                          mio::History<mio::DataWriterToMemory, mio::abm::LogDataForMobility>>,
-               std::tuple<mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState>,
-                          mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation>,
-                          mio::History<mio::DataWriterToMemory, mio::abm::LogPersonInformation>,
-                          mio::History<mio::DataWriterToMemory, mio::abm::LogDataForMobility>>>
+// The history types that are supported in the advance function of the simulation. If a new Logger is added, the corresponding History type has to be added here to be supported in the advance function of the simulation.
+using HistoryTypes = mio::TypeList<mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState>,
+                                   mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation>,
+                                   mio::History<mio::DataWriterToMemory, mio::abm::LogPersonInformation>,
+                                   mio::History<mio::DataWriterToMemory, mio::abm::LogDataForMobility>>;
 
-    ;
-
-void bind_all_advances(py::class_<mio::abm::Simulation<>>& cls)
+mio::details::AbstractHistory<mio::abm::Simulation<mio::abm::Model>> to_abstract_history(py::object obj)
 {
-    // Bind a single advance overload for a specific set of History types
-    auto bind_one = [&]<typename... HistoryTypes>(std::tuple<HistoryTypes...>*) {
-        cls.def("advance", [](mio::abm::Simulation<>& sim, mio::abm::TimePoint tmax, HistoryTypes&... histories) {
-            sim.advance(tmax, histories...);
-        });
-    };
-
-    // Iterate over all combinations and bind one overload each
-    [&]<typename... Combinations>(std::tuple<Combinations...>*) {
-        (bind_one(static_cast<Combinations*>(nullptr)), ...);
-    }(static_cast<AdvanceCombinations*>(nullptr));
+    std::optional<mio::details::AbstractHistory<mio::abm::Simulation<>>> result;
+    [&]<class... Ts>(mio::TypeList<Ts...>) {
+        (
+            [&]() {
+                if (!result && py::isinstance<Ts>(obj)) {
+                    result = mio::details::AbstractHistory<mio::abm::Simulation<>>(py::cast<Ts&>(obj));
+                }
+            }(),
+            ...);
+        if (!result) {
+            throw pybind11::type_error{};
+        }
+    }(HistoryTypes{});
+    return *result;
 }
 
 template <typename... Loggers>
@@ -160,6 +130,25 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("Generic", mio::abm::TestType::Generic)
         .value("Antigen", mio::abm::TestType::Antigen)
         .value("PCR", mio::abm::TestType::PCR);
+
+    pymio::iterable_enum<mio::abm::ActivityType>(m, "ActivityType")
+        .value("Workplace", mio::abm::ActivityType::Workplace)
+        .value("Education", mio::abm::ActivityType::Education)
+        .value("Shopping", mio::abm::ActivityType::Shopping)
+        .value("Leisure", mio::abm::ActivityType::Leisure)
+        .value("PrivateMatters", mio::abm::ActivityType::PrivateMatters)
+        .value("OtherActivity", mio::abm::ActivityType::OtherActivity)
+        .value("Home", mio::abm::ActivityType::Home)
+        .value("UnknownActivity", mio::abm::ActivityType::UnknownActivity);
+
+    pymio::iterable_enum<mio::abm::TransportMode>(m, "TransportMode")
+        .value("Unknown", mio::abm::TransportMode::Unknown)
+        .value("Bike", mio::abm::TransportMode::Bike)
+        .value("CarDriver", mio::abm::TransportMode::CarDriver)
+        .value("CarPassenger", mio::abm::TransportMode::CarPassenger)
+        .value("PublicTransport", mio::abm::TransportMode::PublicTransport)
+        .value("Walking", mio::abm::TransportMode::Walking)
+        .value("Other", mio::abm::TransportMode::Other);
 
     pymio::bind_class<mio::abm::TimeSpan, pymio::EnablePickling::Never>(m, "TimeSpan")
         .def(py::init<int>(), py::arg("seconds") = 0)
@@ -354,9 +343,20 @@ PYBIND11_MODULE(_simulation_abm, m)
                                 return mio::abm::Simulation(t, std::move(model));
                             }),
                             py::return_value_policy::reference_internal)
-                       .def_property_readonly("model", py::overload_cast<>(&mio::abm::Simulation<>::get_model));
-
-    bind_all_advances(sim_cls);
+                       .def_property_readonly("model", py::overload_cast<>(&mio::abm::Simulation<>::get_model))
+                       .def(
+                           "advance",
+                           [](mio::abm::Simulation<>& sim, mio::abm::TimePoint tmax) {
+                               sim.advance(tmax);
+                           },
+                           py::arg("tmax"))
+                       .def("advance", [](mio::abm::Simulation<>& sim, mio::abm::TimePoint tmax, py::args histories) {
+                           std::vector<mio::details::AbstractHistory<mio::abm::Simulation<>>> abs_histories;
+                           for (auto& value : histories) {
+                               abs_histories.push_back(to_abstract_history(py::cast<py::object>(value)));
+                           }
+                           sim.advance(tmax, abs_histories);
+                       });
 
     pymio::bind_class<mio::abm::HouseholdMember, pymio::EnablePickling::Never>(m, "HouseholdMember")
         .def(py::init<size_t>(), py::arg("num_agegroups") = 1)
