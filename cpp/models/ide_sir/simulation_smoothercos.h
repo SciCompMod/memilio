@@ -53,9 +53,7 @@ public:
      * Run the simulation from the current time to tmax.
      * @param tmax Time to stop.
      */
-    void advance(ScalarType tmax);
-
-    void advance_smoothstep(ScalarType tmax);
+    void advance(ScalarType tmax, std::string smoother_func_str);
 
     /**
      * @brief Get the result of the simulation.

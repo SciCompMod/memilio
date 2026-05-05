@@ -539,16 +539,15 @@ def main():
     fdorder = 4
     smootherwindow = 2
 
-    smoothercos_func = False
+    # smoother_func_str = "smoothercos"
 
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
-    main_dir = f"2026-05-04/c++_groundtruth_smoothercos_fdordercontacts=4_smootherwindow=2"
+    main_dir = f"2026-05-05/smoothstep_c2_fdordercontacts=4_smootherwindow=2"
     relevant_dir = os.path.join(root_dir, main_dir)
     # print(relevant_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
-    sub_dirs = [sub_dirs[-1]]
-    # sub_dirs = ["t0ide=0_tmax=5"]
+    # sub_dirs = [sub_dirs[-1]]
 
     cut_off = 0
 

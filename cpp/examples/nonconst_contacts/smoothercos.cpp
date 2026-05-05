@@ -133,10 +133,63 @@ ScalarType smoothstep_deriv(ScalarType current_time, ScalarType damping_time, Sc
     return deriv;
 }
 
-mio::IOResult<void> simulate_smoothercos(ScalarType ide_exponent, size_t finite_difference_order, ScalarType t0_ode,
-                                         ScalarType t0_ide, ScalarType tmax, ScalarType damping,
-                                         ScalarType damping_time, ScalarType smoother_window, std::string save_dir = "",
-                                         bool smoothercos_func = true)
+ScalarType smoothstep_c2(ScalarType current_time, ScalarType damping_time, ScalarType damping, ScalarType cont_freq,
+                         ScalarType smoother_window)
+{
+
+    ScalarType xleft  = damping_time - smoother_window;
+    ScalarType xright = damping_time;
+
+    ScalarType yleft  = cont_freq;
+    ScalarType yright = (1. - damping) * cont_freq;
+
+    if (current_time <= xleft) {
+        return yleft;
+    }
+    if (current_time >= xright) {
+        return yright;
+    }
+
+    else {
+        ScalarType normalized_time = (current_time - xleft) / (xright - xleft);
+
+        ScalarType smoothed_value =
+            yleft + (yright - yleft) * (6. * std::pow(normalized_time, 5) - 15. * std::pow(normalized_time, 4) +
+                                        10. * std::pow(normalized_time, 3));
+
+        return smoothed_value;
+    }
+}
+
+ScalarType smoothstep_c2_deriv(ScalarType current_time, ScalarType damping_time, ScalarType damping,
+                               ScalarType cont_freq, ScalarType smoother_window)
+{
+    ScalarType xleft  = damping_time - smoother_window;
+    ScalarType xright = damping_time;
+
+    ScalarType yleft  = cont_freq;
+    ScalarType yright = (1. - damping) * cont_freq;
+
+    ScalarType deriv = 0.;
+
+    if (current_time <= xleft || current_time >= xright) {
+        deriv = 0.;
+    }
+    else {
+        ScalarType normalized_time       = (current_time - xleft) / (xright - xleft);
+        ScalarType normalized_time_deriv = 1. / (xright - xleft);
+        deriv                            = (yright - yleft) *
+                (30. * std::pow(normalized_time, 4) - 60. * std::pow(normalized_time, 3) +
+                 30 * std::pow(normalized_time, 2)) *
+                normalized_time_deriv;
+    }
+
+    return deriv;
+}
+
+mio::IOResult<void> simulate(ScalarType ide_exponent, size_t finite_difference_order, ScalarType t0_ode,
+                             ScalarType t0_ide, ScalarType tmax, ScalarType damping, ScalarType damping_time,
+                             ScalarType smoother_window, std::string save_dir = "", std::string smoother_func_str = "")
 {
 
     using namespace params;
@@ -152,45 +205,77 @@ mio::IOResult<void> simulate_smoothercos(ScalarType ide_exponent, size_t finite_
     mio::UncertainContactMatrix<ScalarType> contact_matrix = scale_contact_matrix(damping, damping_time);
     Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
 
-    if (smoothercos_func) {
+    if (smoother_func_str == "smoothercos") {
         vec_init[(size_t)mio::isir::InfectionState::Susceptible] =
             contact_matrix.get_cont_freq_mat().get_matrix_at(SimulationTime<ScalarType>(ScalarType(0.) * dt))(0, 0);
         vec_init[(size_t)mio::isir::InfectionState::Infected] =
             smoothercos_deriv(0., contact_matrix, damping_time, smoother_window);
         vec_init[(size_t)mio::isir::InfectionState::Recovered] =
             smoothercos_deriv(0., contact_matrix, damping_time, smoother_window);
-    }
-    else {
-        vec_init[(size_t)mio::isir::InfectionState::Susceptible] =
-            smoothstep(0., damping_time, damping, cont_freq, smoother_window);
-        vec_init[(size_t)mio::isir::InfectionState::Infected] =
-            smoothstep_deriv(0., damping_time, damping, cont_freq, smoother_window);
-        vec_init[(size_t)mio::isir::InfectionState::Recovered] =
-            smoothstep_deriv(0., damping_time, damping, cont_freq, smoother_window);
-    }
 
-    init_populations.add_time_point(t0_ode, vec_init);
-    groundtruth_ts.add_time_point(t0_ode, vec_init);
+        init_populations.add_time_point(t0_ode, vec_init);
+        groundtruth_ts.add_time_point(t0_ode, vec_init);
 
-    while (init_populations.get_last_time() < t0_ide - 1e-10) {
-        if (smoothercos_func) {
+        while (init_populations.get_last_time() < t0_ide - 1e-10) {
+
             vec_init[(size_t)mio::isir::InfectionState::Susceptible] = contact_matrix.get_cont_freq_mat().get_matrix_at(
                 SimulationTime<ScalarType>(init_populations.get_last_time() + dt))(0, 0);
             vec_init[(size_t)mio::isir::InfectionState::Infected] =
                 smoothercos_deriv(init_populations.get_last_time() + dt, contact_matrix, damping_time, smoother_window);
             vec_init[(size_t)mio::isir::InfectionState::Recovered] =
                 smoothercos_deriv(init_populations.get_last_time() + dt, contact_matrix, damping_time, smoother_window);
+
+            init_populations.add_time_point(init_populations.get_last_time() + dt, vec_init);
+            groundtruth_ts.add_time_point(groundtruth_ts.get_last_time() + dt, vec_init);
         }
-        else {
+    }
+    else if (smoother_func_str == "smoothstep") {
+        vec_init[(size_t)mio::isir::InfectionState::Susceptible] =
+            smoothstep(0., damping_time, damping, cont_freq, smoother_window);
+        vec_init[(size_t)mio::isir::InfectionState::Infected] =
+            smoothstep_deriv(0., damping_time, damping, cont_freq, smoother_window);
+        vec_init[(size_t)mio::isir::InfectionState::Recovered] =
+            smoothstep_deriv(0., damping_time, damping, cont_freq, smoother_window);
+
+        init_populations.add_time_point(t0_ode, vec_init);
+        groundtruth_ts.add_time_point(t0_ode, vec_init);
+
+        while (init_populations.get_last_time() < t0_ide - 1e-10) {
+
             vec_init[(size_t)mio::isir::InfectionState::Susceptible] =
                 smoothstep(init_populations.get_last_time() + dt, damping_time, damping, cont_freq, smoother_window);
             vec_init[(size_t)mio::isir::InfectionState::Infected] = smoothstep_deriv(
                 init_populations.get_last_time() + dt, damping_time, damping, cont_freq, smoother_window);
             vec_init[(size_t)mio::isir::InfectionState::Recovered] = smoothstep_deriv(
                 init_populations.get_last_time() + dt, damping_time, damping, cont_freq, smoother_window);
+
+            init_populations.add_time_point(init_populations.get_last_time() + dt, vec_init);
+            groundtruth_ts.add_time_point(groundtruth_ts.get_last_time() + dt, vec_init);
         }
-        init_populations.add_time_point(init_populations.get_last_time() + dt, vec_init);
-        groundtruth_ts.add_time_point(groundtruth_ts.get_last_time() + dt, vec_init);
+    }
+    else if (smoother_func_str == "smoothstep_c2") {
+        vec_init[(size_t)mio::isir::InfectionState::Susceptible] =
+            smoothstep_c2(0., damping_time, damping, cont_freq, smoother_window);
+        vec_init[(size_t)mio::isir::InfectionState::Infected] =
+            smoothstep_c2_deriv(0., damping_time, damping, cont_freq, smoother_window);
+        vec_init[(size_t)mio::isir::InfectionState::Recovered] =
+            smoothstep_c2_deriv(0., damping_time, damping, cont_freq, smoother_window);
+
+        init_populations.add_time_point(t0_ode, vec_init);
+        groundtruth_ts.add_time_point(t0_ode, vec_init);
+
+        while (init_populations.get_last_time() < t0_ide - 1e-10) {
+
+            vec_init[(size_t)mio::isir::InfectionState::Susceptible] =
+                smoothstep_c2(init_populations.get_last_time() + dt, damping_time, damping, cont_freq, smoother_window);
+            vec_init[(size_t)mio::isir::InfectionState::Infected] = smoothstep_c2_deriv(
+                init_populations.get_last_time() + dt, damping_time, damping, cont_freq, smoother_window);
+            vec_init[(size_t)mio::isir::InfectionState::Recovered] = smoothstep_c2_deriv(
+                init_populations.get_last_time() + dt, damping_time, damping, cont_freq, smoother_window);
+
+            init_populations.add_time_point(init_populations.get_last_time() + dt, vec_init);
+            groundtruth_ts.add_time_point(groundtruth_ts.get_last_time() + dt, vec_init);
+        }
     }
 
     // Initialize model.
@@ -201,8 +286,7 @@ mio::IOResult<void> simulate_smoothercos(ScalarType ide_exponent, size_t finite_
 
     // Carry out simulation.
     mio::isir::SimulationSmootherCos sim(model, dt);
-    // sim.advance(tmax);
-    sim.advance_smoothstep(tmax);
+    sim.advance(tmax, smoother_func_str);
 
     if (!save_dir.empty()) {
         // Save compartments.
@@ -225,7 +309,7 @@ int main()
     using namespace params;
 
     ScalarType t0_ode = 0.;
-    ScalarType t0_ide = 12.;
+    ScalarType t0_ide = 5.;
     ScalarType tmax   = 20.;
 
     ScalarType damping      = 0.2;
@@ -235,14 +319,17 @@ int main()
 
     ScalarType smoother_window = 2.;
 
-    bool smoothercos_func = true;
+    // std::string smoother_func_str = "smoothercos";
+    // std::string smoother_func_str = "smoothstep";
+    std::string smoother_func_str = "smoothstep_c2";
 
-    std::vector<ScalarType> ide_exponents = {0., 1., 2., 3., 4.};
+    std::vector<ScalarType> exponents = {0., 1., 2., 3., 4.};
 
-    std::string save_dir = fmt::format(
-        "../../simulation_results/2026-05-04/c++_groundtruth_smoothercos_fdordercontacts={}_smootherwindow={}/"
-        "nonconst_contacts_t0={}_tinit={}_tmax={}_dampingtime={}_damping={}_contfreq={}/",
-        finite_difference_order, smoother_window, t0_ode, t0_ide, tmax, damping_time, damping, cont_freq);
+    std::string save_dir =
+        fmt::format("../../simulation_results/2026-05-05/{}_fdordercontacts={}_smootherwindow={}/"
+                    "nonconst_contacts_t0={}_tinit={}_tmax={}_dampingtime={}_damping={}_contfreq={}/",
+                    smoother_func_str, finite_difference_order, smoother_window, t0_ode, t0_ide, tmax, damping_time,
+                    damping, cont_freq);
 
     // Make folder if not existent yet.
     boost::filesystem::path dir(save_dir);
@@ -250,10 +337,9 @@ int main()
 
     // Do IDE simulations.
 
-    for (ScalarType ide_exponent : ide_exponents) {
+    for (ScalarType exponent : exponents) {
         std::cout << std::endl;
-        mio::IOResult<void> result_ide =
-            simulate_smoothercos(ide_exponent, finite_difference_order, t0_ode, t0_ide, tmax, damping, damping_time,
-                                 smoother_window, save_dir, smoothercos_func);
+        mio::IOResult<void> result = simulate(exponent, finite_difference_order, t0_ode, t0_ide, tmax, damping,
+                                              damping_time, smoother_window, save_dir, smoother_func_str);
     }
 }

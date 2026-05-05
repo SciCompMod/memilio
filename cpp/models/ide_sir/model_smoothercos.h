@@ -50,21 +50,28 @@ public:
         return m_finite_difference_order;
     }
 
+    // Function that compute numerical derivative of some function.
+    ScalarType compute_deriv_numerical(ScalarType dt, ScalarType current_time,
+                                       std::function<ScalarType(ScalarType)> smoother_func);
+
     // Functions for computing/approximating smoothercosine.
+    ScalarType smoothercos_via_contacts(ScalarType current_time);
     ScalarType smoothercos(ScalarType current_time);
     ScalarType smoothercos_deriv(ScalarType current_time);
-    void smoothercos_deriv_numerical(ScalarType dt, size_t j);
-    void smoothercos_deriv_numerical(ScalarType dt);
     void approximate_smoothercos(ScalarType dt, ScalarType current_time);
 
     // Functions for computing/approximating smoothstep.
     ScalarType smoothstep(ScalarType current_time);
     ScalarType smoothstep_deriv(ScalarType current_time);
-    void smoothstep_deriv_numerical(ScalarType current_time, ScalarType dt);
     void approximate_smoothstep(ScalarType dt, ScalarType current_time);
 
+    // Functions for computing/approximating smoothstep where the resulting function is C2.
+    ScalarType smoothstep_c2(ScalarType current_time);
+    ScalarType smoothstep_c2_deriv(ScalarType current_time);
+    void approximate_smoothstep_c2(ScalarType dt, ScalarType current_time);
+
     // Set groundtruth.
-    void set_groundtruth(ScalarType current_time, bool smoothercos_func);
+    void set_groundtruth(ScalarType current_time, std::string smoother_func_str);
 
     // ---- Public parameters. ----
     ParameterSet parameters{}; ///< ParameterSet of Model Parameters.

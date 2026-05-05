@@ -49,6 +49,50 @@ ModelSmootherCos::ModelSmootherCos(TimeSeries<ScalarType>&& populations_init, Ti
     assert(m_finite_difference_order > 0);
 }
 
+ScalarType ModelSmootherCos::compute_deriv_numerical(ScalarType dt, ScalarType current_time,
+                                                     std::function<ScalarType(ScalarType)> smoother_func)
+{
+    ScalarType deriv = 0;
+
+    if (m_finite_difference_order == 1) {
+        deriv = (smoother_func(current_time) - smoother_func(current_time - dt)) / dt;
+    }
+
+    if (m_finite_difference_order == 2) {
+        deriv = (3 * smoother_func(current_time) - 4 * smoother_func(current_time - dt) +
+                 1 * smoother_func(current_time - 2. * dt)) /
+                (2 * dt);
+    }
+
+    if (m_finite_difference_order == 3) {
+        deriv = (11 * smoother_func(current_time) - 18 * smoother_func(current_time - dt) +
+                 9 * smoother_func(current_time - 2 * dt) - 2 * smoother_func(current_time - 3 * dt)) /
+                (6 * dt);
+    }
+
+    if (m_finite_difference_order == 4) {
+        deriv = (25. * smoother_func(current_time) - 48. * smoother_func(current_time - dt) +
+                 36. * smoother_func(current_time - 2. * dt) - 16. * smoother_func(current_time - 3. * dt) +
+                 3. * smoother_func(current_time - 4. * dt)) /
+                (12. * dt);
+    }
+
+    if (m_finite_difference_order == 5) {
+        deriv = (137. * smoother_func(current_time) - 300. * smoother_func(current_time - dt) +
+                 300. * smoother_func(current_time - 2. * dt) - 200. * smoother_func(current_time - 3. * dt) +
+                 75. * smoother_func(current_time - 4. * dt) - 12. * smoother_func(current_time - 5. * dt)) /
+                (60. * dt);
+    }
+
+    return deriv;
+}
+
+ScalarType ModelSmootherCos::smoothercos_via_contacts(ScalarType current_time)
+{
+    return parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+        SimulationTime<ScalarType>(current_time))(0, 0);
+}
+
 ScalarType ModelSmootherCos::smoothercos(ScalarType current_time)
 {
     ScalarType xleft  = m_damping_time - m_smoother_window;
@@ -92,107 +136,20 @@ ScalarType ModelSmootherCos::smoothercos_deriv(ScalarType current_time)
     return deriv;
 }
 
-// void ModelSmootherCos::compute_S()
-// {
-//     ScalarType current_time = populations.get_last_time();
-//     populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] =
-//         parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(SimulationTime<ScalarType>(current_time))(
-//             0, 0);
-// }
-
-// void ModelSmootherCos::compute_S_deriv_analytical(ScalarType current_time)
-// {
-
-//     populations.get_last_value()[(Eigen::Index)InfectionState::Infected] = smoothercos_deriv(current_time);
-// }
-
-void ModelSmootherCos::smoothercos_deriv_numerical(ScalarType dt, size_t j)
-{
-    ScalarType deriv = 0;
-
-    if (m_finite_difference_order == 1) {
-        deriv = (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                     SimulationTime<ScalarType>(ScalarType(j) * dt))(0, 0) -
-                 parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                     SimulationTime<ScalarType>((ScalarType(j) - 1.) * dt))(0, 0)) /
-                dt;
-    }
-
-    if (m_finite_difference_order == 2) {
-        deriv = (3 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                         SimulationTime<ScalarType>(ScalarType(j) * dt))(0, 0) -
-                 4 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                         SimulationTime<ScalarType>((ScalarType(j) - 1.) * dt))(0, 0) +
-                 1 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                         SimulationTime<ScalarType>(((ScalarType)j - 2.) * dt))(0, 0)) /
-                (2 * dt);
-    }
-
-    if (m_finite_difference_order == 3) {
-        deriv = (11 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                          SimulationTime<ScalarType>(ScalarType(j) * dt))(0, 0) -
-                 18 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                          SimulationTime<ScalarType>((ScalarType(j) - 1.) * dt))(0, 0) +
-                 9 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                         SimulationTime<ScalarType>(((ScalarType)j - 2.) * dt))(0, 0) -
-                 2 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                         SimulationTime<ScalarType>(((ScalarType)j - 3.) * dt))(0, 0)) /
-                (6 * dt);
-    }
-
-    if (m_finite_difference_order == 4) {
-        deriv = (25. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                           SimulationTime<ScalarType>((ScalarType)j * dt))(0, 0) -
-                 48. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                           SimulationTime<ScalarType>(((ScalarType)j - 1.) * dt))(0, 0) +
-                 36. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                           SimulationTime<ScalarType>(((ScalarType)j - 2.) * dt))(0, 0) -
-                 16. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                           SimulationTime<ScalarType>(((ScalarType)j - 3.) * dt))(0, 0) +
-                 3. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                          SimulationTime<ScalarType>(((ScalarType)j - 4.) * dt))(0, 0)) /
-                (12. * dt);
-    }
-
-    if (m_finite_difference_order == 5) {
-        deriv = (137. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                            SimulationTime<ScalarType>((ScalarType)j * dt))(0, 0) -
-                 300. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                            SimulationTime<ScalarType>(((ScalarType)j - 1.) * dt))(0, 0) +
-                 300. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                            SimulationTime<ScalarType>(((ScalarType)j - 2.) * dt))(0, 0) -
-                 200. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                            SimulationTime<ScalarType>(((ScalarType)j - 3.) * dt))(0, 0) +
-                 75. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                           SimulationTime<ScalarType>(((ScalarType)j - 4.) * dt))(0, 0) -
-                 12. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                           SimulationTime<ScalarType>(((ScalarType)j - 5.) * dt))(0, 0)) /
-                (60. * dt);
-    }
-
-    populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] = deriv;
-}
-
-void ModelSmootherCos::smoothercos_deriv_numerical(ScalarType dt)
-{
-    // Use the number of time points to determine time_point_index, hence we are calculating S deriv for last time point.
-    size_t j = populations.get_num_time_points() - 1;
-    smoothercos_deriv_numerical(dt, j);
-}
-
 void ModelSmootherCos::approximate_smoothercos(ScalarType dt, ScalarType current_time)
 {
 
     // S analytically in Susceptible compartment via contact matrix.
-    populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] =
-        parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(SimulationTime<ScalarType>(current_time))(
-            0, 0);
+    populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] = smoothercos_via_contacts(current_time);
 
     // S' analytically in Infected compartment.
     populations.get_last_value()[(Eigen::Index)InfectionState::Infected] = smoothercos_deriv(current_time);
 
-    // S numerically in Recovered compartment.
-    smoothercos_deriv_numerical(dt);
+    // S numerically in Recovered compartment via SmootherCOsine in contact_matrix.
+    populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] =
+        compute_deriv_numerical(dt, current_time, [this](ScalarType t) {
+            return smoothercos_via_contacts(t);
+        });
 }
 
 ScalarType ModelSmootherCos::smoothstep(ScalarType current_time)
@@ -244,43 +201,6 @@ ScalarType ModelSmootherCos::smoothstep_deriv(ScalarType current_time)
     return deriv;
 }
 
-void ModelSmootherCos::smoothstep_deriv_numerical(ScalarType current_time, ScalarType dt)
-{
-    ScalarType deriv = 0;
-
-    if (m_finite_difference_order == 1) {
-        deriv = (smoothstep(current_time) - smoothstep(current_time - dt)) / dt;
-    }
-
-    if (m_finite_difference_order == 2) {
-        deriv = (3 * smoothstep(current_time) - 4 * smoothstep(current_time - dt) +
-                 1 * smoothstep(current_time - 2. * dt)) /
-                (2 * dt);
-    }
-
-    if (m_finite_difference_order == 3) {
-        deriv = (11 * smoothstep(current_time) - 18 * smoothstep(current_time - dt) +
-                 9 * smoothstep(current_time - 2 * dt) - 2 * smoothstep(current_time - 3 * dt)) /
-                (6 * dt);
-    }
-
-    if (m_finite_difference_order == 4) {
-        deriv = (25. * smoothstep(current_time) - 48. * smoothstep(current_time - dt) +
-                 36. * smoothstep(current_time - 2. * dt) - 16. * smoothstep(current_time - 3. * dt) +
-                 3. * smoothstep(current_time - 4. * dt)) /
-                (12. * dt);
-    }
-
-    if (m_finite_difference_order == 5) {
-        deriv = (137. * smoothstep(current_time) - 300. * smoothstep(current_time - dt) +
-                 300. * smoothstep(current_time - 2. * dt) - 200. * smoothstep(current_time - 3. * dt) +
-                 75. * smoothstep(current_time - 4. * dt) - 12. * smoothstep(current_time - 5. * dt)) /
-                (60. * dt);
-    }
-
-    populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] = deriv;
-}
-
 void ModelSmootherCos::approximate_smoothstep(ScalarType dt, ScalarType current_time)
 {
     // S analytically in Susceptible compartment.
@@ -290,12 +210,82 @@ void ModelSmootherCos::approximate_smoothstep(ScalarType dt, ScalarType current_
     populations.get_last_value()[(Eigen::Index)InfectionState::Infected] = smoothstep_deriv(current_time);
 
     // S numerically in Recovered compartment.
-    smoothstep_deriv_numerical(current_time, dt);
+    populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] =
+        compute_deriv_numerical(dt, current_time, [this](ScalarType t) {
+            return smoothstep(t);
+        });
 }
 
-void ModelSmootherCos::set_groundtruth(ScalarType current_time, bool smoothercos_func)
+ScalarType ModelSmootherCos::smoothstep_c2(ScalarType current_time)
 {
-    if (smoothercos_func) {
+
+    ScalarType xleft  = m_damping_time - m_smoother_window;
+    ScalarType xright = m_damping_time;
+
+    ScalarType yleft  = m_cont_freq;
+    ScalarType yright = (1. - m_damping) * m_cont_freq;
+
+    if (current_time <= xleft) {
+        return yleft;
+    }
+    if (current_time >= xright) {
+        return yright;
+    }
+
+    else {
+        ScalarType normalized_time = (current_time - xleft) / (xright - xleft);
+
+        ScalarType smoothed_value =
+            yleft + (yright - yleft) * (6. * std::pow(normalized_time, 5) - 15. * std::pow(normalized_time, 4) +
+                                        10. * std::pow(normalized_time, 3));
+
+        return smoothed_value;
+    }
+}
+
+ScalarType ModelSmootherCos::smoothstep_c2_deriv(ScalarType current_time)
+{
+    ScalarType xleft  = m_damping_time - m_smoother_window;
+    ScalarType xright = m_damping_time;
+
+    ScalarType yleft  = m_cont_freq;
+    ScalarType yright = (1. - m_damping) * m_cont_freq;
+
+    ScalarType deriv = 0.;
+
+    if (current_time <= xleft || current_time >= xright) {
+        deriv = 0.;
+    }
+    else {
+        ScalarType normalized_time       = (current_time - xleft) / (xright - xleft);
+        ScalarType normalized_time_deriv = 1. / (xright - xleft);
+        deriv                            = (yright - yleft) *
+                (30. * std::pow(normalized_time, 4) - 60. * std::pow(normalized_time, 3) +
+                 30 * std::pow(normalized_time, 2)) *
+                normalized_time_deriv;
+    }
+
+    return deriv;
+}
+
+void ModelSmootherCos::approximate_smoothstep_c2(ScalarType dt, ScalarType current_time)
+{
+    // S analytically in Susceptible compartment.
+    populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] = smoothstep_c2(current_time);
+
+    // S' analytically in Infected compartment.
+    populations.get_last_value()[(Eigen::Index)InfectionState::Infected] = smoothstep_c2_deriv(current_time);
+
+    // S numerically in Recovered compartment.
+    populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] =
+        compute_deriv_numerical(dt, current_time, [this](ScalarType t) {
+            return smoothstep_c2(t);
+        });
+}
+
+void ModelSmootherCos::set_groundtruth(ScalarType current_time, std::string smoother_func_str)
+{
+    if (smoother_func_str == "smoothercos") {
         // Set to smoother function.
         groundtruth.get_last_value()[(Eigen::Index)InfectionState::Susceptible] = smoothercos(current_time);
         // Set to derivative of smoother function.
@@ -303,12 +293,19 @@ void ModelSmootherCos::set_groundtruth(ScalarType current_time, bool smoothercos
         groundtruth.get_last_value()[(Eigen::Index)InfectionState::Recovered] = smoothercos_deriv(current_time);
     }
 
-    else {
+    else if (smoother_func_str == "smoothstep") {
         // Set to smoother function.
         groundtruth.get_last_value()[(Eigen::Index)InfectionState::Susceptible] = smoothstep(current_time);
         // Set to derivative of smoother function.
         groundtruth.get_last_value()[(Eigen::Index)InfectionState::Infected]  = smoothstep_deriv(current_time);
         groundtruth.get_last_value()[(Eigen::Index)InfectionState::Recovered] = smoothstep_deriv(current_time);
+    }
+    else if (smoother_func_str == "smoothstep_c2") {
+        // Set to smoother function.
+        groundtruth.get_last_value()[(Eigen::Index)InfectionState::Susceptible] = smoothstep_c2(current_time);
+        // Set to derivative of smoother function.
+        groundtruth.get_last_value()[(Eigen::Index)InfectionState::Infected]  = smoothstep_c2_deriv(current_time);
+        groundtruth.get_last_value()[(Eigen::Index)InfectionState::Recovered] = smoothstep_c2_deriv(current_time);
     }
 }
 
