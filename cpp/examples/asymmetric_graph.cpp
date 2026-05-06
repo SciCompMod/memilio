@@ -21,6 +21,7 @@
 #include "memilio/geography/geolocation.h"
 #include "memilio/geography/rtree.h"
 #include "memilio/geography/distance.h"
+#include "memilio/io/io.h"
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/metapopulation_mobility_asymmetric.h"
 #include "memilio/mobility/graph.h"
@@ -40,8 +41,13 @@
 #include <ranges>
 #include <omp.h>
 
+const std::string farm_file     = "/home/kilian/Documents/data/read_data/farms_for_simulations.csv";
+const std::string edge_file     = "/home/kilian/Documents/data/read_data/simulation_edges.csv";
+const std::string exchange_file = "/home/kilian/Documents/data/read_data/exchanges.csv";
+
 int main(int /*argc*/, char** /*argv*/)
 {
+    mio::log_debug("Folder: {}", mio::get_current_dir_name());
     const auto t0   = 0.;
     const auto tmax = 100.;
     const auto dt   = 1.; //initial time step
@@ -53,7 +59,8 @@ int main(int /*argc*/, char** /*argv*/)
     //total compartment sizes
 
     using Model = mio::smm::Model<ScalarType, InfectionState, Status, Region>;
-    auto home   = Region(0);
+
+    auto home = Region(0);
 
     auto adoption_rates = mio::fmd::generic_adoption_rates();
 
@@ -61,11 +68,11 @@ int main(int /*argc*/, char** /*argv*/)
     mio::log_info("Starting Graph generation");
     {
         mio::timing::AutoTimer<"Graph Nodes Generation"> timer;
-        io::CSVReader<4> farms("../../farms200000.csv");
-        farms.read_header(io::ignore_extra_column, "farms", "num_cows", "latitude", "longitude");
+        io::CSVReader<4> farms(farm_file);
+        farms.read_header(io::ignore_extra_column, "id_numeric", "x", "y", "Tiere");
         int farm_id, num_cows;
         double latitude, longitude;
-        while (farms.read_row(farm_id, num_cows, latitude, longitude)) {
+        while (farms.read_row(farm_id, longitude, latitude, num_cows)) {
             builder.add_node(farm_id, longitude, latitude, mio::fmd::create_model(num_cows, adoption_rates), t0);
         }
     }
@@ -75,7 +82,7 @@ int main(int /*argc*/, char** /*argv*/)
     std::vector<std::vector<size_t>> interesting_indices;
     interesting_indices.push_back(
         {Model(Status{InfectionState::Count}, Region(1)).populations.get_flat_index({home, InfectionState::I})});
-    io::CSVReader<2> edges("../../edges200000.csv");
+    io::CSVReader<2> edges(edge_file);
     edges.read_header(io::ignore_extra_column, "from", "to");
     size_t from, to;
     while (edges.read_row(from, to)) {
@@ -93,28 +100,30 @@ int main(int /*argc*/, char** /*argv*/)
     for (auto& node : graph.nodes()) {
         mio::timing::AutoTimer<"neighbourhood search"> timer;
         node.property.set_regional_neighbors(
-            tree.in_range_indices_query(node.property.get_location(), {mio::geo::kilometers(5.0)}));
+            tree.in_range_indices_query(node.property.get_location(), {mio::geo::kilometers(2)}));
     }
 
     mio::log_info("Neighbors set");
     auto sim = mio::make_mobility_sim(t0, dt, std::move(graph));
 
-    io::CSVReader<4> exchanges("../../trade200000.csv");
-    exchanges.read_header(io::ignore_extra_column, "date", "num_animals", "from", "to");
+    io::CSVReader<4> exchanges(exchange_file);
+    exchanges.read_header(io::ignore_extra_column, "from_dec", "to_dec", "day", "LOM_length");
 
     int date, num_animals;
-    while (exchanges.read_row(date, num_animals, from, to)) {
+    while (exchanges.read_row(from, to, date, num_animals)) {
         sim.add_exchange(date, num_animals, from, to);
     }
-    // mio::log_info("Exchanges added");
-
-    // // #ifdef MEMILIO_ENABLE_OPENMP
-    // // #pragma omp parallel for
-    // //     for (size_t i = 0; i < 100; ++i) {
-    // // #endif
-
-    // // mio::log_info("new Simulation created");
-    // sim2.infectionrisk = 0.1;
+    int index_farm = 0;
+    // mio::UniformIntDistribution<int>::get_instance()(sim.get_rng(), 0, int(sim.get_graph().nodes().size() - 1));
+    auto E_index = sim.get_graph().nodes()[0].property.get_simulation().get_model().populations.get_flat_index(
+        {Region(0), InfectionState::E});
+    auto S_index = sim.get_graph().nodes()[0].property.get_simulation().get_model().populations.get_flat_index(
+        {Region(0), InfectionState::S});
+    auto num_sus     = sim.get_graph().nodes()[index_farm].property.get_result().get_last_value()[S_index];
+    auto num_exposed = std::ceil(0.01 * num_sus);
+    sim.get_graph().nodes()[index_farm].property.get_result().get_last_value()[E_index] = num_exposed;
+    sim.get_graph().nodes()[index_farm].property.get_result().get_last_value()[S_index] = num_sus - num_exposed;
+    mio::log_info("Infecting {} individuals at node {}.", num_exposed, index_farm);
 
     sim.advance(tmax);
 

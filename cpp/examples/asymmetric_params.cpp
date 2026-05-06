@@ -45,6 +45,10 @@
 #include <ranges>
 #include <omp.h>
 
+const std::string farm_file     = "/home/kilian/Documents/data/read_data/farms_for_simulations.csv";
+const std::string edge_file     = "/home/kilian/Documents/data/read_data/simulation_edges.csv";
+const std::string exchange_file = "/home/kilian/Documents/data/read_data/exchanges.csv";
+
 template <class T>
 MPI_Datatype mpi_type();
 
@@ -109,7 +113,7 @@ int main(int /*argc*/, char** /*argv*/)
     const auto tmax = 100.;
     const auto dt   = 1.; //initial time step
 
-    const size_t num_runs = 100000;
+    const size_t num_runs = 10;
 
     using mio::fmd::InfectionState;
     using Status = mio::Index<InfectionState>;
@@ -130,28 +134,28 @@ int main(int /*argc*/, char** /*argv*/)
     std::vector<int> farm_ids, num_cows_vec, dates, num_animals_exchanges;
     std::vector<int> froms, tos, from_exchanges, to_exchanges;
     if (rank == 0) {
-        io::CSVReader<4> farms("../../farms200000.csv");
-        farms.read_header(io::ignore_extra_column, "farms", "num_cows", "latitude", "longitude");
+        io::CSVReader<4> farms(farm_file);
+        farms.read_header(io::ignore_extra_column, "id_numeric", "x", "y", "Tiere");
         int farm_id, num_cows;
         double latitude, longitude;
-        while (farms.read_row(farm_id, num_cows, latitude, longitude)) {
+        while (farms.read_row(farm_id, longitude, latitude, num_cows)) {
             farm_ids.push_back(farm_id);
             num_cows_vec.push_back(num_cows);
             latitudes.push_back(latitude);
             longitudes.push_back(longitude);
         }
-        io::CSVReader<2> edges("../../edges200000.csv");
+        io::CSVReader<2> edges(edge_file);
         edges.read_header(io::ignore_extra_column, "from", "to");
         size_t from, to;
         while (edges.read_row(from, to)) {
             froms.push_back(from);
             tos.push_back(to);
         }
-        io::CSVReader<4> exchanges("../../trade200000.csv");
-        exchanges.read_header(io::ignore_extra_column, "date", "num_animals", "from", "to");
+        io::CSVReader<4> exchanges(exchange_file);
+        exchanges.read_header(io::ignore_extra_column, "from_dec", "to_dec", "day", "LOM_length");
 
         int date, num_animals;
-        while (exchanges.read_row(date, num_animals, from, to)) {
+        while (exchanges.read_row(from, to, date, num_animals)) {
             dates.push_back(date);
             num_animals_exchanges.push_back(num_animals);
             from_exchanges.push_back(from);
