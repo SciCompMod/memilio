@@ -1,7 +1,7 @@
 .. include:: ../literature.rst
 
-Agent-based model
-=================
+Agent-based model (with activities and mobility)
+================================================
 
 This module models and simulates the epidemic using an agent-based model (*ABM*) approach. Unlike the compartmental models that use a system of ODEs, this model simulates
 the spread of an epidemic in a population with discrete persons (the agents) moving throughout locations in the
@@ -326,7 +326,7 @@ Here, we run the simulation:
    sim.advance(tmax);
 
 Alternatively, if we want to track things in the simulation, we need to set up a
-`history <https://github.com/SciCompMod/memilio/blob/main/cpp/memilio/io/README.md#the-history-object>`_, for example, to track all the Infection states of each simulation step into a Timeseries.
+`history <https://github.com/SciCompMod/memilio/blob/main/cpp/memilio/io/README.md#the-history-object>`_, for example, to track all the Infection states of each simulation step into a ``TimeSeries``.
 
 .. code-block:: cpp
 

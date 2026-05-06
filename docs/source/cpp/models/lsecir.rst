@@ -27,7 +27,7 @@ For a detailed description and application of the model, see:
 Infection States
 ----------------
 
-The model contains the following list of **InfectionState**\s:
+The model contains the following list of ``InfectionState``\s:
 
 .. code-block:: RST
 
@@ -149,7 +149,7 @@ We start with constructing a vector ``initial_populations`` that we will pass on
         std::vector<std::vector<ScalarType>> initial_populations = {{750}, {30, 20},          {20, 10, 10}, {50},
                                                                     {50},  {10, 10, 5, 3, 2}, {20},         {10}};
 
-We assert that the vector has the correct size by checking that the number of `InfectionState`\s and the numbers of subcompartments are correct.
+We assert that the vector has the correct size by checking that the number of infection states and the numbers of subcompartments are correct.
 
 .. code-block:: cpp
 
@@ -192,7 +192,7 @@ The initial populations in the model are set via:
 In addition to setting the initial populations manually, MEmilio provides two other ways of setting the initial populations:  
 
 - The file `parameters_io <https://github.com/SciCompMod/memilio/blob/main/cpp/models/lct_secir/parameters_io.h>`_ provides functionality to compute an initial value vector for the LCT-SECIR model based on reported data.
-- The file `initializer_flows <https://github.com/SciCompMod/memilio/blob/main/cpp/models/lct_secir/initializer_flows.h>`_ provides functionality to compute an initial value vector for the LCT-SECIR model based on initial data in the form of a ``mio::TimeSeries`` of InfectionTransitions. For the concept of the InfectionTransitions or flows, see also the IDE-SECIR model. This method can be particularly useful if a comparison is to be made with an IDE model with matching initialization or if the reported data is in the form of flows.
+- The file `initializer_flows <https://github.com/SciCompMod/memilio/blob/main/cpp/models/lct_secir/initializer_flows.h>`_ provides functionality to compute an initial value vector for the LCT-SECIR model based on initial data in the form of a ``TimeSeries`` of InfectionTransitions. For the concept of the InfectionTransitions or flows, see also the IDE-SECIR model. This method can be particularly useful if a comparison is to be made with an IDE model with matching initialization or if the reported data is in the form of flows.
 
 
 .. _Nonpharmaceutical Interventions:
@@ -301,13 +301,13 @@ You can also specify a custom integrator:
 Output
 ------
 
-The simulation result is stratefied by subcompartments. The function ``calculate_compartments()`` aggregates the subcompartments by `InfectionState`\s.
+The simulation result is stratified by subcompartments. The function ``calculate_compartments()`` aggregates the subcompartments by infection states.
 
 .. code-block:: cpp
 
     mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_compartments(result);
 
-You can access the data in the `mio::TimeSeries` object as follows:
+You can access the data in the ``TimeSeries`` object as follows:
 
 .. code-block:: cpp
 

@@ -46,8 +46,9 @@ mark_as_advanced(
 
 # try to treat AppleClang as Clang, but warn about missing support
 if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
-    message(WARNING "The compiler ID \"AppleClang\" is not supported, trying to compile with \"Clang\" options.")
+    message(WARNING "The compiler ID \"AppleClang\" has only limited support. Continuing with \"Clang\" options.")
     set(CMAKE_CXX_COMPILER_ID "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffp-model=strict") # to avoid FP differences in CI
 endif()
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
@@ -202,6 +203,7 @@ if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/ode_seirdb)
     add_subdirectory(models/ode_seair)
     add_subdirectory(models/ode_sir)
+    add_subdirectory(models/ode_seir_metapop)
     add_subdirectory(models/sde_sir)
     add_subdirectory(models/sde_sirs)
     add_subdirectory(models/sde_seirvv)

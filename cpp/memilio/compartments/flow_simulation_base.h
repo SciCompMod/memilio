@@ -48,7 +48,7 @@ public:
 
     /**
      * @brief Create a FlowSimulationBase.
-     * @param[in] model An instance of a flow model.
+     * @param[in] model An instance of a FlowModel.
      * @param[in] integrator_core A unique pointer to an object derived from IntegratorCore.
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration.

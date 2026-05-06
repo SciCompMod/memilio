@@ -14,7 +14,7 @@ The infection states and transitions are illustrated in the following figure.
 Infection States
 ----------------
 
-The model contains the following **InfectionState**\s:
+The model contains the following ``InfectionState``\s:
 
 .. code-block:: RST
 
@@ -31,7 +31,7 @@ The model contains the following **InfectionState**\s:
 Infection State Transitions
 ---------------------------
 
-The SEIRV model is implemented as a **FlowModel**. Thus, in each time step, the flows (new infections, progressions,
+The SEIRV model is implemented as a ``FlowModel``. Thus, in each time step, the flows (new infections, progressions,
 recoveries) are computed explicitly in addition to compartment values. The defined transitions `FromState, ToState` are:
 
 .. code-block:: RST
@@ -47,7 +47,7 @@ recoveries) are computed explicitly in addition to compartment values. The defin
 Sociodemographic Stratification
 --------------------------------
 
-The population can be stratified by one sociodemographic dimension denoted **AgeGroup** (can be interpreted more
+The population can be stratified by one sociodemographic dimension denoted ``AgeGroup`` (can be interpreted more
 broadly). The number of age groups is specified in the constructor:
 
 .. code-block:: cpp
@@ -123,7 +123,7 @@ differential infection hazards.
 Initial Conditions
 ------------------
 
-Initial conditions are handled via the **Populations** class. Example for a single age group:
+Initial conditions are handled via the ``Populations`` class. Example for a single age group:
 
 .. code-block:: cpp
 
@@ -189,7 +189,7 @@ Flow simulation (when explicit flows are required):
 Output
 ------
 
-The result of a standard simulation is a ``mio::TimeSeries``:
+The result of a standard simulation is a ``TimeSeries``:
 
 .. code-block:: cpp
 

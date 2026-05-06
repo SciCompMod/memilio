@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.14)
-project(memilio-python)
-
-set(CMAKE_CXX_STANDARD "20")
-set(CMAKE_CXX_STANDARD_REQUIRED "20")
-
 option(MEMILIO_USE_BUNDLED_PYBIND11 "Use pybind11 bundled with this library." ON)
 mark_as_advanced(MEMILIO_USE_BUNDLED_PYBIND11)
 
@@ -27,6 +21,12 @@ elseif(UNIX)
     )
 endif()
 
+# CMAKE_INSTALL_RPATH defaults to
+# - Linux: $ORIGIN;$ORIGIN/lib
+# - MacOS: @loader_path;@loader_path/lib
+# - Windows: empty
+set(PYMIO_INSTALL_RPATH "${CMAKE_INSTALL_RPATH}")
+
 # keep build RPATH separate and avoid putting build paths into installed wheels
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
@@ -47,9 +47,6 @@ if(MEMILIO_USE_BUNDLED_PYBIND11)
 else()
     find_package(pybind11 REQUIRED)
 endif()
-
-# add in C++ library
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../cpp ${CMAKE_CURRENT_BINARY_DIR}/cpp EXCLUDE_FROM_ALL)
 
 # a list of all "LINKED_LIBRARIES" that are given to add_pymio_module. will contain duplicates
 # used for wheel installation
@@ -72,7 +69,7 @@ function(add_pymio_module target_name)
 
     # Set RPATH so extension can find the C++ libraries in lib subdirectory
     set_target_properties(${target_name} PROPERTIES
-        INSTALL_RPATH "$ORIGIN/lib"
+        INSTALL_RPATH "${PYMIO_INSTALL_RPATH}"
     )
 
     # Make sure to install shared and static libraries (LIBRARY and ARCHIVE) and the executables (RUNTIME).
@@ -149,7 +146,7 @@ list(REMOVE_DUPLICATES PYMIO_MEMILIO_LIBS_LIST)
 foreach(target_name IN LISTS PYMIO_MEMILIO_LIBS_LIST)
     if(TARGET ${target_name})
         set_target_properties(${target_name} PROPERTIES
-            INSTALL_RPATH "$ORIGIN;$ORIGIN/lib"
+            INSTALL_RPATH "${PYMIO_INSTALL_RPATH}"
         )
     endif()
 endforeach()
@@ -165,7 +162,7 @@ install(TARGETS ${PYMIO_MEMILIO_LIBS_LIST}
 # drop symlinks, so place real copies for each alias.
 if(TARGET jsoncpp_lib)
     set_target_properties(jsoncpp_lib PROPERTIES
-        INSTALL_RPATH "$ORIGIN"
+        INSTALL_RPATH "${PYMIO_INSTALL_RPATH}"
     )
     install(FILES
         $<TARGET_FILE:jsoncpp_lib>
@@ -180,7 +177,7 @@ if(TARGET spdlog)
 
     if(_SPDLOG_LIB_TYPE STREQUAL "SHARED_LIBRARY")
         set_target_properties(spdlog PROPERTIES
-            INSTALL_RPATH "$ORIGIN"
+            INSTALL_RPATH "${PYMIO_INSTALL_RPATH}"
         )
         install(FILES
             $<TARGET_FILE:spdlog>
