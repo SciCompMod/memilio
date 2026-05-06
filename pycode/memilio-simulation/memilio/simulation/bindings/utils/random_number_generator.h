@@ -32,8 +32,16 @@ void bind_random_number_generator(py::module_& m, std::string const& name)
 {
     bind_class<mio::RandomNumberGenerator, EnablePickling::Never>(m, name.c_str())
         .def(py::init<>())
-        .def_property_readonly("key", &mio::RandomNumberGenerator::get_key)
-        .def_property("counter", &mio::RandomNumberGenerator::get_counter, &mio::RandomNumberGenerator::set_counter)
+        .def_property_readonly("key", [](const mio::RandomNumberGenerator& self) {
+            return self.get_key().get();
+        })
+        .def_property(
+            "counter", [](const mio::RandomNumberGenerator& self) {
+                return self.get_counter().get();
+            },
+            [](mio::RandomNumberGenerator& self, uint64_t counter) {
+                self.set_counter(mio::Counter<uint64_t>(counter));
+            })
         .def_property_readonly("seeds", &mio::RandomNumberGenerator::get_seeds)
         .def("increment_counter", &mio::RandomNumberGenerator::increment_counter)
         .def("seed", &mio::RandomNumberGenerator::seed, py::arg("seeds"));

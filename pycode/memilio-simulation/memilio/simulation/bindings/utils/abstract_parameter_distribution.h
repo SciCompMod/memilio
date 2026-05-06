@@ -32,7 +32,6 @@ namespace pymio
 void bind_abstract_parameter_distribution(py::module_& m, std::string const& name)
 {
     bind_class<mio::AbstractParameterDistribution, EnablePickling::Never>(m, name.c_str())
-        .def(py::init<>())
         .def(py::init<mio::ParameterDistributionLogNormal>(), py::arg("dist"))
         .def("get",
              [](mio::AbstractParameterDistribution& self, mio::RandomNumberGenerator& rng) {
