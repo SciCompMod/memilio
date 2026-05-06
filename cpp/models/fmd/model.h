@@ -31,6 +31,8 @@
 #include "fmd/infection_state.h"
 #include "fmd/adoption_rates.h"
 
+#include <ranges>
+
 namespace mio
 {
 namespace fmd

@@ -96,12 +96,12 @@ public:
      */
     template <SphericalLocationIteratorType Iter>
     RTree(Iter first, Iter last)
-        : rtree{}
+        : m_rtree{}
     {
         size_t index = 0;
         while (first != last) {
             Point point((*first)->get_longitude(), (*first)->get_latitude());
-            rtree.insert(Node(point, index));
+            m_rtree.insert(Node(point, index));
             ++first;
             ++index;
         }
