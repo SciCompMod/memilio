@@ -17,7 +17,7 @@ For the concept see:
 Infection States
 ----------------
 
-The model contains the following list of **InfectionState**\s:
+The model contains the following list of ``InfectionState``\s:
 
 .. code-block:: RST
 
@@ -420,13 +420,13 @@ You can also specify a custom integrator:
 Output
 ------
 
-The simulation result is divided by subcompartments. The function ``calculate_compartments()`` aggregates the subcompartments by `InfectionState`\s .
+The simulation result is divided by subcompartments. The function ``calculate_compartments()`` aggregates the subcompartments by infection states .
 
 .. code-block:: cpp
 
     mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_compartments(result);
 
-You can access the data in the `mio::TimeSeries` object as follows:
+You can access the data in the ``TimeSeries`` object as follows:
 
 .. code-block:: cpp
 
@@ -474,8 +474,4 @@ An example can be found at:
 
 - `examples/glct_secir.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/glct_secir.cpp>`_ 
 
-
-Overview of the ``glsecir`` namespace:
---------------------------------------
-
-.. doxygennamespace:: mio::glsecir
+The code documentation for the model can be found at :CPP-API:`mio::glsecir` .

@@ -16,11 +16,11 @@ runs:
     # Pylint runs against the prebuilt wheels in pycode/wheelhouse/*cp312*.
     # So, use current latest supported Python version.
     - name: Set up Python 3.12
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: "3.12"
     - name: Download Python Wheels
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: python-wheels-${{ inputs.package }}
         path: pycode/wheelhouse
@@ -37,7 +37,7 @@ runs:
         python pycode/run_pylint.py --package-dir memilio-${{ inputs.package }}
         pylint-json2html -f jsonextended -o pycode/memilio-${{ inputs.package }}/build_pylint/pylint.html < pycode/memilio-${{ inputs.package }}/build_pylint/pylint_extended.json
     - name: Upload Pylint Report
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: pylint-report-${{ inputs.package }}
         path: pycode/memilio-${{ inputs.package }}/build_pylint/pylint.html

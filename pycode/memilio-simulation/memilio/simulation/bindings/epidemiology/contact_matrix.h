@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
@@ -55,6 +55,10 @@ void bind_damping_expression_members(DampingExpressionClass& damping_expression_
              [](DampingExpression& self, const Damping& d) {
                  self.add_damping(d);
              })
+        .def("clear_dampings",
+             [](DampingExpression& self) {
+                 self.clear_dampings();
+             })
         .def_property(
             "baseline", [](const DampingExpression& self) -> auto& { return self.get_baseline(); },
             [](DampingExpression& self, const Eigen::Ref<const Matrix>& v) {
@@ -99,6 +103,10 @@ void bind_damping_expression_group_members(DampingExpressionGroupClass& cl)
            [](DampingExpressionGroup& self, const Damping& d) {
                self.add_damping(d);
            })
+        .def("clear_dampings",
+             [](DampingExpressionGroup& self) {
+                 self.clear_dampings();
+             })
         .def_property_readonly("num_matrices",
                                [](const DampingExpressionGroup& self) {
                                    return self.get_num_matrices();

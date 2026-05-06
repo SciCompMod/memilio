@@ -11,7 +11,7 @@ runs:
         sudo apt-get -qq update
     - name: ccache
       id: ccache
-      uses: hendrikmuhs/ccache-action@v1.2
+      uses: hendrikmuhs/ccache-action@v1.2.22
       with:
         # free total space for cache available on github is limited to 10GB, so only save on main branch;
         # other branches will try to use cache from main, but branches that are too old won't benefit;
@@ -25,7 +25,7 @@ runs:
         # load most recent cache where a prefix of the key matches a restore-key, e.g. from the most recent nightly run of the same build
         restore-keys: linux-gcc-latest-Release-covOFF-depON-ompOFF-sanOFF
     - name: Download built test directory
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: build-cpp-linux-gcc-latest-Release
         path: cpp
@@ -38,7 +38,7 @@ runs:
       shell: bash
       run: |
         cd cpp/build
-        cmake -DCMAKE_BUILD_TYPE=Release -Dsbml_DIR=/usr/lib/x86_64-linux-gnu/cmake ..
+        cmake -DCMAKE_BUILD_TYPE=Release -DMEMILIO_ENABLE_SBML=ON -Dsbml_DIR=/usr/lib/x86_64-linux-gnu/cmake ..
         cmake --build . -j 4
     - name: Run SBML importer
       shell: bash
@@ -49,5 +49,5 @@ runs:
       shell: bash
       run: |
         cd cpp/build
-        cmake -DCMAKE_BUILD_TYPE=Release -Dsbml_DIR=/usr/lib/x86_64-linux-gnu/cmake ..
+        cmake -DCMAKE_BUILD_TYPE=Release -DMEMILIO_ENABLE_SBML=ON -Dsbml_DIR=/usr/lib/x86_64-linux-gnu/cmake ..
         cmake --build . -j 4

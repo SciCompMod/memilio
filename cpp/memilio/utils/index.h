@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -36,71 +36,21 @@ namespace mio
 template <typename... CategoryTags>
 class Index;
 
-namespace details
-{
-
-/// @brief Function definition that accepts a MultiIndex, used for the definition of IsMultiIndex.
-template <class... T>
-void is_multi_index_impl(Index<T...>);
-
-} // namespace details
-
-/// @brief A MultiIndex is an Index with any number of categories. Does accept empty or single category indices.
-template <typename... CategoryTags>
-concept IsMultiIndex = requires(Index<CategoryTags...> i) { details::is_multi_index_impl(i); };
-
-namespace details
-{
-
-/// @brief Obtain a tuple of single-category indices from a Index or MultiIndex.
-template <class... Tags>
-std::tuple<Index<Tags>...> get_tuple(const Index<Tags...>& i)
-{
-    if constexpr (sizeof...(Tags) == 1) {
-        return std::tuple(i);
-    }
-    else {
-        return i.indices;
-    }
-}
-
-/// @brief Obtain a tuple of one single-category index from an enum value.
-template <class Enum>
-std::tuple<Index<Enum>> get_tuple(Enum i)
-    requires std::is_enum<Enum>::value
-{
-    return std::tuple(Index<Enum>(i));
-}
-
-/// @brief Merge a series of enums or MultIndex%s into a tuple of single-category indices.
-template <class... IndexArgs>
-    requires((std::is_enum_v<IndexArgs> || IsMultiIndex<IndexArgs>) && ...)
-decltype(auto) concatenate_indices_impl(IndexArgs&&... args)
-{
-    return std::tuple_cat(details::get_tuple(args)...);
-}
-
-/**
- * @brief Function declaration that allows type conversion from a tuple of single-category indices to MultiIndex.
- * Used together with concatenate_indices_impl, this allows combining categories of multiple args into a single MultiIndex.
- */
-template <class... T>
-Index<T...> tuple_to_index(std::tuple<Index<T>...>);
-
-} // namespace details
-
 /**
  * @brief An Index with a single template parameter is a typesafe wrapper for size_t
  * that is associated with a Tag. It is used to index into a CustomIndexArray
  *
+ * @code
  * CustomIndexArray<Tag1, Tag2> a;
  * a[{Index<Tag1>(0), Index<Tag2>(14)}]
+ * @endcode
  *
  * Will retrieve the element associated with the indices 0 and 14 for the Tags Tag1
  * and Tag2 respectively.
  *
  * Optionally, the tag can be derived from Index to shorten the notation:
  *
+ * @code
  * struct Tag1 : public Index<Tag1>{
  *    Tag1(size_t val) : Index<Tag1>(val) {}
  * };
@@ -109,9 +59,16 @@ Index<T...> tuple_to_index(std::tuple<Index<T>...>);
  * };
  * CustomIndexArray<Tag1, Tag2> a;
  * a[{Tag1(0), Tag2(14)}]
+ * @endcode
  *
- * @tparam CategoryTag A tag for the typesafe index
+ * The underlying size_t value can be obtained via the get() member function:
+ * @code
+ *   Index<Tag1> i(3);
+ *   size_t v = i.get();
+ * @endcode
  *
+ * @tparam CategoryTag A tag type for the typesafe index.
+ * @see TypeSafe
  */
 template <typename CategoryTag>
 class MEMILIO_ENABLE_EBO Index<CategoryTag> : public TypeSafe<size_t, Index<CategoryTag>>,

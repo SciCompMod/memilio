@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Rene Schmieding
 *
@@ -89,11 +89,11 @@ TEST(TestUtils, extend_index)
     EXPECT_EQ(result_j, reference_j);
 }
 
-TEST(TestUtils, IndexRange)
+TEST(TestUtils, index_range)
 {
     using I = mio::Index<CategoryTag<1>, CategoryTag<2>, CategoryTag<3>>;
     I dims{CategoryTag<1>(2), CategoryTag<2>(3), CategoryTag<3>(5)};
-    mio::IndexRange<I> range(dims);
+    auto range = mio::make_index_range(dims);
 
     I reference_begin{CategoryTag<1>(0), CategoryTag<2>(0), CategoryTag<3>(0)};
     I reference_end{CategoryTag<1>(2), CategoryTag<2>(0), CategoryTag<3>(0)};
@@ -160,6 +160,33 @@ TEST(TestUtils, RedirectLogger)
                                         msg)); // check the message. ignore the time stamp at the start
     EXPECT_EQ(logger.read(), log); // check that view() did not modify the buffer
     EXPECT_TRUE(logger.view().empty()); // check that read() cleared the buffer
+
+    logger.release();
+}
+
+TEST(TestUtils, LogLevelOverride)
+{
+    // test that LogLevelOverride behaves as intended
+    mio::RedirectLogger logger;
+    logger.capture();
+    // sanity check that the capture works (ignoring the time stamp at the start)
+    mio::log_warning("Test0");
+    EXPECT_THAT(logger.read(), testing::HasSubstr("[redirect] [warning] Test0"));
+    // case: override to higher level, log at normal level; expect a usually emitted log to be ignored
+    {
+        mio::LogLevelOverride llo(mio::LogLevel::critical);
+        mio::log_warning("Test1");
+    }
+    EXPECT_TRUE(logger.read().empty());
+    // case: log at normal level, after higher level override; expect normal logging
+    mio::log_warning("Test2");
+    EXPECT_THAT(logger.read(), testing::HasSubstr("[redirect] [warning] Test2"));
+    // case: override to lower level, log at a level below normal; expect a usually ignored log to be emitted
+    {
+        mio::LogLevelOverride llo(mio::LogLevel::info);
+        mio::log_info("Test3");
+    }
+    EXPECT_THAT(logger.read(), testing::HasSubstr("[redirect] [info] Test3"));
 
     logger.release();
 }

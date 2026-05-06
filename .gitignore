@@ -282,8 +282,12 @@ docs/html
 docs/xml
 docs/source/api
 docs/source/generated
+docs/source/cppapi
 
 # VS Code
 .vscode/
 
 # End of https://www.gitignore.io/api/c++,node,python
+
+# Output directory from memilio examples
+example_results/

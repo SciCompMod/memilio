@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2025 MEmilio
+# Copyright (C) 2020-2026 MEmilio
 #
 # Authors:
 #
@@ -518,8 +518,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         df = gd.get_file(filepath, url, read_data, param_dict)
 
         # check if non-empty dataframe is returned (Error is raised if dataframe is empty)
-        self.assertEqual(
-            str(type(df)), "<class 'pandas.core.frame.DataFrame'>")
+        self.assertIs(df.empty, False)
 
     @patch('pandas.read_json')
     def test_get_file_empty_df(self, mock_json):

@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors:  Lena Ploetzke, Anna Wendler
 *
@@ -23,6 +23,7 @@
 #include "ide_secir/simulation.h"
 #include "ide_secir/parameters_io.h"
 #include "memilio/config.h"
+#include "memilio/data/analyze_result.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/date.h"
@@ -125,8 +126,8 @@ int main(int argc, char** argv)
     sim.advance(tmax);
 
     // Print results.
-    sim.get_transitions().print_table({"S->E", "E->C", "C->I", "C->R", "I->H", "I->R", "H->U", "H->R", "U->D", "U->R"},
-                                      16, 8);
+    mio::interpolate_simulation_result(sim.get_transitions())
+        .print_table({"S->E", "E->C", "C->I", "C->R", "I->H", "I->R", "H->U", "H->R", "U->D", "U->R"}, 16, 8);
 
     return 0;
 }

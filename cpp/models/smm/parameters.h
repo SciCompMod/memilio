@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: René Schmieding, Julia Bicker
 *
@@ -34,7 +34,7 @@ namespace smm
 /**
  * @brief A vector of AdoptionRate%s, see mio::AdoptionRate
  * @tparam FP A floating point type, e.g., double.
- * @tparam Status A MultiIndex, containing the infection state enum.
+ * @tparam Status A MultiIndex, containing the infection state enum and all stratification groups.
  * @tparam Region A MultiIndex for spatial stratification.
  */
 template <typename FP, class Status, class Region>
@@ -49,7 +49,7 @@ struct AdoptionRates {
 /**
  * @brief Struct defining a possible regional transition in a Model based on Poisson Processes.
  * @tparam FP A floating point type, e.g., double.
- * @tparam Status A MultiIndex, containing the infection state enum.
+ * @tparam Status A MultiIndex, containing the infection state enum and all stratification groups.
  * @tparam Region A MultiIndex for spatial stratification.
  */
 template <typename FP, class Status, class Region = mio::regions::Region>

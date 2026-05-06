@@ -31,7 +31,6 @@ After installation the following functions are available:
 * ``get_divi_data``: Downloads ICU data from German DIVI Intensivregister (DIVI).
 * ``get_hospitalization_data``: Downloads data about COVID-19 hospitalizations data from Robert Koch-Institut (RKI-H).
 * ``get_jh_data``: Downloads COVID-19 case data from Johns Hopkins University (JH).
-* ``get_npi_data``: Loads a certain resolution of recorded NPI data from the Corona Datenplattform and extracts the counties asked for and activates the NPIs if they are incidence dependent.
 * ``get_population_data``: Downloads population data for German federal states and counties from various public sources (P).
 * ``get_simulation_data``: Downloads all data required for a simulation with the graph-metapopulation model which are SARS-CoV-2 case data(RKI-C), population data (P), ICU data (DIVI) and COVID-19 vaccination data from Robert Koch-Institut (RKI-V).
 * ``get_testing_data``: Downloads data about SARS-CoV-2 PCR tests from Robert Koch-Institut (RKI-T).
@@ -41,14 +40,14 @@ After installation the following functions are available:
 * ``transformWeatherData``: Transforms weather data.
 
 For a detailed description of the run options and the resulting data files written
-see the `epidata subfolder <memilio/epidata/README.rst>`_.
+see the `epidata subfolder <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-epidata/README.rst>`_.
 
 The downloaded data is written either to HDF5 or json files.
 
 Additional Tools
 ----------------
 
-Some additional tools for processing or analysing data can be found in `tools directory <tools/README.md>`_.
+Some additional tools for processing or analysing data can be found in `tools directory <https://github.com/SciCompMod/memilio/tree/main/tools>`_.
 
 Notes for developers
 --------------------

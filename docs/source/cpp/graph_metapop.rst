@@ -205,7 +205,7 @@ The following steps detail how to configure and execute a graph simulation:
         builder.add_edge(0, 1, 100);
         builder.add_edge(1, 0, 100);
         builder.add_edge(0, 1, 200);
-        auto graph = builder.build(true);
+        auto graph = std::move(builder).build(true); // Builder can not be reused
         // graph contains the edges (0, 1, 100) and (1, 0, 100)
 
 

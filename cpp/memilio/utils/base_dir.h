@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Julia Bicker
 *
@@ -20,7 +20,7 @@
 #ifndef MIO_BASE_DIR_H
 #define MIO_BASE_DIR_H
 
-#include "memilio/config.h"
+#include "memilio/config.h" // IWYU pragma: keep
 
 #include <string>
 

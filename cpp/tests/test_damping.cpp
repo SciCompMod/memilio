@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -172,4 +172,35 @@ TEST(TestDampings, automatic_cache_update)
 
     EXPECT_THAT(print_wrap(dampings.get_matrix_at(mio::SimulationTime<double>(2.0))),
                 MatrixNear((Eigen::VectorXd(2) << 0.25, 0.25).finished()));
+}
+
+TEST(TestDampings, clearDampings)
+{
+    // After clear(), get_matrix_at() must return zero for all times,
+    // regardless of whether the cache was already built before the call
+    mio::Dampings<double, mio::Damping<double, mio::ColumnVectorShape<double>>> dampings(2);
+    dampings.add(0.9, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime<double>(5.0));
+
+    dampings.clear();
+
+    // All times should be without damping
+    EXPECT_EQ(print_wrap(dampings.get_matrix_at(mio::SimulationTime<double>(-1e5))),
+              print_wrap(Eigen::VectorXd::Zero(2)));
+    EXPECT_EQ(print_wrap(dampings.get_matrix_at(mio::SimulationTime<double>(0.0))),
+              print_wrap(Eigen::VectorXd::Zero(2)));
+    EXPECT_EQ(print_wrap(dampings.get_matrix_at(mio::SimulationTime<double>(10.0))),
+              print_wrap(Eigen::VectorXd::Zero(2)));
+}
+
+TEST(TestDampings, clearThenAdd)
+{
+    // Dampings added after clear() should be applied correctly
+    mio::Dampings<double, mio::Damping<double, mio::ColumnVectorShape<double>>> dampings(2);
+    dampings.add(0.9, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime<double>(0.0));
+
+    dampings.clear();
+    dampings.add(0.5, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime<double>(0.0));
+
+    EXPECT_THAT(print_wrap(dampings.get_matrix_at(mio::SimulationTime<double>(1.0))),
+                MatrixNear((Eigen::VectorXd(2) << 0.5, 0.5).finished()));
 }

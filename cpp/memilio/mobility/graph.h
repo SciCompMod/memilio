@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -21,19 +21,17 @@
 #define GRAPH_H
 
 #include "memilio/timer/auto_timer.h"
-#include "memilio/utils/stl_util.h"
 #include "memilio/epidemiology/age_group.h"
-#include "memilio/utils/date.h"
-#include "memilio/utils/uncertain_value.h"
-#include "memilio/utils/parameter_distributions.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/geography/regions.h"
 #include "memilio/utils/logging.h"
+#include "memilio/utils/date.h"
+#include "memilio/utils/parameter_distributions.h"
+#include "memilio/utils/stl_util.h"
+#include "memilio/utils/uncertain_value.h"
+
 #include <algorithm>
-#include <functional>
 #include <iostream>
-#include <concepts>
-#include <ranges>
 
 #include "boost/filesystem.hpp"
 
@@ -99,13 +97,13 @@ struct Edge : public EdgeBase {
 /**
  * @brief comparison operator if node property type is equality comparable
  */
-template <class T>
-std::enable_if_t<has_eq_op<T>::value, bool> operator==(const Node<T>& n1, const Node<T>& n2)
+template <std::equality_comparable T>
+bool operator==(const Node<T>& n1, const Node<T>& n2)
 {
     return n1.id == n2.id && n1.property == n2.property;
 }
-template <class T>
-std::enable_if_t<has_eq_op<T>::value, bool> operator!=(const Node<T>& n1, const Node<T>& n2)
+template <std::equality_comparable T>
+bool operator!=(const Node<T>& n1, const Node<T>& n2)
 {
     return !(n1 == n2);
 }
@@ -113,13 +111,13 @@ std::enable_if_t<has_eq_op<T>::value, bool> operator!=(const Node<T>& n1, const 
 /**
  * @brief comparison operator if edge property type is equality comparable
  */
-template <class T>
-std::enable_if_t<has_eq_op<T>::value, bool> operator==(const Edge<T>& e1, const Edge<T>& e2)
+template <std::equality_comparable T>
+bool operator==(const Edge<T>& e1, const Edge<T>& e2)
 {
     return e1.start_node_idx == e2.start_node_idx && e1.end_node_idx == e2.end_node_idx && e1.property == e2.property;
 }
-template <class T>
-std::enable_if_t<has_eq_op<T>::value, bool> operator!=(const Edge<T>& e1, const Edge<T>& e2)
+template <std::equality_comparable T>
+bool operator!=(const Edge<T>& e1, const Edge<T>& e2)
 {
     return !(e1 == e2);
 }
@@ -128,7 +126,8 @@ std::enable_if_t<has_eq_op<T>::value, bool> operator!=(const Edge<T>& e1, const 
  * @brief out stream operator for edges if edge property type has stream operator defined
  */
 template <class T>
-std::enable_if_t<has_ostream_op<T>::value, std::ostream&> operator<<(std::ostream& os, const Edge<T>& e)
+    requires HasOstreamOperator<T>
+std::ostream& operator<<(std::ostream& os, const Edge<T>& e)
 {
     os << e.start_node_idx << " > " << e.end_node_idx << " : " << e.property;
     return os;
@@ -138,7 +137,8 @@ std::enable_if_t<has_ostream_op<T>::value, std::ostream&> operator<<(std::ostrea
  * @brief out stream operator for edges if edge property type does not have stream operator defined
  */
 template <class T>
-std::enable_if_t<!has_ostream_op<T>::value, std::ostream&> operator<<(std::ostream& os, const Edge<T>& e)
+    requires(!HasOstreamOperator<T>)
+std::ostream& operator<<(std::ostream& os, const Edge<T>& e)
 {
     os << e.start_node_idx << " > " << e.end_node_idx;
     return os;
@@ -150,8 +150,7 @@ std::enable_if_t<!has_ostream_op<T>::value, std::ostream&> operator<<(std::ostre
 template <class NodePropertyT, class EdgePropertyT>
 class Graph
     //ensure correct std::is_copy_constructible; it's not correct by default because the nodes and edges are stored in std::vector
-    : not_copyable_if_t<
-          !conjunction<std::is_copy_constructible<NodePropertyT>, std::is_copy_constructible<EdgePropertyT>>::value>
+    : not_copyable_if_t<!(std::is_copy_constructible_v<NodePropertyT> && std::is_copy_constructible_v<EdgePropertyT>)>
 {
 public:
     using NodeProperty = NodePropertyT;
@@ -289,7 +288,7 @@ public:
      */
     auto nodes()
     {
-        return make_range(begin(m_nodes), end(m_nodes));
+        return Range(m_nodes);
     }
 
     /**
@@ -297,7 +296,7 @@ public:
      */
     auto nodes() const
     {
-        return make_range(begin(m_nodes), end(m_nodes));
+        return Range(m_nodes);
     };
 
     /**
@@ -305,7 +304,7 @@ public:
      */
     auto edges()
     {
-        return make_range(begin(m_edges), end(m_edges));
+        return Range(m_edges);
     }
 
     /**
@@ -313,7 +312,7 @@ public:
      */
     auto edges() const
     {
-        return make_range(begin(m_edges), end(m_edges));
+        return Range(m_edges);
     }
 
     /**
@@ -352,7 +351,7 @@ private:
     template <typename Iter>
     static auto out_edges(Iter b, Iter e, size_t idx)
     {
-        return make_range(std::equal_range(b, e, OutEdgeBase(idx), [](auto&& e1, auto&& e2) {
+        return Range(std::equal_range(b, e, OutEdgeBase(idx), [](auto&& e1, auto&& e2) {
             return e1.start_node_idx < e2.start_node_idx;
         }));
     }
@@ -506,13 +505,15 @@ IOResult<void> set_edges(const fs::path& mobility_data_file, Graph<Model, Mobili
 }
 
 template <class T>
-std::enable_if_t<!has_ostream_op<T>::value, void> print_graph_object(std::ostream& os, size_t idx, const T&)
+    requires(!HasOstreamOperator<T>)
+void print_graph_object(std::ostream& os, size_t idx, const T&)
 {
     os << idx;
 }
 
 template <class T>
-std::enable_if_t<has_ostream_op<T>::value, void> print_graph_object(std::ostream& os, size_t idx, const T& o)
+    requires HasOstreamOperator<T>
+void print_graph_object(std::ostream& os, size_t idx, const T& o)
 {
     os << idx << " [" << o << "]";
 }

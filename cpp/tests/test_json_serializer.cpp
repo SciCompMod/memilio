@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Khoa Nguyen
 *
@@ -580,7 +580,7 @@ TEST(TestJsonSerializer, container_of_objects)
     expected_value[0]["i"] = 1;
     expected_value[1]["i"] = 2;
     Json::Value x;
-    EXPECT_THAT(mio::make_range(js.value().begin(), js.value().end()),
+    EXPECT_THAT(mio::Range(js.value().begin(), js.value().end()),
                 testing::UnorderedElementsAre(expected_value[0], expected_value[1]));
 
     auto r = mio::deserialize_json(expected_value, mio::Tag<std::unordered_set<jsontest::Foo>>{});

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
@@ -61,7 +61,7 @@ void bind_Index(pybind11::module_& m, std::string const& name)
 template <typename Tag, class Tuple>
 mio::Index<Tag> extract_index(pybind11::tuple& t)
 {
-    return t[mio::details::IndexPosition<Tag, Tuple>::value].template cast<mio::Index<Tag>>();
+    return t[mio::index_of_type_v<Tag, Tuple>].template cast<mio::Index<Tag>>();
 }
 
 // bind an index for more than one tag
@@ -70,8 +70,7 @@ void bind_MultiIndex(pybind11::module_& m, std::string const& name)
 {
     using C          = mio::Index<Tags...>;
     decltype(auto) c = bind_class<C, EnablePickling::Required>(m, name.c_str());
-    c.def(pybind11::init<mio::Index<Tags> const&...>())
-        .def(pybind11::init([](pybind11::tuple t) {
+    c.def(pybind11::init<mio::Index<Tags> const&...>()).def(pybind11::init([](pybind11::tuple t) {
         return C(extract_index<Tags, C>(t)...);
     }));
 

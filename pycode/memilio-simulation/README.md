@@ -4,17 +4,34 @@ This package contains Python bindings for the MEmilio C++ library. It enables se
 
 ## Installation
 
-This project is configured via ``pyproject.toml`` and is built with [scikit-build-core](https://scikit-build-core.readthedocs.io). CMake and Ninja must be available on the system. The package uses the [Pybind11 C++ library](https://pybind11.readthedocs.io) to create the bindings.
+### Option 1: Install from PyPI (Recommended)
 
-To install the package, use the command (from the directory containing ``pyproject.toml``)
+Pre-built wheels are provided for Linux and Windows on Python 3.8 to 3.13.
 
 ```bash
-pip install .
+pip install memilio-simulation
 ```
 
-This builds the C++ library and C++ Python extension module and copies everything required to your site-packages.
+### Option 2: Install from source (latest code or development)
 
-All the requirements of the [C++ library](../../cpp/README.md) must be met in order to build and use the python bindings. A virtual environment is recommended. 
+Use this option if you need the latest unreleased code, or want to modify the C++ bindings.
+
+This project is configured via `pyproject.toml`. The following tools must be available on the system:
+
+- A **C++20 compiler**
+- **CMake** >= 3.18
+- **Ninja**
+- All [C++ library dependencies](../../cpp/README.md)
+
+A virtual environment is recommended. Install from the **root of the MEmilio repository** (the directory containing the top-level `pyproject.toml`):
+
+```bash
+pip install -e .[dev]
+```
+
+This is necessary because the C++ build requires access to the `cpp/` directory. Note that this only installs `memilio-simulation` and not any other Python packages.
+
+**Note:** The `-e` flag links the installation to your local source code. Python changes take effect immediately, but C++ changes require re-running this command to recompile.
 
 CMake is executed internally by scikit-build-core. All the options provided by the CMake configuration of the C++ library are available when building the Python extension as well. Additionally, the CMake configuration for the bindings provide the following CMake options:
 
@@ -30,7 +47,7 @@ Alternatively, edit the `CMakeCache.txt` in the directory created by scikit-buil
 
 ## Development
 
-For developement of the cpp bindings use
+For developement of the cpp bindings use the following command from the root of this repository (i.e. the directory containing ``pyproject.toml``)
 
 ```bash
 pip install -e .[dev]

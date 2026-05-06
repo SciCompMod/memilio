@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, David Kerkmann, Sascha Korf
 *
@@ -18,10 +18,6 @@
 * limitations under the License.
 */
 #include "memilio/data/analyze_result.h"
-#include "memilio/math/interpolation.h"
-
-#include <algorithm>
-#include <cassert>
 
 namespace mio
 {

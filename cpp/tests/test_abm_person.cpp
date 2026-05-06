@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen
 *
@@ -152,9 +152,9 @@ TEST_F(TestPerson, quarantine)
     auto dt        = mio::abm::hours(1);
     EXPECT_CALL(mock_logNorm_dist.get_mock(), invoke)
         .Times(testing::AtLeast(1))
-        .WillOnce(testing::Return(1.0)) // TimeInfectedNoSymptomsToSymptoms
-        .WillOnce(testing::Return(1.0)) //IncubationTime
         .WillOnce(testing::Return(0.5 * dt.days())) // TimeInfectedSymptomsToRecovered
+        .WillOnce(testing::Return(1.0)) // TimeInfectedNoSymptomsToSymptoms
+        .WillOnce(testing::Return(1.0)) // IncubationTime
         .WillRepeatedly(testing::Return(1.0));
 
     infection_parameters.get<mio::abm::AgeGroupGotoSchool>().set_multiple({age_group_5_to_14}, true);
@@ -162,7 +162,7 @@ TEST_F(TestPerson, quarantine)
 
     auto person     = make_test_person(this->get_rng(), home, age_group_35_to_59,
                                        mio::abm::InfectionState::InfectedSymptoms, t_morning, infection_parameters);
-    auto rng_person = mio::abm::PersonalRandomNumberGenerator(person);
+    auto rng_person = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person);
 
     // Test quarantine when a person is tested and positive.
     person.get_tested(rng_person, t_morning, test_params);
@@ -189,10 +189,10 @@ TEST_F(TestPerson, get_tested)
     mio::abm::Location loc(mio::abm::LocationType::Home, 0, num_age_groups);
     auto infected =
         make_test_person(this->get_rng(), loc, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms);
-    auto rng_infected = mio::abm::PersonalRandomNumberGenerator(infected);
+    auto rng_infected = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), infected);
     auto susceptible =
         mio::abm::Person(this->get_rng(), loc.get_type(), loc.get_id(), loc.get_model_id(), age_group_15_to_34);
-    auto rng_suscetible = mio::abm::PersonalRandomNumberGenerator(susceptible);
+    auto rng_suscetible = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), susceptible);
 
     auto pcr_parameters     = params.get<mio::abm::TestData>()[mio::abm::TestType::PCR];
     auto antigen_parameters = params.get<mio::abm::TestData>()[mio::abm::TestType::Antigen];
@@ -278,7 +278,7 @@ TEST_F(TestPerson, interact)
     // Create a person and set up a random number generator specific to that person.
     auto person =
         mio::abm::Person(this->get_rng(), loc.get_type(), loc.get_id(), loc.get_model_id(), age_group_15_to_34);
-    auto rng_person = mio::abm::PersonalRandomNumberGenerator(person);
+    auto rng_person = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person);
     auto dt         = mio::abm::seconds(8640); //0.1 days
     // Simulate interaction and check that the person accumulates time at the location.
     interact_testing(rng_person, person, loc, {person}, t, dt, infection_parameters);
@@ -338,20 +338,20 @@ TEST_F(TestPerson, getLatestProtection)
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0, num_age_groups);
     auto person   = mio::abm::Person(this->get_rng(), location.get_type(), location.get_id(), location.get_model_id(),
                                      age_group_15_to_34);
-    auto prng     = mio::abm::PersonalRandomNumberGenerator(person);
+    auto prng     = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person);
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
 
     auto t = mio::abm::TimePoint(0);
     person.add_new_vaccination(mio::abm::ProtectionType::GenericVaccine, t);
     // Verify that the latest protection is a vaccination.
-    auto latest_protection = person.get_latest_protection();
+    auto latest_protection = person.get_latest_protection(t);
     EXPECT_EQ(latest_protection.type, mio::abm::ProtectionType::GenericVaccine);
     EXPECT_EQ(latest_protection.time.days(), t.days());
 
     t = mio::abm::TimePoint(40 * 24 * 60 * 60);
     person.add_new_infection(mio::abm::Infection(prng, static_cast<mio::abm::VirusVariant>(0), age_group_15_to_34,
                                                  params, t, mio::abm::InfectionState::Exposed));
-    latest_protection = person.get_latest_protection();
+    latest_protection = person.get_latest_protection(t);
     // Verify that the latest protection is a natural infection.
     EXPECT_EQ(latest_protection.type, mio::abm::ProtectionType::NaturalInfection);
     EXPECT_EQ(latest_protection.time.days(), t.days());
@@ -367,7 +367,7 @@ TEST_F(TestPerson, rng)
     EXPECT_EQ(p.get_rng_counter(), mio::Counter<uint32_t>(0));
 
     // Verify RNG counter increments.
-    auto p_rng = mio::abm::PersonalRandomNumberGenerator(p);
+    auto p_rng = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p);
     EXPECT_EQ(p_rng.get_counter(), mio::rng_totalsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{0}));
 
     p_rng();
@@ -410,7 +410,7 @@ TEST_F(TestPerson, isCompliant)
 
     // Create test person and associated random number generator
     auto person     = make_test_person(this->get_rng(), home);
-    auto rng_person = mio::abm::PersonalRandomNumberGenerator(person);
+    auto rng_person = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person);
 
     // Test cases with a complete truth table for compliance levels
     struct TestCase {

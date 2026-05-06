@@ -14,7 +14,7 @@ maintainers = [
   { email = "martin.kuehn@dlr.de" }
 ]
 dependencies = [
-  "setuptools>=68",
+  "packaging",
   "pandas>=2.0.0",
   "pyarrow",
   "matplotlib",

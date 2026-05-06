@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: David Kerkmann, Sascha Korf
 *
@@ -17,5 +17,4 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-
-#include "interpolation.h"
+#include "memilio/math/interpolation.h"

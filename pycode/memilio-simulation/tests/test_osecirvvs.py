@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2025 MEmilio
+# Copyright (C) 2020-2026 MEmilio
 #
 # Authors: Maximilian Betz
 #
@@ -192,7 +192,7 @@ class Test_osecirvvs_integration(unittest.TestCase):
             # compare compartments
             for index_compartment in range(0, 27):
                 self.assertAlmostEqual(
-                    timestep[index_compartment+1],
+                    timestep.iloc[index_compartment+1],
                     result[index_timestep][index_compartment], delta=1e-10)
 
     def test_check_constraints_parameters(self):
