@@ -61,7 +61,8 @@ PYBIND11_MODULE(_simulation, m)
     pymio::bind_parameter_distribution_uniform(m, "ParameterDistributionUniform");
     pymio::bind_uncertain_value(m, "UncertainValue");
 
-    pymio::bind_abstract_parameter_distribution(m, "AbstractParameterDistribution");
+    pymio::bind_abstract_parameter_distribution<mio::ParameterDistributionLogNormal>(
+        m, "AbstractParameterLogNormalDistribution");
 
     pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>(m, "AgeGroupArray");
     pymio::bind_class<mio::AgeGroup, pymio::EnablePickling::Required, mio::Index<mio::AgeGroup>>(m, "AgeGroup")

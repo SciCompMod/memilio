@@ -32,7 +32,7 @@ model = abm.Model(num_age_groups)
 # Set parameters
 
 for age_group in range(num_age_groups):
-    model.parameters.TimeExposedToNoSymptoms[abm.VirusVariant.Wildtype, AgeGroup(age_group)] = mio.AbstractParameterDistribution(mio.ParameterDistributionLogNormal(
+    model.parameters.TimeExposedToNoSymptoms[abm.VirusVariant.Wildtype, AgeGroup(age_group)] = mio.AbstractParameterLogNormalDistribution(mio.ParameterDistributionLogNormal(
         4., 1.))
 
 model.parameters.AgeGroupGotoSchool[AgeGroup(1)] = True
