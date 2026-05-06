@@ -38,10 +38,29 @@ void bind_time_series_functor(py::module_& m, std::string const& name)
         .def(py::init())
         .def(py::init<mio::TimeSeriesFunctorType, mio::TimeSeries<double>>())
         .def(py::init([](const mio::TimeSeries<double>& data) {
+            if (data.get_num_time_points() == 0) {
+                throw py::value_error("Need at least one time point for LinearInterpolation.");
+            }
+            if (data.get_num_elements() != 1) {
+                throw py::value_error("LinearInterpolation requires exactly one value per time point.");
+            }
+            if (!data.is_strictly_monotonic()) {
+                throw py::value_error("Time points must be strictly monotonically increasing.");
+            }
             return mio::TimeSeriesFunctor(mio::TimeSeriesFunctorType::LinearInterpolation, data);
         }))
         .def(py::init([](std::vector<std::vector<double>>&& table) {
-            return mio::TimeSeriesFunctor<double>(mio::TimeSeriesFunctorType::LinearInterpolation, table);
+            mio::TimeSeries<double> data(std::move(table));
+            if (data.get_num_time_points() == 0) {
+                throw py::value_error("Need at least one time point for LinearInterpolation.");
+            }
+            if (data.get_num_elements() != 1) {
+                throw py::value_error("LinearInterpolation requires exactly one value per time point.");
+            }
+            if (!data.is_strictly_monotonic()) {
+                throw py::value_error("Time points must be strictly monotonically increasing.");
+            }
+            return mio::TimeSeriesFunctor<double>(mio::TimeSeriesFunctorType::LinearInterpolation, data);
         }))
         .def("__call__", [](mio::TimeSeriesFunctor<double>& self, double time) {
             return self(time);

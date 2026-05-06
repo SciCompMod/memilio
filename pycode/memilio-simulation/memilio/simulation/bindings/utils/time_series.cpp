@@ -35,7 +35,6 @@ void bind_time_series(py::module_& m, std::string const& name)
 {
     bind_class<mio::TimeSeries<double>, EnablePickling::Required>(m, name.c_str())
         .def(py::init<Eigen::Index>(), py::arg("num_elements"))
-        .def(py::init<std::vector<std::vector<double>>>(), py::arg("table"))
         .def("get_num_time_points", &mio::TimeSeries<double>::get_num_time_points)
         .def("get_num_elements", &mio::TimeSeries<double>::get_num_elements)
         .def("get_time", py::overload_cast<Eigen::Index>(&mio::TimeSeries<double>::get_time), py::arg("index"))
