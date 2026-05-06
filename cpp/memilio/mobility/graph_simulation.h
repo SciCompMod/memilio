@@ -411,8 +411,8 @@ public:
                 dt = t_max - Base::m_t;
             }
 
-            cull(dt);
-            vaccinate(dt);
+            // cull(dt);
+            // vaccinate(dt);
 
             for (auto& n : Base::m_graph.nodes()) {
                 Base::m_node_func(Base::m_t, dt, n.property);
@@ -435,7 +435,7 @@ public:
                                   Base::m_graph.nodes()[e.end_node_idx].property, m_rng);
             }
             dt = m_parameters.next_event_time() - Base::m_t;
-            apply_interventions();
+            // apply_interventions();
         }
     }
 
