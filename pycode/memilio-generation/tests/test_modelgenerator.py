@@ -22,6 +22,7 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from memilio.modelgenerator import Generator
 from memilio.modelgenerator.cli import main as cli_main
@@ -346,6 +347,10 @@ class TestModelTemplate(unittest.TestCase):
         for state in ["Susceptible", "Exposed", "Infected", "Recovered"]:
             self.assertIn(f"idx_{state}_i", self.content)
 
+    def test_generated_indices_are_marked_maybe_unused(self):
+        self.assertIn(
+            "[[maybe_unused]] const size_t idx_Recovered_i", self.content)
+
     def test_seird_custom_transition_todo(self):
         content = Generator.from_yaml(SEIRD_YAML).render()[
             "cpp/models/ode_seird/model.h"]
@@ -399,6 +404,41 @@ class TestCMakeTemplate(unittest.TestCase):
     def test_link_libraries(self):
         self.assertIn(
             "target_link_libraries(ode_seir PUBLIC memilio)", self.content)
+
+
+class TestClangFormat(unittest.TestCase):
+
+    @patch("memilio.modelgenerator.generator.subprocess.run")
+    @patch("memilio.modelgenerator.generator.shutil.which")
+    def test_render_formats_cpp_files_if_clang_format_is_available(
+            self, which_mock, run_mock):
+        which_mock.return_value = "/usr/bin/clang-format"
+
+        def _format(*args, **kwargs):
+            return type("CompletedProcess", (), {
+                "stdout": kwargs["input"] + "/* formatted */\n"
+            })()
+
+        run_mock.side_effect = _format
+
+        files = Generator.from_yaml(SEIR_YAML).render()
+
+        self.assertTrue(files["cpp/models/ode_seir/model.h"].endswith(
+            "/* formatted */\n"))
+        self.assertTrue(
+            files["pycode/examples/simulation/ode_seir_simple.py"].endswith(
+                "run_simulation()\n"))
+
+    @patch("memilio.modelgenerator.generator.subprocess.run")
+    @patch("memilio.modelgenerator.generator.shutil.which")
+    def test_render_keeps_cpp_content_if_clang_format_is_unavailable(
+            self, which_mock, run_mock):
+        which_mock.return_value = None
+
+        files = Generator.from_yaml(SEIR_YAML).render()
+
+        run_mock.assert_not_called()
+        self.assertIn("class Model", files["cpp/models/ode_seir/model.h"])
 
 
 # Python example template

@@ -41,9 +41,7 @@ def main(argv=None) -> int:
     Run the model-generator command-line interface.
 
     :param argv: Optional argument vector. If ``None``, ``sys.argv`` is used.
-    :type argv: list[str] | None
     :returns: Process exit code.
-    :rtype: int
     """
     parser = argparse.ArgumentParser(
         prog="memilio-modelgenerator",
@@ -97,7 +95,7 @@ def main(argv=None) -> int:
         output_dir = Path(args.output_dir) if args.output_dir else Path(
             __file__).resolve().parents[4]
         separator = "=" * 72
-        for rel_path, content in gen.render().items():
+        for rel_path, content in gen.render(output_dir).items():
             print(f"\n{separator}")
             print(f"  NEW FILE: {rel_path}")
             print(separator)

@@ -82,7 +82,7 @@ public:
         for (auto i : make_index_range(age_groups)) {
             // Flat indices for age group i
 {% for state in cfg.infection_states %}
-            const size_t idx_{{ state }}_i =
+            [[maybe_unused]] const size_t idx_{{ state }}_i =
                 this->populations.get_flat_index({i, InfectionState::{{ state }}});
 {% endfor %}
 
@@ -94,11 +94,11 @@ public:
             for (auto j : make_index_range(age_groups)) {
                 // Flat indices for age group j
 {% for state in cfg.infection_states %}
-                const size_t idx_{{ state }}_j =
+                [[maybe_unused]] const size_t idx_{{ state }}_j =
                     this->populations.get_flat_index({j, InfectionState::{{ state }}});
 {% endfor %}
 
-                // Total population of age group j
+                // Total population of age group j, summed over all states.
                 const FP Nj =
 {% for state in cfg.infection_states %}
                     pop[idx_{{ state }}_j]{% if not loop.last %} +{% endif %}

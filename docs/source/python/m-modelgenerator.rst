@@ -45,6 +45,8 @@ Given a configuration file, the generator produces the following files:
 In the above description, `<prefix>` is a short but representative name provided by the users; not containing any spaces; see below for an example. In addition to the above files, the two existing CMakeLists files
 ``cpp/CMakeLists.txt`` and ``pycode/memilio-simulation/CMakeLists.txt``
 are generated in place to register the new model.
+If ``clang-format`` is available, generated C++ source and header files are
+formatted with the repository's ``.clang-format`` style.
 
 Configuration file format
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -219,6 +221,15 @@ In order to allow the on-the-fly computation of newly infected (or hospitalized 
     where :math:`c_{ij}` is the contact rate between age groups *i* and *j*,
     :math:`\phi` is the transmission probability, and :math:`N_j` is the total
     population of age group *j*.
+
+    .. note::
+
+       The current generator computes :math:`N_j` as the sum over all compartments
+       listed in ``infection_states``. This also includes terminal compartments such
+       as ``Dead`` in an SEIRD model. If a model requires a different denominator
+       for the force of infection, the generated right-hand side has to be adjusted
+       manually. Configurable denominator states should be added as a future
+       extension.
 
 ``linear``
     The `linear` flow is a simple outflow proportional to the compartment size:

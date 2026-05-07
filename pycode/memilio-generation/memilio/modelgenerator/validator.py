@@ -50,7 +50,6 @@ class Validator:
         Validate ``data``.
 
         :param data: Dictionary as returned by ``yaml.safe_load``.
-        :type data: dict[str, Any]
         :raises ValidationError: If one or more validation errors are found.
         """
         errors: list[str] = []

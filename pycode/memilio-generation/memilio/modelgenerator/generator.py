@@ -25,10 +25,12 @@ representation, and renders all Jinja2 templates into strings.
 
 from __future__ import annotations
 
+import re
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 from typing import Dict, Optional
-import re
 
 import yaml
 
@@ -63,7 +65,6 @@ class Generator:
         Initialize a generator from a validated model configuration.
 
         :param config: Fully validated model configuration.
-        :type config: ModelConfig
         """
         self._config = config
         self._env = Environment(
@@ -80,9 +81,7 @@ class Generator:
         Build a generator from a YAML configuration file.
 
         :param yaml_path: Path to a ``.yaml`` configuration file.
-        :type yaml_path: str | Path
         :returns: Generator initialized from the parsed YAML configuration.
-        :rtype: Generator
         """
         with open(yaml_path, encoding="utf-8") as fh:
             raw = yaml.safe_load(fh)
@@ -97,9 +96,7 @@ class Generator:
         Build a generator from a TOML configuration file.
 
         :param toml_path: Path to a ``.toml`` configuration file.
-        :type toml_path: str | Path
         :returns: Generator initialized from the parsed TOML configuration.
-        :rtype: Generator
         """
         with open(toml_path, "rb") as fh:
             raw = tomllib.load(fh)
@@ -114,15 +111,15 @@ class Generator:
         Build a generator from an already loaded dictionary.
 
         :param raw: Dictionary as returned by ``yaml.safe_load``.
-        :type raw: dict
         :returns: Generator initialized from ``raw``.
-        :rtype: Generator
         """
         Validator.validate(raw)
         config = cls._parse(raw)
         return cls(config)
 
-    def render(self) -> dict[str, str]:
+    def render(
+            self,
+            clang_format_base_dir: str | Path | None = None) -> dict[str, str]:
         """
         Render all generated files.
 
@@ -130,13 +127,14 @@ class Generator:
         repository root. Use :meth:`render_patches` for in-place edits of
         existing CMake files.
 
+        :param clang_format_base_dir: Optional repository root used by clang-format
+            to find the local ``.clang-format`` file.
         :returns: Mapping from relative output path to rendered file content.
-        :rtype: dict[str, str]
         """
         cfg = self._config
         prefix = cfg.meta.prefix
 
-        return {
+        files = {
             f"cpp/models/{prefix}/infection_state.h": self._render("infection_state_h.jinja2"),
             f"cpp/models/{prefix}/parameters.h": self._render("parameters_h.jinja2"),
             f"cpp/models/{prefix}/model.h": self._render("model_h.jinja2"),
@@ -150,6 +148,7 @@ class Generator:
                 f"pycode/memilio-simulation/memilio/simulation/{cfg.meta.namespace}.py"
             ): self._render("simulation_py.jinja2"),
         }
+        return self._format_cpp_files(files, clang_format_base_dir)
 
     _CPP_CMAKE = "cpp/CMakeLists.txt"
     _SIM_CMAKE = "pycode/memilio-simulation/CMakeLists.txt"
@@ -163,9 +162,7 @@ class Generator:
         already exists.
 
         :param output_dir: Repository root directory.
-        :type output_dir: Path
         :returns: Mapping from relative path to patched content or ``None``.
-        :rtype: dict[str, str | None]
         """
         prefix = self._config.meta.prefix
         namespace = self._config.meta.namespace
@@ -232,9 +229,7 @@ class Generator:
         Directories are created as needed.
 
         :param output_dir: Root of the target MEmilio repository.
-        :type output_dir: str | Path
         :param overwrite: Allow overwriting an existing model directory.
-        :type overwrite: bool
         :raises FileExistsError: If model directory exists and ``overwrite`` is
             ``False``.
         """
@@ -247,7 +242,7 @@ class Generator:
                 f"Pass overwrite=True (or --force on the CLI) to overwrite it."
             )
 
-        for rel_path, content in self.render().items():
+        for rel_path, content in self.render(output_dir).items():
             target = output_dir / rel_path
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(content, encoding="utf-8")
@@ -263,6 +258,47 @@ class Generator:
     def _render(self, template_name: str) -> str:
         tmpl = self._env.get_template(template_name)
         return tmpl.render(cfg=self._config)
+
+    @staticmethod
+    def _format_cpp_files(
+            files: dict[str, str],
+            base_dir: str | Path | None) -> dict[str, str]:
+        """Run clang-format on generated C++ files if it is available."""
+        formatted_files = {}
+        for path, content in files.items():
+            if path.endswith((".cpp", ".h")):
+                formatted_files[path] = Generator._format_cpp_content(
+                    path, content, base_dir)
+            else:
+                formatted_files[path] = content
+        return formatted_files
+
+    @staticmethod
+    def _format_cpp_content(
+            path: str, content: str, base_dir: str | Path | None) -> str:
+        clang_format = shutil.which("clang-format")
+        if clang_format is None:
+            return content
+
+        cwd = Path(base_dir) if base_dir is not None else None
+
+        try:
+            result = subprocess.run(
+                [
+                    clang_format,
+                    "--style=file",
+                    "--fallback-style=none",
+                    f"--assume-filename={path}",
+                ],
+                input=content,
+                text=True,
+                capture_output=True,
+                cwd=cwd,
+                check=True,
+            )
+        except (OSError, subprocess.CalledProcessError):
+            return content
+        return result.stdout
 
     @staticmethod
     def _parse(raw: dict) -> ModelConfig:
@@ -323,11 +359,10 @@ class Generator:
                     to_state=t["to"],
                     type=t["type"],
                     parameter=t.get("parameter"),
-                    infectious_state=infectious_states[0] if infectious_states else None,
+                    infectious_state=infectious_states[0]
+                    if infectious_states else None,
                     infectious_states=infectious_states,
-                    custom_formula=t.get("custom_formula"),
-                )
-            )
+                    custom_formula=t.get("custom_formula"),))
 
         return ModelConfig(
             meta=meta,
