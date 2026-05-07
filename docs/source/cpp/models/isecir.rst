@@ -220,7 +220,7 @@ Basic dampings can be added to the contact matrix as follows:
     contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, cont_freq));
     
     // Add a uniform damping across all age groups.
-    contact_matrix[0].add_damping(0.7, mio::SimulationTime<ScalarType>(30.));;
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime<ScalarType>(30.));
 
 For age-resolved models, you can apply different dampings to different groups:
 
@@ -332,7 +332,7 @@ You can access the data in the ``TimeSeries`` objects as follows:
     // Access data at a specific time point, e.g. i=0.
     size_t i                                   = 0;
     Eigen::VectorX<ScalarType> value_at_time_i = compartments.get_value(i);
-    ScalarType time_i    
+    ScalarType time_i                          = compartments.get_time(i);
     
     // Access the last time point.
     Eigen::VectorX<ScalarType> last_value = compartments.get_last_value();

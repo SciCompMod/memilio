@@ -216,7 +216,7 @@ For age-resolved models, you can apply different dampings to different groups:
 
     ScalarType cont_freq = 10.;
     contact_matrix[0] =
-    mio::ContactMatrix<ScalarType>(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, cont_freq));
+    mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(num_agegroups, num_agegroups, cont_freq));
 
     // Add a damping that reduces contacts within the same age group by 70% starting at day 30.
     Eigen::MatrixX<ScalarType> damping_matrix = Eigen::VectorX<ScalarType>::Constant(num_agegroups, 0.7).asDiagonal();
