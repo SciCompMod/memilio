@@ -56,10 +56,11 @@ enum class InfectionTransition
     InfectedSymptomsToInfectedSevere     = 4,
     InfectedSymptomsToRecovered          = 5,
     InfectedSevereToInfectedCritical     = 6,
-    InfectedSevereToRecovered            = 7,
-    InfectedCriticalToDead               = 8,
-    InfectedCriticalToRecovered          = 9,
-    Count                                = 10
+    InfectedSevereToDead                 = 7,
+    InfectedSevereToRecovered            = 8,
+    InfectedCriticalToDead               = 9,
+    InfectedCriticalToRecovered          = 10,
+    Count                                = 11
 };
 
 } // namespace lsecir

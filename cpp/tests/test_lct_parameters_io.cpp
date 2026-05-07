@@ -112,6 +112,7 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKI)
     model.parameters.template get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[0] = 0.2;
     model.parameters.template get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[0]      = 0.1;
     model.parameters.template get<mio::lsecir::CriticalPerSevere<ScalarType>>()[0]              = 0.3;
+    model.parameters.template get<mio::lsecir::DeathsPerSevere<ScalarType>>()[0]                = 0.0;
     model.parameters.template get<mio::lsecir::DeathsPerCritical<ScalarType>>()[0]              = 0.2;
 
     // Calculate initial value vector for subcompartments with RKI data.
@@ -158,6 +159,7 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKIAgeres)
         model.parameters.template get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[i] = 0.2;
         model.parameters.template get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[i]      = 0.1;
         model.parameters.template get<mio::lsecir::CriticalPerSevere<ScalarType>>()[i]              = 0.3;
+        model.parameters.template get<mio::lsecir::DeathsPerSevere<ScalarType>>()[i]                = 0.0;
         model.parameters.template get<mio::lsecir::DeathsPerCritical<ScalarType>>()[i]              = 0.2;
     }
 
@@ -235,6 +237,7 @@ TEST(TestLCTParametersIo, CheckScalingDIVI)
         model.parameters.template get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[i] = 0.2;
         model.parameters.template get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[i]      = 0.1;
         model.parameters.template get<mio::lsecir::CriticalPerSevere<ScalarType>>()[i]              = 0.3;
+        model.parameters.template get<mio::lsecir::DeathsPerSevere<ScalarType>>()[i]                = 0.0;
         model.parameters.template get<mio::lsecir::DeathsPerCritical<ScalarType>>()[i]              = 0.2;
     }
 
@@ -369,6 +372,7 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKIFailure)
     model.parameters.template get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[0] = 0.2;
     model.parameters.template get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[0]      = 0.1;
     model.parameters.template get<mio::lsecir::CriticalPerSevere<ScalarType>>()[0]              = 0.3;
+    model.parameters.template get<mio::lsecir::DeathsPerSevere<ScalarType>>()[0]                = 0.0;
     model.parameters.template get<mio::lsecir::DeathsPerCritical<ScalarType>>()[0]              = 0.2;
 
     // Deactivate temporarily log output for next tests.
@@ -435,6 +439,7 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKIFailureAgeres)
         model.parameters.template get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[i] = 0.2;
         model.parameters.template get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[i]      = 0.1;
         model.parameters.template get<mio::lsecir::CriticalPerSevere<ScalarType>>()[i]              = 0.3;
+        model.parameters.template get<mio::lsecir::DeathsPerSevere<ScalarType>>()[i]                = 0.0;
         model.parameters.template get<mio::lsecir::DeathsPerCritical<ScalarType>>()[i]              = 0.2;
     }
 
