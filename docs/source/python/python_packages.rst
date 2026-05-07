@@ -108,12 +108,37 @@ Please see the individual package documentation for more details on the function
 
 .. _Python_Installation:
 
+
+
 Installation
 ------------
 
+The Python packages can be installed in two ways depending on your use case.
+
+**Option 1: Install from PyPI (Recommended - no C++ compiler required; currently only supported for memilio-simulation)**
+
+Pre-built wheels are provided for Linux and Windows on Python 3.8 to 3.13.
+
+.. code-block:: console
+
+   pip install memilio-simulation
+
+This is the easiest way to get started. No C++ compiler or CMake is needed.
+
+**Option 2: Install from source (latest development version, or contributing)**
+
 Each package provides a ``pyproject.toml`` that installs the package and its dependencies with pip.
+
+If you want to install the memilio-simulation package: 
+
+* The pyproject.toml is in the **root of the MEmilio repository**.
+
+If you want to install any of the other Python packages:
+
+* The pyproject.toml is in the respective folder ``pycode/memilio-*``
+
 The dependencies of the individual packages are denoted in their documentation.
-The installation can be run with the following command (from the directory containing the ``pyproject.toml`` file)
+The installation can be run with the following command from the directory containing the ``pyproject.toml`` file
 
 .. code-block:: console 
     
@@ -127,7 +152,13 @@ For development of code use this command instead
     
     python -m pip install -e .[dev]
 
-This command allows you to work on the code without having to reinstall the package after a change. It also installs all additional dependencies required for development and maintenance.
+This command allows you to work on the code without having . It also installs 
+all additional dependencies required for development and maintenance.
+
+
+The ``-e`` flag links the installation to your local source code so Python changes are reflected immediately. Hence, 
+you do not need to reinstall the package after a changes in Python. C++ changes require re-running this command to 
+recompile.
 
 .. dropdown:: :fa:`gears` Build files for skbuild
 
