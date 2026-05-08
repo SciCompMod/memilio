@@ -41,6 +41,7 @@ add_library(memilio
     io/cli.h
     io/default_serialize.h
     io/default_serialize.cpp
+    io/directories.cpp
     io/directories.h
     io/epi_data.h
     io/epi_data.cpp

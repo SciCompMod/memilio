@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_UTILS_DIRECTORIES_H
-#define MIO_UTILS_DIRECTORIES_H
+#ifndef MIO_IO_DIRECTORIES_H
+#define MIO_IO_DIRECTORIES_H
 
 #include "memilio/config.h" // IWYU pragma: keep
 
@@ -31,29 +31,20 @@ namespace mio
 /**
  * @brief Returns the absolute path to the project directory.
  */
-const static std::filesystem::path base_dir()
-{
-    return details::MEMILIO_BASE_DIR;
-}
+std::filesystem::path base_dir();
 
 /**
  * @brief Returns the absolute path to the project directory.
  */
-[[maybe_unused]] const static std::filesystem::path data_dir()
-{
-    return details::MEMILIO_DATA_DIR;
-}
+[[maybe_unused]] std::filesystem::path data_dir();
 
 /**
  * @brief Returns the absolute path to a common ouput directory for the code examples.
+ * The directory lies in base_dir() and has 
+ * @param[in] example_name Name of the example (e.g. the filename without .cpp).
  */
-[[maybe_unused]] const static std::filesystem::path example_results_dir(const std::string& example_name)
-{
-    // the last empty string is used to end the output path in a /
-    const static std::filesystem::path dir = base_dir() / "example_results" / example_name;
-    return dir;
-}
+[[maybe_unused]] std::filesystem::path example_results_dir(const std::string& example_name);
 
 } // namespace mio
 
-#endif // MIO_UTILS_DIRECTORIES_H
+#endif // MIO_IO_DIRECTORIES_H
