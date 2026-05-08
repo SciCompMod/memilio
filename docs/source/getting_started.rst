@@ -313,7 +313,7 @@ If you just want to run simulations with the latest released version, install th
 
    pip install memilio-simulation
 
-This requires no C++ compiler or CMake. Pre-built wheels are provided for Linux and Windows on Python 3.8 to 3.13.
+This requires no C++ compiler or CMake. Pre-built wheels are provided for Linux and Windows on Python 3.9 to 3.14.
 
 **Option A.2: Install from source (for the latest development version)**
 
