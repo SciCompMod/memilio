@@ -70,7 +70,6 @@ void set_params_distributions_normal(Model<FP>& model, FP t0, FP tmax, FP dev_re
     set_distribution(model.parameters.template get<Seasonality<FP>>(), 0.0);
     set_distribution(model.parameters.template get<ICUCapacity<FP>>());
     set_distribution(model.parameters.template get<TestAndTraceCapacity<FP>>());
-    set_distribution(model.parameters.template get<DynamicNPIsImplementationDelay<FP>>());
 
     // populations
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
@@ -216,8 +215,6 @@ Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityPa
     shared_contacts.draw_sample_dampings();
     auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
     shared_dynamic_npis.draw_sample();
-    auto& shared_dynamic_npis_delay = shared_params_model.parameters.template get<DynamicNPIsImplementationDelay<FP>>();
-    shared_dynamic_npis_delay.draw_sample();
 
     for (auto& params_node : graph.nodes()) {
         auto& node_model = params_node.property;

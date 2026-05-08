@@ -14,7 +14,7 @@ The infection states and the transitions are visualized in the following graph.
 Infection States
 ----------------
 
-The model contains the following list of **InfectionState**\s:
+The model contains the following list of ``InfectionState``\s:
 
 .. code-block:: RST
 
@@ -28,7 +28,7 @@ The model contains the following list of **InfectionState**\s:
 Infection State Transitions
 ---------------------------
 
-The ODE-SEIRDB model is implemented as a **FlowModel**, which defines the derivatives of each flow between compartments.
+The ODE-SEIRDB model is implemented as a ``FlowModel``, which defines the derivatives of each flow between compartments.
 This allows for explicit computation of new transmissions, infections, recoveries, deaths, and burials. Additionally,
 the aggregated compartment values can be computed with minimal overhead. The defined transitions `FromState, ToState` are:
 
@@ -45,7 +45,7 @@ Sociodemographic Stratification
 -------------------------------
 
 In the ODE-SEIRDB model, the population can be stratified by one sociodemographic dimension. This dimension is denoted
-**AgeGroup** but can also be used for other interpretations. For stratifications with two or more dimensions, see
+``AgeGroup`` but can also be used for other interpretations. For stratifications with two or more dimensions, see
 :doc:`Model Creation <../ode_creation>`.
 
 The number of age groups is specified in the model constructor and the model can be initialized with
@@ -96,8 +96,8 @@ The model implements the following parameters:
 Initial Conditions
 ------------------
 
-The initial conditions of the model are defined by the class **Populations** which defines the number of individuals in
-each sociodemographic group and **InfectionState**. Before running a simulation, you need to set the initial values for
+The initial conditions of the model are defined by the class ``Populations`` which defines the number of individuals in
+each sociodemographic group and ``InfectionState``. Before running a simulation, you need to set the initial values for
 each compartment:
 
 .. code-block:: cpp
@@ -199,7 +199,7 @@ For both simulation types, you can also specify a custom integrator:
 Output
 ------
 
-The output of the **Simulation** is a ``mio::TimeSeries`` containing the sizes of each compartment at each time point. For A
+The output of the ``Simulation`` is a ``TimeSeries`` containing the sizes of each compartment at each time point. For A
 standard simulation, you can access the results as follows:
 
 .. code-block:: cpp
@@ -215,7 +215,7 @@ standard simulation, you can access the results as follows:
     Eigen::VectorXd last_value = result_sim.get_last_value();
     double last_time = result_sim.get_last_time();
 
-For flow simulations, the result consists of two `mio::TimeSeries` objects, one for compartment sizes and one for flows:
+For flow simulations, the result consists of two ``TimeSeries`` objects, one for compartment sizes and one for flows:
 
 .. code-block:: cpp
 

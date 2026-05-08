@@ -1,5 +1,5 @@
-name: "Linux Examples"
-description: "Run the C++ examples on linux."
+name: "Apple Examples"
+description: "Run the C++ examples on MacOS."
 inputs:
   build-artifact:
     description: "Name of the build artifact that contains the example binaries."
@@ -7,26 +7,16 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Install Dependencies
-      shell: bash
-      run: |
-        sudo apt-get -qq update
-        sudo apt-get -qq -y install libhdf5-10* wget gnupg lcov
-        sudo apt-get -qq update
     - name: Download examples directory
       uses: actions/download-artifact@v7
       with:
         name: ${{ inputs.build-artifact }}
-        path: cpp
-    - name: extract examples archive
-      shell: bash
-      run: |
-        cd cpp
-        tar -xzf build.tar.gz
+        path: cpp/build-mac/
     - name: Run examples
       shell: bash
       run: |
-        cd cpp/build/bin
+        brew install hdf5
+        cd cpp/build-mac/bin
         sudo chmod -R a+x ./
         numberoffiles=$(ls -dq *_example | wc -l)
         if [[ "$numberoffiles" -gt "0" ]]; then 

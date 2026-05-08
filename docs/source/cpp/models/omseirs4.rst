@@ -17,7 +17,7 @@ This implementation is designed for Respiratory Syncytial Virus (RSV) and is bas
 Infection States
 ----------------
 
-The model contains the following InfectionStates:
+The model contains the following ``InfectionState``\s:
 
 - `MaternalImmune` (M)
 - `S1`, `S2`, `S3`, `S4` (susceptible classes by infection history)
@@ -39,7 +39,7 @@ All infectious classes (I1..I4) contribute equally to transmission in the basic 
 Infection State Transitions
 ---------------------------
 
-The model is implemented as a **CompartmentalModel**, which defines the derivative of the aggregated compartment
+The model is implemented as a ``CompartmentalModel``, which defines the derivative of the aggregated compartment
 values in time. The following transitions occur:
 
 - Births enter M and some enter S1
@@ -131,7 +131,7 @@ Run a standard simulation via:
 Output
 ------
 
-The output is a ``mio::TimeSeries`` of compartment sizes over time. Use ``print_table`` or export to CSV as needed.
+The output is a ``TimeSeries`` of compartment sizes over time. Use ``print_table`` or export to CSV as needed.
 
 Notes
 -----
