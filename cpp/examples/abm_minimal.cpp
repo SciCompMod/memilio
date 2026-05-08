@@ -162,10 +162,7 @@ int main()
     // Run the simulation until tmax with the history object.
     sim.advance(tmax, historyTimeSeries);
 
-    // The results are written into the file "abm_minimal.txt" as a table with 9 columns.
-    // The first column is Time. The other columns correspond to the number of people with a certain infection state at this Time:
-    // Time = Time in days, S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
-    // I_Crit = InfectedCritical, R = Recovered, D = Dead
+    // Write results to a file. Also print the filepath to make it easier to find
     auto outpath = mio::create_directories_or_exit(mio::example_results_dir("abm_minimal")) / "history.txt";
     std::ofstream outfile(outpath);
     std::get<0>(historyTimeSeries.get_log())

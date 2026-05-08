@@ -39,7 +39,7 @@ mio::IOResult<void> write_single_run_result(const size_t run, const mio::osecir:
 {
     std::string abs_path;
     BOOST_OUTCOME_TRY(auto&& created,
-                      mio::create_directory(mio::example_results_dir("ode_secir_parameter_study"), abs_path));
+                      mio::create_directory(mio::example_results_dir("ode_secir_parameter_study"), abs_path, true));
 
     if (run == 0) {
         std::cout << "Results are stored in " << abs_path << '\n';
