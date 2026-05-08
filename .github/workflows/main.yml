@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
-          python-version: 3.12
+          python-version: 3.14
       - uses: pre-commit/action@v3.0.1
 
   build-cpp-gcc_clang:
@@ -339,7 +339,7 @@ jobs:
     if: github.event.pull_request.draft == false
     strategy:
       matrix: 
-        version: ["3.8", "3.12"]
+        version: ["3.9", "3.14"]
     needs: build-py-generation
     runs-on: ubuntu-latest
     steps:
@@ -353,7 +353,7 @@ jobs:
     needs: build-py-simulation
     strategy:
       matrix: 
-        version: ["3.8", "3.12"]
+        version: ["3.9", "3.14"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -366,7 +366,7 @@ jobs:
     needs: [build-py-surrogatemodel, build-py-simulation]
     strategy:
       matrix: 
-        version: ["3.8", "3.12"]
+        version: ["3.9", "3.14"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
