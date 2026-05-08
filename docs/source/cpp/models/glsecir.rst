@@ -68,7 +68,7 @@ Below is an overview of the model variables:
 
 The model equations are given below. For a simpler description let :math:`\mathcal{Z}=\{E,I_{NS},I_{Sy},I_{Sev},I_{Cr}\}` be the set of the compartments that can be divided into subcompartments.
 
-.. image:: https://github.com/SciCompMod/memilio/assets/70579874/e1da5e1d-e719-4c16-9f14-45374be7c353
+.. image:: http://martinkuehn.eu/research/images/glct_equations.png
    :alt: equations
 
 Note that the bold notation :math:`\mathbf{z}(t)` for :math:`z \in \mathcal{Z}` stands for a vector. If several transitions are possible from a compartment, the vector is split in order to be able to select the stay times until the transitions individually. For example, the order
@@ -80,9 +80,21 @@ Note that the bold notation :math:`\mathbf{z}(t)` for :math:`z \in \mathcal{Z}` 
    \mathbf{I_{\text{NS}}^{\text{R}}}(t)
    \end{bmatrix}
 
-is used. Similar holds true for the other compartments :math:`z \in \mathcal{Z}`.
+is used. Similar holds true for the other compartments :math:`z \in \mathcal{Z}`. In particular, we have three transitions 
+originating from the InfectedSevere compartment and the vector is given by
 
-Implicitly, the matrices :math:`\mathbf{A_{z}^{*}}` for one :math:`z \in \mathcal{Z}` are a block of a matrix :math:`\mathbf{A_{z}}` corresponding to the whole vector :math:`\mathbf{z}(t)`. As we have no transitions in between the strains defined for different transition probabilities, we would have many zeros in the matrix. The matrix can be defined as
+.. math::
+
+   \mathbf{I_{\text{NS}}}(t) = \begin{bmatrix}
+   \mathbf{I_{\text{NS}}^{\text{Sy}}}(t) \\
+   \mathbf{I_{\text{NS}}^{\text{D}}}(t) \\
+   \mathbf{I_{\text{NS}}^{\text{R}}}(t)
+   \end{bmatrix}.
+
+Implicitly, the matrices :math:`\mathbf{A_{z}^{*}}` for one :math:`z \in \mathcal{Z}` are a block of a matrix 
+:math:`\mathbf{A_{z}}` corresponding to the whole vector :math:`\mathbf{z}(t)`. As we have no transitions in between 
+the strains defined for different transition probabilities, we would have many zeros in the matrix. The matrix can be 
+defined as
 
 .. math::
 
@@ -92,7 +104,11 @@ Implicitly, the matrices :math:`\mathbf{A_{z}^{*}}` for one :math:`z \in \mathca
    \mathbf{0} &  \mathbf{A_{z}^{*_2}}
    \end{bmatrix},
 
-where :math:`{*}_{1}` is the compartment of the first transition, e.g., :math:`I_{\text{Sy}}` for :math:`z=I_{\text{NS}}` and :math:`*_{2}` the compartment of the second possible transition, e.g., :math:`R`. Therefore, we just store the non-zero blocks of the matrix. Using these parameters, the phase-type distribution that defines the stay time in compartment :math:`z \in \mathcal{Z}` has the probability density function
+where :math:`{*}_{1}` is the compartment of the first transition, e.g., :math:`I_{\text{Sy}}` for 
+:math:`z=I_{\text{NS}}` and :math:`*_{2}` the compartment of the second possible transition, e.g., :math:`R`. 
+Therefore, we just store the non-zero blocks of the matrix. The number of non-zero blocks corresponds to the number of 
+strains originating from the considered compartment. Using these parameters, the phase-type distribution that defines 
+the stay time in compartment :math:`z \in \mathcal{Z}` has the probability density function
 
 .. math::
 
@@ -145,6 +161,7 @@ We continue by defining some epidemiological parameters needed throughout the mo
     const ScalarType recoveredPerInfectedNoSymptoms = 0.09;
     const ScalarType severePerInfectedSymptoms      = 0.2;
     const ScalarType criticalPerSevere              = 0.25;
+    const ScalarType deathsPerSevere                = 0.;
     const ScalarType deathsPerCritical              = 0.3;
 
 Now, we define the initial values with the distribution of the population into subcompartments. Note that this method of defining the initial values using a vector of vectors is not necessary, but should show how the entries of the initial value vector relate to the defined template parameters of the model or the number of subcompartments. It is also possible to define the initial values directly.

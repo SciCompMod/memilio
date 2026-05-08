@@ -259,6 +259,12 @@ The model implements the following parameters:
    * - :math:`\mu_{I_{Sev},b}^{I_{Cr}}`
      - ``CriticalPerSevere_b``
      - Probability of transition from compartment InfectedSevere_1b to InfectedCritical_1b or from InfectedSevere_2b to InfectedCritical_2b.
+   * - :math:`\mu_{I_{Sev},a}^{D}`
+     - ``DeathsPerSevere_a``
+     - Probability of dying when in compartment InfectedSevere_1a or InfectedSevere_2a.
+   * - :math:`\mu_{I_{Sev},b}^{D}`
+     - ``DeathsPerSevere_b``
+     - Probability of dying when in compartment InfectedSevere_1b or InfectedSevere_2b.
    * - :math:`\mu_{I_{Cr},a}^{D}`
      - ``DeathsPerCritical_a``
      - Probability of dying when in compartment InfectedCritical_1a or InfectedCritical_2a.

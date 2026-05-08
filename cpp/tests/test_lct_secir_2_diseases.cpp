@@ -1014,7 +1014,7 @@ TEST(TestLCTSecir2d, deathsPerSevere_flows)
     params.get<mio::lsecir2d::DeathsPerSevere_b<ScalarType>>()[0]   = 0.1;
 
     // Define initial population distribution in infection states, one entry per subcompartment.
-    // We start with 500 individuals in each InfectedSevere subcompartment, no indiviuals in other compartments.
+    // We start with 1000 individuals in each InfectedSevere compartment, no indiviuals in other compartments.
     const auto severe_initial_1a = 1000., severe_initial_1b = 1000., severe_initial_2a = 1000.,
                severe_initial_2b    = 1000.;
     const auto severe_initial_total = severe_initial_1a + severe_initial_1b + severe_initial_2a + severe_initial_2b;
@@ -1059,7 +1059,7 @@ TEST(TestLCTSecir2d, deathsPerSevere_flows)
     }
 
     // Simulate a small time step.
-    ScalarType t0 = 0, tmax = 5., dt = 0.1;
+    ScalarType t0 = 0, tmax = 2., dt = 0.1;
     mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType>(t0, tmax, dt, model);
 
     // With DeathsPerSevere=0.1, deaths from ISev must be > 0 for both diseases.

@@ -13,7 +13,7 @@ The model is particularly suited for pathogens with pre- or asymptomatic infecti
 
 Below is a visualization of the infection states and transitions without a stratification according to sociodemographic groups.
 
-.. image:: https://github.com/SciCompMod/memilio/assets/70579874/6a5d5a95-20f9-4176-8894-c091bd48bfb7
+.. image:: http://martinkuehn.eu/research/images/lct.png
    :alt: tikzLCTSECIR
 
 
@@ -118,6 +118,9 @@ The model implements the following parameters:
    * - :math:`\mu_{I_{Sev}}^{I_{Cr}}`
      - ``CriticalPerSevere``
      - Probability of transition from compartment InfectedSevere to InfectedCritical.
+   * - :math:`\mu_{I_{Sev}}^{D}`
+     - ``DeathsPerSevere``
+     - Probability of dying when in compartment InfectedSevere.
    * - :math:`\mu_{I_{Cr}}^{D}`
      - ``DeathsPerCritical``
      - Probability of dying when in compartment InfectedCritical.
