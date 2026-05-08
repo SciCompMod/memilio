@@ -6,7 +6,7 @@ This package contains Python bindings for the MEmilio C++ library. It enables se
 
 ### Option 1: Install from PyPI (Recommended)
 
-Pre-built wheels are provided for Linux and Windows on Python 3.9 to 3.14.
+Pre-built wheels are provided for Linux and Windows on Python 3.9 to 3.13.
 
 ```bash
 pip install memilio-simulation

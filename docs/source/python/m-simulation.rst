@@ -12,7 +12,7 @@ The ``memilio-simulation`` package can be installed in two ways depending on you
 
 **Option 1: Install from PyPI (Recommended - no C++ compiler required)**
 
-Pre-built wheels are provided for Linux and Windows on Python 3.9 to 3.14.
+Pre-built wheels are provided for Linux and Windows on Python 3.9 to 3.13.
 
 .. code-block:: console
 
