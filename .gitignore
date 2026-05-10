@@ -291,3 +291,4 @@ docs/source/cppapi
 
 # Output directory from memilio examples
 example_results/
+.venv/*
