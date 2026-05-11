@@ -117,7 +117,7 @@ The Python packages can be installed in two ways depending on your use case.
 
 **Option 1: Install from PyPI (Recommended - no C++ compiler required; currently only supported for memilio-simulation)**
 
-Pre-built wheels are provided for Linux and Windows on Python 3.8 to 3.13.
+Pre-built wheels are provided for Linux and Windows on Python 3.9 to 3.13.
 
 .. code-block:: console
 
