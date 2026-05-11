@@ -39,11 +39,6 @@ if sys.version_info >= (3, 11):
 else:
     import tomli as tomllib
 
-if sys.version_info >= (3, 9):
-    import importlib.resources as importlib_resources
-else:
-    import importlib_resources
-
 from jinja2 import Environment, PackageLoader, StrictUndefined
 
 from .schema import (
