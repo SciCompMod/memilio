@@ -277,17 +277,17 @@ After setting the initial populations, the daily vaccination parameters, which a
 
     const size_t daily_vaccinations = 10;
     const size_t num_days = 300;
-    model.parameters.get<mio::osecirts::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(num_days));
-    model.parameters.get<mio::osecirts::DailyFullVaccinations<double>>().resize(mio::SimulationDay(num_days));
-    model.parameters.get<mio::osecirts::DailyBoosterVaccinations<double>>().resize(mio::SimulationDay(num_days));
+    model.parameters.get<mio::osecirts::DailyPartialVaccinations<ScalarType>>().resize(mio::SimulationDay(num_days));
+    model.parameters.get<mio::osecirts::DailyFullVaccinations<ScalarType>>().resize(mio::SimulationDay(num_days));
+    model.parameters.get<mio::osecirts::DailyBoosterVaccinations<ScalarType>>().resize(mio::SimulationDay(num_days));
     for (size_t i = 0; i < num_days; ++i) {
         for (mio::AgeGroup j = 0; j < nb_groups; ++j) {
-            auto num_vaccinations = static_cast<double>(i * daily_vaccinations);
-            model.parameters.get<mio::osecirts::DailyPartialVaccinations<double>>()[{j, mio::SimulationDay(i)}] =
+            auto num_vaccinations = static_cast<ScalarType>(i * daily_vaccinations);
+            model.parameters.get<mio::osecirts::DailyPartialVaccinations<ScalarType>>()[{j, mio::SimulationDay(i)}] =
                 num_vaccinations;
-            model.parameters.get<mio::osecirts::DailyFullVaccinations<double>>()[{j, mio::SimulationDay(i)}] =
+            model.parameters.get<mio::osecirts::DailyFullVaccinations<ScalarType>>()[{j, mio::SimulationDay(i)}] =
                 num_vaccinations;
-            model.parameters.get<mio::osecirts::DailyBoosterVaccinations<double>>()[{j, mio::SimulationDay(i)}] =
+            model.parameters.get<mio::osecirts::DailyBoosterVaccinations<ScalarType>>()[{j, mio::SimulationDay(i)}] =
                 num_vaccinations;
         }
     }

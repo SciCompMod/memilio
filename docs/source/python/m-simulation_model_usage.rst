@@ -40,7 +40,7 @@ Python and C++ to better understand the differences of both interfaces.
          #include "ode_seir/model.h"
 
          int num_groups = 1;
-         mio::oseir::Model<double> model(num_groups);
+         mio::oseir::Model<ScalarType> model(num_groups);
 
 Initialize parameters
 ---------------------

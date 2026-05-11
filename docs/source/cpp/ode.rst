@@ -56,8 +56,8 @@ In the ``ContactPatterns`` parameter, each matrix element stores baseline contac
 group :math:`i` and group :math:`j`. The dimension of the matrix is automatically defined by the model initiation and it is reduced 
 to one value if no stratifcation is used. The values can be adjusted during the simulation, e.g., through implementing 
 nonpharmaceutical interventions, see the section on :ref:`Nonpharmaceutical Interventions`.
-Parameters can get accessed via ``model.parameters.get<Param<double>>()`` and set via either 
-``model.parameters.get<Param<double>>() = value`` or ``model.parameters.set<Param<double>>(value)``. 
+Parameters can get accessed via ``model.parameters.get<Param<ScalarType>>()`` and set via either 
+``model.parameters.get<Param<ScalarType>>() = value`` or ``model.parameters.set<Param<ScalarType>>(value)``. 
 
 .. dropdown:: :fa:`gears` Expert's settings
 

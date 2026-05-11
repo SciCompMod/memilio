@@ -101,7 +101,7 @@ MEmilio uses ``mio::IOResult`` for handling return values and errors of io funct
 
 .. code-block:: c++
 
-    mio::IOResult<void> save_result(const std::vector<TimeSeries<double>>& results, const std::vector<int>& ids, int num_groups,
+    mio::IOResult<void> save_result(const std::vector<TimeSeries<ScalarType>>& results, const std::vector<int>& ids, int num_groups,
                                const std::string& filename) 
     {
         ...;
