@@ -420,8 +420,9 @@ public:
 
             Base::m_t += dt;
 
-            while (m_parameters.next_event_time() == Base::m_t) {
+            while (m_parameters.next_event_time() <= Base::m_t + 0.9) {
                 auto next_event = m_parameters.process_next_event();
+                mio::log_debug("{}, {}, {}", next_event.from, next_event.to, next_event.number);
                 if (Base::m_graph.nodes()[next_event.from].property.is_quarantined() ||
                     Base::m_graph.nodes()[next_event.to].property.is_quarantined()) {
                     mio::log_debug("Mobility from node {} to node {} at time {} skipped due to quarantine.",

@@ -21,8 +21,8 @@
 #ifndef MIO_SMM_SIMULATION_H
 #define MIO_SMM_SIMULATION_H
 
-#include "smm/model.h"
-#include "smm/parameters.h"
+#include "models/smm/model.h"
+#include "models/smm/parameters.h"
 #include "memilio/utils/time_series.h"
 
 namespace mio

@@ -23,7 +23,7 @@
 
 #include "memilio/utils/index.h"
 #include "memilio/utils/index_range.h"
-#include "smm/parameters.h"
+#include "models/smm/parameters.h"
 #include "memilio/compartments/compartmental_model.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/geography/regions.h"

@@ -33,8 +33,8 @@
 #include "memilio/timer/auto_timer.h"
 #include "memilio/utils/parameter_distributions.h"
 #include "memilio/utils/random_number_generator.h"
-#include "smm/simulation.h"
-#include "smm/parameters.h"
+#include "models/smm/simulation.h"
+#include "models/smm/parameters.h"
 
 namespace mio
 {
