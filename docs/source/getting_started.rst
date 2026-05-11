@@ -258,7 +258,7 @@ Before you can install MEmilio, you need to install some common development tool
 
 *   **Python:** Required for the Python packages.
 
-    *   MEmilio is tested daily with Python 3.8 and 3.12. While other versions may also work, we recommend using the latest release of either of these. You can download it from the official website `python.org <https://www.python.org/>`__.
+    *   MEmilio is tested daily with Python 3.9 and 3.13. While other versions may also work, we recommend using the latest release of either of these. You can download it from the official website `python.org <https://www.python.org/>`__.
 
 *   **C++ Compiler and CMake:**
 
@@ -313,7 +313,7 @@ If you just want to run simulations with the latest released version, install th
 
    pip install memilio-simulation
 
-This requires no C++ compiler or CMake. Pre-built wheels are provided for Linux and Windows on Python 3.8 to 3.13.
+This requires no C++ compiler or CMake. Pre-built wheels are provided for Linux and Windows on Python 3.9 to 3.13.
 
 **Option A.2: Install from source (for the latest development version)**
 

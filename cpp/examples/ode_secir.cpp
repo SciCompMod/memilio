@@ -93,26 +93,10 @@ int main()
     mio::TimeSeries<ScalarType> secir = simulate<ScalarType>(t0, tmax, dt, model, std::move(integrator));
     */
 
-    bool print_to_terminal = true;
+    secir.print_table({"S", "E", "C", "C_confirmed", "I", "I_confirmed", "H", "U", "R", "D"}, 20, 14);
 
-    if (print_to_terminal) {
-        std::vector<std::string> vars = {"S", "E", "C", "C_confirmed", "I", "I_confirmed", "H", "U", "R", "D"};
-        printf("\n # t");
-        for (size_t k = 0; k < (size_t)mio::osecir::InfectionState::Count; k++) {
-            printf(" %s", vars[k].c_str());
-        }
-
-        auto num_points = static_cast<size_t>(secir.get_num_time_points());
-        for (size_t i = 0; i < num_points; i++) {
-            printf("\n%.14f ", secir.get_time(i));
-            Eigen::VectorX<ScalarType> res_j = secir.get_value(i);
-            for (size_t j = 0; j < (size_t)mio::osecir::InfectionState::Count; j++) {
-                printf(" %.14f", res_j[j]);
-            }
-        }
-
-        Eigen::VectorX<ScalarType> res_j = secir.get_last_value();
-        printf("number total: %f",
-               res_j[0] + res_j[1] + res_j[2] + res_j[3] + res_j[4] + res_j[5] + res_j[6] + res_j[7]);
-    }
+    std::cout << "Number total:"
+              << (secir.get_last_value().sum() -
+                  secir.get_last_value()[(Eigen::Index)mio::osecir::InfectionState::Dead])
+              << "\n";
 }

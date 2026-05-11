@@ -24,6 +24,7 @@ from unittest.mock import call, patch
 
 import numpy as np
 import pandas as pd
+from numpy.testing import assert_array_almost_equal
 from pyfakefs import fake_filesystem_unittest
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
@@ -162,8 +163,7 @@ class TestGetHospitalizationData(fake_filesystem_unittest.TestCase):
                 except:
                     pass
         # should be equal to the input array
-        np.testing.assert_array_almost_equal(
-            inputarray_r[6:], control_sum[6:], 10)
+        assert_array_almost_equal(inputarray_r[6:], control_sum[6:], 10)
 
 
 if __name__ == '__main__':
