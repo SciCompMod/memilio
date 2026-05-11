@@ -102,9 +102,9 @@ and for the contact rate :math:`\phi` a struct
 Avoid using the mathematical symbols of the constant as names for the struct. Their connection can be noted in the
 documentation of these structs.
 
-The template :code:`ScalarType` and the type :code:`UncertainValue<ScalarType>` in these examples are commonly used throughout MEmilio.
-:code:`ScalarType` is a floating point type, usually :code:`double`. An :code:`UncertainValue<ScalarType>` holds a value of type
-:code:`ScalarType` as well as (optionally) a distribution to sample new values from, e.g. for a parameter study.
+The template :code:`FP` and the type :code:`UncertainValue<FP>` in these examples are commonly used throughout MEmilio.
+:code:`FP` is a floating point type, usually :code:`double`. An :code:`UncertainValue<FP>` holds a value of type
+:code:`FP` as well as (optionally) a distribution to sample new values from, e.g. for a parameter study.
 
 Finally, define a type ``Parameters`` by listing all parameter structs as template arguments of a
 :code:`mio::ParameterSet`:
