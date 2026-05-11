@@ -11,6 +11,10 @@ The following figure from Chapter 5 outlines the workflow of the generator. Blue
 .. image:: https://github.com/SciCompMod/memilio/raw/main/pycode/memilio-generation/generator_workflow.png
     :alt: Workflow of the generator
 
+Installation
+------------
+
+See :doc:`python_packages/Installation` for a detailed installation guide.  
 
 Dependencies
 ----------

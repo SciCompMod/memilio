@@ -68,21 +68,20 @@ The initialization of the model can be done as follows where we set the `Suscept
 
 .. code-block:: cpp
 
-    using Vec = mio::TimeSeries<double>::Vector;
-
+    using Vector = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
 
     int N     = 810000;
-    double dt = 0.1;
-    mio::TimeSeries<double> init(1);
+    ScalarType dt = 0.1;
+    mio::TimeSeries<ScalarType> init(1);
 
-    init.add_time_point<Eigen::VectorXd>(-15.0, Vec::Constant(1, N * 0.95));
+    init.add_time_point<Eigen::VectorX<ScalarType>>(-15.0, Vector::Constant(1, N * 0.95));
     while (init.get_last_time() < 0) {
         init.add_time_point(init.get_last_time() + dt,
-                            Vec::Constant(1, (double)init.get_last_value()[0] + init.get_last_time()));
+                            Vector::Constant(1, (ScalarType)init.get_last_value()[0] + init.get_last_time()));
     }
 
     // Initialize model.
-    mio::iseir::Model<double> model(std::move(init), dt, N);
+    mio::iseir::Model model(std::move(init), dt, N);
 
 .. _Nonpharmaceutical Interventions:
 Nonpharmaceutical Interventions
@@ -97,11 +96,11 @@ Basic dampings can be added to the contact matrix as follows:
 
     // Create a contact matrix with constant contact rates between all groups.
     ScalarType cont_freq = 10.;
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix = model.parameters.get<mio::iseir::ContactFrequency>();
+    contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, cont_freq));
     
     // Add a damping that reduces contacts by 70% starting at day 30.
-    contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime<ScalarType>(30.));
 
 
 Simulation
@@ -133,12 +132,13 @@ points. You can access the results as follows:
     // Get the number of time points.
     auto num_points = static_cast<size_t>(result.get_num_time_points());
     
-    // Access data at a specific time point.
-    Eigen::VectorX value_at_time_i = result.get_value(i);
+    // Access data at a specific time point, e.g. i=0. 
+    size_t i                                   = 0;
+    Eigen::VectorX<ScalarType> value_at_time_i = result.get_value(i);
     ScalarType time_i = result.get_time(i);
     
     // Access the last time point.
-    Eigen::VectorX last_value = result.get_last_value();
+    Eigen::VectorX<ScalarType> last_value = result.get_last_value();
     ScalarType last_time = result.get_last_time();
 
 The order of the compartments follows the definition in the ``InfectionState`` enum.
@@ -159,7 +159,7 @@ Additionally, you can export the results to a CSV file:
 .. code-block:: cpp
 
     // Export results to CSV with default settings.
-    result.export_csv("simulation_results.csv");
+    auto result_status = result.export_csv("simulation_results.csv");
 
 
 Visualization
