@@ -33,7 +33,8 @@ written.
 import io
 import os
 import zipfile
-from typing import Iterable, Optional
+from typing import Optional
+from collections.abc import Iterable
 
 import numpy as np
 import pandas as pd
