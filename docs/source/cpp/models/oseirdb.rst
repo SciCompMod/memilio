@@ -140,8 +140,8 @@ Basic dampings can be added to the ContactPatterns as follows:
 .. code-block:: cpp
 
     // Create a contact matrix with constant contact rates between all groups
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseirdb::ContactPatterns<ScalarType>>();
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix = model.parameters.get<mio::oseirdb::ContactPatterns<ScalarType>>();
+    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixX<ScalarType>::Constant(1, 1, cont_freq));
     
     // Add a damping that reduces contacts by 70% starting at day 30
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
