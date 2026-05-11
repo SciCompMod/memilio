@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Kilian Volmer
 *
@@ -130,8 +130,8 @@ int main(int /*argc*/, char** /*argv*/)
     // if (rank==0) v = {1,2,3,4};
     // bcast_vector(v, 0, MPI_COMM_WORLD);
     // now every rank has v
-    std::vector<ScalarType> latitudes, longitudes;
-    std::vector<int> farm_ids, num_cows_vec, dates, num_animals_exchanges;
+    std::vector<ScalarType> latitudes, longitudes, dates;
+    std::vector<int> farm_ids, num_cows_vec, num_animals_exchanges;
     std::vector<int> froms, tos, from_exchanges, to_exchanges;
     if (rank == 0) {
         io::CSVReader<4> farms(farm_file);
@@ -154,7 +154,8 @@ int main(int /*argc*/, char** /*argv*/)
         io::CSVReader<4> exchanges(exchange_file);
         exchanges.read_header(io::ignore_extra_column, "from_dec", "to_dec", "day", "LOM_length");
 
-        int date, num_animals;
+        ScalarType date;
+        int num_animals;
         while (exchanges.read_row(from, to, date, num_animals)) {
             dates.push_back(date);
             num_animals_exchanges.push_back(num_animals);

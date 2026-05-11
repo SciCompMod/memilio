@@ -20,6 +20,7 @@
 #ifndef METAPOPULATION_MOBILITY_STOCHASTIC_H
 #define METAPOPULATION_MOBILITY_STOCHASTIC_H
 
+#include "models/fmd/infection_state.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/geography/geolocation.h"
@@ -196,19 +197,25 @@ void MobilityEdgeDirected<FP>::apply_mobility(const FP t, const FP num_moving, L
 {
     // auto next_event = m_parameters.process_next_event();
     // auto num_moving = next_event.number;
-    // auto num_available = boost::numeric::ublas::sum(node_from.get_result().get_last_value());
+    // auto num_available = node_from.get_simulation().get_model().populations.get_compartments().sum();
+    // mio::log_info("Avail: {}", num_available);
     auto distribution = DiscreteDistributionInPlace<int>();
-    std::vector<size_t> travellers(node_from.get_result().get_last_value().size(), 0);
-    if (num_moving > std::accumulate(node_from.get_result().get_last_value().begin(),
-                                     node_from.get_result().get_last_value().end(), 0.0)) {
+    std::vector<size_t> travellers(node_from.get_simulation().get_model().populations.get_num_compartments(), 0);
+    if (num_moving > std::accumulate(node_from.get_simulation().get_model().populations.get_compartments().begin(),
+                                     node_from.get_simulation().get_model().populations.get_compartments().end(),
+                                     0.0)) {
         mio::log_warning("Trying to move more individuals than available ({}) at time {}.", num_moving, t);
     }
     else {
         for (int i = 0; i < num_moving; ++i) {
-            auto group = distribution(rng, {node_from.get_result().get_last_value()});
-            node_from.get_result().get_last_value()[group] -= 1;
+            auto group = distribution(rng, {node_from.get_simulation().get_model().populations.get_compartments()});
+            node_from.get_simulation()
+                .get_model()
+                .populations[{mio::regions::Region(0), mio::fmd::InfectionState(group)}] -= 1;
             travellers[group] += 1;
-            node_to.get_result().get_last_value()[group] += 1;
+            node_to.get_simulation()
+                .get_model()
+                .populations[{mio::regions::Region(0), mio::fmd::InfectionState(group)}] += 1;
         }
     }
     add_mobility_result_time_point(t, travellers);
