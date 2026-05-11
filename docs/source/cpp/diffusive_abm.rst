@@ -98,11 +98,11 @@ The model has to be initialized with a vector of agents. Agents have two attribu
     std::vector<Model::Agent> agents(100);
 
     //Random variables for initialization of agents' position and infection state
-    auto& pos_rng = mio::UniformDistribution<double>::get_instance();
+    auto& pos_rng = mio::UniformDistribution<ScalarType>::get_instance();
     auto& sta_rng = mio::DiscreteDistribution<size_t>::get_instance();
 
     //Infection state distribution
-    std::vector<double> pop_dist{0.98, 0.01, 0.005, 0.005, 0., 0.};
+    std::vector<ScalarType> pop_dist{0.98, 0.01, 0.005, 0.005, 0., 0.};
 
     for (auto& a : agents) {
         //Agents are uniformly distributed in [-2,2]x[-2,2]
@@ -114,8 +114,8 @@ Choosing an interaction radius of 0.5 and a noise term of 0.4, the model is init
 
 .. code-block:: cpp
 
-    double interaction_radius = 0.5;
-    double noise = 0.4;
+    ScalarType interaction_radius = 0.5;
+    ScalarType noise = 0.4;
 
     Model model(agents, adoption_rates, interaction_radius, noise);
 
@@ -138,9 +138,9 @@ To simulate the model from `t0` to `tmax` with given step size `dt`, a ``Simulat
 
 .. code-block:: cpp
 
-    double t0   = 0.0;
-    double dt   = 0.1;
-    double tmax = 30.;
+    ScalarType t0   = 0.0;
+    ScalarType dt   = 0.1;
+    ScalarType tmax = 30.;
 
     //Pass the model, t0 and dt to the Simulation
     auto sim = mio::dabm::Simulation(model, t0, dt);
