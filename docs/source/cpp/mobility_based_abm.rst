@@ -344,7 +344,7 @@ Finally, for example, we can print the data to a text file:
 
 .. code-block:: cpp
 
-   std::ofstream outfile("abm_minimal.txt");
-   std::get<0>(log).print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
-   std::cout << "Results written to abm_minimal.txt" << std::endl;
-
+   auto outpath = mio::create_directories_or_exit(mio::example_results_dir("abm_minimal")) / "history.txt";
+   std::ofstream outfile(outpath);
+   std::get<0>(log).print_table(outfile, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4);
+   std::cout << "Results written to " << outpath << std::endl;
