@@ -21,6 +21,7 @@
 #include "d_abm/quad_well.h"
 #include "d_abm/simulation.h"
 #include "d_abm/parameters.h"
+#include "memilio/config.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/data/analyze_result.h"
 #include "memilio/epidemiology/adoption_rate.h"
@@ -44,10 +45,10 @@ int main()
     using Model = mio::dabm::Model<QuadWell<InfectionState>>;
     std::vector<Model::Agent> agents(1000);
     //Random variables for initialization of agents' position and infection state
-    auto& pos_rng = mio::UniformDistribution<double>::get_instance();
+    auto& pos_rng = mio::UniformDistribution<ScalarType>::get_instance();
     auto& sta_rng = mio::DiscreteDistribution<size_t>::get_instance();
     //Infection state distribution
-    std::vector<double> pop_dist{0.98, 0.01, 0.005, 0.005, 0., 0.};
+    std::vector<ScalarType> pop_dist{0.98, 0.01, 0.005, 0.005, 0., 0.};
     for (auto& a : agents) {
         //Agents are equally distributed in [-2,2]x[-2,2] at the beginning
         a.position =
@@ -71,11 +72,11 @@ int main()
     }
 
     //Set interaction radius and noise term of the diffusion process
-    double interaction_radius = 0.5;
-    double noise              = 0.4;
+    ScalarType interaction_radius = 0.5;
+    ScalarType noise              = 0.4;
 
-    double dt   = 0.1;
-    double tmax = 30.;
+    ScalarType dt   = 0.1;
+    ScalarType tmax = 30.;
 
     Model model(agents, adoption_rates, interaction_radius, noise, {InfectionState::D});
     auto sim = mio::dabm::Simulation(model, 0.0, dt);
