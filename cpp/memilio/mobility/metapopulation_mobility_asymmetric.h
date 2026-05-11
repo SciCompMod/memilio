@@ -201,9 +201,7 @@ void MobilityEdgeDirected<FP>::apply_mobility(const FP t, const FP num_moving, L
     // mio::log_info("Avail: {}", num_available);
     auto distribution = DiscreteDistributionInPlace<int>();
     std::vector<size_t> travellers(node_from.get_simulation().get_model().populations.get_num_compartments(), 0);
-    if (num_moving > std::accumulate(node_from.get_simulation().get_model().populations.get_compartments().begin(),
-                                     node_from.get_simulation().get_model().populations.get_compartments().end(),
-                                     0.0)) {
+    if (num_moving > node_from.get_simulation().get_model().populations.get_compartments().sum()) {
         mio::log_warning("Trying to move more individuals than available ({}) at time {}.", num_moving, t);
     }
     else {
