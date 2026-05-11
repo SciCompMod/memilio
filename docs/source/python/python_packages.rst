@@ -152,7 +152,7 @@ For development of code use this command instead
     
     python -m pip install -e .[dev]
 
-This command allows you to work on the code without having . It also installs 
+This command allows you to work on the code without having to reinstall the package after a change. It also installs 
 all additional dependencies required for development and maintenance.
 
 
