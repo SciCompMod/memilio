@@ -52,7 +52,7 @@ Infection state transitions
 The infection state transitions are explicitly given by the adoption rates and are therefore subject to user input. 
 Adoption rates always depend on their source infection state. If an adoption event requires interaction of agents (e.g. 
 disease transmission), the corresponding rate depends not only on the source infection state, but also on other infection 
-states, the **Influence**\s. An adoption rate that only depends on the source infection state, e.g. recovery or worsening 
+states, the :code:`Influence`\s. An adoption rate that only depends on the source infection state, e.g. recovery or worsening 
 of disease symptoms, is called `first-order` adoption rate and an adoption rate that has influences is called `second-order` 
 adoption rate. Adoption rates are region-dependent; therefore it is possible to have different rates in two regions for 
 the same infection state transition which can be useful when having e.g. region-dependent interventions or contact behavior.
@@ -179,7 +179,7 @@ are drawn. Then the time is advanced until the time point of the next event - wh
 infection state adoption - and the event takes places. The waiting times of the other events are updated and a new waiting 
 time for the event that just happened is drawn. The simulation saves the system state in discrete time steps.
 
-To simulate the model from ``t0`` to ``tmax`` with given step size ``dt``, a **Simulation** has to be created and advanced 
+To simulate the model from ``t0`` to ``tmax`` with given step size ``dt``, a ``Simulation`` has to be created and advanced 
 until ``tmax``. The step size is only used to regularly save the system state during the simulation.
 
 .. code-block:: cpp
@@ -197,7 +197,7 @@ until ``tmax``. The step size is only used to regularly save the system state du
 Output
 ------
 
-Subpopulations stratified by region and infection state are saved in a ``mio::TimeSeries`` object which can be accessed and printed as follows:
+Subpopulations stratified by region and infection state are saved in a ``TimeSeries`` object which can be accessed and printed as follows:
 
 .. code-block:: cpp
 
@@ -207,7 +207,7 @@ Subpopulations stratified by region and infection state are saved in a ``mio::Ti
     //Print result object to console. Infection state "Xi" with i=0,1 is the number of agents having infection state X in region i
     result.print_table({"S0", "E0", "C0", "I0", "R0", "D0", "S1", "E1", "C1", "I1", "R1", "D1"})
 
-If one wants to interpolate the aggregated results to a ``mio::TimeSeries`` containing only full days, this can be done by
+If one wants to interpolate the aggregated results to a ``TimeSeries`` containing only full days, this can be done by
 
 .. code-block:: cpp
 

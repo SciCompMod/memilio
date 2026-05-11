@@ -24,12 +24,7 @@ import argparse
 import sys
 import os
 
-if sys.version_info >= (3, 9):
-    # For python 3.9 and newer
-    import importlib.resources as importlib_resources
-else:
-    # For older python versions
-    import importlib_resources
+import importlib.resources as importlib_resources
 
 from memilio.generation import Generator, Scanner, ScannerConfig, AST, ast_handler
 from memilio.generation.graph_visualization import Visualization

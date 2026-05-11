@@ -17,7 +17,6 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-
 #ifndef MIO_ABM_GRAPH_ABMODEL_H
 #define MIO_ABM_GRAPH_ABMODEL_H
 
@@ -26,19 +25,17 @@
 #include "abm/person_id.h"
 #include "abm/time.h"
 #include "abm/location_id.h"
-#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
-#include "memilio/utils/mioomp.h"
 #include "abm/mobility_rules.h"
 #include "abm/mobility_rules.h"
-#include <cstddef>
 #include <cstdint>
-#include <list>
 #include <vector>
 
 namespace mio
 {
-using namespace abm;
+namespace abm
+{
+
 class GraphABModel : public abm::Model
 {
     using Base = Model;
@@ -204,6 +201,8 @@ private:
 
     std::vector<size_t> m_person_buffer; ///< List with indices of persons that are subject to move to another node.
 };
+
+} // namespace abm
 } // namespace mio
 
 #endif //MIO_ABM_GRAPH_ABMODEL_H

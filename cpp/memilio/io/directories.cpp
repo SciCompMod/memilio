@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2026 MEmilio
 *
-* Authors: Daniel Abele
+* Authors: Rene Schmieding
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,9 +17,24 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef DATA_DIR_H
-#define DATA_DIR_H
+#include "memilio/io/directories.h"
 
-const char* const DATA_DIR = "${MEMILIO_DATA_DIR}";
+namespace mio
+{
 
-#endif //DATA_DIR_H
+std::filesystem::path base_dir()
+{
+    return details::MEMILIO_BASE_DIR;
+}
+
+[[maybe_unused]] std::filesystem::path data_dir()
+{
+    return details::MEMILIO_DATA_DIR;
+}
+
+[[maybe_unused]] std::filesystem::path example_results_dir(const std::string& example_name)
+{
+    return base_dir() / "example_results" / example_name;
+}
+
+} // namespace mio

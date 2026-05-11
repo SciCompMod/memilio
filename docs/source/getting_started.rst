@@ -71,7 +71,7 @@ An additional overview on MEmilio's elementary model structure is given by the f
    :alt: Overview on MEmilio's model structure.
    :width: 100%
 
-MEmilio benefits from a harmonized description of its models in infection states and parameters, and, potentially, a list of flows between the compartments; see the following figure for a motivation. All models derive their infection states from a flexible and simple list of InfectionStates. For FlowModels (see below for an explanation), particular transitions are defined evenly flexible as a list of flows between the states. Parameters are also generally defined in an identical fashion. 
+MEmilio benefits from a harmonized description of its models in infection states and parameters, and, potentially, a list of flows between the compartments; see the following figure for a motivation. All models derive their infection states from a flexible and simple list of ``InfectionState``\s. For ``FlowModel``\s (see below for an explanation), particular transitions are defined evenly flexible as a list of flows between the states. Parameters are also generally defined in an identical fashion. 
 
 .. image:: http://martinkuehn.eu/research/images/uniform.png
    :alt: MEmilio's uniform model description.
@@ -258,7 +258,7 @@ Before you can install MEmilio, you need to install some common development tool
 
 *   **Python:** Required for the Python packages.
 
-    *   MEmilio is tested daily with Python 3.8 and 3.12. While other versions may also work, we recommend using the latest release of either of these. You can download it from the official website `python.org <https://www.python.org/>`__.
+    *   MEmilio is tested daily with Python 3.9 and 3.13. While other versions may also work, we recommend using the latest release of either of these. You can download it from the official website `python.org <https://www.python.org/>`__.
 
 *   **C++ Compiler and CMake:**
 
@@ -313,7 +313,7 @@ If you just want to run simulations with the latest released version, install th
 
    pip install memilio-simulation
 
-This requires no C++ compiler or CMake. Pre-built wheels are provided for Linux and Windows on Python 3.8 to 3.13.
+This requires no C++ compiler or CMake. Pre-built wheels are provided for Linux and Windows on Python 3.9 to 3.13.
 
 **Option A.2: Install from source (for the latest development version)**
 

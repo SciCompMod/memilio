@@ -92,8 +92,8 @@ Nonpharmaceutical interventions
 One important topic of interest in infectious disease dynamics are nonpharmaceutical interventions (NPIs), which aim to mitigate the dynamics of the disease spread. 
 In our models, NPIs are implemented through dampings to the contact matrix. These dampings reduce the contact rates between different groups to simulate interventions.
 
-The basic contact matrix is defined through its baseline `ContactPatterns` (and a potential minimum pattern which does not need to be set and which is not used by default).
-For a model with a single age group, the contact matrix is simply value, a 1x1 matrix and `num_groups=1`. For `num_groups>1`, the contact matrix is a square matrix of size `num_groups x num_groups`,
+The basic contact matrix is defined through its baseline ``ContactPatterns`` (and a potential minimum pattern which does not need to be set and which is not used by default).
+For a model with a single age group, the contact matrix is simply value, a 1x1 matrix and ``num_groups=1``. For ``num_groups>1``, the contact matrix is a square matrix of size ``num_groups x num_groups``,
 where each entry represents the contact frequency between two age groups.
 
 .. code-block:: python
@@ -180,10 +180,10 @@ A complex lockdown scenario with multiple interventions starting on a specific d
       dampings.append(physical_distancing_home_school(start_spring, 0.4, 0.6))
       dampings.append(physical_distancing_work_other(start_spring, 0.4, 0.6))
 
-A more advances structure to automatically activate interventions based on threshold criteria is given by **DynamicNPIs**.
+A more advanced structure to automatically activate interventions based on threshold criteria is given by ``DynamicNPIs``.
 Dynamic NPIs can be configured to trigger when the number of symptomatic infected individuals exceeds a certain relative threshold in the population. 
 In contrast to static NPIs which are active as long as no other NPI gets implemented, dynamic NPIs are checked at regular intervals and get 
-activated for a defined duration when the threshold is exceeded. As above, different dampings `dampings` can be assigned to different contact locations
+activated for a defined duration when the threshold is exceeded. As above, different dampings ``dampings`` can be assigned to different contact locations
 and are then triggered all at once the threshold is exceeded.
 The following example shows how to set up dynamic NPIs based on the number of 200 symptomatic infected individuals per 100,000 population. 
 It will be active for at least 14 days and checked every 3 days. If the last check after day 14 is negative, the NPI will be deactivated.
@@ -195,7 +195,7 @@ It will be active for at least 14 days and checked every 3 days. If the last che
    dampings = []
    # increased from [0.4, 0.6] in Nov
    dampings.append(contacts_at_home(0, 0.6, 0.8))
-   dampings.append(school_closure(0, 0.25, 0.25))  # see paper
+   dampings.append(school_closure(0, 0.25, 0.25))  #see paper
    dampings.append(home_office(0, 0.2, 0.3))
    dampings.append(social_events(0, 0.6, 0.8))
    dampings.append(social_events_work(0, 0.1, 0.2))
@@ -236,8 +236,8 @@ The integrator can be changed as the last parameter of the simulate function.
 Output and visualization
 -------------------------
 
-The result returned from the simulation is a TimeSeries object containing the number of people per age group in each infection state at each time step.
-The TimeSeries provides alot of interfaces to interact with it, but can also be transformed into a multidimensional numpy matrix for a more
+The result returned from the simulation is a ``TimeSeries`` object containing the number of people per age group in each infection state at each time step.
+The ``TimeSeries`` provides a lot of interfaces to interact with it, but can also be transformed into a multidimensional numpy matrix for a more
 pythonic interface.
 
 .. code-block:: python
@@ -251,7 +251,7 @@ Additional resources
 ---------------------
 
 Further examples are provided at `examples/simulation <https://github.com/SciCompMod/memilio/blob/main/pycode/examples/simulation/>`_. 
-They include the usage of a FlowModel, introducing a graph model for regional differences or parameter studies for simulating under uncertainty.
+They include the usage of a ``FlowModel``, introducing a graph model for regional differences or parameter studies for simulating under uncertainty.
 
 
 
