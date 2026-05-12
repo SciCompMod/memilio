@@ -123,9 +123,9 @@ Run a standard simulation via:
 
 .. code-block:: cpp
 
-    double t0 = 0.0;     // days
-    double tmax = 3650;  // 10 years
-    double dt = 1.0;     // daily step
+    ScalarType t0 = 0.0;     // days
+    ScalarType tmax = 3650;  // 10 years
+    ScalarType dt = 1.0;     // daily step
     auto timeseries = mio::simulate(t0, tmax, dt, model);
 
 Output

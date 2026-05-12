@@ -897,7 +897,7 @@ def write_vaccination_data(dict_data: dict,
                            file_format: str = dd.defaultDict['file_format'],
                            impute_dates: bool = True,
                            moving_average: int = dd.defaultDict['moving_average'],
-                           ) -> None or Tuple:
+                           ) -> None or tuple:
     """ Writes the vaccination data
     The data is exported in three different ways:
         - all_county_vacc: Resolved per county by grouping all original age groups (05-11, 12-17, 18-59, 60+)

@@ -137,12 +137,12 @@ time:
 
 .. code-block:: cpp
 
-   double t0 = 0; // Start time
-   double tmax = 50; // End time
-   double dt = 0.1; // Time step
+   ScalarType t0 = 0; // Start time
+   ScalarType tmax = 50; // End time
+   ScalarType dt = 0.1; // Time step
 
    // Run a standard simulation
-   mio::TimeSeries<double> result = mio::simulate(t0, tmax, dt, model);
+   mio::TimeSeries<ScalarType> result = mio::simulate(t0, tmax, dt, model);
 
 You can also specify a custom integrator:
 
@@ -154,7 +154,7 @@ You can also specify a custom integrator:
    integrator->set_rel_tolerance(1e-4);
    integrator->set_abs_tolerance(1e-1);
 
-   mio::TimeSeries<double> result = mio::simulate(t0, tmax, dt, model, std::move(integrator));
+   mio::TimeSeries<ScalarType> result = mio::simulate(t0, tmax, dt, model, std::move(integrator));
 
 
 Output
@@ -170,11 +170,11 @@ a basic simulation, you can access the results as follows:
 
    // Access data at specific time point 
    Eigen::VectorXd value_at_time_i = result.get_value(i);
-   double time_i = result.get_time(i);
+   ScalarType time_i = result.get_time(i);
 
    // Access the last time point
    Eigen::VectorXd last_value = result.get_last_value();
-   double last_time = result.get_last_time();
+   ScalarType last_time = result.get_last_time();
 
 You can print the simulation results as a formatted table:
 
