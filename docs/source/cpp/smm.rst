@@ -129,7 +129,7 @@ These populations have the class type ``Populations`` and can be set via:
 
 .. code-block:: cpp
 
-   double pop = 1000, numE = 0.001 * pop, numC = 0.0001 * pop, numI = 0.0001 * pop, numR = 0, numD = 0;
+   ScalarType pop = 1000, numE = 0.001 * pop, numC = 0.0001 * pop, numI = 0.0001 * pop, numR = 0, numD = 0;
 
    //Population is distributed equally to the regions
    for (size_t r = 0; r < num_regions; ++r) {
@@ -184,9 +184,9 @@ until ``tmax``. The step size is only used to regularly save the system state du
 
 .. code-block:: cpp
 
-    double t0   = 0.0;
-    double dt   = 0.1;
-    double tmax = 30.;
+    ScalarType t0   = 0.0;
+    ScalarType dt   = 0.1;
+    ScalarType tmax = 30.;
 
     //Pass the model, t0 and dt to the Simulation
     auto sim = mio::smm::Simulation(model, t0, dt);
@@ -250,7 +250,7 @@ We can define a model:
 
 Now, for accessing the population, all indices need to be given:
 
--- code-block:: cpp
+.. code-block:: cpp
 
    model.populations[{Region(r), InfectionState::S, Species(0)}] = 100;
    // ...

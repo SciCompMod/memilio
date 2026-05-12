@@ -45,8 +45,8 @@ In the ``ContactPatterns``, each matrix element stores baseline contact rates :m
 group :math:`i` to group :math:`j`. The dimension of the matrix is automatically defined by the model initialization 
 and it is reduced to one value if no stratification is used. The values can be adjusted during the simulation, e.g., 
 through implementing nonpharmaceutical interventions, see the section on :ref:`Nonpharmaceutical Interventions GLCT`.
-Parameters can be accessed via ``model.parameters.get<Param<double>>()`` and set via either 
-``model.parameters.set<Param<double>>(value)`` or ``model.parameters.get<Param<double>>() = value``. 
+Parameters can be accessed via ``model.parameters.get<Param<ScalarType>>()`` and set via either 
+``model.parameters.set<Param<ScalarType>>(value)`` or ``model.parameters.get<Param<ScalarType>>() = value``. 
 
 
 Initial conditions

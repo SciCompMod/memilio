@@ -8,6 +8,11 @@ The package is contained inside the folder `pycode/memilio-plot <https://github.
 
 .. note:: This package is under active development.
 
+Installation
+------------
+
+See :doc:`python_packages/Installation` for a detailed installation guide.  
+
 Dependencies
 ------------
 
