@@ -140,8 +140,8 @@ class Generator:
             ): self._render("pybindings_cpp.jinja2"),
             f"pycode/examples/simulation/{prefix}_simple.py": self._render("example_py.jinja2"),
             (
-                f"pycode/memilio-simulation/memilio/simulation/{
-                    cfg.meta.namespace}.py"
+                "pycode/memilio-simulation/memilio/simulation/"
+                f"{cfg.meta.namespace}.py"
             ): self._render("simulation_py.jinja2"),
         }
         return self._format_cpp_files(files, clang_format_base_dir)
