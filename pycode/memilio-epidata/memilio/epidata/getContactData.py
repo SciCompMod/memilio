@@ -114,7 +114,7 @@ def _download_contact_workbooks():
 def _load_workbooks_bytes(
         contact_path: Optional[str]):
     """
-    Return one explicit workbook or all default downloaded workbooks.
+    Return one explicit workbook or, by default, all downloaded workbooks.
 
     :param contact_path: Optional local path to a single workbook.
     :returns: List of workbook contents.
