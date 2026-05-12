@@ -140,7 +140,8 @@ class Generator:
             ): self._render("pybindings_cpp.jinja2"),
             f"pycode/examples/simulation/{prefix}_simple.py": self._render("example_py.jinja2"),
             (
-                f"pycode/memilio-simulation/memilio/simulation/{cfg.meta.namespace}.py"
+                f"pycode/memilio-simulation/memilio/simulation/{
+                    cfg.meta.namespace}.py"
             ): self._render("simulation_py.jinja2"),
         }
         return self._format_cpp_files(files, clang_format_base_dir)
@@ -172,9 +173,13 @@ class Generator:
                 # Insert after the last add_subdirectory(models/…) line
                 pattern = r"(    add_subdirectory\(models/[^)]+\))(?!.*add_subdirectory\(models/)"
                 m = re.search(pattern, text, re.DOTALL)
-                if m:
-                    insert_at = m.end()
-                    text = text[:insert_at] + "\n" + entry + text[insert_at:]
+                if not m:
+                    raise ValueError(
+                        f"Could not find insertion point for '{entry}' in "
+                        f"{self._CPP_CMAKE}."
+                    )
+                insert_at = m.end()
+                text = text[:insert_at] + "\n" + entry + text[insert_at:]
                 results[self._CPP_CMAKE] = text
             else:
                 results[self._CPP_CMAKE] = None  # already present

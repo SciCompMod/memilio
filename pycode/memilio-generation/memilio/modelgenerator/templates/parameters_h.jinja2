@@ -212,11 +212,16 @@ public:
 private:
     Parameters(ParametersBase<FP>&& base)
         : ParametersBase<FP>(std::move(base))
-{% if cfg.has_infection_transition %}
-        , m_num_groups(this->template get<ContactPatterns<FP>>().get_cont_freq_mat().get_num_groups())
-{% else %}
-        , m_num_groups(AgeGroup(1))
-{% endif %}
+ {% if cfg.has_infection_transition %}
+         , m_num_groups(this->template get<ContactPatterns<FP>>().get_cont_freq_mat().get_num_groups())
+ {% else %}
+ {% set per_age_group_params = cfg.parameters | selectattr('per_age_group') | list %}
+ {% if per_age_group_params %}
+         , m_num_groups(AgeGroup(this->template get<{{ per_age_group_params[0].name }}<FP>>().size()))
+ {% else %}
+         , m_num_groups(AgeGroup(1))
+ {% endif %}
+ {% endif %}
     {
     }
 

@@ -26,7 +26,7 @@ from unittest.mock import patch
 
 from memilio.modelgenerator import Generator
 from memilio.modelgenerator.cli import main as cli_main
-from memilio.modelgenerator.validator import ValidationError
+from memilio.modelgenerator.validator import ValidationError, Validator
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 EXAMPLES_DIR = os.path.join(HERE, "..", "..", "examples", "modelgenerator")
@@ -574,6 +574,14 @@ class TestValidation(unittest.TestCase):
                 {"from": "E", "to": "I", "type": "linear", "parameter": "Rate"}
             ],
         }
+
+    def test_top_level_document_must_be_mapping(self):
+        for raw in (None, [], "invalid"):
+            with self.subTest(raw=raw):
+                with self.assertRaises(ValidationError) as ctx:
+                    Validator.validate(raw)
+                self.assertIn("Top-level document must be a mapping.",
+                              str(ctx.exception))
 
     def test_missing_model_section(self):
         d = self._base()

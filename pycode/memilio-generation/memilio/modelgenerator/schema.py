@@ -153,14 +153,12 @@ class ModelConfig:
     @property
     def all_parameters(self) -> list[ParameterConfig]:
         """
-        Full parameter list including the implicitly added
-        ``ContactPatterns`` when any infection transition is present.
+        User-defined parameter list.
+
+        ``ContactPatterns`` is emitted separately by templates when
+        ``has_infection_transition`` is true, so it is not represented as a
+        ``ParameterConfig`` here.
         """
-        if not self.has_infection_transition:
-            return self.parameters
-        # ContactPatterns is added at the end; the generator inserts it
-        # directly into the template so we only expose the user-defined ones
-        # here.  The template accesses has_infection_transition separately.
         return self.parameters
 
     def parameters_for_constraint_check(self) -> list[ParameterConfig]:

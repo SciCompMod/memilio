@@ -45,14 +45,18 @@ class Validator:
     """Validate raw model dictionaries loaded from YAML or TOML."""
 
     @staticmethod
-    def validate(data: dict[str, Any]) -> None:
+    def validate(data: Any) -> None:
         """
         Validate ``data``.
 
-        :param data: Dictionary as returned by ``yaml.safe_load``.
+        :param data: Object as returned by ``yaml.safe_load``.
         :raises ValidationError: If one or more validation errors are found.
         """
         errors: list[str] = []
+
+        if not isinstance(data, dict):
+            errors.append("Top-level document must be a mapping.")
+            raise ValidationError(errors)
 
         # model
         model = data.get("model")

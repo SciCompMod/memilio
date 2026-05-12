@@ -23,7 +23,7 @@ Command-line interface for the model generator.
 
 Usage::
 
-    memilio-modelgenerator path/to/model.yaml [--output-dir DIR] [--preview]
+    memilio-modelgenerator path/to/model.yaml|model.toml [--output-dir DIR] [--preview]
 """
 
 from __future__ import annotations
@@ -45,12 +45,15 @@ def main(argv=None) -> int:
     """
     parser = argparse.ArgumentParser(
         prog="memilio-modelgenerator",
-        description="Generate MEmilio C++ model files and pybind11 bindings from a YAML config.",
+        description=(
+            "Generate MEmilio C++ model files and pybind11 bindings from a "
+            "YAML or TOML config."
+        ),
     )
     parser.add_argument(
         "config",
         metavar="CONFIG",
-        help="Path to the YAML model configuration file.",
+        help="Path to the YAML or TOML model configuration file.",
     )
     parser.add_argument(
         "--output-dir",
