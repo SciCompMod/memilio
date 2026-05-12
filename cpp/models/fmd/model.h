@@ -58,13 +58,13 @@ Model create_model(size_t num_sus, const std::vector<AR>& adoption_rates = gener
 {
     auto home = mio::regions::Region(0);
     Model curr_model(Status{InfectionState::Count}, mio::regions::Region(1));
-    curr_model.populations[{home, InfectionState::S}]                                              = num_sus;
-    curr_model.populations[{home, InfectionState::E}]                                              = 0;
-    curr_model.populations[{home, InfectionState::I}]                                              = 0;
-    curr_model.populations[{home, InfectionState::INS}]                                            = 0;
-    curr_model.populations[{home, InfectionState::ICS}]                                            = 0;
-    curr_model.populations[{home, InfectionState::R}]                                              = 0;
-    curr_model.populations[{home, InfectionState::V}]                                              = 0;
+    curr_model.populations[{home, InfectionState::S}] = num_sus;
+    curr_model.populations[{home, InfectionState::E}] = 0;
+    curr_model.populations[{home, InfectionState::I}] = 0;
+    // curr_model.populations[{home, InfectionState::INS}]                                            = 0;
+    // curr_model.populations[{home, InfectionState::ICS}]                                            = 0;
+    curr_model.populations[{home, InfectionState::R}] = 0;
+    // curr_model.populations[{home, InfectionState::V}]                                              = 0;
     curr_model.populations[{home, InfectionState::D}]                                              = 0;
     curr_model.parameters.get<mio::smm::AdoptionRates<ScalarType, Status, mio::regions::Region>>() = adoption_rates;
     return curr_model;
