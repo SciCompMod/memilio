@@ -17,19 +17,22 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef SEIRMETAPOP_INFECTIONSTATE_H
-#define SEIRMETAPOP_INFECTIONSTATE_H
+#ifndef PYMIO_REGION_H
+#define PYMIO_REGION_H
 
-#include "models/ode_seir/infection_state.h"
+#include "memilio/geography/regions.h"
 
-namespace mio
+#include "pybind11/pybind11.h"
+
+namespace pymio
 {
-namespace oseirmetapop
+
+template <>
+inline std::string pretty_name<mio::regions::Region>()
 {
+    return "Region";
+}
 
-using mio::oseir::InfectionState;
+} // namespace pymio
 
-} // namespace oseirmetapop
-} // namespace mio
-
-#endif // SEIRMETAPOP_INFECTIONSTATE_H
+#endif //PYMIO_REGION_H

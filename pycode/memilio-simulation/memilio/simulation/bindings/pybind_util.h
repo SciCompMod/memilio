@@ -255,7 +255,7 @@ auto bind_Range(pybind11::module_& m, const std::string& class_name)
         .def(
             "__iter__",
             [](Range& self) {
-                return self;
+                return Iterator{{self.begin(), self.end()}};
             },
             pybind11::keep_alive<1, 0>{}) //keep alive the Range as long as there is an iterator
         .def(
