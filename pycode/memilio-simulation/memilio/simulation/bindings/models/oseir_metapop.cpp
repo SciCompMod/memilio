@@ -21,6 +21,7 @@
 // Includes from pymio
 #include "pybind_util.h"
 #include "compartments/simulation.h"
+#include "compartments/flow_simulation.h"
 #include "compartments/compartmental_model.h"
 #include "data/analyze_result.h"
 #include "epidemiology/age_group.h"
@@ -67,6 +68,8 @@ PYBIND11_MODULE(_simulation_oseir_metapop, m)
 
     pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::oseirmetapop::Region, mio::AgeGroup>(
         m, "RegionAgeGroupArray");
+    using RegionAgeGroupPopulations = mio::Populations<double, mio::oseirmetapop::Region, mio::AgeGroup>;
+    pymio::bind_Population(m, "RegionAgeGroupPopulations", mio::Tag<RegionAgeGroupPopulations>{});
 
     pymio::bind_class<mio::oseirmetapop::Parameters<double>, pymio::EnablePickling::Never,
                       mio::oseirmetapop::ParametersBase<double>>(m, "Parameters")
@@ -93,9 +96,13 @@ PYBIND11_MODULE(_simulation_oseir_metapop, m)
         .def("set_commuting_strengths_identity", py::overload_cast<>(&Model::set_commuting_strengths));
 
     pymio::bind_Simulation<mio::Simulation<double, Model>>(m, "Simulation");
+    pymio::bind_Flow_Simulation<mio::FlowSimulation<double, Model>>(m, "FlowSimulation");
 
     m.def("simulate", &mio::simulate<double, Model>, "Simulates an ODE SEIR metapopulation model from t0 to tmax.",
           py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());
+    m.def("simulate_flows", &mio::simulate_flows<double, Model>,
+          "Simulates an ODE SEIR metapopulation model with flows from t0 to tmax.", py::arg("t0"), py::arg("tmax"),
+          py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());
 
     m.attr("__version__") = "dev";
 }
