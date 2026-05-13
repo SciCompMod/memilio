@@ -27,6 +27,7 @@ All errors are collected and raised together as a single
 
 from __future__ import annotations
 
+import re
 from typing import Any, Dict, List
 
 from .schema import ParameterType, TransitionType
@@ -143,6 +144,43 @@ class Validator:
 
         param_name_set = set(param_names)
 
+        # derived_quantities
+        derived_quantities = data.get("derived_quantities", [])
+        if not isinstance(derived_quantities, list):
+            errors.append("'derived_quantities' must be a list if provided.")
+            derived_quantities = []
+
+        formula_names = set(states) | param_name_set | {"t", "safe_div"}
+        derived_names: list[str] = []
+        for i, d in enumerate(derived_quantities):
+            loc = f"derived_quantities[{i}]"
+            if not isinstance(d, dict):
+                errors.append(f"'{loc}' must be a mapping.")
+                continue
+            name = d.get("name")
+            formula = d.get("formula")
+            if not isinstance(name, str) or not name.strip():
+                errors.append(f"'{loc}.name' must be a non-empty string.")
+            elif name in state_set or name in param_name_set:
+                errors.append(
+                    f"'{loc}.name' must not duplicate a state or parameter name."
+                )
+            elif name in derived_names:
+                errors.append(
+                    f"'derived_quantities' contains duplicate 'name' entry {name!r}."
+                )
+            if not isinstance(formula, str) or not formula.strip():
+                errors.append(f"'{loc}.formula' must be a non-empty string.")
+            else:
+                for ref in re.findall(r"\b[A-Za-z_][A-Za-z0-9_]*\b", formula):
+                    if ref not in formula_names:
+                        errors.append(
+                            f"'{loc}.formula' references unknown or later-defined symbol {ref!r}."
+                        )
+            if isinstance(name, str) and name.strip():
+                derived_names.append(name)
+                formula_names.add(name)
+
         # transitions
         transitions = data.get("transitions")
         if not isinstance(transitions, list) or len(transitions) == 0:
@@ -184,6 +222,29 @@ class Validator:
                     errors.append(
                         f"'{loc}.parameter' references unknown parameter {param!r}."
                     )
+
+            if ttype == TransitionType.RATE:
+                if "rate" in t:
+                    if "parameter" in t:
+                        errors.append(
+                            f"'{loc}' must define only one of 'parameter' or 'rate'."
+                        )
+                    rate = t.get("rate")
+                    if not isinstance(rate, str) or not rate.strip():
+                        errors.append(
+                            f"'{loc}.rate' must be a non-empty string.")
+                    else:
+                        for ref in re.findall(r"\b[A-Za-z_][A-Za-z0-9_]*\b", rate):
+                            if ref not in formula_names:
+                                errors.append(
+                                    f"'{loc}.rate' references unknown symbol {ref!r}."
+                                )
+                else:
+                    param = t.get("parameter")
+                    if param not in param_name_set:
+                        errors.append(
+                            f"'{loc}.parameter' references unknown parameter {param!r}."
+                        )
 
             if ttype == TransitionType.INFECTION:
                 has_singular = "infectious_state" in t
