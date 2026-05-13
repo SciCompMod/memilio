@@ -66,20 +66,18 @@ result = oseir_metapop.simulate(t0, tmax, dt, model)
 interpolated_result = oseir_metapop.interpolate_simulation_result(result)
 
 print("Infected individuals per Region over time [%]:")
-
-col_width = 12
-
-print("Time".ljust(
-    col_width) + "".join(f"Region {i}".ljust(col_width) for i in range(model.parameters.num_regions.get())))
+print("".join(f"\t Region {i}" for i in range(
+    model.parameters.num_regions.get())))
 
 for t_idx in range(interpolated_result.get_num_time_points()):
-    row = f"{interpolated_result.get_times()[t_idx]:.1f}".ljust(col_width)
+    row = f" {interpolated_result.get_times()[t_idx]:.6f}"
     values = interpolated_result.get_value(t_idx)
 
     for i in range(model.parameters.num_regions.get()):
         population = model.populations.get_group_total_Region(mio.Region(i))
-        percentage = values[model.parameters.num_regions.get()
-                            * 3 + i] / population * 100
-        row += f"{percentage:.5f}".ljust(col_width)
+        infected_idx = model.populations.get_flat_index(
+            (mio.Region(i), AgeGroup(0), oseir_metapop.InfectionState.Infected))
+        percentage = values[infected_idx] / population * 100
+        row += f"\t {percentage:.5f} "
 
     print(row)
