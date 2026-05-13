@@ -28,6 +28,7 @@ Jinja2 templates.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
@@ -103,6 +104,17 @@ class ParameterConfig:
 
 
 @dataclass
+class DerivedQuantityConfig:
+    """Configuration for a local formula-derived quantity."""
+
+    name: str
+    """C++ local variable name."""
+
+    formula: str
+    """Formula using state, parameter, and earlier derived quantity names."""
+
+
+@dataclass
 class TransitionConfig:
     """Configuration for a single compartment flow."""
 
@@ -117,6 +129,9 @@ class TransitionConfig:
 
     parameter: str | None = None
     """Name of the `ParameterConfig` that drives this flow."""
+
+    rate: str | None = None
+    """For ``type == "rate"``: formula for the source-proportional rate."""
 
     infectious_state: str | None = None
     """
@@ -145,6 +160,7 @@ class ModelConfig:
     meta: ModelMeta
     infection_states: list[str]
     parameters: list[ParameterConfig]
+    derived_quantities: list[DerivedQuantityConfig]
     transitions: list[TransitionConfig]
 
     @property
@@ -169,6 +185,29 @@ class ModelConfig:
             if parameter.name == name:
                 return parameter
         raise KeyError(name)
+
+    @property
+    def uses_safe_div(self) -> bool:
+        """``True`` if generated formulas need the safe_div helper."""
+        return any("safe_div" in d.formula for d in self.derived_quantities) or any(
+            t.rate is not None and "safe_div" in t.rate for t in self.transitions)
+
+    def formula_to_cpp(self, formula: str, index_name: str = "i") -> str:
+        """Translate a formula by replacing known names with C++ expressions."""
+        states = set(self.infection_states)
+        parameters = {p.name: p for p in self.parameters}
+        derived = {d.name for d in self.derived_quantities}
+
+        def replace(match):
+            name = match.group(0)
+            if name in states:
+                return f"y[idx_{name}_{index_name}]"
+            if name in parameters:
+                suffix = f"[{index_name}]" if parameters[name].per_age_group else ""
+                return f"params.template get<{name}<FP>>(){suffix}"
+            return name if name in derived or name in {"t", "safe_div"} else name
+
+        return re.sub(r"\b[A-Za-z_][A-Za-z0-9_]*\b", replace, formula)
 
     def parameters_for_constraint_check(self) -> list[ParameterConfig]:
         """Return parameters that have explicit bound constraints."""

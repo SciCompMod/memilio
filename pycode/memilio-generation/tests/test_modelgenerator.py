@@ -83,6 +83,26 @@ class TestParsing(unittest.TestCase):
         gen = Generator.from_dict(d)
         self.assertEqual(gen._config.transitions[0].type, "rate")
 
+    def test_derived_quantity_parses(self):
+        d = {
+            "model": {"name": "EI", "namespace": "oei", "prefix": "ode_ei"},
+            "infection_states": ["E", "I"],
+            "parameters": [
+                {"name": "Rate", "description": "d",
+                    "type": "custom", "default": 0.2}
+            ],
+            "derived_quantities": [
+                {"name": "effective_rate", "formula": "2 * Rate"}
+            ],
+            "transitions": [
+                {"from": "E", "to": "I", "type": "rate",
+                    "rate": "effective_rate"}
+            ],
+        }
+        gen = Generator.from_dict(d)
+        self.assertEqual(gen._config.derived_quantities[0].name,
+                         "effective_rate")
+
     def test_seird_has_custom_transition(self):
         gen = Generator.from_yaml(SEIRD_YAML)
         custom = [t for t in gen._config.transitions if t.type == "custom"]
@@ -386,6 +406,28 @@ class TestModelTemplate(unittest.TestCase):
         content = Generator.from_dict(d).render()["cpp/models/ode_ei/model.h"]
         self.assertIn("params.template get<Rate<FP>>() *", content)
         self.assertNotIn("Rate<FP>>()[i] *", content)
+
+    def test_rate_flow_supports_formula(self):
+        d = {
+            "model": {"name": "EI", "namespace": "oei", "prefix": "ode_ei"},
+            "infection_states": ["E", "I"],
+            "parameters": [
+                {"name": "Rate", "description": "d",
+                    "type": "custom", "default": 0.2}
+            ],
+            "derived_quantities": [
+                {"name": "N", "formula": "E + I"},
+                {"name": "share", "formula": "safe_div(I, N)"}
+            ],
+            "transitions": [
+                {"from": "E", "to": "I", "type": "rate",
+                    "rate": "Rate * share"}
+            ],
+        }
+        content = Generator.from_dict(d).render()["cpp/models/ode_ei/model.h"]
+        self.assertIn("const FP N = y[idx_E_i] + y[idx_I_i];", content)
+        self.assertIn("const FP share = safe_div(y[idx_I_i], N);", content)
+        self.assertIn("params.template get<Rate<FP>>()[i] * share", content)
 
     def test_serialize_deserialize(self):
         self.assertIn("void serialize(", self.content)
