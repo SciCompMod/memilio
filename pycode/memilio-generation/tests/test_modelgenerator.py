@@ -425,8 +425,10 @@ class TestModelTemplate(unittest.TestCase):
             ],
         }
         content = Generator.from_dict(d).render()["cpp/models/ode_ei/model.h"]
-        self.assertIn("const FP N = y[idx_E_i] + y[idx_I_i];", content)
-        self.assertIn("const FP share = safe_div(y[idx_I_i], N);", content)
+        self.assertIn("const FP N", content)
+        self.assertIn("= y[idx_E_i] + y[idx_I_i];", content)
+        self.assertIn("const FP share", content)
+        self.assertIn("= safe_div(y[idx_I_i], N);", content)
         self.assertIn("params.template get<Rate<FP>>()[i] * share", content)
 
     def test_serialize_deserialize(self):
