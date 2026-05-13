@@ -173,6 +173,11 @@ def _read_contact_sheet(xls: pd.ExcelFile, sheet_name: str, country: str):
     Some source workbooks contain an explicit header row, others contain only
     the matrix. Reading without headers and selecting the numeric block handles
     both formats.
+
+    :param xls: Opened Excel workbook containing contact matrix sheets.
+    :param sheet_name: Name of the sheet to read.
+    :param country: Country name used for error messages.
+    :returns: DataFrame containing the extracted 16x16 contact matrix.
     """
     df = pd.read_excel(
         xls,
@@ -186,6 +191,10 @@ def _read_contact_sheet(xls: pd.ExcelFile, sheet_name: str, country: str):
 def _extract_contact_matrix(df: pd.DataFrame, country: str):
     """
     Extract the 16x16 numeric contact matrix from a raw Excel sheet.
+
+    :param df: Raw sheet data read from the workbook without headers.
+    :param country: Country name used for error messages.
+    :returns: DataFrame with age-group labels as index and columns.
     """
     matrix_size = len(AGE_GROUP_LABELS)
     numeric = df.apply(pd.to_numeric, errors="coerce")
