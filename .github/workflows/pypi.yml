@@ -19,11 +19,13 @@ jobs:
           fetch-depth: 0
 
       - uses: pypa/cibuildwheel@v3.4.1
-
+        with:
+          package-dir: pycode/memilio-simulation
+ 
       - uses: actions/upload-artifact@v7
         with:
           name: cibw-wheels-${{ matrix.os }}
-          path: ./wheelhouse/*.whl
+          path: wheelhouse/*.whl
 
   build_sdist: 
     runs-on: ubuntu-latest
@@ -33,12 +35,14 @@ jobs:
       with:
         fetch-depth: 0
 
-    - run: pipx run build --sdist
+    - run:  |
+        cd pycode/memilio-simulation
+        pipx run build --sdist
 
     - uses: actions/upload-artifact@v7
       with:
         name: cibw-sdist
-        path: dist/*.tar.gz
+        path: pycode/memilio-simulation/dist/*.tar.gz
 
   upload_pypi:
     needs: [build_wheels, build_sdist]
