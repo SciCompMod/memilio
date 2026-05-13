@@ -710,15 +710,16 @@ public:
                     auto inf_rel = get_infections_relative<FP>(*this, t, this->get_result().get_last_value()) *
                                    dyn_npis.get_base_value();
                     auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
+                    const bool npi_expired = floating_point_greater_equal(t, FP(m_dynamic_npi.second), 1e-10);
                     if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
-                        (exceeded_threshold->first > m_dynamic_npi.first ||
-                         t > FP(m_dynamic_npi.second))) { //old npi was weaker or is expired
+                        (exceeded_threshold->first > m_dynamic_npi.first || npi_expired)) {
+                        //old npi was weaker or is expired
 
                         // Keep-alive: if the NPI expired but the threshold is still exceeded at the
                         // same level, renew immediately without delay to avoid a gap.
                         // Apply implementation delay only if stronger NPI needed.
                         bool is_expiry_renewal =
-                            (t > FP(m_dynamic_npi.second)) && !(exceeded_threshold->first > m_dynamic_npi.first);
+                            npi_expired && !(exceeded_threshold->first > m_dynamic_npi.first);
                         FP effective_delay = is_expiry_renewal ? FP(0) : delay_npi_implementation;
                         if (t + effective_delay < direc_end) {
                             auto t_start = SimulationTime<FP>(t + effective_delay);
@@ -738,7 +739,7 @@ public:
                             auto t_start_damping = (!is_expiry_renewal && FP(t_start) > FP(0))
                                                        ? SimulationTime<FP>(FP(t_start) + FP(1))
                                                        : t_start;
-                            auto t_end_damping = (FP(t_start) > FP(0)) ? SimulationTime<FP>(FP(t_end) + FP(1)) : t_end;
+                            auto t_end_damping = SimulationTime<FP>(FP(t_end) + FP(1));
                             implement_dynamic_npis<FP>(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
                                                        t_start_damping, t_end_damping, [](auto& g) {
                                                            return make_contact_damping_matrix(g);
