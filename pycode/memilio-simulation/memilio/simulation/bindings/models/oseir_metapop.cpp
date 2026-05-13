@@ -57,7 +57,7 @@ PYBIND11_MODULE(_simulation_oseir_metapop, m)
 {
     pymio::bind_interpolate_result_methods(m);
 
-    pymio::iterable_enum<mio::oseirmetapop::InfectionState>(m, "InfectionState")
+    pymio::iterable_enum<mio::oseirmetapop::InfectionState>(m, "InfectionState", py::module_local{})
         .value("Susceptible", mio::oseirmetapop::InfectionState::Susceptible)
         .value("Exposed", mio::oseirmetapop::InfectionState::Exposed)
         .value("Infected", mio::oseirmetapop::InfectionState::Infected)
