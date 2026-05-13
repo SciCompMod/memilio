@@ -40,10 +40,12 @@ class TransitionType:
     """Force-of-infection flow using contact matrix and S*I/N."""
     LINEAR = "linear"
     """Simple outflow: (1 / parameter) * source_compartment."""
+    RATE = "rate"
+    """Simple outflow: parameter * source_compartment."""
     CUSTOM = "custom"
     """Placeholder. User must supply the expression manually."""
 
-    ALL = (INFECTION, LINEAR, CUSTOM)
+    ALL = (INFECTION, LINEAR, RATE, CUSTOM)
 
 
 class ParameterType:
@@ -160,6 +162,13 @@ class ModelConfig:
         ``ParameterConfig`` here.
         """
         return self.parameters
+
+    def parameter_by_name(self, name: str) -> ParameterConfig:
+        """Return the parameter config with the given name."""
+        for parameter in self.parameters:
+            if parameter.name == name:
+                return parameter
+        raise KeyError(name)
 
     def parameters_for_constraint_check(self) -> list[ParameterConfig]:
         """Return parameters that have explicit bound constraints."""

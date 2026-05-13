@@ -68,6 +68,21 @@ class TestParsing(unittest.TestCase):
         self.assertIn("infection", types)
         self.assertIn("linear", types)
 
+    def test_rate_transition_parses(self):
+        d = {
+            "model": {"name": "EI", "namespace": "oei", "prefix": "ode_ei"},
+            "infection_states": ["E", "I"],
+            "parameters": [
+                {"name": "Rate", "description": "d",
+                    "type": "custom", "default": 0.2}
+            ],
+            "transitions": [
+                {"from": "E", "to": "I", "type": "rate", "parameter": "Rate"}
+            ],
+        }
+        gen = Generator.from_dict(d)
+        self.assertEqual(gen._config.transitions[0].type, "rate")
+
     def test_seird_has_custom_transition(self):
         gen = Generator.from_yaml(SEIRD_YAML)
         custom = [t for t in gen._config.transitions if t.type == "custom"]
@@ -339,6 +354,39 @@ class TestModelTemplate(unittest.TestCase):
         self.assertIn("TimeExposed<FP>>()[i]", self.content)
         self.assertIn("TimeInfected<FP>>()[i]", self.content)
 
+    def test_rate_flows(self):
+        d = {
+            "model": {"name": "EI", "namespace": "oei", "prefix": "ode_ei"},
+            "infection_states": ["E", "I"],
+            "parameters": [
+                {"name": "Rate", "description": "d",
+                    "type": "custom", "default": 0.2}
+            ],
+            "transitions": [
+                {"from": "E", "to": "I", "type": "rate", "parameter": "Rate"}
+            ],
+        }
+        content = Generator.from_dict(d).render()["cpp/models/ode_ei/model.h"]
+        self.assertIn("Rate outflow transitions", content)
+        self.assertIn("Rate<FP>>()[i] *", content)
+        self.assertIn("y[idx_E_i]", content)
+
+    def test_rate_flow_supports_scalar_parameter(self):
+        d = {
+            "model": {"name": "EI", "namespace": "oei", "prefix": "ode_ei"},
+            "infection_states": ["E", "I"],
+            "parameters": [
+                {"name": "Rate", "description": "d", "type": "custom",
+                    "default": 0.2, "per_age_group": False}
+            ],
+            "transitions": [
+                {"from": "E", "to": "I", "type": "rate", "parameter": "Rate"}
+            ],
+        }
+        content = Generator.from_dict(d).render()["cpp/models/ode_ei/model.h"]
+        self.assertIn("params.template get<Rate<FP>>() *", content)
+        self.assertNotIn("Rate<FP>>()[i] *", content)
+
     def test_serialize_deserialize(self):
         self.assertIn("void serialize(", self.content)
         self.assertIn("static IOResult<Model> deserialize(", self.content)
@@ -597,6 +645,13 @@ class TestValidation(unittest.TestCase):
 
     def test_unknown_parameter_in_transition(self):
         d = self._base()
+        d["transitions"][0]["parameter"] = "NoSuchParam"
+        with self.assertRaises(ValidationError):
+            Generator.from_dict(d)
+
+    def test_unknown_parameter_in_rate_transition(self):
+        d = self._base()
+        d["transitions"][0]["type"] = "rate"
         d["transitions"][0]["parameter"] = "NoSuchParam"
         with self.assertRaises(ValidationError):
             Generator.from_dict(d)

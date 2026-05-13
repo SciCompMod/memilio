@@ -178,7 +178,10 @@ class Validator:
                 )
                 continue
 
-            if ttype in (TransitionType.INFECTION, TransitionType.LINEAR):
+            if ttype in (
+                    TransitionType.INFECTION,
+                    TransitionType.LINEAR,
+                    TransitionType.RATE):
                 param = t.get("parameter")
                 if param not in param_name_set:
                     errors.append(
