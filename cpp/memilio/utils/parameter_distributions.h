@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin J. Kuehn, Daniel Abele, Julia Bicker
 *
@@ -17,10 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef PARAMETER_DISTRIBUTIONS_H
-#define PARAMETER_DISTRIBUTIONS_H
+#ifndef MIO_UTILS_PARAMETER_DISTRIBUTIONS_H
+#define MIO_UTILS_PARAMETER_DISTRIBUTIONS_H
 
-#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/visitor.h"
 #include "memilio/utils/random_number_generator.h"
@@ -275,11 +274,6 @@ public:
         return m_standard_dev;
     }
 
-    void log_stddev_changes(bool log_stddev_change)
-    {
-        m_log_stddev_change = log_stddev_change;
-    }
-
     void set_lower_bound(ScalarType lower_bound)
     {
         m_lower_bound = lower_bound;
@@ -338,7 +332,7 @@ public:
 
         int i            = 0;
         int retries      = 10;
-        ScalarType rnumb = m_distribution.get_distribution_instance()(thread_local_rng(), m_distribution.params);
+        ScalarType rnumb = m_distribution.get_distribution_instance()(rng, m_distribution.params);
         while ((rnumb > m_upper_bound || rnumb < m_lower_bound) && i < retries) {
             rnumb = m_distribution.get_distribution_instance()(rng, m_distribution.params);
             i++;
@@ -430,7 +424,6 @@ private:
     ScalarType m_lower_bound = std::numeric_limits<ScalarType>::min();
     ScalarType m_quantile    = 2.5758; // default is 0.995 quartile
     NormalDistribution<ScalarType>::ParamType m_distribution;
-    bool m_log_stddev_change = true;
 };
 
 template <class IOObj>
@@ -965,4 +958,4 @@ IOResult<std::shared_ptr<ParameterDistribution>> deserialize_internal(IOContext&
 
 } // namespace mio
 
-#endif // PARAMETER_DISTRIBUTIONS_H
+#endif // MIO_UTILS_PARAMETER_DISTRIBUTIONS_H

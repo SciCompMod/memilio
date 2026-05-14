@@ -13,7 +13,7 @@ recovery. It is thus only suited for epidemic use cases and, mostly, early epide
 
 Below is a visualization of the infection states and transitions. The variables :math:`\sigma_{z_1}^{z_2}` refer to a transition from a compartment :math:`z_1` to a compartment :math:`z_2`.
 
-.. image:: https://github.com/SciCompMod/memilio/assets/70579874/3500421a-035c-4ce1-ae95-a54d8097be82
+.. image:: https://martinkuehn.eu/research/images/ide_secir.png
    :alt: tikzIDESECIR
 
 
@@ -26,7 +26,7 @@ A detailed investigation of the IDE-SECIR model and numerical experiments can be
 Infection States
 ----------------
 
-The model contains the following list of **InfectionState**\s:
+The model contains the following list of ``InfectionState``\s:
 
 .. code-block:: RST
 
@@ -42,7 +42,7 @@ The model contains the following list of **InfectionState**\s:
 Infection State Transitions
 ---------------------------
 
-The possible transitions between the **InfectionState**\s are:
+The possible transitions between the ``InfectionState``\s are:
 
 .. code-block:: RST
   
@@ -53,6 +53,7 @@ The possible transitions between the **InfectionState**\s are:
     `InfectedSymptomsToInfectedSevere`
     `InfectedSymptomsToRecovered`
     `InfectedSevereToInfectedCritical`
+    `InfectedSevereToDead`
     `InfectedSevereToRecovered`
     `InfectedCriticalToDead`
     `InfectedCriticalToRecovered`
@@ -62,7 +63,7 @@ Sociodemographic Stratification
 -------------------------------
 
 In the IDE-SECIR model, the population can be stratified by one sociodemographic dimension. This dimension is denoted 
-**AgeGroup** but can also be used for other interpretations. 
+``AgeGroup`` but can also be used for other interpretations. 
 
 
 Parameters
@@ -138,14 +139,14 @@ Then we can define the initial flows as follows.
 
 .. code-block:: cpp
 
-    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
+    size_t num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
     // Create TimeSeries with num_transitions * num_agegroups elements where transitions needed for simulation will be
     // stored.
     mio::TimeSeries<ScalarType> init(num_transitions * num_agegroups);
 
-    // Define vector with flows. 
-    Vec vec_init(num_transitions * num_agegroups);
+    // Define vector with flows.
+    Eigen::VectorX<ScalarType> vec_init(num_transitions * num_agegroups);
     vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 25.0;
     vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
@@ -153,6 +154,7 @@ Then we can define the initial flows as follows.
     vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 1.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 4.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 1.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToDead]                 = 0.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;
@@ -184,13 +186,13 @@ There are different options for initializing a fictional scenario. Regardless of
 
     In that case, we have three possible options for initializing:
 
-        - You can set the number of people in the `Susceptible` compartment at time :math:`t_0` via `populations`. Initial values of the other compartments are derived in the model before starting the simulation.
+        - You can set the number of people in the `Susceptible` compartment at time :math:`t_0` via ``populations``. Initial values of the other compartments are derived in the model before starting the simulation.
 
         .. code-block:: cpp
 
             model.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000.;
 
-        - You can set the number of people in the `Recovered` compartment at time :math:`t_0` via `populations`. Initial values of the other compartments are derived in the model before starting the simulation.
+        - You can set the number of people in the `Recovered` compartment at time :math:`t_0` via ``populations``. Initial values of the other compartments are derived in the model before starting the simulation.
 
         .. code-block:: cpp
 
@@ -214,22 +216,24 @@ Basic dampings can be added to the contact matrix as follows:
 
     // Create a contact matrix with constant contact rates between all groups.
     ScalarType cont_freq = 10.;
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix = model.parameters.get<mio::isecir::ContactPatterns>();
+    contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, cont_freq));
     
     // Add a uniform damping across all age groups.
-    contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime<ScalarType>(30.));
 
 For age-resolved models, you can apply different dampings to different groups:
 
 .. code-block:: cpp
 
     ScalarType cont_freq = 10.;
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, cont_freq));
+    contact_matrix[0] =
+        mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(num_agegroups, num_agegroups, cont_freq));
     
     // Add a damping that reduces contacts within the same age group by 70% starting at day 30.
-    contact_matrix.add_damping(Eigen::VectorX<ScalarType>::Constant(num_agegroups, 0.7).asDiagonal(),
-                             mio::SimulationTime(30.));
+    Eigen::MatrixX<ScalarType> damping_matrix = Eigen::VectorX<ScalarType>::Constant(num_agegroups, 0.7).asDiagonal();
+    contact_matrix[0].add_damping(damping_matrix, mio::SimulationTime<ScalarType>(30.));
+
 
 
 For more complex scenarios, such as real-world venue closures or lockdown modeling, you can implement detailed NPIs with location-specific dampings. The IDE-SECIR model supports contact matrices for different locations (e.g., home, school, work, other) and can apply different dampings to each location.
@@ -291,7 +295,7 @@ Before the simulation, we check if all constraints of the model are satisfied so
     model.check_constraints(dt);
 
 To simulate the model from :math:`t_0` (that is determined by the initial flows provided to the constructor) to 
-:math:`t_{\max}` with given step size :math:`dt`, a object of the **Simulation** class has to be created and advanced 
+:math:`t_{\max}` with given step size :math:`dt`, a object of the ``Simulation`` class has to be created and advanced 
 until :math:`t_{\max}`, which is done as follows.
 
 .. code-block:: cpp
@@ -305,7 +309,7 @@ until :math:`t_{\max}`, which is done as follows.
 Output
 ------
 
-The output of the simulation are two `TimeSeries` objects, one containing the size of the compartments at all time 
+The output of the simulation are two ``TimeSeries`` objects, one containing the size of the compartments at all time 
 points and one containing the number of transitions within a time step. You can access the results as follows:
 
 .. code-block:: cpp
@@ -316,21 +320,22 @@ points and one containing the number of transitions within a time step. You can 
     // Access transitions between compartments.
     auto transitions = sim.get_transitions();
 
-The order of the compartments and transitions follows the definition in the **InfectionState** and **InfectionTransition** enums, respectively.
+The order of the compartments and transitions follows the definition in the ``InfectionState`` and ``InfectionTransition`` enums, respectively.
 
-You can access the data in the `TimeSeries` objects as follows:
+You can access the data in the ``TimeSeries`` objects as follows:
 
 .. code-block:: cpp
 
     // Get the number of time points.
     auto num_points = static_cast<size_t>(compartments.get_num_time_points());
     
-    // Access data at a specific time point.
-    Eigen::VectorX value_at_time_i = compartments.get_value(i);
-    ScalarType time_i = compartments.get_time(i);
+    // Access data at a specific time point, e.g. i=0.
+    size_t i                                   = 0;
+    Eigen::VectorX<ScalarType> value_at_time_i = compartments.get_value(i);
+    ScalarType time_i                          = compartments.get_time(i);
     
     // Access the last time point.
-    Eigen::VectorX last_value = compartments.get_last_value();
+    Eigen::VectorX<ScalarType> last_value = compartments.get_last_value();
     ScalarType last_time = compartments.get_last_time();
 
 
@@ -350,7 +355,7 @@ Additionally, you can export the results to a CSV file:
 .. code-block:: cpp
 
     // Export results to CSV with default settings.
-    compartments.export_csv("simulation_results.csv");
+    auto export_status = compartments.export_csv("simulation_results.csv");
 
 
 Visualization
@@ -371,7 +376,4 @@ Different examples can be found at:
 - `examples/ide_secir_ageres.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ide_secir_ageres.cpp>`_
 - `examples/ide_initialization.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ide_initialization.cpp>`_  
 
-Overview of the ``isecir`` namespace:
------------------------------------------
-
-.. doxygennamespace:: mio::isecir
+The code documentation for the model can be found at :CPP-API:`mio::isecir` .

@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Henrik Zunker, Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
@@ -429,7 +429,7 @@ struct MaxRiskOfInfectionFromSymptomatic {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type(size, 0.);
+        return Type(size, 1.);
     }
     static std::string name()
     {
@@ -468,6 +468,25 @@ struct CriticalPerSevere {
     static std::string name()
     {
         return "CriticalPerSevere";
+    }
+};
+
+/**
+* @brief The percentage of dead patients per hospitalized patients.
+* This is a direct mortality probability from the InfectedSevere compartments,
+* independent of ICU capacity.
+* @tparam FP The floating-point type (default: double).
+*/
+template <typename FP>
+struct DeathsPerSevere {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.);
+    }
+    static std::string name()
+    {
+        return "DeathsPerSevere";
     }
 };
 
@@ -727,22 +746,6 @@ struct InfectiousnessNewVariant {
     }
 };
 
-/**
- * @brief The delay with which DynamicNPIs are implemented and enforced after exceedance of threshold.
- */
-template <typename FP>
-struct DynamicNPIsImplementationDelay {
-    using Type = UncertainValue<FP>;
-    static Type get_default(AgeGroup /*size*/)
-    {
-        return Type(0.0);
-    }
-    static std::string name()
-    {
-        return "DynamicNPIsImplementationDelay";
-    }
-};
-
 template <typename FP>
 using ParametersBase = ParameterSet<
     StartDay<FP>, Seasonality<FP>, ICUCapacity<FP>, TestAndTraceCapacity<FP>, TestAndTraceCapacityMaxRiskNoSymptoms<FP>,
@@ -751,14 +754,13 @@ using ParametersBase = ParameterSet<
     TimeWaningPartialImmunity<FP>, TimeWaningImprovedImmunity<FP>, TimeTemporaryImmunityPI<FP>,
     TimeTemporaryImmunityII<FP>, TransmissionProbabilityOnContact<FP>, RelativeTransmissionNoSymptoms<FP>,
     RecoveredPerInfectedNoSymptoms<FP>, RiskOfInfectionFromSymptomatic<FP>, MaxRiskOfInfectionFromSymptomatic<FP>,
-    SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerCritical<FP>,
+    SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerSevere<FP>, DeathsPerCritical<FP>,
     DaysUntilEffectivePartialVaccination<FP>, DaysUntilEffectiveImprovedVaccination<FP>,
     DaysUntilEffectiveBoosterImmunity<FP>, DailyFullVaccinations<FP>, DailyPartialVaccinations<FP>,
     DailyBoosterVaccinations<FP>, ReducExposedPartialImmunity<FP>, ReducExposedImprovedImmunity<FP>,
     ReducInfectedSymptomsPartialImmunity<FP>, ReducInfectedSymptomsImprovedImmunity<FP>,
     ReducInfectedSevereCriticalDeadPartialImmunity<FP>, ReducInfectedSevereCriticalDeadImprovedImmunity<FP>,
-    ReducTimeInfectedMild<FP>, InfectiousnessNewVariant<FP>, DynamicNPIsImplementationDelay<FP>,
-    StartDayNewVariant<FP>>;
+    ReducTimeInfectedMild<FP>, InfectiousnessNewVariant<FP>, StartDayNewVariant<FP>>;
 
 /**
  * @brief Parameters of the age-resolved SECIRS-type model with high temporary immunity upon immunization and waning immunity over
@@ -818,18 +820,6 @@ public:
     }
 
     /**
-     * Time in simulation after which no dynamic NPIs are applied.
-     */
-    FP& get_end_dynamic_npis()
-    {
-        return m_end_dynamic_npis;
-    }
-    FP get_end_dynamic_npis() const
-    {
-        return m_end_dynamic_npis;
-    }
-
-    /**
      * @brief Checks whether all Parameters satisfy their corresponding constraints and applies them, if they do not.
      * Time spans cannot be negative and probabilities can only take values between [0,1].
      *
@@ -877,13 +867,6 @@ public:
             log_warning("Constraint check: Parameter TestAndTraceCapacityMaxRiskNoSymptoms changed from {} to {}",
                         this->template get<TestAndTraceCapacityMaxRiskNoSymptoms<FP>>(), 0);
             this->template set<TestAndTraceCapacityMaxRiskNoSymptoms<FP>>(0);
-            corrected = true;
-        }
-
-        if (this->template get<DynamicNPIsImplementationDelay<FP>>() < 0.0) {
-            log_warning("Constraint check: Parameter DynamicNPIsImplementationDelay changed from {} to {}",
-                        this->template get<DynamicNPIsImplementationDelay<FP>>(), 0);
-            this->template set<DynamicNPIsImplementationDelay<FP>>(0);
             corrected = true;
         }
 
@@ -1019,6 +1002,22 @@ public:
                 corrected                                      = true;
             }
 
+            if (this->template get<DeathsPerSevere<FP>>()[i] < 0.0 ||
+                this->template get<DeathsPerSevere<FP>>()[i] > 1.0) {
+                log_warning("Constraint check: Parameter DeathsPerSevere changed from {} to {}",
+                            this->template get<DeathsPerSevere<FP>>()[i], 0);
+                this->template get<DeathsPerSevere<FP>>()[i] = 0;
+                corrected                                    = true;
+            }
+
+            if (this->template get<CriticalPerSevere<FP>>()[i] + this->template get<DeathsPerSevere<FP>>()[i] > 1.0) {
+                log_warning("Constraint check: CriticalPerSevere + DeathsPerSevere exceed 1.0 for age group {}. "
+                            "DeathsPerSevere changed from {} to 0.",
+                            static_cast<size_t>(i), this->template get<DeathsPerSevere<FP>>()[i]);
+                this->template get<DeathsPerSevere<FP>>()[i] = 0;
+                corrected                                    = true;
+            }
+
             if (this->template get<DeathsPerCritical<FP>>()[i] < 0.0 ||
                 this->template get<DeathsPerCritical<FP>>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter DeathsPerCritical changed from {} to {}",
@@ -1142,11 +1141,6 @@ public:
             return true;
         }
 
-        if (this->template get<DynamicNPIsImplementationDelay<FP>>() < 0.0) {
-            log_error("Constraint check: Parameter DynamicNPIsImplementationDelay smaller {}", 0);
-            return true;
-        }
-
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 
             if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
@@ -1256,6 +1250,18 @@ public:
                 return true;
             }
 
+            if (this->template get<DeathsPerSevere<FP>>()[i] < 0.0 ||
+                this->template get<DeathsPerSevere<FP>>()[i] > 1.0) {
+                log_error("Constraint check: Parameter DeathsPerSevere smaller {} or larger {}", 0, 1);
+                return true;
+            }
+
+            if (this->template get<CriticalPerSevere<FP>>()[i] + this->template get<DeathsPerSevere<FP>>()[i] > 1.0) {
+                log_error("Constraint check: CriticalPerSevere + DeathsPerSevere exceed 1.0 for age group {}.",
+                          static_cast<size_t>(i));
+                return true;
+            }
+
             if (this->template get<DeathsPerCritical<FP>>()[i] < 0.0 ||
                 this->template get<DeathsPerCritical<FP>>()[i] > 1.0) {
                 log_error("Constraint check: Parameter DeathsPerCritical smaller {} or larger {}", 0, 1);
@@ -1350,7 +1356,6 @@ private:
     FP m_commuter_nondetection    = 0.0;
     FP m_start_commuter_detection = 0.0;
     FP m_end_commuter_detection   = 0.0;
-    FP m_end_dynamic_npis         = std::numeric_limits<FP>::max();
 };
 
 } // namespace osecirts

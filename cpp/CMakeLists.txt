@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.13)
+set(MEMILIO_CMAKE_MINIMUM_VERSION "3.18.0")
+cmake_minimum_required(VERSION ${MEMILIO_CMAKE_MINIMUM_VERSION})
 
 project(memilio VERSION 1.0.0)
 
@@ -9,7 +10,6 @@ option(MEMILIO_BUILD_TESTS "Build memilio unit tests." ON)
 option(MEMILIO_BUILD_EXAMPLES "Build memilio examples." ON)
 option(MEMILIO_BUILD_MODELS "Build memilio models." ON)
 option(MEMILIO_BUILD_BENCHMARKS "Build memilio benchmarks with google benchmark." OFF)
-option(MEMILIO_BUILD_SBML_MODELS "Build the SBML importer and imported models." ON)
 option(MEMILIO_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
 option(MEMILIO_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
 option(MEMILIO_USE_BUNDLED_BOOST "Use boost bundled with epi (only for epi-io)" ON)
@@ -20,18 +20,35 @@ option(MEMILIO_BUILD_SHARED_LIBS "Build memilio as a shared library." ON)
 option(MEMILIO_BUILD_STATIC_LIBS "Build memilio as a static library." ON)
 option(MEMILIO_ENABLE_MPI "Build memilio with MPI." OFF)
 option(MEMILIO_ENABLE_OPENMP "Enable Multithreading with OpenMP." OFF)
+option(MEMILIO_ENABLE_HDF5 "Build memilio with HDF5 IO support." ON)
+option(MEMILIO_ENABLE_SBML "Build memilio with the SBML importer and imported models." OFF)
 option(MEMILIO_ENABLE_WARNINGS "Build memilio with warnings." ON)
 option(MEMILIO_ENABLE_WARNINGS_AS_ERRORS "Build memilio with warnings as errors." ON)
 option(MEMILIO_ENABLE_IPOPT "Enable numerical optimization with Ipopt, requires a Fortran compiler." OFF)
 option(MEMILIO_ENABLE_PROFILING "Enable runtime performance profiling of memilio." OFF)
 option(MEMILIO_ENABLE_LIKWID_MARKER "Enable performance measuring with likwid markers." OFF)
 
-mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
+cmake_path(CONVERT "${PROJECT_SOURCE_DIR}/.." TO_CMAKE_PATH_LIST PROJECT_ROOT_NORMALIZED NORMALIZE)
+set(MEMILIO_BASE_DIR "${PROJECT_ROOT_NORMALIZED}" CACHE PATH
+    "Path to the MEmilio project root, used for file I/O. Accessed via mio::base_dir().")
+set(MEMILIO_DATA_DIR "${PROJECT_ROOT_NORMALIZED}/data" CACHE PATH
+    "Path to the MEmilio data directory. Accessed via mio::data_dir().")
+
+mark_as_advanced(
+    MEMILIO_USE_BUNDLED_SPDLOG
+    MEMILIO_SANITIZE_ADDRESS
+    MEMILIO_SANITIZE_UNDEFINED
+    MEMILIO_BUILD_SHARED_LIBS
+    MEMILIO_BUILD_STATIC_LIBS
+    MEMILIO_BASE_DIR
+    MEMILIO_DATA_DIR
+    )
 
 # try to treat AppleClang as Clang, but warn about missing support
 if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
-    message(WARNING "The compiler ID \"AppleClang\" is not supported, trying to compile with \"Clang\" options.")
+    message(WARNING "The compiler ID \"AppleClang\" has only limited support. Continuing with \"Clang\" options.")
     set(CMAKE_CXX_COMPILER_ID "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffp-model=strict") # to avoid FP differences in CI
 endif()
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
@@ -73,9 +90,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_INSTALL_RPATH "${CMAKE_BINARY_DIR}/lib" "${CMAKE_BINARY_DIR}/bin")
-
-# sets MEMILIO_BASE_DIR to the directory containing cpp (i.e., the root of the git repo)
-cmake_path(CONVERT "${PROJECT_SOURCE_DIR}/.." TO_CMAKE_PATH_LIST MEMILIO_BASE_DIR NORMALIZE)
 
 # code coverage analysis
 # Note: this only works under linux and with make
@@ -180,6 +194,7 @@ if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/ode_secirts)
     add_subdirectory(models/ode_secirvvs)
     add_subdirectory(models/lct_secir)
+    add_subdirectory(models/lct_secir_2_diseases)
     add_subdirectory(models/glct_secir)
     add_subdirectory(models/ide_secir)
     add_subdirectory(models/ide_seir)
@@ -188,6 +203,7 @@ if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/ode_seirdb)
     add_subdirectory(models/ode_seair)
     add_subdirectory(models/ode_sir)
+    add_subdirectory(models/ode_seir_metapop)
     add_subdirectory(models/sde_sir)
     add_subdirectory(models/sde_sirs)
     add_subdirectory(models/sde_seirvv)
@@ -209,7 +225,7 @@ if(MEMILIO_BUILD_BENCHMARKS)
     add_subdirectory(benchmarks)
 endif()
 
-if(MEMILIO_BUILD_SBML_MODELS)
+if(MEMILIO_ENABLE_SBML)
     add_subdirectory(sbml_model_generation)
 endif()
 

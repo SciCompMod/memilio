@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Rene Schmieding, Henrik Zunker
 *
@@ -42,7 +42,7 @@ public:
 
     /**
      * @brief Set up the simulation with an ODE solver.
-     * @param[in] model An instance of a flow model.
+     * @param[in] model An instance of a FlowModel.
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration.
      */

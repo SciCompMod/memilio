@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2025 MEmilio
+# Copyright (C) 2020-2026 MEmilio
 #
 # Authors: Maximilian Betz
 #
@@ -28,12 +28,7 @@ from typing import Any, List, TextIO
 
 import sys
 
-if sys.version_info >= (3, 9):
-    # For python 3.9 and newer
-    import importlib.resources as importlib_resources
-else:
-    # For older python versions
-    import importlib_resources
+import importlib.resources as importlib_resources
 from clang.cindex import Config, Cursor, Type
 
 
@@ -88,7 +83,7 @@ def try_get_compilation_database_path(skbuild_path_to_database: str) -> str:
     return dirname
 
 
-def get_base_class(base_type: Type) -> List[Any]:
+def get_base_class(base_type: Type) -> list[Any]:
     """Retrieve the base class.
     Example for base_type: CompartmentalModel.
 
@@ -101,7 +96,7 @@ def get_base_class(base_type: Type) -> List[Any]:
     return result
 
 
-def get_base_class_string(base_type: Type) -> List[Any]:
+def get_base_class_string(base_type: Type) -> list[Any]:
     """Retrieve the spelling of the base class.
     Example for base_type.spelling: CompartmentalModel<mio::Populations<mio::AgeGroup, mio::InfectionState>, Parameters>.
 

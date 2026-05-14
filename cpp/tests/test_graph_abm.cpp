@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Julia Bicker
 *
@@ -29,13 +29,10 @@
 #include "graph_abm/graph_abm_mobility.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/logging.h"
-#include "memilio/utils/miompi.h"
 #include "memilio/mobility/graph.h"
-#include "abm_helpers.h"
-#include <algorithm>
-#include <cstddef>
+#include "utils.h"
+
 #include <gtest/gtest.h>
-#include <iostream>
 
 struct MockHistory {
 
@@ -50,7 +47,7 @@ TEST(TestGraphAbm, test_advance_node)
 {
     auto t                                                               = mio::abm::TimePoint(0);
     auto dt                                                              = mio::abm::hours(10);
-    auto model                                                           = mio::GraphABModel(size_t(1), 1);
+    auto model                                                           = mio::abm::GraphABModel(size_t(1), 1);
     model.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(0)] = true;
     auto home_id = model.add_location(mio::abm::LocationType::Home);
     auto& home   = model.get_location(home_id);
@@ -73,11 +70,11 @@ TEST(TestGraphAbm, test_advance_node)
 TEST(TestGraphAbm, test_apply_mobility)
 {
     auto model1 =
-        mio::GraphABModel(size_t(2), 1, std::vector<mio::abm::Model::MobilityRuleType>{&mio::abm::go_to_work});
+        mio::abm::GraphABModel(size_t(2), 1, std::vector<mio::abm::Model::MobilityRuleType>{&mio::abm::go_to_work});
     auto model2 =
-        mio::GraphABModel(size_t(2), 2, std::vector<mio::abm::Model::MobilityRuleType>{&mio::abm::go_to_work});
+        mio::abm::GraphABModel(size_t(2), 2, std::vector<mio::abm::Model::MobilityRuleType>{&mio::abm::go_to_work});
     auto model3 =
-        mio::GraphABModel(size_t(2), 3, std::vector<mio::abm::Model::MobilityRuleType>{&mio::abm::go_to_work});
+        mio::abm::GraphABModel(size_t(2), 3, std::vector<mio::abm::Model::MobilityRuleType>{&mio::abm::go_to_work});
     model1.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(0)] = true;
     model2.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(0)] = true;
     model3.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(0)] = true;
@@ -171,8 +168,8 @@ TEST(TestGraphAbm, test_apply_mobility)
 
 TEST(TestGraphABM, test_graph_simulation)
 {
-    auto model1 = mio::GraphABModel(size_t(1), 0);
-    auto model2 = mio::GraphABModel(size_t(1), 1);
+    auto model1 = mio::abm::GraphABModel(size_t(1), 0);
+    auto model2 = mio::abm::GraphABModel(size_t(1), 1);
 
     mio::abm::TimePoint t0   = mio::abm::TimePoint(0);
     mio::abm::TimePoint tmax = t0 + mio::abm::days(5);
@@ -191,7 +188,8 @@ TEST(TestGraphABM, test_graph_simulation)
 
 TEST(TestGraphABM, mask_compliance)
 {
-    auto model = mio::GraphABModel(size_t(2), 0, std::vector<mio::abm::Model::MobilityRuleType>{&mio::abm::go_to_work});
+    auto model =
+        mio::abm::GraphABModel(size_t(2), 0, std::vector<mio::abm::Model::MobilityRuleType>{&mio::abm::go_to_work});
     model.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(1)]   = true;
     model.parameters.get<mio::abm::AgeGroupGotoSchool>()[mio::AgeGroup(0)] = true;
     //add home, work and school location
@@ -244,19 +242,25 @@ TEST(TestGraphABM, mask_compliance)
 
 TEST(TestGraphABM, test_get_person)
 {
-    auto model = mio::GraphABModel(size_t(2), 0, std::vector<mio::abm::Model::MobilityRuleType>{&mio::abm::go_to_work});
-    auto home  = model.add_location(mio::abm::LocationType::Home);
-    auto work  = model.add_location(mio::abm::LocationType::Work);
-    auto pid1  = model.add_person(home, mio::AgeGroup(0));
-    auto pid2  = model.add_person(work, mio::AgeGroup(1));
+    auto model =
+        mio::abm::GraphABModel(size_t(2), 0, std::vector<mio::abm::Model::MobilityRuleType>{&mio::abm::go_to_work});
+    auto home = model.add_location(mio::abm::LocationType::Home);
+    auto work = model.add_location(mio::abm::LocationType::Work);
+    auto pid1 = model.add_person(home, mio::AgeGroup(0));
+    auto pid2 = model.add_person(work, mio::AgeGroup(1));
 
     auto& p1 = model.get_person(pid1);
     EXPECT_EQ(p1.get_location(), home);
     EXPECT_EQ(p1.get_age(), mio::AgeGroup(0));
-    model.remove_person(model.get_person_index(pid1));
-    EXPECT_EQ(model.get_person_index(pid1), std::numeric_limits<uint32_t>::max());
 
-    auto& p2 = model.get_person(pid2);
-    EXPECT_EQ(p2.get_location(), work);
-    EXPECT_EQ(p2.get_age(), mio::AgeGroup(1));
+    {
+        model.remove_person(model.get_person_index(pid1));
+
+        mio::LogLevelOverride llo(mio::LogLevel::off);
+        EXPECT_EQ(model.get_person_index(pid1), std::numeric_limits<uint32_t>::max());
+
+        auto& p2 = model.get_person(pid2);
+        EXPECT_EQ(p2.get_location(), work);
+        EXPECT_EQ(p2.get_age(), mio::AgeGroup(1));
+    }
 }

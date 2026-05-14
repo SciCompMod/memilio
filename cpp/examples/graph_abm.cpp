@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Julia Bicker
 *
@@ -47,7 +47,7 @@ struct Logger : mio::LogAlways {
     */
     using Type = std::vector<std::tuple<int, mio::abm::LocationType, mio::abm::LocationId, size_t,
                                         std::map<mio::abm::InfectionState, size_t>>>;
-    static Type log(const mio::abm::Simulation<mio::GraphABModel>& sim)
+    static Type log(const mio::abm::Simulation<mio::abm::GraphABModel>& sim)
     {
         Type location_information{};
         location_information.reserve(size_t(mio::abm::LocationType::Count));
@@ -76,7 +76,7 @@ int main()
     const auto age_group_adults   = mio::AgeGroup(1);
     const auto age_group_seniors  = mio::AgeGroup(2);
 
-    auto model1 = mio::GraphABModel(num_age_groups, 0);
+    auto model1 = mio::abm::GraphABModel(num_age_groups, 0);
 
     //Set infection parameters
     model1.parameters.get<mio::abm::TimeExposedToNoSymptoms>()           = mio::ParameterDistributionConstant(4.);
@@ -134,7 +134,7 @@ int main()
     add_household_group_to_model(model1, single_hh_group_m1);
     add_household_group_to_model(model1, family_hh_group_m1);
 
-    auto model2 = mio::GraphABModel(num_age_groups, 1);
+    auto model2 = mio::abm::GraphABModel(num_age_groups, 1);
 
     //Set infection parameters
     model2.parameters.get<mio::abm::TimeExposedToNoSymptoms>()           = mio::ParameterDistributionConstant(4.);
@@ -201,7 +201,7 @@ int main()
     for (auto& person : model1.get_persons()) {
         mio::abm::InfectionState infection_state = mio::abm::InfectionState(
             mio::DiscreteDistribution<size_t>::get_instance()(model1.get_rng(), infection_distribution_m1));
-        auto rng = mio::abm::PersonalRandomNumberGenerator(person);
+        auto rng = mio::abm::PersonalRandomNumberGenerator(model1.get_rng(), person);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          model1.parameters, start_date, infection_state));
@@ -231,7 +231,7 @@ int main()
     for (auto& person : model2.get_persons()) {
         mio::abm::InfectionState infection_state = mio::abm::InfectionState(
             mio::DiscreteDistribution<size_t>::get_instance()(model2.get_rng(), infection_distribution_m2));
-        auto rng = mio::abm::PersonalRandomNumberGenerator(person);
+        auto rng = mio::abm::PersonalRandomNumberGenerator(model2.get_rng(), person);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          model2.parameters, start_date, infection_state));

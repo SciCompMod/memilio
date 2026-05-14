@@ -7,7 +7,7 @@ inputs:
   version:
     description: "Python version to use for the test."
     required: false
-    default: "3.8"
+    default: "3.9"
   coverage:
     description: "Generate coverage report from running the tests, ON or OFF, default OFF."
     required: false
@@ -24,26 +24,26 @@ runs:
         else
           sudo apt-get -qq -y install python3-pip gnupg
         fi
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip setuptools
     - name: Download Python Wheels
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: python-wheels-${{ inputs.package }}
         path: pycode/wheelhouse
     - name: Download Python Wheels from epidata for plot package
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       if:  inputs.package == 'plot'
       with:
         name: python-wheels-epidata
         path: pycode/wheelhouse
     - name: Download Python Wheels from simulation for surrogatemodel
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       if:  inputs.package == 'surrogatemodel'
       with:
         name: python-wheels-simulation
         path: pycode/wheelhouse
     - name: Set up Python ${{ inputs.version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ inputs.version }}
     - name: Install Python Wheels
@@ -53,7 +53,11 @@ runs:
         shopt -s nullglob
         for pkg in pycode/wheelhouse/*cp$PYTHON_VERSION_NO_DOT*.whl; do python -m pip install "$pkg"; done # packages that contain native extensions are version specific
         for pkg in pycode/wheelhouse/*py3*.whl; do python -m pip install "$pkg"; done # pure python packages are not version specific
-        python -m pip install --upgrade-strategy only-if-needed --prefer-binary --find-links pycode/wheelhouse "memilio-${{ inputs.package }}[dev]"
+        if [[ "${{ inputs.package }}" == "generation" ]]; then
+          python -m pip install --upgrade-strategy only-if-needed --prefer-binary --find-links pycode/wheelhouse "memilio-${{ inputs.package }}[bindings,dev]"
+        else
+          python -m pip install --upgrade-strategy only-if-needed --prefer-binary --find-links pycode/wheelhouse "memilio-${{ inputs.package }}[dev]"
+        fi
     - name: Run unit tests
       shell: bash
       run: |
@@ -80,7 +84,7 @@ runs:
           gethospitalizationdata --help
         fi
     - name: Upload coverage reports
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: test-py-coverage-reports-${{ inputs.package }}-${{ inputs.version }}
         path: |

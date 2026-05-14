@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "memilio/utils/logging.h"
 #include "ode_secir/model.h"
 #include "ode_secir/infection_state.h"
 #include "ode_secir/parameters.h"
@@ -25,10 +26,10 @@
 #include "memilio/mobility/metapopulation_mobility_stochastic.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 
-#include <iostream>
-
 int main(int /*argc*/, char** /*argv*/)
 {
+    mio::set_log_level(mio::LogLevel::warn);
+
     const auto t0   = 0.;
     const auto tmax = 10.;
     const auto dt   = 0.1; //initial time step

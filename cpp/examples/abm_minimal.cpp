@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Khoa Nguyen
 *
@@ -21,6 +21,7 @@
 #include "abm/lockdown_rules.h"
 #include "abm/model.h"
 #include "abm/common_abm_loggers.h"
+#include "memilio/io/directories.h"
 
 #include <fstream>
 #include <chrono>
@@ -100,9 +101,8 @@ int main()
     // Increase aerosol transmission for all locations
     model.parameters.get<mio::abm::AerosolTransmissionRates>() = 10.0;
     // Increase contact rate for all people between 15 and 34 (i.e. people meet more often in the same location)
-    model.get_location(work)
-        .get_infection_parameters()
-        .get<mio::abm::ContactRates>()[{age_group_15_to_34, age_group_15_to_34}] = 10.0;
+    model.get_location(work).get_infection_parameters().get<mio::abm::ContactRates>().get_baseline()(
+        age_group_15_to_34.get(), age_group_15_to_34.get()) = 10.0;
 
     // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 10.
     auto validity_period       = mio::abm::days(1);
@@ -122,11 +122,11 @@ int main()
 
 
     std::vector<ScalarType> infection_distribution{0.9, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    
+
     for (auto& person : model.get_persons()) {
         mio::abm::InfectionState infection_state = mio::abm::InfectionState(
             mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(), infection_distribution));
-        auto rng = mio::abm::PersonalRandomNumberGenerator(person);
+        auto rng = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          model.parameters, start_date, infection_state));
@@ -169,21 +169,12 @@ int main()
     // Run the simulation until tmax with the history object.
     sim.advance(tmax, historyTimeSeries);
 
+    // Write results to a file. Also print the filepath to make it easier to find
+    auto outpath = mio::create_directories_or_exit(mio::example_results_dir("abm_minimal")) / "history.txt";
+    std::ofstream outfile(outpath);
+    std::get<0>(historyTimeSeries.get_log())
+        .print_table(outfile, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4);
+    std::cout << "Results written to " << outpath << std::endl;
 
-    
-    // The results are written into the file "abm_minimal.txt" as a table with 9 columns.
-    // The first column is Time. The other columns correspond to the number of people with a certain infection state at this Time:
-    // Time = Time in days, S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
-    // I_Crit = InfectedCritical, R = Recovered, D = Dead
-    //std::ofstream outfile("abm_minimal.txt");
-    //std::get<0>(historyTimeSeries.get_log())
-    //    .print_table(outfile, {"S"/*, "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"*/}, 7, 4);
-    //std::cout << "Results written to abm_minimal.txt" << std::endl;
-    
-    auto end = std::chrono::high_resolution_clock::now(); 
-    std::chrono::duration<double> diff = end - start; 
-    std::chrono::duration<double> diff2 = end - start2; 
-    std::cout << "Time: " << diff.count() << " s\n";
-    std::cout << "Time: " << diff2.count() << " s\n";
     return 0;
 }

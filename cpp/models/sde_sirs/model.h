@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Nils Wassmuth, Rene Schmieding, Martin J. Kuehn
 *
@@ -61,7 +61,8 @@ public:
             (1 + params.template get<Seasonality<FP>>() *
                      sin(std::numbers::pi_v<ScalarType> * ((params.template get<StartDay<FP>>() + t) / 182.5 + 0.5)));
 
-        FP coeffStoI = season_val * params.template get<ContactPatterns<FP>>().get_matrix_at(SimulationTime<FP>(t))(0, 0) *
+        FP coeffStoI = season_val *
+                       params.template get<ContactPatterns<FP>>().get_matrix_at(SimulationTime<FP>(t))(0, 0) *
                        params.template get<TransmissionProbabilityOnContact<FP>>() / Base::populations.get_total();
 
         flows[this->template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>()] =

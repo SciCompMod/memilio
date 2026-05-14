@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Henrik Zunker
 *
@@ -26,46 +26,47 @@
 #include <iostream>
 
 // alias for the type of the simulation with feedback
-using FeedbackSim = mio::FeedbackSimulation<double, mio::Simulation<double, mio::osecir::Model<double>>,
-                                            mio::osecir::ContactPatterns<double>>;
+using FeedbackSim = mio::FeedbackSimulation<ScalarType, mio::Simulation<ScalarType, mio::osecir::Model<ScalarType>>,
+                                            mio::osecir::ContactPatterns<ScalarType>>;
 
 // helper function to initialize the model with population and parameters
-void initialize_model(mio::osecir::Model<double>& model, double cont_freq)
+void initialize_model(mio::osecir::Model<ScalarType>& model, ScalarType cont_freq)
 {
-    model.parameters.set<mio::osecir::StartDay<double>>(60);
-    model.parameters.set<mio::osecir::Seasonality<double>>(0.2);
+    model.parameters.set<mio::osecir::StartDay<ScalarType>>(60);
+    model.parameters.set<mio::osecir::Seasonality<ScalarType>>(0.2);
 
     // Mean stay times per compartment
-    model.parameters.get<mio::osecir::TimeExposed<double>>()            = 3.2;
-    model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>() = 2.0;
-    model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()   = 5.8;
-    model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()     = 9.5;
-    model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()   = 7.1;
+    model.parameters.get<mio::osecir::TimeExposed<ScalarType>>()            = 3.2;
+    model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<ScalarType>>() = 2.0;
+    model.parameters.get<mio::osecir::TimeInfectedSymptoms<ScalarType>>()   = 5.8;
+    model.parameters.get<mio::osecir::TimeInfectedSevere<ScalarType>>()     = 9.5;
+    model.parameters.get<mio::osecir::TimeInfectedCritical<ScalarType>>()   = 7.1;
 
     // Set transmission and isolation parameters
-    model.parameters.get<mio::osecir::TransmissionProbabilityOnContact<double>>()  = 0.05;
-    model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()    = 0.7;
-    model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()    = 0.09;
-    model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()    = 0.25;
-    model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>() = 0.45;
-    model.parameters.get<mio::osecir::TestAndTraceCapacity<double>>()              = 35;
-    model.parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()         = 0.2;
-    model.parameters.get<mio::osecir::CriticalPerSevere<double>>()                 = 0.25;
-    model.parameters.get<mio::osecir::DeathsPerCritical<double>>()                 = 0.3;
+    model.parameters.get<mio::osecir::TransmissionProbabilityOnContact<ScalarType>>()  = 0.05;
+    model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<ScalarType>>()    = 0.7;
+    model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()    = 0.09;
+    model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<ScalarType>>()    = 0.25;
+    model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<ScalarType>>() = 0.45;
+    model.parameters.get<mio::osecir::TestAndTraceCapacity<ScalarType>>()              = 35;
+    model.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()         = 0.2;
+    model.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()                 = 0.25;
+    model.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()                 = 0.3;
 
     // contact matrix
-    mio::ContactMatrixGroup<double>& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<double>>();
-    contact_matrix[0] = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
+    contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixXd::Constant(1, 1, cont_freq));
 }
 
 // helper function to initialize the feedback mechanism parameters for a simulation
 void initialize_feedback(FeedbackSim& feedback_simulation)
 {
     // nominal ICU capacity
-    feedback_simulation.get_parameters().template get<mio::NominalICUCapacity<double>>() = 10;
+    feedback_simulation.get_parameters().template get<mio::NominalICUCapacity<ScalarType>>() = 10;
 
     // ICU occupancy in the past for memory kernel
-    auto& icu_occupancy     = feedback_simulation.get_parameters().template get<mio::ICUOccupancyHistory<double>>();
+    auto& icu_occupancy     = feedback_simulation.get_parameters().template get<mio::ICUOccupancyHistory<ScalarType>>();
     Eigen::VectorXd icu_day = Eigen::VectorXd::Constant(1, 1);
     const auto cutoff       = static_cast<int>(feedback_simulation.get_parameters().template get<mio::GammaCutOff>());
     for (int t = -cutoff; t <= 0; ++t) {
@@ -73,24 +74,24 @@ void initialize_feedback(FeedbackSim& feedback_simulation)
     }
 
     // bounds for contact reduction measures
-    feedback_simulation.get_parameters().template get<mio::ContactReductionMin<double>>() = {0.1};
-    feedback_simulation.get_parameters().template get<mio::ContactReductionMax<double>>() = {0.8};
+    feedback_simulation.get_parameters().template get<mio::ContactReductionMin<ScalarType>>() = {0.1};
+    feedback_simulation.get_parameters().template get<mio::ContactReductionMax<ScalarType>>() = {0.8};
 
     // Set blending factors. The global blending factor is implicitly defined as 1 - local - regional.
-    feedback_simulation.get_parameters().template get<mio::BlendingFactorLocal<double>>()    = 0.5;
-    feedback_simulation.get_parameters().template get<mio::BlendingFactorRegional<double>>() = 0.3;
+    feedback_simulation.get_parameters().template get<mio::BlendingFactorLocal<ScalarType>>()    = 0.5;
+    feedback_simulation.get_parameters().template get<mio::BlendingFactorRegional<ScalarType>>() = 0.3;
 }
 
 // helper function to create the graph with nodes and edges
-mio::Graph<mio::SimulationNode<double, FeedbackSim>, mio::MobilityEdge<double>>
-create_graph(int num_nodes, int total_population, double cont_freq)
+mio::Graph<mio::SimulationNode<ScalarType, FeedbackSim>, mio::MobilityEdge<ScalarType>>
+create_graph(int num_nodes, int total_population, ScalarType cont_freq)
 {
     // Create a graph for the metapopulation simulation
-    mio::Graph<mio::SimulationNode<double, FeedbackSim>, mio::MobilityEdge<double>> g;
+    mio::Graph<mio::SimulationNode<ScalarType, FeedbackSim>, mio::MobilityEdge<ScalarType>> g;
 
     // Create models and add nodes to the graph
     for (int i = 0; i < num_nodes; ++i) {
-        mio::osecir::Model<double> model(1);
+        mio::osecir::Model<ScalarType> model(1);
         initialize_model(model, cont_freq);
 
         // Set initial populations (infection starts in the first node)
@@ -112,7 +113,7 @@ create_graph(int num_nodes, int total_population, double cont_freq)
             model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}] = total_population;
         }
         // The function apply_constraints() ensures that all parameters are within their defined bounds.
-        // Note that negative values are set to zero instead of stopping the simulation.        
+        // Note that negative values are set to zero instead of stopping the simulation.
         model.apply_constraints();
 
         // Determine the index for the ICU state (InfectedCritical) for the feedback mechanism
@@ -120,7 +121,7 @@ create_graph(int num_nodes, int total_population, double cont_freq)
             model.populations.get_flat_index({mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical})};
 
         // Create feedback simulation
-        auto feedback_sim = FeedbackSim(mio::Simulation<double, mio::osecir::Model<double>>(model), icu_index);
+        auto feedback_sim = FeedbackSim(mio::Simulation<ScalarType, mio::osecir::Model<ScalarType>>(model), icu_index);
         initialize_feedback(feedback_sim);
 
         // Node-ID-Logic: 1001-1005, 2001-2005, ...
@@ -153,7 +154,7 @@ int main()
     const auto tmax            = 10.;
     const auto dt              = 0.5;
     const int total_population = 1000;
-    const double cont_freq     = 2.7;
+    const ScalarType cont_freq = 2.7;
     const int num_nodes        = 10;
 
     // Create the graph
@@ -161,7 +162,7 @@ int main()
 
     // Create and run the simulation
     using Graph = decltype(g);
-    auto sim    = mio::FeedbackGraphSimulation<double, Graph>(std::move(g), t0, dt);
+    auto sim    = mio::FeedbackGraphSimulation<ScalarType, Graph>(std::move(g), t0, dt);
     sim.advance(tmax);
 
     // The output shows the compartments sizes for a node without any initial infections.

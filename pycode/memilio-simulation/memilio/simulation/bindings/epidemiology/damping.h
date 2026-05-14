@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
@@ -49,7 +49,10 @@ void bind_damping_members(DampingClass& damping_class)
              }),
              pybind11::arg("coeffs"), pybind11::arg("t"), pybind11::arg("level") = 0, pybind11::arg("type") = 0)
         .def_property(
-            "coeffs", [](const Damping& self) -> const auto& { return self.get_coeffs(); },
+            "coeffs",
+            [](const Damping& self) -> const auto& {
+                return self.get_coeffs();
+            },
             [](Damping& self, const Eigen::Ref<const Matrix>& v) {
                 self.get_coeffs() = v;
             },

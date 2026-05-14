@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2025 MEmilio
+# Copyright (C) 2020-2026 MEmilio
 #
 # Authors: Henrik Zunker, Maximilian Betz
 #
@@ -32,10 +32,14 @@ class Test_DynamicNPIs(unittest.TestCase):
         """ """
         model = Model(0)
         dynamic_npis = model.parameters.DynamicNPIsInfectedSymptoms
-        dynamic_npis.interval = 3.0
+        dynamic_npis.implementation_delay = 3.0
+        dynamic_npis.directive_begin = 1.0
+        dynamic_npis.directive_end = 10.0
         dynamic_npis.duration = 14.0
         dynamic_npis.base_value = 100000
-        self.assertEqual(dynamic_npis.interval, 3.0)
+        self.assertEqual(dynamic_npis.implementation_delay, 3.0)
+        self.assertEqual(dynamic_npis.directive_begin, 1.0)
+        self.assertEqual(dynamic_npis.directive_end, 10.0)
         self.assertEqual(dynamic_npis.duration, 14.0)
         self.assertEqual(dynamic_npis.base_value, 100000)
         self.assertEqual(len(dynamic_npis.threshold), 0)

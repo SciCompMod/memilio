@@ -7,13 +7,14 @@ name = "memilio-plot"
 version = "1.0.0"
 description = "Part of MEmilio project, plots data to maps or visualizes simulation curves."
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = { text = "Apache-2.0" }
 authors = [{ name = "MEmilio Team" }]
 maintainers = [
   { email = "martin.kuehn@dlr.de" }
 ]
 dependencies = [
+  "setuptools>=68",
   "pandas>=1.2.2",
   "matplotlib",
   # smaller numpy versions cause a security issue, 1.25 does not work together with pyfakefs
@@ -36,9 +37,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "coverage>=7.0.1",
-  # pylint 2.16 creates problem with wrapt package version
-  "pylint>=2.13.0,<2.16",
-  "pylint_json2html==0.4.0"
+  "pylint>=3.0",
+  "pylint_json2html==0.5.0"
 ]
 
 [project.urls]

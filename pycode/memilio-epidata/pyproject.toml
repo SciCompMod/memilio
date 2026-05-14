@@ -7,13 +7,14 @@ name = "memilio-epidata"
 version = "1.0.0"
 description = "Part of MEmilio project, reads epidemiological data from different official and unofficial sources."
 readme = "README.rst"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = { text = "Apache-2.0" }
 authors = [{ name = "MEmilio Team" }]
 maintainers = [
   { email = "martin.kuehn@dlr.de" }
 ]
 dependencies = [
+  "packaging",
   "pandas>=2.0.0",
   "pyarrow",
   "matplotlib",
@@ -26,7 +27,7 @@ dependencies = [
   "requests",
   "pyxlsb",
   "wget",
-  "twill==3.1",
+  "twill",
   "PyQt6-sip<13.9",
   "PyQt6",
   "python-calamine",
@@ -35,15 +36,14 @@ dependencies = [
   # first support of python 3.11 is 4.6
   # 5.3.4 has conflicts with openpyxl
   # 5.3.3 broken
-  "pyfakefs>=4.6,<5.3.3"
+  "pyfakefs>=4.6,!=5.3.3,!=5.3.4"
 ]
 
 [project.optional-dependencies]
 dev = [
   "coverage>=7.0.1",
-  # pylint 2.16 creates problem with wrapt package version
-  "pylint>=2.13.0,<2.16",
-  "pylint_json2html==0.4.0"
+  "pylint>=3.0",
+  "pylint_json2html==0.5.0"
   ]
 
 [project.scripts]

@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Nils Wassmuth, Rene Schmieding, Martin J. Kuehn
 *
@@ -136,8 +136,8 @@ struct Seasonality {
 };
 
 template <typename FP>
-using ParametersBase =
-    ParameterSet<TransmissionProbabilityOnContact<FP>, TimeInfected<FP>, ContactPatterns<FP>, TimeImmune<FP>, Seasonality<FP>, StartDay<FP>>;
+using ParametersBase = ParameterSet<TransmissionProbabilityOnContact<FP>, TimeInfected<FP>, ContactPatterns<FP>,
+                                    TimeImmune<FP>, Seasonality<FP>, StartDay<FP>>;
 
 /**
  * @brief Parameters of SIR model.
@@ -230,9 +230,8 @@ public:
         }
         if (this->template get<TransmissionProbabilityOnContact<FP>>() < 0.0 ||
             this->template get<TransmissionProbabilityOnContact<FP>>() > 1.0) {
-            log_error(
-                "Constraint check: Parameter TransmissionProbabilityOnContact {} smaller {} or greater {}",
-                this->template get<TransmissionProbabilityOnContact<FP>>(), 0.0, 1.0);
+            log_error("Constraint check: Parameter TransmissionProbabilityOnContact {} smaller {} or greater {}",
+                      this->template get<TransmissionProbabilityOnContact<FP>>(), 0.0, 1.0);
             return true;
         }
         return false;

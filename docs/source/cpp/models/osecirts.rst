@@ -14,13 +14,13 @@ The complete system of equations can be found in the supplementary material: `do
 
 Below is an overview of the model architecture and its compartments.
 
-.. image:: https://github.com/SciCompMod/memilio/assets/69154294/6dec331f-bd91-410f-be5e-c8cf6eb0572b
+.. image:: https://martinkuehn.eu/research/images/secir_waning.png
    :alt: SECIRTS_model
 
 Infection States
 ----------------
 
-The model extends the ODE-SECIRVVS model by adding temporary immunity states and flow paths for waning immunity. It contains the following list of **InfectionState**\s:
+The model extends the ODE-SECIRVVS model by adding temporary immunity states and flow paths for waning immunity. It contains the following list of ``InfectionState``\s:
 
 .. code-block:: RST
 
@@ -66,9 +66,9 @@ The model extends the ODE-SECIRVVS model by adding temporary immunity states and
 Infection State Transitions
 ---------------------------
 
-The ODE-SECIRTS model is implemented as a **FlowModel**, which defines the derivatives of each flow between compartments. A key difference from the ODE-SECIRVVS model is that vaccinations in the ODE-SECIRTS model are implemented as flows within the ODE system rather than discrete events.
+The ODE-SECIRTS model is implemented as a ``FlowModel``, which defines the derivatives of each flow between compartments. A key difference from the ODE-SECIRVVS model is that vaccinations in the ODE-SECIRTS model are implemented as flows within the ODE system rather than discrete events.
 
-The model has the following state trnsitions:
+The model has the following state transitions:
 
 .. code-block:: RST
 
@@ -115,7 +115,7 @@ Sociodemographic Stratification
 -------------------------------
 
 Like the other ODE-SECIR models, the ODE-SECIRTS model can be stratified by one sociodemographic dimension, typically age groups. This stratification is important for modeling different vaccination rates, symptom severities, mortality risks, and immunity waning rates across age groups. The dimension is denoted 
-**AgeGroup** but can also be used for other interpretations.
+``AgeGroup`` but can also be used for other interpretations.
 For stratifications with two or more dimensions, see :doc:`Model Creation <../ode_creation>`.
 
 Parameters
@@ -190,6 +190,10 @@ The model includes all parameters from the ODE-SECIRVVS model as well as additio
    * - :math:`\mu_{I_{Sev}}^{I_{Cr}}`
      - ``CriticalPerSevere``
      - Probability of transition from compartment InfectedSevere to InfectedCritical.
+   * - :math:`\mu_{I_{Sev}}^{D}`
+     - ``DeathsPerSevere``
+     - Probability of dying when in compartment InfectedSevere, independent of ICU capacity. When ICU capacity is
+       exceeded, additional deaths from InfectedSevere may occur through the ICU overflow mechanism.
    * - :math:`\mu_{I_{Cr}}^{D}`
      - ``DeathsPerCritical``
      - Probability of dying when located in compartment InfectedCritical.
@@ -230,7 +234,7 @@ The model includes all parameters from the ODE-SECIRVVS model as well as additio
 Initial conditions
 ------------------
 
-The initial conditions of the model are represented by the class **Populations** which defines the number of individuals in each sociodemographic group and **InfectionState**. Before running a simulation, the initial values for each compartment across all immunity levels have to be set. This can be done via:
+The initial conditions of the model are represented by the class ``Populations`` which defines the number of individuals in each sociodemographic group and ``InfectionState``. Before running a simulation, the initial values for each compartment across all immunity levels have to be set. This can be done via:
 
 .. code-block:: cpp
 
@@ -273,17 +277,17 @@ After setting the initial populations, the daily vaccination parameters, which a
 
     const size_t daily_vaccinations = 10;
     const size_t num_days = 300;
-    model.parameters.get<mio::osecirts::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(num_days));
-    model.parameters.get<mio::osecirts::DailyFullVaccinations<double>>().resize(mio::SimulationDay(num_days));
-    model.parameters.get<mio::osecirts::DailyBoosterVaccinations<double>>().resize(mio::SimulationDay(num_days));
+    model.parameters.get<mio::osecirts::DailyPartialVaccinations<ScalarType>>().resize(mio::SimulationDay(num_days));
+    model.parameters.get<mio::osecirts::DailyFullVaccinations<ScalarType>>().resize(mio::SimulationDay(num_days));
+    model.parameters.get<mio::osecirts::DailyBoosterVaccinations<ScalarType>>().resize(mio::SimulationDay(num_days));
     for (size_t i = 0; i < num_days; ++i) {
         for (mio::AgeGroup j = 0; j < nb_groups; ++j) {
-            auto num_vaccinations = static_cast<double>(i * daily_vaccinations);
-            model.parameters.get<mio::osecirts::DailyPartialVaccinations<double>>()[{j, mio::SimulationDay(i)}] =
+            auto num_vaccinations = static_cast<ScalarType>(i * daily_vaccinations);
+            model.parameters.get<mio::osecirts::DailyPartialVaccinations<ScalarType>>()[{j, mio::SimulationDay(i)}] =
                 num_vaccinations;
-            model.parameters.get<mio::osecirts::DailyFullVaccinations<double>>()[{j, mio::SimulationDay(i)}] =
+            model.parameters.get<mio::osecirts::DailyFullVaccinations<ScalarType>>()[{j, mio::SimulationDay(i)}] =
                 num_vaccinations;
-            model.parameters.get<mio::osecirts::DailyBoosterVaccinations<double>>()[{j, mio::SimulationDay(i)}] =
+            model.parameters.get<mio::osecirts::DailyBoosterVaccinations<ScalarType>>()[{j, mio::SimulationDay(i)}] =
                 num_vaccinations;
         }
     }
@@ -298,7 +302,7 @@ Basic dampings can be added to the contact matrix as follows:
 .. code-block:: cpp
 
     // Create a contact matrix with baseline contact rates
-    auto& contacts = model.parameters.get<mio::osecirts::ContactPatterns<double>>();
+    auto& contacts = model.parameters.get<mio::osecirts::ContactPatterns<ScalarType>>();
     auto& contact_matrix = contacts.get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(0.5);
     contact_matrix[0].get_baseline().diagonal().setConstant(5.0);
@@ -311,13 +315,13 @@ The model also supports dynamic NPIs based on epidemic thresholds:
 .. code-block:: cpp
     
     // Set threshold-based triggers for NPIs
-    auto& dynamic_npis = model.parameters.get<mio::osecirts::DynamicNPIsInfectedSymptoms<double>>();
-    dynamic_npis.set_interval(mio::SimulationTime(3.0));  // Check every 3 days
+    auto& dynamic_npis = model.parameters.get<mio::osecirts::DynamicNPIsInfectedSymptoms<ScalarType>>();
+    dynamic_npis.set_implementation_delay(mio::SimulationTime(0.0));  // Simulate no implementation delay
     dynamic_npis.set_duration(mio::SimulationTime(14.0)); // Apply for 14 days
     dynamic_npis.set_base_value(100'000);                // Per 100,000 population
     dynamic_npis.set_threshold(200.0, dampings);         // Trigger at 200 cases per 100,000
 
-For more complex scenarios, such as real-world venue closures or lockdown modeling, detailed NPIs with location-specific dampings can be implemented. For further details, see the documentation of the :doc:`ODE-SECIR model <cpp/osecir>`
+For more complex scenarios, such as real-world venue closures or lockdown modeling, detailed NPIs with location-specific dampings can be implemented. For further details, see the documentation of the :doc:`ODE-SECIR model <osecir>`
 
 Simulation
 ----------
@@ -331,12 +335,12 @@ Standard simulation:
 
 .. code-block:: cpp
 
-    double t0 = 0;       // Start time
-    double tmax = 50;    // End time
-    double dt = 0.1;     // Time step
+    ScalarType t0 = 0;       // Start time
+    ScalarType tmax = 50;    // End time
+    ScalarType dt = 0.1;     // Time step
     
     // Run a standard simulation
-    mio::TimeSeries<double> result = mio::osecirts::simulate<double>(t0, tmax, dt, model);
+    mio::TimeSeries<ScalarType> result = mio::osecirts::simulate<ScalarType>(t0, tmax, dt, model);
 
 During simulation, the model handles several special processes:
 
@@ -354,12 +358,12 @@ For both simulation types, you can also specify a custom integrator:
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
     
-    mio::TimeSeries<double> result = mio::osecirts::simulate(t0, tmax, dt, model, std::move(integrator));
+    mio::TimeSeries<ScalarType> result = mio::osecirts::simulate(t0, tmax, dt, model, std::move(integrator));
 
 Output
 ------
 
-The output of the simulation is a `mio::TimeSeries` object containing the sizes of each compartment at each time point. For a standard simulation, you can access the results as follows:
+The output of the simulation is a ``TimeSeries`` object containing the sizes of each compartment at each time point. For a standard simulation, you can access the results as follows:
 
 .. code-block:: cpp
 
@@ -368,7 +372,7 @@ The output of the simulation is a `mio::TimeSeries` object containing the sizes 
     
     // Access data at a specific time point
     Eigen::VectorXd value_at_time_i = result.get_value(i);
-    double time_i = result.get_time(i);
+    ScalarType time_i = result.get_time(i);
     
     // Access the last time point
     Eigen::VectorXd last_value = result.get_last_value();
@@ -380,7 +384,7 @@ You can print the simulation results as a formatted table:
     // Print results to console with default formatting
     result.print_table();
 
-The order of the compartments follows the definition in the `InfectionState` enum.
+The order of the compartments follows the definition in the ``InfectionState`` enum.
 
 Additionally, you can export the results to a CSV file for further analysis or visualization:
 
@@ -401,7 +405,5 @@ Examples
 To get started with the ODE-SECIRTS model, check out the code example in the MEmilio repository:
 `examples/ode_secirts.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_secirts.cpp>`_.
 
-Overview of the ``osecirts`` namespace:
------------------------------------------
 
-.. doxygennamespace:: mio::osecirts
+The code documentation for the model can be found at :CPP-API:`mio::osecirts` .

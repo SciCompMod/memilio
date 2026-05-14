@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Wadim Koslow
 *
@@ -254,9 +254,8 @@ TEST(TestSaveParameters, read_graph_without_edges)
 
     std::vector<mio::osecir::Model<double>> models = {model, model};
     std::vector<int> ids                           = {0, 1};
-    auto graph_no_edges =
-        mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>(ids, models);
-    auto write_status = mio::write_graph(graph_no_edges, tmp_results_dir);
+    auto graph_no_edges = mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>(ids, models);
+    auto write_status   = mio::write_graph(graph_no_edges, tmp_results_dir);
     ASSERT_THAT(print_wrap(write_status), IsSuccess());
 
     auto read_graph =
@@ -838,7 +837,7 @@ TEST(TestSaveParameters, ExtrapolateRKI)
 
     TempFileRegister file_register;
     auto results_dir = file_register.get_unique_path("ExtrapolateRKI-%%%%-%%%%");
-    boost::filesystem::create_directory(results_dir);
+    std::filesystem::create_directory(results_dir);
     auto extrapolate_result = mio::osecir::export_input_data_county_timeseries(
         model, results_dir, county, date, scaling_factor_inf, scaling_factor_icu, 1,
         mio::path_join(TEST_DATA_DIR, "county_divi_ma7.json"),

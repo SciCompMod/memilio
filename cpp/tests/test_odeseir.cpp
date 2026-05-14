@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn, Martin Siggel, Henrik Zunker
 *
@@ -432,9 +432,9 @@ TEST(TestSeir, Simulation)
     contact_matrix[0].get_baseline().setConstant(1);
 
     model.check_constraints();
- 
+
     std::unique_ptr<mio::OdeIntegratorCore<double>> integrator = std::make_unique<mio::EulerIntegratorCore<double>>();
-    auto sim = simulate(t0, tmax, dt, model, std::move(integrator));
+    auto sim                                                   = simulate(t0, tmax, dt, model, std::move(integrator));
 
     EXPECT_EQ(sim.get_num_time_points(), 2);
 

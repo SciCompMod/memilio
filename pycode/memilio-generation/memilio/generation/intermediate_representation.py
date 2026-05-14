@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2025 MEmilio
+# Copyright (C) 2020-2026 MEmilio
 #
 # Authors: Maximilian Betz
 #
@@ -77,7 +77,7 @@ class IntermediateRepresentation:
         else:
             raise IndexError("model_base is empty. No base classes found.")
 
-    def check_complete_data(self: Self, optional: Dict
+    def check_complete_data(self: Self, optional: dict
                             [str, Union[str, bool]]) -> None:
         """Check for missing data in the IntermediateRepresentation.
         Called by the Scanner as last step of the data extraction.

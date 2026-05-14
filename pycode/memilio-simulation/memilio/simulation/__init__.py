@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2025 MEmilio
+# Copyright (C) 2020-2026 MEmilio
 #
 # Authors: Daniel Abele
 #
@@ -39,6 +39,9 @@ def __getattr__(attr):
     elif attr == "oseir":
         import memilio.simulation.oseir as oseir
         return oseir
+    elif attr == "oseir_metapop":
+        import memilio.simulation.oseir_metapop as oseir_metapop
+        return oseir_metapop
     elif attr == "oseirdb":
         import memilio.simulation.oseirdb as oseirdb
         return oseirdb

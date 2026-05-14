@@ -15,7 +15,7 @@ An overview of nonstandard but often used data types can be found under :doc:`da
 Infection states
 ----------------
 
-Every model contains a list of **InfectionState**\s that define particular features of the subpopulations in the particular state.
+Every model contains a list of ``InfectionState``\s that define particular features of the subpopulations in the particular state.
 
 .. code-block:: RST
 
@@ -27,8 +27,8 @@ Every model contains a list of **InfectionState**\s that define particular featu
 Infection state transitions
 ---------------------------
 
-Additionally, we define **InfectionTransition**\s that define the possible transitions between the **InfectionState**\s.
-When solving the model, we obtain results for the **InfectionTransition**\s as well.
+Additionally, we define ``InfectionTransition``\s that define the possible transitions between the ``InfectionState``\s.
+When solving the model, we obtain results for the ``InfectionTransition``\s as well.
 
 .. code-block:: RST
 
@@ -40,8 +40,7 @@ When solving the model, we obtain results for the **InfectionTransition**\s as w
 Sociodemographic stratification
 -------------------------------
 
-For the IDE-SECIR model, the population can also be stratified by one sociodemographic dimension. This dimension is denoted 
-**AgeGroup** but can also be used for other interpretations. 
+For the IDE-SECIR model, the population can also be stratified by one sociodemographic dimension. This dimension is denoted ``AgeGroup`` but can also be used for other interpretations. 
 
 Parameters
 ----------
@@ -51,11 +50,11 @@ We use different types of parameters to represent epidemiological parameters suc
 compartment or the contact rates between different sociodemographic groups. Most model parameters are constants that describe 
 pathogen-specific characteristics (possibly resolved by sociodemographic groups) and are represented by a vector with a
 value for each group. To model different contact rates between different sociodemographic groups, we
-use a parameter denoted **ContactPatterns** of type **UncertainContactMatrix**. The **UncertainContactMatrix** contains an
+use a parameter denoted ``ContactPatterns`` of type ``UncertainContactMatrix``. The ``UncertainContactMatrix`` contains an
 arbitrary large set of contact matrices which can represent the different contact locations in the model like 
 schools, workplaces, or homes. The matrices can be loaded or stored in the particular example.
 
-In the **ContactPatterns**, each matrix element stores baseline contact rates :math:`c_{i,j}` between sociodemographic 
+In the ``ContactPatterns``, each matrix element stores baseline contact rates :math:`c_{i,j}` between sociodemographic 
 group :math:`i` and group :math:`j`. The dimension of the matrix is automatically defined by the model initiation and it is reduced 
 to one value if no stratification is used. The values can be adjusted during the simulation, e.g., through implementing 
 nonpharmaceutical interventions, see the section on :ref:`Nonpharmaceutical Interventions IDE`. 
@@ -74,10 +73,10 @@ Parameters can get accessed via ``model.parameters.get<Param<ScalarType>>()`` an
 Initial conditions
 ------------------
 
-The initial conditions consist of a **TimeSeries** that contains the flows per time step for some time interval before 
+The initial conditions consist of a time series that contains the flows per time step for some time interval before 
 the simulation start. The length of this time interval depends on the chosen transition distributions and takes into 
 account how long there is a relevant fraction of individuals remaining in the compartments. For more information, see 
-the documentation of **StateAgeFunction**. Note that the last time point of the initial **TimeSeries** determines the 
+the documentation of ``StateAgeFunction``. Note that the last time point of the initial time series determines the 
 start time of the simulation. 
 
 
@@ -86,9 +85,9 @@ Nonpharmaceutical interventions
 -------------------------------
 
 Contact rates can be adjusted during the simulation to model nonpharmaceutical interventions (NPIs) such as lockdowns, 
-school closures, or social distancing. This is done by adding **Damping**\s to the **ContactPatterns** of the model. A 
-**Damping** is defined by a time point at which the intervention starts and a matrix of the same size as the 
-**ContactMatrix**. While in many cases, the reduction matrix is given by a constant matrix with factor :math:`r`, also 
+school closures, or social distancing. This is done by adding ``Damping``\s to the ``ContactPatterns`` of the model. A 
+``Damping`` is defined by a time point at which the intervention starts and a matrix of the same size as the 
+``ContactMatrix``. While in many cases, the reduction matrix is given by a constant matrix with factor :math:`r`, also 
 group-specific reductions are possible through setting particular rows or columns differently. With a constant 
 reduction factor :math:`r`, the reduced contact rate is :math:`(1-r) * c_{i,j}`.
 
@@ -117,7 +116,7 @@ uses a nonstandard numerical scheme to solve the IDEs that is implemented in MEm
 Output
 ------
 
-The output of the **Simulation** ``sim`` is a ``TimeSeries`` containing the sizes of each compartment at each time point 
+The output of the simulation ``sim`` is a ``TimeSeries`` containing the sizes of each compartment at each time point 
 and a ``TimeSeries`` containing the flows within a time step for each time point. A simple table can be printed using the 
 ``print_table()`` function of the ``TimeSeries`` class. The compartment sizes can be printed with 
 ``sim.get_result().print_table()`` and the flows with ``sim.get_transitions().print_table()``. 

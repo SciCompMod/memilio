@@ -7,6 +7,7 @@ Through pymio the data simulator can be incorporated into the learning process e
 and even further enable online training, i.e. generating training data on the spot during the learning phase.
 
 Most of the important includes for BayesFlow:
+
 .. code-block:: python
 
     import numpy as np
@@ -35,6 +36,7 @@ Most of the important includes for BayesFlow:
 
 
 Define the simulator function with the MEmilio python model. We will use a simple ODE SIR model for this example.
+
 .. code-block:: python
 
     import memilio.simulation as mio
@@ -117,8 +119,6 @@ Define the simulator function with the MEmilio python model. We will use a simpl
         I_data = np.clip(I_data, 10 ** -14, N)
         return dict(cases=np.stack((I_data, )).T)
 
-.. class:: details
-    test
 
 .. code-block:: python
 
@@ -155,6 +155,7 @@ Define the simulator function with the MEmilio python model. We will use a simpl
 
 
 Load data, first need to download them using epidata
+
 .. code-block:: python
     
     def load_observation_data(date_data_begin: datetime.date, T: int, data_path: str) -> np.ndarray:

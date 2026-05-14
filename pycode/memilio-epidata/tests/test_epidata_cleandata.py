@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2025 MEmilio
+# Copyright (C) 2020-2026 MEmilio
 #
 # Authors:
 #
@@ -168,13 +168,13 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
             elif country == "Spain":
                 self.assertEqual(len(os.listdir(pydata_dir)), 2)
-                self.assertEqual(os.listdir(pydata_dir), [
-                                 "b_jh.json", "b_jh.h5"])
+                self.assertCountEqual(os.listdir(pydata_dir), [
+                                      "b_jh.json", "b_jh.h5"])
 
             elif country == "France":
                 self.assertEqual(len(os.listdir(pydata_dir)), 2)
-                self.assertEqual(os.listdir(pydata_dir), [
-                                 "c_jh.json", "c_jh.h5"])
+                self.assertCountEqual(os.listdir(pydata_dir), [
+                                      "c_jh.json", "c_jh.h5"])
 
             elif country == "Global":
                 # For Global, the expected files include its own file(s)
@@ -222,7 +222,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         # Should delete everything
         self.assertEqual(len(os.listdir(self.path)), 3)
-        self.assertEqual(
+        self.assertCountEqual(
             os.listdir(self.path),
             ["China", "ImportantDir", "wichtig.py"])
         self.assertEqual(len(os.listdir(dir_path)), 1)
@@ -267,12 +267,12 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
             elif dir == "Spain":
                 self.assertEqual(len(os.listdir(dir_path)), 2)
-                self.assertEqual(
+                self.assertCountEqual(
                     os.listdir(dir_path),
                     ["b_jh.json", "b_jh.h5"])
             elif dir == 'Global':
                 self.assertEqual(len(os.listdir(dir_path)), 4)
-                self.assertEqual(
+                self.assertCountEqual(
                     os.listdir(dir_path),
                     ["all_jh.json", "all_jh.h5", "FullJohnHopkins.json",
                      "FullJohnHopkins.h5"])
@@ -318,12 +318,12 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
             elif dir == "Spain":
                 self.assertEqual(len(os.listdir(dir_path)), 2)
-                self.assertEqual(
+                self.assertCountEqual(
                     os.listdir(dir_path),
                     ["b_jh.json", "b_jh.h5"])
             elif dir == 'Global':
                 self.assertEqual(len(os.listdir(dir_path)), 4)
-                self.assertEqual(
+                self.assertCountEqual(
                     os.listdir(dir_path),
                     ["all_jh.json", "all_jh.h5", "FullJohnHopkins.json",
                      "FullJohnHopkins.h5"])
@@ -371,7 +371,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                                  sorted(["c_jh.json", "c_jh.h5"]))
             elif country == 'Global':
                 self.assertEqual(len(os.listdir(country_pydata)), 4)
-                self.assertEqual(
+                self.assertCountEqual(
                     os.listdir(country_pydata),
                     ["all_jh.json", "all_jh.h5", "FullJohnHopkins.json",
                      "FullJohnHopkins.h5"])
@@ -418,12 +418,12 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
             elif dir == "Spain":
                 self.assertEqual(len(os.listdir(dir_path)), 2)
-                self.assertEqual(
+                self.assertCountEqual(
                     os.listdir(dir_path),
                     ["b_jh.json", "b_jh.h5"])
             elif dir == 'Global':
                 self.assertEqual(len(os.listdir(dir_path)), 4)
-                self.assertEqual(
+                self.assertCountEqual(
                     os.listdir(dir_path),
                     ["all_jh.json", "all_jh.h5", "FullJohnHopkins.json",
                      "FullJohnHopkins.h5"])
@@ -470,16 +470,16 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
             elif dir == "Spain":
                 self.assertEqual(len(os.listdir(dir_path)), 2)
-                self.assertEqual(
+                self.assertCountEqual(
                     os.listdir(dir_path),
                     ["b_jh.json", "b_jh.h5"])
             elif dir == "France":
-                self.assertEqual(
+                self.assertCountEqual(
                     os.listdir(dir_path),
                     ["c_jh.json", "c_jh.h5"])
             elif dir == 'Global':
                 self.assertEqual(len(os.listdir(dir_path)), 4)
-                self.assertEqual(
+                self.assertCountEqual(
                     os.listdir(dir_path),
                     ["all_jh.json", "all_jh.h5", "FullJohnHopkins.json",
                      "FullJohnHopkins.h5"])
@@ -523,12 +523,12 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
             if dir == "Spain":
                 self.assertEqual(len(os.listdir(dir_path)), 2)
-                self.assertEqual(
+                self.assertCountEqual(
                     os.listdir(dir_path),
                     ["b_jh.json", "b_jh.h5"])
             elif dir == 'Global':
                 self.assertEqual(len(os.listdir(dir_path)), 4)
-                self.assertEqual(
+                self.assertCountEqual(
                     os.listdir(dir_path),
                     ["all_jh.json", "all_jh.h5", "FullJohnHopkins.json",
                      "FullJohnHopkins.h5"])
@@ -576,12 +576,12 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
             elif dir == "Spain":
                 self.assertEqual(len(os.listdir(dir_path)), 2)
-                self.assertEqual(
+                self.assertCountEqual(
                     os.listdir(dir_path),
                     ["b_jh.json", "b_jh.h5"])
             elif dir == 'Global':
                 self.assertEqual(len(os.listdir(dir_path)), 4)
-                self.assertEqual(
+                self.assertCountEqual(
                     os.listdir(dir_path),
                     ["all_jh.json", "all_jh.h5", "FullJohnHopkins.json",
                      "FullJohnHopkins.h5"])
@@ -602,8 +602,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         dir2 = os.listdir(self.path)
         dir2a = os.listdir(os.path.join(self.path, 'Germany/'))
 
-        self.assertEqual(dir1, dir2)
-        self.assertEqual(dir1a, dir2a)
+        self.assertCountEqual(dir1, dir2)
+        self.assertCountEqual(dir1a, dir2a)
 
     def test_clean_data_jh(self):
         """ """
@@ -714,8 +714,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         self.assertEqual(len(os.listdir(self.path)), 1)
 
-        self.assertEqual(os.listdir(self.path),
-                         dir_list)
+        self.assertCountEqual(os.listdir(self.path),
+                              dir_list)
 
         for dir in dir_list:
             dir_path = os.path.join(self.path, dir, 'pydata')
@@ -770,7 +770,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                       False, False, False, False, True, False, False, self.path)
 
         self.assertEqual(len(os.listdir(self.path)), 2)
-        self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
+        self.assertCountEqual(os.listdir(self.path),
+                              ["ImportantDir", "wichtig.py"])
 
     def test_file_not_found_population(self):
         """ """
@@ -787,7 +788,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                       False, False, False, False, True, False, False, self.path)
 
         self.assertEqual(len(os.listdir(self.path)), 2)
-        self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
+        self.assertCountEqual(os.listdir(self.path),
+                              ["ImportantDir", "wichtig.py"])
 
     def test_file_not_found_jh(self):
         """ """
@@ -804,7 +806,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                       False, False, False, False, True, False, False, self.path)
 
         self.assertEqual(len(os.listdir(self.path)), 2)
-        self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
+        self.assertCountEqual(os.listdir(self.path),
+                              ["ImportantDir", "wichtig.py"])
 
     def test_file_not_found_divi(self):
         """ """
@@ -821,7 +824,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                       False, False, False, False, True, False, False, self.path)
 
         self.assertEqual(len(os.listdir(self.path)), 2)
-        self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
+        self.assertCountEqual(os.listdir(self.path),
+                              ["ImportantDir", "wichtig.py"])
 
     def test_file_not_found_vacc(self):
         """ """
@@ -838,7 +842,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                       True, False, False, False, True, False, False, self.path)
 
         self.assertEqual(len(os.listdir(self.path)), 2)
-        self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
+        self.assertCountEqual(os.listdir(self.path),
+                              ["ImportantDir", "wichtig.py"])
 
     def test_file_not_found_commuter(self):
         """ """
@@ -855,7 +860,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                       False, True, False, False, True, False, False, self.path)
 
         self.assertEqual(len(os.listdir(self.path)), 2)
-        self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
+        self.assertCountEqual(os.listdir(self.path),
+                              ["ImportantDir", "wichtig.py"])
 
     def test_file_not_found_testing(self):
         """ """
@@ -872,7 +878,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                       False, False, True, False, True, False, False, self.path)
 
         self.assertEqual(len(os.listdir(self.path)), 2)
-        self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
+        self.assertCountEqual(os.listdir(self.path),
+                              ["ImportantDir", "wichtig.py"])
 
     def test_no_files(self):
         """ """
@@ -1129,13 +1136,13 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
             elif dir == "Spain":
                 self.assertEqual(len(os.listdir(dir_path)), 2)
-                self.assertEqual(
+                self.assertCountEqual(
                     os.listdir(dir_path),
                     ["b_jh.json", "b_jh.h5"])
 
             elif dir == "France":
                 self.assertEqual(len(os.listdir(dir_path)), 2)
-                self.assertEqual(
+                self.assertCountEqual(
                     os.listdir(dir_path),
                     ["c_jh.json", "c_jh.h5"])
 

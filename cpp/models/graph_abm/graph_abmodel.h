@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Julia Bicker
 *
@@ -17,7 +17,6 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-
 #ifndef MIO_ABM_GRAPH_ABMODEL_H
 #define MIO_ABM_GRAPH_ABMODEL_H
 
@@ -26,19 +25,17 @@
 #include "abm/person_id.h"
 #include "abm/time.h"
 #include "abm/location_id.h"
-#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
-#include "memilio/utils/mioomp.h"
 #include "abm/mobility_rules.h"
 #include "abm/mobility_rules.h"
-#include <cstddef>
 #include <cstdint>
-#include <list>
 #include <vector>
 
 namespace mio
 {
-using namespace abm;
+namespace abm
+{
+
 class GraphABModel : public abm::Model
 {
     using Base = Model;
@@ -94,7 +91,7 @@ private:
         for (uint32_t person_index = 0; person_index < num_persons; ++person_index) {
             if (Base::m_activeness_statuses[person_index]) {
                 Person& person    = Base::m_persons[person_index];
-                auto personal_rng = PersonalRandomNumberGenerator(person);
+                auto personal_rng = PersonalRandomNumberGenerator(Base::get_rng(), person);
 
                 auto try_mobility_rule = [&](auto rule) -> bool {
                     //run mobility rule and check if change of location can actually happen
@@ -160,7 +157,7 @@ private:
             auto& trip        = Base::m_trip_list.get_next_trip();
             auto& person      = get_person(trip.person_id);
             auto person_index = Base::get_person_index(trip.person_id);
-            auto personal_rng = PersonalRandomNumberGenerator(person);
+            auto personal_rng = PersonalRandomNumberGenerator(Base::get_rng(), person);
             // skip the trip if the person is in quarantine or is dead
             if (person.is_in_quarantine(t, parameters) || person.get_infection_state(t) == InfectionState::Dead) {
                 continue;
@@ -204,6 +201,8 @@ private:
 
     std::vector<size_t> m_person_buffer; ///< List with indices of persons that are subject to move to another node.
 };
+
+} // namespace abm
 } // namespace mio
 
 #endif //MIO_ABM_GRAPH_ABMODEL_H

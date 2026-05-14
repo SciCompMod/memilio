@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen, David Kerkmann
 *
@@ -261,9 +261,6 @@ public:
     }
 
 private:
-    friend DefaultFactory<Location>;
-    Location() = default;
-
     LocationType m_type; ///< Type of the Location.
     LocationId m_id; ///< Unique identifier for the Location in the Model owning it.
     LocalInfectionParameters m_parameters; ///< Infection parameters for the Location.
@@ -273,8 +270,16 @@ private:
         m_geographical_location; ///< Geographical location (longitude and latitude) of the Location.
     int m_model_id; ///< Model id the location is in. Only used for ABM graph model or hybrid graph model.
 };
-
 } // namespace abm
+
+/// @brief Creates an instance of abm::Location for default serialization.
+template <>
+struct DefaultFactory<abm::Location> {
+    static abm::Location create()
+    {
+        return abm::Location(abm::LocationType::Count, abm::LocationId::invalid_id());
+    }
+};
 } // namespace mio
 
 #endif

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Rene Schmieding, Henrik Zunker 
 *
@@ -119,7 +119,8 @@ TEST(TestFlows, FlowSimulation)
 
     mio::set_log_level(mio::LogLevel::off); // Suppress log output of check_constraints and the Simulation.
     model.check_constraints();
-    auto seir = mio::simulate_flows<double, mio::oseir::Model<double>>(t0, tmax, dt, model, std::make_unique<mio::DefaultIntegratorCore<double>>());
+    auto seir = mio::simulate_flows<double, mio::oseir::Model<double>>(
+        t0, tmax, dt, model, std::make_unique<mio::DefaultIntegratorCore<double>>());
     mio::set_log_level(mio::LogLevel::warn);
 
     // verify results (computed using flows)

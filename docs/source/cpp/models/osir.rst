@@ -23,7 +23,7 @@ The infection states and the transitions are visualized in the following image.
 Infection States 
 ----------------
 
-The model contains the following list of **InfectionState**\s:
+The model contains the following list of ``InfectionState``\s:
 
 .. code-block:: RST
 
@@ -35,7 +35,7 @@ The model contains the following list of **InfectionState**\s:
 Infection State transitions
 ---------------------------
 
-The ODE-SIR model is implemented as a **CompartmentalModel**, which defines the derivative of the aggregated compartment
+The ODE-SIR model is implemented as a ``CompartmentalModel``, which defines the derivative of the aggregated compartment
 values in time.
 
 
@@ -43,7 +43,7 @@ Sociodemographic Stratification
 -------------------------------
 
 In the ODE-SIR model, the population can be stratified by one sociodemographic dimension. This dimension is denoted 
-**AgeGroup** but can also be used for other interpretations. For stratification with two or more dimensions, see 
+``AgeGroup`` but can also be used for other interpretations. For stratification with two or more dimensions, see 
 :doc:`Model Creation <../ode_creation>`.
 
 The number of age groups is specified in the model constructor and the model can be initialized with:
@@ -82,8 +82,8 @@ The model implements the following parameters.
 Initial conditions
 ------------------
 
-The initial conditions of the model are defined by the class **Populations** which defines the number of individuals in
-each sociodemographic group and **InfectionState**. Before running a simulation, you need to set the initial values for
+The initial conditions of the model are defined by the class ``Populations`` which defines the number of individuals in
+each sociodemographic group and ``InfectionState``. Before running a simulation, you need to set the initial values for
 each compartment:
 
 .. code-block:: cpp
@@ -137,12 +137,12 @@ time:
 
 .. code-block:: cpp
 
-   double t0 = 0; // Start time
-   double tmax = 50; // End time
-   double dt = 0.1; // Time step
+   ScalarType t0 = 0; // Start time
+   ScalarType tmax = 50; // End time
+   ScalarType dt = 0.1; // Time step
 
    // Run a standard simulation
-   mio::TimeSeries<double> result = mio::simulate(t0, tmax, dt, model);
+   mio::TimeSeries<ScalarType> result = mio::simulate(t0, tmax, dt, model);
 
 You can also specify a custom integrator:
 
@@ -154,7 +154,7 @@ You can also specify a custom integrator:
    integrator->set_rel_tolerance(1e-4);
    integrator->set_abs_tolerance(1e-1);
 
-   mio::TimeSeries<double> result = mio::simulate(t0, tmax, dt, model, std::move(integrator));
+   mio::TimeSeries<ScalarType> result = mio::simulate(t0, tmax, dt, model, std::move(integrator));
 
 
 Output
@@ -170,11 +170,11 @@ a basic simulation, you can access the results as follows:
 
    // Access data at specific time point 
    Eigen::VectorXd value_at_time_i = result.get_value(i);
-   double time_i = result.get_time(i);
+   ScalarType time_i = result.get_time(i);
 
    // Access the last time point
    Eigen::VectorXd last_value = result.get_last_value();
-   double last_time = result.get_last_time();
+   ScalarType last_time = result.get_last_time();
 
 You can print the simulation results as a formatted table:
 
@@ -208,7 +208,4 @@ Examples
 An example can be found at `examples/ode_sir.cpp <https://github.com/SciCompMod/memilio/tree/main/cpp/examples/ode_sir.cpp>`_.
 
 
-Overview of the ``osir`` namespace:
------------------------------------------
-
-.. doxygennamespace:: mio::osir
+The code documentation for the model can be found at :CPP-API:`mio::osir` .

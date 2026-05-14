@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
@@ -24,6 +24,7 @@
 #include "utils/custom_index_array.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/epidemiology/populations.h"
+#include "geography/regions.h"
 
 #include "pybind11/pybind11.h"
 

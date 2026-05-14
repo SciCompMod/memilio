@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen
 *
@@ -57,8 +57,8 @@ public:
     using ConstLocationIterator   = std::vector<Location>::const_iterator;
     using PersonIterator          = std::vector<Person>::iterator;
     using ConstPersonIterator     = std::vector<Person>::const_iterator;
-    using ActivenessIterator      = std::vector<bool>::iterator;
-    using ConstActivenessIterator = std::vector<bool>::const_iterator;
+    using ActivenessIterator      = std::vector<char>::iterator;
+    using ConstActivenessIterator = std::vector<char>::const_iterator;
     using MobilityRuleType        = LocationType (*)(PersonalRandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
                                               const Parameters&);
 
@@ -219,8 +219,8 @@ public:
      * @return A range of all Location%s.
      * @{
      */
-    Range<std::pair<ConstLocationIterator, ConstLocationIterator>> get_locations() const;
-    Range<std::pair<LocationIterator, LocationIterator>> get_locations();
+    Range<ConstLocationIterator> get_locations() const;
+    Range<LocationIterator> get_locations();
     /** @} */
 
     /**
@@ -228,17 +228,18 @@ public:
      * @return A range of all Person%s.
      * @{
      */
-    Range<std::pair<ConstPersonIterator, ConstPersonIterator>> get_persons() const;
-    Range<std::pair<PersonIterator, PersonIterator>> get_persons();
+    Range<ConstPersonIterator> get_persons() const;
+    Range<PersonIterator> get_persons();
     /** @} */
 
     /**
      * @brief Get a range of all Person%s activeness statuses in the Model.
+     * Valid activeness status values are either `true` or `false`.
      * @return A range of all Person%s activeness statuses.
      * @{
      */
-    Range<std::pair<ConstActivenessIterator, ConstActivenessIterator>> get_activeness_statuses() const;
-    Range<std::pair<ActivenessIterator, ActivenessIterator>> get_activeness_statuses();
+    Range<ConstActivenessIterator> get_activeness_statuses() const;
+    Range<ActivenessIterator> get_activeness_statuses();
     /** @} */
 
     /**
@@ -333,11 +334,39 @@ public:
     * Get the RandomNumberGenerator used by this Model for random events.
     * Persons use their own generators with the same key as the global one. 
     * @return The random number generator.
+    * @{
     */
     RandomNumberGenerator& get_rng()
     {
         return m_rng;
     }
+    const RandomNumberGenerator& get_rng() const
+    {
+        return m_rng;
+    }
+    /** @} */
+
+    /**
+     * @brief Sets the RNG counters of the model and all persons to 0 (or to the optional counter argument).
+     * @param[in] seeds Optional argument used to overwrite the current seed.
+     * @param[in] counter Optional argument used as base value for each RNG counter.
+     * Note: Both the model's and each person's RNG uses a 64 bit counter. Since the persons reserve half of the
+     * counter for their ID, we only allow specifying the first 32 bits here, even for the model.
+     * @{
+     */
+    void reset_rng(Counter<uint32_t> counter = {})
+    {
+        m_rng.set_counter(Counter<uint64_t>(static_cast<uint64_t>(counter.get())));
+        for (Person& person : get_persons()) {
+            person.get_rng_counter() = counter;
+        }
+    }
+    void reset_rng(const std::vector<uint32_t>& seeds, Counter<uint32_t> counter = {})
+    {
+        m_rng.seed(seeds);
+        reset_rng(counter);
+    }
+    /** @} */
 
     /**
      * Get the model id. Is only relevant for graph abm or hybrid model.
@@ -609,7 +638,7 @@ protected:
             compute_exposure_caches(t, dt);
             m_are_exposure_caches_valid = true;
         }
-        auto personal_rng = PersonalRandomNumberGenerator(person);
+        auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
         auto location     = person.get_location();
         mio::abm::interact(personal_rng, person, get_location(location),
                            m_local_population_by_age_cache[location.get()], m_air_exposure_rates_cache[location.get()],
@@ -657,8 +686,10 @@ protected:
     int m_id; ///< Model id. Is only used for abm graph model or hybrid model.
     std::vector<Person> m_persons; ///< Vector of every Person.
     std::vector<Location> m_locations; ///< Vector of every Location.
-    std::vector<bool>
-        m_activeness_statuses; ///< Vector with activeness status for every person. Is only used for abm graph model or hybrid model.
+    std::vector<char> m_activeness_statuses; /**< Vector with activeness status for every person.
+        * Is only used for abm graph model or hybrid model.
+        * Used as boolean. Uses char instead of bool due to portability issues with the specialized std::vector<bool>.
+        */
     std::bitset<size_t(LocationType::Count)>
         m_has_locations; ///< Flags for each LocationType, set if a Location of that type exists.
     TestingStrategy m_testing_strategy; ///< List of TestingScheme%s that are checked for testing.

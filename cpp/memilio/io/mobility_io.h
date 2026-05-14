@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Wadim Koslow, Henrik Zunker, Martin J. Kuehn
 *
@@ -207,7 +207,7 @@ IOResult<void> save_edges(const std::vector<TimeSeries<ScalarType>>& results,
  * @return Any io errors that occur during writing of the files.
  */
 IOResult<void> save_edges(const std::vector<std::vector<TimeSeries<ScalarType>>>& ensemble_edges,
-                          const std::vector<std::pair<int, int>>& pairs_edges, const fs::path& result_dir,
+                          const std::vector<std::pair<int, int>>& pairs_edges, const std::filesystem::path& result_dir,
                           bool save_single_runs = true, bool save_percentiles = true);
 
 #endif //MEMILIO_HAS_HDF5

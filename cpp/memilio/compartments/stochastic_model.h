@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Rene Schmieding
 *
@@ -22,7 +22,6 @@
 
 #include "memilio/compartments/compartmental_model.h"
 #include "memilio/compartments/flow_model.h"
-#include "memilio/utils/metaprogramming.h"
 #include "memilio/utils/random_number_generator.h"
 
 namespace mio

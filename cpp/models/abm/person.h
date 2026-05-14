@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Khoa Nguyen
 *
@@ -23,7 +23,6 @@
 #include "abm/infection.h"
 #include "abm/infection_state.h"
 #include "abm/location_id.h"
-#include "abm/location.h"
 #include "abm/location_type.h"
 #include "abm/parameters.h"
 #include "abm/person_id.h"
@@ -401,27 +400,10 @@ public:
     }
 
     /**
-     * @brief Get this Person's index that is used for the RandomNumberGenerator.
-     * @see mio::abm::PersonalRandomNumberGenerator.
-     */
-    uint32_t get_rng_index()
-    {
-        return m_rng_index;
-    }
-
-    /**
-     * @brief Get this Person's key that is used for the RandomNumberGenerator.
-     * @see mio::abm::PersonalRandomNumberGenerator.
-     */
-    mio::Key<uint64_t> get_rng_key()
-    {
-        return m_rng_key;
-    }
-
-    /**
      * @brief Get the latest #ProtectionType and its initial TimePoint of the Person.
+     * @param[in] t TimePoint to check.
      */
-    ProtectionEvent get_latest_protection() const;
+    ProtectionEvent get_latest_protection(TimePoint t) const;
 
     /// This method is used by the default serialization feature.
     auto default_serialize()
@@ -445,8 +427,7 @@ public:
             .add("last_transport_mode", m_last_transport_mode)
             .add("rng_counter", m_rng_counter)
             .add("test_results", m_test_results)
-            .add("id", m_person_id)
-            .add("rng_index", m_rng_index);
+            .add("id", m_person_id);
     }
 
     /**
@@ -491,8 +472,6 @@ private:
     std::vector<int>
         m_assigned_location_model_ids; ///< Vector with model ids of the assigned locations. Only used in graph abm.
     PersonId m_person_id; ///< Unique identifier of a person.
-    mio::Key<uint64_t> m_rng_key; ///< Key for PersonalRandomNumberGenerator
-    uint32_t m_rng_index; ///< Index for PersonalRandomNumberGenerator.
     Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator.
 };
 
