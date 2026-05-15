@@ -46,10 +46,10 @@ enum class InfectionState
     S,
     E,
     I,
-    INS,
-    ICS,
+    // INS,
+    // ICS,
     R,
-    V,
+    // V,
     D,
     Count
 };

@@ -592,7 +592,7 @@ public:
     auto sum_nodes()
     {
         const auto size = Base::m_graph.nodes()[0].property.get_result().get_num_elements();
-        std::vector<double> results(size, 0.0);
+        std::vector<ScalarType> results(size, 0.0);
         for (auto& n : Base::m_graph.nodes()) {
             assert(n.property.get_result().get_num_elements() == size);
             for (int i = 0; i < size; i++) {
@@ -605,16 +605,23 @@ public:
     auto statistics_per_timestep()
     {
         const auto size = Base::m_graph.nodes()[0].property.get_result().get_num_elements();
-        std::vector<double> timepoints;
+        std::vector<ScalarType> timepoints;
         // Collect all exchange timepoints => All simulations are stopped and write results at those
 
-        for (auto& n : Base::m_graph.edges()) {
-            auto local_timepoints = n.property.get_mobility_results().get_time_points();
-            for (auto t : local_timepoints) {
-                if (std::find(timepoints.begin(), timepoints.end(), t) == timepoints.end()) {
-                    timepoints.push_back(t);
-                }
-            }
+        // for (auto& n : Base::m_graph.nodes()) {
+        //     auto local_timepoints = n.property.get_result().get_time_points();
+        //     for (auto t : local_timepoints) {
+        //         if (std::find(timepoints.begin(), timepoints.end(), t) == timepoints.end()) {
+        //             timepoints.push_back(t);
+        //             // if (t > 10) {
+        //             //     mio::unused(n.property.get_result().export_csv("node_" + std::to_string(n.id) + ".csv",
+        //             //                                                    {"S", "E", "I", "R", "D"}));
+        //             // }
+        //         }
+        //     }
+        // }
+        for (ScalarType t = 0; t <= Base::m_t; t += Base::m_dt) {
+            timepoints.push_back(t);
         }
         std::sort(timepoints.begin(), timepoints.end());
         auto results = TimeSeries<ScalarType>::zero(timepoints.size(), size, timepoints);
@@ -650,8 +657,8 @@ public:
         const auto size = Base::m_graph.nodes()[node_indices[0]].property.get_result().get_num_elements();
         std::vector<double> timepoints;
         // Collect all exchange timepoints => All simulations are stopped and write results at those
-        for (auto& n : Base::m_graph.edges()) {
-            auto local_timepoints = n.property.get_mobility_results().get_time_points();
+        for (auto& n : Base::m_graph.nodes()) {
+            auto local_timepoints = n.property.get_result().get_time_points();
             for (auto t : local_timepoints) {
                 if (std::find(timepoints.begin(), timepoints.end(), t) == timepoints.end()) {
                     timepoints.push_back(t);

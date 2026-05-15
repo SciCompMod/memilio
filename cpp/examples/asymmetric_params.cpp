@@ -279,28 +279,34 @@ int main(int /*argc*/, char** /*argv*/)
     auto get_simulation = [](const auto& sim, ScalarType, ScalarType, size_t run_id) {
         auto sim2      = sim;
         sim2.get_rng() = mio::thread_local_rng();
-        int index_farm = mio::UniformIntDistribution<int>::get_instance()(sim2.get_rng(), 0,
-                                                                          int(sim2.get_graph().nodes().size() - 1));
-        auto E_index   = sim2.get_graph().nodes()[0].property.get_simulation().get_model().populations.get_flat_index(
-            {Region(0), InfectionState::E});
-        auto S_index = sim2.get_graph().nodes()[0].property.get_simulation().get_model().populations.get_flat_index(
-            {Region(0), InfectionState::S});
-        auto num_sus     = sim2.get_graph().nodes()[index_farm].property.get_result().get_last_value()[S_index];
-        auto num_exposed = std::ceil(0.01 * num_sus);
-        sim2.get_graph().nodes()[index_farm].property.get_result().get_last_value()[E_index] = num_exposed;
-        sim2.get_graph().nodes()[index_farm].property.get_result().get_last_value()[S_index] = num_sus - num_exposed;
-        mio::log_info("Run {}: Infecting {} individuals at node {}.", run_id, num_exposed, index_farm);
+        // auto E_index   = sim2.get_graph().nodes()[0].property.get_simulation().get_model().populations.get_flat_index(
+        //     {Region(0), InfectionState::E});
+        // auto S_index = sim2.get_graph().nodes()[0].property.get_simulation().get_model().populations.get_flat_index(
+        //     {Region(0), InfectionState::S});
+        bool infections = false;
+        while (!infections) {
+            int index_farm   = mio::UniformIntDistribution<int>::get_instance()(sim2.get_rng(), 0,
+                                                                              int(sim2.get_graph().nodes().size() - 2));
+            auto num_sus     = sim2.get_graph().nodes()[index_farm].property.get_simulation().get_model().populations[{
+                Region(0), InfectionState::S}];
+            auto num_exposed = std::ceil(0.01 * num_sus);
+            if (num_exposed > 0) {
+                infections                         = true;
+                sim2.get_graph().nodes()[index_farm].property.get_simulation().get_model().populations[{
+                    Region(0), InfectionState::E}] = num_exposed;
+                sim2.get_graph().nodes()[index_farm].property.get_simulation().get_model().populations[{
+                    Region(0), InfectionState::S}] = num_sus - num_exposed;
+                mio::log_info("Run {}: Infecting {} individuals at node {}.", run_id, num_exposed, index_farm);
+            }
+        }
         return sim2;
     };
     auto handle_result = [](auto&& sim, auto&& run) {
         auto infection_numbers = sim.sum_nodes();
-        auto dead_index = sim.get_graph().nodes()[0].property.get_simulation().get_model().populations.get_flat_index(
-            {Region(0), InfectionState::D});
-        if (infection_numbers[dead_index] > 50) {
-            auto abs_path = mio::path_join(mio::base_dir(), "example_results");
-            auto result   = sim.statistics_per_timestep().export_csv(
-                mio::path_join(abs_path, "AsymmetricParams_run" + std::to_string(run) + ".csv"));
-        }
+        auto abs_path          = mio::path_join(mio::base_dir(), "example_results");
+        auto result            = sim.statistics_per_timestep().export_csv(
+            mio::path_join(abs_path, "AsymmetricParams_run" + std::to_string(run) + ".csv"), {"S", "E", "I", "R", "D"});
+        // }
         return 0;
     };
     auto result = study.run(get_simulation, handle_result);
