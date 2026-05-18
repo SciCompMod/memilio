@@ -816,6 +816,187 @@ static void bench_matrix_phi_reconstruction_blockdiag(::benchmark::State& state)
     }
 }
 
+constexpr int seir_phi_tri_entries = 10;
+
+enum SeirPhiTriIndex : int
+{
+    Phi00 = 0,
+    Phi10,
+    Phi11,
+    Phi20,
+    Phi21,
+    Phi22,
+    Phi30,
+    Phi31,
+    Phi32,
+    Phi33
+};
+
+using SeirPhiTriVector = Eigen::Matrix<ScalarType, seir_phi_tri_entries, 1>;
+
+/**
+ * @brief Block-diagonal SEIR Phi system that stores only lower-triangular 4x4 blocks.
+ *
+ * For one age group, Phi is stored as:
+ * [p00   0   0   0]
+ * [p10 p11   0   0]
+ * [p20 p21 p22   0]
+ * [p30 p31 p32 p33]
+ *
+ * State vector: y = [z (NC), tri(Phi_0) (10), ..., tri(Phi_G-1) (10)].
+ * ODE size drops from NC + 16 * G to NC + 10 * G.
+ */
+struct AugmentedPhiSystemBlockTri {
+    const mio::oseir::Model<ScalarType>& model;
+    size_t G;
+    size_t NC;
+
+    explicit AugmentedPhiSystemBlockTri(const mio::oseir::Model<ScalarType>& m)
+        : model(m)
+        , G(static_cast<size_t>(m.parameters.get_num_groups()))
+        , NC(static_cast<size_t>(m.populations.get_num_compartments()))
+    {
+    }
+
+    void operator()(const Eigen::VectorXd& y, Eigen::VectorXd& dydt, double t)
+    {
+        const auto z = y.head(NC);
+
+        Eigen::VectorXd dz(NC);
+        model.get_derivatives(z, z, t, dz);
+        dydt.head(NC) = dz;
+
+        using IS            = mio::oseir::InfectionState;
+        Eigen::VectorXd foi = Eigen::VectorXd::Zero(G);
+        for (size_t j = 0; j < G; ++j) {
+            const size_t Sj = model.populations.get_flat_index({mio::AgeGroup(static_cast<int>(j)), IS::Susceptible});
+            const size_t Ej = model.populations.get_flat_index({mio::AgeGroup(static_cast<int>(j)), IS::Exposed});
+            const size_t Ij = model.populations.get_flat_index({mio::AgeGroup(static_cast<int>(j)), IS::Infected});
+            const size_t Rj = model.populations.get_flat_index({mio::AgeGroup(static_cast<int>(j)), IS::Recovered});
+
+            const double Nj    = z[Sj] + z[Ej] + z[Ij] + z[Rj];
+            const double divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
+
+            for (size_t i = 0; i < G; ++i) {
+                const double coeff =
+                    model.parameters.template get<mio::oseir::ContactPatterns<ScalarType>>()
+                        .get_cont_freq_mat()
+                        .get_matrix_at(t)(static_cast<Eigen::Index>(i), static_cast<Eigen::Index>(j)) *
+                    model.parameters
+                        .template get<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>()[mio::AgeGroup(
+                            static_cast<int>(i))] *
+                    divNj;
+                foi[i] += coeff * z[Ij];
+            }
+        }
+
+        for (size_t g = 0; g < G; ++g) {
+            const double time_exposed =
+                model.parameters.get<mio::oseir::TimeExposed<ScalarType>>()[mio::AgeGroup(static_cast<int>(g))];
+            const double time_infected =
+                model.parameters.get<mio::oseir::TimeInfected<ScalarType>>()[mio::AgeGroup(static_cast<int>(g))];
+
+            const double rate_E = (time_exposed > 1e-10) ? (1.0 / time_exposed) : 0.0;
+            const double rate_I = (time_infected > 1e-10) ? (1.0 / time_infected) : 0.0;
+            const double lambda = foi[g];
+
+            const auto phi = Eigen::Map<const SeirPhiTriVector>(y.data() + NC + g * seir_phi_tri_entries);
+            auto dphi      = Eigen::Map<SeirPhiTriVector>(dydt.data() + NC + g * seir_phi_tri_entries);
+
+            dphi[Phi00] = -lambda * phi[Phi00];
+
+            dphi[Phi10] = lambda * phi[Phi00] - rate_E * phi[Phi10];
+            dphi[Phi11] = -rate_E * phi[Phi11];
+
+            dphi[Phi20] = rate_E * phi[Phi10] - rate_I * phi[Phi20];
+            dphi[Phi21] = rate_E * phi[Phi11] - rate_I * phi[Phi21];
+            dphi[Phi22] = -rate_I * phi[Phi22];
+
+            dphi[Phi30] = rate_I * phi[Phi20];
+            dphi[Phi31] = rate_I * phi[Phi21];
+            dphi[Phi32] = rate_I * phi[Phi22];
+            dphi[Phi33] = 0.0;
+        }
+    }
+};
+
+template <class Integrator>
+static void bench_matrix_phi_reconstruction_blocktri(::benchmark::State& state)
+{
+    const int num_commuter_groups = state.range(0);
+    const size_t num_age_groups   = static_cast<size_t>(state.range(1));
+    const auto num_patches        = num_commuter_groups + 1;
+    mio::set_log_level(mio::LogLevel::critical);
+
+    for (auto _ : state) {
+        for (auto patch = 0; patch < num_patches; patch++) {
+            state.PauseTiming();
+            ModelType model(num_age_groups);
+            setup_model_benchmark(model);
+
+            size_t G  = num_age_groups;
+            size_t NC = 4 * G;
+
+            // NC + G * 10
+            size_t system_size = NC + G * seir_phi_tri_entries;
+
+            Eigen::VectorXd y0(system_size);
+            y0.head(NC) = model.populations.get_compartments();
+
+            for (size_t g = 0; g < G; ++g) {
+                auto phi = Eigen::Map<SeirPhiTriVector>(y0.data() + NC + g * seir_phi_tri_entries);
+                phi.setZero();
+                phi[Phi00] = 1.0;
+                phi[Phi11] = 1.0;
+                phi[Phi22] = 1.0;
+                phi[Phi33] = 1.0;
+            }
+
+            Integrator stepper;
+            AugmentedPhiSystemBlockTri sys(model);
+
+            double mobile_fraction = 0.1 * num_commuter_groups;
+            Eigen::VectorXd initial_mobile_pop =
+                y0.head(NC) * (num_commuter_groups > 0 ? (mobile_fraction / num_commuter_groups) : 0.0);
+
+            Eigen::MatrixXd X0(NC, num_commuter_groups);
+            for (int cg = 0; cg < num_commuter_groups; ++cg) {
+                X0.col(cg) = initial_mobile_pop;
+            }
+            Eigen::MatrixXd Xt(NC, num_commuter_groups);
+
+            state.ResumeTiming();
+
+            double t          = t0;
+            Eigen::VectorXd y = y0;
+            while (t < t_max_phi - 1e-10) {
+                double dt_eff = std::min(dt_phi, t_max_phi - t);
+                stepper.do_step(sys, y, t, dt_eff);
+                t += dt_eff;
+            }
+
+            for (size_t g = 0; g < G; ++g) {
+                const auto phi         = Eigen::Map<const SeirPhiTriVector>(y.data() + NC + g * seir_phi_tri_entries);
+                const Eigen::Index row = static_cast<Eigen::Index>(4 * g);
+
+                for (Eigen::Index cg = 0; cg < static_cast<Eigen::Index>(num_commuter_groups); ++cg) {
+                    const double xS = X0(row + 0, cg);
+                    const double xE = X0(row + 1, cg);
+                    const double xI = X0(row + 2, cg);
+                    const double xR = X0(row + 3, cg);
+
+                    Xt(row + 0, cg) = phi[Phi00] * xS;
+                    Xt(row + 1, cg) = phi[Phi10] * xS + phi[Phi11] * xE;
+                    Xt(row + 2, cg) = phi[Phi20] * xS + phi[Phi21] * xE + phi[Phi22] * xI;
+                    Xt(row + 3, cg) = phi[Phi30] * xS + phi[Phi31] * xE + phi[Phi32] * xI + phi[Phi33] * xR;
+                }
+            }
+
+            benchmark::DoNotOptimize(Xt);
+        }
+    }
+}
+
 } // namespace benchmark_mio
 } // namespace mio
 
@@ -848,6 +1029,36 @@ BENCHMARK(bench_matrix_phi_reconstruction_blockdiag_euler)
             }
         }
     }) -> Name("matrix_phi_blockdiag(Euler)") -> Unit(::benchmark::kMicrosecond);
+
+static void bench_matrix_phi_reconstruction_blocktri_rk4(benchmark::State& state)
+{
+    mio::benchmark_mio::bench_matrix_phi_reconstruction_blocktri<boost::numeric::odeint::runge_kutta4<
+        Eigen::VectorXd, double, Eigen::VectorXd, double, boost::numeric::odeint::vector_space_algebra>>(state);
+}
+
+BENCHMARK(bench_matrix_phi_reconstruction_blocktri_rk4)
+    ->Apply([](auto* b) {
+        for (int i : mio::benchmark_mio::commuter_group_counts) {
+            for (int g : mio::benchmark_mio::age_group_counts) {
+                b->Args({i, g});
+            }
+        }
+    }) -> Name("matrix_phi_blocktri(RK4)") -> Unit(::benchmark::kMicrosecond);
+
+static void bench_matrix_phi_reconstruction_blocktri_euler(benchmark::State& state)
+{
+    mio::benchmark_mio::bench_matrix_phi_reconstruction_blocktri<boost::numeric::odeint::euler<
+        Eigen::VectorXd, double, Eigen::VectorXd, double, boost::numeric::odeint::vector_space_algebra>>(state);
+}
+
+BENCHMARK(bench_matrix_phi_reconstruction_blocktri_euler)
+    ->Apply([](auto* b) {
+        for (int i : mio::benchmark_mio::commuter_group_counts) {
+            for (int g : mio::benchmark_mio::age_group_counts) {
+                b->Args({i, g});
+            }
+        }
+    }) -> Name("matrix_phi_blocktri(Euler)") -> Unit(::benchmark::kMicrosecond);
 
 static void bench_matrix_phi_reconstruction_rk4(benchmark::State& state)
 {
@@ -975,6 +1186,11 @@ static void bench_matrix_phi_blockdiag_rk4_dt(::benchmark::State& state)
     DtOverride ov(mio::benchmark_mio::dt_sweep_values[state.range(2)], SWEEP_T_MAX);
     bench_matrix_phi_reconstruction_blockdiag_rk4(state);
 }
+static void bench_matrix_phi_blocktri_rk4_dt(::benchmark::State& state)
+{
+    DtOverride ov(mio::benchmark_mio::dt_sweep_values[state.range(2)], SWEEP_T_MAX);
+    bench_matrix_phi_reconstruction_blocktri_rk4(state);
+}
 
 static void register_dt_sweep(::benchmark::internal::Benchmark* b)
 {
@@ -998,6 +1214,11 @@ BENCHMARK(bench_matrix_phi_reconstruction_rk4_dt)
 BENCHMARK(bench_matrix_phi_blockdiag_rk4_dt)
     ->Apply(register_dt_sweep)
     ->Name("matrix_phi_blockdiag(RK4)/dt")
+    ->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(bench_matrix_phi_blocktri_rk4_dt)
+    ->Apply(register_dt_sweep)
+    ->Name("matrix_phi_blocktri(RK4)/dt")
     ->Unit(::benchmark::kMicrosecond);
 
 // run all benchmarks
