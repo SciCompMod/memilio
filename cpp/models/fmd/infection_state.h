@@ -24,8 +24,6 @@
 #include "memilio/geography/geolocation.h"
 #include "memilio/geography/rtree.h"
 #include "memilio/geography/distance.h"
-#include "memilio/mobility/graph_simulation.h"
-#include "memilio/mobility/metapopulation_mobility_asymmetric.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/mobility/graph_builder.h"
 #include "memilio/utils/compiler_diagnostics.h"
