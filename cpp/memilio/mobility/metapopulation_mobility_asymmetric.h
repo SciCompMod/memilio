@@ -76,7 +76,7 @@ public:
         regional_neighbor_indices = neighbors;
     }
 
-    auto get_regional_neighbors() const
+    auto& get_regional_neighbors() const
     {
         return regional_neighbor_indices;
     }

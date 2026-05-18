@@ -42,12 +42,12 @@
 #include "fmd/adoption_rates.h"
 #include "abm/time.h"
 #include "thirdparty/csv.h"
+#include <fstream>
 #include <ranges>
 #include <omp.h>
 
-const std::string farm_file     = "/home/kilian/Documents/data/read_data/farms_for_simulations.csv";
-const std::string edge_file     = "/home/kilian/Documents/data/read_data/simulation_edges.csv";
-const std::string exchange_file = "/home/kilian/Documents/data/read_data/exchanges.csv";
+const std::string result_dir =
+    mio::path_join("/storage/users/kilian/fmd/example_results_day_0_days_100_local_DTU-DADS_params");
 
 template <class T>
 MPI_Datatype mpi_type();
@@ -107,13 +107,14 @@ int main(int /*argc*/, char** /*argv*/)
     int size, rank;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    const std::string result_dir = mio::path_join(mio::base_dir(), "example_results");
+    // const std::string result_dir =
+    //     mio::path_join("/storage/users/kilian/fmd/example_results_day_0_days_100_only_trade");
 
     const auto t0   = 0.;
     const auto tmax = 100.;
     const auto dt   = 1.; //initial time step
 
-    const size_t num_runs = 10;
+    const size_t num_runs = 100000;
 
     using mio::fmd::InfectionState;
     using Status = mio::Index<InfectionState>;
@@ -201,7 +202,7 @@ int main(int /*argc*/, char** /*argv*/)
 
     auto tree = mio::geo::RTree(nodes.begin(), nodes.end());
 
-    std::vector<mio::geo::Distance> query_distances = {mio::geo::kilometers(5.0)};
+    std::vector<mio::geo::Distance> query_distances = {mio::geo::kilometers(10.0)};
 
     std::vector<std::vector<std::vector<size_t>>> locally_calculated_neighbors;
     size_t num_calculations = farm_ids.size() / size;
@@ -285,9 +286,9 @@ int main(int /*argc*/, char** /*argv*/)
         //     {Region(0), InfectionState::S});
         bool infections = false;
         while (!infections) {
-            int index_farm   = mio::UniformIntDistribution<int>::get_instance()(sim2.get_rng(), 0,
+            int index_farm = mio::UniformIntDistribution<int>::get_instance()(sim2.get_rng(), 0,
                                                                               int(sim2.get_graph().nodes().size() - 2));
-            auto num_sus     = sim2.get_graph().nodes()[index_farm].property.get_simulation().get_model().populations[{
+            auto num_sus   = sim2.get_graph().nodes()[index_farm].property.get_simulation().get_model().populations[{
                 Region(0), InfectionState::S}];
             auto num_exposed = std::ceil(0.01 * num_sus);
             if (num_exposed > 0) {
@@ -303,10 +304,20 @@ int main(int /*argc*/, char** /*argv*/)
     };
     auto handle_result = [](auto&& sim, auto&& run) {
         auto infection_numbers = sim.sum_nodes();
-        auto abs_path          = mio::path_join(mio::base_dir(), "example_results");
-        auto result            = sim.statistics_per_timestep().export_csv(
-            mio::path_join(abs_path, "AsymmetricParams_run" + std::to_string(run) + ".csv"), {"S", "E", "I", "R", "D"});
-        // }
+        // const std::string result_dir =
+        //     mio::path_join("/storage/users/kilian/fmd/example_results_day_0_days_100_only_trade");
+        auto result = sim.statistics_per_timestep().export_csv(
+            mio::path_join(result_dir, "AsymmetricParams_run" + std::to_string(run) + ".csv"),
+            {"S", "E", "I", "R", "D"});
+        // Vector with one time point per node
+        auto all_time_series = sim.return_first_infections();
+        // print all_time_series to file
+        std::ofstream file(
+            mio::path_join(result_dir, "AsymmetricParams_all_time_series_run" + std::to_string(run) + ".csv"));
+        file << "node,time" << std::endl;
+        for (size_t node_index = 0; node_index < all_time_series.size(); ++node_index) {
+            file << node_index << "," << all_time_series[node_index] << std::endl;
+        }
         return 0;
     };
     auto result = study.run(get_simulation, handle_result);

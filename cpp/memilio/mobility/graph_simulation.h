@@ -29,6 +29,7 @@
 #include "memilio/compartments/feedback_simulation.h"
 #include "memilio/geography/regions.h"
 #include "models/smm/parameters.h"
+#include "memilio/geography/distance.h"
 
 namespace mio
 {
@@ -263,10 +264,10 @@ class GraphSimulationStochastic
                                                     typename Graph::NodeProperty&, typename Graph::NodeProperty&)>,
                                  std::function<void(FP, FP, typename Graph::NodeProperty&)>>
 {
-    using Base          = GraphSimulationBase<Graph, FP, FP,
-                                              std::function<void(typename Graph::EdgeProperty&, size_t,
+    using Base = GraphSimulationBase<Graph, FP, FP,
+                                     std::function<void(typename Graph::EdgeProperty&, size_t,
                                                         typename Graph::NodeProperty&, typename Graph::NodeProperty&)>,
-                                              std::function<void(FP, FP, typename Graph::NodeProperty&)>>;
+                                     std::function<void(FP, FP, typename Graph::NodeProperty&)>>;
     using node_function = typename Base::node_function;
     using edge_function = typename Base::edge_function;
 
@@ -407,6 +408,7 @@ public:
         auto dt = m_parameters.next_event_time() - Base::m_t;
         while (Base::m_t < t_max) {
             mio::log_debug("Time: {}", Base::m_t);
+            update_force_of_infection(Base::m_graph);
             if (Base::m_t + dt > t_max) {
                 dt = t_max - Base::m_t;
             }
@@ -438,6 +440,55 @@ public:
             dt = m_parameters.next_event_time() - Base::m_t;
             // apply_interventions();
         }
+    }
+
+    /**
+    * @brief Update the force of infection for all farms based on their infected neighbors.
+    * 
+    * @param graph 
+    */
+    void update_force_of_infection(Graph& graph)
+    {
+        using Model        = std::decay_t<decltype(Base::m_graph.nodes()[0].property.get_simulation().get_model())>;
+        using AdoptionRate = mio::smm::AdoptionRates<ScalarType, typename Model::Status, mio::regions::Region>;
+        for (auto& node : graph.nodes()) {
+            // Skip calculation for nodes without animals
+            if (node.property.get_result().get_last_value().sum() == 0) {
+                continue;
+            }
+            auto infection_pressure = 0.0;
+            auto neighbors          = node.property.get_regional_neighbors();
+            // Iterate over all neighbours in third neighbourhood layer
+            for (auto index : neighbors[0]) {
+                auto& neighbour = graph.nodes()[index];
+                // Only count infected neighbours
+                if (neighbour.id != node.id) {
+                    infection_pressure +=
+                        stepwise_function(node.property.get_location().distance(neighbour.property.get_location()));
+                }
+            }
+            // Repair before killing animals
+            infection_pressure /= node.property.get_result().get_last_value().sum();
+            node.property.get_simulation().get_model().parameters.template get<AdoptionRate>()[3].factor =
+                infection_pressure;
+        }
+    }
+
+    auto stepwise_function(mio::geo::Distance distance)
+    {
+        if (distance.meters() < 100) {
+            return 0.95;
+        }
+        else if (distance.meters() < 1000) {
+            return 0.012;
+        }
+        else if (distance.meters() < 2000) {
+            return 0.004;
+        }
+        else if (distance.meters() < 3000) {
+            return 0.001;
+        }
+        return 0.0;
     }
 
     /**
@@ -649,6 +700,28 @@ public:
             all_time_series.push_back(n.property.get_result());
         }
         return all_time_series;
+    }
+
+    auto return_first_infections()
+    {
+        std::vector<ScalarType> first_infections;
+        for (auto& n : Base::m_graph.nodes()) {
+            auto node_timeseries = n.property.get_result();
+            assert(node_timeseries.get_num_elements() > 1);
+            bool infected = false;
+            for (Eigen::Index time_index = 0; time_index < node_timeseries.get_num_time_points(); ++time_index) {
+                auto time = node_timeseries.get_time(time_index);
+                if (node_timeseries.get_value(time_index)[1] > 0) {
+                    first_infections.push_back(time);
+                    infected = true;
+                    break;
+                }
+            }
+            if (!infected) {
+                first_infections.push_back(-1);
+            }
+        }
+        return first_infections;
     }
 
     auto statistics_per_timestep(std::vector<size_t> node_indices)

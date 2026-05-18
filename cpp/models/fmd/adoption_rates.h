@@ -51,14 +51,11 @@ std::vector<AR> generic_adoption_rates()
 {
     auto home = Region(0);
     std::vector<AR> adoption_rates;
-    adoption_rates.push_back({InfectionState::S,
-                              InfectionState::E,
-                              home,
-                              1.0,
-                              {{InfectionState::I, 0.24}}});
-                            //   {InfectionState::INS, 0.3}, {InfectionState::ICS, 0.8}}});
-    adoption_rates.push_back({InfectionState::E, InfectionState::I, home, 1./3.6, {}});
-    adoption_rates.push_back({InfectionState::I, InfectionState::R, home, 1./4.4, {}});
+    adoption_rates.push_back({InfectionState::S, InfectionState::E, home, 1.0, {{InfectionState::I, 0.24}}});
+    //   {InfectionState::INS, 0.3}, {InfectionState::ICS, 0.8}}});
+    adoption_rates.push_back({InfectionState::E, InfectionState::I, home, 1. / 3.6, {}});
+    adoption_rates.push_back({InfectionState::I, InfectionState::R, home, 1. / 4.4, {}});
+    adoption_rates.push_back({InfectionState::S, InfectionState::E, home, 0.0, {}});
     // adoption_rates.push_back({InfectionState::I, InfectionState::ICS, home, 0.1, {}});
     // adoption_rates.push_back({InfectionState::ICS, InfectionState::D, home, 0.6, {}});
     // adoption_rates.push_back({InfectionState::ICS, InfectionState::R, home, 0.4, {}});
