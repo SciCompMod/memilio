@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2026 MEmilio
 *
-* Authors: Daniel Abele
+* Authors: Carlotta Gerstein
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,9 +17,22 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef DATA_DIR_H
-#define DATA_DIR_H
+#ifndef PYMIO_REGION_H
+#define PYMIO_REGION_H
 
-const char* const DATA_DIR = "${MEMILIO_DATA_DIR}";
+#include "memilio/geography/regions.h"
 
-#endif //DATA_DIR_H
+#include "pybind11/pybind11.h"
+
+namespace pymio
+{
+
+template <>
+inline std::string pretty_name<mio::regions::Region>()
+{
+    return "Region";
+}
+
+} // namespace pymio
+
+#endif //PYMIO_REGION_H

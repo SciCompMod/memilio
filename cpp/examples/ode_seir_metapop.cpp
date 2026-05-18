@@ -68,12 +68,10 @@ int main()
     for (size_t index = 0; index < (size_t)interpolated_result.get_num_time_points(); index++) {
         printf("\n %f", interpolated_result.get_times()[index]);
         for (size_t i = 0; i < (size_t)model.parameters.get_num_regions(); i++) {
-
-            printf("\t %.5f ",
-                   interpolated_result.get_value(index)[(size_t)model.parameters.get_num_regions() *
-                                                            ((size_t)mio::oseirmetapop::InfectionState::Count - 1) +
-                                                        i] /
-                       model.populations.get_group_total(mio::regions::Region(i)) * 100);
+            auto infected_idx = model.populations.get_flat_index(
+                {mio::regions::Region(i), mio::AgeGroup(0), mio::oseirmetapop::InfectionState::Infected});
+            printf("\t %.5f ", interpolated_result.get_value(index)[infected_idx] /
+                                   model.populations.get_group_total(mio::regions::Region(i)) * 100);
         }
     }
     printf("\n");

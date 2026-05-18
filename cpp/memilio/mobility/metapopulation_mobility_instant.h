@@ -551,9 +551,10 @@ void mio::MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<FP, Sim>&
         auto inf_rel =
             get_infections_relative<FP>(node_from, t, node_from.get_last_state()) * dyn_npis.get_base_value();
         auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
+        const bool npi_expired = floating_point_greater_equal(t, FP(m_dynamic_npi.second), 1e-10);
         if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
-            (exceeded_threshold->first > m_dynamic_npi.first ||
-             t > FP(m_dynamic_npi.second))) { //old NPI was weaker or is expired
+            (exceeded_threshold->first > m_dynamic_npi.first || npi_expired)) {
+            //old NPI was weaker or is expired
             auto t_end    = SimulationTime<FP>(t + dyn_npis.get_duration().get());
             m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
             implement_dynamic_npis<FP>(m_parameters.get_coefficients(), exceeded_threshold->second,

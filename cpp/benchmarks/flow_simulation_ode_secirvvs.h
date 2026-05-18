@@ -570,12 +570,17 @@ public:
                     auto inf_rel = get_infections_relative(*this, t, this->get_result().get_last_value()) *
                                    dyn_npis.get_base_value();
                     auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
+                    const bool npi_expired =
+                        floating_point_greater_equal(t, ScalarType(m_dynamic_npi.second), 1e-10);
                     if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
-                        (exceeded_threshold->first > m_dynamic_npi.first ||
-                         t > ScalarType(m_dynamic_npi.second))) { // old npi was weaker or is expired
+                        (exceeded_threshold->first > m_dynamic_npi.first || npi_expired)) {
+                        // old npi was weaker or is expired
 
-                        if (t + delay_npi_implementation < direc_end) {
-                            auto t_start = SimulationTime<ScalarType>(t + delay_npi_implementation);
+                        const bool is_expiry_renewal =
+                            npi_expired && !(exceeded_threshold->first > m_dynamic_npi.first);
+                        ScalarType effective_delay = is_expiry_renewal ? ScalarType(0) : delay_npi_implementation;
+                        if (t + effective_delay < direc_end) {
+                            auto t_start = SimulationTime<ScalarType>(t + effective_delay);
                             // set the end to the minimum of start+delay and the end of the directive
                             auto t_end = SimulationTime<ScalarType>(
                                 std::min<ScalarType>(direc_end, ScalarType(t_start + dyn_npis.get_duration())));

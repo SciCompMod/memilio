@@ -22,11 +22,11 @@
 #include "memilio/compartments/simulation.h"
 #include "memilio/math/adapt_rk.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
-#include "memilio/utils/base_dir.h"
+#include "memilio/io/directories.h"
 #include "ode_secirvvs/model.h"
 #include <string>
 
-const std::string config_path = mio::base_dir() + "cpp/benchmarks/graph_simulation.config";
+const std::string config_path = (mio::base_dir() / "cpp/benchmarks/graph_simulation.config").string();
 
 mio::osecirvvs::Model<ScalarType> create_model(size_t num_agegroups, const ScalarType tmax)
 {

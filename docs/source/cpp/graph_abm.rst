@@ -6,7 +6,7 @@ Introduction
 
 This model realizes multiple instances of the mobility-based agent-based model (ABM) ``abm::Model`` (see :doc:`mobility_based_abm` for the documentation) 
 as nodes in a directed graph. One local model represents a geographical region. The regions are connected by the graph edges. Mobility within one node 
-and via the graph edges follows the same mobility rules that can be handed as argument to ``mio::GraphABModel``. 
+and via the graph edges follows the same mobility rules that can be handed as argument to ``mio::abm::GraphABModel``. 
 Therefore this graph-based agent-based (graph-ABM) model can be reduced to a single mobility-based agent-based model if 
 simulation time steps within the whole graph, i.e. the step size of each node and the step size of the edge exchange, are equal. 
 Preimplemented mobility rules can be found in `cpp/models/abm/mobility_rules.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/mobility_rules.h>`_. 
@@ -35,8 +35,8 @@ First, the models (corresponding to the graph nodes) have to be created and init
     const auto age_group_adults   = mio::AgeGroup(1);
 
     //Initialize the models with id 0 and 1
-    auto model1 = mio::GraphABModel(num_age_groups, 0);
-    auto model2 = mio::GraphABModel(num_age_groups, 1);
+    auto model1 = mio::abm::GraphABModel(num_age_groups, 0);
+    auto model2 = mio::abm::GraphABModel(num_age_groups, 1);
 
 For all models/nodes, the infection parameters have to be set. If this is not done, the default values are used. For information on what parameters the mobility-based agent-based model ``abm::Model`` has and how to set them, see :doc:`mobility_based_abm`. Below, only the age groups that go to school and work are set:
 

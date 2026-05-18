@@ -181,8 +181,8 @@ Basic dampings can be added to the contact matrix as follows:
 .. code-block:: cpp
 
     // Create a contact matrix with constant contact rates between all groups
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<double>>();
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
+    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixX<ScalarType>::Constant(1, 1, cont_freq));
     
     // Add a damping that reduces contacts by 70% starting at day 30
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
@@ -191,7 +191,7 @@ For age-resolved models, you can apply different dampings to different groups:
 
 .. code-block:: cpp
 
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
+    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
     
     // Add a damping that reduces contacts within the same age group by 70% starting at day 30
     contact_matrix.add_damping(Eigen::VectorX<ScalarType>::Constant((size_t)nb_groups, 0.7).asDiagonal(),
@@ -271,7 +271,7 @@ It will be active for at least 14 days. If the last check after day 14 is negati
 .. code-block:: cpp
 
     // Configure dynamic NPIs with thresholds
-    auto& dynamic_npis = params.get<mio::osecir::DynamicNPIsInfectedSymptoms<double>>();
+    auto& dynamic_npis = params.get<mio::osecir::DynamicNPIsInfectedSymptoms<ScalarType>>();
     dynamic_npis.set_implementation_delay(mio::SimulationTime(0.0));  // Simulate no implementation delay
     dynamic_npis.set_duration(mio::SimulationTime(14.0)); // Apply for 14 days
     dynamic_npis.set_base_value(100'000);                // Per 100,000 population
@@ -290,12 +290,12 @@ Standard simulation:
 
 .. code-block:: cpp
 
-    double t0 = 0;       // Start time
-    double tmax = 50;    // End time
-    double dt = 0.1;     // Time step
+    ScalarType t0 = 0;       // Start time
+    ScalarType tmax = 50;    // End time
+    ScalarType dt = 0.1;     // Time step
     
     // Run a standard simulation
-    mio::TimeSeries<double> secir = mio::osecir::simulate(t0, tmax, dt, model);
+    mio::TimeSeries<ScalarType> secir = mio::osecir::simulate(t0, tmax, dt, model);
 
 Flow simulation for tracking transitions between compartments:
 
@@ -315,7 +315,7 @@ For both simulation types, you can also specify a custom integrator:
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
     
-    mio::TimeSeries<double> secir = mio::osecir::simulate(t0, tmax, dt, model, std::move(integrator));
+    mio::TimeSeries<ScalarType> secir = mio::osecir::simulate(t0, tmax, dt, model, std::move(integrator));
 
 
 Output
@@ -330,11 +330,11 @@ The output of the simulation is a ``TimeSeries`` object containing the sizes of 
     
     // Access data at a specific time point
     Eigen::VectorXd value_at_time_i = secir.get_value(i);
-    double time_i = secir.get_time(i);
+    ScalarType time_i = secir.get_time(i);
     
     // Access the last time point
     Eigen::VectorXd last_value = secir.get_last_value();
-    double last_time = secir.get_last_time();
+    ScalarType last_time = secir.get_last_time();
 
 For flow simulations, the result consists of two ``TimeSeries`` objects, one for compartment sizes and one for flows:
 

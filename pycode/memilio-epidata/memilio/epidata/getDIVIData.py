@@ -99,7 +99,7 @@ def preprocess_divi_data(df_raw: pd.DataFrame,
                          end_date: date = dd.defaultDict['end_date'],
                          impute_dates: bool = dd.defaultDict['impute_dates'],
                          moving_average: int = dd.defaultDict['moving_average'],
-                         ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+                         ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """ Processing of the downloaded data
         * the columns are renamed to English and the state and county names are added.
 
@@ -178,7 +178,7 @@ def write_divi_data(df: pd.DataFrame,
                     file_format: str = dd.defaultDict['file_format'],
                     impute_dates: bool = dd.defaultDict['impute_dates'],
                     moving_average: int = dd.defaultDict['moving_average'],
-                    ) -> Dict:
+                    ) -> dict:
     """ Write the divi data into json files
 
     Three kinds of structuring of the data are done.

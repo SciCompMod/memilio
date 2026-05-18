@@ -24,7 +24,7 @@ To set up a simulation of the ODE metapopulation model, you need to initialize t
 
 .. code-block:: cpp
 
-    mio::oseirmetapop::Model<double> model(3, 1)
+    mio::oseirmetapop::Model<ScalarType> model(3, 1)
 
 Set a population with the number of individuals in each region, age group and epidemiological compartment, e.g.:
 
