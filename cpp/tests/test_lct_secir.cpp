@@ -361,8 +361,8 @@ TEST(TestLCTSecir, testEvalRightHandSideGroups)
     }
 }
 
-/* Test if the function get_derivatives() is working for more than one group. 
- * The parameters and LctStates are chosen, such that the sum of the groups should produce the 
+/* Test if the function get_derivatives() is working for more than one group.
+ * The parameters and LctStates are chosen, such that the sum of the groups should produce the
  * same output as the function with one group. This is tested. */
 TEST(TestLCTSecir, testEvalRightHandSideThreeGroupsEqual)
 {
@@ -521,7 +521,7 @@ TEST_F(ModelTestLCTSecir, compareWithPreviousRun)
 }
 
 /* Test compares a simulation with the result of a previous run stored in a .csv file.
- * Here, three groups with the same parametrization as the one used for the previous result is used. 
+ * Here, three groups with the same parametrization as the one used for the previous result is used.
  * It is tested, if the sum of the results of the groups is equal to the result with one group.
  */
 TEST(TestLCTSecir, compareWithPreviousRunThreeGroups)
@@ -652,6 +652,7 @@ TEST(TestLCTSecir, testConstraintsParameters)
     parameters_lct.get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[0] = 0.1;
     parameters_lct.get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[0]      = 0.1;
     parameters_lct.get<mio::lsecir::CriticalPerSevere<ScalarType>>()[0]              = 0.1;
+    parameters_lct.get<mio::lsecir::DeathsPerSevere<ScalarType>>()[0]                = 0.1;
     parameters_lct.get<mio::lsecir::DeathsPerCritical<ScalarType>>()[0]              = 0.1;
 
     // Check improper TimeExposed.
@@ -719,6 +720,17 @@ TEST(TestLCTSecir, testConstraintsParameters)
     EXPECT_TRUE(constraint_check);
     parameters_lct.get<mio::lsecir::CriticalPerSevere<ScalarType>>()[0] = 0.1;
 
+    // Check DeathsPerSevere.
+    parameters_lct.get<mio::lsecir::DeathsPerSevere<ScalarType>>()[0] = -1;
+    constraint_check                                                  = parameters_lct.check_constraints();
+    EXPECT_TRUE(constraint_check);
+
+    // Check CriticalPerSevere + DeathsPerSevere.
+    parameters_lct.get<mio::lsecir::DeathsPerSevere<ScalarType>>()[0] = 1.0;
+    constraint_check                                                  = parameters_lct.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct.get<mio::lsecir::DeathsPerSevere<ScalarType>>()[0] = 0.1;
+
     // Check DeathsPerCritical.
     parameters_lct.get<mio::lsecir::DeathsPerCritical<ScalarType>>()[0] = -1;
     constraint_check                                                    = parameters_lct.check_constraints();
@@ -784,4 +796,81 @@ TEST(TestLCTSecir, testConstraintsModel)
     model.populations[0] = 1000;
     constraint_check     = model.check_constraints();
     EXPECT_FALSE(constraint_check);
+}
+
+TEST(TestLCTSecir, deathsPerSevere_flows)
+{
+    // Test that DeathsPerSevere causes ISev->Dead flow.
+    // CriticalPerSevere=0 blocks the ISev->ICr->Dead path entirely, so
+    // DeathsPerCritical has no influence and is left at its default values.
+
+    using InfState = mio::lsecir::InfectionState;
+    using LctState = mio::LctInfectionState<ScalarType, InfState, 1, 2, 2, 2, 2, 2, 1, 1>;
+    using Model    = mio::lsecir::Model<ScalarType, LctState>;
+
+    // Initialize a model with one group.
+    Model model;
+    auto& params = model.parameters;
+
+    // params.get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[0]   = 5.0;
+    // params.get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[0] = 5.0;
+    params.get<mio::lsecir::CriticalPerSevere<ScalarType>>()[0] = 0.0; // block ISev->ICr->Dead path
+    params.get<mio::lsecir::DeathsPerSevere<ScalarType>>()[0]   = 0.1;
+
+    // Define initial population distribution in infection states, one entry per subcompartment.
+    // We start with 500 individuals in each InfectedSevere subcompartment, no individuals in other compartments.
+    const auto severe_initial = 1000.;
+    const auto dead_initial   = 0.;
+
+    std::vector<std::vector<ScalarType>> initial_populations = {
+        {0.},
+        {0., 0.},
+        {0., 0.},
+        {0., 0.},
+        {severe_initial / LctState::template get_num_subcompartments<mio::lsecir::InfectionState::InfectedSevere>(),
+         severe_initial / LctState::template get_num_subcompartments<mio::lsecir::InfectionState::InfectedSevere>()},
+        {0., 0.},
+        {0.},
+        {dead_initial}};
+
+    // Transfer the initial values in initial_populations to the model.
+    std::vector<ScalarType> flat_initial_populations;
+    for (auto&& vec : initial_populations) {
+        flat_initial_populations.insert(flat_initial_populations.end(), vec.begin(), vec.end());
+    }
+    for (size_t i = 0; i < LctState::Count; i++) {
+        model.populations[i] = flat_initial_populations[i];
+    }
+
+    // Simulate a small time step.
+    ScalarType t0 = 0, tmax = 1., dt = 0.1;
+    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType>(t0, tmax, dt, model);
+
+    // With DeathsPerSevere=0.1, deaths from ISev must be > 0.
+    mio::TimeSeries<ScalarType> population = model.calculate_compartments(result);
+    auto dead_final                        = population.get_last_value()[(size_t)mio::lsecir::InfectionState::Dead];
+    EXPECT_GT(dead_final, dead_initial);
+
+    // Now run again with DeathsPerSevere=0.
+    params.get<mio::lsecir::DeathsPerSevere<ScalarType>>()[0] = 0.0;
+    mio::TimeSeries<ScalarType> result_no_severe_deaths       = mio::simulate<ScalarType>(t0, tmax, dt, model);
+    mio::TimeSeries<ScalarType> population_no_severe_deaths   = model.calculate_compartments(result_no_severe_deaths);
+    auto dead_no_severe_deaths =
+        population_no_severe_deaths.get_last_value()[(size_t)mio::lsecir::InfectionState::Dead];
+
+    // With DeathsPerSevere=0 there should be no deaths from ISev,
+    // so dead compartment stays 0 (ICr is also 0 initially).
+    EXPECT_DOUBLE_EQ(dead_no_severe_deaths, dead_initial);
+
+    // Population must be conserved in both runs.
+    ScalarType total                  = population.get_last_value().sum();
+    ScalarType total_no_severe_deaths = population_no_severe_deaths.get_last_value().sum();
+    EXPECT_NEAR(total, severe_initial, 1e-10);
+    EXPECT_NEAR(total_no_severe_deaths, severe_initial, 1e-10);
+
+    // Recovery flow must be higher when DeathsPerSevere=0.
+    auto rec = population.get_last_value()[(size_t)mio::lsecir::InfectionState::Recovered];
+    auto rec_no_severe_deaths =
+        population_no_severe_deaths.get_last_value()[(size_t)mio::lsecir::InfectionState::Recovered];
+    EXPECT_GT(rec_no_severe_deaths, rec);
 }

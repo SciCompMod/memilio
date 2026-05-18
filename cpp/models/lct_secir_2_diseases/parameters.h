@@ -370,6 +370,22 @@ struct CriticalPerSevere_a {
 };
 
 /**
+ * @brief The percentage of dead patients per hospitalized patients for each group in the SECIR model.
+ */
+template <typename FP>
+struct DeathsPerSevere_a {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 0.);
+    }
+    static std::string name()
+    {
+        return "DeathsPerSevere_a";
+    }
+};
+
+/**
  * @brief The percentage of dead patients per ICU patients for disease a for each group.
  */
 template <typename FP>
@@ -434,6 +450,22 @@ struct CriticalPerSevere_b {
 };
 
 /**
+ * @brief The percentage of dead patients per hospitalized patients for each group in the SECIR model.
+ */
+template <typename FP>
+struct DeathsPerSevere_b {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 0.);
+    }
+    static std::string name()
+    {
+        return "DeathsPerSevere_b";
+    }
+};
+
+/**
  * @brief The percentage of dead patients per ICU patients for disease b for each group.
  */
 template <typename FP>
@@ -487,16 +519,15 @@ struct Seasonality {
 };
 
 template <typename FP>
-using ParametersBase =
-    ParameterSet<TimeExposed_a<FP>, TimeInfectedNoSymptoms_a<FP>, TimeInfectedSymptoms_a<FP>, TimeInfectedSevere_a<FP>,
-                 TimeInfectedCritical_a<FP>, TimeExposed_b<FP>, TimeInfectedNoSymptoms_b<FP>,
-                 TimeInfectedSymptoms_b<FP>, TimeInfectedSevere_b<FP>, TimeInfectedCritical_b<FP>,
-                 TransmissionProbabilityOnContact_a<FP>, TransmissionProbabilityOnContact_b<FP>, ContactPatterns<FP>,
-                 RelativeTransmissionNoSymptoms_a<FP>, RiskOfInfectionFromSymptomatic_a<FP>,
-                 RecoveredPerInfectedNoSymptoms_a<FP>, SeverePerInfectedSymptoms_a<FP>, CriticalPerSevere_a<FP>,
-                 DeathsPerCritical_a<FP>, RelativeTransmissionNoSymptoms_b<FP>, RiskOfInfectionFromSymptomatic_b<FP>,
-                 RecoveredPerInfectedNoSymptoms_b<FP>, SeverePerInfectedSymptoms_b<FP>, CriticalPerSevere_b<FP>,
-                 DeathsPerCritical_b<FP>, StartDay<FP>, Seasonality<FP>>;
+using ParametersBase = ParameterSet<
+    TimeExposed_a<FP>, TimeInfectedNoSymptoms_a<FP>, TimeInfectedSymptoms_a<FP>, TimeInfectedSevere_a<FP>,
+    TimeInfectedCritical_a<FP>, TimeExposed_b<FP>, TimeInfectedNoSymptoms_b<FP>, TimeInfectedSymptoms_b<FP>,
+    TimeInfectedSevere_b<FP>, TimeInfectedCritical_b<FP>, TransmissionProbabilityOnContact_a<FP>,
+    TransmissionProbabilityOnContact_b<FP>, ContactPatterns<FP>, RelativeTransmissionNoSymptoms_a<FP>,
+    RiskOfInfectionFromSymptomatic_a<FP>, RecoveredPerInfectedNoSymptoms_a<FP>, SeverePerInfectedSymptoms_a<FP>,
+    CriticalPerSevere_a<FP>, DeathsPerSevere_a<FP>, DeathsPerCritical_a<FP>, RelativeTransmissionNoSymptoms_b<FP>,
+    RiskOfInfectionFromSymptomatic_b<FP>, RecoveredPerInfectedNoSymptoms_b<FP>, SeverePerInfectedSymptoms_b<FP>,
+    CriticalPerSevere_b<FP>, DeathsPerSevere_b<FP>, DeathsPerCritical_b<FP>, StartDay<FP>, Seasonality<FP>>;
 
 /**
  * @brief Parameters of an LCT-SECIR-2-DISEASES model.
@@ -659,6 +690,32 @@ public:
             if (this->template get<CriticalPerSevere_b<FP>>()[i] < 0.0 ||
                 this->template get<CriticalPerSevere_b<FP>>()[i] > 1.0) {
                 log_error("Constraint check: Parameter CriticalPerSevere_b smaller {:d} or larger {:d}", 0, 1);
+                return true;
+            }
+
+            if (this->template get<DeathsPerSevere_a<FP>>()[i] < 0.0 ||
+                this->template get<DeathsPerSevere_a<FP>>()[i] > 1.0) {
+                log_error("Constraint check: Parameter DeathsPerSevere_a smaller {:d} or larger {:d}", 0, 1);
+                return true;
+            }
+
+            if (this->template get<DeathsPerSevere_b<FP>>()[i] < 0.0 ||
+                this->template get<DeathsPerSevere_b<FP>>()[i] > 1.0) {
+                log_error("Constraint check: Parameter DeathsPerSevere_b smaller {:d} or larger {:d}", 0, 1);
+                return true;
+            }
+
+            if (this->template get<CriticalPerSevere_a<FP>>()[i] + this->template get<DeathsPerSevere_a<FP>>()[i] >
+                1.0) {
+                log_error("Constraint check: CriticalPerSevere_a + DeathsPerSevere_a exceed 1.0 for age group {}.",
+                          static_cast<size_t>(i));
+                return true;
+            }
+
+            if (this->template get<CriticalPerSevere_b<FP>>()[i] + this->template get<DeathsPerSevere_b<FP>>()[i] >
+                1.0) {
+                log_error("Constraint check: CriticalPerSevere_b + DeathsPerSevere_b exceed 1.0 for age group {}.",
+                          static_cast<size_t>(i));
                 return true;
             }
 
