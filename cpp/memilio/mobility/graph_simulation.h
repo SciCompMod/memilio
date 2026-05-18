@@ -30,6 +30,7 @@
 #include "memilio/geography/regions.h"
 #include "models/smm/parameters.h"
 #include "memilio/geography/distance.h"
+#include "models/fmd/infection_state.h"
 
 namespace mio
 {
@@ -264,10 +265,10 @@ class GraphSimulationStochastic
                                                     typename Graph::NodeProperty&, typename Graph::NodeProperty&)>,
                                  std::function<void(FP, FP, typename Graph::NodeProperty&)>>
 {
-    using Base = GraphSimulationBase<Graph, FP, FP,
-                                     std::function<void(typename Graph::EdgeProperty&, size_t,
+    using Base          = GraphSimulationBase<Graph, FP, FP,
+                                              std::function<void(typename Graph::EdgeProperty&, size_t,
                                                         typename Graph::NodeProperty&, typename Graph::NodeProperty&)>,
-                                     std::function<void(FP, FP, typename Graph::NodeProperty&)>>;
+                                              std::function<void(FP, FP, typename Graph::NodeProperty&)>>;
     using node_function = typename Base::node_function;
     using edge_function = typename Base::edge_function;
 
@@ -462,7 +463,8 @@ public:
             for (auto index : neighbors[0]) {
                 auto& neighbour = graph.nodes()[index];
                 // Only count infected neighbours
-                if (neighbour.id != node.id) {
+                if (neighbour.id != node.id && neighbour.property.get_simulation().get_model().populations[{
+                                                   mio::regions::Region(0), mio::fmd::InfectionState::I}] > 0) {
                     infection_pressure +=
                         stepwise_function(node.property.get_location().distance(neighbour.property.get_location()));
                 }
