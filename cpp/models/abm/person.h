@@ -21,7 +21,7 @@
 #define MIO_ABM_PERSON_H
 
 #include "abm/infection.h"
-#include "abm/infection_state.h"
+#include "abm/symptom_state.h"
 #include "abm/location_id.h"
 #include "abm/location_type.h"
 #include "abm/parameters.h"
@@ -101,11 +101,11 @@ public:
     bool is_infected(TimePoint t) const;
 
     /**
-     * @brief Get the InfectionState of the Person at a specific TimePoint.
+     * @brief Get the SymptomState of the Person at a specific TimePoint.
      * @param[in] t TimePoint of querry. Usually the current time of the Simulation.
-     * @return The InfectionState of the latest Infection at time t.
+     * @return The SymptomState of the latest Infection at time t.
      */
-    InfectionState get_infection_state(TimePoint t) const;
+    SymptomState get_symptom_state(TimePoint t) const;
 
     /**
      * @brief Adds a new Infection to the list of Infection%s.

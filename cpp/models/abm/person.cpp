@@ -67,21 +67,19 @@ bool Person::is_infected(TimePoint t) const
     if (m_infections.empty()) {
         return false;
     }
-    // subject to change if Recovered is removed
-    if (m_infections.back().get_infection_state(t) == InfectionState::Susceptible ||
-        m_infections.back().get_infection_state(t) == InfectionState::Recovered) {
+    if (m_infections.back().is_recovered(t)) {
         return false;
     }
     return true;
 }
 
-InfectionState Person::get_infection_state(TimePoint t) const
+SymptomState Person::get_symptom_state(TimePoint t) const
 {
     if (m_infections.empty()) {
-        return InfectionState::Susceptible;
+        return SymptomState::None;
     }
     else {
-        return m_infections.back().get_infection_state(t);
+        return m_infections.back().get_symptom_state(t);
     }
 }
 

@@ -55,7 +55,7 @@ TEST_F(TestInfection, init)
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(5))
         // 1st infection
-        .WillOnce(testing::Return(0.4)) // Transition to Infected
+        .WillOnce(testing::Return(0.4)) // Transition to Moderate
         .WillOnce(testing::Return(0.6)) // Transition to Recovered
         .WillOnce(testing::Return(params.get<mio::abm::ViralShedFactor>()[{virus_variant_test, age_group_test}]
                                       .params()[0])) // Viral Shed Factor
@@ -68,27 +68,25 @@ TEST_F(TestInfection, init)
     //Distribution for stay times
     EXPECT_CALL(mock_logNormal_dist.get_mock(), invoke)
         // 1st infection
-        .WillOnce(testing::Return(1.)) // IncubationTime
-        .WillOnce(testing::Return(1.)) // TimeInfectedNoSymptomsToSymptoms
+        .WillOnce(testing::Return(1.)) // TimeInfectedNoSymptomsToModerate
         .WillOnce(testing::Return(1.)) // TimeInfectedSymptomsToRecovered
         // 2nd infection
-        .WillOnce(testing::Return(1.0)) // TimeInfectedNoSymptomsToSymptoms
-        .WillOnce(testing::Return(1.0)) // IncubationTime
+        .WillOnce(testing::Return(1.0)) // TimeInfectedNoSymptomsToModerate
         .WillOnce(testing::Return(1.0)) // TimeInfectedSymptomsToRecovered
         .WillRepeatedly(testing::Return(1.0));
 
     auto infection = mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, age_group_15_to_34, params,
-                                         mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed,
-                                         {mio::abm::ProtectionType::NoProtection, mio::abm::TimePoint(0)}, true);
+                                         mio::abm::TimePoint(0), mio::abm::SymptomState::None, false, true,
+                                         {mio::abm::ProtectionType::NoProtection, mio::abm::TimePoint(0)});
 
     // Test virus variant and detection status
     EXPECT_EQ(infection.get_virus_variant(), mio::abm::VirusVariant::Wildtype);
     EXPECT_EQ(infection.is_detected(), true);
     // Test state transitions based on time
-    EXPECT_EQ(infection.get_infection_state(mio::abm::TimePoint(0) + mio::abm::days(1) - mio::abm::seconds(1)),
-              mio::abm::InfectionState::Exposed);
-    EXPECT_EQ(infection.get_infection_state(mio::abm::TimePoint(0) + mio::abm::days(1)),
-              mio::abm::InfectionState::InfectedNoSymptoms);
+    EXPECT_EQ(infection.get_symptom_state(mio::abm::TimePoint(0) + mio::abm::days(1) - mio::abm::seconds(1)),
+              mio::abm::SymptomState::None);
+    EXPECT_EQ(infection.get_symptom_state(mio::abm::TimePoint(0) + mio::abm::days(1)),
+              mio::abm::SymptomState::Moderate);
     // Test viral shed at a specific time point
     EXPECT_NEAR(infection.get_viral_shed(mio::abm::TimePoint(0) + mio::abm::days(3)), 0.02689414213699951, 1e-14);
 
@@ -101,14 +99,14 @@ TEST_F(TestInfection, init)
         mio::TimeSeriesFunctor<ScalarType>{mio::TimeSeriesFunctorType::LinearInterpolation, {{0, 0.91}, {30, 0.81}}};
     auto infection_w_previous_exp =
         mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, age_group_test, params, mio::abm::TimePoint(0),
-                            mio::abm::InfectionState::InfectedSymptoms,
-                            {mio::abm::ProtectionType::GenericVaccine, mio::abm::TimePoint(0)}, true);
-    // Test infection state transition
+                            mio::abm::SymptomState::Moderate, false, true,
+                            {mio::abm::ProtectionType::GenericVaccine, mio::abm::TimePoint(0)});
+    // Test symptom state transition
     EXPECT_EQ(
-        infection_w_previous_exp.get_infection_state(mio::abm::TimePoint(0) + mio::abm::days(1) - mio::abm::seconds(1)),
-        mio::abm::InfectionState::InfectedSymptoms);
-    EXPECT_EQ(infection_w_previous_exp.get_infection_state(mio::abm::TimePoint(0) + mio::abm::days(1)),
-              mio::abm::InfectionState::Recovered);
+        infection_w_previous_exp.get_symptom_state(mio::abm::TimePoint(0) + mio::abm::days(1) - mio::abm::seconds(1)),
+        mio::abm::SymptomState::Moderate);
+    EXPECT_EQ(infection_w_previous_exp.get_symptom_state(mio::abm::TimePoint(0) + mio::abm::days(1)),
+              mio::abm::SymptomState::None);
     // Test viral shed at a specific time point
     EXPECT_NEAR(infection_w_previous_exp.get_viral_shed(mio::abm::TimePoint(0) + mio::abm::days(3)),
                 9.1105119440064545e-05, 1e-14);

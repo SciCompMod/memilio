@@ -91,22 +91,22 @@ struct ScopedMockDistribution {
 };
 
 /**
- * @brief Create a Person without a Model object. Intended for simple use in tests.
+ * @brief Create an infected Person without a Model object. Intended for simple use in tests.
  */
-mio::abm::Person make_test_person(mio::RandomNumberGenerator& rng, mio::abm::Location& location,
-                                  mio::AgeGroup age                        = age_group_15_to_34,
-                                  mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
-                                  mio::abm::TimePoint t                    = mio::abm::TimePoint(0),
-                                  mio::abm::Parameters params              = mio::abm::Parameters(num_age_groups),
-                                  mio::abm::PersonId id                    = mio::abm::PersonId(0));
+mio::abm::Person make_infected_person(mio::RandomNumberGenerator& rng, mio::abm::Location& location,
+                                      mio::AgeGroup age                    = age_group_15_to_34,
+                                      mio::abm::SymptomState symptom_state = mio::abm::SymptomState::None,
+                                      mio::abm::TimePoint t                = mio::abm::TimePoint(0),
+                                      mio::abm::Parameters params          = mio::abm::Parameters(num_age_groups),
+                                      mio::abm::PersonId id                = mio::abm::PersonId(0));
 
 /**
- * @brief Add a Person to the Model. Intended for simple use in tests.
+ * @brief Add a infected Person to the Model. Intended for simple use in tests.
  */
-mio::abm::PersonId add_test_person(mio::abm::Model& model, mio::abm::LocationId loc_id,
-                                   mio::AgeGroup age                        = age_group_15_to_34,
-                                   mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
-                                   mio::abm::TimePoint t                    = mio::abm::TimePoint(0));
+mio::abm::PersonId add_infected_person(mio::abm::Model& model, mio::abm::LocationId loc_id,
+                                       mio::AgeGroup age                    = age_group_15_to_34,
+                                       mio::abm::SymptomState symptom_state = mio::abm::SymptomState::None,
+                                       mio::abm::TimePoint t                = mio::abm::TimePoint(0));
 
 /// @brief Calls mio::abm::interact, but it computes the correct exposures for you.
 void interact_testing(mio::abm::PersonalRandomNumberGenerator& personal_rng, mio::abm::Person& person,
