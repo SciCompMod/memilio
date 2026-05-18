@@ -19,6 +19,7 @@
 */
 #include "utils/time_series.h"
 #include "memilio/utils/time_series.h"
+#include "memilio/math/time_series_functor.h"
 #include "pybind_util.h"
 
 #include <pybind11/pybind11.h>

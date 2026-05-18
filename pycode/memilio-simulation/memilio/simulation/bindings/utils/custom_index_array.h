@@ -231,7 +231,7 @@ void bind_CustomIndexArray(pybind11::module_& m, std::string const& name)
         //scalar assignment
         .def("__setitem__", &assign_scalar<C, Type, Tags...>);
 
-    //scalar assignment with conversion from double
+    // scalar assignment with conversion from double
     if constexpr (std::is_convertible<double, Type>::value) {
         c.def("__setitem__", &assign_scalar<C, double, Tags...>);
     }

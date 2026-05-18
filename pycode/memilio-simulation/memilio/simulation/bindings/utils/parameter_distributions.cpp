@@ -51,6 +51,15 @@ void bind_parameter_distribution_normal(py::module_& m, std::string const& name)
                       &mio::ParameterDistributionNormal::set_standard_dev);
 }
 
+void bind_parameter_distribution_lognormal(py::module_& m, std::string const& name)
+{
+    bind_class<mio::ParameterDistributionLogNormal, EnablePickling::IfAvailable, mio::ParameterDistribution>(
+        m, name.c_str())
+        .def(py::init<double, double>(), py::arg("log_mean"), py::arg("log_stddev"))
+        .def_property_readonly("log_mean", &mio::ParameterDistributionLogNormal::get_log_mean)
+        .def_property_readonly("log_standard_dev", &mio::ParameterDistributionLogNormal::get_log_stddev);
+}
+
 void bind_parameter_distribution_uniform(py::module_& m, std::string const& name)
 {
     bind_class<mio::ParameterDistributionUniform, EnablePickling::IfAvailable, mio::ParameterDistribution>(m,

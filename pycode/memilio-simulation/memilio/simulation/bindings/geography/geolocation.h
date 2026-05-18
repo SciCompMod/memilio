@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2026 MEmilio
 *
-* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
+* Authors: Carlotta Gerstein
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,22 +17,25 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef PYMIO_PARAMETER_DISTRIBUTIONS_H
-#define PYMIO_PARAMETER_DISTRIBUTIONS_H
+#ifndef PYMIO_GEOLOCATION_H
+#define PYMIO_GEOLOCATION_H
+
+#include "memilio/math/integrator.h"
+#include "memilio/geography/geolocation.h"
+#include "pybind_util.h"
 
 #include "pybind11/pybind11.h"
+#include <pybind11/eigen.h>
+
+namespace py = pybind11;
 
 namespace pymio
 {
 
-void bind_parameter_distribution(pybind11::module_& m, std::string const& name);
-
-void bind_parameter_distribution_normal(pybind11::module_& m, std::string const& name);
-
-void bind_parameter_distribution_lognormal(pybind11::module_& m, std::string const& name);
-
-void bind_parameter_distribution_uniform(pybind11::module_& m, std::string const& name);
-
+void bind_geolocation(pybind11::module_& m, std::string const& name)
+{
+    bind_class<mio::geo::GeographicalLocation, EnablePickling::Never>(m, name.c_str()).def(py::init<double, double>());
+}
 } // namespace pymio
 
-#endif //PYMIO_PARAMETER_DISTRIBUTIONS_H
+#endif //PYMIO_GEOLOCATION_H
