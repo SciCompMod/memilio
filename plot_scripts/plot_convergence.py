@@ -638,7 +638,7 @@ def get_t0_ide_from_dir_name(dir_name):
 def get_dampingtime_ide_from_dir_name(dir_name):
     dampingtime_string = [x for x in dir_name.split(
         "_") if ("dampingtime" in x)]
-    dampingtime = int(dampingtime_string[0].split("=")[-1])
+    dampingtime = float(dampingtime_string[0].split("=")[-1])
 
     return dampingtime
 
@@ -657,7 +657,7 @@ def main():
     groundtruth_ode = True
     only_S = False
 
-    main_dir = "2026-04-29/test_backwardsfd_fdordercontacts=4_smootherwindow=2"
+    main_dir = "2026-05-08/smoothcos_negative_dampingtimes_fdordercontacts=4_smootherwindow=1"
 
     ##############################################
 
@@ -701,8 +701,8 @@ def main():
         total_pop_end_all_gregory_orders = []
 
         # Get exponents for which IDE simulations have been computed for considered subdirectory.
-        # ide_exponents = get_ide_exponents(result_dir)
-        ide_exponents = [0, 1, 2]
+        ide_exponents = get_ide_exponents(result_dir)
+        # ide_exponents = [0, 1, 2]
 
         # Calculate time steps resulting from ide_exponents.
         timesteps_ide = []

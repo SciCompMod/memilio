@@ -28,6 +28,7 @@
 #include <Eigen/src/Core/util/Meta.h>
 #include <boost/numeric/odeint/util/ublas_wrapper.hpp>
 #include <cmath>
+#include <cstdlib>
 
 namespace mio
 {
@@ -419,6 +420,7 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
 
     else {
         for (size_t j = 0; j <= current_time_index; j++) {
+            // std::cout << "j: " << std::endl;
 
             ScalarType relevant_susceptibles;
             // Compute inner sum
@@ -431,29 +433,33 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
             //     std::cout << "phi_deriv: " << phi_deriv << std::endl;
             // }
 
-            for (size_t k = 0; k <= j; k++) {
-                ScalarType gregory_weight_inner_sum   = 0.;
-                size_t switch_weights_index_inner_sum = std::min(j, m_gregory_order);
-                if (k < switch_weights_index_inner_sum) {
-                    gregory_weight_inner_sum = sum_part1_weight(j, k);
-                }
-                else {
-                    gregory_weight_inner_sum = sum_part2_weight(j, k);
-                }
+            if (abs(phi_deriv) > 1e-10) {
 
-                // If k<n, we take the Susceptibles at the corresponding index that we have already computed.
-                if (k < current_time_index) {
-                    relevant_susceptibles = populations.get_value(k)[(Eigen::Index)InfectionState::Susceptible];
-                }
-                // In case of j=n, the number of Susceptibles is not already known and stored in populations but is determined
-                // by the input to the fixed point iteration.
-                else {
-                    relevant_susceptibles = susceptibles;
-                }
+                for (size_t k = 0; k <= j; k++) {
+                    // std::cout << "k: " << k << std::endl;
+                    ScalarType gregory_weight_inner_sum   = 0.;
+                    size_t switch_weights_index_inner_sum = std::min(j, m_gregory_order);
+                    if (k < switch_weights_index_inner_sum) {
+                        gregory_weight_inner_sum = sum_part1_weight(j, k);
+                    }
+                    else {
+                        gregory_weight_inner_sum = sum_part2_weight(j, k);
+                    }
 
-                inner_sum += gregory_weight_inner_sum * m_transmissionproboncontact_vector[j - k] *
-                             m_riskofinffromsymptomatic_vector[j - k] * m_transitiondistribution_vector[j - k] *
-                             relevant_susceptibles;
+                    // If k<n, we take the Susceptibles at the corresponding index that we have already computed.
+                    if (k < current_time_index) {
+                        relevant_susceptibles = populations.get_value(k)[(Eigen::Index)InfectionState::Susceptible];
+                    }
+                    // In case of j=n, the number of Susceptibles is not already known and stored in populations but is determined
+                    // by the input to the fixed point iteration.
+                    else {
+                        relevant_susceptibles = susceptibles;
+                    }
+
+                    inner_sum += gregory_weight_inner_sum * m_transmissionproboncontact_vector[j - k] *
+                                 m_riskofinffromsymptomatic_vector[j - k] * m_transitiondistribution_vector[j - k] *
+                                 relevant_susceptibles;
+                }
             }
 
             ScalarType gregory_weight   = 0.;

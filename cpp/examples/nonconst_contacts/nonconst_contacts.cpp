@@ -223,11 +223,11 @@ int main()
     ScalarType time_infected = 2.;
 
     ScalarType t0_ode = 0.;
-    ScalarType t0_ide = 11.;
-    ScalarType tmax   = 15.;
+    ScalarType t0_ide = 5.;
+    ScalarType tmax   = 9.;
 
     ScalarType damping      = 0.2;
-    ScalarType damping_time = 9.;
+    ScalarType damping_time = 4.9;
 
     bool split_integral = false;
 
@@ -238,12 +238,12 @@ int main()
 
     // Compute groundtruth with ODE model.
     ScalarType ode_exponent               = 6.;
-    std::vector<ScalarType> ide_exponents = {0., 1., 2., 3., 4.};
+    std::vector<ScalarType> ide_exponents = {3.};
 
-    std::string save_dir =
-        fmt::format("../../simulation_results/2026-04-29/test_backwardsfd_fdordercontacts={}_smootherwindow=2/"
-                    "nonconst_contacts_t0={}_tinit={}_tmax={}_dampingtime={}_damping={}/",
-                    fd_order_contacts, t0_ode, t0_ide, tmax, damping_time, damping);
+    std::string save_dir = fmt::format(
+        "../../simulation_results/2026-05-08/smoothcos_negative_dampingtimes_fdordercontacts={}_smootherwindow=1/"
+        "nonconst_contacts_t0={}_tinit={}_tmax={}_dampingtime={}_damping={}/",
+        fd_order_contacts, t0_ode, t0_ide, tmax, damping_time, damping);
 
     // Make folder if not existent yet.
     boost::filesystem::path dir(save_dir);

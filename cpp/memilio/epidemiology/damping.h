@@ -363,9 +363,13 @@ public:
                                        return std::get<SimulationTime<FP>>(tup1) < std::get<SimulationTime<FP>>(tup2);
                                    });
 
+        FP smoother_window = 1.;
+
+        bool smoothcos = true;
+
         auto damping = smoother_cosine<FP>(
-            t.get(), (std::get<SimulationTime<FP>>(*ub) - mio::SimulationTime<FP>(1.0)).get(),
-            std::get<SimulationTime<FP>>(*ub).get(), std::get<Matrix>(*(ub - 1)), std::get<Matrix>(*ub));
+            t.get(), (std::get<SimulationTime<FP>>(*ub) - mio::SimulationTime<FP>(smoother_window)).get(),
+            std::get<SimulationTime<FP>>(*ub).get(), std::get<Matrix>(*(ub - 1)), std::get<Matrix>(*ub), smoothcos);
 
         return damping;
     }
