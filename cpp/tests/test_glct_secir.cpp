@@ -532,6 +532,11 @@ TEST_F(ModelTestGLCTSecir, testConstraintsParameters)
     constraint_check = model->parameters.check_constraints();
     EXPECT_TRUE(constraint_check);
     model->parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToInfectedCritical<ScalarType>>()(0, 0) = -0.01;
+    // InfectedSevereToDead.
+    model->parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToDead<ScalarType>>()(0, 0) = 0.01;
+    constraint_check = model->parameters.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    model->parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToDead<ScalarType>>()(0, 0) = -0.01;
     // InfectedSevereToRecovered.
     model->parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToRecovered<ScalarType>>()(0, 0) = 50;
     constraint_check = model->parameters.check_constraints();
