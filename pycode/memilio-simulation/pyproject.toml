@@ -35,8 +35,14 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Operating System :: POSIX :: Linux",
-  "Operating System :: Microsoft :: Windows"
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: MacOS"
 ]
+
+[tool.cibuildwheel]
+build = ["cp38*","cp39*","cp310*","cp311*","cp312*","cp313*"]
+# Disable some wheels
+skip = ["*-musllinux*", "*-win32"]
 
 [project.optional-dependencies]
 dev = []
@@ -57,7 +63,3 @@ metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
 local_scheme = "no-local-version"
 # point scm to the git project root
 root = "../.."
-
-[tool.cibuildwheel]
-# Disable some wheels
-skip = ["pp*", "*musllinux*", "*-win32", "cp314*"]
