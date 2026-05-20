@@ -151,7 +151,8 @@ int main()
             (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
         if (infection_state != mio::abm::InfectionState::Susceptible)
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
-                                                         model.parameters, start_date, infection_state));
+                                                         model.parameters, start_date, infection_state),
+                                     rng, start_date, model.parameters);
     }
 
     // Assign locations to the people

@@ -438,13 +438,16 @@ TEST_F(TestModel, evolveMobilityTrips)
 
     auto rng_p1 = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), p1);
     p1.add_new_infection(mio::abm::Infection(rng_p1, static_cast<mio::abm::VirusVariant>(0), p1.get_age(),
-                                             model.parameters, t, mio::abm::InfectionState::InfectedNoSymptoms));
+                                             model.parameters, t, mio::abm::InfectionState::InfectedNoSymptoms),
+                         rng_p1, t, model.parameters);
     auto rng_p3 = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), p3);
     p3.add_new_infection(mio::abm::Infection(rng_p3, static_cast<mio::abm::VirusVariant>(0), p3.get_age(),
-                                             model.parameters, t, mio::abm::InfectionState::InfectedSevere));
+                                             model.parameters, t, mio::abm::InfectionState::InfectedSevere),
+                         rng_p3, t, model.parameters);
     auto rng_p4 = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), p4);
     p4.add_new_infection(mio::abm::Infection(rng_p4, static_cast<mio::abm::VirusVariant>(0), p4.get_age(),
-                                             model.parameters, t, mio::abm::InfectionState::Recovered));
+                                             model.parameters, t, mio::abm::InfectionState::Recovered),
+                         rng_p4, t, model.parameters);
 
     // For any other uniform distribution calls in model.evolve
     EXPECT_CALL(mock_uniform_dist2.get_mock(), invoke).WillRepeatedly(Return(1.));

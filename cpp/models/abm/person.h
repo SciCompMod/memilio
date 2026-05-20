@@ -20,8 +20,10 @@
 #ifndef MIO_ABM_PERSON_H
 #define MIO_ABM_PERSON_H
 
+#include "abm/sex.h"
 #include "abm/infection.h"
 #include "abm/infection_state.h"
+#include "abm/pais.h"
 #include "abm/location_id.h"
 #include "abm/location_type.h"
 #include "abm/parameters.h"
@@ -58,7 +60,8 @@ public:
      * 
      */
     explicit Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location_id,
-                    int location_model_id, AgeGroup age, PersonId person_id = PersonId::invalid_ID());
+                    int location_model_id, AgeGroup age, Sex sex = Sex::Male,
+                    PersonId person_id = PersonId::invalid_ID());
 
     explicit Person(const Person& other, PersonId person_id);
 
@@ -76,6 +79,22 @@ public:
      */
     Infection& get_infection();
     const Infection& get_infection() const;
+
+    /**
+     * @brief Get all infections of the Person.
+     * @return A vector with all infections the Person had.
+     * @{
+     */
+    std::vector<Infection>& get_infections()
+    {
+        return m_infections;
+    }
+
+    const std::vector<Infection>& get_infections() const
+    {
+        return m_infections;
+    }
+    /** @} */
 
     /**
      * @brief Get all vaccinations of the Person.
@@ -101,6 +120,13 @@ public:
     bool is_infected(TimePoint t) const;
 
     /**
+     * @brief Returns if the Person has an active PAIS at the TimePoint.
+     * @param[in] t TimePoint of querry. Usually the current time of the Simulation.
+     * @return True if the Person has an active PAIS at the TimePoint.
+     */
+    bool has_active_pais(TimePoint t) const;
+
+    /**
      * @brief Get the InfectionState of the Person at a specific TimePoint.
      * @param[in] t TimePoint of querry. Usually the current time of the Simulation.
      * @return The InfectionState of the latest Infection at time t.
@@ -110,8 +136,11 @@ public:
     /**
      * @brief Adds a new Infection to the list of Infection%s.
      * @param[in] inf The new Infection.
+     * @param[in] rng PersonalRandomNumberGenerator.
+     * @param[in] t TimePoint of querry. Usually the current time of the Simulation.
+     * @param[in] params The Parameters of the Simulation.
      */
-    void add_new_infection(Infection&& inf);
+    void add_new_infection(Infection&& inf, PersonalRandomNumberGenerator& rng, TimePoint t, const Parameters& params);
 
     /**
      * @brief Get the AgeGroup of this Person.
@@ -120,6 +149,15 @@ public:
     AgeGroup get_age() const
     {
         return m_age;
+    }
+
+    /**
+     * @brief Get the Sex of this Person.
+     * @return Sex of the Person
+     */
+    Sex get_sex() const
+    {
+        return m_sex;
     }
 
     /**
@@ -352,6 +390,13 @@ public:
     void set_mask(MaskType type, TimePoint t);
 
     /**
+     * @brief Get the antibody level of the Person at a given time.
+     * @param[in] t TimePoint of check.
+     * @returns Antibody level of the Person at the given TimePoint.
+     */
+    ScalarType get_antibody_level(TimePoint t) const;
+
+    /**
      * @brief Get the multiplicative factor on how likely an #Infection is due to the immune system.
      * @param[in] t TimePoint of check.
      * @param[in] virus VirusVariant to check
@@ -414,6 +459,7 @@ public:
             .add("infections", m_infections)
             .add("home_isolation_start", m_home_isolation_start)
             .add("age_group", m_age)
+            .add("sex", m_sex)
             .add("time_at_location", m_time_at_location)
             .add("rnd_workgroup", m_random_workgroup)
             .add("rnd_schoolgroup", m_random_schoolgroup)
@@ -452,8 +498,10 @@ private:
     Person always visits the same Home or School etc. */
     std::vector<ProtectionEvent> m_vaccinations; ///< Vector with all vaccinations the Person has received.
     std::vector<Infection> m_infections; ///< Vector with all Infection%s the Person had.
+    PAIS m_pais; ///< The PAIS of the Person (PAISState::Count if no PAIS).
     TimePoint m_home_isolation_start; ///< TimePoint when the Person started isolation at home.
     AgeGroup m_age; ///< AgeGroup the Person belongs to.
+    Sex m_sex; ///< Sex of the Person.
     TimeSpan m_time_at_location; ///< Time the Person has spent at its current Location so far.
     ScalarType
         m_random_workgroup; ///< Value to determine if the Person goes to work or works from home during lockdown.
@@ -481,7 +529,7 @@ struct DefaultFactory<abm::Person> {
     static abm::Person create()
     {
         return abm::Person(thread_local_rng(), abm::LocationType::Count, abm::LocationId(), 0, AgeGroup(0),
-                           abm::PersonId());
+                           abm::Sex::Male, abm::PersonId());
     }
 };
 
