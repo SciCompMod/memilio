@@ -4,6 +4,10 @@ on:
   release:
     types:
       - published
+  # Uncomment this together with the "repository-url" field of pypa/gh-action-pypi-publish
+  # to make a test release. Building this is rather expensive so do not merge this uncommented!
+  push:
+  ### @Reviewer: MAKE SURE THE LINE ABOVE IS COMMENTED OUT BEFORE MERGE! ###
 
 jobs:
 
@@ -68,5 +72,5 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           skip-existing: true
-          # To test uploads to TestPyPI, uncomment the following:
-          # repository-url: https://test.pypi.org/legacy/
+          # To test uploads to TestPyPI, uncomment the following, as well as the "push:" line at the top:
+          repository-url: https://test.pypi.org/legacy/
