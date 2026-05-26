@@ -22,6 +22,7 @@
 
 #include "memilio/config.h"
 #include "memilio/math/eigen.h"
+#include "memilio/utils/compiler_diagnostics.h"
 
 #include <cmath>
 #include <numbers>
@@ -47,6 +48,7 @@ template <typename FP>
 inline FP smoother_cosine(FP x, FP xleft, FP xright, FP yleft, FP yright, bool smoothcos = true)
 {
     using std::cos;
+    using std::pow;
 
     if (x <= xleft) {
         return yleft;
@@ -56,15 +58,16 @@ inline FP smoother_cosine(FP x, FP xleft, FP xright, FP yleft, FP yright, bool s
     }
 
     if (smoothcos) {
-        return 0.5 * (yleft - yright) * cos(std::numbers::pi_v<ScalarType> / (xright - xleft) * (x - xleft)) +
-               0.5 * (yleft + yright);
+        return FP(0.5) * (yleft - yright) * cos(std::numbers::pi_v<ScalarType> / (xright - xleft) * (x - xleft)) +
+               FP(0.5) * (yleft + yright);
     }
     else {
         FP normalized_time = (x - xleft) / (xright - xleft);
 
-        return yleft + (yright - yleft) * (126. * std::pow(normalized_time, 5) - 420. * std::pow(normalized_time, 6) +
-                                           540. * std::pow(normalized_time, 7) - 315. * std::pow(normalized_time, 8) +
-                                           70. * std::pow(normalized_time, 9));
+        return yleft +
+               (yright - yleft) * (FP(126.) * pow(normalized_time, FP(5)) - FP(420.) * pow(normalized_time, FP(6)) +
+                                   FP(540.) * pow(normalized_time, FP(7)) - FP(315.) * pow(normalized_time, FP(8)) +
+                                   FP(70.) * pow(normalized_time, FP(9)));
     }
 }
 

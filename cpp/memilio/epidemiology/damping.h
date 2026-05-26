@@ -390,7 +390,7 @@ public:
 
         FP smoother_window = 1.;
 
-        bool smoothcos = true;
+        bool smoothcos = false;
 
         auto damping = smoother_cosine<FP>(
             t.get(), (std::get<SimulationTime<FP>>(*ub) - mio::SimulationTime<FP>(smoother_window)).get(),

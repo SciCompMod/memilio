@@ -138,8 +138,8 @@ int main()
     std::string result_dir = fmt::format(
         "../../simulation_results/2025-11-23/messina_more_init_values/t0ide={}_tmax={}/", params::t0, params::tmax);
     // Make folder if not existent yet.
-    boost::filesystem::path dir(result_dir);
-    boost::filesystem::create_directories(dir);
+    std::filesystem::path dir(result_dir);
+    std::filesystem::create_directories(dir);
 
     // Compute groundtruth.
 

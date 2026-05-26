@@ -202,8 +202,8 @@ int main()
             fmt::format("../../simulation_results/simple_model_exponential/", std::to_string(ode_exponent));
         std::cout << "Save dir: " << save_dir << std::endl;
         // Make folder if not existent yet.
-        boost::filesystem::path dir(save_dir);
-        boost::filesystem::create_directories(dir);
+        std::filesystem::path dir(save_dir);
+        std::filesystem::create_directories(dir);
 
         auto result_ode = simulate_ode(ode_exponent, save_dir).value();
 

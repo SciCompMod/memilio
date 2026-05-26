@@ -503,8 +503,8 @@ int main()
                     damping_time, damping, cont_freq);
 
     // Make folder if not existent yet.
-    boost::filesystem::path dir(save_dir);
-    boost::filesystem::create_directories(dir);
+    std::filesystem::path dir(save_dir);
+    std::filesystem::create_directories(dir);
 
     // Do IDE simulations.
 

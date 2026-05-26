@@ -173,8 +173,8 @@ int main()
 {
     std::string result_dir = "../../simulation_results/messina_model_extended_detailed_init_test/";
     // Make folder if not existent yet.
-    boost::filesystem::path dir(result_dir);
-    boost::filesystem::create_directories(dir);
+    std::filesystem::path dir(result_dir);
+    std::filesystem::create_directories(dir);
 
     // Compute groundtruth.
 

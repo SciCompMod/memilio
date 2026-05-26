@@ -114,8 +114,8 @@ int main()
     std::cout << save_dir << std::endl;
 
     // Make folder if not existent yet.
-    boost::filesystem::path dir(save_dir);
-    boost::filesystem::create_directories(dir);
+    std::filesystem::path dir(save_dir);
+    std::filesystem::create_directories(dir);
 
     // Do IDE simulations.
     for (size_t gregory_order : gregory_orders) {

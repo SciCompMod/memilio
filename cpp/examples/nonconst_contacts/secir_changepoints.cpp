@@ -355,8 +355,8 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType t0_ide, Scala
 
     if (!save_dir.empty() && save_exponent > 0) {
         // Create result directory if not existent yet.
-        boost::filesystem::path res_dir(save_dir);
-        boost::filesystem::create_directory(res_dir);
+        std::filesystem::path res_dir(save_dir);
+        std::filesystem::create_directory(res_dir);
 
         // Save compartments.
         auto save_result_status_ode = mio::save_result(
@@ -529,8 +529,8 @@ int main(int argc, char** argv)
     }
 
     // Make folder if not existent yet.
-    boost::filesystem::path dir(result_dir);
-    boost::filesystem::create_directories(dir);
+    std::filesystem::path dir(result_dir);
+    std::filesystem::create_directories(dir);
 
     // General set up.
     ScalarType t0     = 0.;

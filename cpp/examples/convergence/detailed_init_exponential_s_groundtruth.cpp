@@ -268,8 +268,8 @@ int main()
                 }
 
                 // Make folder if not existent yet.
-                boost::filesystem::path dir(save_dir);
-                boost::filesystem::create_directories(dir);
+                std::filesystem::path dir(save_dir);
+                std::filesystem::create_directories(dir);
 
                 auto result_ode = simulate_ode(ode_exponent, t0_ode, tmax, time_infected, save_dir).value();
 
