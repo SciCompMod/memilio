@@ -42,7 +42,7 @@ public:
 
     /**
      * @brief Set up the simulation with an ODE solver.
-     * @param[in] model An instance of a flow model.
+     * @param[in] model An instance of a FlowModel.
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration.
      */

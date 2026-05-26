@@ -82,12 +82,11 @@ IOResult<void> read_confirmed_cases_data(
     });
 
     for (auto region_idx = size_t(0); region_idx < vregion.size(); ++region_idx) {
-        auto region_entry_range_it =
+        Range region_entry_range(
             std::equal_range(rki_data.begin(), rki_data.end(), vregion[region_idx], [](auto&& a, auto&& b) {
                 return get_region_id(a) < get_region_id(b);
-            });
-        auto region_entry_range = make_range(region_entry_range_it);
-        if (region_entry_range.begin() == region_entry_range.end()) {
+            }));
+        if (region_entry_range.empty()) {
             log_error("No entries found for region {}", vregion[region_idx]);
             return failure(StatusCode::InvalidFileFormat,
                            "No entries found for region " + std::to_string(vregion[region_idx]));

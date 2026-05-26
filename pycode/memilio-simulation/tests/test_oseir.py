@@ -107,7 +107,7 @@ class Test_oseir_integration(unittest.TestCase):
                 delta=1e-10)
 
             for index_compartment in range(0, 4):
-                ref = timestep[index_compartment+1]
+                ref = timestep.iloc[index_compartment+1]
                 actual = result[index_timestep][index_compartment]
 
                 tol = rel_tol * ref

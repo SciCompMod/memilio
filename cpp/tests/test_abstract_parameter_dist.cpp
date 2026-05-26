@@ -23,13 +23,10 @@
 #include "memilio/utils/random_number_generator.h"
 #include "models/abm/personal_rng.h"
 #include <gtest/gtest.h>
-#include <stdio.h>
 #include <vector>
 
 TEST(AbstractParameterDist, test_abstract_normal_distribution)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     mio::AbstractParameterDistribution p1(mio::ParameterDistributionNormal(10., 0.5));
     mio::AbstractParameterDistribution p2(mio::ParameterDistributionNormal(20., 0.3));
     auto params1 = std::vector<double>{10., 0.5};
@@ -52,8 +49,6 @@ TEST(AbstractParameterDist, test_abstract_normal_distribution)
 
 TEST(AbstractParameterDist, test_abstract_uniform_distribution)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     mio::AbstractParameterDistribution p1(mio::ParameterDistributionUniform(0., 1.));
     mio::AbstractParameterDistribution p2(mio::ParameterDistributionUniform(2., 3.));
     auto params1 = std::vector<double>{0., 1.};
@@ -78,8 +73,6 @@ TEST(AbstractParameterDist, test_abstract_uniform_distribution)
 
 TEST(AbstractParameterDist, test_abstract_lognormal_distribution)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     mio::AbstractParameterDistribution p1(mio::ParameterDistributionLogNormal(1., 0.25));
     mio::AbstractParameterDistribution p2(mio::ParameterDistributionLogNormal(2., 0.1));
     auto params1 = std::vector<double>{1., 0.25};
@@ -102,8 +95,6 @@ TEST(AbstractParameterDist, test_abstract_lognormal_distribution)
 
 TEST(AbstractParameterDist, test_abstract_exponential_distribution)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     mio::AbstractParameterDistribution p1(mio::ParameterDistributionExponential(1.));
     mio::AbstractParameterDistribution p2(mio::ParameterDistributionExponential(2.));
     auto params1 = std::vector<double>{1.};
@@ -126,8 +117,6 @@ TEST(AbstractParameterDist, test_abstract_exponential_distribution)
 
 TEST(AbstractParameterDist, test_abstract_constant_distribution)
 {
-    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-
     mio::AbstractParameterDistribution p1(mio::ParameterDistributionConstant(1.));
     mio::AbstractParameterDistribution p2(mio::ParameterDistributionConstant(2.));
     auto params1 = std::vector<double>{1.};

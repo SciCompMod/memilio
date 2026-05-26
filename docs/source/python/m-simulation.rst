@@ -5,12 +5,29 @@ MEmilio Simulation is a Python interface to the MEmilio C++ library. Using pytho
 
 The package is contained inside the folder `pycode/memilio-simulation <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-simulation>`_.
 
+
+Installation
+------------
+
+The easiest way to get started is installing the memilio-simulation package via PyPI.
+If you need the latest unreleased code, or want to modify the bindings, build from source. In that case, the following 
+tools are required:
+
+* A **C++20 compiler**
+* **CMake** >= 3.18
+* **Ninja** build tool
+* All :doc:`C++ library dependencies <../getting_started>`
+
+See :doc:`python_packages/Installation` for a detailed installation guide.  
+
+
 Dependencies
 ------------
 
-Required Python packages:
+Required Python packages (installed automatically):
 
-* scikit-build
+* numpy >= 1.22 (not 1.25.*)
+* pandas >= 2.0.0
 
 For a successful build, the development libraries for Python need to be installed, i.e. python3.x-dev. 
 Additionally, as this package builds upon the MEmilio C++ library, 

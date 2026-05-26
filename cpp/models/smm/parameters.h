@@ -33,11 +33,13 @@ namespace smm
 
 /**
  * @brief A vector of AdoptionRate%s, see mio::AdoptionRate
- * @tparam Status An infection state enum.
+ * @tparam FP A floating point type, e.g., double.
+ * @tparam Status A MultiIndex, containing the infection state enum and all stratification groups.
+ * @tparam Region A MultiIndex for spatial stratification.
  */
-template <typename FP, class Status>
+template <typename FP, class Status, class Region>
 struct AdoptionRates {
-    using Type = std::vector<AdoptionRate<FP, Status>>;
+    using Type = std::vector<AdoptionRate<FP, Status, Region>>;
     const static std::string name()
     {
         return "AdoptionRates";
@@ -46,27 +48,35 @@ struct AdoptionRates {
 
 /**
  * @brief Struct defining a possible regional transition in a Model based on Poisson Processes.
- * @tparam Status An infection state enum.
+ * @tparam FP A floating point type, e.g., double.
+ * @tparam Status A MultiIndex, containing the infection state enum and all stratification groups.
+ * @tparam Region A MultiIndex for spatial stratification.
  */
-template <typename FP, class Status>
+template <typename FP, class Status, class Region = mio::regions::Region>
 struct TransitionRate {
     Status status; // i
-    mio::regions::Region from; // k
-    mio::regions::Region to; // l
+    Region from; // k
+    Region to; // l
     FP factor; // lambda_i^{kl}
 };
 
-template <typename FP, class Status>
+/**
+ * @brief A vector of TransitionRate%s, see mio::TransitionRate
+ * @tparam FP A floating point type, e.g., double.
+ * @tparam Status A MultiIndex, containing the infection state enum.
+ * @tparam Region A MultiIndex for spatial stratification.
+ */
+template <typename FP, class Status, class Region>
 struct TransitionRates {
-    using Type = std::vector<TransitionRate<FP, Status>>;
+    using Type = std::vector<TransitionRate<FP, Status, Region>>;
     const static std::string name()
     {
         return "TransitionRates";
     }
 };
 
-template <typename FP, class Status>
-using ParametersBase = mio::ParameterSet<AdoptionRates<FP, Status>, TransitionRates<FP, Status>>;
+template <typename FP, class Status, class Region>
+using ParametersBase = mio::ParameterSet<AdoptionRates<FP, Status, Region>, TransitionRates<FP, Status, Region>>;
 
 } // namespace smm
 

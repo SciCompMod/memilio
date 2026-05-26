@@ -1,7 +1,7 @@
 ODE-based SECIR-type model with COVID-19 variants and vaccinations
 ====================================================================
 
-This model extends the basic :doc:`ODE-SECIR model <cpp/osecir>`. by adding vaccinations and allowing the implicit modeling of a newly arriving variant that takes hold.
+This model extends the basic :doc:`ODE-SECIR model <osecir>`. by adding vaccinations and different immunity levels. Also, this model allows the implicit modeling of a newly arriving variant that takes hold.
 
 Vaccinations are modeled by adding compartments for partially and fully vaccinated persons. **Partially** and **fully vaccinated** is to be understood in this context as the person having received a first and second vaccine shot as in 2021. Persons that have recovered from the disease are treated as fully vaccinated from that time forward. Vaccinated persons are added on every day of simulation, see parameters ``DailyPartialVaccinations`` and ``DailyFullVaccinations``. All groups can get an infection or get reinfected. Vaccinated persons are less likely to develop symptoms. For example, the probability to develop symptoms when carrying the virus is the base probability from the ODE-SECIR model multiplied with the ``ReducInfectedSymptomsPartialImmunity`` parameter.
 
@@ -9,13 +9,13 @@ The ratio of two variants can change over time, which affects the average transm
 
 Below is an overview of the model architecture and its compartments.
 
-.. image:: https://github.com/SciCompMod/memilio/assets/69154294/5d1b72ec-2f45-44a4-8eba-b77533c9e6cf
+.. image:: https://martinkuehn.eu/research/images/secirvvs.png
    :alt: SECIRVVS_model
 
 Infection States
 ----------------
 
-The model extends the basic ODE-SECIR model by dividing the compartments based on immunity levels. It contains the following list of **InfectionState**\s:
+The model extends the basic ODE-SECIR model by dividing the compartments based on immunity levels. It contains the following list of ``InfectionState``\s:
 
 .. code-block:: RST
 
@@ -57,7 +57,7 @@ All compartments with the same base state (e.g., ExposedNaive, ExposedPartialImm
 Infection State Transitions
 ---------------------------
 
-The ODE-SECIRVVS model is implemented as a **FlowModel**, which defines the derivatives of each flow between compartments. The model follows the same flow pattern as the basic ODE-SECIR model but with three parallel sets of compartments representing different immunity levels.
+The ODE-SECIRVVS model is implemented as a ``FlowModel``, which defines the derivatives of each flow between compartments. The model follows the same flow pattern as the basic ODE-SECIR model but with three parallel sets of compartments representing different immunity levels.
 
 The key characteristic of this model is that recovered individuals always end up in the improved immunity level, regardless of their starting immunity level. This represents the immunity gained after infection.
 
@@ -83,13 +83,13 @@ For each immunity level (Naive, PartialImmunity, ImprovedImmunity), the followin
 
 Where * stands for the immunity level suffix (Naive, PartialImmunity, or ImprovedImmunity).
 
-**Important:** Vaccinations are not implemented as flows between compartments but are handled discretely by the simulation. At the beginning of each simulated day, susceptible individuals are moved between immunity levels according to the specified daily vaccination parameters. This discrete process is separate from the ODE system and is managed by the `apply_vaccination` function in the model specific **Simulation** class.
+**Important:** Vaccinations are not implemented as flows between compartments but are handled discretely by the simulation. At the beginning of each simulated day, susceptible individuals are moved between immunity levels according to the specified daily vaccination parameters. This discrete process is separate from the ODE system and is managed by the `apply_vaccination` function in the model specific ``Simulation`` class.
 
 Sociodemographic Stratification
 -------------------------------
 
 Like the basic ODE-SECIR model, the ODE-SECIRVVS model can be stratified by one sociodemographic dimension, typically age groups. This stratification is important for modeling different vaccination rates, symptom severities, and mortality risks across age groups. The dimension is denoted 
-**AgeGroup** but can also be used for other interpretations.
+``AgeGroup`` but can also be used for other interpretations.
 For stratifications with two or more dimensions, see :doc:`Model Creation <../ode_creation>`.
 
 Parameters
@@ -125,6 +125,10 @@ The model includes all parameters from the basic ODE-SECIR model plus additional
    * - :math:`\mu_{I_{Sev}}^{I_{Cr}}`
      - ``CriticalPerSevere``
      - Probability of transition from InfectedSevere to InfectedCritical.
+   * - :math:`\mu_{I_{Sev}}^{D}`
+     - ``DeathsPerSevere``
+     - Probability of dying when in InfectedSevere, independent of ICU capacity. When ICU capacity is exceeded,
+       additional deaths from InfectedSevere may occur through the ICU overflow mechanism.
    * - :math:`\mu_{I_{Cr}}^{D}`
      - ``DeathsPerCritical``
      - Probability of dying when in InfectedCritical.
@@ -158,9 +162,6 @@ The model includes all parameters from the basic ODE-SECIR model plus additional
    * - :math:`TTC_{maxSym}`
      - ``TestAndTraceCapacityMaxRiskSymptoms``
      - Multiplier for test and trace capacity for symptomatic cases.
-   * - :math:`T_{dyndelay}`
-     - ``DynamicNPIsImplementationDelay``
-     - Delay in days for implementing dynamic NPIs after threshold exceedance.
    * - :math:`\lambda_{N,i}`
      - ``ext_inf_force_dummy``
      - Force of infection for susceptibles with naive immunity.
@@ -216,7 +217,7 @@ The model includes all parameters from the basic ODE-SECIR model plus additional
 Initial conditions
 ------------------
 
-The initial conditions of the model are represented by the class **Populations** which defines the number of individuals in each sociodemographic group and **InfectionState**. Before running a simulation, you should set the initial values for each compartment across all immunity levels.
+The initial conditions of the model are represented by the class ``Populations`` which defines the number of individuals in each sociodemographic group and ``InfectionState``. Before running a simulation, you should set the initial values for each compartment across all immunity levels.
 
 Below is an example showing how to initialize all compartments for the ODE-SECIRVVS model:
 
@@ -261,23 +262,24 @@ After setting the initial populations, you also need to set the vaccination para
     
     // Prepare and resize vaccinations parameter for the entire simulation period
     const size_t daily_vaccinations = 10;
-    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().resize(
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<ScalarType>>().resize(
         mio::SimulationDay((size_t)tmax + 1));
-    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().resize(
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<ScalarType>>().resize(
         mio::SimulationDay((size_t)tmax + 1));
         
     // Set increasing number of vaccination over time
     for (size_t i = 0; i < tmax + 1; ++i) {
-        auto num_vaccinations = static_cast<double>(i * daily_vaccinations);
+        auto num_vaccinations = static_cast<ScalarType>(i * daily_vaccinations);
         model.parameters
-            .get<mio::osecirvvs::DailyPartialVaccinations<double>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
+            .get<mio::osecirvvs::DailyPartialVaccinations<ScalarType>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
             num_vaccinations;
         model.parameters
-            .get<mio::osecirvvs::DailyFullVaccinations<double>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
+            .get<mio::osecirvvs::DailyFullVaccinations<ScalarType>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
             num_vaccinations;
     }
 
-.. _Nonpharmaceutical Interventions:
+.. _Nonpharmaceutical Interventions OSECIRVVS:
+
 Nonpharmaceutical Interventions
 -------------------------------
 
@@ -288,7 +290,7 @@ Basic dampings can be added to the contact matrix as follows:
 .. code-block:: cpp
 
     // Create a contact matrix with baseline contact rates
-    auto& contacts = model.parameters.get<mio::osecirvvs::ContactPatterns<double>>();
+    auto& contacts = model.parameters.get<mio::osecirvvs::ContactPatterns<ScalarType>>();
     auto& contact_matrix = contacts.get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(0.5);
     contact_matrix[0].get_baseline().diagonal().setConstant(5.0);
@@ -326,8 +328,8 @@ The model also supports dynamic NPIs based on epidemic thresholds:
 .. code-block:: cpp
 
     // Configure dynamic NPIs
-    auto& dynamic_npis = params.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms<double>>();
-    dynamic_npis.set_interval(mio::SimulationTime(3.0));  // Check NPI every 3 days
+    auto& dynamic_npis = params.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms<ScalarType>>();
+    dynamic_npis.set_implementation_delay(mio::SimulationTime(0.0));  // Simulate no implementation delay
     dynamic_npis.set_duration(mio::SimulationTime(14.0)); // Apply NPI for 14 days
     dynamic_npis.set_base_value(100'000);                // Base value to trigger NPI is population of 100,000
     dynamic_npis.set_threshold(200.0, dampings);         // Trigger at 200 cases per 100,000
@@ -344,12 +346,12 @@ Basic simulation:
 
 .. code-block:: cpp
 
-    double t0 = 0;       // Start time
-    double tmax = 30;    // End time
-    double dt = 0.1;     // Time step
+    ScalarType t0 = 0;       // Start time
+    ScalarType tmax = 30;    // End time
+    ScalarType dt = 0.1;     // Time step
     
     // Run a standard simulation
-    mio::TimeSeries<double> result = mio::osecirvvs::simulate<double>(t0, tmax, dt, model);
+    mio::TimeSeries<ScalarType> result = mio::osecirvvs::simulate<ScalarType>(t0, tmax, dt, model);
 
 During simulation, the model handles several special processes:
 
@@ -367,12 +369,12 @@ For both simulation types, you can also specify a custom integrator:
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
     
-    mio::TimeSeries<double> result = mio::osecirvvs::simulate(t0, tmax, dt, model, std::move(integrator));
+    mio::TimeSeries<ScalarType> result = mio::osecirvvs::simulate(t0, tmax, dt, model, std::move(integrator));
 
 Output
 ------
 
-The output of the simulation is a `mio::TimeSeries` object containing the sizes of each compartment at each time point. For a standard simulation, you can access the results as follows:
+The output of the simulation is a ``TimeSeries`` object containing the sizes of each compartment at each time point. For a standard simulation, you can access the results as follows:
 
 .. code-block:: cpp
 
@@ -381,7 +383,7 @@ The output of the simulation is a `mio::TimeSeries` object containing the sizes 
     
     // Access data at a specific time point
     Eigen::VectorXd value_at_time_i = result.get_value(i);
-    double time_i = result.get_time(i);
+    ScalarType time_i = result.get_time(i);
     
     // Access the last time point
     Eigen::VectorXd last_value = result.get_last_value();
@@ -397,7 +399,7 @@ You can print the simulation results as a formatted table:
     std::vector<std::string> labels = {"S_naive", ... };
     result.print_table(std::cout, labels);
 
-The order of the compartments is as defined in the `InfectionState` enum.
+The order of the compartments is as defined in the ``InfectionState`` enum.
 
 Additionally, you can export the results to a CSV file for further analysis or visualization:
 
@@ -424,7 +426,5 @@ Examples of the basic ODE-SECIR model can be found at:
 - `examples/ode_secir_ageres.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_secir_ageres.cpp>`_
 - `examples/ode_secir_parameter_study.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_secir_parameter_study.cpp>`_
 
-Overview of the ``osecirvvs`` namespace:
------------------------------------------
 
-.. doxygennamespace:: mio::osecirvvs
+The code documentation for the model can be found at :CPP-API:`mio::osecirvvs` .

@@ -375,11 +375,10 @@ TEST_F(TestCLI, test_print_options)
 TEST_F(TestCLI, test_import_export)
 {
     TempFileRegister file_register;
-    auto tmpfile                = file_register.get_unique_path("TestCLI-%%%%-%%%%.json");
-    const std::string read_json = "{\"a\":5.4,\"D\":[\"d\",\"D\"]}";
-    const std::string write_json =
-        "{\n\t\"A\" : 5.4000000000000004,\n\t\"B\" : \"\",\n\t\"C has a name that is too long\" : "
-        "[],\n\t\"D\" : \n\t[\n\t\t\"d\",\n\t\t\"D\"\n\t]\n}";
+    auto tmpfile                 = file_register.get_unique_path("TestCLI-%%%%-%%%%.json");
+    const std::string read_json  = R"({"a":5.4,"D":["d","D"]})";
+    const std::string write_json = "{\n\t\"A\" : 5.4000000000000004,\n\t\"B\" : \"\",\n\t\"C has a name that is too "
+                                   "long\" : [],\n\t\"D\" : \n\t[\n\t\t\"d\",\n\t\t\"D\"\n\t]\n}";
     Params p{};
 
     // write json input into tmpfile
@@ -411,7 +410,7 @@ TEST_F(TestCLI, test_import_export)
     ofile.close();
     const std::vector<std::string> args{"", "--read_from_json", tmpfile, "--write_to_json", tmpfile};
     auto [argc, argv] = make_argv(args);
-    ASSERT_TRUE(mio::command_line_interface("", argc, argv, p));
+    ASSERT_THAT(mio::command_line_interface("", argc, argv, p), IsSuccess());
     ifile.open(tmpfile);
     content.assign(std::istreambuf_iterator<char>(ifile), std::istreambuf_iterator<char>());
     ifile.close();

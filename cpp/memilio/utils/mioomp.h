@@ -20,8 +20,7 @@
 #ifndef MIO_UTIL_OPENMP_H
 #define MIO_UTIL_OPENMP_H
 
-#include "memilio/config.h" // included for MEMILIO_ENABLE_OPENMP
-#include "memilio/utils/compiler_diagnostics.h"
+#include "memilio/config.h" // IWYU pragma: keep
 
 #ifdef MEMILIO_ENABLE_OPENMP
 #include "omp.h"

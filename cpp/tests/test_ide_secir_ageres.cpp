@@ -58,18 +58,21 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
     vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 3.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 10.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 10.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToDead]                 = 0.0;
     // Second AgeGroup.
     vec_init[num_transitions + (int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 20.0;
     vec_init[num_transitions + (int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
     vec_init[num_transitions + (int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
     vec_init[num_transitions + (int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 4.0;
     vec_init[num_transitions + (int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 10.0;
+    vec_init[num_transitions + (int)mio::isecir::InfectionTransition::InfectedSevereToDead]                 = 0.0;
     // Third AgeGroup.
     vec_init[2 * num_transitions + (int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 25.0;
     vec_init[2 * num_transitions + (int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
     vec_init[2 * num_transitions + (int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
     vec_init[2 * num_transitions + (int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 4.0;
     vec_init[2 * num_transitions + (int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 4.0;
+    vec_init[2 * num_transitions + (int)mio::isecir::InfectionTransition::InfectedSevereToDead]                 = 0.0;
     // Add initial time point to TimeSeries.
     init.add_time_point(-10., vec_init);
     // Add further time points until t0.
@@ -121,7 +124,9 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
         // The following probabilities must be 1, as there is no other way to go.
         vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
         vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
-        model.parameters.get<mio::isecir::TransitionProbabilities>()[group]                   = vec_prob;
+        // Set probability from InfectedSevere to Dead to zero.
+        vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToDead)] = 0;
+        model.parameters.get<mio::isecir::TransitionProbabilities>()[group]            = vec_prob;
     }
 
     // Contact matrix.
@@ -165,9 +170,9 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
     mio::TimeSeries<ScalarType> transitions = sim.get_transitions();
     Eigen::VectorX<ScalarType> compare_transitions(num_transitions * num_agegroups);
     compare_transitions << 36.5095571138, 35.2210349942, 15.9243307913, 16.7851751402, 7.4700568103, 7.4700568103,
-        3.4751502776, 3.4751502776, 1.5959804568, 1.5959804568, 36.5095571138, 33.5703502804, 15.9243307913,
-        14.9401136206, 6.9503005552, 6.9503005552, 3.0041079341, 3.0041079341, 1.3063243113, 1.3063243113,
-        45.6369463923, 43.0480501661, 19.8862347266, 19.8862347266, 9.0259862757, 9.0259862757, 4.0260421953,
+        3.4751502776, 0., 3.4751502776, 1.5959804568, 1.5959804568, 36.5095571138, 33.5703502804, 15.9243307913,
+        14.9401136206, 6.9503005552, 6.9503005552, 3.0041079341, 0., 3.0041079341, 1.3063243113, 1.3063243113,
+        45.6369463923, 43.0480501661, 19.8862347266, 19.8862347266, 9.0259862757, 9.0259862757, 4.0260421953, 0.,
         4.0260421953, 1.7699583766, 1.7699583766;
 
     ASSERT_EQ(compare_transitions.size(), static_cast<size_t>(transitions.get_last_value().size()));
@@ -259,6 +264,7 @@ TEST(TestIdeAgeres, checkSimulationFunctions)
         std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
         vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]           = 1;
         vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)]    = 1;
+        vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToDead)]           = 0;
         model_intra.parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(group)] = vec_prob;
 
         mio::SmootherCosine<ScalarType> smoothcos_prob(1.0);
@@ -301,8 +307,9 @@ TEST(TestIdeAgeres, checkSimulationFunctions)
     std::vector<ScalarType> secihurd_t0_baseline    = {4995., 0.5, 0., 4., 0., 0., 4990.5, 10.};
     std::vector<ScalarType> secihurd_t1_baseline    = {4994.00020016, 0.49989992, 0.49994996,    0.12498749,
                                                        1.03124687,    0.25781172, 4993.45699802, 10.12890586};
-    std::vector<ScalarType> transitions_t1_baseline = {0.99979984, 0.99989992, 0.24997498, 0.24997498, 2.06249374,
-                                                       2.06249374, 0.51562344, 0.51562344, 0.12890586, 0.12890586};
+    std::vector<ScalarType> transitions_t1_baseline = {0.99979984, 0.99989992, 0.24997498, 0.24997498,
+                                                       2.06249374, 2.06249374, 0.51562344, 0.,
+                                                       0.51562344, 0.12890586, 0.12890586};
 
     ASSERT_EQ(secihurd_t0_baseline.size() * num_agegroups, secihurd_simulated_intra.get_num_elements());
     // Compare simulated compartments at time points t0 and t1.

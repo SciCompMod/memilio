@@ -62,7 +62,4 @@ Below is an overview of the model architecture and its compartments.
   `examples/ode_seair_optimization.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_seair_optimization.cpp>`_.
 
 
-Overview of the ``oseair`` namespace:
------------------------------------------
-
-.. doxygennamespace:: mio::oseair
+The code documentation for the model can be found at :CPP-API:`mio::oseair` .

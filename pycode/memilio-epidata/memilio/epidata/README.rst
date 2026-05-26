@@ -214,7 +214,7 @@ BAA            Germany     mobility_bfa_2020_dim400           number of commuter
 ============== ==========  =================================== =================
 
 More detailed information can be found in the
-`documentation <https://scicompmod.github.io/memilio/documentation/index.html>`_  of the different functions.
+`documentation <https://memilio.readthedocs.io/en/latest/python/m-epidata.html>`_  of the different functions.
 
 Notes for developers
 --------------------

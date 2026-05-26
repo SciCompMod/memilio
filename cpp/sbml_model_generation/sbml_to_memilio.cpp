@@ -3,31 +3,16 @@
 #include "memilio/io/io.h"
 
 #include <boost/algorithm/string.hpp>
-#include <boost/filesystem.hpp>
 
 #include <sbml/SBMLTypes.h>
 
 #include <cmath>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
-
-/**
- * @brief Get the filename.
- *
- * @param[in] filepath A path including the filename.
- * @return std::string The path without the filename.
- *
- * Uses `boost::filesystem::path` to get the path to the input file, then uses `stem()` to get the name of the input 
- * file without file ending. 
- */
-std::string get_filename(const std::string& filepath)
-{
-    boost::filesystem::path p(filepath);
-    return p.stem().string();
-}
 
 /**
  * @brief Get the path to a folder.
@@ -40,45 +25,28 @@ std::string get_filename(const std::string& filepath)
  * build directory. This function is thus tailored to find the folder for the sbml generated model files.
  * If the folder is not found, it returns an error code. 
  */
-mio::IOResult<std::string> get_path(std::string folder_name)
+mio::IOResult<std::filesystem::path> get_path(std::string folder_name)
 {
-    boost::filesystem::path current_path = boost::filesystem::absolute(boost::filesystem::current_path());
-    boost::filesystem::path folder_path  = current_path / folder_name;
-    if (boost::filesystem::exists(folder_path) && boost::filesystem::is_directory(folder_path) &&
+    std::filesystem::path current_path = std::filesystem::absolute(std::filesystem::current_path());
+    std::filesystem::path folder_path  = current_path / folder_name;
+    if (std::filesystem::exists(folder_path) && std::filesystem::is_directory(folder_path) &&
         current_path.stem().string() != "build") {
-        return mio::success(folder_path.string());
+        return mio::success(folder_path);
     }
     current_path = current_path.parent_path();
     folder_path  = current_path / folder_name;
-    if (boost::filesystem::exists(folder_path) && boost::filesystem::is_directory(folder_path) &&
+    if (std::filesystem::exists(folder_path) && std::filesystem::is_directory(folder_path) &&
         current_path.stem().string() != "build") {
-        return mio::success(folder_path.string());
+        return mio::success(folder_path);
     }
     current_path = current_path.parent_path();
     folder_path  = current_path / folder_name;
-    if (boost::filesystem::exists(folder_path) && boost::filesystem::is_directory(folder_path) &&
+    if (std::filesystem::exists(folder_path) && std::filesystem::is_directory(folder_path) &&
         current_path.stem().string() != "build") {
-        return mio::success(folder_path.string());
+        return mio::success(folder_path);
     }
     return mio::failure(mio::StatusCode::FileNotFound,
                         "Could not find the folder " + folder_name + "in the current path or its parent directories.");
-}
-
-/**
- * @brief Creates a folder with the given name to store the generated model files.
- *
- * @param[in] foldername The name of the folder to be created.
- * @param[in] path The path where the folder should be created -this needs to exist.
- *
- * Extracts the filename using :cpp:func:`get_filename(const std::string& filename)`, converts it to lower case and creates 
- * a folder with the resulting name at the location given by `path` using `boost::filesystem`.
- */
-void create_folder(const std::string& foldername, const std::string& path)
-{
-    std::string lowercase_name = boost::to_lower_copy<std::string>(foldername);
-    boost::filesystem::path p(path + "/" + lowercase_name);
-    boost::filesystem::create_directory(p);
-    mio::log_info("Creating folder at ./{}", p.string());
 }
 
 /**
@@ -420,17 +388,17 @@ mio::IOResult<void> verify_model_suitability(const Model& model)
  * @return mio::IOResult<void> Succes or error code.
  *
  * Extracts the filename using :cpp:func:`get_filename(const std::string& filename)`, converts it to lower case and creates 
- * a file with the resulting name using `boost::filesystem` at the location given by `path`. Then it writes the 
+ * a file with the resulting name using `std::filesystem` at the location given by `path`. Then it writes the 
  * species in the model as infection states to the file.
  */
-mio::IOResult<void> create_infection_state(Model& model, const std::string& filename, const std::string& path)
+mio::IOResult<void> create_infection_state(Model& model, const std::string& filename, const std::filesystem::path& path)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
     size_t number_species      = model.getListOfSpecies()->size();
     std::string uppercase_name = boost::to_upper_copy<std::string>(filename);
 
     std::ofstream infection_state;
-    infection_state.open(path + "/" + lowercase_name + "/infection_state.h", std::ios::out);
+    infection_state.open(path / lowercase_name / "infection_state.h", std::ios::out);
     if (infection_state) {
 
         infection_state << "#ifndef " << uppercase_name << "_INFECTIONSTATE_H" << std::endl;
@@ -465,11 +433,11 @@ mio::IOResult<void> create_infection_state(Model& model, const std::string& file
  * @return mio::IOResult<void> Succes or error code.
  *
  * Extracts the filename using :cpp:func:`get_filename(const std::string& filename)`, converts it to lower case and creates 
- * a file with the resulting name using `boost::filesystem` at the location given by `path`. 
+ * a file with the resulting name using `std::filesystem` at the location given by `path`. 
  * Then it creates one struct for every parameter in the model. It uses the value as returned by libsbml as 
  * default value. (This may be overwritten in the example.cpp file.)
  */
-mio::IOResult<void> create_parameters(Model& model, const std::string& filename, const std::string& path)
+mio::IOResult<void> create_parameters(Model& model, const std::string& filename, const std::filesystem::path& path)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
     std::string uppercase_name = boost::to_upper_copy<std::string>(filename);
@@ -477,7 +445,7 @@ mio::IOResult<void> create_parameters(Model& model, const std::string& filename,
     size_t number_parameters = model.getListOfParameters()->size();
 
     std::ofstream parameters;
-    parameters.open(path + "/" + lowercase_name + "/parameters.h", std::ios::out);
+    parameters.open(path / lowercase_name / "parameters.h", std::ios::out);
     if (parameters) {
 
         parameters << "#ifndef " << uppercase_name << "_PARAMETERS_H" << std::endl;
@@ -535,13 +503,13 @@ mio::IOResult<void> create_parameters(Model& model, const std::string& filename,
  *
  * Creates the generic model.cpp file. The file location is generated using the filename and the `path`.
  */
-mio::IOResult<void> create_model_cpp(const std::string& filename, const std::string& path)
+mio::IOResult<void> create_model_cpp(const std::string& filename, const std::filesystem::path& path)
 {
 
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
 
     std::ofstream model_cpp;
-    model_cpp.open(path + "/" + lowercase_name + "/model.cpp", std::ios::out);
+    model_cpp.open(path / lowercase_name / "model.cpp", std::ios::out);
     if (model_cpp) {
 
         model_cpp << "#include \"" << lowercase_name << "/model.h\"\n\nnamespace mio\n{" << std::endl;
@@ -571,14 +539,14 @@ mio::IOResult<void> create_model_cpp(const std::string& filename, const std::str
  * 
  * In the end it appends a generic serialization function.
  */
-mio::IOResult<void> create_model_h(Model& model, const std::string& filename, const std::string& path)
+mio::IOResult<void> create_model_h(Model& model, const std::string& filename, const std::filesystem::path& path)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
     std::string uppercase_name = boost::to_upper_copy<std::string>(filename);
     size_t number_species      = model.getListOfSpecies()->size();
     size_t number_reactions    = model.getListOfReactions()->size();
     std::ofstream model_h;
-    model_h.open(path + "/" + lowercase_name + "/model.h", std::ios::out);
+    model_h.open(path / lowercase_name / "model.h", std::ios::out);
     if (model_h) {
         //Add generic code
         model_h << "#ifndef " << uppercase_name << "_MODEL_H\n#define " << uppercase_name << "_MODEL_H" << std::endl;
@@ -779,12 +747,12 @@ mio::IOResult<void> create_model_h(Model& model, const std::string& filename, co
  * program are needed. The file location is generated using filename and path and the file is stored in the generated 
  * folder.
  */
-mio::IOResult<void> create_cmake(const std::string& filename, const std::string& path)
+mio::IOResult<void> create_cmake(const std::string& filename, const std::filesystem::path& path)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
 
     std::ofstream cmakelists;
-    cmakelists.open(path + "/" + lowercase_name + "/CMakeLists.txt", std::ios::out);
+    cmakelists.open(path / lowercase_name / "CMakeLists.txt", std::ios::out);
     if (cmakelists.good()) {
         cmakelists << "add_library(" << lowercase_name << std::endl;
         cmakelists << "infection_state.h\nmodel.h\nmodel.cpp\nparameters.h\n)" << std::endl;
@@ -817,13 +785,13 @@ mio::IOResult<void> create_cmake(const std::string& filename, const std::string&
  * The model is simulated in steps to add events that are triggered by a specific time. In the end the model is 
  * simulated for another 50 days. The results are printed to the console and saved in a file as a table.
  */
-mio::IOResult<void> create_example_cpp(Model& model, const std::string& filename, const std::string& path)
+mio::IOResult<void> create_example_cpp(Model& model, const std::string& filename, const std::filesystem::path& path)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
     size_t number_species      = model.getListOfSpecies()->size();
 
     std::ofstream example;
-    example.open(path + "/" + lowercase_name + ".cpp", std::ios::out);
+    example.open(path / (lowercase_name + ".cpp"), std::ios::out);
     if (example) {
         example << "#include \"memilio/compartments/simulation.h\"\n#include \"memilio/config.h\"\n#include "
                    "\"memilio/math/euler.h\"\n#include \"memilio/math/integrator.h\"\n#include "
@@ -928,39 +896,40 @@ mio::IOResult<void> create_example_cpp(Model& model, const std::string& filename
  *
  * Appends the necessary commands for compilation to the CMakeLists.txt file in path using the filename.
  */
-mio::IOResult<void> modify_cmakelists(const std::string& filename, const std::string& path)
+mio::IOResult<void> modify_cmakelists(const std::string& filename, const std::filesystem::path& path)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
-    std::ifstream cmakefile(path + "/CMakeLists.txt");
-    if (cmakefile.is_open()) {
-        std::string line;
-        bool found = false;
-        while (std::getline(cmakefile, line)) {
-            if (line == "add_subdirectory(" + lowercase_name + ")") {
-                found = true;
-                break;
-            }
-        }
-        cmakefile.close();
-        if (!found) {
-            std::ofstream modifications;
-            modifications.open(path + "/CMakeLists.txt", std::ios::app);
-            if (modifications) {
-                modifications << "add_subdirectory(" << lowercase_name << ")" << std::endl;
-                modifications << "add_executable(ex_" << lowercase_name << " " << lowercase_name << ".cpp)"
-                              << std::endl;
-                modifications << "target_link_libraries(ex_" << lowercase_name << " PRIVATE memilio " << lowercase_name
-                              << ")" << std::endl;
-                modifications << "target_compile_options(ex_" << lowercase_name
-                              << " PRIVATE ${MEMILIO_CXX_FLAGS_SBML_GENERATED})\n"
-                              << std::endl;
-                modifications.close();
-            }
+    std::ifstream cmakefile(path / "CMakeLists.txt");
+    if (!cmakefile) {
+        return mio::failure(mio::StatusCode::FileNotFound, "Could not open file for reading: CMakeLists.txt");
+    }
+    std::string line;
+    bool found = false;
+    while (std::getline(cmakefile, line)) {
+        if (line == "add_subdirectory(" + lowercase_name + ")") {
+            found = true;
+            break;
         }
     }
-    else {
+    cmakefile.close();
+
+    if (found) {
+        mio::log_info("Found existing entry for {} in CMakeLists.txt", lowercase_name);
+        return mio::success();
+    }
+
+    std::ofstream modifications(path / "CMakeLists.txt", std::ios::app);
+    if (!modifications) {
         return mio::failure(mio::StatusCode::FileNotFound, "Could not open file for writing: CMakeLists.txt");
     }
+    modifications << "add_subdirectory(" << lowercase_name << ")" << std::endl;
+    modifications << "add_executable(ex_" << lowercase_name << " " << lowercase_name << ".cpp)" << std::endl;
+    modifications << "target_link_libraries(ex_" << lowercase_name << " PRIVATE memilio " << lowercase_name << ")"
+                  << std::endl;
+    modifications << "target_compile_options(ex_" << lowercase_name << " PRIVATE ${MEMILIO_CXX_FLAGS_SBML_GENERATED})\n"
+                  << std::endl;
+    modifications.close();
+
     return mio::success();
 }
 
@@ -979,7 +948,7 @@ void format_files(const std::string& filename, const std::string& path)
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
     std::string command = std::string("clang-format -i --files= ") + path + "/" + lowercase_name + ".cpp " + path +
                           "/" + lowercase_name + "/**.[hc]*";
-    int status = system(command.c_str());
+    int status          = system(command.c_str());
     mio::log_debug("Return status: {}", status);
     if (status != 0) {
         mio::log_error("Error while trying to format the files, files are functional but hard to read.");
@@ -1006,10 +975,10 @@ int main(int argc, char* argv[])
         mio::log_error("Please provide a SBML file at startup!");
         return 1;
     }
-    std::string filename = argv[1];
+    std::filesystem::path sbml_config_file = argv[1];
     SBMLReader reader;
 
-    std::unique_ptr<SBMLDocument> document(reader.readSBML(filename));
+    std::unique_ptr<SBMLDocument> document(reader.readSBML(sbml_config_file.string()));
 
     if (SBMLDocument_getNumErrors(document.get()) > 0) {
         if (XMLError_isFatal(SBMLDocument_getError(document.get(), 0)) ||
@@ -1027,7 +996,7 @@ int main(int argc, char* argv[])
         return 4;
     }
 
-    std::string core_filename = get_filename(filename);
+    std::string core_filename = boost::to_lower_copy<std::string>(sbml_config_file.stem().string());
     std::string folder_name   = "sbml_model_generation";
 
     auto folder_location = get_path(folder_name);
@@ -1035,53 +1004,56 @@ int main(int argc, char* argv[])
         mio::log_error(folder_location.error().formatted_message());
         return 5;
     }
-    std::string path = folder_location.value();
+    std::filesystem::path path = folder_location.value();
 
-    create_folder(core_filename, path);
-
-    result = create_infection_state(model, core_filename, path);
-    if (!result) {
-        mio::log_error(result.error().formatted_message());
+    if (auto r = mio::create_directory(path / core_filename); !r) {
+        mio::log_error(r.error().formatted_message());
         return 6;
     }
 
-    result = create_parameters(model, core_filename, path);
+    result = create_infection_state(model, core_filename, path);
     if (!result) {
         mio::log_error(result.error().formatted_message());
         return 7;
     }
 
-    result = create_model_cpp(core_filename, path);
+    result = create_parameters(model, core_filename, path);
     if (!result) {
         mio::log_error(result.error().formatted_message());
         return 8;
     }
 
-    result = create_model_h(model, core_filename, path);
+    result = create_model_cpp(core_filename, path);
     if (!result) {
         mio::log_error(result.error().formatted_message());
         return 9;
     }
 
-    result = create_cmake(core_filename, path);
+    result = create_model_h(model, core_filename, path);
     if (!result) {
         mio::log_error(result.error().formatted_message());
         return 10;
     }
 
-    result = create_example_cpp(model, core_filename, path);
+    result = create_cmake(core_filename, path);
     if (!result) {
         mio::log_error(result.error().formatted_message());
         return 11;
     }
 
-    result = modify_cmakelists(core_filename, path);
+    result = create_example_cpp(model, core_filename, path);
     if (!result) {
         mio::log_error(result.error().formatted_message());
         return 12;
     }
 
+    result = modify_cmakelists(core_filename, path);
+    if (!result) {
+        mio::log_error(result.error().formatted_message());
+        return 13;
+    }
+
     mio::log_info("Created all files.");
     mio::log_info("Formatting files.");
-    format_files(core_filename, path);
+    format_files(core_filename, path.string());
 }

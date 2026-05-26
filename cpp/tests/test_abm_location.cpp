@@ -118,7 +118,7 @@ TEST_F(TestLocation, interact)
     auto susceptible =
         make_test_person(this->get_rng(), location, age, mio::abm::InfectionState::Susceptible, t, params);
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.5)); // Probability of no infection
-    auto person_rng = mio::abm::PersonalRandomNumberGenerator(susceptible);
+    auto person_rng = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), susceptible);
     interact_testing(person_rng, susceptible, location, local_population, t, dt, params);
     EXPECT_EQ(susceptible.get_infection_state(t + dt), mio::abm::InfectionState::Susceptible);
 
@@ -178,10 +178,9 @@ TEST_F(TestLocation, adjustContactRates)
 {
     mio::abm::Location loc(mio::abm::LocationType::SocialEvent, mio::abm::LocationId(0));
     //Set the maximum contacts smaller than the contact rates
-    loc.get_infection_parameters().get<mio::abm::MaximumContacts>()                                    = 2;
-    loc.get_infection_parameters().get<mio::abm::ContactRates>()[{mio::AgeGroup(0), mio::AgeGroup(0)}] = 4;
+    loc.get_infection_parameters().get<mio::abm::MaximumContacts>()                   = 2;
+    loc.get_infection_parameters().get<mio::abm::ContactRates>().get_baseline()(0, 0) = 4;
     mio::abm::adjust_contact_rates(loc, 1);
-    auto adjusted_contacts_rate =
-        loc.get_infection_parameters().get<mio::abm::ContactRates>()[{mio::AgeGroup(0), mio::AgeGroup(0)}];
+    auto adjusted_contacts_rate = loc.get_infection_parameters().get<mio::abm::ContactRates>().get_baseline()(0, 0);
     EXPECT_EQ(adjusted_contacts_rate, 2);
 }

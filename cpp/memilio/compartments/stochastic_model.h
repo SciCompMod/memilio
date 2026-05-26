@@ -22,7 +22,6 @@
 
 #include "memilio/compartments/compartmental_model.h"
 #include "memilio/compartments/flow_model.h"
-#include "memilio/utils/metaprogramming.h"
 #include "memilio/utils/random_number_generator.h"
 
 namespace mio

@@ -23,10 +23,8 @@
 
 #include "memilio/config.h"
 #include "memilio/utils/compiler_diagnostics.h"
-#include "memilio/utils/parameter_set.h"
 #include "memilio/math/smoother.h"
 #include "memilio/math/floating_point.h"
-#include "memilio/epidemiology/uncertain_matrix.h"
 
 #include "boost/math/distributions/exponential.hpp"
 #include "boost/math/distributions/gamma.hpp"
@@ -34,6 +32,7 @@
 #include <boost/math/distributions/complement.hpp>
 #include <boost/math/distributions/fwd.hpp>
 #include <cmath>
+#include "memilio/utils/logging.h"
 
 namespace mio
 {

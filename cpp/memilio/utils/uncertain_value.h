@@ -91,7 +91,8 @@ public:
      * or AD (Automatic Differentiation) types that can be cast to FP.
      * The distribution remains unset.
      */
-    template <typename T, typename std::enable_if_t<std::is_convertible<T, FP>::value, int> = 0>
+    template <typename T>
+        requires std::is_convertible_v<T, FP>
     UncertainValue(T v)
         : m_value(static_cast<FP>(v))
     {
@@ -103,7 +104,8 @@ public:
      * The contained scalar is updated, while the distribution remains unchanged.
      * Supports scalars and AD (Automatic Differentiation) types that can be cast to FP.
      */
-    template <typename T, typename std::enable_if_t<std::is_convertible<T, FP>::value, int> = 0>
+    template <typename T>
+        requires std::is_convertible_v<T, FP>
     UncertainValue<FP>& operator=(T v)
     {
         m_value = static_cast<FP>(v);

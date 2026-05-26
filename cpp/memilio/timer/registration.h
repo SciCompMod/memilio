@@ -20,6 +20,7 @@
 #ifndef MIO_TIMER_REGISTRATION_H
 #define MIO_TIMER_REGISTRATION_H
 
+#include "memilio/io/default_serialize.h"
 #include "memilio/timer/basic_timer.h"
 
 #include <list>
@@ -30,11 +31,13 @@ namespace mio
 namespace timing
 {
 
+/// @brief Struct used to register ( @see TimerRegistrar ) and print timers ( @see Printer ).
 struct TimerRegistration {
     std::string name;
     std::string scope;
     BasicTimer& timer;
     int thread_id;
+    int rank;
 };
 
 /**

@@ -30,7 +30,7 @@ namespace mio
 {
 namespace benchmark
 {
-namespace detail
+namespace details
 {
 /**
  * @brief Helper function to create a secir model with consistent setup for use in benchmarking.
@@ -89,7 +89,7 @@ mio::osecir::Model<ScalarType> make_model(int num)
 
     return model;
 }
-} // namespace detail
+} // namespace details
 
 namespace model
 {
@@ -98,7 +98,7 @@ namespace model
  */
 mio::osecir::Model<ScalarType> SecirAgeres(size_t num_agegroups)
 {
-    mio::osecir::Model<ScalarType> model = mio::benchmark::detail::make_model(num_agegroups);
+    mio::osecir::Model<ScalarType> model = mio::benchmark::details::make_model(num_agegroups);
 
     auto nb_groups       = model.parameters.get_num_groups();
     ScalarType cont_freq = 10, fact = 1.0 / (ScalarType)(size_t)nb_groups;
@@ -117,7 +117,7 @@ mio::osecir::Model<ScalarType> SecirAgeres(size_t num_agegroups)
  */
 mio::osecir::Model<ScalarType> SecirAgeresDampings(size_t num_agegroups)
 {
-    mio::osecir::Model<ScalarType> model = mio::benchmark::detail::make_model(num_agegroups);
+    mio::osecir::Model<ScalarType> model = mio::benchmark::details::make_model(num_agegroups);
 
     auto nb_groups       = model.parameters.get_num_groups();
     ScalarType cont_freq = 10, fact = 1.0 / (ScalarType)(size_t)nb_groups;
@@ -145,7 +145,7 @@ mio::osecir::Model<ScalarType> SecirAgeresDampings(size_t num_agegroups)
  */
 mio::osecir::Model<ScalarType> SecirAgeresAbsurdDampings(size_t num_agegroups)
 {
-    mio::osecir::Model<ScalarType> model = mio::benchmark::detail::make_model(num_agegroups);
+    mio::osecir::Model<ScalarType> model = mio::benchmark::details::make_model(num_agegroups);
 
     auto nb_groups       = model.parameters.get_num_groups();
     ScalarType cont_freq = 10, fact = 1.0 / (ScalarType)(size_t)nb_groups;

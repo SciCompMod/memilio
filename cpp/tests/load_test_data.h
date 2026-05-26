@@ -19,10 +19,11 @@
 */
 #include "test_data_dir.h"
 #include "memilio/utils/stl_util.h"
-#include <string>
-#include <cstring>
-#include <vector>
+
 #include <fstream>
+#include <string>
+#include <sstream>
+#include <vector>
 
 template <class String>
 std::string get_test_data_file_path(String&& filename)

@@ -1,8 +1,8 @@
 cff-version: "1.2.0"
 message: "If you use this software, please cite it using the metadata below."
-title: "MEmilio v2.1.0 - A high performance Modular EpideMIcs simuLatIOn software"
-version: "2.1.0"
-date-released: "2025-08"
+title: "MEmilio v2.2.0 - A high performance Modular EpideMIcs simuLatIOn software"
+version: "2.2.0"
+date-released: "2025-11"
 authors:
   - given-names: "Julia"
     family-names: "Bicker"
@@ -59,5 +59,5 @@ keywords:
   - agent-based modeling
   - metapopulation models
   - mobility
-url: "https://elib.dlr.de/213614/"
+url: "https://elib.dlr.de/219141/"
 abstract: "MEmilio implements various models for infectious disease dynamics, from simple compartmental (ODE) models through Integro-Differential equation-based (IDE) models (sometimes also denoted 'age of infection models') to agent- or individual-based models (ABMs). Its modular design allows the combination of different models with different mobility patterns. Through efficient implementation and parallelization, MEmilio brings cutting edge and compute intensive epidemiological models to a large scale, enabling a precise and high-resolution spatiotemporal infectious disease dynamics."

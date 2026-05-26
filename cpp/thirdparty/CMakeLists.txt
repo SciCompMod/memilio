@@ -1,7 +1,7 @@
 # Versions of the bundled libraries
 # If you like to upgrade, just change the number
 set(MEMILIO_EIGEN_VERSION "3.4.0")
-set(MEMILIO_SPDLOG_VERSION "1.15.0")
+set(MEMILIO_SPDLOG_VERSION "1.17.0")
 set(MEMILIO_BOOST_VERSION "1.84.0")
 set(MEMILIO_MINIMAL_BOOST_VERSION "1.76.0")
 set(MEMILIO_JSONCPP_VERSION "1.9.6")
@@ -33,13 +33,7 @@ if(MEMILIO_USE_BUNDLED_SPDLOG)
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
         GIT_TAG v${MEMILIO_SPDLOG_VERSION}
     )
-    FetchContent_GetProperties(spdlog)
-
-    if(NOT spdlog_POPULATED)
-        FetchContent_Populate(spdlog)
-
-        add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR} EXCLUDE_FROM_ALL)
-    endif()
+    FetchContent_MakeAvailable(spdlog)
 
 else()
     find_package(spdlog REQUIRED)
@@ -50,14 +44,14 @@ if(MEMILIO_USE_BUNDLED_EIGEN)
     message(STATUS "Downloading Eigen library")
 
     include(FetchContent)
+    # Set SOURCE_SUBDIR to prevent MakeAvailable from calling add_subdirectory. We do not want to run Eigen's
+    # CMakeLists.txt, as it is not set up to be used like that. Instead, we need to manually add a library with the
+    # source files below (this is sufficient, as Eigen is a header-only library)
     FetchContent_Declare(eigen
+        SOURCE_SUBDIR this_directory_name_does_not_exist
         GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
         GIT_TAG ${MEMILIO_EIGEN_VERSION})
-    FetchContent_GetProperties(eigen)
-
-    if(NOT eigen_POPULATED)
-        FetchContent_Populate(eigen)
-    endif()
+    FetchContent_MakeAvailable(eigen)
 
     add_library(eigen INTERFACE)
     target_include_directories(eigen SYSTEM INTERFACE ${eigen_SOURCE_DIR})
@@ -86,15 +80,10 @@ if(MEMILIO_USE_BUNDLED_BOOST)
 
     include(FetchContent)
     FetchContent_Declare(boost
-
         # don't use the URL from github, that download isn't complete and requires more setup (subrepositories, bootstrapping)
         URL https://archives.boost.io/release/${MEMILIO_BOOST_VERSION}/source/boost_${MEMILIO_BOOST_VERSION_UNDERSC}.tar.gz
     )
-    FetchContent_GetProperties(boost)
-
-    if(NOT boost_POPULATED)
-        FetchContent_Populate(boost)
-    endif()
+    FetchContent_MakeAvailable(boost)
 
     add_library(boost INTERFACE)
     add_dependencies(boost boost-bootstrap)
@@ -113,73 +102,41 @@ if(MEMILIO_USE_BUNDLED_BOOST)
     target_compile_definitions(boost_disable_autolink INTERFACE BOOST_ALL_NO_LIB)
     add_library(Boost::disable_autolinking ALIAS boost_disable_autolink)
 
-    add_library(boost_filesystem STATIC
-        ${boost_SOURCE_DIR}/libs/filesystem/src/codecvt_error_category.cpp
-        ${boost_SOURCE_DIR}/libs/filesystem/src/directory.cpp
-        ${boost_SOURCE_DIR}/libs/filesystem/src/exception.cpp
-        ${boost_SOURCE_DIR}/libs/filesystem/src/operations.cpp
-        ${boost_SOURCE_DIR}/libs/filesystem/src/path.cpp
-        ${boost_SOURCE_DIR}/libs/filesystem/src/path_traits.cpp
-        ${boost_SOURCE_DIR}/libs/filesystem/src/portability.cpp
-        ${boost_SOURCE_DIR}/libs/filesystem/src/unique_path.cpp
-        ${boost_SOURCE_DIR}/libs/filesystem/src/utf8_codecvt_facet.cpp
-        ${boost_SOURCE_DIR}/libs/filesystem/src/windows_file_codecvt.cpp
-    )
-
-    # Ensure that the boost atomic library is used instead of the standard atomic library, where some functionality is only available as of C++20.
-    target_compile_definitions(boost_filesystem PUBLIC BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF)
-
-    target_link_libraries(boost_filesystem PUBLIC boost_disable_autolink boost)
-    set_property(TARGET boost_filesystem PROPERTY POSITION_INDEPENDENT_CODE ON)
-    add_library(Boost::filesystem ALIAS boost_filesystem)
-
-    if(NOT MSVC) # on gcc and apple clang we need to define BOOST_NO_CXX98_FUNCTION_BASE because a deprecated function is sometimes used in boost
-        target_compile_definitions(boost_filesystem PUBLIC BOOST_NO_CXX98_FUNCTION_BASE)
-    endif()
-
-    set(Boost_LIBRARIES Boost::boost Boost::filesystem)
+    set(Boost_LIBRARIES Boost::boost)
     set(Boost_FOUND ON)
 
 else()
-    find_package(Boost ${MEMILIO_MINIMAL_BOOST_VERSION}...${MEMILIO_BOOST_VERSION} REQUIRED COMPONENTS outcome optional filesystem)
+    find_package(Boost ${MEMILIO_MINIMAL_BOOST_VERSION}...${MEMILIO_BOOST_VERSION} REQUIRED COMPONENTS outcome optional)
 endif()
 
 # ## HDF5
-find_package(HDF5 COMPONENTS C)
+if(MEMILIO_ENABLE_HDF5)
+    find_package(HDF5 COMPONENTS C)
 
-if(HDF5_FOUND)
-    set(MEMILIO_HAS_HDF5 ON)
-else()
-    message(WARNING "HDF5 was not found. Memilio will be built without some IO features. Install HDF5 Libraries and set the HDF5_DIR cmake variable to the directory containing the hdf5-config.cmake file to build with HDF5.")
+    if(HDF5_FOUND)
+        set(MEMILIO_HAS_HDF5 ON)
+    else()
+        message(WARNING "HDF5 was not found. Memilio will be built without some IO features. Install HDF5 Libraries and set the HDF5_DIR cmake variable to the directory containing the hdf5-config.cmake file to build with HDF5.")
+    endif()
 endif()
 
 # ## JSONCPP
 if(MEMILIO_USE_BUNDLED_JSONCPP)
-    message(STATUS "Downloading jsoncpp library")
+    message(STATUS "Downloading JsonCpp library")
+
+    # set jsoncpp configurations
+    set(JSONCPP_WITH_TESTS OFF)
+    set(JSONCPP_WITH_POST_BUILD_UNITTEST OFF)
 
     include(FetchContent)
     FetchContent_Declare(
         jsoncpp
         URL https://github.com/open-source-parsers/jsoncpp/archive/${MEMILIO_JSONCPP_VERSION}.tar.gz
     )
-    FetchContent_GetProperties(jsoncpp)
+    FetchContent_MakeAvailable(jsoncpp)
 
-    if(NOT jsoncpp_POPULATED)
-        FetchContent_Populate(jsoncpp)
-
-        # set jsoncpp configurations
-        set(JSONCPP_WITH_TESTS "Compile and (for jsoncpp_check) run JsonCpp test executables" OFF)
-        set(JSONCPP_WITH_POST_BUILD_UNITTEST "Automatically run unit-tests as a post build step" ON)
-
-        add_subdirectory(${jsoncpp_SOURCE_DIR} ${jsoncpp_BINARY_DIR} EXCLUDE_FROM_ALL)
-
-        # unset global cache variables to avoid clashes with our code
-        unset(BUILD_OBJECT_LIBS CACHE)
-        unset(CMAKE_ARCHIVE_OUTPUT_DIRECTORY CACHE)
-        unset(CMAKE_ARCHIVE_OUTPUT_DIRECTORY CACHE)
-        unset(CMAKE_PDB_OUTPUT_DIRECTORY CACHE)
-        unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY CACHE)
-    endif()
+    # unset global cache variables to avoid clashes with our code
+    unset(BUILD_OBJECT_LIBS CACHE)
 
     if(BUILD_SHARED_LIBS)
         add_library(JsonCpp::JsonCpp ALIAS jsoncpp_lib)
@@ -198,21 +155,20 @@ else()
         to the directory containing the jsoncppConfig.cmake file to build with JsonCpp.")
 endif()
 
-find_package(sbml ${MEMILIO_SBML_VERSION} CONFIG)
 
-if(sbml_FOUND)
-    set(MEMILIO_HAS_SBML ON)
+if(MEMILIO_ENABLE_SBML)
+    find_package(sbml REQUIRED ${MEMILIO_SBML_VERSION} CONFIG)
     message(STATUS "Found libSBML: ${libsbml_INCLUDE_DIRS}")
-else()
-    message(WARNING "LibSBML was not found. The SBML importer will not be build.")
 endif()
 
 if(MEMILIO_ENABLE_MPI)
     find_package(MPI REQUIRED COMPONENTS CXX)
+    message(STATUS "Enabled MPI ${MPI_CXX_VERSION}")
 endif()
 
 if(MEMILIO_ENABLE_OPENMP)
     find_package(OpenMP REQUIRED COMPONENTS CXX)
+    message(STATUS "Enabled OpenMP ${OpenMP_CXX_VERSION}")
 endif()
 
 # Random123 library for random number generators
@@ -221,14 +177,8 @@ message(STATUS "Downloading Random123 library")
 include(FetchContent)
 FetchContent_Declare(Random123
     GIT_REPOSITORY https://github.com/DEShawResearch/random123
-    GIT_TAG ${MEMILIO_RANDOM123_VERSION}
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND "")
-FetchContent_GetProperties(Random123)
-
-if(NOT Random123_POPULATED)
-    FetchContent_Populate(Random123)
-endif()
+    GIT_TAG ${MEMILIO_RANDOM123_VERSION})
+FetchContent_MakeAvailable(Random123)
 
 add_library(Random123 INTERFACE)
 target_include_directories(Random123 INTERFACE ${random123_SOURCE_DIR}/include)

@@ -21,6 +21,7 @@
 #define MIO_TIMER_LIST_PRINTER_H
 
 #include "memilio/timer/registration.h"
+#include "memilio/utils/compiler_diagnostics.h"
 
 #include <ostream>
 #include <list>
@@ -45,16 +46,16 @@ struct ListPrinter : public Printer {
         const auto indent     = "  ";
         // Write out all timers
         out << "All Timers: " << timer_register.size() << "\n";
-        for (const auto& [name, scope, timer, thread] : timer_register) {
+        for (const auto& [name, scope, timer, thread, rank] : timer_register) {
             out << indent << qualified_name(name, scope) << ": " << std::scientific
-                << time_in_seconds(timer.get_elapsed_time()) << " (" << thread << ")\n";
-            is_multithreaded |= thread > 0;
+                << time_in_seconds(timer.get_elapsed_time()) << " (" << rank << ", " << thread << ")\n";
+            is_multithreaded |= thread > 0 || rank > 0;
         }
         // Write out timers accumulated over threads by name
         if (is_multithreaded) {
             // dedupe list entries from parallel execution
             std::map<std::string, DurationType> deduper;
-            for (const auto& [name, scope, timer, _] : timer_register) {
+            for (const auto& [name, scope, timer, thread, rank] : timer_register) {
                 deduper[qualified_name(name, scope)] += timer.get_elapsed_time();
             }
             out << "Unique Timers (accumulated): " << deduper.size() << "\n";

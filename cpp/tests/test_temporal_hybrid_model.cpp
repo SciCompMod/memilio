@@ -151,7 +151,7 @@ TEST(TestTemporalHybrid, test_advance)
 TEST(TestTemporalHybrid, test_conversion_dabm_smm)
 {
     using Model1 = mio::dabm::Model<SingleWell<mio::osecir::InfectionState>>;
-    using Model2 = mio::smm::Model<ScalarType, 1, mio::osecir::InfectionState>;
+    using Model2 = mio::smm::Model<ScalarType, mio::osecir::InfectionState>;
 
     //Initialize agents for dabm
     SingleWell<mio::osecir::InfectionState>::Agent a1{Eigen::Vector2d{-0.5, 0},
@@ -162,13 +162,14 @@ TEST(TestTemporalHybrid, test_conversion_dabm_smm)
                                                       mio::osecir::InfectionState::InfectedSymptoms};
 
     Model1 model1({a1, a2, a3}, {});
-    Model2 model2;
-    model2.parameters.get<mio::smm::AdoptionRates<ScalarType, mio::osecir::InfectionState>>().push_back(
-        {mio::osecir::InfectionState::Susceptible,
-         mio::osecir::InfectionState::Exposed,
-         mio::regions::Region(0),
-         0.1,
-         {{mio::osecir::InfectionState::InfectedNoSymptoms, 1}, {mio::osecir::InfectionState::InfectedSymptoms, 0.5}}});
+    Model2 model2(mio::osecir::InfectionState::Count, mio::regions::Region(1));
+    model2.parameters.get<mio::smm::AdoptionRates<ScalarType, mio::osecir::InfectionState, mio::regions::Region>>()
+        .push_back({mio::osecir::InfectionState::Susceptible,
+                    mio::osecir::InfectionState::Exposed,
+                    mio::regions::Region(0),
+                    0.1,
+                    {{mio::osecir::InfectionState::InfectedNoSymptoms, 1},
+                     {mio::osecir::InfectionState::InfectedSymptoms, 0.5}}});
 
     //Parameters for simulation
     double t0 = 0;

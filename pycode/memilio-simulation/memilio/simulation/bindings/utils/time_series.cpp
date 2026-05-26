@@ -112,7 +112,13 @@ void bind_time_series(py::module_& m, std::string const& name)
                                                                      self.get_num_time_points());
                 return Eigen::Ref<mio::TimeSeries<double>::Matrix>(m);
             },
-            py::return_value_policy::reference_internal);
+            py::return_value_policy::reference_internal)
+
+        .def("get_times", [](const mio::TimeSeries<double>& self) {
+            auto times_range = self.get_times();
+            std::vector<double> times(times_range.begin(), times_range.end());
+            return times;
+        });
 }
 
 } // namespace pymio

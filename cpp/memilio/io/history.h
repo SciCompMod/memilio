@@ -23,7 +23,6 @@
 #include "memilio/utils/metaprogramming.h"
 #include <vector>
 #include <tuple>
-#include <iostream>
 
 namespace mio
 {

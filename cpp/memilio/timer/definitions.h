@@ -23,7 +23,7 @@
 #include "memilio/utils/mioomp.h"
 
 #include <chrono>
-#include <cstddef>
+#include <ctime>
 
 namespace mio
 {
@@ -41,6 +41,21 @@ using TimeType     = std::chrono::steady_clock::time_point;
 using DurationType = std::chrono::steady_clock::duration;
 
 #endif
+
+namespace details
+{
+
+/// @brief Convert a duration to integer ticks. Useful for serialization.
+inline decltype(auto) convert_to_ticks(DurationType duration)
+{
+#ifdef MEMILIO_ENABLE_OPENMP
+    return duration;
+#else
+    return duration.count();
+#endif
+}
+
+} // namespace details
 
 /**
  * @brief Convert a duration to a (floating point) number of seconds.

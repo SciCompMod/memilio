@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_SPAN_H
-#define EPI_SPAN_H
+#ifndef MIO_UTILS_SPAN_H
+#define MIO_UTILS_SPAN_H
 
 #include <utility>
 #include <cstddef>
@@ -107,4 +107,4 @@ private:
 
 } // namespace mio
 
-#endif //EPI_SPAN_H
+#endif // MIO_UTILS_SPAN_H

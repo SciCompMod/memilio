@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2026 MEmilio
 *
-* Authors: René Schmieding, Julia Bicker
+* Authors: René Schmieding, Julia Bicker, Kilian Volmer
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -20,9 +20,8 @@
 #ifndef MIO_EPI_ADOPTIONRATE_H
 #define MIO_EPI_ADOPTIONRATE_H
 
-#include "memilio/utils/index.h"
-#include "memilio/config.h"
 #include "memilio/geography/regions.h"
+#include <vector>
 
 namespace mio
 {
@@ -30,7 +29,7 @@ namespace mio
 /**
  * @brief Struct defining an influence for a second-order adoption.
  * The population having "status" is multiplied with "factor."
- * @tparam Status An infection state enum.
+ * @tparam Status An infection state enum or MultiIndex.
  */
 template <typename FP, class Status>
 struct Influence {
@@ -43,13 +42,14 @@ struct Influence {
  * The AdoptionRate is considered to be of second-order if there are any "influences".
  * In the d_abm and smm simulations, "from" is implicitly an influence, scaled by "factor". This is multiplied by
  * the sum over all "influences", which scale their "status" with the respective "factor".
- * @tparam Status An infection state enum.
+ * @tparam Status An infection state enum or MultiIndex.
+ * @tparam Region A MultiIndex.
  */
-template <typename FP, class Status>
+template <typename FP, class Status, class Region = mio::regions::Region>
 struct AdoptionRate {
     Status from; // i
     Status to; // j
-    mio::regions::Region region; // k
+    Region region; // k
     FP factor; // gammahat_{ij}^k
     std::vector<Influence<FP, Status>> influences; // influences[tau] = ( Psi_{i,j,tau} , gamma_{i,j,tau} )
 };

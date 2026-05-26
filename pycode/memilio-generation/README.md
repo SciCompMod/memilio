@@ -1,6 +1,12 @@
-# MEmilio Automatic Code Generation of Python Bindings
+# MEmilio Generation
 
-This package contains Python bindings generating code for the MEmilio C++ library. 
+This package contains two tools: the **Bindings Generator** (automatically generates Python bindings from existing C++ models) and the **Model Generator** (generates a complete C++ compartmental model and Python bindings from a YAML/TOML specification).
+
+For full documentation see the [readthedocs pages](https://memilio.readthedocs.io/en/latest/python/m-generation.html): [Bindings Generator](https://memilio.readthedocs.io/en/latest/python/m-generation.html) | [Model Generator](https://memilio.readthedocs.io/en/latest/python/m-modelgenerator.html).
+
+## Bindings Generator
+
+This part contains Python bindings generating code for the MEmilio C++ library.
 It enables the automatic generation of a part of the [Python Bindings](../memilio-simulation/README.md) that is common across multiple models. For a particular example, see the SEIR model with its files `oseir.cpp` and `oseir.py`.
 
 This generating software was developed as a part of the Bachelor thesis [Automatische Codegenerierung für nutzerfreundliche mathematisch-epidemiologische Modelle](https://elib.dlr.de/190367/). The following figure from Chapter 5 outlines the workflow of the generator. Blue boxes represent parts of the code generator and orange ones the input and output. Rectangular boxes contain classes with logic, the rest represent data.

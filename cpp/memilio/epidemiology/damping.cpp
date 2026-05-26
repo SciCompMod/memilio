@@ -18,13 +18,6 @@
 * limitations under the License.
 */
 #include "memilio/epidemiology/damping.h"
-#include "memilio/utils/stl_util.h"
-#include "memilio/math/smoother.h"
-
-#include <algorithm>
-#include <cassert>
-#include <stdio.h>
-#include <cmath>
 
 namespace mio
 {

@@ -17,15 +17,15 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_UTILS_UNUSED_H
-#define EPI_UTILS_UNUSED_H
+#ifndef MIO_UTILS_COMPILER_DIAGNOSTICS_H
+#define MIO_UTILS_COMPILER_DIAGNOSTICS_H
 
 namespace mio
 {
 /**
-* does nothing, can be used to mark variables as not used.
-* e.g. for avoiding compiler warnings/error about unused variables.
-*/
+ * @brief Does nothing, can be used to mark variables as not used.
+ * Intended for avoiding compiler warnings/error about unused variables.
+ */
 template <class... T>
 void unused(T&&...)
 {
@@ -75,4 +75,4 @@ void unused(T&&...)
 #define MEMILIO_ENABLE_EBO
 #endif
 
-#endif //EPI_UTILS_UNUSED_H
+#endif // MIO_UTILS_COMPILER_DIAGNOSTICS_H

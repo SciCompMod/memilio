@@ -51,6 +51,7 @@ void bind_Index(pybind11::module_& m, std::string const& name)
     c.def(pybind11::init<size_t>(), pybind11::arg("value"));
     c.def(pybind11::self == pybind11::self);
     c.def(pybind11::self != pybind11::self);
+    c.def("get", &mio::Index<Tag>::get);
 
     bind_Index_members_if_enum(c);
 }
@@ -61,7 +62,7 @@ void bind_Index(pybind11::module_& m, std::string const& name)
 template <typename Tag, class Tuple>
 mio::Index<Tag> extract_index(pybind11::tuple& t)
 {
-    return t[mio::details::IndexPosition<Tag, Tuple>::value].template cast<mio::Index<Tag>>();
+    return t[mio::index_of_type_v<Tag, Tuple>].template cast<mio::Index<Tag>>();
 }
 
 // bind an index for more than one tag

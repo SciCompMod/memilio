@@ -59,9 +59,9 @@ public:
 protected:
     void SetUp() override
     {
-        log_rng_seeds(m_rng, mio::LogLevel::warn);
+        m_rng.set_counter(mio::Counter<uint64_t>{0});
     }
 
 private:
-    mio::RandomNumberGenerator m_rng{}; ///< Seeded rng used by this test fixture.
+    static inline mio::RandomNumberGenerator m_rng = mio::thread_local_rng(); ///< Seeded rng used by this test fixture.
 };

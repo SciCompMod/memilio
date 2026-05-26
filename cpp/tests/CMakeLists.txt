@@ -6,95 +6,95 @@ include(AddGoogleTest)
 
 set(TESTSOURCES
     testmain.cpp
-    # test_populations.cpp
-    # test_odeseir.cpp
-    # test_odeseirdb.cpp
-    # test_odeseirv.cpp
-    # test_odesir.cpp
-    # test_numericalIntegration.cpp
-    # test_smoother.cpp
-    # test_damping.cpp
-    # test_odesecir.cpp
-    # test_odesecirvvs.cpp
-    # test_odesecirts.cpp
-    # test_sde_sir.cpp
-    # test_sde_sirs.cpp
-    # test_sde_seirvv.cpp
-    # test_mobility.cpp
-    # test_date.cpp
-    # test_eigen_util.cpp
-    # test_odesecir_ageres.cpp
-    # test_odeseair.cpp
-    # test_parameter_studies.cpp
-    # test_graph.cpp
-    # test_graph_simulation.cpp
-    # test_stl_util.cpp
-    # test_uncertain.cpp
-    # test_random_number_generator.cpp
-    # test_time_series.cpp
-    # test_abm_household.cpp
-    # test_abm_infection.cpp
-    # test_abm_location.cpp
-    # test_abm_lockdown_rules.cpp
-    # test_abm_masks.cpp
-    # test_abm_mobility_rules.cpp
-    # test_abm_person.cpp
-    # test_abm_simulation.cpp
-    # test_abm_serialization.cpp
-    # test_abm_testing_strategy.cpp
-    # test_abm_model.cpp
-    # test_math_floating_point.cpp
-    # test_math_time_series_functor.cpp
-    # test_analyze_result.cpp
-    # test_contact_matrix.cpp
-    # test_type_safe.cpp
-    # test_custom_index_array.cpp
-    # test_d_abm_model.cpp
-    # test_flows.cpp
-    # test_feedback.cpp
-    # test_parameter_set.cpp
-    # test_matrix_shape.cpp
-    # test_damping_sampling.cpp
-    # test_dynamic_npis.cpp
-    # test_regions.cpp
-    # test_io_cli.cpp
-    # test_io_framework.cpp
-    # test_binary_serializer.cpp
-    # test_compartments_simulation.cpp
-    # test_mobility_io.cpp
-    # test_transform_iterator.cpp
-    # test_metaprogramming.cpp
-    # test_history.cpp
-    # test_utils.cpp
-    # test_timers.cpp
-    # test_ide_seir.cpp
-    test_ide_sir.cpp
-    # test_ide_secir.cpp
-    # test_ide_secir_ageres.cpp
-    # test_state_age_function.cpp
-    # test_lct_secir.cpp
-    # test_lct_secir_2_diseases.cpp
-    # test_lct_initializer_flows.cpp
-    # test_glct_secir.cpp
-    # test_ad.cpp
-    # test_smm_model.cpp
-    # test_geography.cpp
-    # test_distance.cpp
-    # abm_helpers.h
-    # abm_helpers.cpp
-    # actions.h
-    # distributions_helpers.h
-    # distributions_helpers.cpp
-    # matchers.cpp
-    # matchers.h
-    # random_number_test.h
-    # sanitizers.cpp
-    # temp_file_register.h
-    # test_graph_abm.cpp
-    # test_abstract_parameter_dist.cpp
-    # test_temporal_hybrid_model.cpp
-    # test_odemseirs4.cpp
-    # test_uncertain_ad_compatibility.cpp
+    test_populations.cpp
+    test_odeseir.cpp
+    test_odeseirdb.cpp
+    test_odeseirv.cpp
+    test_odesir.cpp
+    test_numericalIntegration.cpp
+    test_smoother.cpp
+    test_damping.cpp
+    test_odesecir.cpp
+    test_odesecirvvs.cpp
+    test_odesecirts.cpp
+    test_sde_sir.cpp
+    test_sde_sirs.cpp
+    test_sde_seirvv.cpp
+    test_mobility.cpp
+    test_date.cpp
+    test_eigen_util.cpp
+    test_odesecir_ageres.cpp
+    test_odeseair.cpp
+    test_parameter_studies.cpp
+    test_graph.cpp
+    test_graph_simulation.cpp
+    test_stl_util.cpp
+    test_uncertain.cpp
+    test_random_number_generator.cpp
+    test_time_series.cpp
+    test_abm_household.cpp
+    test_abm_infection.cpp
+    test_abm_location.cpp
+    test_abm_lockdown_rules.cpp
+    test_abm_masks.cpp
+    test_abm_mobility_rules.cpp
+    test_abm_person.cpp
+    test_abm_simulation.cpp
+    test_abm_serialization.cpp
+    test_abm_testing_strategy.cpp
+    test_abm_model.cpp
+    test_math_floating_point.cpp
+    test_math_time_series_functor.cpp
+    test_analyze_result.cpp
+    test_contact_matrix.cpp
+    test_type_safe.cpp
+    test_custom_index_array.cpp
+    test_d_abm_model.cpp
+    test_flows.cpp
+    test_feedback.cpp
+    test_parameter_set.cpp
+    test_matrix_shape.cpp
+    test_damping_sampling.cpp
+    test_dynamic_npis.cpp
+    test_regions.cpp
+    test_io_cli.cpp
+    test_io_directories.cpp
+    test_io_framework.cpp
+    test_binary_serializer.cpp
+    test_compartments_simulation.cpp
+    test_mobility_io.cpp
+    test_metaprogramming.cpp
+    test_history.cpp
+    test_utils.cpp
+    test_timers.cpp
+    test_ide_seir.cpp
+    test_ide_secir.cpp
+    test_ide_secir_ageres.cpp
+    test_state_age_function.cpp
+    test_lct_secir.cpp
+    test_lct_secir_2_diseases.cpp
+    test_lct_initializer_flows.cpp
+    test_glct_secir.cpp
+    test_ad.cpp
+    test_smm_model.cpp
+    test_geography.cpp
+    test_distance.cpp
+    abm_helpers.h
+    abm_helpers.cpp
+    actions.h
+    distributions_helpers.h
+    distributions_helpers.cpp
+    matchers.cpp
+    matchers.h
+    random_number_test.h
+    sanitizers.cpp
+    temp_file_register.h
+    test_graph_abm.cpp
+    test_abstract_parameter_dist.cpp
+    test_odemetapop.cpp
+    test_temporal_hybrid_model.cpp
+    test_odemseirs4.cpp
+    test_uncertain_ad_compatibility.cpp
 )
 
 # if(MEMILIO_HAS_JSONCPP)

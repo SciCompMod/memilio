@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_UTILS_PARAMETER_SET_H
-#define EPI_UTILS_PARAMETER_SET_H
+#ifndef MIO_UTILS_PARAMETER_SET_H
+#define MIO_UTILS_PARAMETER_SET_H
 
 #include "memilio/io/io.h"
 
@@ -38,7 +38,7 @@ struct has_get_default_member_function : std::false_type {
 };
 
 template <class T, class... Args>
-struct has_get_default_member_function<T, void_t<decltype(T::get_default(std::declval<Args>()...))>, Args...>
+struct has_get_default_member_function<T, std::void_t<decltype(T::get_default(std::declval<Args>()...))>, Args...>
     : std::true_type {
 };
 
@@ -245,9 +245,9 @@ public:
         class = std::enable_if_t<
             // Avoid erroneous template deduction for T1=ParameterSet as this constructor could falsely be considered
             // as a copy constructor for non-const lvalue references.
-            conjunction_v<negation<std::is_same<std::decay_t<T1>, ParameterSet>>,
-                          details::AllOf<details::BindTail<has_get_default_member_function, T1, TN...>::template type,
-                                         ParameterTagTraits<Tags>...>>>>
+            !std::is_same_v<std::decay_t<T1>, ParameterSet> &&
+            details::AllOf<details::BindTail<has_get_default_member_function, T1, TN...>::template type,
+                           ParameterTagTraits<Tags>...>::value>>
     explicit ParameterSet(T1&& arg1, TN&&... argn)
         : m_tup(ParameterTagTraits<Tags>::get_default(arg1, argn...)...)
     {
@@ -491,4 +491,4 @@ void foreach (ParameterSet<Tags...>& p, F f)
 
 } // namespace mio
 
-#endif //EPI_UTILS_PARAMETER_SET_H
+#endif // MIO_UTILS_PARAMETER_SET_H

@@ -502,7 +502,7 @@ class Simulation:
             local_npis.append(physical_distancing_work_other(0, 0.6, 0.8))
             local_npis.append(senior_awareness(0, 0.0, 0.0))
 
-            dynamic_npis.interval = 3.0
+            dynamic_npis.implementation_delay = 0.0
             dynamic_npis.duration = 14.0
             dynamic_npis.base_value = 100000
             dynamic_npis.set_threshold(200.0, local_npis)

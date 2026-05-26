@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2026 MEmilio
 *
-* Authors: Julia Bicker
+* Authors: Carlotta Gerstein
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,24 +17,19 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_BASE_DIR_H
-#define MIO_BASE_DIR_H
+#ifndef SEIRMETAPOP_INFECTIONSTATE_H
+#define SEIRMETAPOP_INFECTIONSTATE_H
 
-#include "memilio/config.h"
-
-#include <string>
+#include "models/ode_seir/infection_state.h"
 
 namespace mio
 {
-
-/**
- * @brief Returns the absolute path to the project directory.
- */
-const static std::string base_dir()
+namespace oseirmetapop
 {
-    return MEMILIO_BASE_DIR;
-}
 
+using mio::oseir::InfectionState;
+
+} // namespace oseirmetapop
 } // namespace mio
 
-#endif // MIO_BASE_DIR_H
+#endif // SEIRMETAPOP_INFECTIONSTATE_H

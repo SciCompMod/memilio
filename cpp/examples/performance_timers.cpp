@@ -19,6 +19,9 @@
 */
 #include "memilio/timer/auto_timer.h"
 #include "memilio/timer/table_printer.h"
+#include "memilio/timer/timer_registrar.h"
+#include "memilio/utils/logging.h"
+#include "memilio/utils/miompi.h"
 
 #include <thread> // This is only used for the example load function.
 
@@ -40,8 +43,15 @@ void load()
 
 int main()
 {
-    // Specify the namespace of AutoTimer, so we don't have to repeat it. Do not do this with entire namespaces.
+    mio::set_log_level(mio::LogLevel::info);
+    mio::mpi::init();
+
+    const int comm_rank = mio::mpi::rank(mio::mpi::get_world());
+    const int comm_size = mio::mpi::size(mio::mpi::get_world());
+    // Specify the namespace of AutoTimer and TimerRegistrar, so we don't have to repeat it.
+    // Avoid "using" statements with entire namespaces.
     using mio::timing::AutoTimer;
+    using mio::timing::TimerRegistrar;
 
     // Start immediately timing the main function. An AutoTimer starts timing upon its creation, and ends timing when
     // it is destroyed. This usually happens when a function returns, or a scope indicated by {curly braces} ends.
@@ -54,15 +64,21 @@ int main()
     // the end of the programm. This can be disabled by calling `TimerRegistrar::disable_final_timer_summary()`.
     auto printer = std::make_unique<mio::timing::TablePrinter>();
     printer->set_time_format("{:e}");
-    mio::timing::TimerRegistrar::get_instance().set_printer(std::move(printer));
+    TimerRegistrar::get_instance().set_printer(std::move(printer));
 
-    // To manually print all timers, use `TimerRegistrar::print_timers()`, but make sure that no timers are running.
+    // To manually print all timers, use `TimerRegistrar::print_timers()` (or `TimerRegistrar::print_gathered_timers()`
+    // when using MPI), but make sure that no timers are running.
     // The "main" timer in this example would make that difficult, but you can simply add another scope around it,
     // similar to the "compute loops" timer below.
 
-    const int N = 1000; // Number of iterations. Be wary of increasing this number when using the sleep_for load!
+    // Number of iterations. Be wary of increasing this number when using the sleep_for load!
+    const int total_iterations = 1000;
+    const int N                = total_iterations / comm_size + (comm_rank < (total_iterations % comm_size));
 
-    std::cout << "Num threads: " << mio::omp::get_max_threads() << "\n";
+    if (mio::mpi::is_root()) {
+        mio::log_info("Num ranks: {} - Num threads: {} - Work size per rank: {}", comm_size,
+                      mio::omp::get_max_threads(), N);
+    }
 
     // Open a new scope to time computations.
     {
@@ -99,6 +115,16 @@ int main()
             }
         }
     }
+
+    // For MPI parallel execution, we replace the final timer summary with a manual print. That way, we can gather
+    // timers from all ranks into a single output, instead of each rank printing a separate output. You can also use a
+    // custom printer for computing additional statistics.
+    if (comm_size > 1) {
+        TimerRegistrar::get_instance().disable_final_timer_summary();
+        TimerRegistrar::get_instance().print_gathered_timers(mio::mpi::get_world());
+    }
+
+    mio::mpi::finalize();
 
     return 0;
 }

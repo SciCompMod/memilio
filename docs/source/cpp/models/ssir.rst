@@ -30,7 +30,5 @@ Mathematical variable   C++ variable name                         Description
 
 An example can be found in `sde_sir.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/sde_sir.cpp>`_
 
-Overview of the ``SSIR`` namespace:
-------------------------------------
 
-.. doxygennamespace:: mio::ssir
+The code documentation for the model can be found at :CPP-API:`mio::ssir` .

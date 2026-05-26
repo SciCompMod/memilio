@@ -74,6 +74,7 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToDead)]        = 0;
 
     model.parameters.template get<mio::isecir::TransitionProbabilities>()[group] = vec_prob;
 
@@ -112,7 +113,7 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
 
     // Compare transitions at last time point with results from a previous run that are given here.
     Eigen::VectorX<ScalarType> compare(num_transitions * num_agegroups);
-    compare << 30.00000000, 25.50000000, 0.25000000, 6.50000000, 0.89673307, 1.18750000, 0.80038452, 0.80038452,
+    compare << 30.00000000, 25.50000000, 0.25000000, 6.50000000, 0.89673307, 1.18750000, 0.80038452, 0., 0.80038452,
         0.29817594, 0.29817594;
     mio::isecir::Simulation sim(model, dt);
     ASSERT_EQ(compare.size(), model.transitions.get_last_value().size());
@@ -158,6 +159,7 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRunAgeRes)
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToDead)]        = 0;
 
     for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(num_agegroups); ++group) {
         model.parameters.template get<mio::isecir::TransitionProbabilities>()[group] = vec_prob;
@@ -204,15 +206,15 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRunAgeRes)
     // Compare transitions at last time point with results from a previous run that are given here.
     Eigen::VectorX<ScalarType> compare(num_transitions * num_agegroups);
     compare << 336.4285714286, 328.2857142857, 162.0000000000, 163.0714285714, 80.1309896488, 79.8035714286,
-        39.4763745334, 39.4763745334, 19.5504040431, 19.5504040431, 1105.7142857143, 1069.8571428572, 515.7142857142,
-        525.3214285714, 254.4848638825, 253.2142857143, 124.6903391854, 124.6903391854, 61.1148381577, 61.1148381577,
-        5819.0000000000, 5744.0000000000, 2806.4285714286, 2839.2142857143, 1394.5112118989, 1391.2321428571,
-        689.6518098426, 689.6518098426, 340.5829657792, 340.5829657792, 6685.1428571429, 6572.8571428571,
-        3200.7142857143, 3243.5714285714, 1591.9783266355, 1588.8214285714, 787.5403666800, 787.5403666800,
-        388.5439635160, 388.5439635160, 2376.0000000000, 2342.2857142857, 1142.5714285714, 1156.8571428571,
-        566.0586818750, 564.0892857143, 277.9264675819, 277.9264675819, 136.1445518771, 136.1445518771, 966.7142857143,
-        946.1428571428, 457.2142857143, 465.1428571428, 226.4021912199, 225.5714285714, 110.8246575673, 110.8246575673,
-        54.0704051215, 54.0704051215;
+        39.4763745334, 0., 39.4763745334, 19.5504040431, 19.5504040431, 1105.7142857143, 1069.8571428572,
+        515.7142857142, 525.3214285714, 254.4848638825, 253.2142857143, 124.6903391854, 0., 124.6903391854,
+        61.1148381577, 61.1148381577, 5819.0000000000, 5744.0000000000, 2806.4285714286, 2839.2142857143,
+        1394.5112118989, 1391.2321428571, 689.6518098426, 0., 689.6518098426, 340.5829657792, 340.5829657792,
+        6685.1428571429, 6572.8571428571, 3200.7142857143, 3243.5714285714, 1591.9783266355, 1588.8214285714,
+        787.5403666800, 0., 787.5403666800, 388.5439635160, 388.5439635160, 2376.0000000000, 2342.2857142857,
+        1142.5714285714, 1156.8571428571, 566.0586818750, 564.0892857143, 277.9264675819, 0., 277.9264675819,
+        136.1445518771, 136.1445518771, 966.7142857143, 946.1428571428, 457.2142857143, 465.1428571428, 226.4021912199,
+        225.5714285714, 110.8246575673, 0., 110.8246575673, 54.0704051215, 54.0704051215;
 
     mio::isecir::Simulation sim(model, dt);
     ASSERT_EQ(compare.size(), model.transitions.get_last_value().size());

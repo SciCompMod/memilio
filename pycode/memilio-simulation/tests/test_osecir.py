@@ -146,7 +146,7 @@ class Test_osecir_integration(unittest.TestCase):
 
             for index_compartment in range(0, 10):
                 self.assertAlmostEqual(
-                    timestep[index_compartment + 1],
+                    timestep.iloc[index_compartment + 1],
                     result[index_timestep][index_compartment], delta=1e-9)
 
     def test_study(self):

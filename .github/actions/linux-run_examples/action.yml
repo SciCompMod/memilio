@@ -2,7 +2,7 @@ name: "Linux Examples"
 description: "Run the C++ examples on linux."
 inputs:
   build-artifact:
-    description: "Name of the build artifact that contains the unit test binary."
+    description: "Name of the build artifact that contains the example binaries."
     required: true
 runs:
   using: "composite"
@@ -14,7 +14,7 @@ runs:
         sudo apt-get -qq -y install libhdf5-10* wget gnupg lcov
         sudo apt-get -qq update
     - name: Download examples directory
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: ${{ inputs.build-artifact }}
         path: cpp

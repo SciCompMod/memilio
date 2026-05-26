@@ -8,11 +8,13 @@ The following gives an overview on (peer-reviewed) publications extending or usi
 Recently submitted publications
 --------------------------------------
 
+- |MEmilio_citation|
+
+- |Traveler_estimation|
+
 - |Coupled_Epidemiological_and_Wastewater|
 
 - |Differentially_private_federated_learning|
-
-- |Graph_Neural_Network_Surrogates|
 
 
 
@@ -20,6 +22,10 @@ Peer-reviewed publications
 --------------------------
 
 **2026**
+
+- |Missing_Transmission_Chains|
+
+- |Graph_Neural_Network_Surrogates|
 
 - |Revisiting_the_Linear_Chain|
 

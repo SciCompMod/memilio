@@ -160,7 +160,7 @@ IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename)
 
 #ifdef MEMILIO_HAS_HDF5
 IOResult<void> save_edges(const std::vector<std::vector<TimeSeries<ScalarType>>>& ensemble_edges,
-                          const std::vector<std::pair<int, int>>& pairs_edges, const fs::path& result_dir,
+                          const std::vector<std::pair<int, int>>& pairs_edges, const std::filesystem::path& result_dir,
                           bool save_single_runs, bool save_percentiles)
 {
     //save results and sum of results over nodes
@@ -244,8 +244,8 @@ IOResult<void> save_edges(const std::vector<TimeSeries<ScalarType>>& results,
 
             int start_id = ids[edge_indx].first;
             auto total   = Eigen::Matrix<ScalarType, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(
-                             num_timepoints, num_elements)
-                             .eval();
+                               num_timepoints, num_elements)
+                               .eval();
             while (edge_indx < num_edges && ids[edge_indx].first == start_id) {
                 const auto& result_edge = results[edge_indx];
                 auto edge_result = Eigen::Matrix<ScalarType, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(
