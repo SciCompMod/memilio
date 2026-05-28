@@ -676,7 +676,7 @@ TEST(TestGLCTSecir, deathsPerSevere_flows)
             (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedCritical>() / 2.), 7.1);
 
     // Define initial population distribution in infection states, one entry per subcompartment.
-    // We start with 1000 individuals in the first subcompartment of the InfectedSymtpoms compartment which refers to
+    // We start with 1000 individuals in the first subcompartment of the InfectedSymptoms compartment which refers to
     // the strain of individuals that are transitioning from InfectedSymptoms to InfectedSevere.
     const auto initial_pop                                   = 1000.;
     const auto dead_initial                                  = 0.;

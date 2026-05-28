@@ -85,10 +85,10 @@ originating from the InfectedSevere compartment and the vector is given by
 
 .. math::
 
-   \mathbf{I_{\text{NS}}}(t) = \begin{bmatrix}
-   \mathbf{I_{\text{NS}}^{\text{Sy}}}(t) \\
-   \mathbf{I_{\text{NS}}^{\text{D}}}(t) \\
-   \mathbf{I_{\text{NS}}^{\text{R}}}(t)
+   \mathbf{I_{\text{Sev}}}(t) = \begin{bmatrix}
+   \mathbf{I_{\text{Sev}}^{\text{Cr}}}(t) \\
+   \mathbf{I_{\text{Sev}}^{\text{D}}}(t) \\
+   \mathbf{I_{\text{Sev}}^{\text{R}}}(t)
    \end{bmatrix}.
 
 Implicitly, the matrices :math:`\mathbf{A_{z}^{*}}` for one :math:`z \in \mathcal{Z}` are a block of a matrix 
@@ -140,7 +140,7 @@ Note that in the GLCT model, we define two strains for the compartments `Infecte
 
 .. code-block:: cpp
 
-    constexpr size_t NumExposed = 2, NumInfectedNoSymptoms = 6, NumInfectedSymptoms = 2, NumInfectedSevere = 2,
+    constexpr size_t NumExposed = 2, NumInfectedNoSymptoms = 6, NumInfectedSymptoms = 2, NumInfectedSevere = 3,
                      NumInfectedCritical = 10;
     using Model          = mio::glsecir::Model<ScalarType, NumExposed, NumInfectedNoSymptoms, NumInfectedSymptoms,
                                                NumInfectedSevere, NumInfectedCritical>;
@@ -184,7 +184,7 @@ We continue by defining some epidemiological parameters needed throughout the mo
          10 * (1 - recoveredPerInfectedNoSymptoms), 20 * recoveredPerInfectedNoSymptoms,
          10 * recoveredPerInfectedNoSymptoms, 10 * recoveredPerInfectedNoSymptoms},
         {50 * severePerInfectedSymptoms, 50 * (1 - severePerInfectedSymptoms)}, // InfectedSymptoms
-        {50 * criticalPerSevere, 50 * (1 - criticalPerSevere)}, // InfectedSevere
+        {50 * criticalPerSevere, 50 * deathsPerSevere, 50 * (1 - criticalPerSevere - deathsPerSevere)}, // InfectedSevere
         {10 * deathsPerCritical, 10 * deathsPerCritical, 5 * deathsPerCritical,
          3 * deathsPerCritical, // InfectedCritical
          2 * deathsPerCritical, 10 * (1 - deathsPerCritical), 10 * (1 - deathsPerCritical), 5 * (1 - deathsPerCritical),
@@ -305,15 +305,21 @@ We proceed analogously for the remaining compartments `InfectedSymptoms`, `Infec
         Eigen::VectorX<ScalarType>::Zero(LctState::get_num_subcompartments<InfectionState::InfectedSevere>());
     StartingProbabilitiesInfectedSevere[0]                                         = criticalPerSevere;
     StartingProbabilitiesInfectedSevere[(Eigen::Index)(
-        LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.)] = 1 - criticalPerSevere;
+        LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 3.)] = deathsPerSevere;
+    StartingProbabilitiesInfectedSevere[2 * (Eigen::Index)(
+                                                LctState::get_num_subcompartments<InfectionState::InfectedSevere>() /
+                                                3.)] = 1 - criticalPerSevere - deathsPerSevere;
     model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedSevere<ScalarType>>() =
         StartingProbabilitiesInfectedSevere;
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToInfectedCritical<ScalarType>>() =
         mio::glsecir::TransitionMatrixInfectedSevereToInfectedCritical<ScalarType>().get_default(
-            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.), timeInfectedSevere);
+            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 3.), timeInfectedSevere);
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToDead<ScalarType>>() =
+        mio::glsecir::TransitionMatrixInfectedSevereToDead<ScalarType>().get_default(
+            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 3.), timeInfectedSevere);
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToRecovered<ScalarType>>() =
         mio::glsecir::TransitionMatrixInfectedSevereToRecovered<ScalarType>().get_default(
-            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.), timeInfectedSevere);
+            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 3.), timeInfectedSevere);
 
     // InfectedCritical.
     Eigen::VectorX<ScalarType> StartingProbabilitiesInfectedCritical =

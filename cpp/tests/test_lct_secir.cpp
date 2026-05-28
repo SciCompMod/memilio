@@ -812,8 +812,6 @@ TEST(TestLCTSecir, deathsPerSevere_flows)
     Model model;
     auto& params = model.parameters;
 
-    // params.get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[0]   = 5.0;
-    // params.get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[0] = 5.0;
     params.get<mio::lsecir::CriticalPerSevere<ScalarType>>()[0] = 0.0; // block ISev->ICr->Dead path
     params.get<mio::lsecir::DeathsPerSevere<ScalarType>>()[0]   = 0.1;
 
