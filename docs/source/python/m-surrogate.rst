@@ -17,7 +17,7 @@ For more details, we refer to:
 Installation
 ------------
 
-See :doc:`python_packages/Installation` for a detailed installation guide.  
+See :ref:`python-package-installation` for a detailed installation guide.
 
 Dependencies
 ------------

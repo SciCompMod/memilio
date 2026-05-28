@@ -7,7 +7,7 @@ The package as well as links to the sources can be found in the `pycode/memilio-
 Installation
 ------------
 
-See :doc:`python_packages/Installation` for a detailed installation guide.  
+See :ref:`python-package-installation` for a detailed installation guide.
 
 Dependencies
 ------------

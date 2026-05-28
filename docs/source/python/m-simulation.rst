@@ -18,7 +18,7 @@ tools are required:
 * **Ninja** build tool
 * All :doc:`C++ library dependencies <../getting_started>`
 
-See :doc:`python_packages/Installation` for a detailed installation guide.  
+See :ref:`python-package-installation` for a detailed installation guide.
 
 
 Dependencies
