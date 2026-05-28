@@ -196,7 +196,7 @@ configuration):
 
     ./cpp/build/bin/memilio-test
 
-Also try out the example binaries (ending in ``__example``)!
+Also try out the example binaries (ending in ``_example``)!
 
 If you want to only build a specific example, you can specify it with the ``--target`` flag:
 
