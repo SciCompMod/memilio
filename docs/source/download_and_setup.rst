@@ -5,7 +5,7 @@ MEmilio consists of a core library written in C++, including several models and 
 packages
 
 We have structured this documentation to guide you step-by-step through the installation and usage process.
-If you still need help, feel free to `contact us <mailto:Martin.Kuehn@DLR.de>`_ or open an issue at `GitHub <https://github.com/SciCompMod/memilio/issues>`_ 
+If you still need help, feel free to `contact us <mailto:Martin.Kuehn@DLR.de>`__ or open an issue at `GitHub <https://github.com/SciCompMod/memilio/issues>`__ 
 and highlight @mknaranja and @HenrZu such that we can assist you as best as we can.
 
 There are two main ways to set up MEmilio on your computer or on a remote cluster or supercomputer,
@@ -14,7 +14,7 @@ depending on what you want to do:
 1.  **Using the Python packages:** This is the recommended path for many users not familiar with C++.
     Here, you can run simulations using python bindings.
    
-    If you have a working python installation, head to :ref:`<python-package-installation>` and install the package from
+    If you have a working python installation, head to :ref:`python-package-installation` and install the package from
     PyPI (Option 1).
     Otherwise, continue here for the setup instructions.
 
@@ -74,12 +74,12 @@ Before you can install MEmilio, you need to install some common development tool
 
         *   On **MacOS**, you can use `homebrew <https://brew.sh/>`__ to install a specific python version,
             or use the official installer from https://www.python.org/downloads/.
-            A guide can be found `here <https://docs.python.org/3/using/mac.html>`__
+            A guide can be found `here <https://docs.python.org/3/using/mac.html>`__.
 
         *   On **Windows**, you can use `winget <https://learn.microsoft.com/en-us/windows/package-manager/winget/>`__
             to install a specific python version, or use the Python Install Manager from the
-            `Microsoft Store <https://apps.microsoft.com/detail/9nq7512cxl7t>`.
-            A guide can be found `here <https://docs.python.org/3/using/windows.html>`__
+            `Microsoft Store <https://apps.microsoft.com/detail/9nq7512cxl7t>`__.
+            A guide can be found `here <https://docs.python.org/3/using/windows.html>`__.
 
         *   On a cluster or supercomputer, python may be included as a module (e.g. through spack) that has to be
             loaded first. Check the official documentation of that system for details.
@@ -158,12 +158,12 @@ Next steps
 
 From here, you can
 
-* :doc:`continue with the C++ build instructions <cpp/instructions>` or
+* :doc:`continue with the C++ build instructions <cpp/installation>` or
 
 * :ref:`start building the Python packages from source (Option 2) <python-package-installation>`.
 
 Further questions
 -----------------
 If you have any further questions, please take a look at our :doc:`faq` and feel free to contact us via
-`e-mail <mailto:Martin.Kuehn@DLR.de>`_ or open an issue or discussion on
-`GitHub <https://github.com/SciCompMod/memilio/discussions>`_.
+`e-mail <mailto:Martin.Kuehn@DLR.de>`__ or open an issue or discussion on
+`GitHub <https://github.com/SciCompMod/memilio/discussions>`__.

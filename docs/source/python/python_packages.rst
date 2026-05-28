@@ -112,7 +112,7 @@ Package installation
 
 You can run simulations, download data, or create plots with our Python packages.
 First, however, you need a working Python installation.
-If you are not sure that you have one, head to :ref:`<general-setup-section>`, then continue here.
+If you are not sure that you have one, head to :ref:`general-setup-section` for the python setup, then continue here.
 
 .. note::
 
@@ -128,7 +128,7 @@ We will use pip here, but you can use the python package manager of your choice 
 Option 1: Install from PyPI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. info:: Currently only supported for memilio-simulation.
+.. note:: Currently only supported for memilio-simulation.
 
 If you just want to run simulations with the latest released version, install the pre-built wheel directly from PyPI:
 
@@ -144,10 +144,11 @@ Pre-built wheels are provided for Linux, Windows and MacOS(ARM).
 Option 2: Install from source
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you need the latest (unreleased) code, or want to contribute to the package, you need to build from source.
-For the :doc:`memilio-simulation <m-simulation>`, :doc:`memilio-surrogatemodel <m-surrogate>` and
-:doc:`memilio-generation <m-generation>` packages,
-this requires a C++ compiler and CMake, see section :ref:`<general-setup-section>` for setting these up.
+If you need the latest (unreleased) code, or want to contribute to the package, you need to build from source. To get
+the source code, follow :ref:`general-download-section`.
+Additionally, the :doc:`memilio-simulation <m-simulation>`, :doc:`memilio-surrogatemodel <m-surrogate>` and
+:doc:`memilio-generation <m-generation>` packages require a C++ compiler and CMake. 
+If you want to install these packages, follow section :ref:`general-setup-section` for setting these up.
 
 Each package provides a ``pyproject.toml`` in the respective directory ``pycode/memilio-{package_name}``, that installs
 the package and its python dependencies with pip.

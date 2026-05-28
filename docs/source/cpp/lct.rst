@@ -65,6 +65,7 @@ The initial conditions of the model are represented by a class ``LctPopulations`
 
 
 .. _Nonpharmaceutical Interventions LCT:
+
 Nonpharmaceutical interventions
 -------------------------------
 

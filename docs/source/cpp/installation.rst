@@ -1,9 +1,9 @@
 Build instructions
 ==================
 
-The MEmilio core library (MEmilio C++) is written in C++ and uses `CMake <https://cmake.org/>`_ as build system. For
+The MEmilio core library (MEmilio C++) is written in C++ and uses `CMake <https://cmake.org/>`__ as build system. For
 building MEmilio C++, you need a C++20 compiler, CMake and a build tool (like GNU Make or Ninja) installed on your
-device. Follow the steps from :doc:`<download_and_setup>` to set up the required tools and the project.
+device. Follow the steps from :doc:`../download_and_setup` to set up the required tools and the project.
 
 The following guide will make use of the command line, but you can use graphical build tools from an IDE as well.
 
@@ -29,6 +29,7 @@ This will run several tests and should write out ``[  PASSED  ]`` in the end.
 
 Requirements
 ------------
+
 MEmilio C++ is regularly tested with the following compilers (list will be extended over time):
 
 - GCC, versions 11 and 13
@@ -89,13 +90,14 @@ instead. Version compatibility needs to be ensured by the user, the version we c
       - No 
       - https://sbml.org/software/libsbml/ (For SBML integration only)
 
-See the `thirdparty directory <https://github.com/SciCompMod/memilio/blob/main/cpp/thirdparty/README.md>`_ for more details.
+See the `thirdparty directory <https://github.com/SciCompMod/memilio/blob/main/cpp/thirdparty/README.md>`__ for more details.
 
 Step-by-step instructions
 -------------------------
 
-In case you have not installed the required tools, or downloaded the MEmilio repository, first follow the steps from
-:doc:`<download_and_setup>`. We assume that you have a terminal open and have navigated into the the memilio repository.
+In case you have not installed the required tools, or downloaded the MEmilio repository, first follow the steps from the
+:doc:`../download_and_setup` section. We assume that you have a terminal open and have navigated into the the memilio
+repository.
 
 Configuration
 ~~~~~~~~~~~~~
@@ -143,7 +145,7 @@ Additional options can be specified by appending one or more ``-D<OPTION>=<VALUE
     * - ``MEMILIO_ENABLE_WARNINGS_AS_ERRORS``
       - Compilation warnings are treated as compilation errors. ON or OFF, default ON.
     * - ``MEMILIO_ENABLE_PROFILING``
-      - Compile with runtime profiling support. ON or OFF, default OFF. See `here <https://github.com/SciCompMod/memilio/blob/main/cpp/benchmarks/profiling.md>`_ for information.
+      - Compile with runtime profiling support. ON or OFF, default OFF. See `here <https://github.com/SciCompMod/memilio/blob/main/cpp/benchmarks/profiling.md>`__ for information.
     * - ``MEMILIO_ENABLE_LIKWID_MARKER``
       - Compile MEmilio with likwid markers. ON or OFF, default OFF.
 
@@ -194,7 +196,7 @@ configuration):
 
     ./cpp/build/bin/memilio-test
 
-Also try out the example binaries (ending in ``_example``)!
+Also try out the example binaries (ending in ``__example``)!
 
 If you want to only build a specific example, you can specify it with the ``--target`` flag:
 
@@ -203,7 +205,7 @@ If you want to only build a specific example, you can specify it with the ``--ta
    cmake --build cpp/build --target <example_name>
 
 If you experience errors, feel free to contact martin.kuehn@dlr.de or open a
-`discussion on GitHub <https://github.com/SciCompMod/memilio/discussions>`_!
+`discussion on GitHub <https://github.com/SciCompMod/memilio/discussions>`__!
 
 Integration into other projects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -267,7 +269,7 @@ Running simulations
 ~~~~~~~~~~~~~~~~~~~
 
 You can run simulations either via the C++ interface where they are originally implemented or via the python bindings. 
-For the C++ Interface, you can find explanations of the models as well as guides on their usage in the :doc:`C++ model usage <cpp/model_usage>` section.
+For the C++ Interface, you can find explanations of the models as well as guides on their usage in the :doc:`C++ model usage <model_usage>` section.
 In short, the executables for different model instantiations are built as described above and can be run via 
 
 .. code-block:: console
@@ -276,7 +278,7 @@ In short, the executables for different model instantiations are built as descri
 
 
 Out of the box this works for all examples in the ``cpp/examples`` folder of our
-`github repository <https://github.com/SciCompMod/memilio/tree/main/cpp/examples>`_,
+`github repository <https://github.com/SciCompMod/memilio/tree/main/cpp/examples>`__,
 that do not depend on user-provided external libraries. 
 Additional explanations for our models are linked at the corresponding sites of this documentation.
 
@@ -284,7 +286,7 @@ Simulations used in publications
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For simulations used in publications, we maintain a separate repository: 
-`memilio-simulations <https://github.com/SciCompMod/memilio-simulations>`_. 
+`memilio-simulations <https://github.com/SciCompMod/memilio-simulations>`__. 
 This repository contains simulations organized in separate folders, each with the specific version of MEmilio 
 used for the published results. This ensures that simulation results can be easily reproduced.
 
@@ -294,24 +296,26 @@ that were used in publications.
 Loading data
 ~~~~~~~~~~~~
 
-The :doc:`memilio-epidata <python/m-epidata>` package provides tools to download epidemiological relevant datasets. Some 
-datasets like contact matrices for Germany are also included in the ``data`` folder of the `github repository <https://github.com/SciCompMod/memilio/tree/main/data>`_ and 
-school holidays (for Germany) are directly included in the `C++ code <https://github.com/SciCompMod/memilio/blob/main/cpp/memilio/geography/holiday_data.ipp>`_.  
+The :doc:`memilio-epidata <../python/m-epidata>` package provides tools to download epidemiological relevant datasets.
+Some datasets like contact matrices for Germany are also included in the ``data`` folder of the
+`github repository <https://github.com/SciCompMod/memilio/tree/main/data>`__ and school holidays (for Germany) are
+directly included in the
+`C++ code <https://github.com/SciCompMod/memilio/blob/main/cpp/memilio/geography/holiday_data.ipp>`__.  
 
 
 Creating new models
 ~~~~~~~~~~~~~~~~~~~
 
 If you want to create new models, you can do so via the C++ interface. For this, we recommend to have a look at 
-the :doc:`C++ model creation <cpp/model_creation>` section of this documentation.
+the :doc:`C++ model creation <model_creation>` section of this documentation.
 
 
 Visualizations
 ~~~~~~~~~~~~~~
 
-For visualizations, we provide our :doc:`python package MEmilio-plot <python/m-plot>`. Apart from that, we have 
-collected some scripts that we used for visualizations in the `tools folder in our github repository <https://github.com/SciCompMod/memilio/tree/main/tools>`_. 
-For the latter, no regular testing is conducted. If you encounter errors, please `contact us <mailto:Martin.Kuehn@DLR.de>`_.
+For visualizations, we provide our :doc:`python package memilio-plot <../python/m-plot>`. Apart from that, we have 
+collected some scripts that we used for visualizations in the `tools folder in our github repository <https://github.com/SciCompMod/memilio/tree/main/tools>`__. 
+For the latter, no regular testing is conducted. If you encounter errors, please `contact us <mailto:Martin.Kuehn@DLR.de>`__.
 
 
 Known issues
@@ -323,6 +327,6 @@ Known issues
 Further questions
 -----------------
 
-If you have any further questions, please take a look at our :doc:`faq` and feel free to contact us via
-`e-mail <mailto:Martin.Kuehn@DLR.de>`_ or open an issue or discussion on
-`GitHub <https://github.com/SciCompMod/memilio/discussions>`_.
+If you have any further questions, please take a look at our :doc:`../faq` and feel free to contact us via
+`e-mail <mailto:Martin.Kuehn@DLR.de>`__ or open an issue or discussion on
+`GitHub <https://github.com/SciCompMod/memilio/discussions>`__.
