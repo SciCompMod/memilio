@@ -682,8 +682,8 @@ TEST(DynamicNPIs, secir_expiry_keep_alive)
     //
     // Timeline (delay=2, duration=5, t0=1):
     //   1st NPI: t_start=3, t_start_damping=4, t_end=8, t_end_damping=9
-    //   At t=9 (expiry): keep-alive acts, t_start=9, t_start_damping=9 (no +1!),
-    //                    t_end=14, t_end_damping=15  ->  list collapses to [(t=4,0.5),(t=15,0.0)]
+    //   At t=8 (expiry): keep-alive acts, t_start=8, t_start_damping=8 (no +1!),
+    //                    t_end=13, t_end_damping=14  ->  list collapses to [(t=4,0.5),(t=14,0.0)]
     mio::osecir::Model<double> model(1);
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = 10;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, 100);
@@ -703,22 +703,22 @@ TEST(DynamicNPIs, secir_expiry_keep_alive)
     npis.set_implementation_delay(mio::SimulationTime<double>(2.0));
     model.parameters.get<mio::osecir::DynamicNPIsInfectedSymptoms<double>>() = npis;
 
-    // Stop at t=14 so the 2nd keep-alive (which would act at t=15) does not trigger.
+    // Stop at t=12 so the 2nd keep-alive (which would act at t=13) does not trigger.
     mio::osecir::Simulation<double, mio_test::MockSimulation<mio::osecir::Model>> sim(model, 1.0);
-    sim.advance(14.0);
+    sim.advance(12.0);
 
     auto const& cm_dyn = sim.get_model().parameters.get<mio::osecir::ContactPatterns<double>>().get_cont_freq_mat();
 
-    // Damping list after keep-alive collapses to [(t=4, 0.5), (t=15, 0.0)]:
+    // Damping list after keep-alive collapses to [(t=4, 0.5), (t=14, 0.0)]:
     EXPECT_DOUBLE_EQ(cm_dyn.get_matrix_at(mio::SimulationTime<double>(4.0))(0, 0), 0.5); // 1st NPI active
     EXPECT_DOUBLE_EQ(cm_dyn.get_matrix_at(mio::SimulationTime<double>(8.0))(0, 0), 0.5); // still active
     // no dip at t=9 as keep-alive overwrote the restore entry, contact stays at 0.5.
     // (Without this fix the restore would restore to 1.0 at t=9.)
     EXPECT_DOUBLE_EQ(cm_dyn.get_matrix_at(mio::SimulationTime<double>(9.0))(0, 0), 0.5);
     EXPECT_DOUBLE_EQ(cm_dyn.get_matrix_at(mio::SimulationTime<double>(10.0))(0, 0), 0.5); // still constant
-    EXPECT_DOUBLE_EQ(cm_dyn.get_matrix_at(mio::SimulationTime<double>(14.0))(0, 0), 0.5); // still active
-    // Restore window [14, 15]: complete at t=15.
-    EXPECT_DOUBLE_EQ(cm_dyn.get_matrix_at(mio::SimulationTime<double>(15.0))(0, 0), 1.0);
+    EXPECT_DOUBLE_EQ(cm_dyn.get_matrix_at(mio::SimulationTime<double>(13.0))(0, 0), 0.5); // still active
+    // Restore window [13, 14]: complete at t=14.
+    EXPECT_DOUBLE_EQ(cm_dyn.get_matrix_at(mio::SimulationTime<double>(14.0))(0, 0), 1.0);
 }
 
 TEST(DynamicNPIs, secirvvs_threshold_safe)

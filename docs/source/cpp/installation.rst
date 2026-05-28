@@ -34,7 +34,7 @@ MEmilio C++ is regularly tested with the following compilers (list will be exten
 - GCC, versions 11 and 13
 - Clang, version 14 and 17
 - AppleClang, version 21
-- MSVC, version 19.43 (Visual Studio 2022)
+- MSVC, versions 19.44+ (Visual Studio 2022) and 19.51+ (Visual Studio 2026)
 
 MEmilio C++ is regularly tested on GitHub runners using Ubuntu 22.04 and 24.04, MacOS 26 and Windows Server 2022
 and 2025. It is expected to run on any comparable Linux, MacOS or Windows system.
