@@ -6,7 +6,7 @@ on:
       - published
   ### Uncomment the "push:" together with the "repository-url:" field of action pypa/gh-action-pypi-publish
   ### to make a test release. Building this is rather expensive so do not merge this uncommented!
-  #push:
+  push:
   ### @Reviewer: MAKE SURE THE LINE ABOVE IS COMMENTED OUT BEFORE MERGE! ###
 
 jobs:
@@ -73,4 +73,4 @@ jobs:
         with:
           skip-existing: true
           ### To test uploads to TestPyPI in a PR, uncomment the following, as well as the "push:" line at the top:
-          #repository-url: https://test.pypi.org/legacy/
+          repository-url: https://test.pypi.org/legacy/

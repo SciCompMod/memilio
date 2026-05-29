@@ -1,6 +1,16 @@
 cmake_minimum_required(VERSION 3.14)
 project(memilio-python)
 
+# copy cpp files for building sdist's, then exit immediately
+# Note: ${SKBUILD_STATE} is "wheel" while building from an sdist
+if(SKBUILD_STATE STREQUAL "sdist")
+    message(STATUS "Copying current C++ source tree for distribution")
+    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../../cpp DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
+         PATTERN "build" EXCLUDE
+         PATTERN ".cache" EXCLUDE)
+    return()
+endif()
+
 set(CMAKE_CXX_STANDARD "20")
 set(CMAKE_CXX_STANDARD_REQUIRED "20")
 
@@ -55,7 +65,14 @@ else()
 endif()
 
 # add in C++ library
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../cpp ${CMAKE_CURRENT_BINARY_DIR}/cpp EXCLUDE_FROM_ALL)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/cpp)
+    # this is a sdist build, hence we use a copy C++ source tree, so that it is not out-of-tree wrt. pyproject.toml
+    message(WARNING "Using ${CMAKE_CURRENT_SOURCE_DIR}/cpp as C++ source tree. This is intentional for sdist builds.")
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/cpp ${CMAKE_CURRENT_BINARY_DIR}/cpp EXCLUDE_FROM_ALL)
+else()
+    # normal include using the main project tree
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}../../cpp ${CMAKE_CURRENT_BINARY_DIR}/cpp EXCLUDE_FROM_ALL)
+endif()
 
 # a list of all "LINKED_LIBRARIES" that are given to add_pymio_module. will contain duplicates
 # used for wheel installation
