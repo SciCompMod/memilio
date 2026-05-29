@@ -37,9 +37,10 @@ namespace lsecir2d
 * Define Parameters of the LCT-SECIHURD-2-DISEASES model *
 **********************************************************/
 
-// Each paramater is a vector with length equal to the number of groups
+// We define all parameters for diseases a and b separately as they can differ between the two different diseases.
+// Each parameter is a vector with length equal to the number of groups.
 // The contact patterns are given by a matrix with dimension (number of groups)*(number of groups)
-// The default number of groups is 1
+// The default number of groups is 1.
 
 /**
  * @brief Average time spent in the Exposed compartment for disease a in day unit for each group.
@@ -370,7 +371,7 @@ struct CriticalPerSevere_a {
 };
 
 /**
- * @brief The percentage of dead patients per hospitalized patients for each group in the SECIR model.
+ * @brief The percentage of dead patients per hospitalized patients for disease a for each group.
  */
 template <typename FP>
 struct DeathsPerSevere_a {
@@ -450,7 +451,7 @@ struct CriticalPerSevere_b {
 };
 
 /**
- * @brief The percentage of dead patients per hospitalized patients for each group in the SECIR model.
+ * @brief The percentage of dead patients per hospitalized patients for disease b for each group.
  */
 template <typename FP>
 struct DeathsPerSevere_b {

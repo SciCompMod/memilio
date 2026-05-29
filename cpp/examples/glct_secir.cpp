@@ -62,7 +62,7 @@ int main()
     const ScalarType recoveredPerInfectedNoSymptoms = 0.09;
     const ScalarType severePerInfectedSymptoms      = 0.2;
     const ScalarType criticalPerSevere              = 0.25;
-    const ScalarType deathsPerSevere                = 0.;
+    const ScalarType deathsPerSevere                = 0.1;
     const ScalarType deathsPerCritical              = 0.3;
 
     // Define the initial values with the distribution of the population into subcompartments.
