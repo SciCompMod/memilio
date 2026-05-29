@@ -260,7 +260,9 @@ private:
         }
 
         // Calculate derivative of the InfectedCritical compartment.
-        dydt[Ri] += dydt[ICri_first_index] * (1 - params.template get<CriticalPerSevere<FP>>()[Group]);
+        dydt[Ri] += dydt[ICri_first_index] * (1 - params.template get<CriticalPerSevere<FP>>()[Group] -
+                                              params.template get<DeathsPerSevere<FP>>()[Group]);
+        dydt[Di]               = dydt[ICri_first_index] * params.template get<DeathsPerSevere<FP>>()[Group];
         dydt[ICri_first_index] = dydt[ICri_first_index] * params.template get<CriticalPerSevere<FP>>()[Group];
         for (size_t subcomp = 0;
              subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical>() - 1;
@@ -276,7 +278,7 @@ private:
                (1 / params.template get<TimeInfectedCritical<FP>>()[Group]) * y[Ri - 1];
         dydt[Ri - 1] -= flow;
         dydt[Ri] = dydt[Ri] + (1 - params.template get<DeathsPerCritical<FP>>()[Group]) * flow;
-        dydt[Di] = params.template get<DeathsPerCritical<FP>>()[Group] * flow;
+        dydt[Di] = dydt[Di] + params.template get<DeathsPerCritical<FP>>()[Group] * flow;
 
         // Function call for next group if applicable.
         if constexpr (Group + 1 < num_groups) {
