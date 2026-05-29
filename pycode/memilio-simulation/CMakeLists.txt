@@ -71,7 +71,7 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/cpp)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/cpp ${CMAKE_CURRENT_BINARY_DIR}/cpp EXCLUDE_FROM_ALL)
 else()
     # normal include using the main project tree
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}../../cpp ${CMAKE_CURRENT_BINARY_DIR}/cpp EXCLUDE_FROM_ALL)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../cpp ${CMAKE_CURRENT_BINARY_DIR}/cpp EXCLUDE_FROM_ALL)
 endif()
 
 # a list of all "LINKED_LIBRARIES" that are given to add_pymio_module. will contain duplicates
