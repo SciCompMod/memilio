@@ -68,8 +68,73 @@ Below is an overview of the model variables:
 
 The model equations are given below. For a simpler description let :math:`\mathcal{Z}=\{E,I_{NS},I_{Sy},I_{Sev},I_{Cr}\}` be the set of the compartments that can be divided into subcompartments.
 
-.. image:: http://martinkuehn.eu/research/images/glct_equations.png
-   :alt: equations
+.. math::  
+
+    \begin{align*}
+        %--- Equation 1: S(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}S(t) &= -\frac{S(t)}{N(t)}\,\rho(t)\,\phi(t)
+            \Bigl(
+                \xi_{I_{NS}}(t)\,\mathbf{I}_{NS}(t)^{T}\mathbbm{1}
+                + \xi_{I_{Sy}}(t)\,\mathbf{I}_{Sy}(t)^{T}\mathbbm{1}
+            \Bigr)
+        \\[8pt]
+        %--- Equation 2: E(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}\mathbf{E}(t) &= \boldsymbol{\alpha}_{E}\,\frac{S(t)}{N(t)}\,\rho(t)\,\phi(t)
+            \Bigl(
+                \xi_{I_{NS}}(t)\,\mathbf{I}_{NS}(t)^{T}\mathbbm{1}
+                + \xi_{I_{Sy}}(t)\,\mathbf{I}_{Sy}(t)^{T}\mathbbm{1}
+            \Bigr)
+            + \mathbf{A}_{E}^{T}\mathbf{E}(t)
+        \\[8pt]
+        %--- Equation 3: I_NS(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}\mathbf{I}_{NS}(t) &= -\boldsymbol{\alpha}_{I_{NS}}
+            \bigl(\mathbf{A}_{E}\,\mathbbm{1}\bigr)^{T}\mathbf{E}(t)
+            +
+            \begin{bmatrix}
+                \mathbf{A}_{I_{NS}}^{I_{Sy}\;T}\,\mathbf{I}_{NS}^{I_{Sy}}(t) \\[4pt]
+                \mathbf{A}_{I_{NS}}^{R\;T}\,\mathbf{I}_{NS}^{R}(t)
+            \end{bmatrix}
+        \\[8pt]
+        %--- Equation 4: I_Sy(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}\mathbf{I}_{Sy}(t) &= -\boldsymbol{\alpha}_{I_{Sy}}
+            \bigl(\mathbf{A}_{I_{NS}}^{I_{Sy}}\,\mathbbm{1}\bigr)^{T}\mathbf{I}_{NS}^{I_{Sy}}(t)
+            +
+            \begin{bmatrix}
+                \mathbf{A}_{I_{Sy}}^{I_{Sev}\;T}\,\mathbf{I}_{Sy}^{I_{Sev}}(t) \\[4pt]
+                \mathbf{A}_{I_{Sy}}^{R\;T}\,\mathbf{I}_{Sy}^{R}(t)
+            \end{bmatrix}
+        \\[8pt]
+        %--- Equation 5: I_Sev(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}\mathbf{I}_{Sev}(t) &= -\boldsymbol{\alpha}_{I_{Sev}}
+            \bigl(\mathbf{A}_{I_{Sy}}^{I_{Sev}}\,\mathbbm{1}\bigr)^{T}\mathbf{I}_{Sy}^{I_{Sev}}(t)
+            +
+            \begin{bmatrix}
+                \mathbf{A}_{I_{Sev}}^{I_{Crit}\;T}\,\mathbf{I}_{Sev}^{I_{Crit}}(t) \\[4pt]
+                \mathbf{A}_{I_{Sev}}^{D\;T}\,\mathbf{I}_{Sev}^{D}(t) \\[4pt]
+                \mathbf{A}_{I_{Sev}}^{R\;T}\,\mathbf{I}_{Sev}^{R}(t)
+            \end{bmatrix}
+        \\[8pt]
+        %--- Equation 6: I_Crit(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}\mathbf{I}_{Crit}(t) &= -\boldsymbol{\alpha}_{I_{Crit}}
+            \bigl(\mathbf{A}_{I_{Sev}}^{I_{Crit}}\,\mathbbm{1}\bigr)^{T}\mathbf{I}_{Sev}^{I_{Crit}}(t)
+            +
+            \begin{bmatrix}
+                \mathbf{A}_{I_{Crit}}^{D\;T}\,\mathbf{I}_{Crit}^{D}(t) \\[4pt]
+                \mathbf{A}_{I_{Crit}}^{R\;T}\,\mathbf{I}_{Crit}^{R}(t)
+            \end{bmatrix}
+        \\[8pt]
+        %--- Equation 7: R(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}R(t) &=
+            -\bigl(\mathbf{A}_{I_{NS}}^{R}\,\mathbbm{1}\bigr)^{T}\mathbf{I}_{NS}^{R}(t)
+            -\bigl(\mathbf{A}_{I_{Sy}}^{R}\,\mathbbm{1}\bigr)^{T}\mathbf{I}_{Sy}^{R}(t)
+            -\bigl(\mathbf{A}_{I_{Sev}}^{R}\,\mathbbm{1}\bigr)^{T}\mathbf{I}_{Sev}^{R}(t)
+            -\bigl(\mathbf{A}_{I_{Crit}}^{R}\,\mathbbm{1}\bigr)^{T}\mathbf{I}_{Crit}^{R}(t)
+        \\[8pt]
+        %--- Equation 8: D(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}D(t) &=  -\bigl(\mathbf{A}_{I_{Sev}}^{D}\,\mathbbm{1}\bigr)^{T}\mathbf{I}_{Sev}^{D}(t)
+            -\bigl(\mathbf{A}_{I_{Crit}}^{D}\,\mathbbm{1}\bigr)^{T}\mathbf{I}_{Crit}^{D}(t)
+            \\[2pt]
+    \end{align*}
 
 Note that the bold notation :math:`\mathbf{z}(t)` for :math:`z \in \mathcal{Z}` stands for a vector. If several transitions are possible from a compartment, the vector is split in order to be able to select the stay times until the transitions individually. For example, the order
 
