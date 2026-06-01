@@ -90,6 +90,18 @@ TEST(TestCompartmentSimulation, copy_simulation)
     EXPECT_EQ(sim.get_integrator_core().get_dt_max(), sim_copy_assign.get_integrator_core().get_dt_max());
 }
 
+TEST(TestCompartmentSimulation, last_step_tolerance)
+{
+    auto sim = mio::Simulation<double, MockModel>(MockModel(), 0.0);
+
+    // Check default.
+    EXPECT_EQ(sim.get_last_step_tolerance(), mio::Limits<double>::zero_tolerance());
+    // Check setter of tolerance.
+    auto new_tol = 1e-2;
+    sim.set_last_step_tolerance(new_tol);
+    EXPECT_EQ(sim.get_last_step_tolerance(), new_tol);
+}
+
 struct MockSimulateSim { // looks just enough like a simulation for the simulate functions not to notice
 
     // this "model" converts to and from int implicitly, exposing its value after calling chech_constraints
