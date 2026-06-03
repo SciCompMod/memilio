@@ -53,7 +53,7 @@ public:
      * Run the simulation from the current time to tmax.
      * @param tmax Time to stop.
      */
-    void advance(ScalarType tmax, size_t fd_order_contacts, ScalarType damping_time = 1000.,
+    void advance(ScalarType tmax, size_t fd_order_contacts = 4, ScalarType damping_time = 1000.,
                  bool split_integral = false);
 
     void advance_reformulated(ScalarType tmax);

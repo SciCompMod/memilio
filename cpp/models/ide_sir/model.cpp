@@ -484,16 +484,21 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
             // For each index, the corresponding summand is computed here.
             ScalarType init_time = populations.get_time(0);
 
-            sum += -dt * gregory_weight * m_transmissionproboncontact_vector[current_time_index - j] *
-                       m_riskofinffromsymptomatic_vector[current_time_index - j] *
-                       m_transitiondistribution_vector[current_time_index - j] *
-                       (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                            SimulationTime<ScalarType>((current_time_index - (ScalarType)j) * dt + init_time))(0, 0) -
-                        (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                             SimulationTime<ScalarType>(current_time))(0, 0) /
-                         m_N) *
-                            relevant_susceptibles) -
-                   dt * dt * gregory_weight * phi_deriv / m_N * inner_sum;
+            ScalarType summand =
+                -dt * gregory_weight * m_transmissionproboncontact_vector[current_time_index - j] *
+                    m_riskofinffromsymptomatic_vector[current_time_index - j] *
+                    m_transitiondistribution_vector[current_time_index - j] *
+                    (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                         SimulationTime<ScalarType>((current_time_index - (ScalarType)j) * dt + init_time))(0, 0) -
+                     (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                          SimulationTime<ScalarType>(current_time))(0, 0) /
+                      m_N) *
+                         (relevant_susceptibles)) -
+                dt * dt * gregory_weight * phi_deriv / m_N * inner_sum;
+
+            if (fabs(summand) >= 1e-16) {
+                sum += summand;
+            }
         }
     }
     return populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible] * std::exp(sum);

@@ -388,7 +388,7 @@ public:
                                        return std::get<SimulationTime<FP>>(tup1) < std::get<SimulationTime<FP>>(tup2);
                                    });
 
-        FP smoother_window = 1.;
+        FP smoother_window = 2.;
 
         bool smoothcos = false;
 

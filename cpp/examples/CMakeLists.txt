@@ -198,6 +198,10 @@ add_executable(smoothercos nonconst_contacts/smoothercos.cpp)
 target_link_libraries(smoothercos PRIVATE memilio ide_sir)
 target_compile_options(smoothercos PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(compare_init_conditions initial_conditions/compare_init_conditions.cpp)
+target_link_libraries(compare_init_conditions PRIVATE memilio ide_sir)
+target_compile_options(compare_init_conditions PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(ide_secir_graph_example ide_secir_graph.cpp)
 target_link_libraries(ide_secir_graph_example PRIVATE memilio ide_secir)
 target_compile_options(ide_secir_graph_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
