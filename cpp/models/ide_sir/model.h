@@ -76,12 +76,10 @@ public:
     ScalarType compute_gamma_deriv(ScalarType dt, size_t time_point_index, size_t fd_order);
 
     // Returns the number of iterations needed in fixed point iteration.
-    size_t compute_S(ScalarType s_init, ScalarType dt, size_t t0_index = 0, size_t fd_order_contacts = 1,
-                     ScalarType damping_time = 1000., bool split_integral = false, ScalarType tol = 1e-14,
-                     size_t max_iterations = 100);
-    ScalarType fixed_point_function(ScalarType susceptibles, ScalarType dt, size_t t0_index,
-                                    size_t fd_order_contacts = 1, ScalarType damping_time = 1000.,
-                                    bool split_integral = false);
+    ScalarType fixed_point_function(ScalarType susceptibles, ScalarType dt, size_t fd_order_contacts = 1,
+                                    ScalarType damping_time = 1000.);
+    size_t compute_S(ScalarType s_init, ScalarType dt, size_t fd_order_contacts = 1, ScalarType damping_time = 1000.,
+                     ScalarType tol = 1e-14, size_t max_iterations = 100);
 
     size_t compute_S_reformulated(ScalarType s_init, ScalarType dt, size_t t0_index = 0, ScalarType tol = 1e-14,
                                   size_t max_iterations = 100);

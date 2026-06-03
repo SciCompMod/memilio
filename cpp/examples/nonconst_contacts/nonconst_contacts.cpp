@@ -123,10 +123,9 @@ mio::IOResult<void> simulate_ide(ScalarType ide_exponent, size_t gregory_order, 
                                  ScalarType damping, ScalarType damping_time, std::string save_dir = "",
                                  mio::TimeSeries<ScalarType> result_groundtruth =
                                      mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
-                                 size_t fd_order_gamma = 1, size_t fd_order_contacts = 1, bool split_integral = false)
+                                 size_t fd_order_gamma = 1, size_t fd_order_contacts = 1)
 {
     unused(fd_order_contacts);
-    unused(split_integral);
     unused(fd_order_gamma);
 
     using namespace params;
@@ -196,7 +195,7 @@ mio::IOResult<void> simulate_ide(ScalarType ide_exponent, size_t gregory_order, 
 
     // Carry out simulation.
     mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide);
-    sim.advance(tmax, fd_order_contacts, damping_time, split_integral);
+    sim.advance(tmax, fd_order_contacts, damping_time);
     // sim.advance_reformulated2(tmax, fd_order_gamma);
 
     if (!save_dir.empty()) {
@@ -223,13 +222,11 @@ int main()
     ScalarType time_infected = 2.;
 
     ScalarType t0_ode = 0.;
-    ScalarType t0_ide = 10.;
-    ScalarType tmax   = 20.;
+    ScalarType t0_ide = 30.;
+    ScalarType tmax   = 40.;
 
-    ScalarType damping      = 0.;
-    ScalarType damping_time = 4.9;
-
-    bool split_integral = false;
+    ScalarType damping      = 0.3;
+    ScalarType damping_time = 35.372907;
 
     std::vector<size_t> gregory_orders = {1, 2, 3};
     size_t finite_difference_order     = 4;
@@ -238,12 +235,12 @@ int main()
 
     // Compute groundtruth with ODE model.
     ScalarType ode_exponent               = 6.;
-    std::vector<ScalarType> ide_exponents = {0, 1, 2};
+    std::vector<ScalarType> ide_exponents = {3};
 
-    std::string save_dir = fmt::format(
-        "../../simulation_results/2026-05-26/init_and_simulation_windows_fdordercontacts={}_smootherwindow=1/"
-        "nonconst_contacts_t0={}_tinit={}_tmax={}_dampingtime={}_damping={}/",
-        fd_order_contacts, t0_ode, t0_ide, tmax, damping_time, damping);
+    std::string save_dir =
+        fmt::format("../../simulation_results/2026-05-28/try_dampings_fdordercontacts={}_smootherwindow=2/"
+                    "nonconst_contacts_t0={}_tinit={}_tmax={}_dampingtime={}_damping={}/",
+                    fd_order_contacts, t0_ode, t0_ide, tmax, damping_time, damping);
 
     // Make folder if not existent yet.
     std::filesystem::path dir(save_dir);
@@ -255,9 +252,9 @@ int main()
     for (size_t gregory_order : gregory_orders) {
         for (ScalarType ide_exponent : ide_exponents) {
             std::cout << std::endl;
-            mio::IOResult<void> result_ide = simulate_ide(
-                ide_exponent, gregory_order, finite_difference_order, t0_ode, t0_ide, tmax, time_infected, damping,
-                damping_time, save_dir, result_ode, fd_order_gamma, fd_order_contacts, split_integral);
+            mio::IOResult<void> result_ide =
+                simulate_ide(ide_exponent, gregory_order, finite_difference_order, t0_ode, t0_ide, tmax, time_infected,
+                             damping, damping_time, save_dir, result_ode, fd_order_gamma, fd_order_contacts);
         }
     }
 }
