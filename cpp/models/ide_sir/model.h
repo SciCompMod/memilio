@@ -81,6 +81,10 @@ public:
     size_t compute_S(ScalarType s_init, ScalarType dt, size_t fd_order_contacts = 1, ScalarType damping_time = 1000.,
                      ScalarType tol = 1e-14, size_t max_iterations = 100);
 
+    ScalarType fixed_point_function_S_deriv(ScalarType susceptibles_deriv, ScalarType dt);
+    size_t compute_S_deriv_fixedpoint(ScalarType s_deriv_init, ScalarType dt, ScalarType tol = 1e-14,
+                                      size_t max_iterations = 100);
+
     size_t compute_S_reformulated(ScalarType s_init, ScalarType dt, size_t t0_index = 0, ScalarType tol = 1e-14,
                                   size_t max_iterations = 100);
     ScalarType fixed_point_function_reformulated(ScalarType susceptibles, ScalarType dt, size_t t0_index);

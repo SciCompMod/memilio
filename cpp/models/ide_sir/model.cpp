@@ -423,6 +423,87 @@ size_t ModelMessinaExtendedDetailedInit::compute_S(ScalarType s_init, ScalarType
     return iter_counter;
 }
 
+ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function_S_deriv(ScalarType susceptibles_deriv, ScalarType dt)
+{
+    // Get the index of the current time step.
+    ScalarType current_time = populations.get_last_time();
+    // std::cout << "current time: " << current_time << std::endl;
+    size_t current_time_index = populations.get_num_time_points() - 1;
+
+    // Compute first part of sum where already known initial values of Susceptibles are used.
+    ScalarType sum = 0.;
+
+    for (size_t j = 0; j <= current_time_index; j++) {
+
+        ScalarType relevant_susceptibles_deriv;
+
+        ScalarType gregory_weight   = 0.;
+        size_t switch_weights_index = std::min(current_time_index, m_gregory_order);
+        if (j < switch_weights_index) {
+            gregory_weight = sum_part1_weight(current_time_index, j);
+        }
+        else {
+            gregory_weight = sum_part2_weight(current_time_index, j);
+        }
+
+        // If j<n, we take the Susceptibles at the corresponding index that we have already computed.
+        if (j < current_time_index) {
+            relevant_susceptibles_deriv = -flows.get_value(j)[(Eigen::Index)InfectionTransition::SusceptibleToInfected];
+        }
+        // In case of j=n, the number of Susceptibles is not already known and stored in populations but is determined
+        // by the input to the fixed point iteration.
+        else {
+            relevant_susceptibles_deriv = susceptibles_deriv;
+        }
+
+        // For each index, the corresponding summand is computed here.
+        ScalarType summand = gregory_weight * m_transmissionproboncontact_vector[current_time_index - j] *
+                             m_riskofinffromsymptomatic_vector[current_time_index - j] *
+                             m_transitiondistribution_vector[current_time_index - j] * relevant_susceptibles_deriv;
+
+        if (fabs(summand) >= 1e-16) {
+            sum += summand;
+        }
+    }
+
+    ScalarType first_term = m_transmissionproboncontact_vector[current_time_index] *
+                            m_riskofinffromsymptomatic_vector[current_time_index] *
+                            m_transitiondistribution_vector[current_time_index] *
+                            (m_N - populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible]);
+
+    return populations.get_value(current_time_index)[(Eigen::Index)InfectionState::Susceptible] *
+           parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+               SimulationTime<ScalarType>(current_time))(0, 0) *
+           (first_term - dt * sum);
+}
+
+size_t ModelMessinaExtendedDetailedInit::compute_S_deriv_fixedpoint(ScalarType s_deriv_init, ScalarType dt,
+                                                                    ScalarType tol, size_t max_iterations)
+{
+    size_t iter_counter = 0;
+    while (iter_counter < max_iterations) {
+
+        ScalarType s_deriv_new = fixed_point_function_S_deriv(s_deriv_init, dt);
+
+        if (std::fabs(s_deriv_init - s_deriv_new) < tol) {
+            break;
+        }
+
+        s_deriv_init = s_deriv_new;
+
+        iter_counter++;
+    }
+
+    if (iter_counter == max_iterations) {
+        std::cout << "Max number of iterations reached without convergence. Results may not be accurate." << std::endl;
+    }
+
+    // Set S in corresponding TimeSeries.
+    flows.get_last_value()[(Eigen::Index)InfectionTransition::SusceptibleToInfected] = -s_deriv_init;
+
+    return iter_counter;
+}
+
 ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function_reformulated(ScalarType susceptibles, ScalarType dt,
                                                                                size_t t0_index)
 {

@@ -172,8 +172,8 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 
         // Carry out simulation.
         mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide);
-        size_t fd_order_contacts = 1;
-        sim.advance(tmax, fd_order_contacts);
+        // size_t fd_order_contacts = 1;
+        sim.advance(tmax);
 
         if (!save_dir.empty()) {
             // Save compartments.
@@ -208,30 +208,25 @@ int main()
     // Compute groundtruth with ODE model.
     ScalarType ode_exponent = 6;
 
-    std::vector<ScalarType> time_infected_values = {2.};
+    std::vector<ScalarType> time_infected_values = {2.}; // T_I=2: support max = 36.85
 
     ScalarType t0                         = 0.;
-    std::vector<ScalarType> t_init_values = {50.};
-    ScalarType tmax                       = 55.;
+    std::vector<ScalarType> t_init_values = {40.};
+    ScalarType tmax                       = 50.;
 
-    std::vector<ScalarType> num_days_vec = {10};
+    std::vector<size_t> finite_difference_orders = {1, 2, 3, 4};
 
-    std::vector<size_t> finite_difference_orders = {4};
-
-    std::vector<ScalarType> ide_exponents = {0, 1, 2, 3};
+    std::vector<ScalarType> ide_exponents = {3};
     std::vector<size_t> gregory_orders    = {1, 2, 3};
 
     for (int time_infected : time_infected_values) {
 
         for (ScalarType t_init : t_init_values) {
 
-            // for (size_t num_days : num_days_vec) {
-            // ScalarType tmax = t0_ide + num_days;
-
             for (size_t finite_difference_order : finite_difference_orders) {
                 std::cout << "FD order: " << finite_difference_order << std::endl;
 
-                std::string save_dir = fmt::format("../../simulation_results/2026-04-20/test_convergence/"
+                std::string save_dir = fmt::format("../../simulation_results/2026-06-03/compare_fd_orders/"
                                                    "detailed_init_exponential_t0={}_tinit={}_tmax={}_finite_diff={}/",
                                                    t0, t_init, tmax, finite_difference_order);
 

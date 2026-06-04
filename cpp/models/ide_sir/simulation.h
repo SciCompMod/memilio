@@ -55,6 +55,8 @@ public:
      */
     void advance(ScalarType tmax, size_t fd_order_contacts = 4, ScalarType damping_time = 1000.);
 
+    void advance_S_deriv_fixedpoint(ScalarType tmax, size_t fd_order_contacts = 4, ScalarType damping_time = 1000.);
+
     void advance_reformulated(ScalarType tmax);
 
     void advance_reformulated2(ScalarType tmax, size_t fd_order);
