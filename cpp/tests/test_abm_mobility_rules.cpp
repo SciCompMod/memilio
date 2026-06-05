@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "abm/activity_type.h"
+#include "abm/location.h"
 #include "abm/location_type.h"
 #include "abm/mobility_rules.h"
 #include "abm/person.h"
@@ -267,6 +268,9 @@ TEST_F(TestMobilityRules, school_return)
 TEST_F(TestMobilityRules, worker_goes_to_work)
 {
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
+    mio::abm::Location work(mio::abm::LocationType::Work, 1, num_age_groups);
+    mio::abm::Location school(mio::abm::LocationType::School, 2, num_age_groups);
+    mio::abm::Location hospital(mio::abm::LocationType::Hospital, 3, num_age_groups);
     // Mock the uniform distribution to control the randomness for workers' decisions.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
@@ -279,6 +283,14 @@ TEST_F(TestMobilityRules, worker_goes_to_work)
         .WillOnce(testing::Return(0.))
         .WillOnce(testing::Return(0.))
         .WillOnce(testing::Return(0.))
+        .WillOnce(testing::Return(0.))
+        .WillOnce(testing::Return(0.))
+        .WillOnce(testing::Return(0.))
+        .WillOnce(testing::Return(0.))
+        .WillOnce(testing::Return(0.))
+        .WillOnce(testing::Return(0.))
+        .WillOnce(testing::Return(0.))
+        .WillOnce(testing::Return(0.))
         .WillRepeatedly(testing::Return(1.0));
 
     auto p_retiree   = mio::abm::Person(this->get_rng(), home.get_type(), mio::abm::ActivityType::Home, home.get_id(),
@@ -286,9 +298,18 @@ TEST_F(TestMobilityRules, worker_goes_to_work)
     auto rng_retiree = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_retiree);
     auto p_adult     = mio::abm::Person(this->get_rng(), home.get_type(), mio::abm::ActivityType::Home, home.get_id(),
                                         home.get_model_id(), age_group_15_to_34);
-    auto rng_adult   = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_adult);
+    p_adult.set_assigned_location(mio::abm::ActivityType::Work, work.get_id(), home.get_model_id());
+    auto rng_adult = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_adult);
+    auto p_teacher = mio::abm::Person(this->get_rng(), home.get_type(), mio::abm::ActivityType::Home, home.get_id(),
+                                      home.get_model_id(), age_group_35_to_59);
+    p_teacher.set_assigned_location(mio::abm::ActivityType::Work, school.get_id(), school.get_model_id());
+    auto rng_teacher = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_teacher);
+    auto p_doctor    = mio::abm::Person(this->get_rng(), home.get_type(), mio::abm::ActivityType::Home, home.get_id(),
+                                        home.get_model_id(), age_group_35_to_59);
+    p_doctor.set_assigned_location(mio::abm::ActivityType::Work, hospital.get_id(), hospital.get_model_id());
+    auto rng_doctor = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_doctor);
 
-    auto t_morning = mio::abm::TimePoint(0) + mio::abm::hours(8);
+    auto t_morning = mio::abm::TimePoint(0) + mio::abm::hours(6);
     auto t_night   = mio::abm::TimePoint(0) + mio::abm::days(1) + mio::abm::hours(4);
     auto dt        = mio::abm::hours(1);
 
@@ -303,10 +324,14 @@ TEST_F(TestMobilityRules, worker_goes_to_work)
 
     // Check that the retiree (age group 60-79) should stay home and not go to work.
     EXPECT_EQ(mio::abm::go_to_work(rng_retiree, p_retiree, t_morning, dt, params), mio::abm::ActivityType::Home);
-    // Check that the adult (age group 15-34) should go to work at 8:00 AM.
-    EXPECT_EQ(mio::abm::go_to_work(rng_adult, p_adult, t_morning, dt, params), mio::abm::ActivityType::Home);
-    // Check that during the night (4:00 AM), the adult should stay home and not go to work.
+    // Check that the adults (age group 15-34) should go to work at 6:00 AM.
+    EXPECT_EQ(mio::abm::go_to_work(rng_adult, p_adult, t_morning, dt, params), mio::abm::ActivityType::Work);
+    EXPECT_EQ(mio::abm::go_to_work(rng_teacher, p_teacher, t_morning, dt, params), mio::abm::ActivityType::Work);
+    EXPECT_EQ(mio::abm::go_to_work(rng_doctor, p_doctor, t_morning, dt, params), mio::abm::ActivityType::Work);
+    // Check that during the night (4:00 AM), the adults should stay home and not go to work.
     EXPECT_EQ(mio::abm::go_to_work(rng_adult, p_adult, t_night, dt, params), mio::abm::ActivityType::Home);
+    EXPECT_EQ(mio::abm::go_to_work(rng_teacher, p_teacher, t_night, dt, params), mio::abm::ActivityType::Home);
+    EXPECT_EQ(mio::abm::go_to_work(rng_doctor, p_doctor, t_night, dt, params), mio::abm::ActivityType::Home);
 }
 
 /**

@@ -22,6 +22,7 @@
 #include "abm/model.h"
 #include "abm/common_abm_loggers.h"
 
+#include <cstddef>
 #include <fstream>
 
 int main()
@@ -127,6 +128,10 @@ int main()
         }
     }
 
+    size_t num_teachers     = 0;
+    size_t num_hosp_doctors = 0;
+    size_t num_icu_doctors  = 0;
+
     // Assign locations to the people
     for (auto& person : model.get_persons()) {
         const auto id = person.get_id();
@@ -141,7 +146,21 @@ int main()
             model.assign_location(id, school, mio::abm::ActivityType::School);
         }
         if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
-            model.assign_location(id, work, mio::abm::ActivityType::Work);
+            if (num_teachers < 3) {
+                model.assign_location(id, school, mio::abm::ActivityType::Work);
+                num_teachers++;
+            }
+            else if (num_hosp_doctors < 1) {
+                model.assign_location(id, hospital, mio::abm::ActivityType::Work);
+                num_hosp_doctors++;
+            }
+            else if (num_icu_doctors < 1) {
+                model.assign_location(id, icu, mio::abm::ActivityType::Work);
+                num_icu_doctors++;
+            }
+            else {
+                model.assign_location(id, work, mio::abm::ActivityType::Work);
+            }
         }
     }
 
