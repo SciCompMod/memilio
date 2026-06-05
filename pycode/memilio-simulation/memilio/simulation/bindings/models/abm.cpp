@@ -77,11 +77,9 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("BasicsShop", mio::abm::ActivityType::BasicsShop)
         .value("Hospital", mio::abm::ActivityType::Hospital)
         .value("ICU", mio::abm::ActivityType::ICU)
-        .value("Car", mio::abm::ActivityType::Car)
         .value("PublicTransport", mio::abm::ActivityType::PublicTransport)
-        .value("TransportWithoutContact", mio::abm::ActivityType::TransportWithoutContact);
 
-    pymio::iterable_enum<mio::abm::TestType>(m, "TestType")
+            pymio::iterable_enum<mio::abm::TestType>(m, "TestType")
         .value("Generic", mio::abm::TestType::Generic)
         .value("Antigen", mio::abm::TestType::Antigen)
         .value("PCR", mio::abm::TestType::PCR);
