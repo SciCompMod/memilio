@@ -93,9 +93,9 @@ class TestAbm(unittest.TestCase):
         p2_id = model.add_person(
             home_id, mio.AgeGroup(2), abm.ActivityType.Home)
 
-        for loc_id in [home_id, social_event_id, work_id]:
-            model.assign_location(p1_id, loc_id)
-            model.assign_location(p2_id, loc_id)
+        for loc in [(home_id, abm.ActivityType.Home), (social_event_id, abm.ActivityType.Recreation), (work_id, abm.ActivityType.Work)]:
+            model.assign_location(p1_id, loc[0], loc[1])
+            model.assign_location(p2_id, loc[0], loc[1])
 
         # trips
         trip_list = abm.TripList()
