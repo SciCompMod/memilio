@@ -70,16 +70,16 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("TransportWithoutContact", mio::abm::LocationType::TransportWithoutContact);
 
     pymio::iterable_enum<mio::abm::ActivityType>(m, "ActivityType")
-        .value("Home", mio::abm::LocationType::Home)
-        .value("School", mio::abm::LocationType::School)
-        .value("Work", mio::abm::LocationType::Work)
-        .value("SocialEvent", mio::abm::LocationType::Recreation)
-        .value("BasicsShop", mio::abm::LocationType::BasicsShop)
-        .value("Hospital", mio::abm::LocationType::Hospital)
-        .value("ICU", mio::abm::LocationType::ICU)
-        .value("Car", mio::abm::LocationType::Car)
-        .value("PublicTransport", mio::abm::LocationType::PublicTransport)
-        .value("TransportWithoutContact", mio::abm::LocationType::TransportWithoutContact);
+        .value("Home", mio::abm::ActivityType::Home)
+        .value("School", mio::abm::ActivityType::School)
+        .value("Work", mio::abm::ActivityType::Work)
+        .value("SocialEvent", mio::abm::ActivityType::Recreation)
+        .value("BasicsShop", mio::abm::ActivityType::BasicsShop)
+        .value("Hospital", mio::abm::ActivityType::Hospital)
+        .value("ICU", mio::abm::ActivityType::ICU)
+        .value("Car", mio::abm::ActivityType::Car)
+        .value("PublicTransport", mio::abm::ActivityType::PublicTransport)
+        .value("TransportWithoutContact", mio::abm::ActivityType::TransportWithoutContact);
 
     pymio::iterable_enum<mio::abm::TestType>(m, "TestType")
         .value("Generic", mio::abm::TestType::Generic)
@@ -199,11 +199,12 @@ PYBIND11_MODULE(_simulation_abm, m)
     pymio::bind_Range<decltype(std::declval<const mio::abm::Model>().get_persons())>(m, "_ModelPersonsRange");
 
     pymio::bind_class<mio::abm::Trip, pymio::EnablePickling::Never>(m, "Trip")
-        .def(py::init<mio::abm::PersonId, mio::abm::TimePoint, mio::abm::LocationId>(), py::arg("person_id"),
-             py::arg("time"), py::arg("destination"))
+        .def(py::init<mio::abm::PersonId, mio::abm::TimePoint, mio::abm::LocationId, mio::abm::ActivityType>(),
+             py::arg("person_id"), py::arg("time"), py::arg("destination"), py::arg("activity"))
         .def_readwrite("person_id", &mio::abm::Trip::person_id)
         .def_readwrite("trip_time", &mio::abm::Trip::trip_time)
-        .def_readwrite("destination", &mio::abm::Trip::destination);
+        .def_readwrite("destination", &mio::abm::Trip::destination)
+        .def_readwrite("activity", &mio::abm::Trip::activity);
 
     pymio::bind_class<mio::abm::TripList, pymio::EnablePickling::Never>(m, "TripList")
         .def(py::init<>())
