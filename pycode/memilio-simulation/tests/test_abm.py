@@ -47,13 +47,9 @@ class TestAbm(unittest.TestCase):
         model = sim.model
 
         home_id = model.add_location(abm.LocationType.Home)
-        social_event_id = model.add_location(abm.LocationType.SocialEvent)
         self.assertEqual(len(model.locations), 3)
 
         home = model.locations[home_id.index()]
-        self.assertEqual(home.type, abm.LocationType.Home)
-
-        testing_ages = [mio.AgeGroup(0)]
 
         home.infection_parameters.MaximumContacts = 10
         self.assertEqual(home.infection_parameters.MaximumContacts, 10)
@@ -65,10 +61,12 @@ class TestAbm(unittest.TestCase):
         model = sim.model
 
         home_id = model.add_location(abm.LocationType.Home)
-        social_event_id = model.add_location(abm.LocationType.SocialEvent)
+        social_event_id = model.add_location(abm.LocationType.Recreation)
 
-        p1_id = model.add_person(home_id, mio.AgeGroup(2))
-        p2_id = model.add_person(social_event_id, mio.AgeGroup(5))
+        p1_id = model.add_person(
+            home_id, mio.AgeGroup(2), abm.ActivityType.Home)
+        p2_id = model.add_person(social_event_id, mio.AgeGroup(
+            5), abm.ActivityType.Recreation)
 
         p1 = model.persons[p1_id.index()]
         p2 = model.persons[p2_id.index()]
@@ -88,10 +86,12 @@ class TestAbm(unittest.TestCase):
 
         # add some locations and persons
         home_id = model.add_location(abm.LocationType.Home)
-        social_event_id = model.add_location(abm.LocationType.SocialEvent)
+        social_event_id = model.add_location(abm.LocationType.Recreation)
         work_id = model.add_location(abm.LocationType.Work)
-        p1_id = model.add_person(home_id, mio.AgeGroup(0))
-        p2_id = model.add_person(home_id, mio.AgeGroup(2))
+        p1_id = model.add_person(
+            home_id, mio.AgeGroup(0), abm.ActivityType.Home)
+        p2_id = model.add_person(
+            home_id, mio.AgeGroup(2), abm.ActivityType.Home)
 
         for loc_id in [home_id, social_event_id, work_id]:
             model.assign_location(p1_id, loc_id)
@@ -100,7 +100,7 @@ class TestAbm(unittest.TestCase):
         # trips
         trip_list = abm.TripList()
         trip_list.add_trips(
-            [abm.Trip(abm.PersonId(0), abm.TimePoint(0) + abm.hours(8), social_event_id), abm.Trip(abm.PersonId(1), abm.TimePoint(0) + abm.hours(8), work_id)])
+            [abm.Trip(abm.PersonId(0), abm.TimePoint(0) + abm.hours(8), social_event_id, abm.ActivityType.Recreation), abm.Trip(abm.PersonId(1), abm.TimePoint(0) + abm.hours(8), work_id, abm.ActivityType.Work)])
 
         model.trip_list = trip_list
         model.use_mobility_rules = False

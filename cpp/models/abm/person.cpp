@@ -98,11 +98,11 @@ LocationId Person::get_location() const
     return m_location;
 }
 
-void Person::set_location(ActivityType type, LocationType location_type, LocationId id, int model_id)
+void Person::set_location(ActivityType activity_type, LocationType location_type, LocationId id, int model_id)
 {
     m_location          = id;
     m_location_type     = location_type;
-    m_activity_type     = type;
+    m_activity_type     = activity_type;
     m_location_model_id = model_id;
     m_time_at_location  = TimeSpan(0);
 }
@@ -117,18 +117,19 @@ Infection& Person::get_infection()
     return m_infections.back();
 }
 
-void Person::set_assigned_location(ActivityType type, LocationId id, int model_id = 0)
+void Person::set_assigned_location(ActivityType activity_type, LocationId id, int model_id = 0)
 {
-    m_assigned_locations[static_cast<uint32_t>(type)].push_back(id);
-    m_assigned_location_model_ids[static_cast<uint32_t>(type)].push_back(model_id);
+    m_assigned_locations[static_cast<uint32_t>(activity_type)].push_back(id);
+    m_assigned_location_model_ids[static_cast<uint32_t>(activity_type)].push_back(model_id);
 }
 
-std::pair<LocationId, int> Person::get_assigned_location(ActivityType type, PersonalRandomNumberGenerator& rng) const
+std::pair<LocationId, int> Person::get_assigned_location(ActivityType activity_type,
+                                                         PersonalRandomNumberGenerator& rng) const
 {
     size_t index = UniformIntDistribution<size_t>::get_instance()(
-        rng, size_t(0), m_assigned_locations[static_cast<uint32_t>(type)].size() - 1);
-    return {m_assigned_locations[static_cast<uint32_t>(type)][index],
-            m_assigned_location_model_ids[static_cast<uint32_t>(type)][index]};
+        rng, size_t(0), m_assigned_locations[static_cast<uint32_t>(activity_type)].size() - 1);
+    return {m_assigned_locations[static_cast<uint32_t>(activity_type)][index],
+            m_assigned_location_model_ids[static_cast<uint32_t>(activity_type)][index]};
 }
 
 bool Person::goes_to_work(TimePoint t, const Parameters& params) const

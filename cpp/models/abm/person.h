@@ -158,12 +158,12 @@ public:
 
     /**
      * @brief Change the location of the person.
-     * @param[in] type The ActivityType the Person does at the new Location.
+     * @param[in] activity_type The ActivityType the Person does at the new Location.
      * @param[in] location_type The LocationType of the new Location.
      * @param[in] id The LocationId of the new Location.
      * @param[in] model_id The model id of the new Location.
      */
-    void set_location(ActivityType type, LocationType location_type, LocationId id, int model_id);
+    void set_location(ActivityType activity_type, LocationType location_type, LocationId id, int model_id);
 
     /**
      * @brief Get the time the Person has been at its current Location.
@@ -190,19 +190,20 @@ public:
      *            Model::assign_location with a valid LocationId, obtained e.g. through Model::add_location.
      *
      * The assigned Location is saved by the index of its LocationId.
-     * @param[in] type The ActivityType the Person does at the Location.
+     * @param[in] activity_type The ActivityType the Person does at the Location.
      * @param[in] id The LocationId of the Location.
      * @param[in] model_id The model id of the Location.
      */
-    void set_assigned_location(ActivityType type, LocationId id, int model_id);
+    void set_assigned_location(ActivityType activity_type, LocationId id, int model_id);
 
     /**
      * @brief Returns the index of an assigned Location of the Person. The index is uniformly sampled from the LocationIds of the assigned ActivityType.
-     * @param[in] type #ActivityType of the assigned Location.
+     * @param[in] activity_type #ActivityType of the assigned Location.
      * @param[in] rng RandomNumberGenerator for sampling the index of the assigned LocationId.
      * @return The index in the LocationId and the model id of the assigned Location.
      */
-    std::pair<LocationId, int> get_assigned_location(ActivityType type, PersonalRandomNumberGenerator& rng) const;
+    std::pair<LocationId, int> get_assigned_location(ActivityType activity_type,
+                                                     PersonalRandomNumberGenerator& rng) const;
 
     /**
      * @brief Get the assigned Location%s of the Person.
