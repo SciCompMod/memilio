@@ -14,6 +14,11 @@ For more details, we refer to:
 
 |Graph_Neural_Network_Surrogates|
 
+Installation
+------------
+
+See :doc:`python_packages/Installation` for a detailed installation guide.  
+
 Dependencies
 ------------
 

@@ -22,7 +22,7 @@
 
 #include "memilio/math/adapt_rk.h"
 #include "memilio/math/stepper_wrapper.h"
-#include "memilio/utils/base_dir.h"
+#include "memilio/io/directories.h"
 
 template <class Integrator>
 void simulation(::benchmark::State& state)
@@ -30,7 +30,8 @@ void simulation(::benchmark::State& state)
     // suppress non-critical messages
     mio::set_log_level(mio::LogLevel::critical);
     // setup benchmark parameters
-    auto cfg = mio::benchmark::SimulationConfig::initialize(mio::base_dir() + "cpp/benchmarks/simulation.config");
+    auto cfg =
+        mio::benchmark::SimulationConfig::initialize((mio::base_dir() / "cpp/benchmarks/simulation.config").string());
     //auto cfg = mio::benchmark::SimulationConfig::initialize(10);
     auto model = mio::benchmark::model::SecirAgeres(cfg.num_agegroups);
 

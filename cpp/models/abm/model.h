@@ -59,8 +59,8 @@ public:
     using ConstLocationIterator   = std::vector<Location>::const_iterator;
     using PersonIterator          = std::vector<Person>::iterator;
     using ConstPersonIterator     = std::vector<Person>::const_iterator;
-    using ActivenessIterator      = std::vector<bool>::iterator;
-    using ConstActivenessIterator = std::vector<bool>::const_iterator;
+    using ActivenessIterator      = std::vector<char>::iterator;
+    using ConstActivenessIterator = std::vector<char>::const_iterator;
     using MobilityRuleType        = ActivityType (*)(PersonalRandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
                                               const Parameters&);
 
@@ -237,6 +237,7 @@ public:
 
     /**
      * @brief Get a range of all Person%s activeness statuses in the Model.
+     * Valid activeness status values are either `true` or `false`.
      * @return A range of all Person%s activeness statuses.
      * @{
      */
@@ -691,8 +692,10 @@ protected:
     int m_id; ///< Model id. Is only used for abm graph model or hybrid model.
     std::vector<Person> m_persons; ///< Vector of every Person.
     std::vector<Location> m_locations; ///< Vector of every Location.
-    std::vector<bool>
-        m_activeness_statuses; ///< Vector with activeness status for every person. Is only used for abm graph model or hybrid model.
+    std::vector<char> m_activeness_statuses; /**< Vector with activeness status for every person.
+        * Is only used for abm graph model or hybrid model.
+        * Used as boolean. Uses char instead of bool due to portability issues with the specialized std::vector<bool>.
+        */
     std::bitset<size_t(LocationType::Count)>
         m_has_locations; ///< Flags for each LocationType, set if a Location of that type exists.
     TestingStrategy m_testing_strategy; ///< List of TestingScheme%s that are checked for testing.

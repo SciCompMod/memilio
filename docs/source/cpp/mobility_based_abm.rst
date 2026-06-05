@@ -1,7 +1,7 @@
 .. include:: ../literature.rst
 
-Agent-based model
-=================
+Agent-based model (with activities and mobility)
+================================================
 
 This module models and simulates the epidemic using an agent-based model (*ABM*) approach. Unlike the compartmental models that use a system of ODEs, this model simulates
 the spread of an epidemic in a population with discrete persons (the agents) moving throughout locations in the
@@ -299,7 +299,7 @@ For infections to happen during the simulation, we have to initialize people wit
 .. code-block:: cpp
 
    // Assign infection state to each person randomly with specific distribution
-   std::vector<double> infection_distribution{0.5, 0.3, 0.05, 0.05, 0.05, 0.05, 0.0, 0.0};
+   std::vector<ScalarType> infection_distribution{0.5, 0.3, 0.05, 0.05, 0.05, 0.05, 0.0, 0.0};
    for (auto& person : model.get_persons()) {
        mio::abm::InfectionState infection_state = mio::abm::InfectionState(
            mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(), infection_distribution));
@@ -326,7 +326,7 @@ Here, we run the simulation:
    sim.advance(tmax);
 
 Alternatively, if we want to track things in the simulation, we need to set up a
-`history <https://github.com/SciCompMod/memilio/blob/main/cpp/memilio/io/README.md#the-history-object>`_, for example, to track all the Infection states of each simulation step into a Timeseries.
+`history <https://github.com/SciCompMod/memilio/blob/main/cpp/memilio/io/README.md#the-history-object>`_, for example, to track all the Infection states of each simulation step into a ``TimeSeries``.
 
 .. code-block:: cpp
 
@@ -344,7 +344,7 @@ Finally, for example, we can print the data to a text file:
 
 .. code-block:: cpp
 
-   std::ofstream outfile("abm_minimal.txt");
-   std::get<0>(log).print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
-   std::cout << "Results written to abm_minimal.txt" << std::endl;
-
+   auto outpath = mio::create_directories_or_exit(mio::example_results_dir("abm_minimal")) / "history.txt";
+   std::ofstream outfile(outpath);
+   std::get<0>(log).print_table(outfile, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4);
+   std::cout << "Results written to " << outpath << std::endl;

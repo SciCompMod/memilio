@@ -51,6 +51,7 @@ void bind_Index(pybind11::module_& m, std::string const& name)
     c.def(pybind11::init<size_t>(), pybind11::arg("value"));
     c.def(pybind11::self == pybind11::self);
     c.def(pybind11::self != pybind11::self);
+    c.def("get", &mio::Index<Tag>::get);
 
     bind_Index_members_if_enum(c);
 }

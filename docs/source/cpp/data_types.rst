@@ -21,7 +21,7 @@ The following list explains the nonstandard data types that are used throughout 
      - A contiguous array whose values can be accessed by a multi-index, e.g. a :code:`mio::Index` with one or more categories. This datatype is, for example, used in the parameter :code:`mio::abm::TimeExposedToNoSymptoms` making it dependent on :code:`mio::abm::VirusVariant` and :code:`mio::AgeGroup`. Its values can then be set for a specific :code:`virus_variant` and :code:`age_group` using :code:`model.parameters.template get<mio::abm::TimeInfectedSevereToCritical>()[{virus_variant, age_group}]`.
    * - :code:`Populations`
      - Is a :code:`mio::CustomIndexArray` with :code:`mio::UncertainValue<FP>` as values. Adds some convenient functions like :code:`get_group_total`.
-   * - :code:`TimeSeries`
+   * - ``TimeSeries``
      - Stores vectors of values at time points. Each time point has a vector of values of the same size with operations like adding time points, retrieving values, exporting to CSV, etc. It's also used for storing and analyzing simulation results over time.
    * - :code:`Graph`
      - A generic graph structure that represents a network of nodes connected by edges. Each node and edge can have associated properties. The graph is used to model geographical regions connected by mobility patterns (e.g., commuting), where each node is represented by its own epidemiological model.
@@ -41,9 +41,9 @@ The following list explains the nonstandard data types that are used throughout 
      - Parameters that influence mobility between nodes, including coefficients and dynamic nonpharmaceutical interventions (NPIs).
    * - :code:`MobilityEdge`
      - Represents mobility between two nodes in a graph. Handles the movement of populations between nodes, tracks mobile populations, and applies mobility returns according to epidemiological models.
-   * - :code:`ContactMatrix`
+   * - ``ContactMatrix``
      - Time-dependent contact frequencies between groups, derived from ``DampingMatrixExpression``. Models how the contact rates between different age groups change over time due to interventions.
-   * - :code:`ContactMatrixGroup`
+   * - ``ContactMatrixGroup``
      - A collection of contact matrices that represent different contexts (e.g., home, school, work) whose sum is the total number of contacts, derived from ``DampingMatrixExpressionGroup``.
    * - :code:`DampingMatrixExpression`
      - Represents a coefficient-wise matrix expression :math:`B - D \odot (B - M)`, where :math:`B` is a baseline matrix, :math:`M` is a minimum matrix, :math:`D` is a time-dependent complex damping factor, and :math:`\odot` is element wise multiplication. Used as the base for time-dependent contact matrices.

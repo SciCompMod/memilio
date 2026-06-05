@@ -84,6 +84,8 @@ struct TransitionProbabilities {
         // Set the following probablities to 1 as there is no other option to go anywhere else.
         probs[Eigen::Index(InfectionTransition::SusceptibleToExposed)]        = 1;
         probs[Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
+        // Set default to 0.
+        probs[Eigen::Index(InfectionTransition::InfectedSevereToDead)] = 0;
         return Type(size, probs);
     }
 
@@ -308,13 +310,15 @@ public:
                 return true;
             }
 
-            if (!floating_point_equal(this->get<TransitionProbabilities>()[group][(
-                                          int)InfectionTransition::InfectedSevereToInfectedCritical] +
-                                          this->get<TransitionProbabilities>()[group][(
-                                              int)InfectionTransition::InfectedSevereToRecovered],
-                                      1.0, 1e-14)) {
-                log_error("Constraint check: Sum of transition probability for InfectedSevereToInfectedCritical and "
-                          "InfectedSevereToRecovered not equal to {}",
+            if (!floating_point_equal(
+                    this->get<TransitionProbabilities>()[group]
+                                                        [(int)InfectionTransition::InfectedSevereToInfectedCritical] +
+                        this->get<TransitionProbabilities>()[group][(int)InfectionTransition::InfectedSevereToDead] +
+                        this->get<TransitionProbabilities>()[group]
+                                                            [(int)InfectionTransition::InfectedSevereToRecovered],
+                    1.0, 1e-14)) {
+                log_error("Constraint check: Sum of transition probability for InfectedSevereToInfectedCritical, "
+                          "InfectedSevereToDead and InfectedSevereToRecovered not equal to {}",
                           1);
                 return true;
             }

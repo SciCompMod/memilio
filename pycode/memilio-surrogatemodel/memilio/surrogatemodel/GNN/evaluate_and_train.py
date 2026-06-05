@@ -37,7 +37,8 @@ import time
 import warnings
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, List, Tuple
+from collections.abc import Iterable
 
 import numpy as np
 import pandas as pd
@@ -95,8 +96,8 @@ class TrainingSummary:
     mean_test_loss: float
     mean_test_loss_orig: float
     training_time: float
-    train_losses: List[List[float]]
-    val_losses: List[List[float]]
+    train_losses: list[list[float]]
+    val_losses: list[list[float]]
 
 
 def load_gnn_dataset(
@@ -315,8 +316,8 @@ def train_and_evaluate(
     best_weights = model.get_weights()
     patience_counter = es_patience
 
-    epoch_train_losses: List[float] = []
-    epoch_val_losses: List[float] = []
+    epoch_train_losses: list[float] = []
+    epoch_val_losses: list[float] = []
 
     start_time = time.perf_counter()
 

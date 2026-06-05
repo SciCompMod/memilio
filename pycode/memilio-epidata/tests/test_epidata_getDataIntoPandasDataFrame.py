@@ -373,14 +373,14 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         file0 = "test_csv.csv"
 
         self.assertEqual(len(os.listdir(self.path)), 1)
-        self.assertEqual(os.listdir(self.path), [file0])
+        self.assertCountEqual(os.listdir(self.path), [file0])
 
         gd.write_dataframe(df, self.path, "test_json", 'json')
 
         file1 = "test_json.json"
 
         self.assertEqual(len(os.listdir(self.path)), 2)
-        self.assertEqual(os.listdir(self.path), [file0, file1])
+        self.assertCountEqual(os.listdir(self.path), [file0, file1])
 
         file_with_path = os.path.join(self.path, file1)
         f = open(file_with_path)
@@ -400,8 +400,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         file2 = "test_json_timeasstring.json"
 
         self.assertEqual(len(os.listdir(self.path)), 3)
-        self.assertEqual(os.listdir(self.path).sort(),
-                         [file0, file1, file2].sort())
+        self.assertCountEqual(os.listdir(self.path), [file0, file1, file2])
 
         file_with_path = os.path.join(self.path, file2)
         f = open(file_with_path)

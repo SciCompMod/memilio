@@ -29,7 +29,7 @@ import pandas as pd
 
 from memilio.epidata.getContactData import (AGE_GROUP_LABELS,
                                             AGE_GROUP_LABELS_RKI,
-                                            CONTACT_WORKBOOK_NAME,
+                                            CONTACT_WORKBOOK_NAMES,
                                             list_available_contact_countries,
                                             load_contact_matrix)
 
@@ -62,15 +62,31 @@ class TestGetContactData(unittest.TestCase):
         return path
 
     def _create_zip_with_workbook(self, sheets: dict):
-        """Create a ZIP that contains MUestimates_all_locations_1.xlsx."""
+        """Create a ZIP that contains all default contact workbooks."""
+        return self._create_zip_with_workbooks({
+            workbook_name: sheets
+            for workbook_name in CONTACT_WORKBOOK_NAMES
+        })
+
+    def _create_zip_with_workbooks(
+            self, workbook_sheets: dict, workbook_headers: dict = None):
+        """Create a ZIP that contains the given contact workbooks."""
+        if workbook_headers is None:
+            workbook_headers = {}
         with io.BytesIO() as buf_zip:
             with zipfile.ZipFile(buf_zip, mode="w") as zf:
-                with io.BytesIO() as buf_xlsx:
-                    with pd.ExcelWriter(buf_xlsx, engine="openpyxl") as writer:
-                        for sheet_name, df in sheets.items():
-                            df.to_excel(
-                                writer, sheet_name=sheet_name, index=False)
-                    zf.writestr(CONTACT_WORKBOOK_NAME, buf_xlsx.getvalue())
+                for workbook_name, sheets in workbook_sheets.items():
+                    header = workbook_headers.get(workbook_name, True)
+                    with io.BytesIO() as buf_xlsx:
+                        with pd.ExcelWriter(
+                                buf_xlsx, engine="openpyxl") as writer:
+                            for sheet_name, df in sheets.items():
+                                df.to_excel(
+                                    writer,
+                                    sheet_name=sheet_name,
+                                    index=False,
+                                    header=header)
+                        zf.writestr(workbook_name, buf_xlsx.getvalue())
             return buf_zip.getvalue()
 
     def test_list_available_explicit_path(self):
@@ -83,11 +99,13 @@ class TestGetContactData(unittest.TestCase):
 
     @patch('memilio.epidata.getContactData.requests.get')
     def test_list_available_downloads_zip(self, mock_get):
-        """When no path is given, the workbook is downloaded from the ZIP and the available countries are listed.
+        """The country list is read from all downloaded workbooks.
         """
         data = pd.DataFrame(np.ones((16, 16)))
-        zip_bytes = self._create_zip_with_workbook(
-            {"Germany": data, "Spain": data})
+        zip_bytes = self._create_zip_with_workbooks({
+            CONTACT_WORKBOOK_NAMES[0]: {"Germany": data},
+            CONTACT_WORKBOOK_NAMES[1]: {"Spain": data},
+        })
         mock_resp = Mock()
         mock_resp.content = zip_bytes
         mock_resp.raise_for_status = Mock()
@@ -99,7 +117,7 @@ class TestGetContactData(unittest.TestCase):
         mock_get.assert_called_once()
 
     def test_load_contact_matrix(self):
-        """Contact matrix loads full 16x16 matrix (no reduction, no pop needed)."""
+        """Contact matrix loads full 16x16 matrix."""
         matrix_values = np.arange(16 * 16).reshape(16, 16)
         df = pd.DataFrame(matrix_values)
         contact_path = self._create_workbook({"Germany": df})
@@ -115,7 +133,7 @@ class TestGetContactData(unittest.TestCase):
         self.assertEqual(matrix.iloc[-1, -1], 255)
 
     def test_load_contact_matrix_rki_groups_missing_population(self):
-        """Raises ValueError if reduce_to_rki_groups=True but population is missing."""
+        """Raises ValueError if RKI aggregation misses population."""
         matrix_values = np.arange(16 * 16).reshape(16, 16)
         df = pd.DataFrame(matrix_values)
         contact_path = self._create_workbook({"Germany": df})
@@ -126,7 +144,7 @@ class TestGetContactData(unittest.TestCase):
                 reduce_to_rki_groups=True)
 
     def test_load_contact_matrix_rki_groups(self):
-        """Aggregate to the 6-group RKI age groups using a uniform dummy population."""
+        """Aggregate to the 6-group RKI age groups."""
         matrix_values = np.arange(16 * 16).reshape(16, 16)
         df = pd.DataFrame(matrix_values)
         contact_path = self._create_workbook({"Germany": df})
@@ -141,28 +159,31 @@ class TestGetContactData(unittest.TestCase):
         # entries from group [0-4] to [0-4] remain the same
         self.assertEqual(matrix.iloc[0, 0], 0)
 
-        # groups [5-9] and [10-14] (row 1,2) are aggregated into the [5-14] RKI group (row 1).
+        # Groups [5-9] and [10-14] are aggregated into [5-14].
         # weighted avg with uniform pop is (16*100 + 32*100)/200 = 24.
         self.assertEqual(matrix.iloc[1, 0], 24)
 
         # rows 3,4,5,6 and cols 3,4,5,6 ([15-34] with [15-34])
-        # sum across the columns, then average across the rows (due to uniform population)
+        # Sum across columns, then average rows due to uniform population.
         sub_expected = matrix_values[3:7, 3:7].sum(axis=1).mean()
         self.assertEqual(matrix.iloc[2, 2], sub_expected)
 
     @patch('memilio.epidata.getContactData.requests.get')
     def test_load_contact_matrix_downloads_no_path(self, mock_get):
-        """When no path is given, the workbook is downloaded from the DOI ZIP."""
+        """When no path is given, all contact workbooks are searched."""
         matrix_values = np.arange(16 * 16).reshape(16, 16)
         df = pd.DataFrame(matrix_values)
-        zip_bytes = self._create_zip_with_workbook({"Germany": df})
+        zip_bytes = self._create_zip_with_workbooks({
+            CONTACT_WORKBOOK_NAMES[0]: {"Germany": df},
+            CONTACT_WORKBOOK_NAMES[1]: {"Spain": df},
+        })
         mock_resp = Mock()
         mock_resp.content = zip_bytes
         mock_resp.raise_for_status = Mock()
         mock_get.return_value = mock_resp
 
         matrix = load_contact_matrix(
-            "Germany", contact_path=None, population=self.dummy_pop)
+            "Spain", contact_path=None, population=self.dummy_pop)
         self.assertEqual(matrix.shape, (6, 6))
         self.assertEqual(list(matrix.columns), AGE_GROUP_LABELS_RKI)
         self.assertEqual(list(matrix.index), AGE_GROUP_LABELS_RKI)
@@ -171,6 +192,34 @@ class TestGetContactData(unittest.TestCase):
         self.assertEqual(matrix.iloc[1, 0], 24)
         mock_resp.raise_for_status.assert_called_once()
         mock_get.assert_called_once()
+
+    @patch('memilio.epidata.getContactData.requests.get')
+    def test_load_contact_matrix_downloads_headerless_second_workbook(
+            self, mock_get):
+        """Contact matrices can be read without an Excel header row."""
+        matrix_values = np.arange(16 * 16).reshape(16, 16)
+        df = pd.DataFrame(matrix_values)
+        zip_bytes = self._create_zip_with_workbooks(
+            {
+                CONTACT_WORKBOOK_NAMES[0]: {"Germany": df},
+                CONTACT_WORKBOOK_NAMES[1]: {"United States of America": df},
+            },
+            workbook_headers={
+                CONTACT_WORKBOOK_NAMES[1]: False,
+            })
+        mock_resp = Mock()
+        mock_resp.content = zip_bytes
+        mock_resp.raise_for_status = Mock()
+        mock_get.return_value = mock_resp
+
+        matrix = load_contact_matrix(
+            "United States of America",
+            contact_path=None,
+            reduce_to_rki_groups=False)
+
+        self.assertEqual(matrix.shape, (16, 16))
+        self.assertEqual(matrix.iloc[0, 0], 0)
+        self.assertEqual(matrix.iloc[-1, -1], 255)
 
 
 if __name__ == '__main__':

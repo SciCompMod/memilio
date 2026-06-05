@@ -1,7 +1,7 @@
 # Versions of the bundled libraries
 # If you like to upgrade, just change the number
 set(MEMILIO_EIGEN_VERSION "3.4.0")
-set(MEMILIO_SPDLOG_VERSION "1.15.0")
+set(MEMILIO_SPDLOG_VERSION "1.17.0")
 set(MEMILIO_BOOST_VERSION "1.84.0")
 set(MEMILIO_MINIMAL_BOOST_VERSION "1.76.0")
 set(MEMILIO_JSONCPP_VERSION "1.9.6")
@@ -102,35 +102,11 @@ if(MEMILIO_USE_BUNDLED_BOOST)
     target_compile_definitions(boost_disable_autolink INTERFACE BOOST_ALL_NO_LIB)
     add_library(Boost::disable_autolinking ALIAS boost_disable_autolink)
 
-    add_library(boost_filesystem STATIC
-        ${boost_SOURCE_DIR}/libs/filesystem/src/codecvt_error_category.cpp
-        ${boost_SOURCE_DIR}/libs/filesystem/src/directory.cpp
-        ${boost_SOURCE_DIR}/libs/filesystem/src/exception.cpp
-        ${boost_SOURCE_DIR}/libs/filesystem/src/operations.cpp
-        ${boost_SOURCE_DIR}/libs/filesystem/src/path.cpp
-        ${boost_SOURCE_DIR}/libs/filesystem/src/path_traits.cpp
-        ${boost_SOURCE_DIR}/libs/filesystem/src/portability.cpp
-        ${boost_SOURCE_DIR}/libs/filesystem/src/unique_path.cpp
-        ${boost_SOURCE_DIR}/libs/filesystem/src/utf8_codecvt_facet.cpp
-        ${boost_SOURCE_DIR}/libs/filesystem/src/windows_file_codecvt.cpp
-    )
-
-    # Ensure that the boost atomic library is used instead of the standard atomic library, where some functionality is only available as of C++20.
-    target_compile_definitions(boost_filesystem PUBLIC BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF)
-
-    target_link_libraries(boost_filesystem PUBLIC boost_disable_autolink boost)
-    set_property(TARGET boost_filesystem PROPERTY POSITION_INDEPENDENT_CODE ON)
-    add_library(Boost::filesystem ALIAS boost_filesystem)
-
-    if(NOT MSVC) # on gcc and apple clang we need to define BOOST_NO_CXX98_FUNCTION_BASE because a deprecated function is sometimes used in boost
-        target_compile_definitions(boost_filesystem PUBLIC BOOST_NO_CXX98_FUNCTION_BASE)
-    endif()
-
-    set(Boost_LIBRARIES Boost::boost Boost::filesystem)
+    set(Boost_LIBRARIES Boost::boost)
     set(Boost_FOUND ON)
 
 else()
-    find_package(Boost ${MEMILIO_MINIMAL_BOOST_VERSION}...${MEMILIO_BOOST_VERSION} REQUIRED COMPONENTS outcome optional filesystem)
+    find_package(Boost ${MEMILIO_MINIMAL_BOOST_VERSION}...${MEMILIO_BOOST_VERSION} REQUIRED COMPONENTS outcome optional)
 endif()
 
 # ## HDF5

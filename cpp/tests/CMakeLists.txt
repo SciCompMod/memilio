@@ -58,6 +58,7 @@ set(TESTSOURCES
     test_dynamic_npis.cpp
     test_regions.cpp
     test_io_cli.cpp
+    test_io_directories.cpp
     test_io_framework.cpp
     test_binary_serializer.cpp
     test_compartments_simulation.cpp
@@ -90,6 +91,7 @@ set(TESTSOURCES
     temp_file_register.h
     test_graph_abm.cpp
     test_abstract_parameter_dist.cpp
+    test_odemetapop.cpp
     test_temporal_hybrid_model.cpp
     test_odemseirs4.cpp
     test_uncertain_ad_compatibility.cpp

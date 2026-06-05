@@ -376,6 +376,8 @@ IOResult<void> export_input_data_county_timeseries(
     const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, int num_days,
     const std::string& divi_data_path, const std::string& confirmed_cases_path, const std::string& population_data_path)
 {
+    mio::unused(models, results_dir, region, date, scaling_factor_inf, scaling_factor_icu, num_days, divi_data_path,
+                confirmed_cases_path, population_data_path);
     mio::log_warning("HDF5 not available. Cannot export time series of extrapolated real data.");
     return success();
 }

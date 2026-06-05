@@ -369,7 +369,7 @@ rst files can be generated as in the following examples:
     :CPP-API:`mio::osir`
     :CPP-API:`mio::geo::Distance::kilometers`
     :CPP-API:`Graph Constructor <mio::Graph::Graph>`
-    .. opening angle brackets in the function defintion need to be escaped, the following line is also sensitive to the space between the closing brackets
+    .. opening angle brackets in the function definition need to be escaped, the following line is also sensitive to the space between the closing brackets
     :CPP-API:`mio::details::SimulationBase\< FP, M, SystemIntegrator\< FP, Integrands... > >`
 
 
