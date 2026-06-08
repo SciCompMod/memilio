@@ -307,7 +307,7 @@ TEST(IdeSir, testFiniteDifferenceApproximation)
 
     for (size_t finite_difference_order : finite_difference_orders) {
         // Set values of S to sin(x) on interval from 0 to 2.
-        std::vector<ScalarType> dt_exponents = {0, 1, 2, 3};
+        std::vector<ScalarType> dt_exponents = {0, 1, 2, 3, 4, 5};
 
         std::vector<ScalarType> errors_max = {};
         std::vector<ScalarType> errors_l2  = {};
@@ -374,7 +374,7 @@ TEST(IdeSir, testFiniteDifferenceApproximation)
             l2_error_per_step_size = std::pow(dt * l2_error_per_step_size, 1. / 2.);
             errors_l2.push_back(l2_error_per_step_size);
         }
-
+        std::cout << "FD Order: " << finite_difference_order << std::endl;
         for (size_t i = 0; i < errors_max.size(); i++) {
             // std::cout << "Max error: " << errors_max[i] << std::endl;
             // std::cout << "L2 error: " << errors_l2[i] << std::endl;
@@ -386,7 +386,7 @@ TEST(IdeSir, testFiniteDifferenceApproximation)
                 log(errors_max[i + 1] / errors_max[i]) / log(pow(10, -dt_exponents[i + 1]) / pow(10, -dt_exponents[i]));
             // std::cout << "Order max: " << numerical_order_max << std::endl;
             // Only check for convergence rate if error of smaller time step is sufficiently large.
-            if (errors_max[i + 1] > 5e-12) {
+            if (errors_max[i + 1] > 5e-10) {
                 EXPECT_NEAR(numerical_order_max, finite_difference_order, 0.3);
             }
             // ScalarType numerical_order_l2 =

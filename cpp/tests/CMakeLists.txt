@@ -70,6 +70,7 @@ set(TESTSOURCES
     test_ide_seir.cpp
     test_ide_secir.cpp
     test_ide_secir_ageres.cpp
+    test_ide_sir.cpp
     test_state_age_function.cpp
     test_lct_secir.cpp
     test_lct_secir_2_diseases.cpp
