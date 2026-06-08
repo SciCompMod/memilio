@@ -22,6 +22,7 @@
 #include "ide_sir/infection_state.h"
 #include "ide_sir/parameters.h"
 #include "ide_sir/simulation.h"
+#include "memilio/compartments/simulation.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
@@ -79,7 +80,14 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent,
     std::unique_ptr<mio::OdeIntegratorCore<ScalarType>> integrator =
         std::make_unique<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_fehlberg78>>();
 
-    auto sir = simulate<ScalarType, mio::osir::Model<ScalarType>>(t0_ode, tmax, dt_ode, model, std::move(integrator));
+    auto sim = mio::Simulation<ScalarType, mio::osir::Model<ScalarType>>(model, t0_ode, dt_ode);
+    sim.set_integrator_core(std::move(integrator));
+    sim.set_last_step_tolerance(1e-9);
+
+    sim.advance(tmax);
+    auto sir = sim.get_result();
+
+    std::cout << "Num tps ODE: " << sir.get_num_time_points() << std::endl;
 
     if (!save_dir.empty()) {
         // Save compartments.
