@@ -47,7 +47,7 @@ class TestAbm(unittest.TestCase):
         model = sim.model
 
         home_id = model.add_location(abm.LocationType.Home)
-        self.assertEqual(len(model.locations), 1)
+        self.assertEqual(len(model.locations), 2)
 
         home = model.locations[home_id.index()]
 
