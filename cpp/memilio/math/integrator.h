@@ -189,8 +189,6 @@ public:
         using std::max;
         using std::min;
         const FP t0 = results.get_last_time();
-        // const FP eps = Limits<FP>::zero_tolerance();
-        const FP eps = 1e-9;
         assert(tmax > t0);
         assert(dt > 0);
 
@@ -206,7 +204,8 @@ public:
         FP dt_min_restore = m_core->get_dt_min(); // used to restore dt_min, if it was decreased to reach tmax
         FP t              = t0;
 
-        for (size_t i = results.get_num_time_points() - 1; fabs((tmax - t) / (tmax - t0)) > eps; ++i) {
+        for (size_t i = results.get_num_time_points() - 1; fabs((tmax - t) / (tmax - t0)) > m_last_step_tolerance;
+             ++i) {
             // We don't make time steps too small as the error estimator of an adaptive integrator
             //may not be able to handle it. this is very conservative and maybe unnecessary,
             //but also unlikely to happen. may need to be reevaluated.
@@ -227,7 +226,7 @@ public:
             results.get_last_time() = t;
 
             // if dt has been changed by step, register the current m_core as adaptive.
-            m_is_adaptive |= !floating_point_equal<FP>(dt, dt_copy, eps);
+            m_is_adaptive |= !floating_point_equal<FP>(dt, dt_copy, Limits<FP>::zero_tolerance());
         }
         m_core->get_dt_min() = dt_min_restore; // restore dt_min
         // if dt was decreased to reach tmax in the last time iteration,
@@ -238,7 +237,7 @@ public:
             if (!step_okay) {
                 log_warning("Adaptive step sizing failed. Forcing an integration step of size dt_min.");
             }
-            else if (fabs((tmax - t) / (tmax - t0)) > eps) {
+            else if (fabs((tmax - t) / (tmax - t0)) > m_last_step_tolerance) {
                 log_warning("Last time step too small. Could not reach tmax exactly.");
             }
             else {
@@ -272,10 +271,37 @@ public:
     {
         return *m_core;
     }
+    /** @} */
+
+    /**
+     * @brief Change the tolerance for the last time step.
+     * @param last_step_tolerance The new last_step_tolerance.
+     */
+    void set_last_step_tolerance(FP last_step_tolerance)
+    {
+        m_last_step_tolerance = last_step_tolerance;
+    }
+
+    /**
+     * @brief Access the tolerance for the last time step.
+     * @return A reference to the last_step_tolerance.
+     * @{
+     */
+    FP& get_last_step_tolerance()
+    {
+        return m_last_step_tolerance;
+    }
+
+    const FP& get_last_step_tolerance() const
+    {
+        return m_last_step_tolerance;
+    }
+    /** @} */
 
 private:
     std::unique_ptr<Core> m_core;
     bool m_is_adaptive;
+    FP m_last_step_tolerance = Limits<FP>::zero_tolerance();
 };
 
 /**
