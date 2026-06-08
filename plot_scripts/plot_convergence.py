@@ -343,9 +343,9 @@ def plot_difference_per_timestep(groundtruth, results, groundtruth_exponent, tim
         fig, axs = plt.subplots(1, num_plots, sharex=True,
                                 figsize=(figsize_x, 3))
 
-        if damping_time != -1:
-            fig_zoom, axs_zoom = plt.subplots(1, num_plots, sharex=True,
-                                              figsize=(figsize_x, 3))
+        # if damping_time != -1:
+        fig_zoom, axs_zoom = plt.subplots(1, num_plots, sharex=True,
+                                          figsize=(figsize_x, 3))
 
         for compartment in range(num_errors):
             scale_timesteps = timestep/pow(10, -groundtruth_exponent)
@@ -657,7 +657,7 @@ def main():
     groundtruth_ode = True
     only_S = False
 
-    main_dir = "2026-05-08/smoothcos_negative_dampingtimes_fdordercontacts=4_smootherwindow=1"
+    main_dir = "2026-06-03/compare_fd_orders"
 
     ##############################################
 
@@ -678,7 +678,8 @@ def main():
 
         t0_ide = get_t0_ide_from_dir_name(dir_name)
         tmax = get_tmax_ide_from_dir_name(dir_name)
-        damping_time = get_dampingtime_ide_from_dir_name(dir_name)
+        # damping_time = get_dampingtime_ide_from_dir_name(dir_name)
+        damping_time = -1
 
         # Path where simulation results are stored.
         result_dir = os.path.join(os.path.dirname(
