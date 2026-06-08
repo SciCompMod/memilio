@@ -68,8 +68,73 @@ Below is an overview of the model variables:
 
 The model equations are given below. For a simpler description let :math:`\mathcal{Z}=\{E,I_{NS},I_{Sy},I_{Sev},I_{Cr}\}` be the set of the compartments that can be divided into subcompartments.
 
-.. image:: https://github.com/SciCompMod/memilio/assets/70579874/e1da5e1d-e719-4c16-9f14-45374be7c353
-   :alt: equations
+.. math::  
+
+    \begin{align*}
+        %--- Equation 1: S(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}S(t) &= -\frac{S(t)}{N(t)}\,\rho(t)\,\phi(t)
+            \Bigl(
+                \xi_{I_{NS}}(t)\,\mathbf{I}_{NS}(t)^{T}\boldsymbol{\Bbb{1}}
+                + \xi_{I_{Sy}}(t)\,\mathbf{I}_{Sy}(t)^{T}\boldsymbol{\Bbb{1}}
+            \Bigr)
+        \\[8pt]
+        %--- Equation 2: E(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}\mathbf{E}(t) &= \boldsymbol{\alpha}_{E}\,\frac{S(t)}{N(t)}\,\rho(t)\,\phi(t)
+            \Bigl(
+                \xi_{I_{NS}}(t)\,\mathbf{I}_{NS}(t)^{T}\boldsymbol{\Bbb{1}}
+                + \xi_{I_{Sy}}(t)\,\mathbf{I}_{Sy}(t)^{T}\boldsymbol{\Bbb{1}}
+            \Bigr)
+            + \mathbf{A}_{E}^{T}\mathbf{E}(t)
+        \\[8pt]
+        %--- Equation 3: I_NS(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}\mathbf{I}_{NS}(t) &= -\boldsymbol{\alpha}_{I_{NS}}
+            \bigl(\mathbf{A}_{E}\,\boldsymbol{\Bbb{1}}\bigr)^{T}\mathbf{E}(t)
+            +
+            \begin{bmatrix}
+                \mathbf{A}_{I_{NS}}^{I_{Sy}\;T}\,\mathbf{I}_{NS}^{I_{Sy}}(t) \\[4pt]
+                \mathbf{A}_{I_{NS}}^{R\;T}\,\mathbf{I}_{NS}^{R}(t)
+            \end{bmatrix}
+        \\[8pt]
+        %--- Equation 4: I_Sy(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}\mathbf{I}_{Sy}(t) &= -\boldsymbol{\alpha}_{I_{Sy}}
+            \bigl(\mathbf{A}_{I_{NS}}^{I_{Sy}}\,\boldsymbol{\Bbb{1}}\bigr)^{T}\mathbf{I}_{NS}^{I_{Sy}}(t)
+            +
+            \begin{bmatrix}
+                \mathbf{A}_{I_{Sy}}^{I_{Sev}\;T}\,\mathbf{I}_{Sy}^{I_{Sev}}(t) \\[4pt]
+                \mathbf{A}_{I_{Sy}}^{R\;T}\,\mathbf{I}_{Sy}^{R}(t)
+            \end{bmatrix}
+        \\[8pt]
+        %--- Equation 5: I_Sev(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}\mathbf{I}_{Sev}(t) &= -\boldsymbol{\alpha}_{I_{Sev}}
+            \bigl(\mathbf{A}_{I_{Sy}}^{I_{Sev}}\,\boldsymbol{\Bbb{1}}\bigr)^{T}\mathbf{I}_{Sy}^{I_{Sev}}(t)
+            +
+            \begin{bmatrix}
+                \mathbf{A}_{I_{Sev}}^{I_{Crit}\;T}\,\mathbf{I}_{Sev}^{I_{Crit}}(t) \\[4pt]
+                \mathbf{A}_{I_{Sev}}^{D\;T}\,\mathbf{I}_{Sev}^{D}(t) \\[4pt]
+                \mathbf{A}_{I_{Sev}}^{R\;T}\,\mathbf{I}_{Sev}^{R}(t)
+            \end{bmatrix}
+        \\[8pt]
+        %--- Equation 6: I_Crit(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}\mathbf{I}_{Crit}(t) &= -\boldsymbol{\alpha}_{I_{Crit}}
+            \bigl(\mathbf{A}_{I_{Sev}}^{I_{Crit}}\,\boldsymbol{\Bbb{1}}\bigr)^{T}\mathbf{I}_{Sev}^{I_{Crit}}(t)
+            +
+            \begin{bmatrix}
+                \mathbf{A}_{I_{Crit}}^{D\;T}\,\mathbf{I}_{Crit}^{D}(t) \\[4pt]
+                \mathbf{A}_{I_{Crit}}^{R\;T}\,\mathbf{I}_{Crit}^{R}(t)
+            \end{bmatrix}
+        \\[8pt]
+        %--- Equation 7: R(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}R(t) &=
+            -\bigl(\mathbf{A}_{I_{NS}}^{R}\,\boldsymbol{\Bbb{1}}\bigr)^{T}\mathbf{I}_{NS}^{R}(t)
+            -\bigl(\mathbf{A}_{I_{Sy}}^{R}\,\boldsymbol{\Bbb{1}}\bigr)^{T}\mathbf{I}_{Sy}^{R}(t)
+            -\bigl(\mathbf{A}_{I_{Sev}}^{R}\,\boldsymbol{\Bbb{1}}\bigr)^{T}\mathbf{I}_{Sev}^{R}(t)
+            -\bigl(\mathbf{A}_{I_{Crit}}^{R}\,\boldsymbol{\Bbb{1}}\bigr)^{T}\mathbf{I}_{Crit}^{R}(t)
+        \\[8pt]
+        %--- Equation 8: D(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}D(t) &=  -\bigl(\mathbf{A}_{I_{Sev}}^{D}\,\boldsymbol{\Bbb{1}}\bigr)^{T}\mathbf{I}_{Sev}^{D}(t)
+            -\bigl(\mathbf{A}_{I_{Crit}}^{D}\,\boldsymbol{\Bbb{1}}\bigr)^{T}\mathbf{I}_{Crit}^{D}(t)
+            \\[2pt]
+    \end{align*}
 
 Note that the bold notation :math:`\mathbf{z}(t)` for :math:`z \in \mathcal{Z}` stands for a vector. If several transitions are possible from a compartment, the vector is split in order to be able to select the stay times until the transitions individually. For example, the order
 
@@ -80,9 +145,21 @@ Note that the bold notation :math:`\mathbf{z}(t)` for :math:`z \in \mathcal{Z}` 
    \mathbf{I_{\text{NS}}^{\text{R}}}(t)
    \end{bmatrix}
 
-is used. Similar holds true for the other compartments :math:`z \in \mathcal{Z}`.
+is used. Similar holds true for the other compartments :math:`z \in \mathcal{Z}`. In particular, we have three transitions 
+originating from the InfectedSevere compartment and the vector is given by
 
-Implicitly, the matrices :math:`\mathbf{A_{z}^{*}}` for one :math:`z \in \mathcal{Z}` are a block of a matrix :math:`\mathbf{A_{z}}` corresponding to the whole vector :math:`\mathbf{z}(t)`. As we have no transitions in between the strains defined for different transition probabilities, we would have many zeros in the matrix. The matrix can be defined as
+.. math::
+
+   \mathbf{I_{\text{Sev}}}(t) = \begin{bmatrix}
+   \mathbf{I_{\text{Sev}}^{\text{Cr}}}(t) \\
+   \mathbf{I_{\text{Sev}}^{\text{D}}}(t) \\
+   \mathbf{I_{\text{Sev}}^{\text{R}}}(t)
+   \end{bmatrix}.
+
+Implicitly, the matrices :math:`\mathbf{A_{z}^{*}}` for one :math:`z \in \mathcal{Z}` are a block of a matrix 
+:math:`\mathbf{A_{z}}` corresponding to the whole vector :math:`\mathbf{z}(t)`. As we have no transitions in between 
+the strains defined for different transition probabilities, we would have many zeros in the matrix. The matrix can be 
+defined as
 
 .. math::
 
@@ -92,7 +169,11 @@ Implicitly, the matrices :math:`\mathbf{A_{z}^{*}}` for one :math:`z \in \mathca
    \mathbf{0} &  \mathbf{A_{z}^{*_2}}
    \end{bmatrix},
 
-where :math:`{*}_{1}` is the compartment of the first transition, e.g., :math:`I_{\text{Sy}}` for :math:`z=I_{\text{NS}}` and :math:`*_{2}` the compartment of the second possible transition, e.g., :math:`R`. Therefore, we just store the non-zero blocks of the matrix. Using these parameters, the phase-type distribution that defines the stay time in compartment :math:`z \in \mathcal{Z}` has the probability density function
+where :math:`{*}_{1}` is the compartment of the first transition, e.g., :math:`I_{\text{Sy}}` for 
+:math:`z=I_{\text{NS}}` and :math:`*_{2}` the compartment of the second possible transition, e.g., :math:`R`. 
+Therefore, we just store the non-zero blocks of the matrix. The number of non-zero blocks corresponds to the number of 
+strains originating from the considered compartment. Using these parameters, the phase-type distribution that defines 
+the stay time in compartment :math:`z \in \mathcal{Z}` has the probability density function
 
 .. math::
 
@@ -124,7 +205,7 @@ Note that in the GLCT model, we define two strains for the compartments `Infecte
 
 .. code-block:: cpp
 
-    constexpr size_t NumExposed = 2, NumInfectedNoSymptoms = 6, NumInfectedSymptoms = 2, NumInfectedSevere = 2,
+    constexpr size_t NumExposed = 2, NumInfectedNoSymptoms = 6, NumInfectedSymptoms = 2, NumInfectedSevere = 3,
                      NumInfectedCritical = 10;
     using Model          = mio::glsecir::Model<ScalarType, NumExposed, NumInfectedNoSymptoms, NumInfectedSymptoms,
                                                NumInfectedSevere, NumInfectedCritical>;
@@ -145,6 +226,7 @@ We continue by defining some epidemiological parameters needed throughout the mo
     const ScalarType recoveredPerInfectedNoSymptoms = 0.09;
     const ScalarType severePerInfectedSymptoms      = 0.2;
     const ScalarType criticalPerSevere              = 0.25;
+    const ScalarType deathsPerSevere                = 0.;
     const ScalarType deathsPerCritical              = 0.3;
 
 Now, we define the initial values with the distribution of the population into subcompartments. Note that this method of defining the initial values using a vector of vectors is not necessary, but should show how the entries of the initial value vector relate to the defined template parameters of the model or the number of subcompartments. It is also possible to define the initial values directly.
@@ -167,7 +249,7 @@ We continue by defining some epidemiological parameters needed throughout the mo
          10 * (1 - recoveredPerInfectedNoSymptoms), 20 * recoveredPerInfectedNoSymptoms,
          10 * recoveredPerInfectedNoSymptoms, 10 * recoveredPerInfectedNoSymptoms},
         {50 * severePerInfectedSymptoms, 50 * (1 - severePerInfectedSymptoms)}, // InfectedSymptoms
-        {50 * criticalPerSevere, 50 * (1 - criticalPerSevere)}, // InfectedSevere
+        {50 * criticalPerSevere, 50 * deathsPerSevere, 50 * (1 - criticalPerSevere - deathsPerSevere)}, // InfectedSevere
         {10 * deathsPerCritical, 10 * deathsPerCritical, 5 * deathsPerCritical,
          3 * deathsPerCritical, // InfectedCritical
          2 * deathsPerCritical, 10 * (1 - deathsPerCritical), 10 * (1 - deathsPerCritical), 5 * (1 - deathsPerCritical),
@@ -288,15 +370,21 @@ We proceed analogously for the remaining compartments `InfectedSymptoms`, `Infec
         Eigen::VectorX<ScalarType>::Zero(LctState::get_num_subcompartments<InfectionState::InfectedSevere>());
     StartingProbabilitiesInfectedSevere[0]                                         = criticalPerSevere;
     StartingProbabilitiesInfectedSevere[(Eigen::Index)(
-        LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.)] = 1 - criticalPerSevere;
+        LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 3.)] = deathsPerSevere;
+    StartingProbabilitiesInfectedSevere[2 * (Eigen::Index)(
+                                                LctState::get_num_subcompartments<InfectionState::InfectedSevere>() /
+                                                3.)] = 1 - criticalPerSevere - deathsPerSevere;
     model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedSevere<ScalarType>>() =
         StartingProbabilitiesInfectedSevere;
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToInfectedCritical<ScalarType>>() =
         mio::glsecir::TransitionMatrixInfectedSevereToInfectedCritical<ScalarType>().get_default(
-            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.), timeInfectedSevere);
+            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 3.), timeInfectedSevere);
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToDead<ScalarType>>() =
+        mio::glsecir::TransitionMatrixInfectedSevereToDead<ScalarType>().get_default(
+            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 3.), timeInfectedSevere);
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToRecovered<ScalarType>>() =
         mio::glsecir::TransitionMatrixInfectedSevereToRecovered<ScalarType>().get_default(
-            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.), timeInfectedSevere);
+            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 3.), timeInfectedSevere);
 
     // InfectedCritical.
     Eigen::VectorX<ScalarType> StartingProbabilitiesInfectedCritical =
