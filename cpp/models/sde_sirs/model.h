@@ -112,7 +112,7 @@ public:
         double tau_minus = params.template get<SeasonalityPeak<FP>>()[season] - params.template get<StartDay<FP>>() +
                            365. * int(t / 365.) - 182.5;
         double tau_plus = params.template get<SeasonalityPeak<FP>>()[season] - params.template get<StartDay<FP>>() +
-                          365. * int(t / 365.) - 182.5;
+                          365. * int(t / 365.) + 182.5;
         if (t <=
             params.template get<SeasonalityPeak<FP>>()[season] - params.template get<StartDay<FP>>() - 182.5 + 30) {
             return (t - tau_minus + 30) / 60.;
