@@ -120,7 +120,7 @@ If you are not sure that you have one, head to :ref:`general-setup-section` for 
     any python package (including ours)! You can find instructions on how to create one
     `here <https://docs.python.org/3/library/venv.html#creating-virtual-environments>`__.
     You can freely choose name and location of the environment, just make sure that you can find it again later.
-    And remember to active the environment before trying to use MEmilio!
+    And remember to activate the environment before using MEmilio!
 
 The Python packages can be installed in two ways, depending on your use case.
 We will use pip here, but you can use the python package manager of your choice as well.
@@ -181,7 +181,7 @@ directories too often, simply run ``python -m pip install pycode/memilio-{packag
 
     The simulaion and generation packages use skbuild to compile python bindings and parts of the C++ library.
     By default, the cmake build files are put into ``pycode/build/memilio-{package_name}`` to save on time during
-    package development. If you get unexpected cmake errors, you can try deleting the respective build directory. If
+    package development. If you get unexpected CMake errors, you can try deleting the respective build directory. If
     you do not want to store the build files at all, you can remove the ``build_dir`` entry from the section
     ``[tool.scikit-build]`` in the ``pyproject.toml``. Then skbuild will use a temporary directory instead.
 

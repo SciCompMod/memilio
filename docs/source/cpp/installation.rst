@@ -96,14 +96,14 @@ Step-by-step instructions
 -------------------------
 
 In case you have not installed the required tools, or downloaded the MEmilio repository, first follow the steps from the
-:doc:`../download_and_setup` section. We assume that you have a terminal open and have navigated into the the memilio
+:doc:`../download_and_setup` section. From here on, we assume that you have a terminal open and have navigated into the the MEmilio
 repository.
 
 Configuration
 ~~~~~~~~~~~~~
 
 Before we can *build* anything, we need to *configure* the project first. If you want to use its default options,
-simply run cmake in MEmilio's project directory.
+simply run cmake in MEmilio's root directory.
 
 .. code:: bash
 
@@ -250,7 +250,7 @@ Installation
 
 .. warning::
     
-    Installing currently is not tested and probably does not work as expected or at all. If you want to
+    Installing currently is not tested and may not work as expected or at all. If you want to
     integrate the project into yours, use the `FetchContent` way.
 
 After having built MEmilio C++ as described above, you can install it to the location given in the
@@ -268,7 +268,7 @@ Next steps
 Running simulations
 ~~~~~~~~~~~~~~~~~~~
 
-You can run simulations either via the C++ interface where they are originally implemented or via the python bindings. 
+You can run simulations either via the C++ interface where they are originally implemented or via the Python bindings. 
 For the C++ Interface, you can find explanations of the models as well as guides on their usage in the :doc:`C++ model usage <model_usage>` section.
 In short, the executables for different model instantiations are built as described above and can be run via 
 
@@ -321,7 +321,7 @@ For the latter, no regular testing is conducted. If you encounter errors, please
 Known issues
 ------------
 
-- Installing currently is not tested and probably does not work as expected or at all. If you want to integrate the project into yours, use the `FetchContent` way.
+- Installing currently is not tested and may not work as expected or at all. If you want to integrate the project into yours, use the `FetchContent` way.
 - On Windows, automatic detection of HDF5 installations does not work reliably. If you get HDF5 related errors during the build, you may have to supply the HDF5_DIR variable during CMake configuration, see above.
 
 Further questions

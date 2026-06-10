@@ -1,7 +1,7 @@
 Download and setup
 ==================
 
-MEmilio consists of a core library written in C++, including several models and examples, as well as several python
+MEmilio consists of a core library written in C++, including several models and examples, as well as several Python
 packages
 
 We have structured this documentation to guide you step-by-step through the installation and usage process.
@@ -12,9 +12,9 @@ There are two main ways to set up MEmilio on your computer or on a remote cluste
 depending on what you want to do:
 
 1.  **Using the Python packages:** This is the recommended path for many users not familiar with C++.
-    Here, you can run simulations using python bindings.
+    Here, you can run simulations using Python bindings.
    
-    If you have a working python installation, head to :ref:`python-package-installation` and install the package from
+    If you have a working Python installation, head to :ref:`python-package-installation` and install the package from
     PyPI (Option 1).
     Otherwise, continue here for the setup instructions.
 
@@ -25,7 +25,7 @@ In addition, we provide several Python packages to download epidemiological data
 
 Below, we will give you a step-by-step guide for both methods. If you are new to MEmilio and more familiar with Python, 
 Julia, or R than with C++, we recommend starting with the Python packages, as they provide an easy access to simulate 
-infection dynamics models from and collect experiences with MEmilio.
+infection dynamics models and gain experience with MEmilio.
 
 .. _general-setup-section:
 
@@ -41,7 +41,7 @@ Before you can install MEmilio, you need to install some common development tool
     
     .. dropdown:: :fa:`gears` Python installation help
 
-        You can check whether python is installed by opening a terminal and running
+        You can check whether Python is installed by opening a terminal and running
 
         .. code-block:: console
 
@@ -53,8 +53,8 @@ Before you can install MEmilio, you need to install some common development tool
 
             python3 --version
 
-        to see which version is installed, if any - otherwise it will say "command not found" or something similar.
-        You can also type ``python`` and hit the tab key once or twice, it may auto-complete to a python command 
+        to see which version is installed. If no installation can be found it will say "command not found" or something similar.
+        You can also type ``python`` and hit the tab key once or twice, it may auto-complete to a Python command 
         including the minor version, e.g. ``python3.13``. Add the ``--version`` flag and hit enter.
 
         If one of these commands reports a supported version, you are done here!
@@ -90,7 +90,7 @@ Before you can install MEmilio, you need to install some common development tool
     .. note::
 
         In this documentation, we will simply use ``python`` as a command, but depending on your installation method
-        and platform you may need to substitute this by, e.g., ``python3``, ``python3.11``, ``.\python3.13,exe``, or
+        and platform you may need to substitute this by, e.g., ``python3``, ``python3.11``, ``.\python3.13.exe``, or
         similar.
 
 *   **C++ Compiler and CMake:**
@@ -118,7 +118,7 @@ Download the MEmilio source code
 For C++ developement and for building python from source, it is required to download MEmilio.
 
 You can get the newest version (or a specific release) of MEmilio from our
-`github repository <https://github.com/SciCompMod/memilio>`__, preferably by using git:
+`GitHub repository <https://github.com/SciCompMod/memilio>`__, preferably by using git:
 
 Open a terminal and navigate to a directory of your choice, then run
 
@@ -151,7 +151,7 @@ In your terminal, change into this directory:
 
 Alternatively, the source code can be downloaded and extracted from GitHub. This method will not include other branches
 and code versions, as they are managed through git, so we recommend against it. If you do continue with this method,
-you may want to rename the extraced directory to "memilio" for consistency. Then navigate into it in a terminal.
+you may want to rename the extracted directory to "memilio" for consistency. Then navigate into it in a terminal.
 
 Next steps
 ----------
