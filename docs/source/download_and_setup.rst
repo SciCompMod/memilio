@@ -12,7 +12,7 @@ There are two main ways to set up MEmilio on your computer or on a remote cluste
 depending on what you want to do:
 
 1.  **Using the Python packages:** This is the recommended path for many users not familiar with C++.
-    With the :doc:`memilio-simulation <m-simulation>` package you can run simulations through Python bindings.
+    With the :doc:`memilio-simulation <python/m-simulation>` package you can run simulations through Python bindings.
    
     If you have a working Python installation, head to :ref:`python-package-installation` and install the package from
     PyPI (Option 1).

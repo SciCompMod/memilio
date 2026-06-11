@@ -206,7 +206,7 @@ several parts of the library. They can be run via
 This will work for all examples in the ``cpp/examples`` folder of our
 `github repository <https://github.com/SciCompMod/memilio/tree/main/cpp/examples>`__
 that do not depend on user-provided external libraries (like HDF5).
-Additional explanations for our models are can be found in the :doc:`model usage section <cpp/model_usage>`.
+Additional explanations for our models are can be found in the :doc:`model usage section <model_usage>`.
 
 If you want to only build a specific example, to save some compilation time, you can specify it with the ``--target``
 flag:
