@@ -147,8 +147,10 @@ Option 2: Install from source
 If you need the latest (unreleased) code, or want to contribute to the package, you need to build from source. To get
 the source code, follow :ref:`general-download-section`.
 Additionally, the :doc:`memilio-simulation <m-simulation>`, :doc:`memilio-surrogatemodel <m-surrogate>` and
-:doc:`memilio-generation <m-generation>` packages require a C++ compiler and CMake. 
-If you want to install these packages, follow section :ref:`general-setup-section` for setting these up.
+:doc:`memilio-generation <m-generation>` packages require a C++ compiler, a generator and CMake, as they use
+`scikit-build-core <https://scikit-build-core.readthedocs.io>`__ to compile Python bindings and/or parts of the C++
+library. If you want to install these packages, follow section :ref:`general-setup-section` for setting up these
+additional dependencies.
 
 Each package provides a ``pyproject.toml`` in the respective directory ``pycode/memilio-{package_name}``, that installs
 the package and its Python dependencies with pip.
@@ -177,9 +179,20 @@ directories too often, simply run ``python -m pip install pycode/memilio-{packag
 .. warning::
    C++ code changes always require re-running this command for the changes to take effect.
 
-.. dropdown:: :fa:`gears` Expert's knowledge: Build files for skbuild
+.. dropdown:: :fa:`gears` Expert's knowledge: Build options and files for scikit-build-core
 
-    The simulaion and generation packages use skbuild to compile Python bindings and parts of the C++ library.
+    When installing a package that uses scikit-build-core, all the :doc:`CMake configuration options<../cpp/installation>`
+    of the C++ library are available as well. Additionally, the CMake configuration for the Python bindings
+    (i.e., memilio-simulation) provides the following CMake options:
+
+    - MEMILIO_USE_BUNDLED_PYBIND11: ON or OFF, default ON. If ON, downloads Pybind11 automatically from a repository during
+    CMake configuration. If OFF, Pybind11 needs to be installed on the system.
+
+    When building the bindings, CMake options can be forwarded with configuration settings, e.g.
+
+    .. code-block:: console
+        python -m pip install . --config-settings=cmake.args="-DCMAKE_BUILD_TYPE=Debug" --config-settings=cmake.args="-DMEMILIO_USE_BUNDLED_PYBIND11=OFF"
+
     By default, the cmake build files are put into ``pycode/build/memilio-{package_name}`` to save on time during
     package development. If you get unexpected CMake errors, you can try deleting the respective build directory. If
     you do not want to store the build files at all, you can remove the ``build_dir`` entry from the section
@@ -199,11 +212,11 @@ To run the tests, simply use the following command inside the package directory 
 This works for both the normal and the editable (with "-e") installations. 
 
 Alternatively, you can start the tests from outside the source directory, but you need to tell the unittest module where
-to look. From the MEmilio project directory, run
+to look. From the MEmilio project directory, run for example
 
 .. code-block:: console 
 
-    python -m unittest discover -s pycode/memilio-surrogatemodel/tests
+    python -m unittest discover -s pycode/memilio-simulation/tests
 
 Coverage Report
 ----------------

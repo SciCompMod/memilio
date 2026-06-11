@@ -2,106 +2,17 @@
 
 This package contains Python bindings for the MEmilio C++ library. It enables setting up and running simulations from Python code.
 
-## Installation
+- Module Documentation: https://memilio.readthedocs.io/en/latest/python/m-simulation.html
+- Project Documentation: https://memilio.readthedocs.io
+- Source code: https://github.com/SciCompMod/memilio
+- Bug reports: https://github.com/SciCompMod/memilio/issues
 
-### Option 1: Install from PyPI (Recommended)
+### Installation
 
-Pre-built wheels are provided for Linux and Windows on Python 3.9 to 3.13.
-
-```bash
-pip install memilio-simulation
-```
-
-### Option 2: Install from source (latest code or development)
-
-Use this option if you need the latest unreleased code, or want to modify the C++ bindings.
-
-This project is configured via `pyproject.toml`. The following tools must be available on the system:
-
-- A **C++20 compiler**
-- **CMake** >= 3.18
-- **Ninja**
-- All [C++ library dependencies](../../cpp/README.md)
-
-A virtual environment is recommended. Install from the **root of the MEmilio repository** (the directory containing the top-level `pyproject.toml`):
+For supported platforms, use
 
 ```bash
-pip install -e .[dev]
+python -m pip install memilio-simulation
 ```
 
-This is necessary because the C++ build requires access to the `cpp/` directory. Note that this only installs `memilio-simulation` and not any other Python packages.
-
-**Note:** The `-e` flag links the installation to your local source code. Python changes take effect immediately, but C++ changes require re-running this command to recompile.
-
-CMake is executed internally by scikit-build-core. All the options provided by the CMake configuration of the C++ library are available when building the Python extension as well. Additionally, the CMake configuration for the bindings provide the following CMake options:
-
-- MEMILIO_USE_BUNDLED_PYBIND11: ON or OFF, default ON. If ON, downloads Pybind11 automatically from a repository during CMake configuration. If OFF, Pybind11 needs to be installed on the system.
-
-When building the bindings, CMake options can be forwarded with configuration settings, e.g.
-
-```bash
-pip install . --config-settings=cmake.args="-DCMAKE_BUILD_TYPE=Debug" --config-settings=cmake.args="-DMEMILIO_USE_BUNDLED_PYBIND11=OFF"
-```
-
-Alternatively, edit the `CMakeCache.txt` in the directory created by scikit-build-core.
-
-## Development
-
-For developement of the cpp bindings use the following command from the root of this repository (i.e. the directory containing ``pyproject.toml``)
-
-```bash
-pip install -e .[dev]
-```
-
-This command allows you to work on the code without having to reinstall the package after a change. Note that this only works for changes to Python code. If C++ code is modified, the install command has to be repeated every time. The command also installs all additional dependencies required for development and maintenance. 
-
-The [bindings](memilio/simulation/bindings/) folder contains all the C++ code to expose the MEmilio library to Python and follows its structure, expect for the models that are bundled in a subfolder.
-
-In order to add a new model, the following steps need to be taken:
-1. Add new bindings including a model file in the [models](memilio/simulation/bindings/models/) folder that defines the new module
-2. Add the new module to the building process by modifying [CMakeLists.txt](CMakeLists.txt)
-3. Add a python module file similar to the other models, e.g. [osir.py](memilio/simulation/osir.py) (needed for the structure of the python package) and modify getter function in [__init__.py](memilio/simulation/__init__.py)
-4. Write new tests and examples
-
-The bindings can also be expanded with pure Python code by expanding the existing python files or adding new ones underneath the [simulation](memilio/simulation/) folder. 
-
-## Stubs
-
-A stub file is a file containing a skeleton of the public interface of that Python module including classes, variables, functions and their types. They help by enabling autocompletes and type annotations. `mypy stubgen` is used to generate the stub files for the MEmilio Python Bindings and provide them as a separate stubs-only package.
-
-For installing stubs you first need to install our package `memilio.simulation` (not in editable mode -e) and the external dependency `mypy` for your python interpreter. Then run [generate_stubs.py](tools/generate_stubs.py) to generate the stubs-only package and install it as `memilio-stubs`, e.g. from the [current folder](.)
-
-```bash
-python ./tools/generate_stubs.py
-```
-
-## Usage
-
-The package provides the following modules:
-
-- `memilio.simulation`: core simulation framework and utilities, corresponds to the framework in `cpp/memilio`.
-- `memilio.simulation.osir`: ODE SIR model and simulation with demographic resolution, corresponds to the model in `cpp/models/ode_sir`.
-- `memilio.simulation.oseir`: ODE SEIR model and simulation with demographic resolution, corresponds to the model in `cpp/models/ode_seir`.
-- `memilio.simulation.osecir`: ODE SECIHURD model and simulation with demographic and geographic resolution, corresponds to the model in `cpp/models/ode_secir`.
-- `memilio.simulation.osecirvvs`: Extended ODE SECIHURD model to include vaccinations and multi-layered immunity, among other enhancements, with the ability to integrate new disease variants. Simulation includes demographic and geographic resolution, corresponds to the model in `cpp/models/ode_secirvvs`.
-`memilio.simulation.abm`: Agent based model and simulation, corresponds to the model in `cpp/models/abm` (python model is incomplete and work in progress).
-
-Detailed documentation under construction. See the scripts in the [examples](../examples/simulation/) directory for more information.
-
-## Testing
-
-The package provides a test suite in `tests/`. To run the tests, make sure the package is installed, and you are in the source directory, then run:
-
-```bash
-cd tests
-python -m unittest
-```
-
-This works with both normal (`pip install .`) and editable (`pip install -e .`) installations.
-
-Alternatively, you can run the tests from outside the source directory:
-
-```bash
-cd /path/to/another/directory
-python -m unittest discover -s /path/to/memilio/pycode/memilio-simulation/tests
-```
+Note that the source distribution requires a C++ toolchain to build.
