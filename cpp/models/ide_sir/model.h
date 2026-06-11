@@ -39,8 +39,10 @@ class ModelMessinaExtendedDetailedInit
     using ParameterSet = Parameters;
 
 public:
-    ModelMessinaExtendedDetailedInit(TimeSeries<ScalarType>&& populations_init, ScalarType N_init, size_t gregory_order,
-                                     size_t finite_difference_order = 1);
+    ModelMessinaExtendedDetailedInit(
+        TimeSeries<ScalarType>&& populations_init, ScalarType N_init, size_t gregory_order,
+        size_t finite_difference_order      = 1,
+        TimeSeries<ScalarType>&& flows_init = TimeSeries<ScalarType>((size_t)InfectionTransition::Count));
 
     ScalarType get_totalpop() const;
 
@@ -107,7 +109,7 @@ public:
     ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
     TimeSeries<ScalarType> populations; ///< TimeSeries containing points of time and the corresponding number of
     // people in defined #InfectionState%s for every AgeGroup.
-    TimeSeries<ScalarType> flows;
+    TimeSeries<ScalarType> flows = TimeSeries<ScalarType>((size_t)InfectionTransition::Count);
 
 private:
     // ---- Private parameters. ----

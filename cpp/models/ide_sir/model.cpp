@@ -36,16 +36,20 @@ namespace isir
 {
 ModelMessinaExtendedDetailedInit::ModelMessinaExtendedDetailedInit(TimeSeries<ScalarType>&& populations_init,
                                                                    ScalarType N_init, size_t gregory_order,
-                                                                   size_t finite_difference_order)
+                                                                   size_t finite_difference_order,
+                                                                   TimeSeries<ScalarType>&& flows_init)
     : parameters{Parameters()}
-    , populations{std::move(populations_init)}
-    , flows{TimeSeries<ScalarType>((size_t)InfectionTransition::Count)}
+    , populations{std::move(populations_init)} // , flows{TimeSeries<ScalarType>((size_t)InfectionTransition::Count)}
     , m_N{N_init}
     , m_gregory_order(gregory_order)
     , m_finite_difference_order(finite_difference_order)
 {
     assert(m_gregory_order > 0);
     assert(m_finite_difference_order > 0);
+
+    if (flows_init.get_num_time_points() > 0) {
+        flows = std::move(flows_init);
+    }
 }
 
 void ModelMessinaExtendedDetailedInit::set_transitiondistribution_vector(ScalarType dt, ScalarType tmax,

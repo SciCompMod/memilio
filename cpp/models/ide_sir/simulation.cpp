@@ -49,14 +49,18 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, size_t fd_o
     // We set S'(0) due to lack of knowledge of previous values of S.
     // The corresponding flow is then given by -S'.
     // TODO: Initialize S'(0) in a different way?
-    m_model->flows.add_time_point(m_model->populations.get_time(0),
-                                  TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, 0.));
-    std::cout << "Flows first tp: " << m_model->flows.get_time(0) << std::endl;
-    // Compute S'(t) for t_1,..., t_{n0-1} with backwards difference operator. The corresponding flow is then given by -S'.
-    for (size_t i = 1; i < (size_t)m_model->populations.get_num_time_points(); i++) {
-        m_model->flows.add_time_point(m_model->flows.get_last_time() + m_dt,
+
+    if (m_model->flows.get_num_time_points() == 0) {
+        m_model->flows.add_time_point(m_model->populations.get_time(0),
                                       TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, 0.));
-        m_model->compute_S_deriv(m_dt, i);
+        std::cout << "Flows first tp: " << m_model->flows.get_time(0) << std::endl;
+        // Compute S'(t) for t_1,..., t_{n0-1} with backwards difference operator. The corresponding flow is then given by -S'.
+        for (size_t i = 1; i < (size_t)m_model->populations.get_num_time_points(); i++) {
+            m_model->flows.add_time_point(
+                m_model->flows.get_last_time() + m_dt,
+                TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, 0.));
+            m_model->compute_S_deriv(m_dt, i);
+        }
     }
 
     while (m_model->populations.get_last_time() < tmax - 1e-10) {

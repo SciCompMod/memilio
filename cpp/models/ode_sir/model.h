@@ -112,12 +112,12 @@ public:
 
                 const FP Nj        = pop[Sj] + pop[Ij] + pop[Rj];
                 const FP divNj     = (Nj < Limits<FP>::zero_tolerance()) ? FP(0.0) : FP(1.0 / Nj);
-                const FP coeffStoE = params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(
+                const FP coeffStoI = params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(
                                          SimulationTime<FP>(t))(i.get(), j.get()) *
                                      params.template get<TransmissionProbabilityOnContact<FP>>()[i] * divNj;
 
                 flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>(i)] +=
-                    coeffStoE * y[Si] * pop[Ij];
+                    coeffStoI * y[Si] * pop[Ij];
             }
             flows[Base::template get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>(i)] =
                 (1.0 / params.template get<TimeInfected<FP>>()[i]) * y[Ii];
