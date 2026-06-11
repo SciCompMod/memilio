@@ -12,6 +12,7 @@ The class used for implementing SDE models is called ``StochasticModel``. It is 
 :doc:`SDE model creation <sde_creation>` for more details.
 
 .. _Simulation SDE:
+
 Simulation
 ----------
 

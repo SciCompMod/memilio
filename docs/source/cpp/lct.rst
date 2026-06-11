@@ -25,9 +25,10 @@ parameter to the model.
 
 .. code-block:: cpp
 
-    using LctStateGroup1 = mio::LctInfectionState<ScalarType, `List of InfectionStates`, `Number of subcompartments of State1`, 
-                                                                                         `Number of subcompartments of State2`, 
-                                                                                         `...`>;
+    using LctStateGroup1 = mio::LctInfectionState<ScalarType, <List of InfectionStates> ,
+                                                              <Number of subcompartments of State1> ,
+                                                              <Number of subcompartments of State2> ,
+                                                              ... >;
 
 The model is implemented as ``CompartmentalModel``.
 
@@ -65,6 +66,7 @@ The initial conditions of the model are represented by a class ``LctPopulations`
 
 
 .. _Nonpharmaceutical Interventions LCT:
+
 Nonpharmaceutical interventions
 -------------------------------
 

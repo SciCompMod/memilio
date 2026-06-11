@@ -64,7 +64,7 @@ Below is an overview of the model variables:
      - Vector of size :math:`n_{z}` with the initial probability of starting in any of the subcompartments of compartment :math:`z \in \mathcal{Z}`. The entries should sum up to 1.
    * - :math:`\mathbf{A_{z}^{*}}`
      - ``TransitionMatrix(...z)To(...*)``
-     - Matrix describing the transitions in between the subcompartments of :math:`z \in \mathcal{Z}` that describes the transition to the compartment *.
+     - Matrix describing the transitions in between the subcompartments of :math:`z \in \mathcal{Z}` that describes the transition to the compartment \*.
 
 The model equations are given below. For a simpler description let :math:`\mathcal{Z}=\{E,I_{NS},I_{Sy},I_{Sev},I_{Cr}\}` be the set of the compartments that can be divided into subcompartments.
 
@@ -401,7 +401,6 @@ We proceed analogously for the remaining compartments `InfectedSymptoms`, `Infec
         mio::glsecir::TransitionMatrixInfectedCriticalToRecovered<ScalarType>().get_default(
             (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedCritical>() / 2.), timeInfectedCritical);
 
-.. _Nonpharmaceutical Interventions:
 Nonpharmaceutical Interventions
 -------------------------------
 

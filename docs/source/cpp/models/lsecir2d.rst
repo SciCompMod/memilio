@@ -1,5 +1,5 @@
 Two diseases in LCT-based SECIR-type model
-==========================
+==========================================
 
 The LCT-SECIR-2-DISEASES model is an extension of the :doc:`model with one disease <lsecir>`.
 The model is ODE-based and uses the Linear Chain Trick to allow for more general Erlang distributed stay times in each compartment instead of just exponentially distributed stay times induced by basic ODE-based models.
@@ -368,7 +368,6 @@ The initial populations in the model are set via:
         model.populations[i] = flat_initial_populations[i];
     }
 
-.. _Nonpharmaceutical Interventions:
 Nonpharmaceutical Interventions
 -------------------------------
 
