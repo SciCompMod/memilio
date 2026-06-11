@@ -96,7 +96,7 @@ Step-by-step instructions
 -------------------------
 
 In case you have not installed the required tools, or downloaded the MEmilio repository, first follow the steps from the
-:doc:`../download_and_setup` section. From here on, we assume that you have a terminal open and have navigated into the the MEmilio
+:doc:`../download_and_setup` section. From here on, we assume that you have a terminal open and have navigated into the MEmilio
 repository.
 
 Configuration
