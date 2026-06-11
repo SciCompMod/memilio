@@ -406,6 +406,20 @@ TEST(TestOdeIntegrator, integratorForcesLastStepSize)
     }
 }
 
+TEST(TestOdeIntegrator, integratorLastStepTolerance)
+{
+    using testing::_;
+    auto mock_core = std::make_unique<testing::StrictMock<MockIntegratorCore>>();
+
+    auto integrator = mio::OdeIntegrator<double>(std::move(mock_core));
+    // Check default.
+    EXPECT_EQ(integrator.get_last_step_tolerance(), mio::Limits<double>::zero_tolerance());
+    // Check setter of tolerance.
+    auto new_tol = 1e-2;
+    integrator.set_last_step_tolerance(new_tol);
+    EXPECT_EQ(integrator.get_last_step_tolerance(), new_tol);
+}
+
 TEST(TestStochasticIntegrator, EulerMaruyamaIntegratorCore)
 {
     using X = Eigen::Vector2d;
