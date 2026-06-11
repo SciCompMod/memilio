@@ -12,11 +12,11 @@ There are two main ways to set up MEmilio on your computer or on a remote cluste
 depending on what you want to do:
 
 1.  **Using the Python packages:** This is the recommended path for many users not familiar with C++.
-    Here, you can run simulations using Python bindings.
+    With the :doc:`memilio-simulation <m-simulation>` package you can run simulations through Python bindings.
    
     If you have a working Python installation, head to :ref:`python-package-installation` and install the package from
     PyPI (Option 1).
-    Otherwise, continue here for the setup instructions.
+    For setting up Python, or for installing our other Python packages, continue here for the setup instructions.
 
 2.  **Directly building the C++ Core:** This is for developers who want to modify the functionality,
     contribute new models etc. by running C++ code directly.
@@ -106,7 +106,7 @@ Before you can install MEmilio, you need to install some common development tool
 
 *   **Git:** This is a version control system used to download the project's source code.
 
-    On Linux and MacOS, git is often preinstalled, but not on Windows.
+    On Linux and MacOS, Git is often preinstalled, but not on Windows.
     You can check by opening a terminal and running ``git --version``.
     Instructions on how to download and install it can be found on `git-scm.com <https://git-scm.com/install>`__.
 
@@ -118,7 +118,7 @@ Download the MEmilio source code
 For C++ developement and for building python from source, it is required to download MEmilio.
 
 You can get the newest version (or a specific release) of MEmilio from our
-`GitHub repository <https://github.com/SciCompMod/memilio>`__, preferably by using git:
+`GitHub repository <https://github.com/SciCompMod/memilio>`__, preferably by using Git:
 
 Open a terminal and navigate to a directory of your choice, then run
 
@@ -148,10 +148,6 @@ In your terminal, change into this directory:
 .. code-block:: console
 
    cd memilio
-
-Alternatively, the source code can be downloaded and extracted from GitHub. This method will not include other branches
-and code versions, as they are managed through git, so we recommend against it. If you do continue with this method,
-you may want to rename the extracted directory to "memilio" for consistency. Then navigate into it in a terminal.
 
 Next steps
 ----------

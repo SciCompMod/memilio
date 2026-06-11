@@ -173,8 +173,8 @@ Other important options you may need:
     
         cmake -S cpp -B cpp/build -DMEMILIO_BUILD_TESTS=OFF -DMEMILIO_BUILD_BENCHMARKS=ON
 
-Building
-~~~~~~~~
+Building and running
+~~~~~~~~~~~~~~~~~~~~
 
 Finally, you can *build* the project by running
 
@@ -196,9 +196,20 @@ configuration):
 
     ./cpp/build/bin/memilio-test
 
-Also try out the example binaries (ending in ``_example``)!
+Also try out the example binaries (ending in ``_example``)! These contain model simulations and usage examples for
+several parts of the library. They can be run via 
 
-If you want to only build a specific example, you can specify it with the ``--target`` flag:
+.. code-block:: console
+
+   ./cpp/build/bin/<example_name>
+
+This will work for all examples in the ``cpp/examples`` folder of our
+`github repository <https://github.com/SciCompMod/memilio/tree/main/cpp/examples>`__
+that do not depend on user-provided external libraries (like HDF5).
+Additional explanations for our models are can be found in the :doc:`model usage section <cpp/model_usage>`.
+
+If you want to only build a specific example, to save some compilation time, you can specify it with the ``--target``
+flag:
 
 .. code-block:: console
 
@@ -261,62 +272,6 @@ After having built MEmilio C++ as described above, you can install it to the loc
     cmake --install cpp/build
 
 This will install the libraries, headers, and executables that were built, i.e. where ``MEMILIO_BUILD_<PART>=ON``.
-
-Next steps
-----------
-
-Running simulations
-~~~~~~~~~~~~~~~~~~~
-
-You can run simulations either via the C++ interface where they are originally implemented or via the Python bindings. 
-For the C++ Interface, you can find explanations of the models as well as guides on their usage in the :doc:`C++ model usage <model_usage>` section.
-In short, the executables for different model instantiations are built as described above and can be run via 
-
-.. code-block:: console
-
-   ./cpp/build/bin/<example_name>
-
-
-Out of the box this works for all examples in the ``cpp/examples`` folder of our
-`github repository <https://github.com/SciCompMod/memilio/tree/main/cpp/examples>`__,
-that do not depend on user-provided external libraries. 
-Additional explanations for our models are linked at the corresponding sites of this documentation.
-
-Simulations used in publications
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-For simulations used in publications, we maintain a separate repository: 
-`memilio-simulations <https://github.com/SciCompMod/memilio-simulations>`__. 
-This repository contains simulations organized in separate folders, each with the specific version of MEmilio 
-used for the published results. This ensures that simulation results can be easily reproduced.
-
-The repository also includes additional scripts for plotting, data gathering, and pre-/post-processing 
-that were used in publications.
-
-Loading data
-~~~~~~~~~~~~
-
-The :doc:`memilio-epidata <../python/m-epidata>` package provides tools to download epidemiological relevant datasets.
-Some datasets like contact matrices for Germany are also included in the ``data`` folder of the
-`github repository <https://github.com/SciCompMod/memilio/tree/main/data>`__ and school holidays (for Germany) are
-directly included in the
-`C++ code <https://github.com/SciCompMod/memilio/blob/main/cpp/memilio/geography/holiday_data.ipp>`__.  
-
-
-Creating new models
-~~~~~~~~~~~~~~~~~~~
-
-If you want to create new models, you can do so via the C++ interface. For this, we recommend to have a look at 
-the :doc:`C++ model creation <model_creation>` section of this documentation.
-
-
-Visualizations
-~~~~~~~~~~~~~~
-
-For visualizations, we provide our :doc:`python package memilio-plot <../python/m-plot>`. Apart from that, we have 
-collected some scripts that we used for visualizations in the `tools folder in our github repository <https://github.com/SciCompMod/memilio/tree/main/tools>`__. 
-For the latter, no regular testing is conducted. If you encounter errors, please `contact us <mailto:Martin.Kuehn@DLR.de>`__.
-
 
 Known issues
 ------------

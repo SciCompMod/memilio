@@ -1,7 +1,7 @@
 Overview
 =========
 
-MEmilio contains several python modules offering an easy-to-use interface to the efficiently implemented C++
+MEmilio contains several Python modules offering an easy-to-use interface to the efficiently implemented C++
 models and to complement these by data preparation, code generation, machine learning, or plotting functionality.
 Please see the individual package documentation for more details on the functionality and usage.
 
@@ -15,7 +15,7 @@ Please see the individual package documentation for more details on the function
         MEmilio Python Interface
         ^^^
 
-        This package provides a python interface for parts of the C++ main library,
+        This package provides a Python interface for parts of the C++ main library,
         with the goal of exposing fast mathematical-epidemiological models to
         a bigger user base.
 
@@ -26,7 +26,7 @@ Please see the individual package documentation for more details on the function
             :color: secondary
             :click-parent:
 
-            To the python bindings
+            To the Python bindings
 
     .. grid-item-card::
         :img-top: http://martinkuehn.eu/research/images/epidata.png
@@ -94,7 +94,7 @@ Please see the individual package documentation for more details on the function
         Interface Generation
         ^^^
 
-        Easy to use tool for helping with the creation of python bindings or interfaces to (new) C++ models.
+        Easy to use tool for helping with the creation of Python bindings or interfaces to (new) C++ models.
 
         +++
 
@@ -112,18 +112,18 @@ Package installation
 
 You can run simulations, download data, or create plots with our Python packages.
 First, however, you need a working Python installation.
-If you are not sure that you have one, head to :ref:`general-setup-section` for the python setup, then continue here.
+If you are not sure that you have one, head to :ref:`general-setup-section` for the Python setup, then continue here.
 
 .. note::
 
     We highly recommend using a `virtual environment <https://docs.python.org/3/library/venv.html>`__ for installing
-    any python package (including ours)! You can find instructions on how to create one
+    any Python package (including ours)! You can find instructions on how to create one
     `here <https://docs.python.org/3/library/venv.html#creating-virtual-environments>`__.
     You can freely choose name and location of the environment, just make sure that you can find it again later.
     And remember to activate the environment before using MEmilio!
 
 The Python packages can be installed in two ways, depending on your use case.
-We will use pip here, but you can use the python package manager of your choice as well.
+We will use pip here, but you can use the Python package manager of your choice as well.
 
 Option 1: Install from PyPI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -151,7 +151,7 @@ Additionally, the :doc:`memilio-simulation <m-simulation>`, :doc:`memilio-surrog
 If you want to install these packages, follow section :ref:`general-setup-section` for setting these up.
 
 Each package provides a ``pyproject.toml`` in the respective directory ``pycode/memilio-{package_name}``, that installs
-the package and its python dependencies with pip.
+the package and its Python dependencies with pip.
 
 The dependencies of the individual packages are denoted in their documentation.
 The installation can be run with the following command from the directory containing the ``pyproject.toml`` file
@@ -167,7 +167,7 @@ directories too often, simply run ``python -m pip install pycode/memilio-{packag
 .. tip:: For Contributors: Installing development packages
 
     The ``-e`` flag installs the package in a mode, which links the installation to your local source code directory.
-    This allows working on the python code without having to reinstall the package after every change.
+    This allows working on the Python code without having to reinstall the package after every change.
     If you plan to contribute to any package, install all development dependencies by adding ``[dev]``:
 
     .. code-block:: console
@@ -179,7 +179,7 @@ directories too often, simply run ``python -m pip install pycode/memilio-{packag
 
 .. dropdown:: :fa:`gears` Expert's knowledge: Build files for skbuild
 
-    The simulaion and generation packages use skbuild to compile python bindings and parts of the C++ library.
+    The simulaion and generation packages use skbuild to compile Python bindings and parts of the C++ library.
     By default, the cmake build files are put into ``pycode/build/memilio-{package_name}`` to save on time during
     package development. If you get unexpected CMake errors, you can try deleting the respective build directory. If
     you do not want to store the build files at all, you can remove the ``build_dir`` entry from the section
