@@ -6,7 +6,8 @@ on:
       - published
   ### Uncomment the "push:" together with the "repository-url:" field of action pypa/gh-action-pypi-publish
   ### to make a release to TestPyPI. Building this is rather expensive so do not merge this uncommented!
-  push:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
   ### @Reviewer: MAKE SURE THE LINE ABOVE IS COMMENTED OUT BEFORE MERGE! ###
 
 jobs:
