@@ -13,7 +13,7 @@ The model is particularly suited for pathogens with pre- or asymptomatic infecti
 
 Below is a visualization of the infection states and transitions without a stratification according to sociodemographic groups.
 
-.. image:: https://github.com/SciCompMod/memilio/assets/70579874/6a5d5a95-20f9-4176-8894-c091bd48bfb7
+.. image:: http://martinkuehn.eu/research/images/lct.png
    :alt: tikzLCTSECIR
 
 
@@ -118,6 +118,9 @@ The model implements the following parameters:
    * - :math:`\mu_{I_{Sev}}^{I_{Cr}}`
      - ``CriticalPerSevere``
      - Probability of transition from compartment InfectedSevere to InfectedCritical.
+   * - :math:`\mu_{I_{Sev}}^{D}`
+     - ``DeathsPerSevere``
+     - Probability of dying when in compartment InfectedSevere.
    * - :math:`\mu_{I_{Cr}}^{D}`
      - ``DeathsPerCritical``
      - Probability of dying when in compartment InfectedCritical.
@@ -190,8 +193,6 @@ In addition to setting the initial populations manually, MEmilio provides two ot
 - The file `parameters_io <https://github.com/SciCompMod/memilio/blob/main/cpp/models/lct_secir/parameters_io.h>`_ provides functionality to compute an initial value vector for the LCT-SECIR model based on reported data.
 - The file `initializer_flows <https://github.com/SciCompMod/memilio/blob/main/cpp/models/lct_secir/initializer_flows.h>`_ provides functionality to compute an initial value vector for the LCT-SECIR model based on initial data in the form of a ``TimeSeries`` of InfectionTransitions. For the concept of the InfectionTransitions or flows, see also the IDE-SECIR model. This method can be particularly useful if a comparison is to be made with an IDE model with matching initialization or if the reported data is in the form of flows.
 
-
-.. _Nonpharmaceutical Interventions:
 Nonpharmaceutical Interventions
 -------------------------------
 

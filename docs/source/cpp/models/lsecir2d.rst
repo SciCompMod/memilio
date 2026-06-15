@@ -1,5 +1,5 @@
 Two diseases in LCT-based SECIR-type model
-==========================
+==========================================
 
 The LCT-SECIR-2-DISEASES model is an extension of the :doc:`model with one disease <lsecir>`.
 The model is ODE-based and uses the Linear Chain Trick to allow for more general Erlang distributed stay times in each compartment instead of just exponentially distributed stay times induced by basic ODE-based models.
@@ -259,6 +259,12 @@ The model implements the following parameters:
    * - :math:`\mu_{I_{Sev},b}^{I_{Cr}}`
      - ``CriticalPerSevere_b``
      - Probability of transition from compartment InfectedSevere_1b to InfectedCritical_1b or from InfectedSevere_2b to InfectedCritical_2b.
+   * - :math:`\mu_{I_{Sev},a}^{D}`
+     - ``DeathsPerSevere_a``
+     - Probability of dying when in compartment InfectedSevere_1a or InfectedSevere_2a.
+   * - :math:`\mu_{I_{Sev},b}^{D}`
+     - ``DeathsPerSevere_b``
+     - Probability of dying when in compartment InfectedSevere_1b or InfectedSevere_2b.
    * - :math:`\mu_{I_{Cr},a}^{D}`
      - ``DeathsPerCritical_a``
      - Probability of dying when in compartment InfectedCritical_1a or InfectedCritical_2a.
@@ -362,7 +368,6 @@ The initial populations in the model are set via:
         model.populations[i] = flat_initial_populations[i];
     }
 
-.. _Nonpharmaceutical Interventions:
 Nonpharmaceutical Interventions
 -------------------------------
 

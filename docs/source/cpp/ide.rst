@@ -81,6 +81,7 @@ start time of the simulation.
 
 
 .. _Nonpharmaceutical Interventions IDE:
+
 Nonpharmaceutical interventions
 -------------------------------
 
@@ -150,7 +151,3 @@ List of models
     
     models/isecir
     models/iseir
-
-
-
-
