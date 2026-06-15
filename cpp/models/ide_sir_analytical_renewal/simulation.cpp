@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 
+#include "ide_sir/parameters.h"
 #include "ide_sir_analytical_renewal/infection_state.h"
 #include "ide_sir_analytical_renewal/model.h"
 #include "ide_sir_analytical_renewal/simulation.h"
@@ -41,7 +42,7 @@ void SimulationAnalyticalRenewal::advance(ScalarType tmax)
 
     m_model->set_transitiondistribution_vector(m_dt, tmax);
 
-    size_t init_tps = m_model->populations.get_last_time();
+    size_t init_tps = m_model->populations.get_num_time_points();
 
     while (m_model->populations.get_last_time() < tmax - 1e-10) {
 
@@ -73,6 +74,14 @@ void SimulationAnalyticalRenewal::advance(ScalarType tmax)
         if (floating_point_equal(std::remainder(10 * m_model->flows.get_last_time(), tmax), 0., 1e-7)) {
             std::cout << "Time flows: " << m_model->flows.get_last_time() << std::endl;
         }
+
+        // ScalarType rho = m_model->parameters.get<TransmissionProbabilityOnContact>().eval(0.);
+        // ScalarType kappa =
+        //     m_model->parameters.get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::SusceptibleToInfected]
+        //         .get_distribution_parameter();
+
+        // m_model->flows.get_last_value()[(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+        //     rho * (rho - kappa) * std::exp((rho - kappa) * i * m_dt);
 
         m_model->compute_S_deriv(m_dt);
     }

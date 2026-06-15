@@ -81,17 +81,15 @@ def plot_susceptibles(files, fileending, rho, kappa, save_dir=""):
 
         dates = data['Time'][:]
 
+        dates_groundtruth = np.linspace(dates[0], dates[-1], int(1e6))
+
         # Plot groundtruth.
-        groundtruth_at_timepoints_S = [
-            np.cosh(timepoint) for timepoint in dates]
-        axs[0].plot(dates,
-                    [S(timepoint, rho, kappa) for timepoint in dates], label=labels[0],  linestyle=linestyles[1], color=colors[1], linewidth=linewidth)
-        groundtruth_at_timepoints_S_deriv = [
-            np.sinh(timepoint) for timepoint in dates]
-        axs[1].plot(dates,
-                    [I(timepoint, rho, kappa) for timepoint in dates], label=labels[0],  linestyle=linestyles[1], color=colors[1], linewidth=linewidth)
-        axs[2].plot(dates,
-                    [R(timepoint, rho, kappa) for timepoint in dates], label=labels[0],  linestyle=linestyles[1], color=colors[1], linewidth=linewidth)
+        axs[0].plot(dates_groundtruth,
+                    [S(timepoint, rho, kappa) for timepoint in dates_groundtruth], label=labels[0],  linestyle=linestyles[1], color=colors[1], linewidth=linewidth)
+        axs[1].plot(dates_groundtruth,
+                    [I(timepoint, rho, kappa) for timepoint in dates_groundtruth], label=labels[0],  linestyle=linestyles[1], color=colors[1], linewidth=linewidth)
+        axs[2].plot(dates_groundtruth,
+                    [R(timepoint, rho, kappa) for timepoint in dates_groundtruth], label=labels[0],  linestyle=linestyles[1], color=colors[1], linewidth=linewidth)
 
         # Plot data.
         for i in range(num_plots):
@@ -138,14 +136,14 @@ def subfolders_scandir(path):
 
 def get_rho_from_dir_name(dir_name):
     rho_string = [x for x in dir_name.split("_") if "rho" in x]
-    rho = int(rho_string[0].split("=")[-1])
+    rho = float(rho_string[0].split("=")[-1])
 
     return rho
 
 
 def get_kappa_from_dir_name(dir_name):
     kappa_string = [x for x in dir_name.split("_") if "kappa" in x]
-    kappa = int(kappa_string[0].split("=")[-1])
+    kappa = float(kappa_string[0].split("=")[-1])
 
     return kappa
 
@@ -155,7 +153,7 @@ if __name__ == '__main__':
     # dir_name = "detailed_init_exponential_t0ide=50_tmax=51_finite_diff=1_tolexp=8"
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
-    main_dir = "2026-06-04/analytical_renewal_rho=1_kappa=2"
+    main_dir = "2026-06-14/analytical_renewal_rho=5_kappa=5.1"
     relevant_dir = os.path.join(root_dir, main_dir)
 
     sub_dirs = subfolders_scandir(relevant_dir)
@@ -173,11 +171,11 @@ if __name__ == '__main__':
         plot_dir = os.path.join(os.path.dirname(
             __file__),  f"../plots/{main_dir}/{dir_name}/")
 
-        gregory_orders = [3]
-        ide_exponents = ["2"]
+        files = os.listdir(result_dir)
+        for exponent in range(4):
+            if f'result_{"ide"}_dt=1e-{exponent}_gregoryorder=3.h5' in files:
+                ide_exponent = exponent
 
-        for ide_exponent in ide_exponents:
-            for gregory_order in gregory_orders:
                 plot_susceptibles([
-                    os.path.join(result_dir, f"result_ide_dt=1e-{ide_exponent}_gregoryorder={gregory_order}")],
-                    f"dt=1e-{ide_exponent}_gregory={gregory_order}", rho, kappa, save_dir=plot_dir)
+                    os.path.join(result_dir, f"result_ide_dt=1e-{ide_exponent}_gregoryorder=3")],
+                    f"dt=1e-{ide_exponent}_gregory=3", rho, kappa, save_dir=plot_dir)

@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 
+#include "ide_sir/infection_state.h"
 #include "ide_sir/parameters.h"
 #include "ide_sir_analytical_renewal/model.h"
 #include "ide_sir_analytical_renewal/simulation.h"
@@ -36,10 +37,10 @@ size_t num_agegroups = 1;
 
 size_t finite_difference_order = 4;
 
-ScalarType t0_init = 4.;
+ScalarType t0_init = 10.;
 
-ScalarType rho   = 1.;
-ScalarType kappa = 2.;
+ScalarType rho   = 5.;
+ScalarType kappa = 5.1;
 } // namespace params
 
 mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, ScalarType t0_groundtruth,
@@ -68,14 +69,14 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 
         while (init_populations.get_last_time() < t0_init - 1e-10) {
             ScalarType time = init_populations.get_last_time() + dt_ide;
-            init_populations.add_time_point(time);
+
             vec_init[(size_t)mio::isir::InfectionState::Susceptible] = rho * std::exp((rho - kappa) * time);
             vec_init[(size_t)mio::isir::InfectionState::Infected] =
                 (rho - kappa) * (std::exp((rho - kappa) * time) - std::exp(-kappa * time));
             vec_init[(size_t)mio::isir::InfectionState::Recovered] =
                 vec_init[(size_t)mio::isir::InfectionState::Susceptible] - rho -
                 vec_init[(size_t)mio::isir::InfectionState::Infected];
-            init_populations.get_last_value() = vec_init;
+            init_populations.add_time_point(time, vec_init);
         }
 
         // Initialize model.
@@ -118,12 +119,12 @@ int main()
     using namespace params;
 
     ScalarType t0   = 0.;
-    ScalarType tmax = 10.;
+    ScalarType tmax = 50.;
 
-    std::vector<ScalarType> ide_exponents = {0, 1, 2};
-    std::vector<size_t> gregory_orders    = {1, 2, 3};
+    std::vector<ScalarType> ide_exponents = {0, 1};
+    std::vector<size_t> gregory_orders    = {3};
 
-    std::string save_dir = fmt::format("../../simulation_results/2026-06-04/analytical_renewal_rho={}_kappa={}/"
+    std::string save_dir = fmt::format("../../simulation_results/2026-06-14/analytical_renewal_rho={}_kappa={}/"
                                        "t0ide={}_tinit={}_tmax={}/",
                                        rho, kappa, t0, t0_init, tmax);
 

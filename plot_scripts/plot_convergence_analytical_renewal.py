@@ -260,7 +260,7 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
             handles.append(fourth[0])
             # Invert x axis only for one plot so that sharex=True and invert_xaxis work as intended.
             axs[i].invert_xaxis()
-        titles = [r"S(t)", r"S'(t)", r"S(0)+\int_0^t S'(x)\,dx"]
+        titles = [r"S(t)", r"I(t)", r"R(t)"]
         axs[i].set_title(titles[i], fontsize=10)
 
         # Adapt plots.
@@ -402,14 +402,14 @@ def get_tmax_from_dir_name(dir_name):
 
 def get_rho_from_dir_name(dir_name):
     rho_string = [x for x in dir_name.split("_") if "rho" in x]
-    rho = int(rho_string[0].split("=")[-1])
+    rho = float(rho_string[0].split("=")[-1])
 
     return rho
 
 
 def get_kappa_from_dir_name(dir_name):
     kappa_string = [x for x in dir_name.split("_") if "kappa" in x]
-    kappa = int(kappa_string[0].split("=")[-1])
+    kappa = float(kappa_string[0].split("=")[-1])
 
     return kappa
 
@@ -420,7 +420,7 @@ def main():
 
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
-    main_dir = "2026-06-04/analytical_renewal_rho=1_kappa=2"
+    main_dir = "2026-06-14/analytical_renewal_rho=2_kappa=2.1"
     relevant_dir = os.path.join(root_dir, main_dir)
     # print(relevant_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
@@ -428,7 +428,7 @@ def main():
 
     gregory_orders_simulation = [1, 2, 3]
 
-    cut_off = 10
+    # cut_off = 10
 
     rho = get_rho_from_dir_name(main_dir)
     kappa = get_kappa_from_dir_name(main_dir)
@@ -445,7 +445,7 @@ def main():
 
         # Path where plots will be stored.
         plot_dir = os.path.join(os.path.dirname(
-            __file__),  f"../plots/{main_dir}/{dir_name}/cutoff={cut_off}/")
+            __file__),  f"../plots/{main_dir}/{dir_name}/")
 
         # errors_all_gregory_orders_l2_rel = []
         errors_all_gregory_orders_l2_abs = []
@@ -474,19 +474,19 @@ def main():
             # errors_l2_rel = compute_errors_l2(
             #     groundtruth, results, groundtruth_exponent, timesteps_ide, t0, True)
             errors_l2_abs = compute_errors_l2(
-                groundtruth, results, groundtruth_exponent, timesteps_ide, t0, False, cut_off)
+                groundtruth, results, groundtruth_exponent, timesteps_ide, t0, False)
             # errors_all_gregory_orders_l2_rel.append(errors_l2_rel)
             errors_all_gregory_orders_l2_abs.append(errors_l2_abs)
 
             # errors_max_rel = compute_errors_max(
             #     groundtruth, results, groundtruth_exponent, timesteps_ide, t0, True)
             errors_max_abs = compute_errors_max(
-                groundtruth, results, groundtruth_exponent, timesteps_ide, t0, False, cut_off)
+                groundtruth, results, groundtruth_exponent, timesteps_ide, t0, False)
             # errors_all_gregory_orders_max_rel.append(errors_max_rel)
             errors_all_gregory_orders_max_abs.append(errors_max_abs)
 
             plot_difference_per_timestep(
-                groundtruth, results, groundtruth_exponent, timesteps_ide, t0, gregory_order_simulation, cut_off, plot_dir)
+                groundtruth, results, groundtruth_exponent, timesteps_ide, t0, gregory_order_simulation, 0, plot_dir)
 
             print()
             # print(f"Gregory order {gregory_order_simulation}")

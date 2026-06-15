@@ -249,15 +249,19 @@ int main()
     // Compute groundtruth with ODE model.
     ScalarType ode_exponent = 6.;
 
-    std::vector<ScalarType> time_infected_values = {2.}; // T_I=2: support max = 36.85
+    std::vector<ScalarType> time_infected_values = {1., 2., 3., 4.};
+    // T_I=1: support max = 18.43
+    // T_I=2: support max = 36.85
+    // T_I=3: support max = 55.27
+    // T_I=4: support max = 73.69
 
     ScalarType t0                         = 0.;
-    std::vector<ScalarType> t_init_values = {40.};
+    std::vector<ScalarType> t_init_values = {0.};
     ScalarType tmax                       = 50.;
 
     std::vector<size_t> finite_difference_orders = {4};
 
-    std::vector<ScalarType> ide_exponents = {0, 1, 2};
+    std::vector<ScalarType> ide_exponents = {3.};
     std::vector<size_t> gregory_orders    = {1, 2, 3};
 
     for (int time_infected : time_infected_values) {
@@ -267,9 +271,10 @@ int main()
             for (size_t finite_difference_order : finite_difference_orders) {
                 std::cout << "FD order: " << finite_difference_order << std::endl;
 
-                std::string save_dir = fmt::format("../../simulation_results/2026-06-11/init_with_flows/"
-                                                   "detailed_init_exponential_t0={}_tinit={}_tmax={}_finite_diff={}/",
-                                                   t0, t_init, tmax, finite_difference_order);
+                std::string save_dir =
+                    fmt::format("../../simulation_results/2026-06-15/investigate_init_conditions_timeinf={}/"
+                                "detailed_init_exponential_t0={}_tinit={}_tmax={}_finite_diff={}/",
+                                time_infected, t0, t_init, tmax, finite_difference_order);
 
                 // Make folder if not existent yet.
                 std::filesystem::path dir(save_dir);
@@ -278,7 +283,7 @@ int main()
                 auto result_ode = simulate_ode(ode_exponent, t0, tmax, time_infected, save_dir).value();
 
                 auto compartments_ode = result_ode[0];
-                auto flows_ode        = result_ode[1];
+                // auto flows_ode        = result_ode[1];
 
                 // Do IDE simulations.
                 for (size_t gregory_order : gregory_orders) {
@@ -286,7 +291,7 @@ int main()
                     std::cout << "Gregory order: " << gregory_order << std::endl;
                     mio::IOResult<void> result_ide =
                         simulate_ide(ide_exponents, gregory_order, finite_difference_order, t0, t_init, tmax,
-                                     time_infected, save_dir, compartments_ode, flows_ode);
+                                     time_infected, save_dir, compartments_ode);
                 }
             }
         }
