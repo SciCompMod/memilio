@@ -248,9 +248,6 @@ void ModelAnalyticalRenewal::compute_S_deriv(ScalarType dt)
 
 void ModelAnalyticalRenewal::compute_I_and_R(ScalarType dt, size_t time_point_index)
 {
-    // Get the index of the current time step.
-    size_t current_time_index = populations.get_num_time_points() - 1;
-
     // Index determining when we switch from one Gregory sum to the other one.
     // TODO: Explain better what the difference between the two Gregory sums is.
     size_t switch_weights_index = std::min(time_point_index, m_gregory_order);
@@ -270,14 +267,16 @@ void ModelAnalyticalRenewal::compute_I_and_R(ScalarType dt, size_t time_point_in
         }
 
         // For each index, the corresponding summand is computed here.
-        sum_infected -= gregory_weight * m_transitiondistribution_vector[current_time_index - j] *
+        // Negative sign because flows from S to I is negative derivative of S.
+        sum_infected -= gregory_weight * m_transitiondistribution_vector[time_point_index - j] *
                         flows.get_value(j)[(Eigen::Index)InfectionTransition::SusceptibleToInfected];
 
-        sum_recovered -= gregory_weight * (1. - m_transitiondistribution_vector[current_time_index - j]) *
+        sum_recovered -= gregory_weight * (1. - m_transitiondistribution_vector[time_point_index - j]) *
                          flows.get_value(j)[(Eigen::Index)InfectionTransition::SusceptibleToInfected];
     }
 
-    populations[time_point_index][(Eigen::Index)InfectionState::Infected]  = dt * sum_infected;
+    populations[time_point_index][(Eigen::Index)InfectionState::Infected] = dt * sum_infected;
+
     populations[time_point_index][(Eigen::Index)InfectionState::Recovered] = dt * sum_recovered;
 }
 

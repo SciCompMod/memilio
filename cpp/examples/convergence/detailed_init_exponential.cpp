@@ -153,6 +153,14 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
             }
             init_populations.add_time_point(t0, vec_init);
 
+            while (init_populations.get_last_time() < t_init - 1e-10) {
+                for (size_t compartment : compartments) {
+                    vec_init[compartment] = compartments_groundtruth.get_value(
+                        size_t(init_populations.get_num_time_points() * groundtruth_index_factor))[compartment];
+                }
+                init_populations.add_time_point(init_populations.get_last_time() + dt_ide, vec_init);
+            }
+
             if (flows_groundtruth.get_num_time_points() > 0) {
                 std::cout << "Initializing with given groundtruth for flows.\n";
                 // Add values to init_flows_ts.
@@ -162,14 +170,6 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
                     compartments_groundtruth.get_value(0)[(size_t)mio::isir::InfectionState::Recovered];
 
                 init_flows_ts.add_time_point(t0, vec_init_flows);
-
-                while (init_populations.get_last_time() < t_init - 1e-10) {
-                    for (size_t compartment : compartments) {
-                        vec_init[compartment] = compartments_groundtruth.get_value(
-                            size_t(init_populations.get_num_time_points() * groundtruth_index_factor))[compartment];
-                    }
-                    init_populations.add_time_point(init_populations.get_last_time() + dt_ide, vec_init);
-                }
 
                 while (init_flows_ts.get_last_time() < t_init - 1e-10) {
                     for (size_t flow : flows) {
@@ -184,6 +184,11 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
                 }
             }
         }
+
+        std::cout << "t0: " << t0 << std::endl;
+        std::cout << "t_init: " << t_init << std::endl;
+
+        std::cout << "last time pop: " << init_populations.get_last_time() << std::endl;
 
         // Initialize model.
         mio::isir::ModelMessinaExtendedDetailedInit model(std::move(init_populations), total_population, gregory_order,
@@ -215,6 +220,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
         mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide);
         // size_t fd_order_contacts = 1;
         sim.advance(tmax);
+        // sim.advance_S_deriv_fixedpoint(tmax);
 
         if (!save_dir.empty()) {
             // Save compartments.
@@ -256,23 +262,26 @@ int main()
     // T_I=4: support max = 73.69
 
     ScalarType t0                         = 0.;
-    std::vector<ScalarType> t_init_values = {0.};
-    ScalarType tmax                       = 50.;
+    std::vector<ScalarType> t_init_values = {10., 20., 30., 40.};
+    // ScalarType tmax                       = 50.;
 
     std::vector<size_t> finite_difference_orders = {4};
 
-    std::vector<ScalarType> ide_exponents = {3.};
+    std::vector<ScalarType> ide_exponents = {0., 1., 2.};
     std::vector<size_t> gregory_orders    = {1, 2, 3};
 
     for (int time_infected : time_infected_values) {
 
         for (ScalarType t_init : t_init_values) {
 
+            // ScalarType tmax = t_init + 50.;
+            ScalarType tmax = 100.;
+
             for (size_t finite_difference_order : finite_difference_orders) {
                 std::cout << "FD order: " << finite_difference_order << std::endl;
 
                 std::string save_dir =
-                    fmt::format("../../simulation_results/2026-06-15/investigate_init_conditions_timeinf={}/"
+                    fmt::format("../../simulation_results/2026-06-17/investigate_init_conitions_timeinf={}/"
                                 "detailed_init_exponential_t0={}_tinit={}_tmax={}_finite_diff={}/",
                                 time_infected, t0, t_init, tmax, finite_difference_order);
 

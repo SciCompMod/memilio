@@ -222,25 +222,26 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
     # Plot comparison line for linear convergence as well as second, third and fourth order.
     for i in range(num_plots):
         plotted_timesteps = timesteps_ide[:6]
-        comparison = [0.5*errors_all_gregory_orders[0]
+        first_timestep = timesteps_ide[0]
+        comparison = [0.5*1/first_timestep*errors_all_gregory_orders[0]
                       [0, i]*dt for dt in timesteps_ide]
         first = axs[i].plot(plotted_timesteps, comparison,
                             '--', color='gray', linewidth=1.2, label=r"$\mathcal{O}(\Delta t)$")
 
         plotted_timesteps = timesteps_ide[:6]
-        comparison = [0.5*errors_all_gregory_orders[0]
+        comparison = [0.5*(1/first_timestep)**2*errors_all_gregory_orders[0]
                       [0, i]*dt**2 for dt in plotted_timesteps]
         second = axs[i].plot(plotted_timesteps, comparison,
                              '--', color=colors[0], linewidth=1.2, alpha=0.5, label=r"$\mathcal{O}(\Delta t^2)$")
 
         plotted_timesteps = timesteps_ide[:6]
-        comparison = [0.5*errors_all_gregory_orders[1]
+        comparison = [0.5*(1/first_timestep)**3*errors_all_gregory_orders[1]
                       [0, i]*dt**3 for dt in plotted_timesteps]
         third = axs[i].plot(plotted_timesteps, comparison,
                             '--', color=colors[1], linewidth=1.2, alpha=0.5, label=r"$\mathcal{O}(\Delta t^3)$")
 
         plotted_timesteps = timesteps_ide[:6]
-        comparison = [0.5*errors_all_gregory_orders[2]
+        comparison = [0.5*(1/first_timestep)**4*errors_all_gregory_orders[2]
                       [0, i]*dt**4 for dt in plotted_timesteps]
         fourth = axs[i].plot(plotted_timesteps, comparison,
                              '--', color=colors[2], linewidth=1.2, alpha=0.5, label=r"$\mathcal{O}(\Delta t^4)$")
@@ -420,11 +421,12 @@ def main():
 
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
-    main_dir = "2026-06-14/analytical_renewal_rho=2_kappa=2.1"
+    main_dir = "2026-06-21/analytical_renewal_rho=5.2_kappa=5.1"
     relevant_dir = os.path.join(root_dir, main_dir)
     # print(relevant_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
     # sub_dirs = ["t0ide=0_tmax=5"]
+    sub_dirs = [sub_dirs[-1]]
 
     gregory_orders_simulation = [1, 2, 3]
 
@@ -447,15 +449,15 @@ def main():
         plot_dir = os.path.join(os.path.dirname(
             __file__),  f"../plots/{main_dir}/{dir_name}/")
 
-        # errors_all_gregory_orders_l2_rel = []
+        errors_all_gregory_orders_l2_rel = []
         errors_all_gregory_orders_l2_abs = []
 
-        # errors_all_gregory_orders_max_rel = []
+        errors_all_gregory_orders_max_rel = []
         errors_all_gregory_orders_max_abs = []
 
         # Get exponents for which IDE simulations have been computed for considered subdirectory.
-        ide_exponents = get_ide_exponents(result_dir)
-        # ide_exponents = [0, 1, 2, 3, 4]
+        # ide_exponents = get_ide_exponents(result_dir)
+        ide_exponents = [1, 2, 3]
 
         # Calculate time steps resulting from ide_exponents.
         timesteps_ide = []
@@ -471,18 +473,18 @@ def main():
                                 gregory_order_simulation)
 
             # Compute errors of IDE results compared to groundtruth.
-            # errors_l2_rel = compute_errors_l2(
-            #     groundtruth, results, groundtruth_exponent, timesteps_ide, t0, True)
+            errors_l2_rel = compute_errors_l2(
+                groundtruth, results, groundtruth_exponent, timesteps_ide, t0, True)
             errors_l2_abs = compute_errors_l2(
                 groundtruth, results, groundtruth_exponent, timesteps_ide, t0, False)
-            # errors_all_gregory_orders_l2_rel.append(errors_l2_rel)
+            errors_all_gregory_orders_l2_rel.append(errors_l2_rel)
             errors_all_gregory_orders_l2_abs.append(errors_l2_abs)
 
-            # errors_max_rel = compute_errors_max(
-            #     groundtruth, results, groundtruth_exponent, timesteps_ide, t0, True)
+            errors_max_rel = compute_errors_max(
+                groundtruth, results, groundtruth_exponent, timesteps_ide, t0, True)
             errors_max_abs = compute_errors_max(
                 groundtruth, results, groundtruth_exponent, timesteps_ide, t0, False)
-            # errors_all_gregory_orders_max_rel.append(errors_max_rel)
+            errors_all_gregory_orders_max_rel.append(errors_max_rel)
             errors_all_gregory_orders_max_abs.append(errors_max_abs)
 
             plot_difference_per_timestep(
@@ -514,6 +516,20 @@ def main():
         #         relative_error = True
         #     else:
         relative_error = False
+
+        # L2 norm
+        l2 = True
+        maxnorm = False
+        plot_convergence(errors_all_gregory_orders_l2_abs, timesteps_ide,
+                         gregory_orders_simulation, l2, maxnorm,  relative_error, plot_dir)
+
+        # max norm
+        l2 = False
+        maxnorm = True
+        plot_convergence(errors_all_gregory_orders_max_abs, timesteps_ide,
+                         gregory_orders_simulation,  l2, maxnorm, relative_error, plot_dir)
+
+        relative_error = True
 
         # L2 norm
         l2 = True
