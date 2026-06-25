@@ -189,38 +189,206 @@ struct LogInfectionState : mio::LogAlways {
     }
 };
 
+/**
+ * @brief Iterate over all infected persons, bin them, and accumulate into a (num_bins x num_clusters) histogram.
+ *
+ * The cluster column is age_index * num_loc_types + location_index, using the person's
+ * current location (where a test would occur at this time point). Persons in cemetery
+ * are skipped for now. The result is flattened column-major to a single vector for
+ * the TimeSeriesWriter: entry (bin, cluster) lives at index cluster * num_bins + bin.
+ *
+ * @tparam BinFn  Callable (ScalarType viral_load) -> int returning the (unclamped) bin index.
+ * @param[in] sim       The ABM simulation.
+ * @param[in] num_bins  Number of histogram bins along the value axis.
+ * @param[in] bin_fn    Binning function mapping a viral load to a bin index.
+ * @return Flattened (num_bins * num_clusters) histogram vector.
+ */
+template <class BinFn>
+Eigen::VectorX<uint32_t> accumulate_infected_histogram(const mio::abm::Simulation<>& sim, int num_bins,
+                                                         BinFn bin_fn)
+{
+    const int num_age_groups = static_cast<int>(sim.get_model().parameters.get_num_groups());
+    const int num_loc_types = static_cast<int>(mio::abm::LocationType::Cemetery); // exclude Cemetery
+    const int num_clusters  = num_age_groups * num_loc_types;
+    const auto curr_time     = sim.get_time();
+
+    Eigen::VectorX<uint32_t> hist = Eigen::VectorX<uint32_t>::Zero(num_bins * num_clusters);
+
+    for (auto& person : sim.get_model().get_persons()) {
+        const auto& infection_vector = person.get_infection_vector();
+        if (infection_vector.empty()) {
+            continue;
+        }
+        const int loc_idx = static_cast<int>(sim.get_model().get_location(person.get_location()).get_type());
+        if (loc_idx >= num_loc_types) {
+            continue; // skip Cemetery
+        }
+        const int age_idx = static_cast<int>(person.get_age().get());
+        const int cluster = age_idx * num_loc_types + loc_idx;
+
+        const ScalarType vl = infection_vector[0].get_viral_load(curr_time);
+        const int bin       = std::clamp(bin_fn(vl), 0, num_bins - 1);
+
+        hist[cluster * num_bins + bin] += uint32_t(1);
+    }
+    return hist;
+}
 
 /**
-* @brief Logger to log the TimeSeries of the number of Person%s with viral load > 1.
-*/
+ * @brief Logger for the cluster-stratified distribution of viral load among infected persons.
+ *
+ * Output is a (num_bins x num_clusters) histogram flattened column-major; see
+ * accumulate_infected_histogram for the cluster indexing convention.
+ */
 struct LogViralLoad : mio::LogAlways {
-    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorX<ScalarType>>;
-    /** 
-     * @brief Log the TimeSeries of the number of Person%s in an #InfectionState.
-     * @param[in] sim The simulation of the abm.
-     * @return A pair of the TimePoint and the TimeSeries of the number of Person%s with viral load > 1.
-     */
+    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorX<uint32_t>>;
     static Type log(const mio::abm::Simulation<>& sim)
     {
         constexpr int num_bins = 10;
-        Eigen::VectorX<ScalarType> sum =
-            Eigen::VectorX<ScalarType>::Zero(num_bins);
-        auto curr_time = sim.get_time();
-        PRAGMA_OMP(for)
-        for (auto& person : sim.get_model().get_persons()) 
-        {
-            const auto& infection_vector = person.get_infection_vector();
-            if (!infection_vector.empty())
-            {   
-                const auto& infection = infection_vector[0]; 
-                ScalarType vl = infection.get_viral_load(curr_time);
-                int bin = static_cast<int>(vl);
-                bin = std::clamp(bin, 0, num_bins-1);
-                sum[bin] += ScalarType(1);
-            }            
-        }
-        return std::make_pair(curr_time, sum);
+        auto hist = accumulate_infected_histogram(sim, num_bins, [](ScalarType vl) {
+            return static_cast<int>(vl);
+        });
+        return std::make_pair(sim.get_time(), hist);
     }
+};
+
+/**
+ * @brief Logger for the cluster-stratified distribution of cycle thresholds among infected persons.
+ *
+ * Output is a (num_bins x num_clusters) histogram flattened column-major; see
+ * accumulate_infected_histogram for the cluster indexing convention.
+ */
+struct LogCycleThreshhold : mio::LogAlways {
+    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorX<uint32_t>>;
+    static Type log(const mio::abm::Simulation<>& sim)
+    {
+        constexpr int max_cycle_threshold = 40;
+        constexpr int num_bins            = max_cycle_threshold + 1; // bins 0..40 inclusive
+        constexpr double log10_cycle_slope = 3.32192809489; // 1/log10(2)
+        auto hist = accumulate_infected_histogram(sim, num_bins, [](ScalarType vl) {
+            return static_cast<int>(max_cycle_threshold - vl * log10_cycle_slope);
+        });
+        return std::make_pair(sim.get_time(), hist);
+    }
+};
+
+
+
+
+
+/**
+ * @brief Logs the CT histogram for a single age-group × location-type cluster.
+ *
+ * Output: 41-bin histogram (CT 0..40) over ALL persons at the cluster, infected or not.
+ * Uninfected persons (and recovered with zero viral load) are binned at CT=40, matching
+ * the LogSchoolCohort convention: 40 = "not detected", 0 = maximum viral load.
+ * The sum of all bins equals the total number of persons at the cluster that morning,
+ * so Python can reconstruct the uninfected fraction as hist[40] minus the infected tail.
+ * Fires at a fixed hour each day (default 8), matching LogSchoolCohort's schedule.
+ */
+struct LogCTCluster {
+    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorX<uint32_t>>;
+
+    explicit LogCTCluster(mio::AgeGroup age_group, mio::abm::LocationType loc_type, int hour = 8)
+        : m_age_group(age_group), m_loc_type(loc_type), m_hour(hour)
+    {
+    }
+
+    bool should_log(const mio::abm::Simulation<>& sim)
+    {
+        return sim.get_time().hour_of_day() == m_hour;
+    }
+
+    Type log(const mio::abm::Simulation<>& sim)
+    {
+        constexpr int num_bins       = 41; // CT 0..40
+        constexpr int max_ct         = 40;
+        constexpr double log10_slope = 3.32192809489; // 1/log10(2)
+
+        Eigen::VectorX<uint32_t> hist = Eigen::VectorX<uint32_t>::Zero(num_bins);
+        const auto t                  = sim.get_time();
+
+        for (const auto& person : sim.get_model().get_persons()) {
+            if (person.get_age() != m_age_group)
+                continue;
+            if (sim.get_model().get_location(person.get_location()).get_type() != m_loc_type)
+                continue;
+            const auto& infections = person.get_infection_vector();
+            if (infections.empty()) {
+                hist[max_ct] += 1; // not infected → bin 40 = "not detected"
+                continue;
+            }
+            const ScalarType vl = infections[0].get_viral_load(t);
+            const int bin       = std::clamp(static_cast<int>(max_ct - vl * log10_slope), 0, num_bins - 1);
+            hist[bin] += 1;
+        }
+        return {t, hist};
+    }
+
+private:
+    mio::AgeGroup          m_age_group;
+    mio::abm::LocationType m_loc_type;
+    int                    m_hour;
+};
+
+/**
+ * @brief Logs CT values for a fixed cohort of school students once per day at 8AM.
+ *
+ * The cohort is sampled on the first 8AM when students are present at a School location.
+ * Each subsequent 8AM the same individuals are re-observed.
+ *
+ * Encoding (matches LogCTCluster): 0 = max viral load, 40 = not detected (uninfected
+ * or below threshold), 255 = unused budget slot (cohort smaller than max_budget).
+ */
+struct LogSchoolCohort {
+    using Type = std::pair<mio::abm::TimePoint, std::vector<uint8_t>>;
+
+    explicit LogSchoolCohort(int max_budget = 100) : m_max_budget(max_budget) {}
+
+    bool should_log(const mio::abm::Simulation<>& sim)
+    {
+        return sim.get_time().hour_of_day() == 8;
+    }
+
+    Type log(const mio::abm::Simulation<>& sim)
+    {
+        const auto& persons = sim.get_model().get_persons();
+
+        if (m_cohort.empty()) {
+            std::vector<size_t> candidates;
+            for (size_t i = 0; i < persons.size(); ++i) {
+                if (sim.get_model().get_location(persons[i].get_location()).get_type() ==
+                    mio::abm::LocationType::School) {
+                    candidates.push_back(i);
+                }
+            }
+            std::shuffle(candidates.begin(), candidates.end(), mio::thread_local_rng());
+            size_t n = std::min(candidates.size(), size_t(m_max_budget));
+            m_cohort.assign(candidates.begin(), candidates.begin() + n);
+        }
+
+        auto t = sim.get_time();
+        std::vector<uint8_t> cts(m_max_budget, 255); // 255 = unused slot
+
+        for (size_t i = 0; i < m_cohort.size(); ++i) {
+            const auto& infections = persons[m_cohort[i]].get_infection_vector();
+            if (infections.empty()) {
+                cts[i] = static_cast<uint8_t>(s_max_ct); // 40 = not detected
+            }
+            else {
+                ScalarType vl = infections[0].get_viral_load(t);
+                int ct        = static_cast<int>(s_max_ct - vl * s_log10_slope);
+                cts[i]        = static_cast<uint8_t>(std::clamp(ct, 0, s_max_ct));
+            }
+        }
+        return {t, cts};
+    }
+
+private:
+    static constexpr int    s_max_ct      = 40;
+    static constexpr double s_log10_slope = 3.32192809489; // 1/log10(2)
+    int                     m_max_budget;
+    std::vector<size_t>     m_cohort;
 };
 
 /**

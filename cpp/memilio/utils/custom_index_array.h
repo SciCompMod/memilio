@@ -38,6 +38,7 @@ size_t product(Index<Ts...> const& t)
         return static_cast<size_t>(mio::get<I>(t)) * product<I + 1, Index, Ts...>(t);
     }
     else {
+        (void)t; // silence MSVC warning about unused parameter
         return 1;
     }
 }

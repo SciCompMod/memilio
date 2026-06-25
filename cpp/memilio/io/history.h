@@ -85,6 +85,11 @@ public:
     {
     }
 
+    History(Loggers... loggers)
+        : m_loggers(std::move(loggers)...)
+    {
+    }
+
     /**
      * @brief Logs new records according to the Writer and Loggers.
      *

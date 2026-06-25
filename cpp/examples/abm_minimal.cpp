@@ -22,13 +22,12 @@
 #include "abm/model.h"
 #include "abm/common_abm_loggers.h"
 #include "memilio/io/directories.h"
+#include "memilio/io/history.h"
 
 #include <fstream>
-#include <chrono>
 
 int main()
 {
-    auto start = std::chrono::high_resolution_clock::now();
     // This is a minimal example with children and adults < 60 year old.
     // We divided them into 4 different age groups, which are defined as follows:
     mio::set_log_level(mio::LogLevel::warn);
@@ -52,7 +51,7 @@ int main()
     model.parameters.check_constraints();
 
     // There are 10 households for each household group.
-    int n_households = 10;
+    int n_households = 100;
 
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
     auto child = mio::abm::HouseholdMember(num_age_groups); // A child is 50/50% 0-4 or 5-14.
@@ -79,30 +78,43 @@ int main()
     threePersonHousehold_group.add_households(threePersonHousehold_full, n_households);
     add_household_group_to_model(model, threePersonHousehold_group);
 
-    // Add one social event with 5 maximum contacts.
-    // Maximum contacs limit the number of people that a person can infect while being at this location.
-    auto event = model.add_location(mio::abm::LocationType::SocialEvent);
-    model.get_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    // Add hospital and ICU with 5 maximum contacs.
+    // Scale location count to population size.
+    // Population: ~n_households school-age kids, ~3*n_households workers, ~5*n_households total.
+    // Target ~200 people per school/workplace, ~500 per shop/event.
+    const int n_schools    = std::max(1, n_households / 200);
+    const int n_workplaces = std::max(1, 3 * n_households / 200);
+    const int n_shops      = std::max(1, 5 * n_households / 500);
+    const int n_events     = std::max(1, 5 * n_households / 500);
+
+    std::vector<mio::abm::LocationId> schools, workplaces, shops, events;
+    for (int i = 0; i < n_schools; ++i) {
+        auto loc = model.add_location(mio::abm::LocationType::School);
+        model.get_location(loc).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+        schools.push_back(loc);
+    }
+    for (int i = 0; i < n_workplaces; ++i) {
+        auto loc = model.add_location(mio::abm::LocationType::Work);
+        model.get_location(loc).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+        model.get_location(loc).get_infection_parameters().get<mio::abm::ContactRates>().get_baseline()(
+            age_group_15_to_34.get(), age_group_15_to_34.get()) = 10.0;
+        workplaces.push_back(loc);
+    }
+    for (int i = 0; i < n_shops; ++i) {
+        auto loc = model.add_location(mio::abm::LocationType::BasicsShop);
+        model.get_location(loc).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+        shops.push_back(loc);
+    }
+    for (int i = 0; i < n_events; ++i) {
+        auto loc = model.add_location(mio::abm::LocationType::SocialEvent);
+        model.get_location(loc).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+        events.push_back(loc);
+    }
     auto hospital = model.add_location(mio::abm::LocationType::Hospital);
     model.get_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
     auto icu = model.add_location(mio::abm::LocationType::ICU);
     model.get_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    // Add one supermarket, maximum constacts are assumed to be 20.
-    auto shop = model.add_location(mio::abm::LocationType::BasicsShop);
-    model.get_location(shop).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
-    // At every school, the maximum contacts are 20.
-    auto school = model.add_location(mio::abm::LocationType::School);
-    model.get_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
-    // At every workplace, maximum contacts are 20.
-    auto work = model.add_location(mio::abm::LocationType::Work);
-    model.get_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
 
-    // Increase aerosol transmission for all locations
-    model.parameters.get<mio::abm::AerosolTransmissionRates>() = 10.0;
-    // Increase contact rate for all people between 15 and 34 (i.e. people meet more often in the same location)
-    model.get_location(work).get_infection_parameters().get<mio::abm::ContactRates>().get_baseline()(
-        age_group_15_to_34.get(), age_group_15_to_34.get()) = 10.0;
+    model.parameters.get<mio::abm::AerosolTransmissionRates>() = 0.10;
 
     // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 10.
     auto validity_period       = mio::abm::days(1);
@@ -117,10 +129,6 @@ int main()
     model.get_testing_strategy().add_scheme(mio::abm::LocationType::Work, testing_scheme_work);
 
     // Assign infection state to each person.
-    // The infection states are chosen randomly with the following distribution
-    //std::vector<ScalarType> infection_distribution{0.5, 0.3, 0.05, 0.05, 0.05, 0.05, 0.0, 0.0};
-
-
     std::vector<ScalarType> infection_distribution{0.9, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
     for (auto& person : model.get_persons()) {
@@ -133,48 +141,74 @@ int main()
         }
     }
 
-    // Assign locations to the people
+    // Assign locations round-robin so each location receives an equal share of people.
+    int school_ctr = 0, work_ctr = 0, shop_ctr = 0, event_ctr = 0;
     for (auto& person : model.get_persons()) {
         const auto id = person.get_id();
-        //assign shop and event
-        model.assign_location(id, event);
-        model.assign_location(id, shop);
-        //assign hospital and ICU
         model.assign_location(id, hospital);
         model.assign_location(id, icu);
-        //assign work/school to people depending on their age
+        model.assign_location(id, shops[shop_ctr++ % n_shops]);
+        model.assign_location(id, events[event_ctr++ % n_events]);
         if (person.get_age() == age_group_5_to_14) {
-            model.assign_location(id, school);
+            model.assign_location(id, schools[school_ctr++ % n_schools]);
         }
         if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
-            model.assign_location(id, work);
+            model.assign_location(id, workplaces[work_ctr++ % n_workplaces]);
         }
     }
-
-    // During the lockdown, social events are closed for 90% of people.
-    //auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(10);
-    //mio::abm::close_social_events(t_lockdown, 0.9, model.parameters);
 
     // Set start and end time for the simulation.
     auto t0   = mio::abm::TimePoint(0);
     auto tmax = t0 + mio::abm::days(30);
     auto sim  = mio::abm::Simulation(t0, std::move(model));
 
-    // Create a history object to store the time series of the infection states.
-    //mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
-    //    Eigen::Index(mio::abm::InfectionState::Count)};
-    mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogViralLoad> historyTimeSeries{
-        Eigen::Index(10)};
-    auto start2 = std::chrono::high_resolution_clock::now();
+    // Both loggers fire at 8AM — one row per school-day morning.
+    mio::History<mio::DataWriterToMemory, mio::abm::LogCTCluster, mio::abm::LogSchoolCohort, mio::abm::LogInfectionState>
+        historyTimeSeries{
+            mio::abm::LogCTCluster{age_group_5_to_14, mio::abm::LocationType::School},
+            mio::abm::LogSchoolCohort{},
+            mio::abm::LogInfectionState{}};
     // Run the simulation until tmax with the history object.
     sim.advance(tmax, historyTimeSeries);
 
-    // Write results to a file. Also print the filepath to make it easier to find
-    auto outpath = mio::create_directories_or_exit(mio::example_results_dir("abm_minimal")) / "history.txt";
+    // Write results to files.
+    auto outpath = mio::create_directories_or_exit(mio::example_results_dir("abm_minimal")) / "ct_cluster.txt";
     std::ofstream outfile(outpath);
-    std::get<0>(historyTimeSeries.get_log())
-        .print_table(outfile, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4);
-    std::cout << "Results written to " << outpath << std::endl;
+    for (const auto& [time, hist] : std::get<0>(historyTimeSeries.get_log())) {
+        outfile << time.days();
+        for (Eigen::Index i = 0; i < hist.size(); ++i)
+            outfile << " " << hist[i];
+        outfile << "\n";
+    }
+    std::cout << "CT cluster log written to " << outpath << std::endl;
+
+    auto cohort_bin_path = mio::create_directories_or_exit(mio::example_results_dir("abm_minimal")) / "cohort.bin";
+    auto cohort_txt_path = mio::create_directories_or_exit(mio::example_results_dir("abm_minimal")) / "cohort.txt";
+    std::ofstream cohort_bin(cohort_bin_path, std::ios::binary);
+    std::ofstream cohort_txt(cohort_txt_path);
+    for (const auto& [time, cts] : std::get<1>(historyTimeSeries.get_log())) {
+        uint32_t day = static_cast<uint32_t>(std::round(time.days()));
+        cohort_bin.write(reinterpret_cast<const char*>(&day), sizeof(day));
+        cohort_bin.write(reinterpret_cast<const char*>(cts.data()), cts.size());
+        cohort_txt << "day=" << day << ":";
+        for (uint8_t ct : cts) {
+            cohort_txt << " " << (ct == 255 ? "-" : std::to_string(ct));
+        }
+        cohort_txt << "\n";
+    }
+    std::cout << "Cohort log written to " << cohort_bin_path << " and " << cohort_txt_path << std::endl;
+
+    auto inf_path = mio::create_directories_or_exit(mio::example_results_dir("abm_minimal")) / "infection_states.txt";
+    std::ofstream inf_file(inf_path);
+    inf_file << "t S E I_NS I_Sy I_Sev I_Crit R D\n";
+    for (const auto& [time, counts] : std::get<2>(historyTimeSeries.get_log())) {
+        inf_file << time.days();
+        for (Eigen::Index i = 0; i < counts.size(); ++i) {
+            inf_file << " " << counts[i];
+        }
+        inf_file << "\n";
+    }
+    std::cout << "Infection state log written to " << inf_path << std::endl;
 
     return 0;
 }

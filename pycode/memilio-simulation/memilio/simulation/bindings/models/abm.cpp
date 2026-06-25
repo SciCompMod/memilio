@@ -237,10 +237,23 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     m.attr("__version__") = "dev";
 
+    py::class_<ABMPopulation>(m, "ABMPopulation",
+      "Pre-built ABM population (households, locations, agent assignments). "
+      "Construct once, reuse across many forward_pass() calls to avoid rebuilding the structure.")
+        .def(py::init<int>(), py::arg("n_households") = 100);
+
     m.def("forward_pass",
-      &forward_pass,
-      py::arg("beta"), py::arg("kappa"),
-      "Run the ABM forward pass and return a 10-bin Eigen vector.");
+      py::overload_cast<const ABMPopulation&, ScalarType, ScalarType, int>(&forward_pass),
+      py::arg("population"), py::arg("beta"), py::arg("kappa"), py::arg("cohort_budget") = 50,
+      "Run the ABM forward pass using a pre-built population. Returns (histogram, cohort): "
+      "histogram is (n_days, 42) with columns [day, ct_0..ct_40], "
+      "cohort is (n_days, cohort_budget+1) with columns [day, ct_student_0..ct_student_{k-1}]. "
+      "Encoding: 0 = max viral load, 40 = not detected, 255 = unused cohort slot.");
+
+    m.def("forward_pass",
+      py::overload_cast<ScalarType, ScalarType, int>(&forward_pass),
+      py::arg("beta"), py::arg("kappa"), py::arg("cohort_budget") = 50,
+      "Run the ABM forward pass (builds a fresh population each call). Returns (histogram, cohort).");
 }
 
 PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::Model>().get_locations()))

@@ -184,8 +184,19 @@ endif()
 
 # add parts of the project
 include(thirdparty/CMakeLists.txt)
+
+# Workaround for MSVC warning C4459 inside spdlog/fmt
+if (MSVC)
+    target_compile_options(spdlog PRIVATE /wd4459)
+    target_compile_options(spdlog INTERFACE /wd4459)
+endif()
 add_subdirectory(memilio/ad)
 add_subdirectory(memilio)
+
+if (MSVC)
+    target_compile_options(memilio PRIVATE /wd4459)
+endif()
+
 
 if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/abm)

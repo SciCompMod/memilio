@@ -23,176 +23,167 @@
 #include "abm/common_abm_loggers.h"
 #include "forward_pass.h"
 
-Eigen::MatrixXd forward_pass(ScalarType beta, ScalarType kappa)
+namespace
 {
-    auto start = std::chrono::high_resolution_clock::now();
-    // This is a minimal example with children and adults < 60 year old.
-    // We divided them into 4 different age groups, which are defined as follows:
+const size_t NUM_AGE_GROUPS      = 4;
+const auto AGE_GROUP_0_TO_4      = mio::AgeGroup(0);
+const auto AGE_GROUP_5_TO_14     = mio::AgeGroup(1);
+const auto AGE_GROUP_15_TO_34    = mio::AgeGroup(2);
+const auto AGE_GROUP_35_TO_59    = mio::AgeGroup(3);
+} // namespace
+
+struct ABMPopulation::Impl {
+    mio::abm::Model model;
+
+    explicit Impl(int n_households)
+        : model(NUM_AGE_GROUPS)
+    {
+        model.parameters.get<mio::abm::AgeGroupGotoSchool>() = false;
+        model.parameters.get<mio::abm::AgeGroupGotoSchool>()[AGE_GROUP_5_TO_14] = true;
+        model.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple(
+            {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59}, true);
+
+        auto child = mio::abm::HouseholdMember(NUM_AGE_GROUPS);
+        child.set_age_weight(AGE_GROUP_0_TO_4, 1);
+        child.set_age_weight(AGE_GROUP_5_TO_14, 1);
+
+        auto parent = mio::abm::HouseholdMember(NUM_AGE_GROUPS);
+        parent.set_age_weight(AGE_GROUP_15_TO_34, 1);
+        parent.set_age_weight(AGE_GROUP_35_TO_59, 1);
+
+        auto twoPersonHousehold_group = mio::abm::HouseholdGroup();
+        auto twoPersonHousehold_full  = mio::abm::Household();
+        twoPersonHousehold_full.add_members(child, 1);
+        twoPersonHousehold_full.add_members(parent, 1);
+        twoPersonHousehold_group.add_households(twoPersonHousehold_full, n_households);
+        add_household_group_to_model(model, twoPersonHousehold_group);
+
+        auto threePersonHousehold_group = mio::abm::HouseholdGroup();
+        auto threePersonHousehold_full  = mio::abm::Household();
+        threePersonHousehold_full.add_members(child, 1);
+        threePersonHousehold_full.add_members(parent, 2);
+        threePersonHousehold_group.add_households(threePersonHousehold_full, n_households);
+        add_household_group_to_model(model, threePersonHousehold_group);
+
+        const int n_schools    = std::max(1, n_households / 200);
+        const int n_workplaces = std::max(1, 3 * n_households / 200);
+        const int n_shops      = std::max(1, 5 * n_households / 500);
+        const int n_events     = std::max(1, 5 * n_households / 500);
+
+        std::vector<mio::abm::LocationId> schools, workplaces, shops, events;
+        for (int i = 0; i < n_schools; ++i) {
+            auto loc = model.add_location(mio::abm::LocationType::School);
+            model.get_location(loc).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+            schools.push_back(loc);
+        }
+        for (int i = 0; i < n_workplaces; ++i) {
+            auto loc = model.add_location(mio::abm::LocationType::Work);
+            model.get_location(loc).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+            model.get_location(loc).get_infection_parameters().get<mio::abm::ContactRates>().get_baseline()(
+                AGE_GROUP_15_TO_34.get(), AGE_GROUP_15_TO_34.get()) = 10.0;
+            workplaces.push_back(loc);
+        }
+        for (int i = 0; i < n_shops; ++i) {
+            auto loc = model.add_location(mio::abm::LocationType::BasicsShop);
+            model.get_location(loc).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+            shops.push_back(loc);
+        }
+        for (int i = 0; i < n_events; ++i) {
+            auto loc = model.add_location(mio::abm::LocationType::SocialEvent);
+            model.get_location(loc).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+            events.push_back(loc);
+        }
+        auto hospital = model.add_location(mio::abm::LocationType::Hospital);
+        model.get_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+        auto icu = model.add_location(mio::abm::LocationType::ICU);
+        model.get_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+
+        auto testing_criteria_work = mio::abm::TestingCriteria();
+        auto testing_scheme_work   = mio::abm::TestingScheme(
+            testing_criteria_work, mio::abm::days(1), mio::abm::TimePoint(0),
+            mio::abm::TimePoint(0) + mio::abm::days(10),
+            model.parameters.get<mio::abm::TestData>()[mio::abm::TestType::Antigen], 0.5);
+        model.get_testing_strategy().add_scheme(mio::abm::LocationType::Work, testing_scheme_work);
+
+        int school_ctr = 0, work_ctr = 0, shop_ctr = 0, event_ctr = 0;
+        for (auto& person : model.get_persons()) {
+            const auto id = person.get_id();
+            model.assign_location(id, hospital);
+            model.assign_location(id, icu);
+            model.assign_location(id, shops[shop_ctr++ % n_shops]);
+            model.assign_location(id, events[event_ctr++ % n_events]);
+            if (person.get_age() == AGE_GROUP_5_TO_14) {
+                model.assign_location(id, schools[school_ctr++ % n_schools]);
+            }
+            if (person.get_age() == AGE_GROUP_15_TO_34 || person.get_age() == AGE_GROUP_35_TO_59) {
+                model.assign_location(id, workplaces[work_ctr++ % n_workplaces]);
+            }
+        }
+    }
+};
+
+ABMPopulation::ABMPopulation(int n_households)
+    : impl(std::make_shared<Impl>(n_households))
+{
+}
+
+std::pair<Eigen::MatrixXd, Eigen::MatrixXd> forward_pass(const ABMPopulation& population,
+                                                          ScalarType beta, ScalarType kappa,
+                                                          int cohort_budget)
+{
     mio::set_log_level(mio::LogLevel::warn);
-    size_t num_age_groups         = 4;
-    const auto age_group_0_to_4   = mio::AgeGroup(0);
-    const auto age_group_5_to_14  = mio::AgeGroup(1);
-    const auto age_group_15_to_34 = mio::AgeGroup(2);
-    const auto age_group_35_to_59 = mio::AgeGroup(3);
 
-    // Create the model with 4 age groups.
-    auto model = mio::abm::Model(num_age_groups);
-    // Set same infection parameter for all age groups. For example, the incubation period is log normally distributed with parameters 4 and 1.
-    model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() = mio::ParameterDistributionLogNormal(log(kappa), 1.);
-    // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    model.parameters.get<mio::abm::AgeGroupGotoSchool>()                    = false;
-    model.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
-    // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 and 35-59)
-    model.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
-
-    // Check if the parameters satisfy their contraints.
+    // Copy the pre-built population, then set inference parameters on the copy.
+    auto model = population.impl->model;
+    model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() =
+        mio::ParameterDistributionLogNormal(log(kappa), 1.);
     model.parameters.check_constraints();
-
-    // There are 10 households for each household group.
-    int n_households = 100;
-
-    // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
-    auto child = mio::abm::HouseholdMember(num_age_groups); // A child is 50/50% 0-4 or 5-14.
-    child.set_age_weight(age_group_0_to_4, 1);
-    child.set_age_weight(age_group_5_to_14, 1);
-
-    auto parent = mio::abm::HouseholdMember(num_age_groups); // A parent is 50/50% 15-34 or 35-59.
-    parent.set_age_weight(age_group_15_to_34, 1);
-    parent.set_age_weight(age_group_35_to_59, 1);
-
-    // Two-person household with one parent and one child.
-    auto twoPersonHousehold_group = mio::abm::HouseholdGroup();
-    auto twoPersonHousehold_full  = mio::abm::Household();
-    twoPersonHousehold_full.add_members(child, 1);
-    twoPersonHousehold_full.add_members(parent, 1);
-    twoPersonHousehold_group.add_households(twoPersonHousehold_full, n_households);
-    add_household_group_to_model(model, twoPersonHousehold_group);
-
-    // Three-person household with two parent and one child.
-    auto threePersonHousehold_group = mio::abm::HouseholdGroup();
-    auto threePersonHousehold_full  = mio::abm::Household();
-    threePersonHousehold_full.add_members(child, 1);
-    threePersonHousehold_full.add_members(parent, 2);
-    threePersonHousehold_group.add_households(threePersonHousehold_full, n_households);
-    add_household_group_to_model(model, threePersonHousehold_group);
-
-    // Add one social event with 5 maximum contacts.
-    // Maximum contacs limit the number of people that a person can infect while being at this location.
-    auto event = model.add_location(mio::abm::LocationType::SocialEvent);
-    model.get_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    // Add hospital and ICU with 5 maximum contacs.
-    auto hospital = model.add_location(mio::abm::LocationType::Hospital);
-    model.get_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    auto icu = model.add_location(mio::abm::LocationType::ICU);
-    model.get_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    // Add one supermarket, maximum constacts are assumed to be 20.
-    auto shop = model.add_location(mio::abm::LocationType::BasicsShop);
-    model.get_location(shop).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
-    // At every school, the maximum contacts are 20.
-    auto school = model.add_location(mio::abm::LocationType::School);
-    model.get_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
-    // At every workplace, maximum contacts are 20.
-    auto work = model.add_location(mio::abm::LocationType::Work);
-    model.get_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
-
-    // Increase aerosol transmission for all locations
     model.parameters.get<mio::abm::AerosolTransmissionRates>() = 1 / beta;
-    // Increase contact rate for all people between 15 and 34 (i.e. people meet more often in the same location)
-    model.get_location(work)
-        .get_infection_parameters()
-        .get<mio::abm::ContactRates>()[{age_group_15_to_34, age_group_15_to_34}] = 10.0;
 
-    // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 10.
-    auto validity_period       = mio::abm::days(1);
-    auto probability           = 0.5;
-    auto start_date            = mio::abm::TimePoint(0);
-    auto end_date              = mio::abm::TimePoint(0) + mio::abm::days(10);
-    auto test_type             = mio::abm::TestType::Antigen;
-    auto test_parameters       = model.parameters.get<mio::abm::TestData>()[test_type];
-    auto testing_criteria_work = mio::abm::TestingCriteria();
-    auto testing_scheme_work   = mio::abm::TestingScheme(testing_criteria_work, validity_period, start_date, end_date,
-                                                         test_parameters, probability);
-    model.get_testing_strategy().add_scheme(mio::abm::LocationType::Work, testing_scheme_work);
-
-    // Assign infection state to each person.
-    // The infection states are chosen randomly with the following distribution
+    // Randomise initial infection states on the copied model.
+    auto start_date = mio::abm::TimePoint(0);
     std::vector<ScalarType> infection_distribution{0.9, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    
     for (auto& person : model.get_persons()) {
         mio::abm::InfectionState infection_state = mio::abm::InfectionState(
             mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(), infection_distribution));
-        auto rng = mio::abm::PersonalRandomNumberGenerator(person);
+        auto rng = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          model.parameters, start_date, infection_state));
         }
     }
 
-    // Assign locations to the people
-    for (auto& person : model.get_persons()) {
-        const auto id = person.get_id();
-        //assign shop and event
-        model.assign_location(id, event);
-        model.assign_location(id, shop);
-        //assign hospital and ICU
-        model.assign_location(id, hospital);
-        model.assign_location(id, icu);
-        //assign work/school to people depending on their age
-        if (person.get_age() == age_group_5_to_14) {
-            model.assign_location(id, school);
-        }
-        if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
-            model.assign_location(id, work);
-        }
-    }
-
-    // During the lockdown, social events are closed for 90% of people.
-    //auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(10);
-    //mio::abm::close_social_events(t_lockdown, 0.9, model.parameters);
-
-    // Set start and end time for the simulation.
     auto t0   = mio::abm::TimePoint(0);
     auto tmax = t0 + mio::abm::days(30);
     auto sim  = mio::abm::Simulation(t0, std::move(model));
 
-    // Create a history object to store the time series of the infection states.
-    mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogViralLoad> historyTimeSeries{
-        Eigen::Index(10)};
-    // Run the simulation until tmax with the history object.
+    mio::History<mio::DataWriterToMemory, mio::abm::LogCTCluster, mio::abm::LogSchoolCohort>
+        historyTimeSeries{
+            mio::abm::LogCTCluster{AGE_GROUP_5_TO_14, mio::abm::LocationType::School},
+            mio::abm::LogSchoolCohort{cohort_budget}};
     sim.advance(tmax, historyTimeSeries);
-        
-    const auto& log =std::get<0>(historyTimeSeries.get_log());
-    size_t num_points_log = static_cast<size_t>(log.get_num_time_points());
-    size_t num_elements_log = static_cast<size_t>(log.get_num_elements());
-    std::vector<Eigen::RowVectorXd> rows;
 
-    for (size_t i = 0; i < num_points_log; ++i) {
-        double t = log.get_time(i);
-
-        if (std::abs(t - std::round(t)) < 1e-10) {
-            Eigen::RowVectorXd row(num_elements_log + 1);
-            row(0) = std::round(t);
-            row.tail(num_elements_log) = log.get_value(i).transpose();
-            rows.push_back(row);
-        }
+    const auto& hist_log = std::get<0>(historyTimeSeries.get_log());
+    Eigen::MatrixXd hist_result(static_cast<Eigen::Index>(hist_log.size()), 42);
+    for (size_t i = 0; i < hist_log.size(); ++i) {
+        const auto& [time, hist] = hist_log[i];
+        hist_result(i, 0)           = std::round(time.days());
+        hist_result.row(i).tail(41) = hist.cast<double>().transpose();
     }
 
-    Eigen::MatrixXd result(rows.size(), num_elements_log + 1);
-    for (size_t i = 0; i < rows.size(); ++i) {
-        result.row(i) = rows[i];
+    const auto& cohort_log = std::get<1>(historyTimeSeries.get_log());
+    Eigen::MatrixXd cohort_result(static_cast<Eigen::Index>(cohort_log.size()), cohort_budget + 1);
+    for (size_t i = 0; i < cohort_log.size(); ++i) {
+        const auto& [time, cts] = cohort_log[i];
+        cohort_result(i, 0) = std::round(time.days());
+        for (int j = 0; j < cohort_budget; ++j)
+            cohort_result(i, j + 1) = static_cast<double>(cts[j]);
     }
 
-    /*
-    Eigen::MatrixXd result(num_points_log, num_elements_log + 1); 
-    
-    for (size_t i = 0; i < num_points_log; i++) { 
-        //auto time = log.get_time(i);
-        //auto res_i = log.get_value(i);
-        //result.row(i) = res_i.transpose();
+    return {hist_result, cohort_result};
+}
 
-        result(i, 0) = log.get_time(i); 
-        result.row(i).segment(1, num_elements_log) = log.get_value(i).transpose();
-    }
-    */
-    return result;
+std::pair<Eigen::MatrixXd, Eigen::MatrixXd> forward_pass(ScalarType beta, ScalarType kappa, int cohort_budget)
+{
+    return forward_pass(ABMPopulation{}, beta, kappa, cohort_budget);
 }

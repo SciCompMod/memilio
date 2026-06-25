@@ -567,6 +567,7 @@ IOResult<Tup> deserialize_tuple_element(IOObj& obj, Tag<Tup> tag, const IOResult
         //end of recursion
         //number of arguments in rs is the same as the size of the tuple
         //no more elements to read, so finalize the object
+        (void)tag; // silence unused parameter warning, tag is only used for overload resolution
         return mio::apply(
             obj,
             [](const Ts&... ts) {
