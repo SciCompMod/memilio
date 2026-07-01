@@ -39,7 +39,7 @@ ModelMessinaExtendedDetailedInit::ModelMessinaExtendedDetailedInit(TimeSeries<Sc
                                                                    size_t finite_difference_order,
                                                                    TimeSeries<ScalarType>&& flows_init)
     : parameters{Parameters()}
-    , populations{std::move(populations_init)} // , flows{TimeSeries<ScalarType>((size_t)InfectionTransition::Count)}
+    , populations{std::move(populations_init)}
     , m_N{N_init}
     , m_gregory_order(gregory_order)
     , m_finite_difference_order(finite_difference_order)
@@ -381,15 +381,15 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
         ScalarType init_time = populations.get_time(0);
 
         ScalarType summand =
-            -dt * gregory_weight * m_transmissionproboncontact_vector[current_time_index - j] *
+            dt * gregory_weight * m_transmissionproboncontact_vector[current_time_index - j] *
                 m_riskofinffromsymptomatic_vector[current_time_index - j] *
                 m_transitiondistribution_vector[current_time_index - j] *
                 (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                     SimulationTime<ScalarType>((current_time_index - (ScalarType)j) * dt + init_time))(0, 0) -
-                 (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                      SimulationTime<ScalarType>(current_time))(0, 0) /
-                  m_N) *
-                     (relevant_susceptibles)) -
+                     SimulationTime<ScalarType>((current_time_index - (ScalarType)j) * dt + init_time))(0, 0) /
+                     m_N * (populations.get_value(0)[(Eigen::Index)InfectionState::Recovered] - m_N) +
+                 parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                     SimulationTime<ScalarType>(current_time))(0, 0) *
+                     relevant_susceptibles / m_N) -
             dt * dt * gregory_weight * phi_deriv / m_N * inner_sum;
 
         if (fabs(summand) >= 1e-16) {
@@ -819,6 +819,18 @@ void ModelMessinaExtendedDetailedInit::compute_S_deriv(ScalarType dt, size_t tim
               3 * populations[time_point_index - 4][(Eigen::Index)InfectionState::Susceptible]) /
             (12 * dt);
     }
+}
+
+void ModelMessinaExtendedDetailedInit::compute_S_deriv_forward(ScalarType dt, size_t time_point_index)
+{
+
+    flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+        -(-25 * populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] +
+          48 * populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible] -
+          36 * populations[time_point_index - 2][(Eigen::Index)InfectionState::Susceptible] +
+          16 * populations[time_point_index - 3][(Eigen::Index)InfectionState::Susceptible] -
+          3 * populations[time_point_index - 4][(Eigen::Index)InfectionState::Susceptible]) /
+        (12 * dt);
 }
 
 void ModelMessinaExtendedDetailedInit::compute_S_deriv(ScalarType dt)

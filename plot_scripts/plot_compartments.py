@@ -65,6 +65,8 @@ def plot_susceptibles(files, fileending, save_dir=""):
         total = data['Total'][:, :]
 
         dates = data['Time'][:]
+        if file == 0:
+            t0_ode = dates[0]
 
         # Plot data.
         for i in range(num_plots):
@@ -76,7 +78,7 @@ def plot_susceptibles(files, fileending, save_dir=""):
     # Define some characteristics of the plot
     for i in range(num_plots):
         axs[i].set_title(secir_dict[i], fontsize=8)
-        axs[i].set_xlim(left=dates[0], right=dates[-1])
+        axs[i].set_xlim(left=t0_ode, right=dates[-1])
         axs[i].grid(True, linestyle='--', alpha=0.5)
         axs[i].ticklabel_format(axis='y',
                                 style='sci', scilimits=(0, 0))
@@ -102,8 +104,6 @@ def plot_susceptibles(files, fileending, save_dir=""):
 
 
 def subfolders_scandir(path):
-    # path = os.path.dirname(path)
-    print(path)
     with os.scandir(path) as it:
         return [entry.name for entry in it if entry.is_dir()]
 
@@ -113,7 +113,7 @@ if __name__ == '__main__':
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
 
-    main_dir = "2026-04-28/test_fdordercontacts=8"
+    main_dir = "2026-07-01/adapted_formulation_t0ode=0_I0=1000_R0=100"
 
     relevant_dir = os.path.join(root_dir, main_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
