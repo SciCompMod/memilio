@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Sascha Korf
 *
@@ -33,13 +33,13 @@ namespace abm
  */
 enum class TransportMode : uint32_t
 {
+    Unknown = 0,
     Bike,
     CarDriver,
     CarPassenger,
     PublicTransport,
     Walking,
     Other,
-    Unknown,
     Count //last!!
 };
 

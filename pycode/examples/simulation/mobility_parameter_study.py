@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2025 MEmilio
+# Copyright (C) 2020-2026 MEmilio
 #
 # Authors:
 #
@@ -122,13 +122,14 @@ def run_mobility_parameter_study():
     handle_result.c = 0
 
     # study with unknown number of undetected InfectedNoSymptoms
-    carrier_distribution = mio.ParameterDistributionNormal(50, 2000, 200, 100)
+    carrier_distribution = mio.ParameterDistributionNormal(
+        50, 2000, 200, 100, 2.5758)
     graph.get_node(0).property.populations[mio.AgeGroup(
         0), osecir.InfectionState.InfectedNoSymptoms].set_distribution(carrier_distribution)
 
     t0 = 0
     tmax = 50
-    study = osecir.ParameterStudy(graph, t0, tmax, dt=1.0, num_runs=3)
+    study = osecir.GraphParameterStudy(graph, t0, tmax, dt=1.0, num_runs=3)
     study.run(handle_result)
 
 

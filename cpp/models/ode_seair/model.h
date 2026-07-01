@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Ralf Hannemann-Tamas
 *
@@ -21,7 +21,7 @@
 #ifndef ODESEAIR_MODEL_H
 #define ODESEAIR_MODEL_H
 
-#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/compartments/compartmental_model.h"
 #include "memilio/config.h"
 #include "memilio/epidemiology/populations.h"
 #include "ode_seair/infection_state.h"
@@ -32,7 +32,7 @@ namespace mio
 namespace oseair
 {
 
-template <typename FP = ScalarType>
+template <typename FP>
 class Model : public mio::CompartmentalModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>>
 {
     using Base = mio::CompartmentalModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>>;
@@ -42,7 +42,7 @@ public:
     using typename Base::Populations;
 
     Model()
-        : Base(Populations({InfectionState::Count}, 0.), ParameterSet())
+        : Base(Populations({InfectionState::Count}, 0.0), ParameterSet())
     {
     }
 

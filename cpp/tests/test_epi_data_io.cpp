@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -17,14 +17,11 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-
-#include "abm/infection_state.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/geography/regions.h"
 #include "memilio/io/epi_data.h"
 #include "matchers.h"
 #include "memilio/io/io.h"
-#include "memilio/io/mobility_io.h"
 #include "test_data_dir.h"
 #include "gtest/gtest.h"
 #include "json/value.h"
@@ -32,6 +29,7 @@
 #include "ode_secirts/parameters_io.h"
 #include "memilio/utils/stl_util.h"
 #include "boost/optional/optional_io.hpp"
+#include "utils.h"
 #include <gmock/gmock-matchers.h>
 
 TEST(TestEpiDataIo, read_rki)
@@ -300,10 +298,28 @@ TEST(TestEpiDataIo, read_divi_data)
 TEST(TestEpiDataIo, is_divi_data_available)
 {
     EXPECT_FALSE(mio::is_divi_data_available(mio::Date(2020, 4, 22))); // Before start
-    EXPECT_FALSE(mio::is_divi_data_available(mio::Date(2024, 7, 22))); // After end
     EXPECT_TRUE(mio::is_divi_data_available(mio::Date(2020, 4, 23))); // Start date
-    EXPECT_TRUE(mio::is_divi_data_available(mio::Date(2022, 1, 1))); // Inside range
-    EXPECT_TRUE(mio::is_divi_data_available(mio::Date(2024, 7, 21))); // End date
+    EXPECT_TRUE(mio::is_divi_data_available(mio::Date(2022, 1, 1))); // Day after start
+}
+
+TEST(TestEpiDataIo, is_vaccination_data_available)
+{
+    // Single date tests
+    EXPECT_FALSE(mio::is_vaccination_data_available(mio::Date(2020, 12, 26), mio::Date(2020, 12, 26))); // Before start
+    EXPECT_TRUE(mio::is_vaccination_data_available(mio::Date(2020, 12, 27), mio::Date(2020, 12, 27))); // Start date
+    EXPECT_TRUE(mio::is_vaccination_data_available(mio::Date(2024, 7, 9), mio::Date(2024, 7, 9))); // End date
+    EXPECT_FALSE(mio::is_vaccination_data_available(mio::Date(2024, 7, 10), mio::Date(2024, 7, 10))); // After end
+
+    // Date range tests
+    EXPECT_TRUE(
+        mio::is_vaccination_data_available(mio::Date(2020, 12, 20), mio::Date(2020, 12, 28))); // Overlap with start
+    EXPECT_TRUE(mio::is_vaccination_data_available(mio::Date(2024, 7, 5), mio::Date(2024, 7, 15))); // Overlap with end
+    EXPECT_TRUE(
+        mio::is_vaccination_data_available(mio::Date(2021, 1, 1), mio::Date(2021, 12, 31))); // Completely within range
+    EXPECT_TRUE(
+        mio::is_vaccination_data_available(mio::Date(2020, 1, 1), mio::Date(2025, 1, 1))); // Contains entire range
+    EXPECT_FALSE(mio::is_vaccination_data_available(mio::Date(2019, 1, 1), mio::Date(2020, 12, 26))); // Before start
+    EXPECT_FALSE(mio::is_vaccination_data_available(mio::Date(2024, 7, 10), mio::Date(2025, 1, 1))); // After end
 }
 
 TEST(TestEpiDataIo, read_confirmed_cases_data)
@@ -405,9 +421,12 @@ TEST(TestEpiData, set_vaccination_data)
     model.parameters.set<mio::osecirts::DaysUntilEffectiveBoosterImmunity<double>>(1);
     std::vector<mio::osecirts::Model<double>> model_vector{model};
 
-    auto f = mio::osecirts::details::set_vaccination_data(model_vector,
-                                                          mio::path_join(TEST_DATA_DIR, "vaccination_test.json"),
-                                                          mio::Date(2022, 4, 15), county_ids, num_days);
+    {
+        mio::LogLevelOverride llo(mio::LogLevel::off); // suppress "Vaccination data only available from [...]"
+        mio::unused(mio::osecirts::details::set_vaccination_data(model_vector,
+                                                                 mio::path_join(TEST_DATA_DIR, "vaccination_test.json"),
+                                                                 mio::Date(2022, 4, 15), county_ids, num_days));
+    }
 
     auto expected_values_PI =
         (Eigen::ArrayXd(num_age_groups * (num_days + 1)) << 7, 10, 20, 15, 10, 5, 2, 15, 8, 0).finished();

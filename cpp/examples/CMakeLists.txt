@@ -1,10 +1,10 @@
-# configure directory that contains the data files used by examples
-file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../data" MEMILIO_DATA_DIR)
-configure_file(data_dir.h.in data_dir.h)
-
 add_executable(euler_example euler_test.cpp)
 target_link_libraries(euler_example PRIVATE memilio)
 target_compile_options(euler_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(performance_timer_example performance_timers.cpp)
+target_link_libraries(performance_timer_example PRIVATE memilio)
+target_compile_options(performance_timer_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(ode_secir_parameter_sampling_example ode_secir_parameter_sampling.cpp)
 target_link_libraries(ode_secir_parameter_sampling_example PRIVATE memilio ode_secir)
@@ -17,6 +17,10 @@ target_compile_options(adapt_rk_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNI
 add_executable(ode_seir_example ode_seir.cpp)
 target_link_libraries(ode_seir_example PRIVATE memilio ode_seir)
 target_compile_options(ode_seir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(ode_seirdb_example ode_seirdb.cpp)
+target_link_libraries(ode_seirdb_example PRIVATE memilio ode_seirdb)
+target_compile_options(ode_seirdb_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(ode_seir_ageres_example ode_seir_ageres.cpp)
 target_link_libraries(ode_seir_ageres_example PRIVATE memilio ode_seir)
@@ -64,6 +68,10 @@ add_executable(seir_flows_example ode_seir_flows.cpp)
 target_link_libraries(seir_flows_example PRIVATE memilio ode_seir)
 target_compile_options(seir_flows_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(ode_seirv_example ode_seirv_example.cpp)
+target_link_libraries(ode_seirv_example PRIVATE memilio ode_seirv)
+target_compile_options(ode_seirv_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(ode_secir_example ode_secir.cpp)
 target_link_libraries(ode_secir_example PRIVATE memilio ode_secir)
 target_compile_options(ode_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
@@ -75,6 +83,10 @@ target_compile_options(ode_secir_contact_changes PRIVATE ${MEMILIO_CXX_FLAGS_ENA
 add_executable(ode_secir_feedback ode_secir_feedback.cpp)
 target_link_libraries(ode_secir_feedback PRIVATE memilio ode_secir)
 target_compile_options(ode_secir_feedback PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(ode_secir_feedback_graph ode_secir_feedback_graph.cpp)
+target_link_libraries(ode_secir_feedback_graph PRIVATE memilio ode_secir)
+target_compile_options(ode_secir_feedback_graph PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(ode_secirvvs_example ode_secirvvs.cpp)
 target_link_libraries(ode_secirvvs_example PRIVATE memilio ode_secirvvs)
@@ -96,9 +108,15 @@ add_executable(graph_stochastic_mobility_example graph_stochastic_mobility.cpp)
 target_link_libraries(graph_stochastic_mobility_example PRIVATE memilio ode_secir)
 target_compile_options(graph_stochastic_mobility_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-# Add CUDA ABM minimal example 
-add_executable(abm_minimal_example abm_minimal.cu)
+add_executable(ode_metapop_seir_example ode_seir_metapop.cpp)
+target_link_libraries(ode_metapop_seir_example PRIVATE memilio ode_seir_metapop)
+target_compile_options(ode_metapop_seir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(abm_minimal_example abm_minimal.cpp)
 target_link_libraries(abm_minimal_example PRIVATE memilio abm)
+
+# Add CUDA ABM minimal example 
+add_executable(abm_minimal_example_cuda abm_minimal.cu)
 if(MEMILIO_ENABLE_CUDA)
     # Already a .cu file so no need to set language
     target_link_libraries(abm_minimal_example PRIVATE ${CUDA_LIBRARIES})
@@ -126,6 +144,12 @@ if(MEMILIO_ENABLE_CUDA)
                          CUDA_SEPARABLE_COMPILATION ON)
 endif()
 
+if(MEMILIO_HAS_HDF5)
+    add_executable(abm_parameter_study_example abm_parameter_study.cpp)
+    target_link_libraries(abm_parameter_study_example PRIVATE memilio abm)
+    target_compile_options(abm_parameter_study_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+endif()
+
 add_executable(abm_history_example abm_history_object.cpp)
 target_link_libraries(abm_history_example PRIVATE memilio abm)
 target_compile_options(abm_history_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
@@ -138,13 +162,17 @@ add_executable(ide_secir_example ide_secir.cpp)
 target_link_libraries(ide_secir_example PRIVATE memilio ide_secir)
 target_compile_options(ide_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-add_executable(ide_secir_ageres_example ide_secir_ageres.cpp)
-target_link_libraries(ide_secir_ageres_example PRIVATE memilio ide_secir)
-target_compile_options(ide_secir_ageres_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+add_executable(ide_secir_graph_example ide_secir_graph.cpp)
+target_link_libraries(ide_secir_graph_example PRIVATE memilio ide_secir)
+target_compile_options(ide_secir_graph_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(lct_secir_example lct_secir.cpp)
 target_link_libraries(lct_secir_example PRIVATE memilio lct_secir)
 target_compile_options(lct_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(lct_secir_2_diseases_example lct_secir_2_diseases.cpp)
+target_link_libraries(lct_secir_2_diseases_example PRIVATE memilio lct_secir_2_diseases)
+target_compile_options(lct_secir_2_diseases_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(glct_secir_example glct_secir.cpp)
 target_link_libraries(glct_secir_example PRIVATE memilio glct_secir)
@@ -165,6 +193,10 @@ target_compile_options(dabm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_E
 add_executable(smm_example smm.cpp)
 target_link_libraries(smm_example PRIVATE memilio smm)
 target_compile_options(smm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(temporal_hybrid_example temporal_hybrid_dabm_osecir.cpp)
+target_link_libraries(temporal_hybrid_example PRIVATE memilio hybrid ode_secir d_abm)
+target_compile_options(temporal_hybrid_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 if(MEMILIO_HAS_JSONCPP)
     add_executable(ode_secir_read_graph_example ode_secir_read_graph.cpp)
@@ -206,3 +238,7 @@ if(MEMILIO_HAS_JSONCPP)
     target_link_libraries(ide_initialization_example PRIVATE memilio ide_secir)
     target_compile_options(ide_initialization_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()
+
+add_executable(ode_mseirs4_example ode_mseirs4.cpp)
+target_link_libraries(ode_mseirs4_example PRIVATE memilio ode_mseirs4)
+target_compile_options(ode_mseirs4_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})

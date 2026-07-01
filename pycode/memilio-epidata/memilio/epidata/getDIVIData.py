@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2025 MEmilio
+# Copyright (C) 2020-2026 MEmilio
 #
 # Authors: Kathrin Rack, Lena Ploetzke, Martin J. Kuehn
 #
@@ -99,7 +99,7 @@ def preprocess_divi_data(df_raw: pd.DataFrame,
                          end_date: date = dd.defaultDict['end_date'],
                          impute_dates: bool = dd.defaultDict['impute_dates'],
                          moving_average: int = dd.defaultDict['moving_average'],
-                         ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+                         ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """ Processing of the downloaded data
         * the columns are renamed to English and the state and county names are added.
 
@@ -178,7 +178,7 @@ def write_divi_data(df: pd.DataFrame,
                     file_format: str = dd.defaultDict['file_format'],
                     impute_dates: bool = dd.defaultDict['impute_dates'],
                     moving_average: int = dd.defaultDict['moving_average'],
-                    ) -> Dict:
+                    ) -> dict:
     """ Write the divi data into json files
 
     Three kinds of structuring of the data are done.
@@ -349,7 +349,7 @@ def divi_data_sanity_checks(df: pd.DataFrame) -> None:
     # Maybe we should look for a new method to sanitize the size of the
     # DataFrame.
     num_dates = (date.today() - date(2020, 4, 24)).days
-    min_num_data = 380 * num_dates  # not all 400 counties report every day
+    min_num_data = 300 * num_dates  # not all 400 counties report every day
     max_num_data = 400 * num_dates
     if (len(df) < min_num_data) or (len(df) > max_num_data):
         raise gd.DataError("Error: unexpected length of dataframe.")

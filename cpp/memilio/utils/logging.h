@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Martin Siggel
 *
@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef LOGGING_H
-#define LOGGING_H
+#ifndef MIO_UTILS_LOGGING_H
+#define MIO_UTILS_LOGGING_H
 
 #ifdef NDEBUG
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_INFO
@@ -27,12 +27,25 @@
 #endif
 
 #include "memilio/utils/compiler_diagnostics.h"
-#include "ad/ad.hpp"
 
 // C4996: Some stdext functions used in spdlog 1.11 are marked as deprecated in version 19.38.33135.0 of MSVC. Maybe a future version of spdlog will fix this.
 MSVC_WARNING_DISABLE_PUSH(4996)
 #include <spdlog/spdlog.h>
 MSVC_WARNING_POP()
+
+#include <filesystem>
+
+/**
+ * @brief Make std::filesystem::path formattable as string.
+ */
+template <>
+struct fmt::formatter<std::filesystem::path> : formatter<std::string_view> {
+    template <typename FormatContext>
+    auto format(const std::filesystem::path& path, FormatContext& ctxt) const
+    {
+        return formatter<std::string_view>::format(path.string(), ctxt);
+    }
+};
 
 namespace mio
 {
@@ -94,26 +107,32 @@ inline void set_log_level(LogLevel level)
 template <typename... Args>
 inline void log_info(spdlog::string_view_t fmt, const Args&... args)
 {
-    spdlog::default_logger_raw()->info(fmt, args...);
+    spdlog::default_logger_raw()->info(fmt::runtime(fmt), args...);
 }
 
 template <typename... Args>
 inline void log_error(spdlog::string_view_t fmt, const Args&... args)
 {
-    spdlog::default_logger_raw()->error(fmt, args...);
+    spdlog::default_logger_raw()->error(fmt::runtime(fmt), args...);
+}
+
+template <typename... Args>
+inline void log_critical(spdlog::string_view_t fmt, const Args&... args)
+{
+    spdlog::default_logger_raw()->critical(fmt::runtime(fmt), args...);
 }
 
 template <typename... Args>
 inline void log_warning(spdlog::string_view_t fmt, const Args&... args)
 {
-    spdlog::default_logger_raw()->warn(fmt, args...);
+    spdlog::default_logger_raw()->warn(fmt::runtime(fmt), args...);
 }
 
 template <typename... Args>
 inline void log_debug(spdlog::string_view_t fmt, const Args&... args)
 {
 #ifndef NDEBUG
-    spdlog::default_logger_raw()->debug(fmt, args...);
+    spdlog::default_logger_raw()->debug(fmt::runtime(fmt), args...);
 #else
     unused(fmt, args...);
 #endif
@@ -122,29 +141,9 @@ inline void log_debug(spdlog::string_view_t fmt, const Args&... args)
 template <typename... Args>
 inline void log(LogLevel level, spdlog::string_view_t fmt, const Args&... args)
 {
-    spdlog::default_logger_raw()->log(details::get_spdlog_level(level), fmt, args...);
+    spdlog::default_logger_raw()->log(details::get_spdlog_level(level), fmt::runtime(fmt), args...);
 }
 
 } // namespace mio
 
-namespace ad
-{
-namespace internal
-{
-
-/**
- * @brief Format AD types (like ad::gt1s<double>::type) using their value for logging with spdlog.
- *
- * If derivative information is needed as well, use `ad::derivative(...)` or define a `fmt::formatter<...>`.
- */
-template <class FP, class DataHandler>
-const FP& format_as(const active_type<FP, DataHandler>& ad_type)
-{
-    // Note: the format_as function needs to be in the same namespace as the value it takes
-    return value(ad_type);
-}
-
-} // namespace internal
-} // namespace ad
-
-#endif // LOGGING_H
+#endif // MIO_UTILS_LOGGING_H

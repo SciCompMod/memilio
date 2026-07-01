@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Khoa Nguyen
 *
@@ -35,14 +35,15 @@ namespace abm
 template <class M = Model>
 class Simulation
 {
-
 public:
+    using Model = M;
+
     /**
      * @brief Create a simulation.
      * @param[in] t0 The starting time of the Simulation.
      * @param[in] model The Model to simulate.
      */
-    Simulation(TimePoint t0, M&& model)
+    Simulation(TimePoint t0, Model&& model)
         : m_model(std::move(model))
         , m_t(t0)
         , m_dt(hours(1))
@@ -87,11 +88,11 @@ public:
     /**
      * @brief Get the Model that this Simulation evolves.
      */
-    M& get_model()
+    Model& get_model()
     {
         return m_model;
     }
-    const M& get_model() const
+    const Model& get_model() const
     {
         return m_model;
     }
@@ -105,7 +106,7 @@ private:
         m_t += m_dt;
     }
 
-    M m_model; ///< The Model to simulate.
+    Model m_model; ///< The Model to simulate.
     TimePoint m_t; ///< The current TimePoint of the Simulation.
     TimeSpan m_dt; ///< The length of the time steps.
 };

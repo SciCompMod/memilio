@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Julia Bicker
 *
@@ -17,7 +17,6 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-
 #ifndef MIO_ABM_GRAPH_ABMODEL_H
 #define MIO_ABM_GRAPH_ABMODEL_H
 
@@ -26,19 +25,17 @@
 #include "abm/person_id.h"
 #include "abm/time.h"
 #include "abm/location_id.h"
-#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
-#include "memilio/utils/mioomp.h"
 #include "abm/mobility_rules.h"
 #include "abm/mobility_rules.h"
-#include <cstddef>
 #include <cstdint>
-#include <list>
 #include <vector>
 
 namespace mio
 {
-using namespace abm;
+namespace abm
+{
+
 class GraphABModel : public abm::Model
 {
     using Base = Model;
@@ -55,14 +52,14 @@ public:
     }
 
     /**
-     * @brief Get person buffer. 
+     * @brief Get person buffer.
      */
     std::vector<size_t>& get_person_buffer()
     {
         return m_person_buffer;
     }
 
-    /** 
+    /**
     * @brief Removes person from the model.
     * @param[in] pos Index of person in m_persons vector.
     */
@@ -73,7 +70,7 @@ public:
         Base::m_person_ids_equal_index = false;
     }
 
-    /** 
+    /**
      * @brief Evolve the Graph Model one time step.
      * @param[in] t Current time.
      * @param[in] dt Length of the time step.
@@ -94,7 +91,7 @@ private:
         for (uint32_t person_index = 0; person_index < num_persons; ++person_index) {
             if (Base::m_activeness_statuses[person_index]) {
                 Person& person    = Base::m_persons[person_index];
-                auto personal_rng = PersonalRandomNumberGenerator(person);
+                auto personal_rng = PersonalRandomNumberGenerator(Base::get_rng(), person);
 
                 auto try_mobility_rule = [&](auto rule) -> bool {
                     //run mobility rule and check if change of location can actually happen
@@ -113,7 +110,7 @@ private:
                             return false;
                         }
                         // the Person cannot move if the performed TestingStrategy is positive
-                        if (!m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
+                        if (!m_testing_strategy.run_and_check(personal_rng, person, target_location, t)) {
                             return false;
                         }
                         // update worn mask to target location's requirements
@@ -152,16 +149,15 @@ private:
         }
 
         // check if a person makes a trip
-        bool weekend     = t.is_weekend();
-        size_t num_trips = Base::m_trip_list.num_trips(weekend);
+        size_t num_trips = Base::m_trip_list.num_trips();
 
         for (; Base::m_trip_list.get_current_index() < num_trips &&
-               Base::m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds();
+               Base::m_trip_list.get_next_trip_time().seconds() < (t + dt).time_since_midnight().seconds();
              Base::m_trip_list.increase_index()) {
-            auto& trip        = Base::m_trip_list.get_next_trip(weekend);
+            auto& trip        = Base::m_trip_list.get_next_trip();
             auto& person      = get_person(trip.person_id);
             auto person_index = Base::get_person_index(trip.person_id);
-            auto personal_rng = PersonalRandomNumberGenerator(person);
+            auto personal_rng = PersonalRandomNumberGenerator(Base::get_rng(), person);
             // skip the trip if the person is in quarantine or is dead
             if (person.is_in_quarantine(t, parameters) || person.get_infection_state(t) == InfectionState::Dead) {
                 continue;
@@ -173,7 +169,7 @@ private:
                     continue;
                 }
                 // skip the trip if the performed TestingStrategy is positive
-                if (!Base::m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
+                if (!Base::m_testing_strategy.run_and_check(personal_rng, person, target_location, t)) {
                     continue;
                 }
                 // all requirements are met, move to target location
@@ -192,8 +188,7 @@ private:
             }
             else { //person moves to other world
                 Base::m_activeness_statuses[person_index] = false;
-                person.set_location(trip.destination_type, abm::LocationId::invalid_id(),
-                                    std::numeric_limits<int>::max());
+                person.set_location(abm::LocationType::Invalid, trip.destination, std::numeric_limits<int>::max());
                 m_person_buffer.push_back(person_index);
                 m_are_exposure_caches_valid       = false;
                 m_is_local_population_cache_valid = false;
@@ -206,6 +201,8 @@ private:
 
     std::vector<size_t> m_person_buffer; ///< List with indices of persons that are subject to move to another node.
 };
+
+} // namespace abm
 } // namespace mio
 
 #endif //MIO_ABM_GRAPH_ABMODEL_H

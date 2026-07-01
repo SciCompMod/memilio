@@ -6,10 +6,13 @@ inputs:
     required: true
 runs:
   using: "composite"
-  steps:    
+  steps:
+    - name: Configure Git safe directory
+      shell: bash 
+      run: git config --global --add safe.directory /__w/memilio/memilio    
     - name: Install dependencies
       shell: bash
-      run: yum install ninja-build -qy
+      run: yum install ninja-build cmake git -qy
     - name: Make artifact dir
       shell: bash
       run: |
@@ -19,8 +22,16 @@ runs:
       shell: bash
       run: |
         cd pycode/memilio-${{ inputs.package }}/
-        /opt/python/cp38-cp38/bin/python setup.py bdist_wheel
-        /opt/python/cp311-cp311/bin/python setup.py bdist_wheel
+        # install dependencies and build wheels with specified python versions
+        for python_cmd in /opt/python/cp39-cp39/bin/python /opt/python/cp313-cp313/bin/python
+        do
+          $python_cmd -m pip install --upgrade pip setuptools wheel
+          $python_cmd -m pip install scikit-build scikit-build-core
+          if [ "${{ inputs.package }}" == "simulation" ]
+            then $python_cmd -m pip install setuptools-scm
+          fi
+          $python_cmd -m build --no-isolation --wheel
+        done    
         # Exclude memilio-generation, because its a pure python package, cmake is only used in the build process to retrieve data from cpp
         if [[ -f "CMakeLists.txt" ]] && [ "${{ inputs.package }}" != "generation" ]; then 
           # includes native dependencies in the wheel
@@ -31,8 +42,7 @@ runs:
         fi
         cp -r wheelhouse ..
     - name: Upload Python Wheels
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: python-wheels-${{ inputs.package }}
         path: pycode/wheelhouse
-

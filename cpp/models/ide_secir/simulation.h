@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin J Kuehn, Anna Wendler, Lena Ploetzke
 *
@@ -41,12 +41,16 @@ public:
     /**
      * @brief setup the Simulation for an IDE model.
      * @param[in] model An instance of the IDE model.
-     * @param[in] dt Step size of numerical solver.
+     * @param[in] dt Step size of numerical solver. Throughout the simulation, the step size will be constant. 
      */
     Simulation(Model const& model, ScalarType dt = 0.1)
         : m_model(std::make_unique<Model>(model))
         , m_dt(dt)
     {
+        assert(m_dt > 0);
+        m_model->set_transitiondistributions_support_max(m_dt);
+        m_model->set_transitiondistributions_derivative(m_dt);
+        m_model->set_transitiondistributions_in_forceofinfection(m_dt);
     }
 
     /** 
@@ -123,7 +127,7 @@ private:
  * @param[in] model An instance of an IDE-SECIR model.
  * @return A TimeSeries to represent the final simulation result.
  */
-TimeSeries<ScalarType> simulate(double tmax, double dt, Model const& model);
+TimeSeries<ScalarType> simulate(ScalarType tmax, ScalarType dt, Model const& model);
 
 } // namespace isecir
 } // namespace mio

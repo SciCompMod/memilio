@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Lena Ploetzke
 *
@@ -20,13 +20,13 @@
 #ifndef MIO_EPI_LCT_POPULATIONS_H
 #define MIO_EPI_LCT_POPULATIONS_H
 
-#include "boost/type_traits/make_void.hpp"
-#include "memilio/config.h"
-#include "memilio/utils/uncertain_value.h"
-#include "memilio/math/eigen.h"
-#include "memilio/epidemiology/lct_infection_state.h"
-#include "memilio/utils/type_list.h"
+#include "memilio/config.h" // IWYU pragma: keep
+#include "memilio/math/eigen.h" // IWYU pragma: keep
+#include "memilio/epidemiology/lct_infection_state.h" // IWYU pragma: keep for ease of use
 #include "memilio/utils/metaprogramming.h"
+#include "memilio/utils/type_list.h"
+#include "memilio/utils/uncertain_value.h"
+#include <cstddef>
 
 namespace mio
 {
@@ -34,25 +34,25 @@ namespace mio
 /**
  * @brief A class template for compartment populations of LCT models.
  *
- * Populations can be split up into different categories, e.g. by age group, yearly income group, gender etc. 
- * In LCT models, we want to use different numbers of subcompartments, i.e. different LctStates, 
+ * Populations can be split up into different categories, e.g. by age group, yearly income group, gender etc.
+ * In LCT models, we want to use different numbers of subcompartments, i.e. different LctStates,
  * for each group of a category.
  * (Therefore, we can't use the normal Populations class because it expects the same InfectionStates for each group.)
- * 
- * This template must be instantiated with one LctState for each group of a category. 
+ *
+ * This template must be instantiated with one LctState for each group of a category.
  * The purpose of the LctStates is to define the number of subcompartments for each InfectionState.
- * The number of LctStates also determines the number of groups. 
- * If you want to use more than one category, e.g. age and gender, you have to define num_age_groups * num_genders 
- * LctStates, because the number of subcompartments can be different 
+ * The number of LctStates also determines the number of groups.
+ * If you want to use more than one category, e.g. age and gender, you have to define num_age_groups * num_genders
+ * LctStates, because the number of subcompartments can be different
  * even for (female, A05-A14) and (female, A80+) or (male, A05-A14).
  *
- * The class created from this template contains a "flat array" of compartment populations and some functions for 
- * retrieving or setting the populations. The order in the flat array is: First, all (sub-)compartments of the 
+ * The class created from this template contains a "flat array" of compartment populations and some functions for
+ * retrieving or setting the populations. The order in the flat array is: First, all (sub-)compartments of the
  * first group, afterwards all (sub-)compartments of the second group and so on.
  *
  */
 
-template <typename FP = ScalarType, class... LctStates>
+template <typename FP, class... LctStates>
 class LctPopulations
 {
 public:
@@ -64,9 +64,8 @@ public:
 
     /// @brief Default constructor.
     LctPopulations()
+        : m_y(InternalArrayType::Constant(get_count(), UncertainValue<FP>(0.0)))
     {
-        set_count();
-        m_y = InternalArrayType::Constant(m_count, 1, 0.);
     }
 
     /**
@@ -75,7 +74,7 @@ public:
      */
     size_t get_num_compartments() const
     {
-        return m_count;
+        return m_y.size();
     }
 
     /**
@@ -98,7 +97,7 @@ public:
      */
     Type& operator[](size_t index)
     {
-        assert(index < m_count);
+        assert(index < static_cast<size_t>(m_y.size()));
         return m_y[index];
     }
 
@@ -119,13 +118,13 @@ public:
         }
     }
     /**
-     * @brief Returns an Eigen copy of the vector of populations. 
+     * @brief Returns an Eigen copy of the vector of populations.
      * This can be used as initial conditions for the ODE solver.
      * @return Eigen::VectorXd of populations.
      */
     inline Eigen::VectorX<FP> get_compartments() const
     {
-        return m_y.array().template cast<FP>();
+        return m_y.template cast<FP>();
     }
 
     /**
@@ -136,8 +135,7 @@ public:
     template <size_t Group>
     FP get_group_total() const
     {
-        return m_y.array()
-            .template cast<FP>()
+        return m_y.template cast<FP>()
             .segment(get_first_index_of_group<Group>(), type_at_index_t<Group, LctStatesGroups>::Count)
             .sum();
     }
@@ -148,15 +146,15 @@ public:
      */
     FP get_total() const
     {
-        return m_y.array().template cast<FP>().sum();
+        return m_y.template cast<FP>().sum();
     }
 
     /**
-     * @brief Checks whether all compartments have non-negative values. 
-     * This function can be used to prevent slightly negative function values in compartment sizes that are produced 
+     * @brief Checks whether all compartments have non-negative values.
+     * This function can be used to prevent slightly negative function values in compartment sizes that are produced
      * due to rounding errors if, e.g., population sizes were computed in a complex way.
      *
-     * Attention: This function should be used with care. It can not and will not set model parameters and 
+     * Attention: This function should be used with care. It can not and will not set model parameters and
      *            compartments to meaningful values. In most cases it is preferable to use check_constraints,
      *            and correct values manually before proceeding with the simulation.
      *            The main usage for apply_constraints is in automated tests using random values for initialization.
@@ -166,12 +164,16 @@ public:
     bool apply_constraints()
     {
         bool corrected = false;
-        for (int i = 0; i < m_y.array().size(); i++) {
-            if (m_y.array()[i] < 0) {
-                log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, m_y.array()[i],
-                            0);
-                m_y.array()[i] = 0.;
-                corrected      = true;
+        for (int i = 0; i < m_y.size(); i++) {
+            if (m_y[i] < 0.0) {
+                if (m_y[i] > -1e-10) {
+                    log_warning("Constraint check: Compartment number {} changed from {} to {}", i, m_y[i], 0);
+                }
+                else {
+                    log_error("Constraint check: Compartment number {} changed from {} to {}", i, m_y[i], 0);
+                }
+                m_y[i]    = 0.;
+                corrected = true;
             }
         }
         return corrected;
@@ -183,7 +185,7 @@ public:
      */
     bool check_constraints() const
     {
-        if ((m_y.array() < 0.).any()) {
+        if ((m_y < 0.0).any()) {
             log_error("Constraint check: At least one compartment size is smaller {}.", 0);
             return true;
         }
@@ -196,18 +198,15 @@ private:
      * The number also corresponds to the size of the internal vector.
      */
     template <size_t Group = 0>
-    void set_count()
+    [[nodiscard]] static size_t get_count()
     {
-        if constexpr (Group == 0) {
-            m_count = 0;
-        }
+        size_t count = 0;
         if constexpr (Group < num_groups) {
-            m_count += type_at_index_t<Group, LctStatesGroups>::Count;
-            set_count<Group + 1>();
+            count = type_at_index_t<Group, LctStatesGroups>::Count + get_count<Group + 1>();
         }
+        return count;
     }
 
-    size_t m_count; //< Number of groups stored.
     InternalArrayType m_y{}; //< An array containing the number of people in the groups.
 };
 

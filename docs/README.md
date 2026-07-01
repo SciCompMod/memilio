@@ -1,22 +1,7 @@
 MEmilio Documentation
 ===============================
-The MEmilio documentation is created by [doxygen](https://www.doxygen.nl/). The documentation of the main branch is automatically deployed to https://scicompmod.github.io/memilio/documentation/index.html by the continuous integration process.
+The MEmilio documentation is automatically generated whenever the main branch is updated. For more information on the 
+documentation, please refer to the [corresponding section](https://memilio.readthedocs.io/en/latest/development.html#documentation) 
+in the documentation. The starting page of the documentation can be found at
 
-In order to create the MEmilio documentation locally, follow the procedure below.
-
-How to create the documentation:
----------------------------------
-1. From the `docs` folder, execute
-
-    doxygen
-
-This will create an html documentation.
-
-2. Open 
-
-     docs/html/index.html
-
-
-How to use the documentation
-----------------------------
-Under "Files", you can see the general file structure and access documentation of classes.
+https://memilio.readthedocs.io/en/latest/index.html

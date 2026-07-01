@@ -27,10 +27,13 @@ runs:
       shell: bash
       run: |
         sudo apt-get -qq update
-        sudo apt-get -qq -y install libhdf5-10* wget gnupg lcov
+        sudo apt-get -qq -y install wget gnupg lcov
+        if [[ "${{ inputs.optional-deps }}" == "ON" ]]; then
+          sudo apt-get -qq -y install libhdf5-10*
+        fi
         sudo apt-get -qq update
     - name: Download built test directory
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: build-cpp-linux-${{ inputs.artifact-pattern }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
         path: cpp
@@ -56,14 +59,14 @@ runs:
           cmake --build . --target coverage/fast
         fi
     - name: Upload test report
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: test-cpp-linux-report-${{ inputs.artifact-pattern }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
         path: cpp/build/bin/report.xml
         if-no-files-found: error
         retention-days: 1
     - name: Upload coverage reports
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: test-cpp-coverage-reports-${{ inputs.artifact-pattern }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}${{ inputs.openmp == 'ON' && '-omp' || ''}}
         path: |

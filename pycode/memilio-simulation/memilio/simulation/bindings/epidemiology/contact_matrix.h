@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
@@ -55,6 +55,10 @@ void bind_damping_expression_members(DampingExpressionClass& damping_expression_
              [](DampingExpression& self, const Damping& d) {
                  self.add_damping(d);
              })
+        .def("clear_dampings",
+             [](DampingExpression& self) {
+                 self.clear_dampings();
+             })
         .def_property(
             "baseline", [](const DampingExpression& self) -> auto& { return self.get_baseline(); },
             [](DampingExpression& self, const Eigen::Ref<const Matrix>& v) {
@@ -72,7 +76,7 @@ void bind_damping_expression_members(DampingExpressionClass& damping_expression_
                  return std::vector<Damping>(self.get_dampings().begin(), self.get_dampings().end());
              })
         .def("get_matrix_at", [](const DampingExpression& self, double t) {
-            return self.get_matrix_at(t);
+            return self.get_matrix_at(mio::SimulationTime<double>(t));
         });
     bind_shape_property(damping_expression_class);
 }
@@ -99,6 +103,10 @@ void bind_damping_expression_group_members(DampingExpressionGroupClass& cl)
            [](DampingExpressionGroup& self, const Damping& d) {
                self.add_damping(d);
            })
+        .def("clear_dampings",
+             [](DampingExpressionGroup& self) {
+                 self.clear_dampings();
+             })
         .def_property_readonly("num_matrices",
                                [](const DampingExpressionGroup& self) {
                                    return self.get_num_matrices();
@@ -119,7 +127,7 @@ void bind_damping_expression_group_members(DampingExpressionGroupClass& cl)
                  self[i] = m;
              })
         .def("get_matrix_at", [](const DampingExpressionGroup& self, double t) {
-            return self.get_matrix_at(t);
+            return self.get_matrix_at(mio::SimulationTime<double>(t));
         });
 }
 

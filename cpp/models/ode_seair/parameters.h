@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Ralf Hannemann-Tamas
 *
@@ -36,7 +36,7 @@ namespace oseair
 /**
  * @brief Social distancing.
  */
-template <typename FP = double>
+template <typename FP>
 struct SocialDistancing {
     using Type = FP;
     static Type get_default()
@@ -52,7 +52,7 @@ struct SocialDistancing {
 /**
  * @brief Quarantining.
  */
-template <typename FP = double>
+template <typename FP>
 struct Quarantined {
     using Type = FP;
     static Type get_default()
@@ -68,7 +68,7 @@ struct Quarantined {
 /**
  * @brief Rate of testing.
  */
-template <typename FP = double>
+template <typename FP>
 struct TestingRate {
     using Type = FP;
     static Type get_default()
@@ -84,7 +84,7 @@ struct TestingRate {
 /**
  * @brief Recovery rate.
  */
-template <typename FP = double>
+template <typename FP>
 struct RecoveryRate {
     using Type = FP;
     static Type get_default()
@@ -100,7 +100,7 @@ struct RecoveryRate {
 /**
  * @brief Death Rate.
  */
-template <typename FP = double>
+template <typename FP>
 struct DeathRate {
     using Type = FP;
     static Type get_default()
@@ -116,7 +116,7 @@ struct DeathRate {
 /**
  * @brief Inverse of the latent period of the virus.
  */
-template <typename FP = double>
+template <typename FP>
 struct TimeExposed {
     using Type = FP;
     static Type get_default()
@@ -132,7 +132,7 @@ struct TimeExposed {
 /**
  * @brief Infectious period for unconfirmed infected people.
  */
-template <typename FP = double>
+template <typename FP>
 struct RecoveryRateFromAsymptomatic {
     using Type = FP;
     static Type get_default()
@@ -148,7 +148,7 @@ struct RecoveryRateFromAsymptomatic {
 /**
  * @brief Rate recovered people become susceptible again.
  */
-template <typename FP = double>
+template <typename FP>
 struct TimeRecoveredInv {
     using Type = FP;
     static Type get_default()
@@ -161,7 +161,7 @@ struct TimeRecoveredInv {
     }
 };
 
-template <typename FP = double>
+template <typename FP>
 using ParametersBase =
     ParameterSet<SocialDistancing<FP>, Quarantined<FP>, TestingRate<FP>, RecoveryRate<FP>, DeathRate<FP>,
                  TimeExposed<FP>, RecoveryRateFromAsymptomatic<FP>, TimeRecoveredInv<FP>>;
@@ -169,7 +169,7 @@ using ParametersBase =
 /**
  * @brief Parameters of an SEAIR model.
  */
-template <typename FP = double>
+template <typename FP>
 class Parameters : public ParametersBase<FP>
 {
 public:
@@ -186,18 +186,18 @@ public:
     bool check_constraints() const
     {
         if (this->template get<SocialDistancing<FP>>() < 0.0) {
-            log_error("Constraint check: Parameter SocialDistancing smaller {:d}", 0);
+            log_error("Constraint check: Parameter SocialDistancing smaller {}", 0);
             return true;
         }
 
         if (this->template get<Quarantined<FP>>() < 0.0) {
-            log_error("Constraint check: Parameter Quarantined smaller {:d}", 0);
+            log_error("Constraint check: Parameter Quarantined smaller {}", 0);
             return true;
         }
 
-        const double tol_times = 1e-1; // accepted tolerance for compartment stays
+        const FP tol_times = 1e-1; // accepted tolerance for compartment stays
         if (this->template get<TimeExposed<FP>>() < tol_times) {
-            log_error("Constraint check: Parameter TimeExposed {:.4f} smaller {:.4f}. Please "
+            log_error("Constraint check: Parameter TimeExposed {} smaller {}. Please "
                       "note that unreasonably small compartment stays lead to massively increased run time. "
                       "Consider to cancel and reset parameters.",
                       this->template get<TimeExposed<FP>>(), tol_times);
@@ -205,27 +205,27 @@ public:
         }
 
         if (this->template get<RecoveryRateFromAsymptomatic<FP>>() < 0.0) {
-            log_error("Constraint check: Parameter RecoveryRateFromAsymptomatic smaller {:d}", 0);
+            log_error("Constraint check: Parameter RecoveryRateFromAsymptomatic smaller {}", 0);
             return true;
         }
 
         if (this->template get<TestingRate<FP>>() < 0.0) {
-            log_error("Constraint check: Parameter TestingRate smaller {:d}", 0);
+            log_error("Constraint check: Parameter TestingRate smaller {}", 0);
             return true;
         }
 
         if (this->template get<RecoveryRate<FP>>() < 0.0) {
-            log_error("Constraint check: Parameter RecoveryRate smaller {:d}", 0);
+            log_error("Constraint check: Parameter RecoveryRate smaller {}", 0);
             return true;
         }
 
         if (this->template get<DeathRate<FP>>() < 0.0) {
-            log_error("Constraint check: Parameter DeathRate smaller {:d}", 0);
+            log_error("Constraint check: Parameter DeathRate smaller {}", 0);
             return true;
         }
 
         if (this->template get<TimeRecoveredInv<FP>>() < 0.0) {
-            log_error("Constraint check: Parameter TimeRecoveredInv smaller {:d}", 0);
+            log_error("Constraint check: Parameter TimeRecoveredInv smaller {}", 0);
             return true;
         }
 

@@ -1,7 +1,7 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
-* Authors: Sascha Korf, Rene Schmieding 
+* Authors: Sascha Korf, Rene Schmieding
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -23,7 +23,6 @@
 #include "memilio/utils/metaprogramming.h"
 #include <vector>
 #include <tuple>
-#include <iostream>
 
 namespace mio
 {
@@ -50,7 +49,7 @@ struct DataWriterToMemory {
     }
 };
 
-/** 
+/**
  * @brief History class that handles writers and loggers.
  * History provides a function "log" to add a new record and a function "get_log" to access all records.
  *
@@ -101,8 +100,8 @@ public:
 
     /**
      * @brief Get the data object.
-     * 
-     * @return const WriteWrapper::Data& 
+     *
+     * @return const WriteWrapper::Data&
      */
     const typename WriteWrapper::Data& get_log() const
     {

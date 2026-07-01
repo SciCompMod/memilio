@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Khoa Nguyen
 *
@@ -22,7 +22,11 @@
 #include "abm/simulation.h"
 #include "abm/model.h"
 #include "abm/location_type.h"
+#include "memilio/io/io.h"
+#include "memilio/utils/abstract_parameter_distribution.h"
 #include "memilio/io/history.h"
+#include "memilio/io/directories.h"
+#include "memilio/utils/parameter_distributions.h"
 
 #include <fstream>
 #include <string>
@@ -41,7 +45,8 @@ void write_log_to_file(const T& history)
     auto loc_id      = std::get<1>(logg);
     auto time_points = std::get<0>(logg);
     std::string input;
-    std::ofstream myfile("test_output.txt");
+    std::ofstream myfile(mio::create_directories_or_exit(mio::example_results_dir("abm_history_object")) /
+                         "test_output.txt");
     myfile << "Locations as numbers:\n";
     for (auto&& id : loc_id[0]) {
         myfile << convert_loc_id_to_string(id) << "\n";
@@ -69,9 +74,9 @@ int main()
 
     // Create the model with 4 age groups.
     auto model = mio::abm::Model(num_age_groups);
-
-    // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
-    model.parameters.get<mio::abm::IncubationPeriod>() = 4.;
+    mio::ParameterDistributionLogNormal log_norm(4., 1.);
+    // Set same infection parameter for all age groups. For example, the incubation period is log normally distributed with parameters 4 and 1.
+    model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() = mio::ParameterDistributionLogNormal(4., 1.);
 
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
     model.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
@@ -134,14 +139,14 @@ int main()
     auto test_parameters       = model.parameters.get<mio::abm::TestData>()[test_type];
     auto testing_criteria_work = mio::abm::TestingCriteria();
     auto testing_scheme_work   = mio::abm::TestingScheme(testing_criteria_work, validity_period, start_date, end_date,
-                                                       test_parameters, probability);
-    model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
+                                                         test_parameters, probability);
+    model.get_testing_strategy().add_scheme(mio::abm::LocationType::Work, testing_scheme_work);
 
     // Assign infection state to each person.
     // The infection states are chosen randomly.
     auto persons = model.get_persons();
     for (auto& person : persons) {
-        auto rng = mio::abm::PersonalRandomNumberGenerator(person);
+        auto rng = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
         mio::abm::InfectionState infection_state =
             (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
         if (infection_state != mio::abm::InfectionState::Susceptible)
@@ -176,7 +181,7 @@ int main()
     auto sim  = mio::abm::Simulation(t0, std::move(model));
 
     struct LogTimePoint : mio::LogAlways {
-        using Type = double;
+        using Type = ScalarType;
         static Type log(const mio::abm::Simulation<>& sim)
         {
             return sim.get_time().hours();

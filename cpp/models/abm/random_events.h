@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -47,7 +47,8 @@ namespace abm
  * @return New state from the list if transition happens, current_state otherwise.
  */
 template <class RNG, class T, size_t NumTransitions>
-T random_transition(RNG& rng, T current_state, TimeSpan dt, const std::pair<T, double> (&transitions)[NumTransitions])
+T random_transition(RNG& rng, T current_state, TimeSpan dt,
+                    const std::pair<T, ScalarType> (&transitions)[NumTransitions])
 {
     assert(std::all_of(std::begin(transitions), std::end(transitions),
                        [](auto& p) {
@@ -62,10 +63,10 @@ T random_transition(RNG& rng, T current_state, TimeSpan dt, const std::pair<T, d
     if (sum <= 0) { //no transitions or all transitions have rate zero
         return current_state;
     }
-    auto v = ExponentialDistribution<double>::get_instance()(rng, sum);
+    auto v = ExponentialDistribution<ScalarType>::get_instance()(rng, sum);
     if (v < dt.days()) {
         //pick one of the possible transitions using discrete distribution
-        std::array<double, NumTransitions> rates;
+        std::array<ScalarType, NumTransitions> rates;
         std::transform(std::begin(transitions), std::end(transitions), rates.begin(), [](auto&& t) {
             return t.second;
         });

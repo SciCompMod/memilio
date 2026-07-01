@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert
 *
@@ -50,22 +50,19 @@ template <>
 struct PickleType<bool> : std::true_type {
 };
 
-template <class T>
-using is_small_integral = std::integral_constant<bool, (std::is_integral<T>::value && sizeof(T) <= 4)>;
-
 //small ints
 template <class T>
 struct PickleType<T, std::enable_if_t<is_small_integral<T>::value>> : std::true_type {
 };
 
 //signed big ints
-template <>
-struct PickleType<int64_t> : std::true_type {
+template <class T>
+struct PickleType<T, std::enable_if_t<is_64bit_integral<T>::value && std::is_signed_v<T>>> : std::true_type {
 };
 
 //unsigned big ints
-template <>
-struct PickleType<uint64_t> : std::true_type {
+template <class T>
+struct PickleType<T, std::enable_if_t<is_64bit_integral<T>::value && std::is_unsigned_v<T>>> : std::true_type {
 };
 
 //double

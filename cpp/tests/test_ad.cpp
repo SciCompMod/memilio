@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Ralf Hannemann-Tamas, Lena Ploetzke
 *
@@ -24,7 +24,7 @@
 
 #include "memilio/utils/logging.h"
 
-#include "ad/ad.hpp"
+#include "memilio/ad/ad.h"
 #include "boost/numeric/odeint.hpp"
 #include <gtest/gtest.h>
 

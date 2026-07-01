@@ -4,6 +4,7 @@ add_library(abm
     location_id.h
     household.cpp
     household.h
+    result_simulation.h
     simulation.cpp
     simulation.h
     person.cpp

@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2025 MEmilio
+# Copyright (C) 2020-2026 MEmilio
 #
 # Authors: Maximilian Betz
 #
@@ -24,14 +24,9 @@ import argparse
 import sys
 import os
 
-if sys.version_info >= (3, 9):
-    # For python 3.9 and newer
-    import importlib.resources as importlib_resources
-else:
-    # For older python versions
-    import importlib_resources
+import importlib.resources as importlib_resources
 
-from memilio.generation import Generator, Scanner, ScannerConfig, AST
+from memilio.generation import Generator, Scanner, ScannerConfig, AST, ast_handler
 from memilio.generation.graph_visualization import Visualization
 
 
@@ -46,6 +41,15 @@ def run_memilio_generation(print_ast=False):
     with importlib_resources.as_file(pkg.joinpath('../tools/config.json')) as path:
         with open(path) as file:
             conf = ScannerConfig.schema().loads(file.read(), many=True)[0]
+
+    file_path = os.path.dirname(os.path.abspath(__file__))
+
+    conf.source_file = os.path.abspath(os.path.join(
+        file_path, "..", "..", "..", "..", "cpp", "models", "ode_secirvvs", "model.cpp "))
+
+    # Could be any target folder
+    conf.target_folder = file_path
+
     scanner = Scanner(conf)
     ast = AST(conf)
     aviz = Visualization()

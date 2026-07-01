@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Henrik Zunker, Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
@@ -24,6 +24,7 @@
 #include "memilio/utils/memory.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/parameter_distributions.h"
+#include "memilio/math/math_utils.h"
 #include "ode_secirts/model.h"
 
 #include <assert.h>
@@ -42,7 +43,7 @@ namespace osecirts
  * @tparam FP Floating point type, e.g., double.
  * @param[inout] model Model including contact patterns for all age groups
  */
-template <typename FP = double>
+template <typename FP>
 void draw_sample_demographics(Model<FP>& model)
 {
     model.parameters.template get<ICUCapacity<FP>>().draw_sample();
@@ -78,14 +79,14 @@ void draw_sample_demographics(Model<FP>& model)
 
     // helper function to calculate the total population of a layer for a given age group
     auto calculate_layer_total = [&model](const std::vector<InfectionState>& states, AgeGroup ageGroup) {
-        return std::accumulate(states.begin(), states.end(), 0.0,
-                               [&model, &ageGroup](double sum, const InfectionState& state) {
-                                   return sum + model.populations[{ageGroup, state}];
+        return std::accumulate(states.begin(), states.end(), FP(0.0),
+                               [&model, &ageGroup](FP sum, const InfectionState& state) {
+                                   return evaluate_intermediate<FP>(sum + model.populations[{ageGroup, state}]);
                                });
     };
 
     // helper function to adjust the susceptible population of a layer for a given age group
-    auto adjust_susceptible_population = [&model](AgeGroup i, double diff, InfectionState susceptibleState) {
+    auto adjust_susceptible_population = [&model](AgeGroup i, FP diff, InfectionState susceptibleState) {
         model.populations[{i, susceptibleState}] += diff;
         if (model.populations[{i, susceptibleState}] < 0) {
             mio::log_warning("Negative population in State " + std::to_string(static_cast<size_t>(susceptibleState)) +
@@ -96,9 +97,9 @@ void draw_sample_demographics(Model<FP>& model)
 
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
 
-        const double group_naive_total    = calculate_layer_total(naive_immunity_states, i);
-        const double group_partial_total  = calculate_layer_total(partial_immunity_states, i);
-        const double group_improved_total = calculate_layer_total(improved_immunity_states, i);
+        const FP group_naive_total    = calculate_layer_total(naive_immunity_states, i);
+        const FP group_partial_total  = calculate_layer_total(partial_immunity_states, i);
+        const FP group_improved_total = calculate_layer_total(improved_immunity_states, i);
 
         //sample initial compartments (with exceptions)
         for (auto inf_state = Index<InfectionState>(0); inf_state < InfectionState::Count; ++inf_state) {
@@ -108,9 +109,9 @@ void draw_sample_demographics(Model<FP>& model)
                 model.populations[{i, inf_state}].draw_sample();
             }
         }
-        const double diff_naive    = group_naive_total - calculate_layer_total(naive_immunity_states, i);
-        const double diff_partial  = group_partial_total - calculate_layer_total(partial_immunity_states, i);
-        const double diff_improved = group_improved_total - calculate_layer_total(improved_immunity_states, i);
+        const FP diff_naive    = group_naive_total - calculate_layer_total(naive_immunity_states, i);
+        const FP diff_partial  = group_partial_total - calculate_layer_total(partial_immunity_states, i);
+        const FP diff_improved = group_improved_total - calculate_layer_total(improved_immunity_states, i);
 
         adjust_susceptible_population(i, diff_naive, InfectionState::SusceptibleNaive);
         adjust_susceptible_population(i, diff_partial, InfectionState::SusceptiblePartialImmunity);
@@ -119,13 +120,13 @@ void draw_sample_demographics(Model<FP>& model)
 }
 
 /**
- * Draws a sample from the specified distributions for all parameters 
+ * Draws a sample from the specified distributions for all parameters
  * related to the infection.
- * 
+ *
  * @tparam FP Floating point type, e.g., double.
  * @param[inout] model Model including contact patterns for all age groups.
  */
-template <typename FP = double>
+template <typename FP>
 void draw_sample_infection(Model<FP>& model)
 {
     model.parameters.template get<Seasonality<FP>>().draw_sample();
@@ -191,15 +192,15 @@ void draw_sample_infection(Model<FP>& model)
 /**
  * Draws a sample from model parameter distributions and stores sample values
  * as parameters values (cf. UncertainValue and Parameters classes).
- * 
+ *
  * @tparam FP Floating point type, e.g., double.
  * @param[inout] model Model including contact patterns for all age groups.
  */
-template <typename FP = double>
+template <typename FP>
 void draw_sample(Model<FP>& model)
 {
-    draw_sample_infection(model);
-    draw_sample_demographics(model);
+    draw_sample_infection<FP>(model);
+    draw_sample_demographics<FP>(model);
     model.parameters.template get<ContactPatterns<FP>>().draw_sample();
     model.apply_constraints();
 }
@@ -207,19 +208,19 @@ void draw_sample(Model<FP>& model)
 /**
  * Draws samples for each model node in a graph.
  * Some parameters are shared between nodes and are only sampled once.
- * 
+ *
  * @tparam FP Floating point type, e.g., double.
  * @param graph Graph to be sampled.
  * @return Graph with nodes and edges from the input graph sampled.
  */
-template <typename FP = double>
+template <typename FP>
 Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityParameters<FP>>& graph)
 {
     Graph<Model<FP>, MobilityParameters<FP>> sampled_graph;
 
     //sample global parameters
     auto& shared_params_model = graph.nodes()[0].property;
-    draw_sample_infection(shared_params_model);
+    draw_sample_infection<FP>(shared_params_model);
     auto& shared_contacts = shared_params_model.parameters.template get<ContactPatterns<FP>>();
     shared_contacts.draw_sample_dampings();
     auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
@@ -229,7 +230,7 @@ Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityPa
         auto& node_model = params_node.property;
 
         //sample local parameters
-        draw_sample_demographics(params_node.property);
+        draw_sample_demographics<FP>(params_node.property);
 
         //copy global parameters
         //save demographic parameters so they aren't overwritten

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen, Carlotta Gerstein
 *
@@ -22,6 +22,8 @@
 #include "abm/parameters.h"
 #include "abm/person.h"
 #include "abm_helpers.h"
+#include "memilio/utils/compiler_diagnostics.h"
+#include "memilio/utils/parameter_distributions.h"
 #include "random_number_test.h"
 
 using TestLocation = RandomNumberTest;
@@ -84,18 +86,22 @@ TEST_F(TestLocation, interact)
     auto t  = mio::abm::TimePoint(0);
     auto dt = mio::abm::seconds(8640); //0.1 days
 
-    // Setup model parameters for viral loads and infectivity distributions.
+    // Setup model parameters for viral loads and viral shed distributions.
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
     params.set_default<mio::abm::ViralLoadDistributions>(num_age_groups);
-    params.get<mio::abm::ViralLoadDistributions>()[{variant, age}] = {{1., 1.}, {0.0001, 0.0001}, {-0.0001, -0.0001}};
-    params.set_default<mio::abm::InfectivityDistributions>(num_age_groups);
-    params.get<mio::abm::InfectivityDistributions>()[{variant, age}] = {{1., 1.}, {1., 1.}};
+    params.get<mio::abm::ViralLoadDistributions>()[{variant, age}] = {mio::ParameterDistributionConstant(1.),
+                                                                      mio::ParameterDistributionConstant(0.0001),
+                                                                      mio::ParameterDistributionConstant(-0.0001)};
+    params.set_default<mio::abm::ViralShedParameters>(num_age_groups);
+    params.get<mio::abm::ViralShedParameters>()[{variant, age}] = {1., 1.};
 
     // Set incubtion period to two days so that the newly infected person is still exposed
-    params.get<mio::abm::IncubationPeriod>()[{variant, age}] = 2.;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::LogNormalDistribution<double>>>> mock_logNorm_dist;
+    EXPECT_CALL(mock_logNorm_dist.get_mock(), invoke).WillRepeatedly(testing::Return(2));
 
     // Setup location with some chance of exposure
     mio::abm::Location location(mio::abm::LocationType::Work, 0, num_age_groups);
+    location.get_infection_parameters().get<mio::abm::UseLocationCapacityForTransmissions>() = true;
     auto infected1 = make_test_person(this->get_rng(), location, age_group_15_to_34,
                                       mio::abm::InfectionState::InfectedNoSymptoms, t, params);
     auto infected2 = make_test_person(this->get_rng(), location, age_group_80_plus,
@@ -112,7 +118,7 @@ TEST_F(TestLocation, interact)
     auto susceptible =
         make_test_person(this->get_rng(), location, age, mio::abm::InfectionState::Susceptible, t, params);
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.5)); // Probability of no infection
-    auto person_rng = mio::abm::PersonalRandomNumberGenerator(susceptible);
+    auto person_rng = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), susceptible);
     interact_testing(person_rng, susceptible, location, local_population, t, dt, params);
     EXPECT_EQ(susceptible.get_infection_state(t + dt), mio::abm::InfectionState::Susceptible);
 
@@ -159,8 +165,22 @@ TEST_F(TestLocation, getGeographicalLocation)
     // Create a location of type Home.
     auto location = mio::abm::Location(mio::abm::LocationType::Home, 0);
     // Set a geographical location for the location.
-    mio::abm::GeographicalLocation geographical_location = {10.5100470359749, 52.2672785559812};
+    mio::geo::GeographicalLocation geographical_location = {10.5100470359749, 52.2672785559812};
     location.set_geographical_location(geographical_location);
     // Verify that the set geographical location matches the expected values.
     EXPECT_EQ(location.get_geographical_location(), geographical_location);
+}
+
+/**
+ * @brief Test whether the contact rates of a location are reduced if the total contacts in that location exceed the maximum number of contacts.
+ */
+TEST_F(TestLocation, adjustContactRates)
+{
+    mio::abm::Location loc(mio::abm::LocationType::SocialEvent, mio::abm::LocationId(0));
+    //Set the maximum contacts smaller than the contact rates
+    loc.get_infection_parameters().get<mio::abm::MaximumContacts>()                   = 2;
+    loc.get_infection_parameters().get<mio::abm::ContactRates>().get_baseline()(0, 0) = 4;
+    mio::abm::adjust_contact_rates(loc, 1);
+    auto adjusted_contacts_rate = loc.get_infection_parameters().get<mio::abm::ContactRates>().get_baseline()(0, 0);
+    EXPECT_EQ(adjusted_contacts_rate, 2);
 }

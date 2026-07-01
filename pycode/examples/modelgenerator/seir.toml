@@ -1,0 +1,49 @@
+infection_states = ["Susceptible", "Exposed", "Infected", "Recovered"]
+
+[model]
+name = "SEIR"
+namespace = "oseir"
+prefix = "ode_seir"
+
+[[parameters]]
+name = "TransmissionProbabilityOnContact"
+description = "probability of getting infected from a contact"
+type = "probability"
+default = 1
+per_age_group = true
+bounds = [0, 1]
+
+[[parameters]]
+name = "TimeExposed"
+description = "the latent time in day unit"
+type = "time"
+default = 5.2
+per_age_group = true
+bounds = [0.1, 1e100]
+
+[[parameters]]
+name = "TimeInfected"
+description = "the infectious time in day unit"
+type = "time"
+default = 6
+per_age_group = true
+bounds = [0.1, 1e100]
+
+[[transitions]]
+from = "Susceptible"
+to = "Exposed"
+type = "infection"
+parameter = "TransmissionProbabilityOnContact"
+infectious_state = "Infected"
+
+[[transitions]]
+from = "Exposed"
+to = "Infected"
+type = "linear"
+parameter = "TimeExposed"
+
+[[transitions]]
+from = "Infected"
+to = "Recovered"
+type = "linear"
+parameter = "TimeInfected"

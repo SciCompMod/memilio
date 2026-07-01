@@ -1,11 +1,14 @@
-cmake_minimum_required(VERSION 3.13)
+set(MEMILIO_CMAKE_MINIMUM_VERSION "3.18.0")
+cmake_minimum_required(VERSION ${MEMILIO_CMAKE_MINIMUM_VERSION})
 
 project(memilio VERSION 1.0.0)
+
+set(CMAKE_CXX_STANDARD "20")
+set(CMAKE_CXX_STANDARD_REQUIRED "20")
 
 option(MEMILIO_BUILD_TESTS "Build memilio unit tests." ON)
 option(MEMILIO_BUILD_EXAMPLES "Build memilio examples." ON)
 option(MEMILIO_BUILD_MODELS "Build memilio models." ON)
-option(MEMILIO_BUILD_SIMULATIONS "Build memilio simulations that were used for scientific articles." ON)
 option(MEMILIO_BUILD_BENCHMARKS "Build memilio benchmarks with google benchmark." OFF)
 option(MEMILIO_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
 option(MEMILIO_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
@@ -17,18 +20,36 @@ option(MEMILIO_BUILD_SHARED_LIBS "Build memilio as a shared library." ON)
 option(MEMILIO_BUILD_STATIC_LIBS "Build memilio as a static library." ON)
 option(MEMILIO_ENABLE_MPI "Build memilio with MPI." OFF)
 option(MEMILIO_ENABLE_OPENMP "Enable Multithreading with OpenMP." OFF)
+option(MEMILIO_ENABLE_HDF5 "Build memilio with HDF5 IO support." ON)
+option(MEMILIO_ENABLE_SBML "Build memilio with the SBML importer and imported models." OFF)
 option(MEMILIO_ENABLE_WARNINGS "Build memilio with warnings." ON)
 option(MEMILIO_ENABLE_WARNINGS_AS_ERRORS "Build memilio with warnings as errors." ON)
-option(MEMILIO_ENABLE_IPOPT "Enable numerical optimization with Ipopt, requires a Fortran compiler" OFF)
-option(MEMILIO_ENABLE_PROFILING "Enable runtime performance profiling of memilio" OFF)
+option(MEMILIO_ENABLE_IPOPT "Enable numerical optimization with Ipopt, requires a Fortran compiler." OFF)
+option(MEMILIO_ENABLE_PROFILING "Enable runtime performance profiling of memilio." OFF)
+option(MEMILIO_ENABLE_LIKWID_MARKER "Enable performance measuring with likwid markers." OFF)
 option(MEMILIO_ENABLE_CUDA "Enable CUDA" ON)
 
-mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
+cmake_path(CONVERT "${PROJECT_SOURCE_DIR}/.." TO_CMAKE_PATH_LIST PROJECT_ROOT_NORMALIZED NORMALIZE)
+set(MEMILIO_BASE_DIR "${PROJECT_ROOT_NORMALIZED}" CACHE PATH
+    "Path to the MEmilio project root, used for file I/O. Accessed via mio::base_dir().")
+set(MEMILIO_DATA_DIR "${PROJECT_ROOT_NORMALIZED}/data" CACHE PATH
+    "Path to the MEmilio data directory. Accessed via mio::data_dir().")
+
+mark_as_advanced(
+    MEMILIO_USE_BUNDLED_SPDLOG
+    MEMILIO_SANITIZE_ADDRESS
+    MEMILIO_SANITIZE_UNDEFINED
+    MEMILIO_BUILD_SHARED_LIBS
+    MEMILIO_BUILD_STATIC_LIBS
+    MEMILIO_BASE_DIR
+    MEMILIO_DATA_DIR
+    )
 
 # try to treat AppleClang as Clang, but warn about missing support
 if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
-    message(WARNING "The compiler ID \"AppleClang\" is not supported, trying to compile with \"Clang\" options.")
+    message(WARNING "The compiler ID \"AppleClang\" has only limited support. Continuing with \"Clang\" options.")
     set(CMAKE_CXX_COMPILER_ID "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffp-model=strict") # to avoid FP differences in CI
 endif()
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
@@ -90,7 +111,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
         setup_target_for_coverage_lcov(
             NAME coverage
             EXECUTABLE memilio-test
-            EXCLUDE "${CMAKE_SOURCE_DIR}/tests*" "${CMAKE_SOURCE_DIR}/simulations*" "${CMAKE_SOURCE_DIR}/examples*"
+            LCOV_ARGS --ignore-errors gcov,mismatch
+            EXCLUDE "${CMAKE_SOURCE_DIR}/tests*" "${CMAKE_SOURCE_DIR}/examples*"
             "${CMAKE_SOURCE_DIR}/memilio/ad*" "${CMAKE_BINARY_DIR}/*" "/usr*" "${CMAKE_SOURCE_DIR}/*.F"
         )
     endif()
@@ -129,6 +151,7 @@ if(MEMILIO_ENABLE_WARNINGS)
     endif()
 endif()
 
+# exclude some warnings we accept
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
         "-Wno-unknown-warning;-Wno-pragmas;-Wno-deprecated-copy;-Wno-expansion-to-defined;-Warray-bounds=0;-Wno-stringop-overread;-fcompare-debug-second;")
@@ -137,6 +160,22 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         "-Wno-unknown-warning-option;-Wno-deprecated;-Wno-gnu-zero-variadic-macro-arguments;")
 endif()
 
+# workarounds for compiler bugs or overzealous optimization/analysis
+if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RELEASE")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
+            "-Wno-restrict;" # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105329
+            "-Wno-maybe-uninitialized;" # https://gcc.gnu.org/bugzilla/buglist.cgi?quicksearch=may%20be%20uninitialized
+            "-Wno-stringop-overread;"
+        )
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
+            "-Wno-stringop-overread;"
+        )
+    endif()
+endif()
+
+# finalize string by setting warnings as errors
 if(MEMILIO_ENABLE_WARNINGS_AS_ERRORS)
     if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
         string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
@@ -184,17 +223,23 @@ if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/ode_secirts)
     add_subdirectory(models/ode_secirvvs)
     add_subdirectory(models/lct_secir)
+    add_subdirectory(models/lct_secir_2_diseases)
     add_subdirectory(models/glct_secir)
     add_subdirectory(models/ide_secir)
     add_subdirectory(models/ide_seir)
     add_subdirectory(models/ode_seir)
+    add_subdirectory(models/ode_seirv)
+    add_subdirectory(models/ode_seirdb)
     add_subdirectory(models/ode_seair)
     add_subdirectory(models/ode_sir)
+    add_subdirectory(models/ode_seir_metapop)
     add_subdirectory(models/sde_sir)
     add_subdirectory(models/sde_sirs)
     add_subdirectory(models/sde_seirvv)
     add_subdirectory(models/graph_abm)
     add_subdirectory(models/smm)
+    add_subdirectory(models/hybrid)
+    add_subdirectory(models/ode_mseirs4)
 endif()
 
 if(MEMILIO_BUILD_EXAMPLES)
@@ -205,12 +250,12 @@ if(MEMILIO_BUILD_TESTS)
     add_subdirectory(tests)
 endif()
 
-if(MEMILIO_BUILD_SIMULATIONS)
-    # add_subdirectory(simulations)
-endif()
-
 if(MEMILIO_BUILD_BENCHMARKS)
     add_subdirectory(benchmarks)
+endif()
+
+if(MEMILIO_ENABLE_SBML)
+    add_subdirectory(sbml_model_generation)
 endif()
 
 install(TARGETS memilio

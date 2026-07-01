@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Nils Wassmuth, Rene Schmieding, Martin J. Kuehn
 *
@@ -18,23 +18,22 @@
 * limitations under the License.
 */
 
-#include "memilio/utils/logging.h"
+#include "memilio/compartments/stochastic_simulation.h"
 #include "sde_sir/model.h"
-#include "sde_sir/simulation.h"
 
 int main()
 {
     mio::set_log_level(mio::LogLevel::debug);
 
-    double t0   = 0.;
-    double tmax = 5.;
-    double dt   = 0.1;
+    ScalarType t0   = 0.;
+    ScalarType tmax = 5.;
+    ScalarType dt   = 0.1;
 
-    double total_population = 10000;
+    ScalarType total_population = 10000;
 
     mio::log_info("Simulating SIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    mio::ssir::Model model;
+    mio::ssir::Model<ScalarType> model;
 
     model.populations[{mio::Index<mio::ssir::InfectionState>(mio::ssir::InfectionState::Infected)}]  = 100;
     model.populations[{mio::Index<mio::ssir::InfectionState>(mio::ssir::InfectionState::Recovered)}] = 1000;
@@ -42,14 +41,15 @@ int main()
         total_population -
         model.populations[{mio::Index<mio::ssir::InfectionState>(mio::ssir::InfectionState::Infected)}] -
         model.populations[{mio::Index<mio::ssir::InfectionState>(mio::ssir::InfectionState::Recovered)}];
-    model.parameters.set<mio::ssir::TimeInfected>(10);
-    model.parameters.set<mio::ssir::TransmissionProbabilityOnContact>(1);
-    model.parameters.get<mio::ssir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
-    model.parameters.get<mio::ssir::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
+    model.parameters.set<mio::ssir::TimeInfected<ScalarType>>(10);
+    model.parameters.set<mio::ssir::TransmissionProbabilityOnContact<ScalarType>>(1);
+    model.parameters.get<mio::ssir::ContactPatterns<ScalarType>>().get_baseline()(0, 0) = 2.7;
+    model.parameters.get<mio::ssir::ContactPatterns<ScalarType>>().add_damping(0.6,
+                                                                               mio::SimulationTime<ScalarType>(12.5));
 
     model.check_constraints();
 
-    auto sir = mio::ssir::simulate(t0, tmax, dt, model);
+    auto sir = mio::simulate_stochastic(t0, tmax, dt, model);
 
     sir.print_table();
 }

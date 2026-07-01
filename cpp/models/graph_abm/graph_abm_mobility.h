@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Julia Bicker
 *
@@ -24,19 +24,12 @@
 #include "abm/simulation.h"
 #include "abm/time.h"
 #include "abm/location_type.h"
-#include "abm/parameters.h"
-#include "abm/person.h"
-#include "abm/person_id.h"
-#include "abm/model_functions.h"
 #include "graph_abm/graph_abmodel.h"
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/graph.h"
-#include "memilio/utils/compiler_diagnostics.h"
+
 #include <algorithm>
-#include <cstddef>
-#include <iostream>
 #include <utility>
-#include <vector>
 
 namespace mio
 {
@@ -48,7 +41,7 @@ class ABMSimulationNode
 {
 
 public:
-    using Sim = abm::Simulation<GraphABModel>;
+    using Sim = abm::Simulation<abm::GraphABModel>;
 
     template <class... Args, typename = std::enable_if_t<std::is_constructible<Sim, Args...>::value, void>>
     ABMSimulationNode(std::tuple<History...>&& history, Args&&... args)
@@ -107,7 +100,7 @@ class ABMMobilityEdge
 
 public:
     /**
-     * @brief Exchanges persons via the edge. 
+     * @brief Exchanges persons via the edge.
      * Commuters are given by the person buffer of node_from.
      * @param[in] node_from Commuters home node
      * @param[in] node_to Node commuters (temporarily) move to
@@ -125,8 +118,12 @@ public:
         for (int i = int(persons_to_change.size()) - 1; i >= 0; --i) {
             auto& person     = model_from.get_persons()[persons_to_change[i]];
             auto target_type = person.get_location_type();
+            if (target_type == abm::LocationType::Invalid) {
+                target_type = model_to.get_location(person.get_location()).get_type();
+            }
             //check if Person uses this edge
             if (person.get_assigned_location_model_id(target_type) == model_to.get_id()) {
+
                 auto target_id = person.get_assigned_location(target_type);
                 //set correct location for person
                 person.set_location(target_type, target_id, model_to.get_id());
@@ -147,7 +144,7 @@ public:
 };
 
 /**
- * @brief Edge functor for abm graph simulation. 
+ * @brief Edge functor for abm graph simulation.
  * @see ABMMobilityEdge::apply_mobility
  * The attribute dt is required by the GraphSimulation class and therefore an input argument of the function.
  * However it is not used in ABMMobilityEdge::apply_mobility.
@@ -178,21 +175,23 @@ void advance_model(abm::TimePoint t, abm::TimeSpan dt, ABMSimulationNode<History
 
 /**
  * @brief Creates an abm graph simulation.
- * Every dt time step for each edge the persons that want to change to a location in another node 
+ * Every dt time step for each edge the persons that want to change to a location in another node
  * are removed from the model in their former location's node and added to the model of the new location.
  * @param[in] t0 Start time point of the simulation.
  * @param[in] dt Step between mobility on edges.
  * @param[in] graph Graph for simulation.
  */
 template <class... History>
-GraphSimulation<Graph<ABMSimulationNode<History...>, ABMMobilityEdge<History...>>, abm::TimePoint, abm::TimeSpan,
+GraphSimulation<ScalarType, Graph<ABMSimulationNode<History...>, ABMMobilityEdge<History...>>, abm::TimePoint,
+                abm::TimeSpan,
                 void (*)(mio::abm::TimePoint, mio::abm::TimeSpan, mio::ABMMobilityEdge<History...>&,
                          mio::ABMSimulationNode<History...>&, mio::ABMSimulationNode<History...>&),
                 void (*)(mio::abm::TimePoint, mio::abm::TimeSpan, mio::ABMSimulationNode<History...>&)>
 make_abm_graph_sim(abm::TimePoint t0, abm::TimeSpan dt,
                    Graph<ABMSimulationNode<History...>, ABMMobilityEdge<History...>>&& graph)
 {
-    return make_graph_sim(t0, dt, std::move(graph), &advance_model<History...>, &apply_mobility<History...>);
+    return make_graph_sim<ScalarType>(t0, dt, std::move(graph), &advance_model<History...>,
+                                      &apply_mobility<History...>);
 }
 
 } // namespace mio

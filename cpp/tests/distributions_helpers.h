@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -33,6 +33,9 @@ void check_distribution(const mio::ParameterDistribution& dist, const mio::Param
 class MockParameterDistribution
 {
 public:
+    MockParameterDistribution();
+    ~MockParameterDistribution();
+
     MOCK_METHOD(double, get_rand_sample, (), ());
 };
 //the second class is clonable etc. and forwards calls to a stable instance of the first class
@@ -45,7 +48,7 @@ class MockParameterDistributionRef : public mio::ParameterDistributionNormal
 public:
     using mio::ParameterDistributionNormal::ParameterDistributionNormal;
 
-    double get_rand_sample() override
+    double get_rand_sample(mio::RandomNumberGenerator& /*rng*/) override
     {
         return mock->get_rand_sample();
     }

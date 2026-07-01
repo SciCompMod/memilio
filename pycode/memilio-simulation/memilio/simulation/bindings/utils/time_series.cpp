@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
@@ -63,13 +63,36 @@ void bind_time_series(py::module_& m, std::string const& name)
                 }
             },
             py::is_operator(), py::arg("index"), py::arg("v"))
-        .def("print_table",
-             [](const mio::TimeSeries<double>& self, const std::vector<std::string>& column_labels, size_t width,
-                size_t precision) {
-                 std::ostringstream oss;
-                 self.print_table(column_labels, width, precision, oss);
-                 return oss.str();
-             })
+        .def(
+            "print_table",
+            [](const mio::TimeSeries<double>& self, bool return_string, const std::vector<std::string>& column_labels,
+               size_t width, size_t precision, char separator, const std::string& header_prefix) {
+                if (return_string) {
+                    std::ostringstream oss;
+                    self.print_table(oss, column_labels, width, precision, separator, header_prefix);
+                    return py::object(py::str(oss.str()));
+                }
+                else {
+                    self.print_table(column_labels, width, precision, separator, header_prefix);
+                    return py::object(py::none());
+                }
+            },
+            "Prints the TimeSeries as a formatted table. If return_string is true, the table is returned as a "
+            "string. Otherwise, it is printed to the console.",
+            py::arg("return_string") = false, py::arg("column_labels") = std::vector<std::string>{},
+            py::arg("width") = 16, py::arg("precision") = 5, py::arg("separator") = ' ',
+            py::arg("header_prefix") = "\n")
+        .def(
+            "export_csv",
+            [](const mio::TimeSeries<double>& self, const std::string& filename,
+               const std::vector<std::string>& column_labels, char separator, int precision) {
+                auto result = self.export_csv(filename, column_labels, separator, precision);
+                if (!result) {
+                    throw py::value_error(result.error().message());
+                }
+            },
+            py::arg("filename"), py::arg("column_labels") = std::vector<std::string>{}, py::arg("separator") = ',',
+            py::arg("precision") = 6)
         .def("add_time_point",
              [](mio::TimeSeries<double>& self) {
                  return self.add_time_point();
@@ -82,10 +105,19 @@ void bind_time_series(py::module_& m, std::string const& name)
              [](mio::TimeSeries<double>& self, double t, Eigen::Ref<const mio::TimeSeries<double>::Vector> expr) {
                  return self.add_time_point(t, expr);
              })
-        .def("as_ndarray", [](mio::TimeSeries<double>& self) {
-            auto m = Eigen::Map<mio::TimeSeries<double>::Matrix>(self.data(), self.get_num_rows(),
-                                                                 self.get_num_time_points());
-            return Eigen::Ref<mio::TimeSeries<double>::Matrix>(m);
+        .def(
+            "as_ndarray",
+            [](mio::TimeSeries<double>& self) {
+                auto m = Eigen::Map<mio::TimeSeries<double>::Matrix>(self.data(), self.get_num_rows(),
+                                                                     self.get_num_time_points());
+                return Eigen::Ref<mio::TimeSeries<double>::Matrix>(m);
+            },
+            py::return_value_policy::reference_internal)
+
+        .def("get_times", [](const mio::TimeSeries<double>& self) {
+            auto times_range = self.get_times();
+            std::vector<double> times(times_range.begin(), times_range.end());
+            return times;
         });
 }
 
