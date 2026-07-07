@@ -17,113 +17,34 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/household.h"
-#include "abm/lockdown_rules.h"
 #include "abm/model.h"
 #include "abm/common_abm_loggers.h"
+#include "city_builder.h"
 #include "forward_pass.h"
 
 namespace
 {
-const size_t NUM_AGE_GROUPS      = 4;
-const auto AGE_GROUP_0_TO_4      = mio::AgeGroup(0);
-const auto AGE_GROUP_5_TO_14     = mio::AgeGroup(1);
-const auto AGE_GROUP_15_TO_34    = mio::AgeGroup(2);
-const auto AGE_GROUP_35_TO_59    = mio::AgeGroup(3);
+const auto AGE_GROUP_5_TO_14 = mio::AgeGroup(1);
 } // namespace
 
 struct ABMPopulation::Impl {
     mio::abm::Model model;
 
-    explicit Impl(int n_households)
-        : model(NUM_AGE_GROUPS)
+    explicit Impl(int total_population)
+        : model(CityBuilder::build_world(CityConfig{total_population}, mio::thread_local_rng()))
     {
-        model.parameters.get<mio::abm::AgeGroupGotoSchool>() = false;
-        model.parameters.get<mio::abm::AgeGroupGotoSchool>()[AGE_GROUP_5_TO_14] = true;
-        model.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple(
-            {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59}, true);
-
-        auto child = mio::abm::HouseholdMember(NUM_AGE_GROUPS);
-        child.set_age_weight(AGE_GROUP_0_TO_4, 1);
-        child.set_age_weight(AGE_GROUP_5_TO_14, 1);
-
-        auto parent = mio::abm::HouseholdMember(NUM_AGE_GROUPS);
-        parent.set_age_weight(AGE_GROUP_15_TO_34, 1);
-        parent.set_age_weight(AGE_GROUP_35_TO_59, 1);
-
-        auto twoPersonHousehold_group = mio::abm::HouseholdGroup();
-        auto twoPersonHousehold_full  = mio::abm::Household();
-        twoPersonHousehold_full.add_members(child, 1);
-        twoPersonHousehold_full.add_members(parent, 1);
-        twoPersonHousehold_group.add_households(twoPersonHousehold_full, n_households);
-        add_household_group_to_model(model, twoPersonHousehold_group);
-
-        auto threePersonHousehold_group = mio::abm::HouseholdGroup();
-        auto threePersonHousehold_full  = mio::abm::Household();
-        threePersonHousehold_full.add_members(child, 1);
-        threePersonHousehold_full.add_members(parent, 2);
-        threePersonHousehold_group.add_households(threePersonHousehold_full, n_households);
-        add_household_group_to_model(model, threePersonHousehold_group);
-
-        const int n_schools    = std::max(1, n_households / 200);
-        const int n_workplaces = std::max(1, 3 * n_households / 200);
-        const int n_shops      = std::max(1, 5 * n_households / 500);
-        const int n_events     = std::max(1, 5 * n_households / 500);
-
-        std::vector<mio::abm::LocationId> schools, workplaces, shops, events;
-        for (int i = 0; i < n_schools; ++i) {
-            auto loc = model.add_location(mio::abm::LocationType::School);
-            model.get_location(loc).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
-            schools.push_back(loc);
-        }
-        for (int i = 0; i < n_workplaces; ++i) {
-            auto loc = model.add_location(mio::abm::LocationType::Work);
-            model.get_location(loc).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
-            model.get_location(loc).get_infection_parameters().get<mio::abm::ContactRates>().get_baseline()(
-                AGE_GROUP_15_TO_34.get(), AGE_GROUP_15_TO_34.get()) = 10.0;
-            workplaces.push_back(loc);
-        }
-        for (int i = 0; i < n_shops; ++i) {
-            auto loc = model.add_location(mio::abm::LocationType::BasicsShop);
-            model.get_location(loc).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
-            shops.push_back(loc);
-        }
-        for (int i = 0; i < n_events; ++i) {
-            auto loc = model.add_location(mio::abm::LocationType::SocialEvent);
-            model.get_location(loc).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-            events.push_back(loc);
-        }
-        auto hospital = model.add_location(mio::abm::LocationType::Hospital);
-        model.get_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-        auto icu = model.add_location(mio::abm::LocationType::ICU);
-        model.get_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-
+        // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 10.
         auto testing_criteria_work = mio::abm::TestingCriteria();
         auto testing_scheme_work   = mio::abm::TestingScheme(
             testing_criteria_work, mio::abm::days(1), mio::abm::TimePoint(0),
             mio::abm::TimePoint(0) + mio::abm::days(10),
             model.parameters.get<mio::abm::TestData>()[mio::abm::TestType::Antigen], 0.5);
         model.get_testing_strategy().add_scheme(mio::abm::LocationType::Work, testing_scheme_work);
-
-        int school_ctr = 0, work_ctr = 0, shop_ctr = 0, event_ctr = 0;
-        for (auto& person : model.get_persons()) {
-            const auto id = person.get_id();
-            model.assign_location(id, hospital);
-            model.assign_location(id, icu);
-            model.assign_location(id, shops[shop_ctr++ % n_shops]);
-            model.assign_location(id, events[event_ctr++ % n_events]);
-            if (person.get_age() == AGE_GROUP_5_TO_14) {
-                model.assign_location(id, schools[school_ctr++ % n_schools]);
-            }
-            if (person.get_age() == AGE_GROUP_15_TO_34 || person.get_age() == AGE_GROUP_35_TO_59) {
-                model.assign_location(id, workplaces[work_ctr++ % n_workplaces]);
-            }
-        }
     }
 };
 
-ABMPopulation::ABMPopulation(int n_households)
-    : impl(std::make_shared<Impl>(n_households))
+ABMPopulation::ABMPopulation(int total_population)
+    : impl(std::make_shared<Impl>(total_population))
 {
 }
 
