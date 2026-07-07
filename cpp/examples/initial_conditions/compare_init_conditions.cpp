@@ -39,14 +39,14 @@ namespace params
 {
 size_t num_agegroups = 1;
 
-ScalarType TransmissionProbabilityOnContact = 0.2;
+ScalarType TransmissionProbabilityOnContact = 0.3;
 ScalarType RiskOfInfectionFromSymptomatic   = 1.;
 ScalarType Seasonality                      = 0.;
 
 ScalarType cont_freq = 1.;
 
 ScalarType S0               = 999000.;
-ScalarType I0               = 10.;
+ScalarType I0               = 100.;
 ScalarType R0               = 0.;
 ScalarType total_population = S0 + I0 + R0;
 } // namespace params
@@ -231,13 +231,13 @@ int main()
 
     ScalarType t_init = 0.;
 
-    ScalarType t0 = 40.;
+    ScalarType t0 = 30.;
     // ScalarType t_init_groundtruth = t0
 
     ScalarType t_init_simple   = t0;
     ScalarType t_init_detailed = t0 - 30.;
 
-    ScalarType tmax = t0 + 20.;
+    ScalarType tmax = t0 + 50.;
 
     ScalarType damping      = 0.;
     ScalarType damping_time = 0.;
@@ -247,9 +247,9 @@ int main()
 
     ScalarType ide_exponent = 2.;
 
-    std::string save_dir = fmt::format("../../simulation_results/2026-07-06/diff_groundtruth_init/"
+    std::string save_dir = fmt::format("../../simulation_results/2026-07-07/diff_groundtruth_init/"
                                        "nonconst_contacts_tinit={}_tinitdetailed={}_t0={}_tmax={}/",
-                                       TransmissionProbabilityOnContact, t_init, t_init_detailed, t0, tmax);
+                                       t_init, t_init_detailed, t0, tmax);
 
     // Make folder if not existent yet.
     std::filesystem::path dir(save_dir);

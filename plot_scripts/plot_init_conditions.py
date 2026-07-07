@@ -45,9 +45,9 @@ def plot_susceptibles(files, fileending, save_dir=""):
     fig, axs = plt.subplots(1, num_plots, sharex='all', num='Compare files')
 
     colors = ["C0", "limegreen", "Orange"]
-    linestyles = ['-', '--', ':']
-    linewidth = 1
-    labels = ["Groundtruth", "Detailed", "Simple"]
+    linestyles = [':', '-', '--']
+    linewidth = 2
+    labels = ["Groundtruth", "Detailed", "Simple"]  # if file != 0:
 
     # Add results to plot.
     for file in range(len(files)):
@@ -67,20 +67,21 @@ def plot_susceptibles(files, fileending, save_dir=""):
         dates = data['Time'][:]
 
         # Plot data.
-        for i in range(num_plots):
-            axs[i].plot(dates,
-                        total[:, i], label=labels[file],  linestyle=linestyles[file], color=colors[file], linewidth=linewidth)
+        if file != 0:
+            for i in range(num_plots):
+                axs[i].plot(dates,
+                            total[:, i], label=labels[file],  linestyle=linestyles[file], color=colors[file], linewidth=linewidth)
 
         h5file.close()
 
     # Define some characteristics of the plot
     for i in range(num_plots):
         axs[i].set_title(secir_dict[i], fontsize=8)
-        axs[i].set_xlim(left=0, right=dates[-1])
+        # axs[i].set_xlim(left=0, right=dates[-1])
         axs[i].grid(True, linestyle='--', alpha=0.5)
         axs[i].ticklabel_format(axis='y',
                                 style='sci', scilimits=(0, 0))
-
+    labels.remove("Groundtruth")
     fig.legend(labels, bbox_to_anchor=(0.1, -0.73, 0.8, 0.8),
                fancybox=False, shadow=False, ncol=1)
 
@@ -110,7 +111,7 @@ def plot_flow_S_to_I(files, fileending, save_dir=""):
     fig, axs = plt.subplots(1, num_plots, sharex='all', num='Compare files')
 
     colors = ["C0", "limegreen", "Orange"]
-    linestyles = ['-', '--', ':']
+    linestyles = [':', '-', '--']
     linewidth = 1
     labels = ["Groundtruth", "Detailed", "Simple"]
 
@@ -132,10 +133,13 @@ def plot_flow_S_to_I(files, fileending, save_dir=""):
         dates = data['Time'][:]
 
         # Plot data.
-        # if file != 1:
-        if file == 0:
-            axs.plot(dates,
-                     total[:, 0], label=labels[file],  linestyle=linestyles[file], color=colors[file], linewidth=linewidth)
+        if file != 0:
+            # if file == 0:
+            s = 1
+            if file == 2:
+                s = 10
+            axs.scatter(dates,
+                        total[:, 0], label=labels[file],  linestyle=linestyles[file], color=colors[file], linewidth=linewidth, s=s)
 
         h5file.close()
 
@@ -147,6 +151,7 @@ def plot_flow_S_to_I(files, fileending, save_dir=""):
     axs.ticklabel_format(axis='y',
                          style='sci', scilimits=(0, 0))
 
+    labels.remove("Groundtruth")
     fig.legend(labels, bbox_to_anchor=(0.1, -0.73, 0.8, 0.8),
                fancybox=False, shadow=False, ncol=1)
 
@@ -176,7 +181,7 @@ def plot_infectionage_distribution(files, fileending, save_dir=""):
     fig, axs = plt.subplots(1, num_plots, sharex='all', num='Compare files')
 
     colors = ["C0", "limegreen", "Orange"]
-    linestyles = ['-', '--', ':']
+    linestyles = [':', '-', '--']
     linewidth = 1
     labels = ["Groundtruth", "Detailed", "Simple"]
 
@@ -198,13 +203,13 @@ def plot_infectionage_distribution(files, fileending, save_dir=""):
         dates = data['Time'][:]
 
         # Plot data.
-        # if file != 1:
-        s = 1
-        if file == 2:
-            s = 10
+        if file != 0:
+            s = 1
+            if file == 2:
+                s = 10
 
-        axs.scatter(dates,
-                    total[:], label=labels[file],  linestyle=linestyles[file], color=colors[file], linewidth=linewidth, s=s)
+            axs.scatter(dates,
+                        total[:], label=labels[file],  linestyle=linestyles[file], color=colors[file], linewidth=linewidth, s=s)
 
         h5file.close()
 
@@ -216,6 +221,7 @@ def plot_infectionage_distribution(files, fileending, save_dir=""):
     axs.ticklabel_format(axis='y',
                          style='sci', scilimits=(0, 0))
 
+    labels.remove("Groundtruth")
     fig.legend(labels, bbox_to_anchor=(0.1, -0.73, 0.8, 0.8),
                fancybox=False, shadow=False, ncol=1)
 
