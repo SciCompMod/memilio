@@ -9,6 +9,10 @@ set(MEMILIO_RANDOM123_VERSION "v1.14.0")
 set(MEMILIO_IPOPT_VERSION "3.14.12")
 set(MEMILIO_SBML_VERSION "5.20.2")
 
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
+    cmake_policy(SET CMP0135 NEW)
+endif()
+
 # Gperftools for profiling; must be first, so that libraries are included in the profile
 if(MEMILIO_ENABLE_PROFILING)
     if(NOT UNIX)

@@ -115,18 +115,18 @@ target_compile_options(ode_metapop_seir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENAB
 add_executable(abm_minimal_example abm_minimal.cpp)
 target_link_libraries(abm_minimal_example PRIVATE memilio abm)
 
-# Add CUDA ABM minimal example 
-add_executable(abm_minimal_example_cuda abm_minimal.cu)
-if(MEMILIO_ENABLE_CUDA)
-    # Already a .cu file so no need to set language
-    target_link_libraries(abm_minimal_example PRIVATE ${CUDA_LIBRARIES})
-    target_include_directories(abm_minimal_example PRIVATE ${CUDA_INCLUDE_DIRS})
-    set_target_properties(abm_minimal_example PROPERTIES
-                         CUDA_SEPARABLE_COMPILATION ON)
-else()
-    # Compile as regular C++ if CUDA is disabled
-    target_compile_options(abm_minimal_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
-endif()
+# # Add CUDA ABM minimal example 
+# add_executable(abm_minimal_example_cuda abm_minimal.cu)
+# if(MEMILIO_ENABLE_CUDA)
+#     # Already a .cu file so no need to set language
+#     target_link_libraries(abm_minimal_example PRIVATE ${CUDA_LIBRARIES})
+#     target_include_directories(abm_minimal_example PRIVATE ${CUDA_INCLUDE_DIRS})
+#     set_target_properties(abm_minimal_example PROPERTIES
+#                          CUDA_SEPARABLE_COMPILATION ON)
+# else()
+#     # Compile as regular C++ if CUDA is disabled
+#     target_compile_options(abm_minimal_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+# endif()
 
 # find_package(OpenACC REQUIRED)
 # --acc
@@ -141,6 +141,16 @@ if(MEMILIO_ENABLE_CUDA)
     target_link_libraries(gpu_integrator PRIVATE ${CUDA_LIBRARIES})
     target_include_directories(gpu_integrator PRIVATE ${CUDA_INCLUDE_DIRS})
     set_target_properties(gpu_integrator PROPERTIES
+                         CUDA_SEPARABLE_COMPILATION ON)
+endif()
+
+add_executable(gpu_ode_seir_metapop_example gpu_ode_seir_metapop.cpp)
+target_link_options(gpu_ode_seir_metapop_example PRIVATE ${OpenACC_CXX_OPTIONS})
+target_compile_options(gpu_ode_seir_metapop_example PRIVATE ${OpenACC_CXX_OPTIONS})
+if(MEMILIO_ENABLE_CUDA)
+    target_link_libraries(gpu_ode_seir_metapop_example PRIVATE ${CUDA_LIBRARIES})
+    target_include_directories(gpu_ode_seir_metapop_example PRIVATE ${CUDA_INCLUDE_DIRS})
+    set_target_properties(gpu_ode_seir_metapop_example PROPERTIES
                          CUDA_SEPARABLE_COMPILATION ON)
 endif()
 

@@ -27,7 +27,7 @@ option(MEMILIO_ENABLE_WARNINGS_AS_ERRORS "Build memilio with warnings as errors.
 option(MEMILIO_ENABLE_IPOPT "Enable numerical optimization with Ipopt, requires a Fortran compiler." OFF)
 option(MEMILIO_ENABLE_PROFILING "Enable runtime performance profiling of memilio." OFF)
 option(MEMILIO_ENABLE_LIKWID_MARKER "Enable performance measuring with likwid markers." OFF)
-option(MEMILIO_ENABLE_CUDA "Enable CUDA" ON)
+option( "Enable CUDA" ON)
 
 cmake_path(CONVERT "${PROJECT_SOURCE_DIR}/.." TO_CMAKE_PATH_LIST PROJECT_ROOT_NORMALIZED NORMALIZE)
 set(MEMILIO_BASE_DIR "${PROJECT_ROOT_NORMALIZED}" CACHE PATH
@@ -119,6 +119,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
 endif()
 
 string(APPEND CMAKE_CXX_FLAGS "--diag_suppress inline_gnu_noinline_conflict -acc -gpu=mem:unified:nomanagedalloc -Minfo=accel")
+# string(APPEND CMAKE_CXX_FLAGS "--diag_suppress inline_gnu_noinline_conflict -acc -Minfo=accel") # no unified mem on teamserver
 # message("###########\n  " ${CMAKE_CXX_FLAGS_RELEASE})
 
 # set sanitizer compiler flags
@@ -193,7 +194,6 @@ if(MEMILIO_ENABLE_CUDA)
     cmake_minimum_required(VERSION 3.17 FATAL_ERROR)
     enable_language(CUDA)
 
-    find_package(CUDA REQUIRED)
     set(CMAKE_CUDA_STANDARD 17)
     
     include_directories(${CUDA_INCLUDE_DIRS})

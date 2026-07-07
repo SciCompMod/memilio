@@ -1,7 +1,8 @@
 #define R123_NO_CUDA_DEVICE_RANDOM 1
 // #define CUDA_TEST_SIZE 1024
-
+#ifdef MEMILIO_WITH_CUDA
 #include <cuda_runtime.h>
+#endif
 
 #include "gpu_integrator.h"
 

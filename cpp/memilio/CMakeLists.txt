@@ -139,8 +139,6 @@ target_compile_options(memilio
     $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
 )
 
-find_package(OpenACC REQUIRED)
-
 target_link_options(memilio PRIVATE ${OpenACC_CXX_OPTIONS})
 target_compile_options(memilio PRIVATE ${OpenACC_CXX_OPTIONS})
 
