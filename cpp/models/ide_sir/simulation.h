@@ -102,6 +102,26 @@ public:
     }
 
     /**
+     * @brief Get the result of the simulation.
+     * Return the number of persons in all #InfectionState%s.
+     * @return The result of the simulation.
+     */
+    TimeSeries<ScalarType> get_infected_per_infection_age()
+    {
+        return m_model->infected_per_infection_age;
+    }
+
+    /**
+     * @brief Get the result of the simulation.
+     * Return the number of persons in all #InfectionState%s.
+     * @return The result of the simulation.
+     */
+    const TimeSeries<ScalarType>& get_infected_per_infection_age() const
+    {
+        return m_model->infected_per_infection_age;
+    }
+
+    /**
      * @brief returns the simulation model used in simulation.
      */
     const ModelMessinaExtendedDetailedInit& get_model() const
@@ -124,6 +144,13 @@ public:
     ScalarType get_dt()
     {
         return m_dt;
+    }
+
+    mio::TimeSeries<ScalarType> write_infected_per_infection_age(size_t time_point_index)
+    {
+        m_model->write_infected_per_infection_age(m_dt, time_point_index);
+
+        return m_model->infected_per_infection_age;
     }
 
 private:

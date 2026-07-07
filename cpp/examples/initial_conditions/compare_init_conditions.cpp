@@ -39,14 +39,14 @@ namespace params
 {
 size_t num_agegroups = 1;
 
-ScalarType TransmissionProbabilityOnContact = 0.5;
+ScalarType TransmissionProbabilityOnContact = 0.2;
 ScalarType RiskOfInfectionFromSymptomatic   = 1.;
 ScalarType Seasonality                      = 0.;
 
 ScalarType cont_freq = 1.;
 
 ScalarType S0               = 999000.;
-ScalarType I0               = 1000.;
+ScalarType I0               = 10.;
 ScalarType R0               = 0.;
 ScalarType total_population = S0 + I0 + R0;
 } // namespace params
@@ -70,7 +70,8 @@ simulate_ide(ScalarType ide_exponent, size_t gregory_order, size_t finite_differ
              ScalarType t0, ScalarType tmax, ScalarType TimeInfected, ScalarType damping, ScalarType damping_time,
              std::string save_dir = "", std::string model_type = "",
              mio::TimeSeries<ScalarType> result_groundtruth =
-                 mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count))
+                 mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
+             size_t write_inf_per_infage_time = 0)
 {
     using namespace params;
     using Vec = mio::TimeSeries<ScalarType>::Vector;
@@ -93,28 +94,21 @@ simulate_ide(ScalarType ide_exponent, size_t gregory_order, size_t finite_differ
         // while (init_populations.get_last_time() < t0 - 1e-10) {
 
         //     vec_init[(size_t)mio::isir::InfectionState::Susceptible] =
-        //         S0 - 500 * init_populations.get_num_time_points() * dt * dt;
+        //         S0 - 5000 * init_populations.get_num_time_points() * dt;
         //     vec_init[(size_t)mio::isir::InfectionState::Infected] =
-        //         I0 + 500 * init_populations.get_num_time_points() * dt * dt;
-        //     vec_init[(size_t)mio::isir::InfectionState::Recovered] = R0;
+        //         I0 + 5000 * init_populations.get_num_time_points() * dt;
+        //     vec_init[(size_t)mio::isir::InfectionState::Recovered] =
+        //         R0 + 4000 * init_populations.get_num_time_points() * dt;
 
         //     init_populations.add_time_point(init_populations.get_last_time() + dt, vec_init);
         // }
     }
     else {
-        std::cout << "Initializing with given groundtruth for t_{-4},...,t0.\n";
-
         if (model_type == "simple") {
 
             // Initialize time points before t0 based on groundtruth.
             // Get index of t0 in groundtruth.
-            size_t t0_index = 0;
-            for (Eigen::Index i = 0; i < result_groundtruth.get_num_time_points(); i++) {
-                ScalarType t = result_groundtruth.get_time(i);
-                if (fabs(t - t0) < 1e-7) {
-                    t0_index = i;
-                }
-            }
+            size_t t0_index = size_t((t0 - result_groundtruth.get_time(0)) / dt);
             std::cout << "t0 index: " << t0_index << std::endl;
 
             Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
@@ -165,10 +159,12 @@ simulate_ide(ScalarType ide_exponent, size_t gregory_order, size_t finite_differ
     // Initialize model.
     mio::isir::ModelMessinaExtendedDetailedInit model(std::move(init_populations), total_population, gregory_order,
                                                       finite_difference_order);
+    unused(TimeInfected);
 
-    mio::ExponentialSurvivalFunction logn(1. / TimeInfected);
+    mio::LognormSurvivalFunction survival_func(0.24622068, 0, 7.76114000);
+    // mio::ExponentialSurvivalFunction survival_func(1. / 4.);
 
-    mio::StateAgeFunctionWrapper dist(logn);
+    mio::StateAgeFunctionWrapper dist(survival_func);
     std::vector<mio::StateAgeFunctionWrapper<ScalarType>> vec_dist((size_t)mio::isir::InfectionTransition::Count, dist);
     model.parameters.get<mio::isir::TransitionDistributions>() = vec_dist;
 
@@ -192,6 +188,7 @@ simulate_ide(ScalarType ide_exponent, size_t gregory_order, size_t finite_differ
     mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt);
     sim.advance(tmax);
     mio::TimeSeries<ScalarType> compartments = sim.get_result();
+    mio::TimeSeries<ScalarType> flows        = sim.get_flows();
 
     if (!save_dir.empty()) {
         // Save compartments.
@@ -200,6 +197,27 @@ simulate_ide(ScalarType ide_exponent, size_t gregory_order, size_t finite_differ
             mio::save_result({compartments}, {0}, num_agegroups,
                              save_dir + model_type + "_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
                                  +"_gregoryorder=" + fmt::format("{}", gregory_order) + ".h5");
+
+        auto save_result_status_ide_flows =
+            mio::save_result({flows}, {0}, num_agegroups,
+                             save_dir + model_type + "_flows_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
+                                 +"_gregoryorder=" + fmt::format("{}", gregory_order) + ".h5");
+
+        std::cout << "write time: " << write_inf_per_infage_time << std::endl;
+        if (write_inf_per_infage_time > 0) {
+
+            size_t write_inf_per_infage_index = (write_inf_per_infage_time - compartments.get_time(0)) / dt;
+            std::cout << "write index: " << write_inf_per_infage_index << std::endl;
+            std::cout << "eval time: " << compartments.get_time(write_inf_per_infage_index) << std::endl;
+            std::cout << std::endl;
+            mio::TimeSeries<ScalarType> infected_per_infection_age =
+                sim.write_infected_per_infection_age(write_inf_per_infage_index);
+
+            auto save_result_status_ide_inf = mio::save_result(
+                {infected_per_infection_age}, {0}, num_agegroups,
+                save_dir + model_type + "_infectionagedistribution_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
+                    +"_gregoryorder=" + fmt::format("{}", gregory_order) + ".h5");
+        }
     }
 
     return mio::success(compartments);
@@ -213,9 +231,11 @@ int main()
 
     ScalarType t_init = 0.;
 
-    ScalarType t0              = 20.;
+    ScalarType t0 = 40.;
+    // ScalarType t_init_groundtruth = t0
+
     ScalarType t_init_simple   = t0;
-    ScalarType t_init_detailed = t0 - 5.;
+    ScalarType t_init_detailed = t0 - 30.;
 
     ScalarType tmax = t0 + 20.;
 
@@ -227,9 +247,9 @@ int main()
 
     ScalarType ide_exponent = 2.;
 
-    std::string save_dir = fmt::format("../../simulation_results/2026-06-01/diff_init_conditions_timeinf={}/"
-                                       "nonconst_contacts_tinit={}_t0={}_tmax={}/",
-                                       time_infected, t_init, t0, tmax);
+    std::string save_dir = fmt::format("../../simulation_results/2026-07-06/diff_groundtruth_init/"
+                                       "nonconst_contacts_tinit={}_tinitdetailed={}_t0={}_tmax={}/",
+                                       TransmissionProbabilityOnContact, t_init, t_init_detailed, t0, tmax);
 
     // Make folder if not existent yet.
     std::filesystem::path dir(save_dir);
@@ -237,15 +257,15 @@ int main()
 
     // Do IDE simulations.
     std::cout << std::endl;
-    mio::IOResult<mio::TimeSeries<ScalarType>> result_ide_groundtruth =
-        simulate_ide(ide_exponent, gregory_order, finite_difference_order, t_init, t_init, tmax, time_infected, damping,
-                     damping_time, save_dir, "groundtruth");
+    mio::IOResult<mio::TimeSeries<ScalarType>> result_ide_groundtruth = simulate_ide(
+        ide_exponent, gregory_order, finite_difference_order, t_init, t0, tmax, time_infected, damping, damping_time,
+        save_dir, "groundtruth", mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count), t0);
 
     mio::IOResult<mio::TimeSeries<ScalarType>> result_ide_detailed =
         simulate_ide(ide_exponent, gregory_order, finite_difference_order, t_init_detailed, t0, tmax, time_infected,
-                     damping, damping_time, save_dir, "detailed", result_ide_groundtruth.value());
+                     damping, damping_time, save_dir, "detailed", result_ide_groundtruth.value(), t0);
 
     mio::IOResult<mio::TimeSeries<ScalarType>> result_ide_simple =
         simulate_ide(ide_exponent, gregory_order, finite_difference_order, t_init_simple, t0, tmax, time_infected,
-                     damping, damping_time, save_dir, "simple", result_ide_groundtruth.value());
+                     damping, damping_time, save_dir, "simple", result_ide_groundtruth.value(), t0);
 }

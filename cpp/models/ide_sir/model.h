@@ -107,11 +107,14 @@ public:
     void set_transitiondistribution_vector(ScalarType dt, ScalarType tmax, size_t t0_index = 0);
     void set_parameter_vectors(ScalarType dt, ScalarType tmax, size_t t0_index = 0);
 
+    void write_infected_per_infection_age(ScalarType dt, size_t time_point_index);
+
     // ---- Public parameters. ----
     ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
     TimeSeries<ScalarType> populations; ///< TimeSeries containing points of time and the corresponding number of
     // people in defined #InfectionState%s for every AgeGroup.
-    TimeSeries<ScalarType> flows = TimeSeries<ScalarType>((size_t)InfectionTransition::Count);
+    TimeSeries<ScalarType> flows                      = TimeSeries<ScalarType>((size_t)InfectionTransition::Count);
+    TimeSeries<ScalarType> infected_per_infection_age = TimeSeries<ScalarType>(1);
 
 private:
     // ---- Private parameters. ----

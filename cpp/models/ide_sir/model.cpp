@@ -29,6 +29,7 @@
 #include <boost/numeric/odeint/util/ublas_wrapper.hpp>
 #include <cmath>
 #include <cstdlib>
+#include <vector>
 
 namespace mio
 {
@@ -823,13 +824,12 @@ void ModelMessinaExtendedDetailedInit::compute_S_deriv(ScalarType dt, size_t tim
 
 void ModelMessinaExtendedDetailedInit::compute_S_deriv_forward(ScalarType dt, size_t time_point_index)
 {
-
     flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
         -(-25 * populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] +
-          48 * populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible] -
-          36 * populations[time_point_index - 2][(Eigen::Index)InfectionState::Susceptible] +
-          16 * populations[time_point_index - 3][(Eigen::Index)InfectionState::Susceptible] -
-          3 * populations[time_point_index - 4][(Eigen::Index)InfectionState::Susceptible]) /
+          48 * populations[time_point_index + 1][(Eigen::Index)InfectionState::Susceptible] -
+          36 * populations[time_point_index + 2][(Eigen::Index)InfectionState::Susceptible] +
+          16 * populations[time_point_index + 3][(Eigen::Index)InfectionState::Susceptible] -
+          3 * populations[time_point_index + 4][(Eigen::Index)InfectionState::Susceptible]) /
         (12 * dt);
 }
 
@@ -899,6 +899,24 @@ void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt)
     // time point of flows.
     size_t time_point_index = flows.get_num_time_points() - 1;
     compute_I_and_R(dt, time_point_index);
+}
+
+void ModelMessinaExtendedDetailedInit::write_infected_per_infection_age(ScalarType dt, size_t time_point_index)
+{
+
+    for (size_t i = 0; i <= time_point_index; i++) {
+
+        ScalarType entry = flows[time_point_index - i][(Eigen::Index)InfectionTransition::SusceptibleToInfected];
+
+        ScalarType infection_age = i * dt;
+        unused(entry);
+        unused(dt);
+        unused(infection_age);
+        infected_per_infection_age.add_time_point(
+            infection_age, TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, entry));
+    }
+
+    std::cout << "num tps infection age dist: " << infected_per_infection_age.get_num_time_points() << std::endl;
 }
 
 } // namespace isir

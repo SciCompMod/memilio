@@ -54,15 +54,33 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, size_t fd_o
     // TODO: Initialize S'(0) in a different way?
 
     if (m_model->flows.get_num_time_points() == 0) {
-        m_model->flows.add_time_point(m_model->populations.get_time(0),
-                                      TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, 0.));
+
+        // ScalarType first_flow_approx = m_model->parameters.get<TransmissionProbabilityOnContact>().eval(0) *
+        //                                m_model->parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+        //                                    SimulationTime<ScalarType>(0.))(0, 0) *
+        //                                (m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Infected] +
+        //                                 m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Recovered]) /
+        //                                m_model->populations.get_value(0).sum();
+
+        ScalarType first_flow_approx = m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Infected];
+
+        m_model->flows.add_time_point(
+            m_model->populations.get_time(0),
+            TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, first_flow_approx));
         std::cout << "Flows first tp: " << m_model->flows.get_time(0) << std::endl;
         // Compute S'(t) for t_1,..., t_{n0-1} with backwards difference operator. The corresponding flow is then given by -S'.
         for (size_t i = 1; i < (size_t)m_model->populations.get_num_time_points(); i++) {
+
             m_model->flows.add_time_point(
                 m_model->flows.get_last_time() + m_dt,
                 TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, 0.));
-            m_model->compute_S_deriv(m_dt, i);
+
+            if (i < 4) {
+                m_model->compute_S_deriv_forward(m_dt, i);
+            }
+            else {
+                m_model->compute_S_deriv(m_dt, i);
+            }
         }
     }
 
@@ -156,39 +174,16 @@ void SimulationMessinaExtendedDetailedInit::advance_S_deriv_fixedpoint(ScalarTyp
     // We set S'(0) due to lack of knowledge of previous values of S.
     // The corresponding flow is then given by -S'.
     // TODO: Initialize S'(0) in a different way?
-    // ScalarType first_flow_approx = (m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Infected] +
-    //                                 m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Recovered]) /
-    //                                m_model->populations.get_value(0).sum();
 
-    // ScalarType first_flow_approx =
-    //     -(-25 * m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible] +
-    //       48 * m_model->populations.get_value(1)[(Eigen::Index)InfectionState::Susceptible] -
-    //       36 * m_model->populations.get_value(2)[(Eigen::Index)InfectionState::Susceptible] +
-    //       16 * m_model->populations.get_value(3)[(Eigen::Index)InfectionState::Susceptible] -
-    //       3 * m_model->populations.get_value(4)[(Eigen::Index)InfectionState::Susceptible]) /
-    //     (12 * m_dt);
-
-    ScalarType first_flow_approx = m_model->parameters.get<TransmissionProbabilityOnContact>().eval(0) *
-                                   m_model->parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                                       SimulationTime<ScalarType>(0.))(0, 0) *
-                                   (m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Infected] +
-                                    m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Recovered]) /
-                                   m_model->populations.get_value(0).sum();
-    m_model->flows.add_time_point(
-        m_model->populations.get_time(0),
-        TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, first_flow_approx));
+    m_model->flows.add_time_point(m_model->populations.get_time(0),
+                                  TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, 0.));
     std::cout << "Flows first tp: " << m_model->flows.get_time(0) << std::endl;
     // Compute S'(t) for t_1,..., t_{n0-1} with backwards difference operator. The corresponding flow is then given by -S'.
     for (size_t i = 1; i < (size_t)m_model->populations.get_num_time_points(); i++) {
         m_model->flows.add_time_point(m_model->flows.get_last_time() + m_dt,
                                       TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, 0.));
 
-        if (i < 4) {
-            m_model->compute_S_deriv_forward(m_dt, i);
-        }
-        else {
-            m_model->compute_S_deriv(m_dt, i);
-        }
+        m_model->compute_S_deriv(m_dt, i);
     }
 
     while (m_model->populations.get_last_time() < tmax - 1e-10) {
