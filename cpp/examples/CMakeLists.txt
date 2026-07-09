@@ -150,6 +150,10 @@ add_executable(glct_secir_example glct_secir.cpp)
 target_link_libraries(glct_secir_example PRIVATE memilio glct_secir)
 target_compile_options(glct_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(glct_vector_example glct_vector.cpp)
+target_link_libraries(glct_vector_example PRIVATE memilio glct_vector)
+target_compile_options(glct_vector_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(history_example history.cpp)
 target_link_libraries(history_example PRIVATE memilio)
 target_compile_options(history_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
