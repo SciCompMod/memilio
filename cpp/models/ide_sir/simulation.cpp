@@ -76,7 +76,8 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, size_t fd_o
                 TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, 0.));
 
             if (i < 4) {
-                m_model->compute_S_deriv_forward(m_dt, i);
+                // m_model->compute_S_deriv_forward(m_dt, i);
+                m_model->compute_S_deriv(m_dt, i);
             }
             else {
                 m_model->compute_S_deriv(m_dt, i);
@@ -316,7 +317,7 @@ void SimulationMessinaExtendedDetailedInit::advance_reformulated(ScalarType tmax
         m_model->compute_S_deriv(m_dt);
 
         // Compute I and R.
-        m_model->compute_I_and_R(m_dt, false);
+        m_model->compute_I_and_R(m_dt, m_model->flows.get_num_time_points());
     }
 
     std::cout << "SIR: " << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] << ", "
