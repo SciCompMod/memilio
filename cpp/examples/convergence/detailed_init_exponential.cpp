@@ -49,13 +49,31 @@ ScalarType cont_freq = 0.7;
 
 ScalarType total_population = 1e7;
 ScalarType I0               = 1000.;
-ScalarType R0               = 100.;
+ScalarType R0               = 0.;
 ScalarType S0               = total_population - I0 - R0;
 
 } // namespace params
 
-mio::IOResult<std::vector<mio::TimeSeries<ScalarType>>>
-simulate_ode(ScalarType ode_exponent, ScalarType t0_ode, ScalarType tmax, int TimeInfected, std::string save_dir = "")
+mio::TimeSeries<ScalarType> compress_timeseries(const mio::TimeSeries<ScalarType>& simulation_result,
+                                                ScalarType saving_dt)
+{
+    mio::TimeSeries<ScalarType> removed(simulation_result.get_num_elements());
+    ScalarType dt_original = simulation_result.get_time(1) - simulation_result.get_time(0);
+    ScalarType time        = simulation_result.get_time(0);
+    for (int i = 0; i < simulation_result.get_num_time_points(); i++) {
+        if (std::fabs(simulation_result.get_time(i) - time) < dt_original / 2.) {
+            removed.add_time_point(simulation_result.get_time(i), simulation_result[i]);
+            std::cout << time << std::endl;
+            time += saving_dt;
+        }
+    }
+    return removed;
+}
+
+mio::IOResult<std::vector<mio::TimeSeries<ScalarType>>> simulate_ode(ScalarType ode_exponent, ScalarType t0_ode,
+                                                                     ScalarType tmax, int TimeInfected,
+                                                                     std::string save_dir       = "",
+                                                                     ScalarType saving_exponent = 0.)
 {
     using namespace params;
 
@@ -87,18 +105,23 @@ simulate_ode(ScalarType ode_exponent, ScalarType t0_ode, ScalarType tmax, int Ti
     sim.set_last_step_tolerance(1e-8);
 
     sim.advance(tmax);
-    auto sir   = sim.get_result();
-    auto flows = sim.get_flows();
+    auto compartments = sim.get_result();
+    auto flows        = sim.get_flows();
 
-    std::cout << "Num tps ODE: " << sir.get_num_time_points() << std::endl;
+    std::cout << "Num tps ODE: " << compartments.get_num_time_points() << std::endl;
 
     if (!save_dir.empty()) {
         // Save compartments.
-        mio::TimeSeries<ScalarType> compartments = sir;
-        auto result                              = compartments.export_csv("ode_result.csv");
+        ScalarType dt_save           = std::pow(10, -saving_exponent);
+        auto compressed_compartments = compress_timeseries(compartments, dt_save);
+
+        std::cout << "Num tps ODE compressed: " << compressed_compartments.get_num_time_points() << std::endl;
+
+        auto result = compressed_compartments.export_csv("ode_result.csv");
         auto save_result_status_ode =
-            mio::save_result({compartments}, {0}, num_agegroups,
-                             save_dir + "result_ode_dt=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
+            mio::save_result({compressed_compartments}, {0}, num_agegroups,
+                             save_dir + "result_ode_dt=1e-" + fmt::format("{:.0f}", ode_exponent) + "_savedt=1e-" +
+                                 fmt::format("{:.0f}", saving_exponent) + ".h5");
 
         if (!save_result_status_ode) {
             return mio::failure(mio::StatusCode::InvalidValue,
@@ -106,7 +129,7 @@ simulate_ode(ScalarType ode_exponent, ScalarType t0_ode, ScalarType tmax, int Ti
         }
     }
 
-    auto results = {sir, flows};
+    auto results = {compartments, flows};
     return mio::success(results);
 }
 
@@ -258,7 +281,7 @@ int main()
     using namespace params;
 
     // Compute groundtruth with ODE model.
-    ScalarType ode_exponent = 6.;
+    ScalarType ode_exponent = 10.;
 
     std::vector<ScalarType> time_infected_values = {2};
     // Support max with tol = 1e-8:
@@ -268,62 +291,64 @@ int main()
     // T_I=4: support max = 73.69
 
     ScalarType t0_ode                      = 0.;
-    ScalarType t0_ide                      = 50.;
-    std::vector<ScalarType> t_init_windows = {40., 30., 20., 10., 0.};
+    ScalarType t0_ide                      = 30.;
+    std::vector<ScalarType> t_init_windows = {20.};
     std::vector<ScalarType> tmax_values    = {t0_ide + 20.};
 
     std::vector<size_t> finite_difference_orders = {4};
 
-    std::vector<ScalarType> ide_exponents = {3.};
+    std::vector<ScalarType> ide_exponents = {0., 1., 2., 3.};
     std::vector<size_t> gregory_orders    = {1, 2, 3};
 
-    std::vector<std::vector<ScalarType>> timeinf_tinit_tmax_values;
+    std::vector<std::vector<ScalarType>> timeinf_tmax_values;
 
     for (ScalarType time_infected : time_infected_values) {
-        for (ScalarType t_init_window : t_init_windows) {
-            for (ScalarType tmax : tmax_values) {
-                // ScalarType t_init                   = t0_ide - t_init_window;
-                std::vector<ScalarType> value_tuple = {time_infected, t_init_window, tmax};
-                timeinf_tinit_tmax_values.push_back(value_tuple);
-            }
+        for (ScalarType tmax : tmax_values) {
+            std::vector<ScalarType> value_tuple = {time_infected, tmax};
+            timeinf_tmax_values.push_back(value_tuple);
         }
     }
 
-    // std::vector<std::vector<ScalarType>> timeinf_tinit_tmax_values = {
-    //                 {1., 10., 20.}, {2., 10., 20.}, {3., 10., 20.}, {4., 10., 20.}};
-
-    for (std::vector<ScalarType> value_tuple : timeinf_tinit_tmax_values) {
+    for (std::vector<ScalarType> value_tuple : timeinf_tmax_values) {
 
         ScalarType time_infected = value_tuple[0];
-        ScalarType t_init_window = value_tuple[1];
-        ScalarType tmax          = value_tuple[2];
-
-        ScalarType t_init = t0_ide - t_init_window;
+        ScalarType tmax          = value_tuple[1];
 
         for (size_t finite_difference_order : finite_difference_orders) {
             std::cout << "FD order: " << finite_difference_order << std::endl;
 
-            std::string save_dir =
-                fmt::format("../../simulation_results/2026-07-01/adapted_formulation_t0ode={}_I0={}_R0={}/"
-                            "detailed_init_exponential_tinit={}_t0ide={}_tmax={}_finite_diff={}/",
-                            t0_ode, I0, R0, t_init, t0_ide, tmax, finite_difference_order);
+            std::string save_dir = fmt::format("../../simulation_results/2026-07-09/dtode=1e-{}_t0ode={}_I0={}_R0={}/"
+                                               "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
+                                               ode_exponent, t0_ode, I0, R0, t0_ide, tmax, finite_difference_order);
 
             // Make folder if not existent yet.
             std::filesystem::path dir(save_dir);
             std::filesystem::create_directories(dir);
 
-            auto result_ode = simulate_ode(ode_exponent, t0_ode, tmax, time_infected, save_dir).value();
+            ScalarType saving_exponent = *std::max_element(ide_exponents.begin(), ide_exponents.end());
+            auto result_ode =
+                simulate_ode(ode_exponent, t0_ode, tmax, time_infected, save_dir, saving_exponent).value();
 
             auto compartments_ode = result_ode[0];
             // auto flows_ode        = result_ode[1];
 
-            // Do IDE simulations.
-            for (size_t gregory_order : gregory_orders) {
-                std::cout << std::endl;
-                std::cout << "Gregory order: " << gregory_order << std::endl;
-                mio::IOResult<void> result_ide =
-                    simulate_ide(ide_exponents, gregory_order, finite_difference_order, t_init_window, t0_ide, tmax,
-                                 time_infected, save_dir, compartments_ode);
+            for (ScalarType t_init_window : t_init_windows) {
+                ScalarType t_init = t0_ide - t_init_window;
+                std::cout << "t_init = " << t_init << std::endl;
+
+                std::string save_dir_ide = fmt::format("{}/tinit={}/", save_dir, t_init);
+                // Make folder if not existent yet.
+                std::filesystem::path dir_ide(save_dir_ide);
+                std::filesystem::create_directories(dir_ide);
+
+                // Do IDE simulations.
+                for (size_t gregory_order : gregory_orders) {
+                    std::cout << std::endl;
+                    std::cout << "Gregory order: " << gregory_order << std::endl;
+                    mio::IOResult<void> result_ide =
+                        simulate_ide(ide_exponents, gregory_order, finite_difference_order, t_init_window, t0_ide, tmax,
+                                     time_infected, save_dir_ide, compartments_ode);
+                }
             }
         }
     }
