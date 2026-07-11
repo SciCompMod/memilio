@@ -98,13 +98,6 @@ struct ABMPopulation::Impl {
         auto icu = model.add_location(mio::abm::LocationType::ICU);
         model.get_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
 
-        auto testing_criteria_work = mio::abm::TestingCriteria();
-        auto testing_scheme_work   = mio::abm::TestingScheme(
-            testing_criteria_work, mio::abm::days(1), mio::abm::TimePoint(0),
-            mio::abm::TimePoint(0) + mio::abm::days(10),
-            model.parameters.get<mio::abm::TestData>()[mio::abm::TestType::Antigen], 0.5);
-        model.get_testing_strategy().add_scheme(mio::abm::LocationType::Work, testing_scheme_work);
-
         int school_ctr = 0, work_ctr = 0, shop_ctr = 0, event_ctr = 0;
         for (auto& person : model.get_persons()) {
             const auto id = person.get_id();
@@ -128,8 +121,7 @@ ABMPopulation::ABMPopulation(int n_households)
 }
 
 std::pair<Eigen::MatrixXd, Eigen::MatrixXd> forward_pass(const ABMPopulation& population,
-                                                          ScalarType beta, ScalarType kappa,
-                                                          int cohort_budget)
+                                                          ScalarType beta, ScalarType kappa)
 {
     mio::set_log_level(mio::LogLevel::warn);
 
@@ -157,33 +149,35 @@ std::pair<Eigen::MatrixXd, Eigen::MatrixXd> forward_pass(const ABMPopulation& po
     auto tmax = t0 + mio::abm::days(30);
     auto sim  = mio::abm::Simulation(t0, std::move(model));
 
-    mio::History<mio::DataWriterToMemory, mio::abm::LogCTCluster, mio::abm::LogSchoolCohort>
+    // clusters: 0 = school (5–14), 1 = work (15–34), 2 = work (35–59)
+    mio::History<mio::DataWriterToMemory, mio::abm::LogCTCluster>
         historyTimeSeries{
-            mio::abm::LogCTCluster{AGE_GROUP_5_TO_14, mio::abm::LocationType::School},
-            mio::abm::LogSchoolCohort{cohort_budget}};
+            mio::abm::LogCTCluster{std::vector<mio::abm::LogCTCluster::ClusterSpec>{
+                {AGE_GROUP_5_TO_14,  mio::abm::LocationType::School},
+                {AGE_GROUP_15_TO_34, mio::abm::LocationType::Work},
+                {AGE_GROUP_35_TO_59, mio::abm::LocationType::Work}}}};
     sim.advance(tmax, historyTimeSeries);
 
     const auto& hist_log = std::get<0>(historyTimeSeries.get_log());
-    Eigen::MatrixXd hist_result(static_cast<Eigen::Index>(hist_log.size()), 42);
-    for (size_t i = 0; i < hist_log.size(); ++i) {
-        const auto& [time, hist] = hist_log[i];
-        hist_result(i, 0)           = std::round(time.days());
-        hist_result.row(i).tail(41) = hist.cast<double>().transpose();
+    const int n_days     = static_cast<int>(hist_log.size());
+
+    Eigen::MatrixXd school_result(n_days, 42); // [day, ct_0..ct_40]  school age-group
+    Eigen::MatrixXd work_result(n_days, 83);   // [day, ct_0..ct_40 (15–34), ct_0..ct_40 (35–59)]
+
+    for (int i = 0; i < n_days; ++i) {
+        const auto& [time, hists] = hist_log[i];
+        const double day = std::round(time.days());
+        school_result(i, 0)             = day;
+        school_result.row(i).tail(41)   = hists[0].cast<double>().transpose();
+        work_result(i, 0)               = day;
+        work_result.row(i).segment(1, 41)  = hists[1].cast<double>().transpose();
+        work_result.row(i).segment(42, 41) = hists[2].cast<double>().transpose();
     }
 
-    const auto& cohort_log = std::get<1>(historyTimeSeries.get_log());
-    Eigen::MatrixXd cohort_result(static_cast<Eigen::Index>(cohort_log.size()), cohort_budget + 1);
-    for (size_t i = 0; i < cohort_log.size(); ++i) {
-        const auto& [time, cts] = cohort_log[i];
-        cohort_result(i, 0) = std::round(time.days());
-        for (int j = 0; j < cohort_budget; ++j)
-            cohort_result(i, j + 1) = static_cast<double>(cts[j]);
-    }
-
-    return {hist_result, cohort_result};
+    return {school_result, work_result};
 }
 
-std::pair<Eigen::MatrixXd, Eigen::MatrixXd> forward_pass(ScalarType beta, ScalarType kappa, int cohort_budget)
+std::pair<Eigen::MatrixXd, Eigen::MatrixXd> forward_pass(ScalarType beta, ScalarType kappa)
 {
-    return forward_pass(ABMPopulation{}, beta, kappa, cohort_budget);
+    return forward_pass(ABMPopulation{}, beta, kappa);
 }

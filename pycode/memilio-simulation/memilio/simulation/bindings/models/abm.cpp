@@ -243,17 +243,18 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::init<int>(), py::arg("n_households") = 100);
 
     m.def("forward_pass",
-      py::overload_cast<const ABMPopulation&, ScalarType, ScalarType, int>(&forward_pass),
-      py::arg("population"), py::arg("beta"), py::arg("kappa"), py::arg("cohort_budget") = 50,
-      "Run the ABM forward pass using a pre-built population. Returns (histogram, cohort): "
-      "histogram is (n_days, 42) with columns [day, ct_0..ct_40], "
-      "cohort is (n_days, cohort_budget+1) with columns [day, ct_student_0..ct_student_{k-1}]. "
-      "Encoding: 0 = max viral load, 40 = not detected, 255 = unused cohort slot.");
+      py::overload_cast<const ABMPopulation&, ScalarType, ScalarType>(&forward_pass),
+      py::arg("population"), py::arg("beta"), py::arg("kappa"),
+      "Run the ABM forward pass using a pre-built population. "
+      "Returns (histogram_school, histogram_work): "
+      "histogram_school is (n_days, 42) with columns [day, ct_0..ct_40] for age 5-14 at School; "
+      "histogram_work is (n_days, 83) with columns [day, ct_0..ct_40 (age 15-34), ct_0..ct_40 (age 35-59)]. "
+      "Encoding: 0 = max viral load, 40 = not detected.");
 
     m.def("forward_pass",
-      py::overload_cast<ScalarType, ScalarType, int>(&forward_pass),
-      py::arg("beta"), py::arg("kappa"), py::arg("cohort_budget") = 50,
-      "Run the ABM forward pass (builds a fresh population each call). Returns (histogram, cohort).");
+      py::overload_cast<ScalarType, ScalarType>(&forward_pass),
+      py::arg("beta"), py::arg("kappa"),
+      "Run the ABM forward pass (builds a fresh population each call). Returns (histogram_school, histogram_work).");
 }
 
 PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::Model>().get_locations()))

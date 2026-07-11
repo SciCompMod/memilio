@@ -16,14 +16,12 @@ struct ABMPopulation {
 // Runs one forward pass: copies the population, sets beta/kappa, randomises initial
 // infections, and simulates. Reusing the same ABMPopulation avoids rebuilding the
 // household/location structure on every call.
-// Returns (histogram, cohort):
-//   histogram:    (n_days, 42)              — [day, count_ct0..count_ct40]
-//   fixed_cohort: (n_days, cohort_budget+1) — [day, ct_student0..ct_student_{k-1}]
-// Encoding: 0 = max viral load, 40 = not detected, 255 = unused cohort slot.
+// Returns (histogram_school, histogram_work):
+//   histogram_school: (n_days, 42) — [day, count_ct0..count_ct40] for age 5–14 at School
+//   histogram_work:   (n_days, 83) — [day, count_ct0..count_ct40 (age 15–34), count_ct0..count_ct40 (age 35–59)]
+// Encoding: 0 = max viral load, 40 = not detected.
 std::pair<Eigen::MatrixXd, Eigen::MatrixXd> forward_pass(const ABMPopulation& population,
-                                                          ScalarType beta, ScalarType kappa,
-                                                          int cohort_budget = 50);
+                                                          ScalarType beta, ScalarType kappa);
 
 // Convenience wrapper: builds a fresh ABMPopulation on every call (original behaviour).
-std::pair<Eigen::MatrixXd, Eigen::MatrixXd> forward_pass(ScalarType beta, ScalarType kappa,
-                                                          int cohort_budget = 50);
+std::pair<Eigen::MatrixXd, Eigen::MatrixXd> forward_pass(ScalarType beta, ScalarType kappa);

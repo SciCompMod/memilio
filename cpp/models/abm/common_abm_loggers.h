@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Sascha Korf
@@ -38,7 +38,7 @@ namespace abm
 /**
  * @brief Struct to save specific mobility data of an agent.
  * The data consists of:
- * 
+ *
  */
 struct mobility_data {
     uint32_t agent_id;
@@ -82,7 +82,7 @@ struct LogLocationInformation : mio::LogOnce {
     using Type = std::vector<
         std::tuple<mio::abm::LocationId, mio::abm::LocationType, mio::geo::GeographicalLocation, size_t, int>>;
     /**
-     * @brief Log the LocationInformation of the simulation. 
+     * @brief Log the LocationInformation of the simulation.
      * @param[in] sim The simulation of the abm.
      * @return A vector of tuples with the LocationInformation, where each tuple contains the following information:
      * -# The index of the location.
@@ -112,8 +112,8 @@ struct LogLocationInformation : mio::LogOnce {
  */
 struct LogPersonInformation : mio::LogOnce {
     using Type = std::vector<std::tuple<mio::abm::PersonId, mio::abm::LocationId, mio::AgeGroup>>;
-    /** 
-     * @brief Log the LocationInformation of the simulation. 
+    /**
+     * @brief Log the LocationInformation of the simulation.
      * @param[in] sim The simulation of the abm.
      * @return A vector of tuples with the LocationInformation, where each tuple contains the following information:
      * -# The person id.
@@ -139,7 +139,7 @@ struct LogPersonInformation : mio::LogOnce {
 struct LogDataForMobility : mio::LogAlways {
     using Type = std::vector<std::tuple<mio::abm::PersonId, mio::abm::LocationId, mio::abm::TimePoint,
                                         mio::abm::TransportMode, mio::abm::ActivityType, mio::abm::InfectionState>>;
-    /** 
+    /**
      * @brief Log the mobility data of the agents in the simulation.
      * @param[in] sim The simulation of the ABM.
      * @return A vector of tuples with the mobility Data, where each tuple contains the following information:
@@ -167,7 +167,7 @@ struct LogDataForMobility : mio::LogAlways {
 */
 struct LogInfectionState : mio::LogAlways {
     using Type = std::pair<mio::abm::TimePoint, Eigen::VectorX<ScalarType>>;
-    /** 
+    /**
      * @brief Log the TimeSeries of the number of Person%s in an #InfectionState.
      * @param[in] sim The simulation of the abm.
      * @return A pair of the TimePoint and the TimeSeries of the number of Person%s in an #InfectionState.
@@ -277,20 +277,23 @@ struct LogCycleThreshhold : mio::LogAlways {
 
 
 /**
- * @brief Logs the CT histogram for a single age-group × location-type cluster.
+ * @brief Logs CT histograms for one or more (age-group, location-type) clusters per day.
  *
- * Output: 41-bin histogram (CT 0..40) over ALL persons at the cluster, infected or not.
- * Uninfected persons (and recovered with zero viral load) are binned at CT=40, matching
- * the LogSchoolCohort convention: 40 = "not detected", 0 = maximum viral load.
- * The sum of all bins equals the total number of persons at the cluster that morning,
- * so Python can reconstruct the uninfected fraction as hist[40] minus the infected tail.
+ * Each cluster produces an independent 41-bin histogram (CT 0..40).
+ * Uninfected persons (and recovered with zero viral load) are binned at CT=40:
+ * 40 = "not detected", 0 = maximum viral load.
+ * The sum of each histogram equals the number of persons in that cluster that morning.
  * Fires at a fixed hour each day (default 8), matching LogSchoolCohort's schedule.
+ *
+ * Output Type: pair<TimePoint, vector<VectorX<uint32_t>>> — one histogram per cluster,
+ * in the same order as the clusters passed to the constructor.
  */
 struct LogCTCluster {
-    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorX<uint32_t>>;
+    using ClusterSpec = std::pair<mio::AgeGroup, mio::abm::LocationType>;
+    using Type        = std::pair<mio::abm::TimePoint, std::vector<Eigen::VectorX<uint32_t>>>;
 
-    explicit LogCTCluster(mio::AgeGroup age_group, mio::abm::LocationType loc_type, int hour = 8)
-        : m_age_group(age_group), m_loc_type(loc_type), m_hour(hour)
+    explicit LogCTCluster(std::vector<ClusterSpec> clusters, int hour = 10)
+        : m_clusters(std::move(clusters)), m_hour(hour)
     {
     }
 
@@ -301,34 +304,36 @@ struct LogCTCluster {
 
     Type log(const mio::abm::Simulation<>& sim)
     {
-        constexpr int num_bins       = 41; // CT 0..40
+        constexpr int num_bins       = 41;
         constexpr int max_ct         = 40;
         constexpr double log10_slope = 3.32192809489; // 1/log10(2)
 
-        Eigen::VectorX<uint32_t> hist = Eigen::VectorX<uint32_t>::Zero(num_bins);
-        const auto t                  = sim.get_time();
+        const auto t = sim.get_time();
+        std::vector<Eigen::VectorX<uint32_t>> hists(m_clusters.size(),
+                                                     Eigen::VectorX<uint32_t>::Zero(num_bins));
 
         for (const auto& person : sim.get_model().get_persons()) {
-            if (person.get_age() != m_age_group)
-                continue;
-            if (sim.get_model().get_location(person.get_location()).get_type() != m_loc_type)
-                continue;
-            const auto& infections = person.get_infection_vector();
-            if (infections.empty()) {
-                hist[max_ct] += 1; // not infected → bin 40 = "not detected"
-                continue;
+            const auto age      = person.get_age();
+            const auto loc_type = sim.get_model().get_location(person.get_location()).get_type();
+            for (size_t c = 0; c < m_clusters.size(); ++c) {
+                if (m_clusters[c].first != age || m_clusters[c].second != loc_type)
+                    continue;
+                const auto& infections = person.get_infection_vector();
+                if (infections.empty()) {
+                    hists[c][max_ct] += 1;
+                } else {
+                    const ScalarType vl = infections[0].get_viral_load(t);
+                    const int bin = std::clamp(static_cast<int>(max_ct - vl * log10_slope), 0, num_bins - 1);
+                    hists[c][bin] += 1;
+                }
             }
-            const ScalarType vl = infections[0].get_viral_load(t);
-            const int bin       = std::clamp(static_cast<int>(max_ct - vl * log10_slope), 0, num_bins - 1);
-            hist[bin] += 1;
         }
-        return {t, hist};
+        return {t, std::move(hists)};
     }
 
 private:
-    mio::AgeGroup          m_age_group;
-    mio::abm::LocationType m_loc_type;
-    int                    m_hour;
+    std::vector<ClusterSpec> m_clusters;
+    int                      m_hour;
 };
 
 /**
@@ -420,7 +425,7 @@ struct DataWriterToMemoryDelta {
     using Data = std::tuple<std::vector<typename Loggers::Type>...>;
     template <class Logger>
     /**
-     * @brief This function adds an entry to the data vector. 
+     * @brief This function adds an entry to the data vector.
      * @param[in] t The data from the logger.
      * @param[in,out] data The data tuple.
      * @details The data is only added if it differs from the last entry. For this we use the first entry as a reference for the current position.
