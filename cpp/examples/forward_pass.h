@@ -4,13 +4,13 @@
 #include <utility>
 #include "memilio/config.h"
 
-// Pre-built ABM population: household structure, locations, and agent assignments,
-// with all agents initially susceptible and no inference parameters set.
-// Construct once with ABMPopulation(n_households), then reuse across forward_pass() calls.
+// Pre-built ABM population: German-demographics-based households, schools, workplaces,
+// shops, events, and hospital/ICU (via CityBuilder), with all agents initially susceptible.
+// Construct once with ABMPopulation(total_population), then reuse across forward_pass() calls.
 struct ABMPopulation {
     struct Impl;
     std::shared_ptr<Impl> impl;
-    explicit ABMPopulation(int n_households = 100);
+    explicit ABMPopulation(int total_population = 500);
 };
 
 // Runs one forward pass: copies the population, sets beta/kappa, randomises initial

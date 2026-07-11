@@ -238,9 +238,10 @@ PYBIND11_MODULE(_simulation_abm, m)
     m.attr("__version__") = "dev";
 
     py::class_<ABMPopulation>(m, "ABMPopulation",
-      "Pre-built ABM population (households, locations, agent assignments). "
+      "Pre-built ABM population from CityBuilder: German-demographics-based households, "
+      "schools, workplaces, shops, events, and hospital/ICU. "
       "Construct once, reuse across many forward_pass() calls to avoid rebuilding the structure.")
-        .def(py::init<int>(), py::arg("n_households") = 100);
+        .def(py::init<int>(), py::arg("total_population") = 500);
 
     m.def("forward_pass",
       py::overload_cast<const ABMPopulation&, ScalarType, ScalarType>(&forward_pass),

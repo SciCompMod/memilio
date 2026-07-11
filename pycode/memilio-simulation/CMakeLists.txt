@@ -110,7 +110,10 @@ endfunction()
 # build python extensions
 add_pymio_module(_simulation_abm
     LINKED_LIBRARIES memilio abm
-    SOURCES memilio/simulation/bindings/models/abm.cpp  ${CMAKE_CURRENT_SOURCE_DIR}/../../cpp/examples/forward_pass.cpp
+    SOURCES memilio/simulation/bindings/models/abm.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../cpp/examples/forward_pass.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../cpp/examples/city_builder.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../cpp/examples/parameter_setter.cpp
 )
 target_include_directories(_simulation_abm PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../cpp/examples)
 
