@@ -75,8 +75,9 @@ public:
                 //   To incorporate external changes to the last values of pop_result (e.g. by applying mobility), we only
                 //   calculate the change in population starting from the last available time point in m_result, instead
                 //   of starting at t0. To do that, the following difference of flows is used.
-                model.get_derivatives(flows - Base::get_flows().get_value(pop_result.get_num_time_points() - 1),
-                                      m_pop); // note: overwrites values in pop
+                auto& flow_delta = Base::get_flow_delta();
+                flow_delta       = flows - Base::get_flows().get_value(pop_result.get_num_time_points() - 1);
+                model.get_derivatives(flow_delta, m_pop); // note: overwrites values in pop
                 //   add the "initial" value of the ODEs (using last available time point in pop_result)
                 //     If no changes were made to the last value in m_result outside of FlowSimulation, the following
                 //     line computes the same as `model.get_derivatives(flows, x); x += model.get_initial_values();`.

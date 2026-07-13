@@ -56,6 +56,7 @@ public:
     FlowSimulationBase(Model const& model, std::unique_ptr<Core>&& integrator_core, FP t0, FP dt)
         : Base(model, std::move(integrator_core), t0, dt)
         , m_flow_result(t0, model.get_initial_flows())
+        , m_flow_delta(model.get_initial_flows().size())
     {
     }
 
@@ -97,13 +98,20 @@ protected:
         // calculate new time points
         for (Eigen::Index i = result.get_num_time_points(); i < flows.get_num_time_points(); i++) {
             result.add_time_point(flows.get_time(i));
-            model.get_derivatives(flows.get_value(i) - flows.get_value(last_tp), result.get_value(i));
+            m_flow_delta = flows.get_value(i) - flows.get_value(last_tp);
+            model.get_derivatives(m_flow_delta, result.get_value(i));
             result.get_value(i) += result.get_value(last_tp);
         }
     }
 
+    Eigen::VectorX<FP>& get_flow_delta()
+    {
+        return m_flow_delta;
+    }
+
 private:
     mio::TimeSeries<FP> m_flow_result; ///< Flow result of the simulation.
+    Eigen::VectorX<FP> m_flow_delta; ///< Pre-allocated temporary for flow changes relative to the current base point.
 };
 
 /// @brief Specialization of FlowSimulationBase that takes a SystemIntegrator instead of it's Integrands.
