@@ -250,12 +250,20 @@ public:
             },
             ytp1, t, dt);
         // update time (it is not modified by do_step)
-        t += dt;
+
+        // Compute t+=dt via Kahan summation to reduce numerical error.
+        FP increment      = dt - m_summation_error;
+        FP t_temp         = t + increment;
+        m_summation_error = (t_temp - t) - increment;
+        std::cout << t << ", " << m_summation_error << std::endl;
+        t = t_temp;
+        // t += dt;
         return true; // no step size adaption
     }
 
 private:
     mutable Stepper m_stepper; ///< A stepper instance used for integration.
+    mutable FP m_summation_error = 0.; ///< Variable for storing numerical error of summation when updating t.
 };
 
 } // namespace mio

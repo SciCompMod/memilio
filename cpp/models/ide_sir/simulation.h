@@ -158,6 +158,9 @@ private:
     ScalarType m_dt; ///< Time step used for numerical computations in simulation.
     size_t m_max_number_iterations =
         0; ///< Get maximal number of iterations that was necessary throughout the simulation.
+    ScalarType m_summation_error_pop        = 0.;
+    ScalarType m_summation_error_flows      = 0.;
+    ScalarType m_summation_error_flows_init = 0.;
 };
 
 } // namespace isir

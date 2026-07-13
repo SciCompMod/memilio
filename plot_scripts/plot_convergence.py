@@ -129,6 +129,8 @@ def read_data(data_dir, ide_exponents, gregory_order):
         if len(data['Total'][0]) == 3:
             # As there should be only one Group, total is the simulation result.
             results.append(data['Total'][:, :])
+            # print("ide exponent: ", exponent)
+            # print("value at t_init:", results[0][0])
         else:
             raise gd.DataError(
                 "Expected a different size of vector in time series.")
@@ -303,9 +305,17 @@ def compute_errors_max(groundtruth, results, groundtruth_exponent, timesteps_ide
         for compartment in range(num_errors):
             timestep = timesteps_ide[i]
             scale_timesteps = timestep/pow(10, -groundtruth_exponent)
+            # print("scale timesteps: ", scale_timesteps)
 
             difference = groundtruth[0][int(
                 pow(10, groundtruth_exponent)*(t0_ide))::int(scale_timesteps)][:, compartment]-results[i][int((t0_ide-t_init)/timestep)::][:, compartment]
+
+            print("timestep: ", timestep)
+            print("difference at t_init: ", difference[0])
+            print()
+
+            # to debug:
+            # groundtruth[0][int(pow(10, groundtruth_exponent)*(t_init))::int(scale_timesteps)][:, compartment] - results[i][0::][:, compartment]
 
             if relative_error:
                 norm_groundtruth = compute_max_norm(groundtruth[0][int(
@@ -675,7 +685,7 @@ def main():
     groundtruth_save_exponent = 3
     only_S = False
 
-    main_dir = "2026-07-09/compare_init_intervals_backwardfd_t0ode=0_I0=1000_R0=0/"
+    main_dir = f"2026-07-13/ide_with_kahan_dtode=1e-{groundtruth_exponent}_t0ode=0_timeinf=1/"
 
     ##############################################
 
@@ -684,7 +694,7 @@ def main():
     relevant_dir = os.path.join(root_dir, main_dir)
     # print(relevant_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
-    # sub_dirs = [sub_dirs[-1]]
+    sub_dirs = [sub_dirs[-1]]
 
     total_pop_reference = 0
     total_pop_all_fd_orders = []
