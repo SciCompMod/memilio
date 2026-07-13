@@ -95,6 +95,7 @@ protected:
         auto& result      = this->get_result();
         // take the last time point as base result (instead of the initial results), so that we use external changes
         const size_t last_tp = result.get_num_time_points() - 1;
+        result.reserve(flows.get_num_time_points());
         // calculate new time points
         for (Eigen::Index i = result.get_num_time_points(); i < flows.get_num_time_points(); i++) {
             result.add_time_point(flows.get_time(i));
