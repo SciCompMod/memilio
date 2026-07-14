@@ -82,10 +82,10 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, size_t fd_o
 
             if (i < 4) {
                 // m_model->compute_S_deriv_forward(m_dt, i);
-                m_model->compute_S_deriv(m_dt, i);
+                m_model->compute_S_deriv(m_div_dt, i);
             }
             else {
-                m_model->compute_S_deriv(m_dt, i);
+                m_model->compute_S_deriv(m_div_dt, i);
             }
         }
     }
@@ -139,7 +139,7 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, size_t fd_o
         }
 
         // Compute S'.
-        m_model->compute_S_deriv(m_dt);
+        m_model->compute_S_deriv(m_div_dt);
 
         // Compute I and R.
         m_model->compute_I_and_R(m_dt);

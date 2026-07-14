@@ -95,10 +95,10 @@ public:
     ScalarType fixed_point_function_reformulated2(ScalarType susceptibles, ScalarType dt, size_t t0_index,
                                                   size_t fd_order = 1);
 
-    void compute_S_deriv(ScalarType dt, size_t time_point_index);
-    void compute_S_deriv(ScalarType dt);
+    void compute_S_deriv(ScalarType div_dt, size_t time_point_index);
+    void compute_S_deriv(ScalarType div_dt);
 
-    void compute_S_deriv_forward(ScalarType dt, size_t time_point_index);
+    void compute_S_deriv_forward(ScalarType div_dt, size_t time_point_index);
 
     void compute_I_and_R(ScalarType dt, size_t time_point_index);
     void compute_I_and_R(ScalarType dt);

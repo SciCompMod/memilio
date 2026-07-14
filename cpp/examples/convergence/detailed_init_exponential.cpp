@@ -47,10 +47,11 @@ ScalarType Seasonality                      = 0.;
 
 ScalarType cont_freq = 0.7;
 
-ScalarType total_population = 1e7;
-ScalarType I0               = 1000.;
-ScalarType R0               = 0.;
-ScalarType S0               = total_population - I0 - R0;
+ScalarType totalpop_reduction = 1.;
+ScalarType total_population   = 1e7 / totalpop_reduction;
+ScalarType I0                 = 1000. / totalpop_reduction;
+ScalarType R0                 = 0. / totalpop_reduction;
+ScalarType S0                 = total_population - I0 - R0;
 
 } // namespace params
 
@@ -149,7 +150,8 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarTy
 
     for (ScalarType ide_exponent : ide_exponents) {
 
-        ScalarType dt_ide = pow(10, -ide_exponent);
+        ScalarType dt_ide     = pow(10, -ide_exponent);
+        ScalarType div_dt_ide = pow(10, ide_exponent);
         std::cout << "Simulation with dt=" << dt_ide << std::endl;
 
         mio::TimeSeries<ScalarType> init_populations((size_t)mio::isir::InfectionState::Count);
@@ -259,7 +261,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarTy
         std::cout << "support max: " << model.compute_calctime(dt_ide, 1e-7) << std::endl;
 
         // Carry out simulation.
-        mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide);
+        mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide, div_dt_ide);
         // size_t fd_order_contacts = 1;
         sim.advance(tmax);
         // sim.advance_S_deriv_fixedpoint(tmax);
@@ -298,9 +300,9 @@ int main()
     using namespace params;
 
     // Compute groundtruth with ODE model.
-    ScalarType ode_exponent = 6.;
+    ScalarType ode_exponent = 7.;
 
-    std::vector<ScalarType> time_infected_values = {1};
+    std::vector<ScalarType> time_infected_values = {2};
     // Support max with tol = 1e-8:
     // T_I=1: support max = 18.43
     // T_I=2: support max = 36.85
@@ -308,9 +310,9 @@ int main()
     // T_I=4: support max = 73.69
 
     ScalarType t0_ode                      = 0.;
-    ScalarType t0_ide                      = 20.;
-    std::vector<ScalarType> t_init_windows = {15.};
-    std::vector<ScalarType> tmax_values    = {t0_ide + 2.};
+    ScalarType t0_ide                      = 40.;
+    std::vector<ScalarType> t_init_windows = {30.};
+    std::vector<ScalarType> tmax_values    = {t0_ide + 5.};
 
     std::vector<size_t> finite_difference_orders = {4};
 
@@ -335,7 +337,7 @@ int main()
             std::cout << "FD order: " << finite_difference_order << std::endl;
 
             std::string save_dir =
-                fmt::format("../../simulation_results/2026-07-13/long_double_dtode=1e-{}_t0ode={}_timeinf={}/"
+                fmt::format("../../simulation_results/2026-07-13/more_kahan_dtode=1e-{}_t0ode={}_timeinf={}/"
                             "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
                             ode_exponent, t0_ode, time_infected, t0_ide, tmax, finite_difference_order);
 

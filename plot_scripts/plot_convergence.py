@@ -508,8 +508,12 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
 
     # fig.supxlabel(r'Time step $\Delta t$', fontsize=12, labelpad=20)
     axs[1].set_xlabel(r'Time step $\Delta t$', fontsize=12, labelpad=15)
-    ylabel = fig.supylabel(
-        r"$err$", fontsize=12)
+    if relative_error:
+        ylabel = fig.supylabel(
+            r"$err_{rel}$", fontsize=12)
+    else:
+        ylabel = fig.supylabel(
+            r"$err$", fontsize=12)
 
     # print(handles)
 
@@ -685,7 +689,7 @@ def main():
     groundtruth_save_exponent = 3
     only_S = False
 
-    main_dir = f"2026-07-13/ide_with_kahan_dtode=1e-{groundtruth_exponent}_t0ode=0_timeinf=1/"
+    main_dir = f"2026-07-13/more_kahan_dtode=1e-{groundtruth_exponent}_t0ode=0_timeinf=2/"
 
     ##############################################
 
@@ -732,10 +736,8 @@ def main():
             # errors_all_gregory_orders_l2_rel = []
             errors_all_gregory_orders_l2_abs = []
 
-            # errors_all_gregory_orders_max_rel = []
+            errors_all_gregory_orders_max_rel = []
             errors_all_gregory_orders_max_abs = []
-
-            total_pop_end_all_gregory_orders = []
 
             # Get exponents for which IDE simulations have been computed for considered directory.
             ide_exponents = get_ide_exponents(ide_result_dir)
@@ -761,6 +763,10 @@ def main():
                     groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init, False)
                 errors_all_gregory_orders_max_abs.append(errors_max_abs)
 
+                errors_max_abs_rel = compute_errors_max(
+                    groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init, True)
+                errors_all_gregory_orders_max_rel.append(errors_max_abs_rel)
+
                 plot_difference_per_timestep(
                     groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init, gregory_order_simulation, plot_dir, damping_time=-1)
 
@@ -776,20 +782,6 @@ def main():
                 # print(
                 #     f"Orders of convergence: ")
                 # print(order.T)
-
-                # print(
-                #     f"Total population at end for time step {timesteps_ide[-1]}: {results[-1][-1].sum()}")
-
-                # total_pop_end = get_total_pop_end(results)
-                # total_pop_end_all_gregory_orders.append(total_pop_end)
-
-                # total_pop_reference = results[-1][0].sum()
-
-            # total_pop_all_fd_orders.append(total_pop_end_all_gregory_orders)
-
-            # print("Max norm")
-            # for i in range(len(errors_all_gregory_orders_max_abs)):
-            #     print(errors_all_gregory_orders_max_abs[i])
 
             # Plot convergence of all compartments separately.
             fd_order = 1  # dummy right now
@@ -808,6 +800,11 @@ def main():
             maxnorm = True
             norm_of_sum = False
             plot_convergence(errors_all_gregory_orders_max_abs, timesteps_ide,
+                             gregory_orders_simulation, fd_order, l2, maxnorm, norm_of_sum, relative_error, plot_dir, only_S)
+
+            # relative error
+            relative_error = True
+            plot_convergence(errors_all_gregory_orders_max_rel, timesteps_ide,
                              gregory_orders_simulation, fd_order, l2, maxnorm, norm_of_sum, relative_error, plot_dir, only_S)
 
 

@@ -42,11 +42,17 @@ public:
      * @param[in] model An instance of the IDE model.
      * @param[in] dt Step size of numerical solver.
      */
-    SimulationMessinaExtendedDetailedInit(ModelMessinaExtendedDetailedInit const& model, ScalarType dt)
+    SimulationMessinaExtendedDetailedInit(ModelMessinaExtendedDetailedInit const& model, ScalarType dt,
+                                          ScalarType div_dt = 0.)
         : m_model(std::make_unique<ModelMessinaExtendedDetailedInit>(model))
         , m_dt(dt)
+        , m_div_dt(div_dt)
     {
         assert(m_dt > 0);
+
+        if (m_div_dt < 1e-10) {
+            m_div_dt = 1. / dt;
+        }
     }
 
     /** 
@@ -156,6 +162,7 @@ public:
 private:
     std::unique_ptr<ModelMessinaExtendedDetailedInit> m_model; ///< Unique pointer to the Model simulated.
     ScalarType m_dt; ///< Time step used for numerical computations in simulation.
+    ScalarType m_div_dt;
     size_t m_max_number_iterations =
         0; ///< Get maximal number of iterations that was necessary throughout the simulation.
     ScalarType m_summation_error_pop        = 0.;
