@@ -215,6 +215,7 @@ endif()
 
 if(MEMILIO_BUILD_EXAMPLES)
     add_subdirectory(examples)
+    add_subdirectory(TwinChainDemonstrator)
 endif()
 
 if(MEMILIO_BUILD_TESTS)
