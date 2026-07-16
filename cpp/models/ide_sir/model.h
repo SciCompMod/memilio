@@ -100,6 +100,8 @@ public:
 
     void compute_S_deriv_forward(ScalarType div_dt, size_t time_point_index);
 
+    void compute_S_deriv_analytical(ScalarType dt, size_t time_point_index);
+
     void compute_I_and_R(ScalarType dt, size_t time_point_index);
     void compute_I_and_R(ScalarType dt);
 

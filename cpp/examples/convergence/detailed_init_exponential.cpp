@@ -113,11 +113,14 @@ mio::IOResult<std::vector<mio::TimeSeries<ScalarType>>> simulate_ode(ScalarType 
     std::cout << "Num tps ODE: " << compartments.get_num_time_points() << std::endl;
 
     mio::TimeSeries<ScalarType> compressed_compartments =
-        mio::TimeSeries<ScalarType>((Eigen::Index)mio::isir::InfectionState::Susceptible);
+        mio::TimeSeries<ScalarType>((Eigen::Index)mio::isir::InfectionState::Count);
+    mio::TimeSeries<ScalarType> compressed_flows =
+        mio::TimeSeries<ScalarType>((Eigen::Index)mio::isir::InfectionTransition::Count);
 
     if (!save_dir.empty()) {
         // Save compartments.
         compressed_compartments = compress_timeseries(compartments, saving_exponent);
+        compressed_flows        = compress_timeseries(flows, saving_exponent);
 
         std::cout << "Num tps ODE compressed: " << compressed_compartments.get_num_time_points() << std::endl;
 
@@ -126,6 +129,11 @@ mio::IOResult<std::vector<mio::TimeSeries<ScalarType>>> simulate_ode(ScalarType 
             mio::save_result({compressed_compartments}, {0}, num_agegroups,
                              save_dir + "result_ode_dt=1e-" + fmt::format("{:.0f}", ode_exponent) + "_savedt=1e-" +
                                  fmt::format("{:.0f}", saving_exponent) + ".h5");
+
+        auto save_result_status_ode_flows =
+            mio::save_result({compressed_flows}, {0}, num_agegroups,
+                             save_dir + "result_ode_dt=1e-" + fmt::format("{:.0f}", ode_exponent) + "_savedt=1e-" +
+                                 fmt::format("{:.0f}", saving_exponent) + "_flows.h5");
 
         if (!save_result_status_ode) {
             return mio::failure(mio::StatusCode::InvalidValue,
@@ -264,7 +272,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarTy
         mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide, div_dt_ide);
         // size_t fd_order_contacts = 1;
         sim.advance(tmax);
-        // sim.advance_S_deriv_fixedpoint(tmax);
+        // sim.advance_S_deriv_analytical(tmax);
 
         if (!save_dir.empty()) {
             // Save compartments.
@@ -300,7 +308,7 @@ int main()
     using namespace params;
 
     // Compute groundtruth with ODE model.
-    ScalarType ode_exponent = 7.;
+    ScalarType ode_exponent = 6.;
 
     std::vector<ScalarType> time_infected_values = {2};
     // Support max with tol = 1e-8:
@@ -316,7 +324,7 @@ int main()
 
     std::vector<size_t> finite_difference_orders = {4};
 
-    std::vector<ScalarType> ide_exponents = {0, 1, 2, 3};
+    std::vector<ScalarType> ide_exponents = {0, 1, 2};
     std::vector<size_t> gregory_orders    = {1, 2, 3};
 
     std::vector<std::vector<ScalarType>> timeinf_tmax_values;
@@ -337,7 +345,7 @@ int main()
             std::cout << "FD order: " << finite_difference_order << std::endl;
 
             std::string save_dir =
-                fmt::format("../../simulation_results/2026-07-13/more_kahan_dtode=1e-{}_t0ode={}_timeinf={}/"
+                fmt::format("../../simulation_results/2026-07-16/S_deriv_fd_dtode=1e-{}_t0ode={}_timeinf={}/"
                             "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
                             ode_exponent, t0_ode, time_infected, t0_ide, tmax, finite_difference_order);
 

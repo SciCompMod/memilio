@@ -354,10 +354,6 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
                      relevant_susceptibles / m_N) -
             dt * dt * gregory_weight * phi_deriv / m_N * inner_sum;
 
-        // if (fabs(summand) >= 1e-16) {
-        //     sum += summand;
-        // }
-
         sum_vector.push_back(summand);
     }
 
@@ -391,6 +387,81 @@ size_t ModelMessinaExtendedDetailedInit::compute_S(ScalarType s_init, ScalarType
     populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] = s_init;
 
     return iter_counter;
+}
+
+void ModelMessinaExtendedDetailedInit::compute_S_deriv_analytical(ScalarType dt, size_t time_point_index)
+{
+    // Get first time of populations.
+    ScalarType init_time = populations.get_time(0);
+    // Get the index of the current time step.
+    ScalarType considered_time = populations.get_time(time_point_index);
+    // std::cout << "current time: " << current_time << std::endl;
+    // size_t current_time_index = populations.get_num_time_points() - 1;
+
+    // Compute first part of sum where already known initial values of Susceptibles are used.
+    ScalarType sum = 0.;
+    std::vector<ScalarType> sum_vector{};
+
+    ScalarType gregory_weight   = 0.;
+    size_t switch_weights_index = std::min(time_point_index, m_gregory_order);
+
+    for (size_t j = 0; j <= time_point_index; j++) {
+
+        if (j < switch_weights_index) {
+            gregory_weight = sum_part1_weight(time_point_index, j);
+        }
+        else {
+            gregory_weight = sum_part2_weight(time_point_index, j);
+        }
+
+        // For each index, the corresponding summand is computed here.
+
+        ScalarType gamma_deriv = compute_gamma_deriv(dt, time_point_index - j, m_finite_difference_order);
+        // std::cout << "gamma deriv: " << gamma_deriv << std::endl;
+
+        ScalarType summand_A_deriv =
+            m_transmissionproboncontact_vector[time_point_index - j] *
+            m_riskofinffromsymptomatic_vector[time_point_index - j] * gamma_deriv *
+            (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                 SimulationTime<ScalarType>(considered_time))(0, 0) *
+                 populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible] +
+             parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                 SimulationTime<ScalarType>((time_point_index - (ScalarType)j) * dt + init_time))(0, 0) *
+                 (populations.get_value(0)[(Eigen::Index)InfectionState::Recovered] - m_N));
+        // std::cout << "sum A deriv: " << sum_A_deriv << std::endl;
+
+        ScalarType phi_deriv =
+            compute_phi_deriv(dt, time_point_index - j, m_finite_difference_order, considered_time, 1000., init_time);
+        // std::cout << "phi deriv: " << phi_deriv << std::endl;
+        ScalarType summand_A = 0.;
+        if (phi_deriv > 1e-12) {
+            summand_A = m_transmissionproboncontact_vector[time_point_index - j] *
+                        m_riskofinffromsymptomatic_vector[time_point_index - j] *
+                        m_transitiondistribution_vector[time_point_index - j] * phi_deriv *
+                        (populations.get_value(0)[(Eigen::Index)InfectionState::Recovered] - m_N);
+        }
+
+        // std::cout << "sum A: " << summand_A << std::endl;
+
+        ScalarType summand = gregory_weight * (summand_A_deriv + summand_A);
+
+        sum_vector.push_back(summand);
+    }
+    sum = kahan_sum(sum_vector);
+
+    ScalarType first_term = m_transmissionproboncontact_vector[0] * m_riskofinffromsymptomatic_vector[0] *
+                            m_transitiondistribution_vector[0] *
+                            (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                                 SimulationTime<ScalarType>(considered_time))(0, 0) *
+                                 populations.get_value(time_point_index)[(Eigen::Index)InfectionState::Susceptible] +
+                             parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                                 SimulationTime<ScalarType>(init_time))(0, 0) *
+                                 (populations.get_value(0)[(Eigen::Index)InfectionState::Recovered] - m_N));
+
+    ScalarType derivative =
+        populations.get_value(time_point_index)[(Eigen::Index)InfectionState::Susceptible] * (first_term + dt * sum);
+
+    flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] = -derivative;
 }
 
 ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function_S_deriv(ScalarType susceptibles_deriv, ScalarType dt)

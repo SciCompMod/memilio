@@ -176,6 +176,123 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, size_t fd_o
     std::cout << std::endl;
 }
 
+void SimulationMessinaExtendedDetailedInit::advance_S_deriv_analytical(ScalarType tmax, size_t fd_order_contacts,
+                                                                       ScalarType damping_time)
+{
+    // Get index of t0, i.e. index of last time point of given initial values.
+    size_t t0_index = m_model->populations.get_num_time_points() - 1;
+
+    // Set vector with values of transition distribution and parameters, respectively.
+    m_model->set_transitiondistribution_vector(m_dt, tmax, t0_index);
+    m_model->set_parameter_vectors(m_dt, tmax, t0_index);
+
+    mio::log_info("Simulating IDE-SIR from t0 = {} until tmax = {} with dt = {}.", m_model->populations.get_last_time(),
+                  tmax, m_dt);
+
+    // Compute S' for t_0,..., t_{n0-1}.
+    // We set S'(0) due to lack of knowledge of previous values of S.
+    // The corresponding flow is then given by -S'.
+    // TODO: Initialize S'(0) in a different way?
+
+    if (m_model->flows.get_num_time_points() == 0) {
+
+        ScalarType first_flow_approx = m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Infected];
+
+        ScalarType t_flows_init = m_model->populations.get_time(0);
+        m_model->flows.add_time_point(t_flows_init, TimeSeries<ScalarType>::Vector::Constant(
+                                                        (size_t)InfectionTransition::Count, first_flow_approx));
+        std::cout << "Flows first tp: " << m_model->flows.get_time(0) << std::endl;
+        // Compute S'(t) for t_1,..., t_{n0-1} with backwards difference operator. The corresponding flow is then given by -S'.
+        for (size_t i = 1; i < (size_t)m_model->populations.get_num_time_points(); i++) {
+
+            ScalarType increment         = m_dt - m_summation_error_flows_init;
+            ScalarType t_temp            = t_flows_init + increment;
+            m_summation_error_flows_init = (t_temp - t_flows_init) - increment;
+            // std::cout << t << ", " << m_summation_error << std::endl;
+            t_flows_init = t_temp;
+
+            m_model->flows.add_time_point(
+                t_flows_init, TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, 0.));
+
+            m_model->compute_S_deriv_analytical(m_dt, i);
+        }
+    }
+
+    ScalarType t_pop = m_model->populations.get_last_time();
+
+    while (m_model->populations.get_last_time() < tmax - 1e-10) {
+
+        ScalarType increment  = m_dt - m_summation_error_pop;
+        ScalarType t_temp     = t_pop + increment;
+        m_summation_error_pop = (t_temp - t_pop) - increment;
+        // std::cout << t << ", " << m_summation_error << std::endl;
+        t_pop = t_temp;
+
+        // Add new time point to populations.
+        m_model->populations.add_time_point(t_pop, Vec::Constant((size_t)InfectionState::Count, 0.));
+
+        // Print time.
+        if (floating_point_equal(std::remainder(10 * m_model->populations.get_last_time(), tmax), 0., 1e-7)) {
+            std::cout << "Time pop: " << m_model->populations.get_last_time() << std::endl;
+        }
+
+        // Compute Susceptibles.
+        size_t num_time_points = m_model->populations.get_num_time_points();
+
+        size_t num_iterations =
+            m_model->compute_S(m_model->populations.get_value(num_time_points - 2)[(size_t)InfectionState::Susceptible],
+                               m_dt, fd_order_contacts, damping_time);
+
+        if (num_iterations > m_max_number_iterations) {
+            m_max_number_iterations = num_iterations;
+        }
+    }
+
+    // Compute S' as well as I and R.
+    ScalarType t_flows = m_model->flows.get_last_time();
+    while (m_model->flows.get_last_time() < tmax - 1e-10) {
+
+        long double increment   = m_dt - m_summation_error_flows;
+        long double t_temp      = t_flows + increment;
+        m_summation_error_flows = (t_temp - (long double)t_flows) - increment;
+        // std::cout << t << ", " << m_summation_error << std::endl;
+        t_flows = (ScalarType)t_temp;
+
+        m_model->flows.add_time_point(t_flows, Vec::Constant((size_t)InfectionTransition::Count, 0.));
+
+        if (floating_point_equal(std::remainder(10 * m_model->flows.get_last_time(), tmax), 0., 1e-7)) {
+            std::cout << "Time flows: " << m_model->flows.get_last_time() << std::endl;
+        }
+
+        // Compute S'.
+        int last_tp_index = m_model->flows.get_num_time_points() - 1;
+        m_model->compute_S_deriv_analytical(m_dt, last_tp_index);
+
+        // Compute I and R.
+        m_model->compute_I_and_R(m_dt);
+    }
+
+    std::cout << "SIR: " << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] << ", "
+              << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Infected] << ", "
+              << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] << std::endl;
+
+    std::cout << "Difference in total population: "
+              << m_model->populations.get_value(t0_index)[(Eigen::Index)InfectionState::Susceptible] +
+                     m_model->populations.get_value(t0_index)[(Eigen::Index)InfectionState::Infected] +
+                     m_model->populations.get_value(t0_index)[(Eigen::Index)InfectionState::Recovered] -
+                     (m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] +
+                      m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Infected] +
+                      m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Recovered])
+              << std::endl;
+
+    std::cout << "Max number of iterations throughout simulation was " << m_max_number_iterations << std::endl;
+
+    // std::cout << "t0_index: " << t0_index << std::endl;
+
+    auto file = m_model->populations.export_csv("populations_ide.csv");
+    std::cout << std::endl;
+}
+
 void SimulationMessinaExtendedDetailedInit::advance_S_deriv_fixedpoint(ScalarType tmax, size_t fd_order_contacts,
                                                                        ScalarType damping_time)
 {
