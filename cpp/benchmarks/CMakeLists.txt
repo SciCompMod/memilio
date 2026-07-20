@@ -23,6 +23,14 @@ target_link_libraries(flow_simulation_ode_secirvvs_benchmark PRIVATE memilio ode
 add_executable(flow_simulation_ode_seir_benchmark flow_simulation_ode_seir.cpp)
 target_link_libraries(flow_simulation_ode_seir_benchmark PRIVATE memilio ode_seir benchmark::benchmark)
 
+add_executable(flow_paper_runtime_benchmark flow_paper_runtime.cpp)
+target_link_libraries(flow_paper_runtime_benchmark PRIVATE
+    memilio
+    ode_seir
+    ode_secir
+    ode_secirts
+    benchmark::benchmark)
+
 add_executable(simulation_benchmark simulation.cpp)
 target_link_libraries(simulation_benchmark PRIVATE memilio ode_secir benchmark::benchmark)
 add_executable(graph_simulation_benchmark graph_simulation.cpp)

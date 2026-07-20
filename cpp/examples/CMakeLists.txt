@@ -30,6 +30,14 @@ add_executable(ode_sir_example ode_sir.cpp)
 target_link_libraries(ode_sir_example PRIVATE memilio ode_sir)
 target_compile_options(ode_sir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(ode_sir_flow_comparison_example ode_sir_flow_comparison.cpp)
+target_link_libraries(ode_sir_flow_comparison_example PRIVATE memilio ode_sir)
+target_compile_options(ode_sir_flow_comparison_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(flow_paper_numerics_example flow_paper_numerics.cpp)
+target_link_libraries(flow_paper_numerics_example PRIVATE memilio ode_sir ode_seir ode_secir ode_secirts)
+target_compile_options(flow_paper_numerics_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(sde_sir_example sde_sir.cpp)
 target_link_libraries(sde_sir_example PRIVATE memilio sde_sir)
 target_compile_options(sde_sir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
