@@ -26,6 +26,14 @@ import matplotlib.pyplot as plt
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 
+def get_t0_from_dir_name(dir_name):
+    t0_string = [x for x in dir_name.split(
+        "_") if ("t0" in x)]
+    t0 = float(t0_string[0].split("=")[-1])
+
+    return t0
+
+
 def plot_susceptibles(files, fileending, save_dir=""):
     """
     Plots simulation results of Susceptibles.
@@ -42,12 +50,14 @@ def plot_susceptibles(files, fileending, save_dir=""):
 
     # Define plot.
     num_plots = 3
-    fig, axs = plt.subplots(1, num_plots, sharex='all', num='Compare files')
+    fig, axs = plt.subplots(1, num_plots, figsize=(
+        10, 4), sharex='all', num='Compare files')
 
     colors = ["C0", "limegreen", "Orange"]
     linestyles = [':', '-', '--']
     linewidth = 2
-    labels = ["Groundtruth", "Detailed", "Simple"]  # if file != 0:
+    # if file != 0:
+    labels = ["Groundtruth", "Detailed", "Simple", r"$t_0$"]
 
     # Add results to plot.
     for file in range(len(files)):
@@ -73,6 +83,15 @@ def plot_susceptibles(files, fileending, save_dir=""):
                             total[:, i], label=labels[file],  linestyle=linestyles[file], color=colors[file], linewidth=linewidth)
 
         h5file.close()
+
+    # min_y = np.min(np.min(total[:, 0]), np.min(
+    #     total[:, 1]), np.min(total[:, 2]))
+    # max_y = np.max(np.max(total[:, 0]), np.max(
+    #     total[:, 1]), np.max(total[:, 2]))
+    t0 = get_t0_from_dir_name(files[0])
+    for i in range(num_plots):
+        axs[i].vlines(t0, np.min(total[:, i]),
+                      np.max(total[:, i]), color="gray", alpha=0.5, label=labels[3])
 
     # Define some characteristics of the plot
     for i in range(num_plots):
@@ -113,7 +132,7 @@ def plot_flow_S_to_I(files, fileending, save_dir=""):
     colors = ["C0", "limegreen", "Orange"]
     linestyles = [':', '-', '--']
     linewidth = 1
-    labels = ["Groundtruth", "Detailed", "Simple"]
+    labels = ["Groundtruth", "Detailed", "Simple", r"t0"]
 
     # Add results to plot.
     for file in range(len(files)):
@@ -142,6 +161,11 @@ def plot_flow_S_to_I(files, fileending, save_dir=""):
                         total[:, 0], label=labels[file],  linestyle=linestyles[file], color=colors[file], linewidth=linewidth, s=s)
 
         h5file.close()
+
+    t0 = get_t0_from_dir_name(files[0])
+    for i in range(num_plots):
+        axs.vlines(t0, np.min(total[:, i]),
+                   np.max(total[:, i]), color="gray", alpha=0.5, label=labels[3])
 
     # Define some characteristics of the plot
 
@@ -254,7 +278,7 @@ if __name__ == '__main__':
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
 
-    main_dir = "2026-07-06/diff_groundtruth_init"
+    main_dir = "2026-07-20/compare_different_inits_lognorm"
 
     relevant_dir = os.path.join(root_dir, main_dir)
     sub_dirs = subfolders_scandir(relevant_dir)

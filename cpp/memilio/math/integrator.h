@@ -204,8 +204,7 @@ public:
         FP dt_min_restore = m_core->get_dt_min(); // used to restore dt_min, if it was decreased to reach tmax
         FP t              = t0;
 
-        for (size_t i = results.get_num_time_points() - 1; fabs((tmax - t) / (tmax - t0)) > m_last_step_tolerance;
-             ++i) {
+        for (size_t i = results.get_num_time_points() - 1; fabs((tmax - t)) > m_last_step_tolerance; ++i) {
             // We don't make time steps too small as the error estimator of an adaptive integrator
             //may not be able to handle it. this is very conservative and maybe unnecessary,
             //but also unlikely to happen. may need to be reevaluated.
@@ -222,6 +221,7 @@ public:
             dt_copy = dt;
 
             results.add_time_point();
+
             step_okay &= m_core->step(fs..., results[i], t, dt, results[i + 1]);
             results.get_last_time() = t;
 

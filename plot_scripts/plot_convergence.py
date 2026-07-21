@@ -310,9 +310,9 @@ def compute_errors_max(groundtruth, results, groundtruth_exponent, timesteps_ide
             difference = groundtruth[0][int(
                 pow(10, groundtruth_exponent)*(t0_ide))::int(scale_timesteps)][:, compartment]-results[i][int((t0_ide-t_init)/timestep)::][:, compartment]
 
-            print("timestep: ", timestep)
-            print("difference at t_init: ", difference[0])
-            print()
+            # print("timestep: ", timestep)
+            # print("difference at t_init: ", difference[0])
+            # print()
 
             # to debug:
             # groundtruth[0][int(pow(10, groundtruth_exponent)*(t_init))::int(scale_timesteps)][:, compartment] - results[i][0::][:, compartment]
@@ -438,13 +438,16 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
 
     handles = [plt.Line2D([], [], color='none')]
 
-    # Define colors.
-    colors_ = [plt.cm.viridis(x)
-               for x in np.linspace(0, 1, num_plotted_results)]
-    if len(colors_) > 2:
-        colors = ["darkorange", colors_[1], "darkred"]
-    else:
-        colors = ["darkred"]
+    # # Define colors.
+    # colors_ = [plt.cm.viridis(x)
+    #            for x in np.linspace(0, 1, num_plotted_results)]
+    # if len(colors_) > 2:
+    #     colors = ["darkorange", colors_[1], "darkred"]
+    # else:
+    #     colors = ["darkred"]
+
+    colors = ["#332288", "#44AA99", "#882255"]  # sand, teal, wine
+    gray = "#888888"
 
     for i in range(num_plots):
 
@@ -470,7 +473,7 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
         comparison = [0.5*1/first_timestep*errors_all_gregory_orders[0]
                       [0, i]*dt for dt in timesteps_ide]
         first = ax_obj.plot(plotted_timesteps, comparison,
-                            '--', color='gray', linewidth=1.2, label=r"$\mathcal{O}(\Delta t)$")
+                            '--', color=gray, linewidth=1.2, label=r"$\mathcal{O}(\Delta t)$")
 
         plotted_timesteps = timesteps_ide[:6]
         comparison = [0.5*(1/first_timestep)**2*errors_all_gregory_orders[0]
@@ -685,11 +688,11 @@ def get_tmax_ide_from_dir_name(dir_name):
 
 def main():
 
-    groundtruth_exponent = 6
+    groundtruth_exponent = 5
     groundtruth_save_exponent = 3
     only_S = False
 
-    main_dir = f"2026-07-13/more_kahan_dtode=1e-{groundtruth_exponent}_t0ode=0_timeinf=2/"
+    main_dir = f"2026-07-21/totalpopreduction=1_dtode=1e-5_t0ode=0_timeinf=1_contfreq=1.8/"
 
     ##############################################
 
@@ -698,7 +701,7 @@ def main():
     relevant_dir = os.path.join(root_dir, main_dir)
     # print(relevant_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
-    sub_dirs = [sub_dirs[-1]]
+    # sub_dirs = [sub_dirs[-1]]
 
     total_pop_reference = 0
     total_pop_all_fd_orders = []

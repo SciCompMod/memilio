@@ -57,17 +57,24 @@ inline FP smoother_cosine(FP x, FP xleft, FP xright, FP yleft, FP yright, bool s
         return yright;
     }
 
+    FP normalized_time = (x - xleft) / (xright - xleft);
+
     if (smoothcos) {
-        return FP(0.5) * (yleft - yright) * cos(std::numbers::pi_v<ScalarType> / (xright - xleft) * (x - xleft)) +
+        return FP(0.5) * (yleft - yright) * cos(std::numbers::pi_v<ScalarType> * normalized_time) +
                FP(0.5) * (yleft + yright);
     }
     else {
-        FP normalized_time = (x - xleft) / (xright - xleft);
 
+        // C⁴
         return yleft +
                (yright - yleft) * (FP(126.) * pow(normalized_time, FP(5)) - FP(420.) * pow(normalized_time, FP(6)) +
                                    FP(540.) * pow(normalized_time, FP(7)) - FP(315.) * pow(normalized_time, FP(8)) +
                                    FP(70.) * pow(normalized_time, FP(9)));
+
+        // // C³
+        // return yleft +
+        //        (yright - yleft) * (FP(35.) * pow(normalized_time, FP(4)) - FP(84.) * pow(normalized_time, FP(5)) +
+        //                            FP(70.) * pow(normalized_time, FP(6)) - FP(20.) * pow(normalized_time, FP(7)));
     }
 }
 
