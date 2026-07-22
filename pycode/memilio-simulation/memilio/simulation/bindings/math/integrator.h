@@ -24,6 +24,7 @@
 #include "memilio/math/euler.h"
 #include "memilio/math/adapt_rk.h"
 #include "memilio/math/stepper_wrapper.h"
+#include "boost/numeric/odeint/stepper/runge_kutta4.hpp"
 #include <Eigen/Dense>
 #include "pybind_util.h"
 
@@ -63,6 +64,11 @@ void bind_Integrator_Core(pybind11::module_& m)
                 return result;
             },
             pybind11::arg("f"), pybind11::arg("yt"), pybind11::arg("t"), pybind11::arg("dt"), pybind11::arg("ytp1"));
+
+    using RK4Integrator = mio::ExplicitStepperWrapper<double, boost::numeric::odeint::runge_kutta4>;
+    pymio::bind_class<RK4Integrator, pymio::EnablePickling::Never, mio::OdeIntegratorCore<double>,
+                      pybind11::smart_holder>(m, "RK4IntegratorCore")
+        .def(pybind11::init<>());
 
     using RungeKuttaCashKarp54Integrator =
         mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>;
