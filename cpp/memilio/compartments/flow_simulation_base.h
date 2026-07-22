@@ -94,13 +94,19 @@ protected:
         const auto& model = this->get_model();
         auto& result      = this->get_result();
         // take the last time point as base result (instead of the initial results), so that we use external changes
-        const size_t last_tp = result.get_num_time_points() - 1;
+        const size_t last_tp           = result.get_num_time_points() - 1;
+        const bool zero_flow_reference = flows.get_value(last_tp).isZero(FP(0));
         result.reserve(flows.get_num_time_points());
         // calculate new time points
         for (Eigen::Index i = result.get_num_time_points(); i < flows.get_num_time_points(); i++) {
             result.add_time_point(flows.get_time(i));
-            m_flow_delta = flows.get_value(i) - flows.get_value(last_tp);
-            model.get_derivatives(m_flow_delta, result.get_value(i));
+            if (zero_flow_reference) {
+                model.get_derivatives(flows.get_value(i), result.get_value(i));
+            }
+            else {
+                m_flow_delta = flows.get_value(i) - flows.get_value(last_tp);
+                model.get_derivatives(m_flow_delta, result.get_value(i));
+            }
             result.get_value(i) += result.get_value(last_tp);
         }
     }

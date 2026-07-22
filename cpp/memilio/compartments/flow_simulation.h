@@ -64,8 +64,10 @@ public:
         // the derivfunktion (i.e. the lambda passed to m_integrator.advance below) requires that there are at least
         // as many entries in m_flow_result as in Base::m_result
         assert(Base::get_flows().get_num_time_points() == Base::get_result().get_num_time_points());
-        const auto result = Base::advance(
-            [this](auto&& flows, auto&& t, auto&& dflows_dt) {
+        const size_t reference_index   = Base::get_result().get_num_time_points() - 1;
+        const bool zero_flow_reference = Base::get_flows().get_value(reference_index).isZero(FP(0));
+        const auto result              = Base::advance(
+            [this, reference_index, zero_flow_reference](auto&& flows, auto&& t, auto&& dflows_dt) {
                 const auto& pop_result = this->get_result();
                 const auto& model      = this->get_model();
                 // compute current population
@@ -75,13 +77,18 @@ public:
                 //   To incorporate external changes to the last values of pop_result (e.g. by applying mobility), we only
                 //   calculate the change in population starting from the last available time point in m_result, instead
                 //   of starting at t0. To do that, the following difference of flows is used.
-                auto& flow_delta = Base::get_flow_delta();
-                flow_delta       = flows - Base::get_flows().get_value(pop_result.get_num_time_points() - 1);
-                model.get_derivatives(flow_delta, m_pop); // note: overwrites values in pop
+                if (zero_flow_reference) {
+                    model.get_derivatives(flows, m_pop); // note: overwrites values in pop
+                }
+                else {
+                    auto& flow_delta = Base::get_flow_delta();
+                    flow_delta       = flows - Base::get_flows().get_value(reference_index);
+                    model.get_derivatives(flow_delta, m_pop); // note: overwrites values in pop
+                }
                 //   add the "initial" value of the ODEs (using last available time point in pop_result)
                 //     If no changes were made to the last value in m_result outside of FlowSimulation, the following
                 //     line computes the same as `model.get_derivatives(flows, x); x += model.get_initial_values();`.
-                m_pop += pop_result.get_last_value();
+                m_pop += pop_result.get_value(reference_index);
                 // compute the current change in flows with respect to the current population
                 dflows_dt.setZero();
                 model.get_flows(m_pop, m_pop, t, dflows_dt); // this result is used by the integrator
