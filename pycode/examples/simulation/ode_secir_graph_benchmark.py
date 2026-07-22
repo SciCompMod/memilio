@@ -67,15 +67,11 @@ def main():
     parser.add_argument("nodes", type=int)
     parser.add_argument("age_groups", type=int)
     parser.add_argument("tmax", type=float)
-    parser.add_argument("mobility_dt", type=float)
-    parser.add_argument("ode_dt", type=float)
+    parser.add_argument("dt", type=float)
     parser.add_argument("state_file", nargs="?")
     args = parser.parse_args()
-    if (args.nodes < 5 or args.age_groups < 1 or
-            args.tmax <= 0 or args.mobility_dt <= 0 or args.ode_dt <= 0):
-        parser.error(
-            "require N >= 5, AGE_GROUPS > 0, TMAX > 0, MOBILITY_DT > 0 "
-            "and ODE_DT > 0")
+    if (args.nodes < 5 or args.age_groups < 1 or args.tmax <= 0 or args.dt <= 0):
+        parser.error("require N >= 5, AGE_GROUPS > 0, TMAX > 0 and DT > 0")
     mio.set_log_level(mio.LogLevel.Critical)
 
     edges = (2 * args.nodes * (args.nodes - 1) + 2) // 5
@@ -88,7 +84,7 @@ def main():
     graph = osecir.MobilityGraph()
     for node in range(args.nodes):
         graph.add_node(node, model_a if node % 2 == 0 else model_b, 0.0,
-                       args.ode_dt)
+                       args.dt)
     nodes_end = time.perf_counter()
     for node in range(args.nodes):
         graph.get_node(node).property.integrator = mio.RK4IntegratorCore()
@@ -106,7 +102,7 @@ def main():
             graph.add_edge(source, target, params)
     graph_end = time.perf_counter()
 
-    simulation = osecir.MobilitySimulation(graph, 0.0, args.mobility_dt)
+    simulation = osecir.MobilitySimulation(graph, 0.0, args.dt)
     sim_end = time.perf_counter()
     simulation.advance(args.tmax)
     advance_end = time.perf_counter()
@@ -122,8 +118,7 @@ def main():
     rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss if resource else 0
     values = ("python", args.nodes, args.age_groups,
               edges / (args.nodes * (args.nodes - 1)), edges,
-              args.tmax, args.mobility_dt,
-              count_steps(args.tmax, args.mobility_dt), "rk4", args.ode_dt,
+              args.tmax, args.dt, count_steps(args.tmax, args.dt), "rk4",
               model_end - all_begin,
               nodes_end - model_end, integrator_end - nodes_end,
               graph_end - integrator_end,
