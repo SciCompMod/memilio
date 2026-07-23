@@ -104,8 +104,11 @@ def main():
 
     simulation = osecir.MobilitySimulation(graph, 0.0, args.dt)
     sim_end = time.perf_counter()
-    simulation.advance(args.tmax)
+    advance_begin = time.perf_counter()
+    advance_cpp = simulation._advance_timed(args.tmax)
     advance_end = time.perf_counter()
+    advance_python = advance_end - advance_begin
+    binding_overhead = advance_python - advance_cpp
     state = np.empty((args.nodes, 10 * args.age_groups))
     for node in range(args.nodes):
         result = simulation.graph.get_node(node).property.result
@@ -116,14 +119,16 @@ def main():
     if args.state_file:
         state.tofile(args.state_file)
     rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss if resource else 0
-    values = ("python", args.nodes, args.age_groups,
+    values = (args.nodes, args.age_groups,
               edges / (args.nodes * (args.nodes - 1)), edges,
               args.tmax, args.dt, count_steps(args.tmax, args.dt), "rk4",
               model_end - all_begin,
               nodes_end - model_end, integrator_end - nodes_end,
               graph_end - integrator_end,
               sim_end - graph_end, sim_end - all_begin,
-              advance_end - sim_end, extract_end - advance_end,
+              advance_cpp, advance_python, binding_overhead,
+              100.0 * binding_overhead / advance_cpp,
+              extract_end - advance_end,
               extract_end - all_begin, rss, state_sum)
     print(",".join(str(value) for value in values))
 

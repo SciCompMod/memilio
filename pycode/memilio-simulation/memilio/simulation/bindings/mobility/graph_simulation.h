@@ -26,6 +26,8 @@
 
 #include "pybind11/pybind11.h"
 
+#include <chrono>
+
 namespace pymio
 {
 
@@ -48,7 +50,16 @@ void bind_GraphSimulation(pybind11::module_& m, std::string const& name)
             },
             pybind11::return_value_policy::reference_internal)
         .def_property_readonly("t", &GS::get_t)
-        .def("advance", &GS::advance, pybind11::arg("tmax"));
+        .def("advance", &GS::advance, pybind11::arg("tmax"))
+        .def(
+            "_advance_timed",
+            [](GS& self, double tmax) {
+                const auto begin = std::chrono::steady_clock::now();
+                self.advance(tmax);
+                const auto end = std::chrono::steady_clock::now();
+                return std::chrono::duration<double>(end - begin).count();
+            },
+            pybind11::arg("tmax"));
 }
 
 } // namespace pymio
