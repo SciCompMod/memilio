@@ -5,6 +5,7 @@ project(memilio VERSION 1.0.0)
 
 set(CMAKE_CXX_STANDARD "20")
 set(CMAKE_CXX_STANDARD_REQUIRED "20")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(MEMILIO_BUILD_TESTS "Build memilio unit tests." ON)
 option(MEMILIO_BUILD_EXAMPLES "Build memilio examples." ON)

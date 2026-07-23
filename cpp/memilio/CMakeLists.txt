@@ -160,3 +160,5 @@ if(MEMILIO_ENABLE_LIKWID_MARKER)
     target_link_libraries(memilio PUBLIC likwid)
     target_compile_definitions(memilio PUBLIC "-DLIKWID_PERFMON")
 endif()
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
