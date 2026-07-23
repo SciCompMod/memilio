@@ -27,6 +27,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdlib>
+#include <iterator>
 #include <limits>
 #include <memory>
 #include <numbers>
@@ -885,6 +886,43 @@ std::vector<SecirTrackedTransition> make_secir_transition_order(size_t num_age_g
     return transitions;
 }
 
+size_t get_secir_auxiliary_transition_rank(SecirTransitionKind kind)
+{
+    const auto position =
+        std::find(secir_auxiliary_transition_kinds.begin(), secir_auxiliary_transition_kinds.end(), kind);
+    if (position == secir_auxiliary_transition_kinds.end()) {
+        throw std::runtime_error("SECIR transition is not part of the auxiliary benchmark.");
+    }
+    return static_cast<size_t>(std::distance(secir_auxiliary_transition_kinds.begin(), position));
+}
+
+void sort_secir_transitions_canonically(std::vector<SecirTrackedTransition>& transitions)
+{
+    std::sort(transitions.begin(), transitions.end(), [](const auto& left, const auto& right) {
+        const auto left_group  = static_cast<size_t>(left.group);
+        const auto right_group = static_cast<size_t>(right.group);
+        if (left_group != right_group) {
+            return left_group < right_group;
+        }
+        return get_secir_auxiliary_transition_rank(left.kind) < get_secir_auxiliary_transition_rank(right.kind);
+    });
+}
+
+std::vector<SecirTrackedTransition> select_secir_transitions(size_t num_age_groups, const std::string& selection_order,
+                                                             size_t tracked_transitions)
+{
+    auto transitions = make_secir_transition_order(num_age_groups, selection_order);
+    if (tracked_transitions > transitions.size()) {
+        throw std::runtime_error("Invalid SECIR auxiliary transition selection.");
+    }
+    transitions.erase(transitions.begin() + static_cast<std::ptrdiff_t>(tracked_transitions), transitions.end());
+
+    // The preference order determines the selected set only. A fixed evaluation
+    // order prevents branch-prediction effects from being mistaken for rate cost.
+    sort_secir_transitions_canonically(transitions);
+    return transitions;
+}
+
 FP recompute_secir_infection_rate(const mio::osecir::Model<FP>& model, mio::AgeGroup group,
                                   Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y,
                                   FP t)
@@ -1445,13 +1483,10 @@ void benchmark_recomputed_auxiliary_secir_simulation(benchmark::State& state, in
     auto base_model              = make_runtime_model<mio::osecir::Model<FP>>(num_age_groups);
     const size_t compartment_dim = static_cast<size_t>(base_model.get_initial_values().size());
     const size_t flow_dim        = static_cast<size_t>(base_model.get_initial_flows().size());
-    auto transitions             = make_secir_transition_order(static_cast<size_t>(num_age_groups), selection_order);
-    if (tracked_transitions > transitions.size()) {
-        throw std::runtime_error("Invalid SECIR auxiliary transition selection.");
-    }
-    const size_t tracked_transition_pool = transitions.size();
-    std::vector<SecirTrackedTransition> selected_transitions(
-        transitions.begin(), transitions.begin() + static_cast<std::ptrdiff_t>(tracked_transitions));
+    const size_t tracked_transition_pool =
+        make_secir_transition_order(static_cast<size_t>(num_age_groups), selection_order).size();
+    auto selected_transitions =
+        select_secir_transitions(static_cast<size_t>(num_age_groups), selection_order, tracked_transitions);
     const RecomputedAuxiliarySecirModel model(std::move(base_model), std::move(selected_transitions));
     benchmark_compartment_trajectory(state, model, compartment_dim, flow_dim, tracked_transitions);
     state.counters["tracked_transition_pool"] = static_cast<double>(tracked_transition_pool);
@@ -1619,7 +1654,20 @@ void register_recomputed_auxiliary_secir_benchmarks()
         validate_recomputed_secir_rates(model);
         const size_t tracked_transition_pool =
             make_secir_transition_order(static_cast<size_t>(num_age_groups), "group_wise").size();
+        const auto full_reference =
+            select_secir_transitions(static_cast<size_t>(num_age_groups), "group_wise", tracked_transition_pool);
         for (const auto& selection_order : selection_orders) {
+            const auto full_selection =
+                select_secir_transitions(static_cast<size_t>(num_age_groups), selection_order, tracked_transition_pool);
+            const bool identical_full_selection =
+                std::equal(full_reference.begin(), full_reference.end(), full_selection.begin(),
+                           [](const auto& left, const auto& right) {
+                               return static_cast<size_t>(left.group) == static_cast<size_t>(right.group) &&
+                                      left.kind == right.kind;
+                           });
+            if (!identical_full_selection) {
+                throw std::runtime_error("Full SECIR auxiliary selections differ between preference orders.");
+            }
             const auto prefix =
                 "flow_paper/SECIR/" + std::to_string(num_age_groups) + "/auxiliary_recomputed/" + selection_order;
             for (size_t tracked_transitions = 0; tracked_transitions <= tracked_transition_pool;
