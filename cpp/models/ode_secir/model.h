@@ -300,7 +300,7 @@ public:
 
         FP delay_npi_implementation;
         FP t = BaseT::get_result().get_last_time();
-        while (t < tmax) {
+        while (floating_point_less<FP>(t, tmax, 1e-10)) {
             if (t > 0) {
                 delay_npi_implementation = FP(dyn_npis.get_implementation_delay());
             }
