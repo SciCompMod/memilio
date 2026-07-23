@@ -690,7 +690,7 @@ public:
 
         FP delay_npi_implementation;
         FP t = BaseT::get_result().get_last_time();
-        while (t < tmax) {
+        while (floating_point_less<FP>(t, tmax, 1e-10)) {
 
             if (t > 0) {
                 delay_npi_implementation = FP(dyn_npis.get_implementation_delay());
@@ -706,11 +706,11 @@ public:
             if (dyn_npis.get_thresholds().size() > 0) {
                 FP direc_begin = FP(dyn_npis.get_directive_begin());
                 FP direc_end   = FP(dyn_npis.get_directive_end());
-                if (floating_point_greater_equal(t, direc_begin, 1e-10) && t < direc_end) {
+                if (floating_point_greater_equal<FP>(t, direc_begin, 1e-10) && t < direc_end) {
                     auto inf_rel = get_infections_relative<FP>(*this, t, this->get_result().get_last_value()) *
                                    dyn_npis.get_base_value();
                     auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
-                    const bool npi_expired = floating_point_greater_equal(t, FP(m_dynamic_npi.second), 1e-10);
+                    const bool npi_expired = floating_point_greater_equal<FP>(t, FP(m_dynamic_npi.second), 1e-10);
                     if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
                         (exceeded_threshold->first > m_dynamic_npi.first || npi_expired)) {
                         //old npi was weaker or is expired
