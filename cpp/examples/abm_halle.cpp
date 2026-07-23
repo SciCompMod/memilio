@@ -3,6 +3,12 @@
 #include "abm/common_abm_loggers.h"
 #include "memilio/io/directories.h"
 
+#include "memilio/timer/auto_timer.h"
+#include "memilio/timer/table_printer.h"
+#include "memilio/timer/timer_registrar.h"
+#include "memilio/utils/miompi.h"
+
+
 #include "H5Tpublic.h"
 #include "H5public.h"
 #include "abm/infection_state.h"
@@ -148,9 +154,13 @@ mio::AgeGroup determine_age_group(uint32_t age)
 
 void initialize_model(mio::abm::Model& model, std::string person_file,
     size_t max_work_size, size_t max_school_size){
-// void initialize_model(mio::abm::Model& model, std::string person_file, std::string outfile){
-    // Mapping of ABM locations to traffic areas/cells
-    // - each traffic area is mapped to a vector containing strings with LocationType and LocationId
+        // void initialize_model(mio::abm::Model& model, std::string person_file, std::string outfile){
+            // Mapping of ABM locations to traffic areas/cells
+            // - each traffic area is mapped to a vector containing strings with LocationType and LocationId
+    using mio::timing::AutoTimer;
+    using mio::timing::TimerRegistrar;
+    AutoTimer<"initialize_model"> timer_ms;
+
     std::map<int, std::vector<std::string>> loc_area_mapping;
     // Mapping of traffic data location ids to ABM location ids
     std::map<int, mio::abm::LocationId> home_locations;
@@ -488,79 +498,49 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
 }
 int main()
 {
-    std::cout << "Start" << "\n";
+    // ---------------------------------------
+    // ------------ Set up Timing ------------
+    // ---------------------------------------
 
+    using mio::timing::AutoTimer;
+    using mio::timing::TimerRegistrar;
+    AutoTimer<"main"> timer_ms;
+
+
+    std::cout << "Start" << "\n";
     auto start = std::chrono::high_resolution_clock::now();
-    // ------------------------------------------------
-    // ------------ Ages, Fam, Child/Adult ------------
-    // ------------------------------------------------
+
+    // ------------------------------------
+    // ------------ Model Init ------------
+    // ------------------------------------
 
     mio::set_log_level(mio::LogLevel::warn);
     size_t num_age_groups            = 11;
-    // const auto age_group_0_to_3      = mio::AgeGroup(0);
-    // const auto age_group_4_to_6      = mio::AgeGroup(1);
-    // const auto age_group_7_to_15     = mio::AgeGroup(2);
-    // const auto age_group_16_to_18    = mio::AgeGroup(3);
-    // const auto age_group_19_to_21    = mio::AgeGroup(4);
-    // const auto age_group_22_to_35    = mio::AgeGroup(5);
-    // const auto age_group_36_to_60    = mio::AgeGroup(6);
-    // const auto age_group_61_to_65    = mio::AgeGroup(7);
-    // const auto age_group_66_to_75    = mio::AgeGroup(8);
-    // const auto age_group_76_to_80    = mio::AgeGroup(9);
-    // const auto age_group_81_and_over = mio::AgeGroup(10);
-
-    // Create the model with 11 age groups.
-    std::string path = "/home/wulf_ka/home/abm/memilio/cpp/examples/df_abm_short.csv";
-    std::string out  = "/home/wulf_ka/home/abm/memilio/cpp/examples/out";
     auto model  = mio::abm::Model(num_age_groups);
+
+
+    std::string path = "/home/wulf_ka/home/abm/memilio/cpp/examples/df_abm_short.csv";
+    // std::string path = "/home/wulf_ka/home/abm/memilio/cpp/examples/df_abm_is_my_code_even_running.csv";
+    std::string out  = "/home/wulf_ka/home/abm/memilio/cpp/examples/out";
+    
+    initialize_model(model, path, 50,50);
+
+    // -------------------------------------
+    // ------------ Model Param ------------
+    // -------------------------------------
+
     // Set same infection parameter for all age groups. For example, the incubation period is log normally distributed with parameters 4 and 1.
     model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() = mio::ParameterDistributionLogNormal(4., 1.);
 
-    // Test init
-    initialize_model(model, path, 50,50);
-
     auto end_init = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_init = end_init - start;
-
     std::cout << "Time for init: " << elapsed_init.count() << " seconds\n";
 
-    //     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    // model.parameters.get<mio::abm::AgeGroupGotoSchool>()                 = false;
-    // model.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_0_to_3]   = true;
-    // model.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_4_to_6]  = true;
-    // model.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_7_to_15] = true;
-    // model.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_16_to_18] = true;
-    // // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 and 35-59)
-    // model.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple(
-    //     {age_group_19_to_21, age_group_22_to_35, age_group_36_to_60, age_group_61_to_65}, true);
-
-    // // zu Testzwecken weil sich das ABM sonst beschwert dass die nicht genutzt werden
-    // model.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple(
-    //     {age_group_66_to_75, age_group_76_to_80, age_group_81_and_over}, true);
-
-    // Check if the parameters satisfy their contraints.
     model.parameters.check_constraints();
 
-    // ------------------------------------
-    // ------------ Households ------------
-    // ------------------------------------
-
-
-    // --------------------------------
-    // ------------ Events ------------
-    // --------------------------------
-
-
-
-    // -----------------------------------------
-    // ------------ Infection Param ------------
-    // -----------------------------------------
 
     // Increase aerosol transmission for all locations
     model.parameters.get<mio::abm::AerosolTransmissionRates>() = 5.0;
-    // Increase contact rate for all people between 15 and 34 (i.e. people meet more often in the same location)
-    // model.get_location(work).get_infection_parameters().get<mio::abm::ContactRates>().get_baseline()(
-    //     age_group_19_to_21.get(), age_group_19_to_21.get()) = 10.0;
 
     // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 10.
     auto validity_period       = mio::abm::days(1);
@@ -587,10 +567,10 @@ int main()
         }
     }
 
-    // ------------------------------------------
-    // ------------ Events to People ------------
-    // ------------------------------------------
 
+    // -----------------------------------
+    // ------------ Run Model ------------
+    // -----------------------------------
 
     // Set start and end time for the simulation.
     auto t0   = mio::abm::TimePoint(0);
@@ -602,8 +582,10 @@ int main()
         Eigen::Index(mio::abm::InfectionState::Count)};
 
     // Run the simulation until tmax with the history object.
+    {
+    AutoTimer<"advance"> adv_timer_ms;
     sim.advance(tmax, historyTimeSeries);
-
+    }
     // Write results to a file. Also print the filepath to make it easier to find
     auto outpath = mio::create_directories_or_exit(mio::example_results_dir("abm_minimal")) / "history.txt";
     std::ofstream outfile(outpath);
@@ -611,9 +593,9 @@ int main()
         .print_table(outfile, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4);
     std::cout << "Results written to " << outpath << std::endl;
 
+    // Measure runntime
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
-
     std::cout << "Time total: " << elapsed.count() << " seconds\n";
 
     return 0;
