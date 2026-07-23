@@ -454,29 +454,60 @@ enum class SecirParameterization
     Rates
 };
 
-struct SecirInverseTimes {
-    explicit SecirInverseTimes(const SecirParameters& parameters)
-        : exposed(parameters.get_num_groups().get())
-        , no_symptoms(parameters.get_num_groups().get())
-        , symptoms(parameters.get_num_groups().get())
-        , severe(parameters.get_num_groups().get())
-        , critical(parameters.get_num_groups().get())
+enum class SecirTransitionStage : Eigen::Index
+{
+    Exposed,
+    NoSymptoms,
+    Symptoms,
+    Severe,
+    Critical,
+    Count
+};
+
+template <SecirParameterization Parameterization>
+class SecirTransitionValues
+{
+public:
+    // Keep both parameterizations in the same layout so the timed rate access differs only by the division.
+    explicit SecirTransitionValues(const SecirParameters& parameters)
+        : m_values(parameters.get_num_groups().get(), num_stages)
     {
         for (mio::AgeGroup group = 0; group < parameters.get_num_groups(); ++group) {
-            const auto index   = static_cast<Eigen::Index>((size_t)group);
-            exposed[index]     = 1.0 / parameters.template get<mio::osecir::TimeExposed<FP>>()[group];
-            no_symptoms[index] = 1.0 / parameters.template get<mio::osecir::TimeInfectedNoSymptoms<FP>>()[group];
-            symptoms[index]    = 1.0 / parameters.template get<mio::osecir::TimeInfectedSymptoms<FP>>()[group];
-            severe[index]      = 1.0 / parameters.template get<mio::osecir::TimeInfectedSevere<FP>>()[group];
-            critical[index]    = 1.0 / parameters.template get<mio::osecir::TimeInfectedCritical<FP>>()[group];
+            store(group, SecirTransitionStage::Exposed,
+                  parameters.template get<mio::osecir::TimeExposed<FP>>()[group]);
+            store(group, SecirTransitionStage::NoSymptoms,
+                  parameters.template get<mio::osecir::TimeInfectedNoSymptoms<FP>>()[group]);
+            store(group, SecirTransitionStage::Symptoms,
+                  parameters.template get<mio::osecir::TimeInfectedSymptoms<FP>>()[group]);
+            store(group, SecirTransitionStage::Severe,
+                  parameters.template get<mio::osecir::TimeInfectedSevere<FP>>()[group]);
+            store(group, SecirTransitionStage::Critical,
+                  parameters.template get<mio::osecir::TimeInfectedCritical<FP>>()[group]);
         }
     }
 
-    Eigen::VectorX<FP> exposed;
-    Eigen::VectorX<FP> no_symptoms;
-    Eigen::VectorX<FP> symptoms;
-    Eigen::VectorX<FP> severe;
-    Eigen::VectorX<FP> critical;
+    FP get_rate(mio::AgeGroup group, SecirTransitionStage stage) const
+    {
+        const FP value =
+            m_values(static_cast<Eigen::Index>((size_t)group), static_cast<Eigen::Index>(stage));
+        if constexpr (Parameterization == SecirParameterization::Rates) {
+            return value;
+        }
+        return 1.0 / value;
+    }
+
+private:
+    static constexpr int num_stages = static_cast<int>(SecirTransitionStage::Count);
+
+    void store(mio::AgeGroup group, SecirTransitionStage stage, FP time)
+    {
+        if constexpr (Parameterization == SecirParameterization::Rates) {
+            time = 1.0 / time;
+        }
+        m_values(static_cast<Eigen::Index>((size_t)group), static_cast<Eigen::Index>(stage)) = time;
+    }
+
+    Eigen::Matrix<FP, Eigen::Dynamic, num_stages, Eigen::RowMajor> m_values;
 };
 
 template <SecirParameterization Parameterization>
@@ -487,7 +518,7 @@ public:
 
     BenchmarkSecirFlowModel(const SecirPopulations& populations, const SecirParameters& parameters)
         : Base(populations, parameters)
-        , m_inverse_times(parameters)
+        , m_transition_values(parameters)
     {
     }
 
@@ -668,42 +699,27 @@ public:
 private:
     FP exposed_rate(mio::AgeGroup group) const
     {
-        if constexpr (Parameterization == SecirParameterization::Rates) {
-            return m_inverse_times.exposed[static_cast<Eigen::Index>((size_t)group)];
-        }
-        return 1.0 / this->parameters.template get<mio::osecir::TimeExposed<FP>>()[group];
+        return m_transition_values.get_rate(group, SecirTransitionStage::Exposed);
     }
 
     FP no_symptoms_rate(mio::AgeGroup group) const
     {
-        if constexpr (Parameterization == SecirParameterization::Rates) {
-            return m_inverse_times.no_symptoms[static_cast<Eigen::Index>((size_t)group)];
-        }
-        return 1.0 / this->parameters.template get<mio::osecir::TimeInfectedNoSymptoms<FP>>()[group];
+        return m_transition_values.get_rate(group, SecirTransitionStage::NoSymptoms);
     }
 
     FP symptoms_rate(mio::AgeGroup group) const
     {
-        if constexpr (Parameterization == SecirParameterization::Rates) {
-            return m_inverse_times.symptoms[static_cast<Eigen::Index>((size_t)group)];
-        }
-        return 1.0 / this->parameters.template get<mio::osecir::TimeInfectedSymptoms<FP>>()[group];
+        return m_transition_values.get_rate(group, SecirTransitionStage::Symptoms);
     }
 
     FP severe_rate(mio::AgeGroup group) const
     {
-        if constexpr (Parameterization == SecirParameterization::Rates) {
-            return m_inverse_times.severe[static_cast<Eigen::Index>((size_t)group)];
-        }
-        return 1.0 / this->parameters.template get<mio::osecir::TimeInfectedSevere<FP>>()[group];
+        return m_transition_values.get_rate(group, SecirTransitionStage::Severe);
     }
 
     FP critical_rate(mio::AgeGroup group) const
     {
-        if constexpr (Parameterization == SecirParameterization::Rates) {
-            return m_inverse_times.critical[static_cast<Eigen::Index>((size_t)group)];
-        }
-        return 1.0 / this->parameters.template get<mio::osecir::TimeInfectedCritical<FP>>()[group];
+        return m_transition_values.get_rate(group, SecirTransitionStage::Critical);
     }
 
     FP infection_rate(mio::AgeGroup group, Eigen::Ref<const Eigen::VectorX<FP>> pop,
@@ -770,7 +786,7 @@ private:
             this->parameters.template get<mio::osecir::CriticalPerSevere<FP>>()[group], 0.0);
     }
 
-    SecirInverseTimes m_inverse_times;
+    SecirTransitionValues<Parameterization> m_transition_values;
 };
 
 template <SecirParameterization Parameterization>
@@ -1713,6 +1729,7 @@ int main(int argc, char** argv)
     benchmark::AddCustomContext("tmax", std::to_string(tmax));
     benchmark::AddCustomContext("dt", std::to_string(dt));
     benchmark::AddCustomContext("timed_region", "integration with benchmark-specific output retention");
+    benchmark::AddCustomContext("secir_parameter_storage", "identical contiguous layout for times and rates");
     benchmark::RunSpecifiedBenchmarks();
     benchmark::Shutdown();
     return 0;
