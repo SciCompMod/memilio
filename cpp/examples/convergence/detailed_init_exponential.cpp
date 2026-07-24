@@ -45,7 +45,7 @@ ScalarType TransmissionProbabilityOnContact = 0.8;
 ScalarType RiskOfInfectionFromSymptomatic   = 1.;
 ScalarType Seasonality                      = 0.;
 
-ScalarType cont_freq = 0.7;
+ScalarType cont_freq = 0.73;
 
 ScalarType totalpop_reduction = 1.;
 ScalarType total_population   = 1e7 / totalpop_reduction;
@@ -310,21 +310,21 @@ int main()
     // Compute groundtruth with ODE model.
     ScalarType ode_exponent = 6.;
 
-    std::vector<ScalarType> time_infected_values = {2};
+    std::vector<ScalarType> time_infected_values = {2.};
     // Support max with tol = 1e-8:
     // T_I=1: support max = 18.43
     // T_I=2: support max = 36.85
     // T_I=3: support max = 55.27
     // T_I=4: support max = 73.69
 
-    ScalarType t0_ode                      = 0.;
-    ScalarType t0_ide                      = 40.;
-    std::vector<ScalarType> t_init_windows = {30.};
-    std::vector<ScalarType> tmax_values    = {t0_ide + 5.};
+    ScalarType t0_ode                    = 0.;
+    ScalarType t0_ide                    = 50.;
+    std::vector<ScalarType> init_windows = {40.};
+    std::vector<ScalarType> tmax_values  = {t0_ide + 100.};
 
     std::vector<size_t> finite_difference_orders = {4};
 
-    std::vector<ScalarType> ide_exponents = {0, 1, 2};
+    std::vector<ScalarType> ide_exponents = {-1., 0., 1., 2., 3.};
     std::vector<size_t> gregory_orders    = {1, 2, 3};
 
     std::vector<std::vector<ScalarType>> timeinf_tmax_values;
@@ -344,10 +344,11 @@ int main()
         for (size_t finite_difference_order : finite_difference_orders) {
             std::cout << "FD order: " << finite_difference_order << std::endl;
 
-            std::string save_dir =
-                fmt::format("../../simulation_results/2026-07-16/S_deriv_fd_dtode=1e-{}_t0ode={}_timeinf={}/"
-                            "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
-                            ode_exponent, t0_ode, time_infected, t0_ide, tmax, finite_difference_order);
+            std::string save_dir = fmt::format(
+                "../../simulation_results/2026-07-23/totalpopreduction={}_dtode=1e-{}_t0ode={}_timeinf={}_contfreq={}/"
+                "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
+                totalpop_reduction, ode_exponent, t0_ode, time_infected, cont_freq, t0_ide, tmax,
+                finite_difference_order);
 
             // Make folder if not existent yet.
             std::filesystem::path dir(save_dir);
@@ -361,8 +362,8 @@ int main()
             auto compartments_ode = result_ode[0];
             // auto flows_ode        = result_ode[1];
 
-            for (ScalarType t_init_window : t_init_windows) {
-                ScalarType t_init = t0_ide - t_init_window;
+            for (ScalarType init_window : init_windows) {
+                ScalarType t_init = t0_ide - init_window;
                 std::cout << "t_init = " << t_init << std::endl;
 
                 std::string save_dir_ide = fmt::format("{}/tinit={}/", save_dir, t_init);
@@ -376,7 +377,7 @@ int main()
                     std::cout << "Gregory order: " << gregory_order << std::endl;
                     mio::IOResult<void> result_ide =
                         simulate_ide(ide_exponents, saving_exponent, gregory_order, finite_difference_order,
-                                     t_init_window, t0_ide, tmax, time_infected, save_dir_ide, compartments_ode);
+                                     init_window, t0_ide, tmax, time_infected, save_dir_ide, compartments_ode);
                 }
             }
         }

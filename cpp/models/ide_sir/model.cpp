@@ -930,12 +930,16 @@ void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t tim
     //     dt * sum_recovered;
 
     // New discretization
+    // populations[time_point_index][(Eigen::Index)InfectionState::Recovered] =
+    //     populations.get_value(0)[(Eigen::Index)InfectionState::Recovered] +
+    //     (1. - m_transitiondistribution_vector[time_point_index]) *
+    //         populations.get_value(0)[(Eigen::Index)InfectionState::Infected] +
+    //     populations[0][(Eigen::Index)InfectionState::Susceptible] -
+    //     populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] - dt * sum_infected;
+
     populations[time_point_index][(Eigen::Index)InfectionState::Recovered] =
-        populations.get_value(0)[(Eigen::Index)InfectionState::Recovered] +
-        (1. - m_transitiondistribution_vector[time_point_index]) *
-            populations.get_value(0)[(Eigen::Index)InfectionState::Infected] +
-        populations[0][(Eigen::Index)InfectionState::Susceptible] -
-        populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] - dt * sum_infected;
+        m_N - populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] -
+        populations[time_point_index][(Eigen::Index)InfectionState::Infected];
 }
 
 void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt)
