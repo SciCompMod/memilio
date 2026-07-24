@@ -19,304 +19,410 @@
 #############################################################################
 import h5py
 import os
-import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 
+STYLE = {
+    "groundtruth": {"color": "C0",     "linestyle": ":",  "label": "Groundtruth"},
+    "detailed":    {"color": "#88CCEE", "linestyle": "-",  "label": "Detailed long"},
+    "detailed_short":    {"color": "#117733", "linestyle": "--",  "label": "Detailed short"},
+    "simple":      {"color": "#CC6677", "linestyle": ":", "label": "Simple"},
+}
+# order matches input file lists
+FILE_KEYS = ["detailed", "detailed_short", "simple"]
+
+LINEWIDTH = 2
+SCATTERSIZE = 12
+TITLE_FONTSIZE = 11
+T0_COLOR = "gray"
+T0_LABEL = r"$t_0$"
+
+
+PANEL_WIDTH = 3.4
+PANEL_HEIGHT = 4
+
 
 def get_t0_from_dir_name(dir_name):
-    t0_string = [x for x in dir_name.split(
-        "_") if ("t0" in x)]
+    t0_string = [x for x in dir_name.split("_") if "t0" in x]
     t0 = float(t0_string[0].split("=")[-1])
-
     return t0
+
+
+def load_h5_total(filepath):
+    """Load the single dataset's 'Total' array and 'Time' array from an h5 file."""
+    with h5py.File(str(filepath) + ".h5", "r") as h5file:
+        if len(list(h5file.keys())) > 1:
+            raise gd.DataError("File should contain one dataset.")
+        group_key = list(h5file.keys())[0]
+        if len(list(h5file[group_key].keys())) > 3:
+            raise gd.DataError("Expected only one group.")
+        data = h5file[group_key]
+        total = data["Total"][:, :]
+        dates = data["Time"][:]
+    return dates, total
+
+
+def _style_axis(ax, title):
+    ax.set_title(title, fontsize=TITLE_FONTSIZE, pad=12)
+    ax.set_axisbelow(True)
+    ax.grid(True, linestyle="--", alpha=0.5)
+    ax.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
+
+
+def _add_shared_legend(fig, used_keys, include_t0=True):
+    handles = [plt.Line2D([0], [0], color=STYLE[k]["color"],
+                          linestyle=STYLE[k]["linestyle"], linewidth=LINEWIDTH,
+                          label=STYLE[k]["label"])
+               for k in used_keys]
+    if include_t0:
+        handles.append(plt.Line2D(
+            [0], [0], color=T0_COLOR, alpha=0.5, label=T0_LABEL))
+
+    fig.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.5, -0.08),
+               ncol=len(handles), fancybox=False, shadow=False, frameon=False)
+
+
+def _save(fig, save_dir, filename):
+    if save_dir != "":
+        if not os.path.isdir(save_dir):
+            os.makedirs(save_dir)
+        fig.savefig(os.path.join(save_dir, filename),
+                    bbox_inches="tight", dpi=500)
+    plt.close(fig)
 
 
 def plot_susceptibles(files, fileending, save_dir=""):
     """
-    Plots simulation results of Susceptibles.
+    Plots simulation results (S, I, R) comparing groundtruth/detailed/simple.
 
-    @param[in] files Expects list of two files with ODE and IDE simulation results for compartments, respectively, in
-        this order.
-    @param[in] fileending Determines file ending of saved plot. Default is an empty string leading to no further
-        specification.
-    @param[in] save_dir Directory where plot will be stored. Default is an empty string leading to the plot not being
-        saved.
+    @param[in] files List of three files [groundtruth, detailed, simple] with
+        compartment simulation results, in that order.
+    @param[in] fileending Suffix for the saved plot filename.
+    @param[in] save_dir Directory to save the plot in; not saved if empty.
     """
-    # Define compartments
-    secir_dict = {0: 'Susceptible',  1: 'Infected', 2: 'Recovered'}
+    compartment_names = {0: "Susceptible", 1: "Infected", 2: "Recovered"}
+    num_plots = len(compartment_names)
 
-    # Define plot.
-    num_plots = 3
-    fig, axs = plt.subplots(1, num_plots, figsize=(
-        10, 4), sharex='all', num='Compare files')
+    fig, axs = plt.subplots(1, num_plots, figsize=(PANEL_WIDTH * num_plots, PANEL_HEIGHT),
+                            sharex="all", num="Compare files")
 
-    colors = ["C0", "limegreen", "Orange"]
-    linestyles = [':', '-', '--']
-    linewidth = 2
-    # if file != 0:
-    labels = ["Groundtruth", "Detailed", "Simple", r"$t_0$"]
+    plotted_keys = []
+    groundtruth_total = None
+    plot_min = 1e7*np.ones(num_plots)
+    plot_max = np.zeros(num_plots)
 
-    # Add results to plot.
-    for file in range(len(files)):
-        # Load data.
-        h5file = h5py.File(str(files[file]) + '.h5', 'r')
+    for key, filepath in zip(FILE_KEYS, files):
+        dates, total = load_h5_total(filepath)
+        if key == "groundtruth":
+            # groundtruth_total = total
+            continue
+        plotted_keys.append(key)
+        style = STYLE[key]
+        for i in range(num_plots):
+            _style_axis(axs[i], compartment_names[i])
+            if np.min(total[:, i]) < plot_min[i]:
+                plot_min[i] = np.min(total[:, i])
+            if np.max(total[:, i]) > plot_max[i]:
+                plot_max[i] = np.max(total[:, i])
+            axs[i].plot(dates, total[:, i], color=style["color"],
+                        linestyle=style["linestyle"], linewidth=LINEWIDTH)
 
-        if (len(list(h5file.keys())) > 1):
-            raise gd.DataError("File should contain one dataset.")
-        if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
-            raise gd.DataError("Expected only one group.")
-
-        data = h5file[list(h5file.keys())[0]]
-
-        # As there should be only one Group, total is the simulation result.
-        total = data['Total'][:, :]
-
-        dates = data['Time'][:]
-
-        # Plot data.
-        if file != 0:
-            for i in range(num_plots):
-                axs[i].plot(dates,
-                            total[:, i], label=labels[file],  linestyle=linestyles[file], color=colors[file], linewidth=linewidth)
-
-        h5file.close()
-
-    # min_y = np.min(np.min(total[:, 0]), np.min(
-    #     total[:, 1]), np.min(total[:, 2]))
-    # max_y = np.max(np.max(total[:, 0]), np.max(
-    #     total[:, 1]), np.max(total[:, 2]))
     t0 = get_t0_from_dir_name(files[0])
     for i in range(num_plots):
-        axs[i].vlines(t0, np.min(total[:, i]),
-                      np.max(total[:, i]), color="gray", alpha=0.5, label=labels[3])
+        axs[i].vlines(t0, plot_min[i], plot_max[i],
+                      color=T0_COLOR, alpha=0.5)
 
-    # Define some characteristics of the plot
-    for i in range(num_plots):
-        axs[i].set_title(secir_dict[i], fontsize=8)
-        # axs[i].set_xlim(left=0, right=dates[-1])
-        axs[i].grid(True, linestyle='--', alpha=0.5)
-        axs[i].ticklabel_format(axis='y',
-                                style='sci', scilimits=(0, 0))
-    labels.remove("Groundtruth")
-    fig.legend(labels, bbox_to_anchor=(0.1, -0.73, 0.8, 0.8),
-               fancybox=False, shadow=False, ncol=1)
+    _add_shared_legend(fig, plotted_keys)
 
-    fig.supxlabel('Simulation time [days]')
-    fig.supylabel('Number of individuals')
-    plt.subplots_adjust(left=None, bottom=None, right=None,
-                        top=None, wspace=None, hspace=0.6)
-
+    fig.supxlabel("Simulation time [days]", y=0.04)
+    fig.supylabel("Number of individuals", y=0.54)
     plt.tight_layout()
 
-    # Save result.
-    if save_dir != "":
-        if not os.path.isdir(save_dir):
-            os.makedirs(save_dir)
-        plt.savefig(save_dir + f"compare_compartments_{fileending}.png",
-                    bbox_inches='tight', dpi=500)
-
-    plt.close()
+    _save(fig, save_dir, f"compare_compartments_{fileending}.png")
 
 
 def plot_flow_S_to_I(files, fileending, save_dir=""):
-    # Define compartments
-    flow_dict = {0: 'SusceptibleToExposed'}
+    """
+    Plots the Susceptible -> Infected flow, comparing groundtruth/detailed/simple.
 
-    # Define plot.
-    num_plots = 1
-    fig, axs = plt.subplots(1, num_plots, sharex='all', num='Compare files')
+    @param[in] files List of three files [groundtruth, detailed, simple].
+    @param[in] fileending Suffix for the saved plot filename.
+    @param[in] save_dir Directory to save the plot in; not saved if empty.
+    """
+    fig, ax = plt.subplots(1, 1, figsize=(
+        1.5 * PANEL_WIDTH, PANEL_HEIGHT), num="Compare files")
 
-    colors = ["C0", "limegreen", "Orange"]
-    linestyles = [':', '-', '--']
-    linewidth = 1
-    labels = ["Groundtruth", "Detailed", "Simple", r"t0"]
-
-    # Add results to plot.
-    for file in range(len(files)):
-        # Load data.
-        h5file = h5py.File(str(files[file]) + '.h5', 'r')
-
-        if (len(list(h5file.keys())) > 1):
-            raise gd.DataError("File should contain one dataset.")
-        if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
-            raise gd.DataError("Expected only one group.")
-
-        data = h5file[list(h5file.keys())[0]]
-
-        # As there should be only one Group, total is the simulation result.
-        total = data['Total'][:, :]
-
-        dates = data['Time'][:]
-
-        # Plot data.
-        if file != 0:
-            # if file == 0:
-            s = 1
-            if file == 2:
-                s = 10
-            axs.scatter(dates,
-                        total[:, 0], label=labels[file],  linestyle=linestyles[file], color=colors[file], linewidth=linewidth, s=s)
-
-        h5file.close()
+    plotted_keys = []
+    plot_min = 1e7
+    plot_max = 0
 
     t0 = get_t0_from_dir_name(files[0])
-    for i in range(num_plots):
-        axs.vlines(t0, np.min(total[:, i]),
-                   np.max(total[:, i]), color="gray", alpha=0.5, label=labels[3])
 
-    # Define some characteristics of the plot
+    _style_axis(ax, "Susceptible to Infected flow")
 
-    axs.set_title(flow_dict[0], fontsize=8)
-    # axs.set_xlim(left=0, right=dates[-1])
-    axs.grid(True, linestyle='--', alpha=0.5)
-    axs.ticklabel_format(axis='y',
-                         style='sci', scilimits=(0, 0))
+    for key, filepath in zip(FILE_KEYS, files):
+        dates, total = load_h5_total(filepath)
+        if key == "detailed":
+            tinit_detailed = dates[0]
+        plotted_keys.append(key)
+        style = STYLE[key]
 
-    labels.remove("Groundtruth")
-    fig.legend(labels, bbox_to_anchor=(0.1, -0.73, 0.8, 0.8),
-               fancybox=False, shadow=False, ncol=1)
+        t0_index = np.where(np.isclose(dates, t0))[0][0]
+        ax.scatter(dates[:t0_index+1], total[:, 0][:t0_index+1], color=style["color"],
+                   marker="o",
+                   s=SCATTERSIZE,
+                   linewidths=0,
+                   edgecolors="none")
 
-    fig.supxlabel('Simulation time [days]')
-    fig.supylabel('Number of individuals')
-    plt.subplots_adjust(left=None, bottom=None, right=None,
-                        top=None, wspace=None, hspace=0.6)
+        # ax.plot(dates[:t0_index+1], total[:, 0][:t0_index+1], color=style["color"],
+        #         marker="o",
+        #         linewidth=12)
 
+    # tinit =
+    ax.set_xlim(tinit_detailed-2, t0+2)
+    # ax.vlines(t0, plot_min, plot_max,
+    #           color=T0_COLOR, alpha=0.5)
+
+    handles = [plt.Line2D([0], [0], color=STYLE[k]["color"],
+                          linestyle="-", linewidth=LINEWIDTH,
+                          label=STYLE[k]["label"])
+               for k in plotted_keys]
+
+    fig.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.5, -0.08),
+               ncol=len(handles), fancybox=False, shadow=False, frameon=False)
+
+    fig.supxlabel("Simulation time [days]",  y=0.04)
+    fig.supylabel("Number of individuals", y=0.65)
     plt.tight_layout()
 
-    # Save result.
-    if save_dir != "":
-        if not os.path.isdir(save_dir):
-            os.makedirs(save_dir)
-        plt.savefig(save_dir + f"compare_flow_{fileending}.png",
-                    bbox_inches='tight', dpi=500)
-
-    plt.close()
+    _save(fig, save_dir, f"compare_flow_{fileending}.png")
 
 
 def plot_infectionage_distribution(files, fileending, save_dir=""):
-    # Define compartments
-    flow_dict = {0: 'Infected per infection age'}
+    """
+    Plots the infected-per-infection-age distribution, comparing
+    groundtruth/detailed/simple.
 
-    # Define plot.
-    num_plots = 1
-    fig, axs = plt.subplots(1, num_plots, sharex='all', num='Compare files')
+    @param[in] files List of three files [groundtruth, detailed, simple].
+    @param[in] fileending Suffix for the saved plot filename.
+    @param[in] save_dir Directory to save the plot in; not saved if empty.
+    """
+    fig, ax = plt.subplots(1, 1, figsize=(
+        1.5*PANEL_WIDTH, PANEL_HEIGHT), num="Compare files")
 
-    colors = ["C0", "limegreen", "Orange"]
-    linestyles = [':', '-', '--']
-    linewidth = 1
-    labels = ["Groundtruth", "Detailed", "Simple"]
+    plotted_keys = []
 
-    # Add results to plot.
-    for file in range(len(files)):
-        # Load data.
-        h5file = h5py.File(str(files[file]) + '.h5', 'r')
+    _style_axis(ax, r"Infected per infection age at $t_0$")
 
-        if (len(list(h5file.keys())) > 1):
-            raise gd.DataError("File should contain one dataset.")
-        if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
-            raise gd.DataError("Expected only one group.")
+    for key, filepath in zip(FILE_KEYS, files):
+        dates, total = load_h5_total(filepath)
+        if key == "groundtruth":
+            continue
+        plotted_keys.append(key)
+        style = STYLE[key]
+        ax.scatter(dates, total, color=style["color"],
+                   linestyle=style["linestyle"], marker="o",
+                   s=SCATTERSIZE,
+                   linewidths=0,
+                   edgecolors="none")
 
-        data = h5file[list(h5file.keys())[0]]
+    handles = [plt.Line2D([0], [0], color=STYLE[k]["color"],
+                          linestyle="-", linewidth=LINEWIDTH,
+                          label=STYLE[k]["label"])
+               for k in plotted_keys]
 
-        # As there should be only one Group, total is the simulation result.
-        total = data['Total'][:, :]
+    fig.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.5, -0.08),
+               ncol=len(handles), fancybox=False, shadow=False, frameon=False)
 
-        dates = data['Time'][:]
-
-        # Plot data.
-        if file != 0:
-            s = 1
-            if file == 2:
-                s = 10
-
-            axs.scatter(dates,
-                        total[:], label=labels[file],  linestyle=linestyles[file], color=colors[file], linewidth=linewidth, s=s)
-
-        h5file.close()
-
-    # Define some characteristics of the plot
-
-    axs.set_title(flow_dict[0], fontsize=8)
-    # axs.set_xlim(left=0, right=dates[-1])
-    axs.grid(True, linestyle='--', alpha=0.5)
-    axs.ticklabel_format(axis='y',
-                         style='sci', scilimits=(0, 0))
-
-    labels.remove("Groundtruth")
-    fig.legend(labels, bbox_to_anchor=(0.1, -0.73, 0.8, 0.8),
-               fancybox=False, shadow=False, ncol=1)
-
-    fig.supxlabel('Infection age [days]')
-    fig.supylabel('Number of individuals')
-    plt.subplots_adjust(left=None, bottom=None, right=None,
-                        top=None, wspace=None, hspace=0.6)
-
+    fig.supxlabel("Infection age [days]",  y=0.04)
+    fig.supylabel("Number of individuals")
     plt.tight_layout()
 
-    # Save result.
-    if save_dir != "":
-        if not os.path.isdir(save_dir):
-            os.makedirs(save_dir)
-        plt.savefig(save_dir + f"infected_per_infection_age_{fileending}.png",
-                    bbox_inches='tight', dpi=500)
+    _save(fig, save_dir, f"infected_per_infection_age_{fileending}.png")
 
-    plt.close()
+
+def plot_init_conditions(files_flows, files_infage_dist, fileending, save_dir=""):
+    """
+    Combines the Susceptible -> Infected flow plot and the infected-per-
+    infection-age distribution plot into one figure with a shared legend.
+
+    @param[in] files_flows List of flow files in the order
+        [detailed, detailed_short, simple].
+    @param[in] files_infage_dist List of infection-age distribution files in
+        the order [detailed, detailed_short, simple].
+    @param[in] fileending Suffix for the saved plot filename.
+    @param[in] save_dir Directory to save the plot in; not saved if empty.
+    """
+    if len(files_flows) != len(FILE_KEYS):
+        raise ValueError(
+            f"Expected {len(FILE_KEYS)} flow files, got {len(files_flows)}."
+        )
+
+    if len(files_infage_dist) != len(FILE_KEYS):
+        raise ValueError(
+            "Expected "
+            f"{len(FILE_KEYS)} infection-age distribution files, "
+            f"got {len(files_infage_dist)}."
+        )
+
+    fig, axs = plt.subplots(
+        1,
+        2,
+        figsize=(3 * PANEL_WIDTH, PANEL_HEIGHT),
+        num="Compare initial conditions",
+    )
+
+    _style_axis(axs[0], "Susceptible to Infected flow")
+    _style_axis(axs[1], r"Infected per infection age at $t_0$")
+
+    plotted_keys = []
+    t0 = get_t0_from_dir_name(files_flows[0])
+    tinit_detailed = None
+
+    # Plot the flow data.
+    for key, filepath in zip(FILE_KEYS, files_flows):
+        dates_flow, total_flow = load_h5_total(filepath)
+
+        if key == "detailed":
+            tinit_detailed = dates_flow[0]
+
+        style = STYLE[key]
+        plotted_keys.append(key)
+
+        t0_indices = np.where(np.isclose(dates_flow, t0))[0]
+        if len(t0_indices) == 0:
+            raise ValueError(
+                f"Could not find t0={t0} in flow file '{filepath}'."
+            )
+
+        t0_index = t0_indices[0]
+
+        axs[0].scatter(
+            dates_flow[:t0_index + 1],
+            total_flow[:t0_index + 1, 0],
+            color=style["color"],
+            marker="o",
+            s=SCATTERSIZE,
+            linewidths=0,
+            edgecolors="none",
+            zorder=2,
+        )
+
+    # Plot the infection-age distributions.
+    for key, filepath in zip(FILE_KEYS, files_infage_dist):
+        dates_age, total_age = load_h5_total(filepath)
+        style = STYLE[key]
+
+        axs[1].scatter(
+            dates_age,
+            total_age,
+            color=style["color"],
+            marker="o",
+            s=SCATTERSIZE,
+            linewidths=0,
+            edgecolors="none",
+            zorder=2,
+        )
+
+    if tinit_detailed is not None:
+        axs[0].set_xlim(tinit_detailed - 2, t0 + 2)
+
+    axs[0].set_xlabel("Simulation time [days]")
+    axs[1].set_xlabel("Infection age [days]")
+    fig.supylabel("Number of individuals", y=0.57)
+
+    handles = [
+        plt.Line2D(
+            [0],
+            [0],
+            color=STYLE[key]["color"],
+            linestyle="-",
+            linewidth=LINEWIDTH,
+            label=STYLE[key]["label"],
+        )
+        for key in plotted_keys
+    ]
+
+    fig.legend(
+        handles=handles,
+        loc="lower center",
+        bbox_to_anchor=(0.5, 0.02),
+        ncol=len(handles),
+        fancybox=False,
+        shadow=False,
+        frameon=False,
+    )
+
+    plt.tight_layout(rect=(0, 0.10, 1, 1))
+
+    _save(fig, save_dir, f"init_conditions_{fileending}.png")
 
 
 def subfolders_scandir(path):
-    # path = os.path.dirname(path)
-    print(path)
     with os.scandir(path) as it:
         return [entry.name for entry in it if entry.is_dir()]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    root_dir = os.path.join(os.path.dirname(
-        __file__), "../simulation_results")
-
-    main_dir = "2026-07-20/compare_different_inits_lognorm"
+    root_dir = os.path.join(os.path.dirname(__file__), "../simulation_results")
+    main_dir = "2026-07-24/compare_different_inits_lognorm"
 
     relevant_dir = os.path.join(root_dir, main_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
-    # sub_dirs = [
-    #     "nonconst_contacts_t0=0_tinit=20_tmax=30_scalingtime=25_damping=0.5"]
 
     gregory_order = 3
+    ide_exponent = 2
 
     for sub_dir in sub_dirs:
         print(main_dir + "/" + sub_dir)
 
-        # Path where simulation results are stored.
-        result_dir = os.path.join(os.path.dirname(
-            __file__),  f"../simulation_results/{main_dir}/{sub_dir}")
-        # Path where plots will be stored.
-        plot_dir = os.path.join(os.path.dirname(
-            __file__),  f"../plots/{main_dir}/{sub_dir}/")
+        result_dir = os.path.join(os.path.dirname(__file__),
+                                  f"../simulation_results/{main_dir}/{sub_dir}")
+        plot_dir = os.path.join(os.path.dirname(__file__),
+                                f"../plots/{main_dir}/{sub_dir}/")
 
         files = os.listdir(result_dir)
 
-        ide_exponent = 2
-        if f'detailed_dt=1e-{ide_exponent}_gregoryorder=3.h5' in files:
-            print(ide_exponent)
+        if f"detailed_dt=1e-{ide_exponent}_gregoryorder={gregory_order}.h5" not in files:
+            continue
 
-            plot_susceptibles([os.path.join(result_dir, f"groundtruth_dt=1e-{ide_exponent}_gregoryorder={gregory_order}"),
-                               os.path.join(
-                result_dir, f"detailed_dt=1e-{ide_exponent}_gregoryorder={gregory_order}"),
-                os.path.join(result_dir, f"simple_dt=1e-{ide_exponent}_gregoryorder={gregory_order}")],
-                fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir)
+        # print(ide_exponent)
 
-            plot_flow_S_to_I([os.path.join(result_dir, f"groundtruth_flows_dt=1e-{ide_exponent}_gregoryorder={gregory_order}"),
-                              os.path.join(
-                result_dir, f"detailed_flows_dt=1e-{ide_exponent}_gregoryorder={gregory_order}"),
-                os.path.join(result_dir, f"simple_flows_dt=1e-{ide_exponent}_gregoryorder={gregory_order}")],
-                fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir)
+        base = f"dt=1e-{ide_exponent}_gregoryorder={gregory_order}"
 
-            plot_infectionage_distribution([os.path.join(result_dir, f"groundtruth_infectionagedistribution_dt=1e-{ide_exponent}_gregoryorder={gregory_order}"),
-                                            os.path.join(
-                result_dir, f"detailed_infectionagedistribution_dt=1e-{ide_exponent}_gregoryorder={gregory_order}"),
-                os.path.join(result_dir, f"simple_infectionagedistribution_dt=1e-{ide_exponent}_gregoryorder={gregory_order}")],
-                fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir)
+        plot_susceptibles(
+            [
+                # os.path.join(result_dir, f"groundtruth_{base}"),
+                os.path.join(result_dir, f"detailed_{base}"),
+                os.path.join(result_dir, f"detailed_short_{base}"),
+                os.path.join(result_dir, f"simple_{base}")],
+            fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir)
+
+        # plot_flow_S_to_I(
+        #     [os.path.join(result_dir, f"detailed_flows_{base}"),
+        #      os.path.join(result_dir, f"detailed_short_flows_{base}"),
+        #      os.path.join(result_dir, f"simple_flows_{base}")],
+        #     fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir)
+
+        # plot_infectionage_distribution(
+        #     [os.path.join(
+        #         result_dir, f"detailed_infectionagedistribution_{base}"),
+        #         os.path.join(
+        #             result_dir, f"detailed_short_infectionagedistribution_{base}"),
+        #         os.path.join(result_dir, f"simple_infectionagedistribution_{base}")],
+        #     fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir)
+
+        plot_init_conditions(
+            [os.path.join(result_dir, f"detailed_flows_{base}"),
+             os.path.join(result_dir, f"detailed_short_flows_{base}"),
+             os.path.join(result_dir, f"simple_flows_{base}")], [os.path.join(
+                 result_dir, f"detailed_infectionagedistribution_{base}"),
+                os.path.join(
+                 result_dir, f"detailed_short_infectionagedistribution_{base}"),
+                os.path.join(result_dir, f"simple_infectionagedistribution_{base}")],
+            fileending=f"dt=1e-{ide_exponent}",
+            save_dir=plot_dir,
+        )

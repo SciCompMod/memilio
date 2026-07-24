@@ -39,7 +39,7 @@ namespace params
 {
 size_t num_agegroups = 1;
 
-ScalarType TransmissionProbabilityOnContact = 0.3;
+ScalarType TransmissionProbabilityOnContact = 0.25;
 ScalarType RiskOfInfectionFromSymptomatic   = 1.;
 ScalarType Seasonality                      = 0.;
 
@@ -67,11 +67,11 @@ mio::UncertainContactMatrix<ScalarType> scale_contact_matrix(ScalarType damping,
 
 mio::IOResult<mio::TimeSeries<ScalarType>>
 simulate_ide(ScalarType ide_exponent, size_t gregory_order, size_t finite_difference_order, ScalarType t_init,
-             ScalarType t0, ScalarType tmax, ScalarType TimeInfected, ScalarType damping, ScalarType damping_time,
-             std::string save_dir = "", std::string model_type = "",
+             ScalarType t0, ScalarType tmax, ScalarType damping, ScalarType damping_time, std::string save_dir = "",
+             std::string model_type = "",
              mio::TimeSeries<ScalarType> result_groundtruth =
                  mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
-             size_t write_inf_per_infage_time = 0)
+             size_t write_inf_per_infage_time = 0, bool lognorm = true)
 {
     using namespace params;
     using Vec = mio::TimeSeries<ScalarType>::Vector;
@@ -159,12 +159,18 @@ simulate_ide(ScalarType ide_exponent, size_t gregory_order, size_t finite_differ
     // Initialize model.
     mio::isir::ModelMessinaExtendedDetailedInit model(std::move(init_populations), total_population, gregory_order,
                                                       finite_difference_order);
-    unused(TimeInfected);
 
-    mio::LognormSurvivalFunction survival_func(0.24622068, 0, 7.76114000);
-    // mio::ExponentialSurvivalFunction survival_func(1. / 4.);
-
+    mio::LognormSurvivalFunction survival_func(0.24622068, 0, 7.76114000); //mean =8.
+    // mio::LognormSurvivalFunction survival_func(0.32459285, 0, 4.26907484); // mean = 4.5
+    std::cout << "mean: " << survival_func.get_mean(dt) << std::endl;
     mio::StateAgeFunctionWrapper dist(survival_func);
+
+    if (!lognorm) {
+        mio::ExponentialSurvivalFunction survival_func_exp(1. / 8.);
+        std::cout << "mean: " << survival_func_exp.get_mean(dt) << std::endl;
+        dist = survival_func_exp;
+    }
+
     std::vector<mio::StateAgeFunctionWrapper<ScalarType>> vec_dist((size_t)mio::isir::InfectionTransition::Count, dist);
     model.parameters.get<mio::isir::TransitionDistributions>() = vec_dist;
 
@@ -227,17 +233,19 @@ int main()
 {
     using namespace params;
 
-    ScalarType time_infected = 5.;
+    // ScalarType time_infected = 2.;
 
     ScalarType t_init = 0.;
 
-    ScalarType t0 = 30.;
+    ScalarType t0 = 35.;
     // ScalarType t_init_groundtruth = t0
 
-    ScalarType t_init_simple   = t0;
-    ScalarType t_init_detailed = t0 - 30.;
+    ScalarType t_init_simple         = t0;
+    ScalarType t_init_detailed       = t0 - 25.;
+    ScalarType t_init_detailed_short = t0 - 10.;
 
-    ScalarType tmax = t0 + 50.;
+    // ScalarType tmax = t0 + 115.;
+    ScalarType tmax = 85.;
 
     ScalarType damping      = 0.;
     ScalarType damping_time = 0.;
@@ -247,7 +255,9 @@ int main()
 
     ScalarType ide_exponent = 2.;
 
-    std::string save_dir = fmt::format("../../simulation_results/2026-07-07/diff_groundtruth_init/"
+    bool lognorm = true;
+
+    std::string save_dir = fmt::format("../../simulation_results/2026-07-24/compare_different_inits_lognorm/"
                                        "nonconst_contacts_tinit={}_tinitdetailed={}_t0={}_tmax={}/",
                                        t_init, t_init_detailed, t0, tmax);
 
@@ -258,14 +268,18 @@ int main()
     // Do IDE simulations.
     std::cout << std::endl;
     mio::IOResult<mio::TimeSeries<ScalarType>> result_ide_groundtruth = simulate_ide(
-        ide_exponent, gregory_order, finite_difference_order, t_init, t0, tmax, time_infected, damping, damping_time,
-        save_dir, "groundtruth", mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count), t0);
+        ide_exponent, gregory_order, finite_difference_order, t_init, t0, tmax, damping, damping_time, save_dir,
+        "groundtruth", mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count), t0, lognorm);
 
     mio::IOResult<mio::TimeSeries<ScalarType>> result_ide_detailed =
-        simulate_ide(ide_exponent, gregory_order, finite_difference_order, t_init_detailed, t0, tmax, time_infected,
-                     damping, damping_time, save_dir, "detailed", result_ide_groundtruth.value(), t0);
+        simulate_ide(ide_exponent, gregory_order, finite_difference_order, t_init_detailed, t0, tmax, damping,
+                     damping_time, save_dir, "detailed", result_ide_groundtruth.value(), t0, lognorm);
+
+    mio::IOResult<mio::TimeSeries<ScalarType>> result_ide_detailed_short =
+        simulate_ide(ide_exponent, gregory_order, finite_difference_order, t_init_detailed_short, t0, tmax, damping,
+                     damping_time, save_dir, "detailed_short", result_ide_groundtruth.value(), t0, lognorm);
 
     mio::IOResult<mio::TimeSeries<ScalarType>> result_ide_simple =
-        simulate_ide(ide_exponent, gregory_order, finite_difference_order, t_init_simple, t0, tmax, time_infected,
-                     damping, damping_time, save_dir, "simple", result_ide_groundtruth.value(), t0);
+        simulate_ide(ide_exponent, gregory_order, finite_difference_order, t_init_simple, t0, tmax, damping,
+                     damping_time, save_dir, "simple", result_ide_groundtruth.value(), t0, lognorm);
 }
