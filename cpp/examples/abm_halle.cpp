@@ -250,7 +250,6 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
         uint32_t age = row[index["age"]];
 
         int home_id   = row[index["home_id"]];
-        int home_zone = row[index["home_zone"]];
 
         mio::abm::LocationId home;
 
@@ -262,13 +261,7 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
             home_locations.insert({home_id, home});
             std::string loc_home =
                 "0" + std::to_string(static_cast<int>(mio::abm::LocationType::Home)) + std::to_string(home.get());
-            auto zone_iter_home = loc_area_mapping.find(home_zone);
-            if (zone_iter_home == loc_area_mapping.end()) {
-                loc_area_mapping.insert({home_zone, {loc_home}});
-            }
-            else {
-                loc_area_mapping[home_zone].push_back(loc_home);
-            }
+
         }
         else {
             home = home_locations[home_id];
@@ -279,7 +272,6 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
         person.set_assigned_location(mio::abm::LocationType::Home, home,model.get_id());
 
         int shop_id   = row[index["shop_id"]];
-        int shop_zone = row[index["shop_zone"]];
 
         mio::abm::LocationId shop;
 
@@ -294,13 +286,6 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
             }
             std::string loc_shop =
                 "0" + std::to_string(static_cast<int>(mio::abm::LocationType::BasicsShop)) + std::to_string(shop.get());
-            auto zone_iter_shop = loc_area_mapping.find(shop_zone);
-            if (zone_iter_shop == loc_area_mapping.end()) {
-                loc_area_mapping.insert({shop_zone, {loc_shop}});
-            }
-            else {
-                loc_area_mapping[shop_zone].push_back(loc_shop);
-            }
         }
         else {
             shop = shop_locations[shop_id];
@@ -310,7 +295,6 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
         // model.get_location(shop).increase_size();
 
         int event_id   = row[index["event_id"]];
-        int event_zone = row[index["event_zone"]];
 
         mio::abm::LocationId event;
 
@@ -325,13 +309,6 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
             }
             std::string loc_event = "0" + std::to_string(static_cast<int>(mio::abm::LocationType::SocialEvent)) +
                               std::to_string(event.get());
-            auto zone_iter_event = loc_area_mapping.find(event_zone);
-            if (zone_iter_event == loc_area_mapping.end()) {
-                loc_area_mapping.insert({event_zone, {loc_event}});
-            }
-            else {
-                loc_area_mapping[event_zone].push_back(loc_event);
-            }
         }
         else {
             event = event_locations[event_id];
@@ -343,7 +320,6 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
         // Check if person is school-aged
         if (person.get_age() == mio::AgeGroup(1) || person.get_age() == mio::AgeGroup(2) || person.get_age() == mio::AgeGroup(3)) {
             int school_id   = row[index["school_id"]];
-            int school_zone = row[index["school_zone"]];
 
             mio::abm::LocationId school;
 
@@ -360,13 +336,6 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
                 }
                 std::string loc_school = "0" + std::to_string(static_cast<int>(mio::abm::LocationType::School)) +
                                   std::to_string(school.get());
-                auto zone_iter_school = loc_area_mapping.find(school_zone);
-                if (zone_iter_school == loc_area_mapping.end()) {
-                    loc_area_mapping.insert({school_zone, {loc_school}});
-                }
-                else {
-                    loc_area_mapping[school_zone].push_back(loc_school);
-                }
             }
             else {
                 school = school_locations[school_id];
@@ -389,13 +358,6 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
                         school_sizes[school_id].insert({school, 1});
                         std::string loc_school = "0" + std::to_string(static_cast<int>(mio::abm::LocationType::School)) +
                                           std::to_string(school.get());
-                        auto zone_iter_school = loc_area_mapping.find(school_zone);
-                        if (zone_iter_school == loc_area_mapping.end()) {
-                            loc_area_mapping.insert({school_zone, {loc_school}});
-                        }
-                        else {
-                            loc_area_mapping[school_zone].push_back(loc_school);
-                        }
                     }
                 }
                 else {
@@ -409,11 +371,6 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
         // Check if person is work-aged
         if (person.get_age() == mio::AgeGroup(4) || person.get_age() == mio::AgeGroup(5) || person.get_age() == mio::AgeGroup(6) || person.get_age() == mio::AgeGroup(7)) {
             int work_id   = row[index["work_id"]];
-            int work_zone = row[index["work_zone"]];
-
-            if (work_zone == -2) {
-                mio::log_error("Person with id {} has work age but no work zone", row[index["puid"]]);
-            }
 
             mio::abm::LocationId work;
 
@@ -430,13 +387,6 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
                 }
                 std::string loc_id =
                     "0" + std::to_string(static_cast<int>(mio::abm::LocationType::Work)) + std::to_string(work.get());
-                auto zone_iter_id = loc_area_mapping.find(work_zone);
-                if (zone_iter_id == loc_area_mapping.end()) {
-                    loc_area_mapping.insert({work_zone, {loc_id}});
-                }
-                else {
-                    loc_area_mapping[work_zone].push_back(loc_id);
-                }
             }
             else {
                 work = work_locations[work_id];
@@ -459,13 +409,6 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
                         work_sizes[work_id].insert({work, 1});
                         std::string loc_work = "0" + std::to_string(static_cast<int>(mio::abm::LocationType::Work)) +
                                           std::to_string(work.get());
-                        auto zone_iter_work = loc_area_mapping.find(work_zone);
-                        if (zone_iter_work == loc_area_mapping.end()) {
-                            loc_area_mapping.insert({work_zone, {loc_work}});
-                        }
-                        else {
-                            loc_area_mapping[work_zone].push_back(loc_work);
-                        }
                     }
                 }
                 else {
@@ -519,8 +462,8 @@ int main()
     auto model  = mio::abm::Model(num_age_groups);
 
 
-    std::string path = "/home/wulf_ka/home/abm/memilio/cpp/examples/df_abm_short.csv";
-    // std::string path = "/home/wulf_ka/home/abm/memilio/cpp/examples/df_abm_is_my_code_even_running.csv";
+    // std::string path = "/home/wulf_ka/home/abm/memilio/cpp/examples/df_abm_short.csv";
+    std::string path = "/home/wulf_ka/home/abm/memilio/cpp/examples/df_abm_is_my_code_even_running.csv";
     std::string out  = "/home/wulf_ka/home/abm/memilio/cpp/examples/out";
     
     initialize_model(model, path, 50,50);

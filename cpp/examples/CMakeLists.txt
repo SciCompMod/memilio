@@ -116,6 +116,10 @@ add_executable(abm_minimal_example abm_minimal.cpp)
 target_link_libraries(abm_minimal_example PRIVATE memilio abm)
 target_compile_options(abm_minimal_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(abm_halle abm_halle.cpp)
+target_link_libraries(abm_halle PRIVATE memilio abm)
+target_compile_options(abm_halle PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 if(MEMILIO_HAS_HDF5)
     add_executable(abm_parameter_study_example abm_parameter_study.cpp)
     target_link_libraries(abm_parameter_study_example PRIVATE memilio abm)
@@ -214,3 +218,5 @@ endif()
 add_executable(ode_mseirs4_example ode_mseirs4.cpp)
 target_link_libraries(ode_mseirs4_example PRIVATE memilio ode_mseirs4)
 target_compile_options(ode_mseirs4_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
