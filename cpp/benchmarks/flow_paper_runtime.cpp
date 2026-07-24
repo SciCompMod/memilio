@@ -432,18 +432,13 @@ struct SecirTrackedTransition {
     SecirTransitionKind kind;
 };
 
-constexpr std::array<SecirTransitionKind, 13> secir_auxiliary_transition_kinds{
+constexpr std::array<SecirTransitionKind, 8> secir_auxiliary_transition_kinds{
     SecirTransitionKind::Infection,
     SecirTransitionKind::ExposedToNoSymptoms,
     SecirTransitionKind::NoSymptomsToSymptoms,
     SecirTransitionKind::NoSymptomsToRecovered,
-    SecirTransitionKind::ConfirmedNoSymptomsToConfirmedSymptoms,
-    SecirTransitionKind::ConfirmedNoSymptomsToRecovered,
     SecirTransitionKind::SymptomsToSevere,
     SecirTransitionKind::SymptomsToRecovered,
-    SecirTransitionKind::ConfirmedSymptomsToSevere,
-    SecirTransitionKind::ConfirmedSymptomsToRecovered,
-    SecirTransitionKind::SevereToRecovered,
     SecirTransitionKind::CriticalToDead,
     SecirTransitionKind::CriticalToRecovered,
 };
@@ -473,8 +468,7 @@ public:
         : m_values(parameters.get_num_groups().get(), num_stages)
     {
         for (mio::AgeGroup group = 0; group < parameters.get_num_groups(); ++group) {
-            store(group, SecirTransitionStage::Exposed,
-                  parameters.template get<mio::osecir::TimeExposed<FP>>()[group]);
+            store(group, SecirTransitionStage::Exposed, parameters.template get<mio::osecir::TimeExposed<FP>>()[group]);
             store(group, SecirTransitionStage::NoSymptoms,
                   parameters.template get<mio::osecir::TimeInfectedNoSymptoms<FP>>()[group]);
             store(group, SecirTransitionStage::Symptoms,
@@ -488,8 +482,7 @@ public:
 
     FP get_rate(mio::AgeGroup group, SecirTransitionStage stage) const
     {
-        const FP value =
-            m_values(static_cast<Eigen::Index>((size_t)group), static_cast<Eigen::Index>(stage));
+        const FP value = m_values(static_cast<Eigen::Index>((size_t)group), static_cast<Eigen::Index>(stage));
         if constexpr (Parameterization == SecirParameterization::Rates) {
             return value;
         }
