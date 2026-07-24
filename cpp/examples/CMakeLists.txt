@@ -158,10 +158,6 @@ add_executable(detailed_init_exponential convergence/detailed_init_exponential.c
 target_link_libraries(detailed_init_exponential PRIVATE memilio ide_sir ode_sir)
 target_compile_options(detailed_init_exponential PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-add_executable(detailed_init_linear_decay convergence/detailed_init_linear_decay.cpp)
-target_link_libraries(detailed_init_linear_decay PRIVATE memilio ide_sir)
-target_compile_options(detailed_init_linear_decay PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
-
 add_executable(detailed_init_exponential_complement convergence/detailed_init_exponential_complement.cpp)
 target_link_libraries(detailed_init_exponential_complement PRIVATE memilio ide_sir)
 target_compile_options(detailed_init_exponential_complement PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
@@ -201,6 +197,10 @@ target_compile_options(secir_changepoints PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WAR
 add_executable(smoothercos nonconst_contacts/smoothercos.cpp)
 target_link_libraries(smoothercos PRIVATE memilio ide_sir)
 target_compile_options(smoothercos PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(runtime_comparison_smoother nonconst_contacts/runtime_comparison_smoother.cpp)
+target_link_libraries(runtime_comparison_smoother PRIVATE memilio)
+target_compile_options(runtime_comparison_smoother PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(compare_init_conditions initial_conditions/compare_init_conditions.cpp)
 target_link_libraries(compare_init_conditions PRIVATE memilio ide_sir)
