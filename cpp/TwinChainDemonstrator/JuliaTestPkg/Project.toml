@@ -1,0 +1,10 @@
+name = "JuliaTestPkg"
+uuid = "d9ea7a7d-9656-4ee6-8ffa-28bebf28d670"
+version = "0.1.0"
+authors = ["Madhav Chaturvedi <m.chaturvedi@uni-muenster.de>"]
+
+[deps]
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+
+[compat]
+StatsBase = "0.34.12"
