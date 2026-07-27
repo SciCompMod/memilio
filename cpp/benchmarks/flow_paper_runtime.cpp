@@ -16,7 +16,7 @@
 #include "memilio/math/smoother.h"
 #include "memilio/math/stepper_wrapper.h"
 #include "memilio/utils/logging.h"
-#include "ode_secir/model.h"
+#include "ode_secir/model_reduced.h"
 #include "ode_secirts/model.h"
 #include "ode_seir/model.h"
 
@@ -46,10 +46,13 @@ using SeirPopulations      = mio::Populations<FP, mio::AgeGroup, SeirState>;
 using SeirParameters       = mio::oseir::Parameters<FP>;
 using SeirCompartmentModel = mio::CompartmentalModel<FP, SeirState, SeirPopulations, SeirParameters>;
 
-using SecirState       = mio::osecir::InfectionState;
+using SecirState       = mio::osecir::reduced::InfectionState;
 using SecirPopulations = mio::Populations<FP, mio::AgeGroup, SecirState>;
 using SecirParameters  = mio::osecir::Parameters<FP>;
-using SecirFlowModel   = mio::FlowModel<FP, SecirState, SecirPopulations, SecirParameters, mio::osecir::Flows>;
+using SecirFlowModel =
+    mio::FlowModel<FP, SecirState, SecirPopulations, SecirParameters, mio::osecir::reduced::Flows>;
+using PaperSecirModel      = mio::osecir::reduced::Model<FP>;
+using SecirTransitionKind = mio::osecir::reduced::Transition;
 
 constexpr FP t0   = 0.0;
 constexpr FP tmax = 600.0;
@@ -183,9 +186,9 @@ public:
 using ReusedRateSeirModel       = DirectSeirModel<SeirRateHandling::Reuse>;
 using EquationWiseRateSeirModel = DirectSeirModel<SeirRateHandling::EquationWise>;
 
-void setup_runtime_model(mio::osecir::Model<FP>& model)
+void setup_runtime_model(PaperSecirModel& model)
 {
-    using IS = mio::osecir::InfectionState;
+    using IS = SecirState;
 
     const FP total_population = 10000.0;
     const auto num_groups     = model.parameters.get_num_groups();
@@ -209,24 +212,20 @@ void setup_runtime_model(mio::osecir::Model<FP>& model)
         model.parameters.template get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<FP>>()[group] = 0.4;
         model.parameters.template get<mio::osecir::SeverePerInfectedSymptoms<FP>>()[group]         = 0.08;
         model.parameters.template get<mio::osecir::CriticalPerSevere<FP>>()[group]                 = 0.2;
-        model.parameters.template get<mio::osecir::DeathsPerSevere<FP>>()[group]                   = 0.01;
+        model.parameters.template get<mio::osecir::DeathsPerSevere<FP>>()[group]                   = 0.0;
         model.parameters.template get<mio::osecir::DeathsPerCritical<FP>>()[group]                 = 0.25;
 
-        model.populations[{group, IS::Exposed}]                     = 40.0 / denominator;
-        model.populations[{group, IS::InfectedNoSymptoms}]          = 25.0 / denominator;
-        model.populations[{group, IS::InfectedNoSymptomsConfirmed}] = 0.0;
-        model.populations[{group, IS::InfectedSymptoms}]            = 20.0 / denominator;
-        model.populations[{group, IS::InfectedSymptomsConfirmed}]   = 0.0;
-        model.populations[{group, IS::InfectedSevere}]              = 4.0 / denominator;
-        model.populations[{group, IS::InfectedCritical}]            = 1.0 / denominator;
-        model.populations[{group, IS::Recovered}]                   = 250.0 / denominator;
-        model.populations[{group, IS::Dead}]                        = 0.0;
+        model.populations[{group, IS::Exposed}]            = 40.0 / denominator;
+        model.populations[{group, IS::InfectedNoSymptoms}] = 25.0 / denominator;
+        model.populations[{group, IS::InfectedSymptoms}]   = 20.0 / denominator;
+        model.populations[{group, IS::InfectedSevere}]     = 4.0 / denominator;
+        model.populations[{group, IS::InfectedCritical}]   = 1.0 / denominator;
+        model.populations[{group, IS::Recovered}]          = 250.0 / denominator;
+        model.populations[{group, IS::Dead}]               = 0.0;
 
         const FP assigned =
             model.populations[{group, IS::Exposed}] + model.populations[{group, IS::InfectedNoSymptoms}] +
-            model.populations[{group, IS::InfectedNoSymptomsConfirmed}] +
-            model.populations[{group, IS::InfectedSymptoms}] +
-            model.populations[{group, IS::InfectedSymptomsConfirmed}] + model.populations[{group, IS::InfectedSevere}] +
+            model.populations[{group, IS::InfectedSymptoms}] + model.populations[{group, IS::InfectedSevere}] +
             model.populations[{group, IS::InfectedCritical}] + model.populations[{group, IS::Recovered}] +
             model.populations[{group, IS::Dead}];
         model.populations[{group, IS::Susceptible}] = group_population - assigned;
@@ -408,40 +407,12 @@ private:
     mutable Eigen::VectorX<FP> m_flow_delta;
 };
 
-enum class SecirTransitionKind
-{
-    Infection,
-    ExposedToNoSymptoms,
-    NoSymptomsToSymptoms,
-    NoSymptomsToRecovered,
-    ConfirmedNoSymptomsToConfirmedSymptoms,
-    ConfirmedNoSymptomsToRecovered,
-    SymptomsToSevere,
-    SymptomsToRecovered,
-    ConfirmedSymptomsToSevere,
-    ConfirmedSymptomsToRecovered,
-    SevereToCritical,
-    SevereToRecovered,
-    SevereToDead,
-    CriticalToDead,
-    CriticalToRecovered
-};
-
 struct SecirTrackedTransition {
     mio::AgeGroup group;
     SecirTransitionKind kind;
 };
 
-constexpr std::array<SecirTransitionKind, 8> secir_auxiliary_transition_kinds{
-    SecirTransitionKind::Infection,
-    SecirTransitionKind::ExposedToNoSymptoms,
-    SecirTransitionKind::NoSymptomsToSymptoms,
-    SecirTransitionKind::NoSymptomsToRecovered,
-    SecirTransitionKind::SymptomsToSevere,
-    SecirTransitionKind::SymptomsToRecovered,
-    SecirTransitionKind::CriticalToDead,
-    SecirTransitionKind::CriticalToRecovered,
-};
+inline constexpr auto secir_auxiliary_transition_kinds = mio::osecir::reduced::transitions;
 
 enum class SecirParameterization
 {
@@ -522,26 +493,19 @@ public:
         const auto num_groups                             = params.get_num_groups();
         const mio::ContactMatrixGroup<FP>& contact_matrix = params.template get<mio::osecir::ContactPatterns<FP>>();
 
-        FP icu_occupancy           = 0.0;
         FP test_and_trace_required = 0.0;
         for (mio::AgeGroup group = 0; group < num_groups; ++group) {
             const auto no_symptoms = this->populations.get_flat_index({group, SecirState::InfectedNoSymptoms});
-            const auto critical    = this->populations.get_flat_index({group, SecirState::InfectedCritical});
             test_and_trace_required +=
                 (1.0 - params.template get<mio::osecir::RecoveredPerInfectedNoSymptoms<FP>>()[group]) *
                 no_symptoms_rate(group) * pop[no_symptoms];
-            icu_occupancy += pop[critical];
         }
 
         for (mio::AgeGroup group = 0; group < num_groups; ++group) {
             const auto susceptible = this->populations.get_flat_index({group, SecirState::Susceptible});
             const auto exposed     = this->populations.get_flat_index({group, SecirState::Exposed});
             const auto no_symptoms = this->populations.get_flat_index({group, SecirState::InfectedNoSymptoms});
-            const auto confirmed_no_symptoms =
-                this->populations.get_flat_index({group, SecirState::InfectedNoSymptomsConfirmed});
             const auto symptoms = this->populations.get_flat_index({group, SecirState::InfectedSymptoms});
-            const auto confirmed_symptoms =
-                this->populations.get_flat_index({group, SecirState::InfectedSymptomsConfirmed});
             const auto severe   = this->populations.get_flat_index({group, SecirState::InfectedSevere});
             const auto critical = this->populations.get_flat_index({group, SecirState::InfectedCritical});
 
@@ -583,17 +547,10 @@ public:
                      symptomatic_risk * pop[source_symptoms]);
             }
 
-            const FP adjusted_critical =
-                mio::smoother_cosine<FP>(icu_occupancy, 0.9 * params.template get<mio::osecir::ICUCapacity<FP>>(),
-                                         params.template get<mio::osecir::ICUCapacity<FP>>(),
-                                         params.template get<mio::osecir::CriticalPerSevere<FP>>()[group], 0.0);
-            const FP adjusted_deaths =
-                params.template get<mio::osecir::CriticalPerSevere<FP>>()[group] - adjusted_critical;
             const FP recovered_no_symptoms =
                 params.template get<mio::osecir::RecoveredPerInfectedNoSymptoms<FP>>()[group];
             const FP severe_symptoms = params.template get<mio::osecir::SeverePerInfectedSymptoms<FP>>()[group];
             const FP critical_severe = params.template get<mio::osecir::CriticalPerSevere<FP>>()[group];
-            const FP deaths_severe   = params.template get<mio::osecir::DeathsPerSevere<FP>>()[group];
             const FP deaths_critical = params.template get<mio::osecir::DeathsPerCritical<FP>>()[group];
 
             flows[this->template get_flat_flow_index<SecirState::Exposed, SecirState::InfectedNoSymptoms>({group})] =
@@ -602,25 +559,14 @@ public:
                 {group})] = (1.0 - recovered_no_symptoms) * no_symptoms_rate(group) * y[no_symptoms];
             flows[this->template get_flat_flow_index<SecirState::InfectedNoSymptoms, SecirState::Recovered>({group})] =
                 recovered_no_symptoms * no_symptoms_rate(group) * y[no_symptoms];
-            flows[this->template get_flat_flow_index<SecirState::InfectedNoSymptomsConfirmed,
-                                                     SecirState::InfectedSymptomsConfirmed>({group})] =
-                (1.0 - recovered_no_symptoms) * no_symptoms_rate(group) * y[confirmed_no_symptoms];
-            flows[this->template get_flat_flow_index<SecirState::InfectedNoSymptomsConfirmed, SecirState::Recovered>(
-                {group})] = recovered_no_symptoms * no_symptoms_rate(group) * y[confirmed_no_symptoms];
             flows[this->template get_flat_flow_index<SecirState::InfectedSymptoms, SecirState::InfectedSevere>(
                 {group})] = severe_symptoms * symptoms_rate(group) * y[symptoms];
             flows[this->template get_flat_flow_index<SecirState::InfectedSymptoms, SecirState::Recovered>({group})] =
                 (1.0 - severe_symptoms) * symptoms_rate(group) * y[symptoms];
-            flows[this->template get_flat_flow_index<SecirState::InfectedSymptomsConfirmed, SecirState::InfectedSevere>(
-                {group})] = severe_symptoms * symptoms_rate(group) * y[confirmed_symptoms];
-            flows[this->template get_flat_flow_index<SecirState::InfectedSymptomsConfirmed, SecirState::Recovered>(
-                {group})] = (1.0 - severe_symptoms) * symptoms_rate(group) * y[confirmed_symptoms];
             flows[this->template get_flat_flow_index<SecirState::InfectedSevere, SecirState::InfectedCritical>(
-                {group})] = adjusted_critical * severe_rate(group) * y[severe];
+                {group})] = critical_severe * severe_rate(group) * y[severe];
             flows[this->template get_flat_flow_index<SecirState::InfectedSevere, SecirState::Recovered>({group})] =
-                (1.0 - critical_severe - deaths_severe) * severe_rate(group) * y[severe];
-            flows[this->template get_flat_flow_index<SecirState::InfectedSevere, SecirState::Dead>({group})] =
-                (deaths_severe + adjusted_deaths) * severe_rate(group) * y[severe];
+                (1.0 - critical_severe) * severe_rate(group) * y[severe];
             flows[this->template get_flat_flow_index<SecirState::InfectedCritical, SecirState::Dead>({group})] =
                 deaths_critical * critical_rate(group) * y[critical];
             flows[this->template get_flat_flow_index<SecirState::InfectedCritical, SecirState::Recovered>({group})] =
@@ -647,38 +593,18 @@ public:
         case SecirTransitionKind::NoSymptomsToRecovered:
             return params.template get<mio::osecir::RecoveredPerInfectedNoSymptoms<FP>>()[group] *
                    no_symptoms_rate(group) * state_value(SecirState::InfectedNoSymptoms);
-        case SecirTransitionKind::ConfirmedNoSymptomsToConfirmedSymptoms:
-            return (1.0 - params.template get<mio::osecir::RecoveredPerInfectedNoSymptoms<FP>>()[group]) *
-                   no_symptoms_rate(group) * state_value(SecirState::InfectedNoSymptomsConfirmed);
-        case SecirTransitionKind::ConfirmedNoSymptomsToRecovered:
-            return params.template get<mio::osecir::RecoveredPerInfectedNoSymptoms<FP>>()[group] *
-                   no_symptoms_rate(group) * state_value(SecirState::InfectedNoSymptomsConfirmed);
         case SecirTransitionKind::SymptomsToSevere:
             return params.template get<mio::osecir::SeverePerInfectedSymptoms<FP>>()[group] * symptoms_rate(group) *
                    state_value(SecirState::InfectedSymptoms);
         case SecirTransitionKind::SymptomsToRecovered:
             return (1.0 - params.template get<mio::osecir::SeverePerInfectedSymptoms<FP>>()[group]) *
                    symptoms_rate(group) * state_value(SecirState::InfectedSymptoms);
-        case SecirTransitionKind::ConfirmedSymptomsToSevere:
-            return params.template get<mio::osecir::SeverePerInfectedSymptoms<FP>>()[group] * symptoms_rate(group) *
-                   state_value(SecirState::InfectedSymptomsConfirmed);
-        case SecirTransitionKind::ConfirmedSymptomsToRecovered:
-            return (1.0 - params.template get<mio::osecir::SeverePerInfectedSymptoms<FP>>()[group]) *
-                   symptoms_rate(group) * state_value(SecirState::InfectedSymptomsConfirmed);
         case SecirTransitionKind::SevereToCritical:
-            return adjusted_critical_per_severe(group, pop) * severe_rate(group) *
+            return params.template get<mio::osecir::CriticalPerSevere<FP>>()[group] * severe_rate(group) *
                    state_value(SecirState::InfectedSevere);
         case SecirTransitionKind::SevereToRecovered:
-            return (1.0 - params.template get<mio::osecir::CriticalPerSevere<FP>>()[group] -
-                    params.template get<mio::osecir::DeathsPerSevere<FP>>()[group]) *
+            return (1.0 - params.template get<mio::osecir::CriticalPerSevere<FP>>()[group]) *
                    severe_rate(group) * state_value(SecirState::InfectedSevere);
-        case SecirTransitionKind::SevereToDead: {
-            const FP adjusted_critical = adjusted_critical_per_severe(group, pop);
-            const FP adjusted_deaths =
-                params.template get<mio::osecir::CriticalPerSevere<FP>>()[group] - adjusted_critical;
-            return (params.template get<mio::osecir::DeathsPerSevere<FP>>()[group] + adjusted_deaths) *
-                   severe_rate(group) * state_value(SecirState::InfectedSevere);
-        }
         case SecirTransitionKind::CriticalToDead:
             return params.template get<mio::osecir::DeathsPerCritical<FP>>()[group] * critical_rate(group) *
                    state_value(SecirState::InfectedCritical);
@@ -767,18 +693,6 @@ private:
         return rate;
     }
 
-    FP adjusted_critical_per_severe(mio::AgeGroup group, Eigen::Ref<const Eigen::VectorX<FP>> pop) const
-    {
-        FP icu_occupancy = 0.0;
-        for (mio::AgeGroup source_group = 0; source_group < this->parameters.get_num_groups(); ++source_group) {
-            icu_occupancy += pop[this->populations.get_flat_index({source_group, SecirState::InfectedCritical})];
-        }
-        return mio::smoother_cosine<FP>(
-            icu_occupancy, 0.9 * this->parameters.template get<mio::osecir::ICUCapacity<FP>>(),
-            this->parameters.template get<mio::osecir::ICUCapacity<FP>>(),
-            this->parameters.template get<mio::osecir::CriticalPerSevere<FP>>()[group], 0.0);
-    }
-
     SecirTransitionValues<Parameterization> m_transition_values;
 };
 
@@ -814,24 +728,14 @@ public:
                 SecirTransitionKind::NoSymptomsToSymptoms, group, pop, y, t, dydt);
             add_transition<SecirState::InfectedNoSymptoms, SecirState::Recovered>(
                 SecirTransitionKind::NoSymptomsToRecovered, group, pop, y, t, dydt);
-            add_transition<SecirState::InfectedNoSymptomsConfirmed, SecirState::InfectedSymptomsConfirmed>(
-                SecirTransitionKind::ConfirmedNoSymptomsToConfirmedSymptoms, group, pop, y, t, dydt);
-            add_transition<SecirState::InfectedNoSymptomsConfirmed, SecirState::Recovered>(
-                SecirTransitionKind::ConfirmedNoSymptomsToRecovered, group, pop, y, t, dydt);
             add_transition<SecirState::InfectedSymptoms, SecirState::InfectedSevere>(
                 SecirTransitionKind::SymptomsToSevere, group, pop, y, t, dydt);
             add_transition<SecirState::InfectedSymptoms, SecirState::Recovered>(
                 SecirTransitionKind::SymptomsToRecovered, group, pop, y, t, dydt);
-            add_transition<SecirState::InfectedSymptomsConfirmed, SecirState::InfectedSevere>(
-                SecirTransitionKind::ConfirmedSymptomsToSevere, group, pop, y, t, dydt);
-            add_transition<SecirState::InfectedSymptomsConfirmed, SecirState::Recovered>(
-                SecirTransitionKind::ConfirmedSymptomsToRecovered, group, pop, y, t, dydt);
             add_transition<SecirState::InfectedSevere, SecirState::InfectedCritical>(
                 SecirTransitionKind::SevereToCritical, group, pop, y, t, dydt);
             add_transition<SecirState::InfectedSevere, SecirState::Recovered>(SecirTransitionKind::SevereToRecovered,
                                                                               group, pop, y, t, dydt);
-            add_transition<SecirState::InfectedSevere, SecirState::Dead>(SecirTransitionKind::SevereToDead, group, pop,
-                                                                         y, t, dydt);
             add_transition<SecirState::InfectedCritical, SecirState::Dead>(SecirTransitionKind::CriticalToDead, group,
                                                                            pop, y, t, dydt);
             add_transition<SecirState::InfectedCritical, SecirState::Recovered>(
@@ -932,185 +836,19 @@ std::vector<SecirTrackedTransition> select_secir_transitions(size_t num_age_grou
     return transitions;
 }
 
-FP recompute_secir_infection_rate(const mio::osecir::Model<FP>& model, mio::AgeGroup group,
-                                  Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y,
-                                  FP t)
-{
-    using IS                  = mio::osecir::InfectionState;
-    const auto& params        = model.parameters;
-    const auto num_age_groups = params.get_num_groups();
-
-    FP test_and_trace_required = 0.0;
-    for (mio::AgeGroup source_group = 0; source_group < num_age_groups; ++source_group) {
-        const auto infected_no_symptoms = model.populations.get_flat_index({source_group, IS::InfectedNoSymptoms});
-        test_and_trace_required +=
-            (1.0 - params.template get<mio::osecir::RecoveredPerInfectedNoSymptoms<FP>>()[source_group]) /
-            params.template get<mio::osecir::TimeInfectedNoSymptoms<FP>>()[source_group] * pop[infected_no_symptoms];
-    }
-
-    const auto susceptible = model.populations.get_flat_index({group, IS::Susceptible});
-    const FP seasonality   = 1.0 + params.template get<mio::osecir::Seasonality<FP>>() *
-                                     std::sin(std::numbers::pi_v<FP> *
-                                              ((params.template get<mio::osecir::StartDay<FP>>() + t) / 182.5 + 0.5));
-    const mio::ContactMatrixGroup<FP>& contact_matrix = params.template get<mio::osecir::ContactPatterns<FP>>();
-
-    FP infection_rate = 0.0;
-    for (mio::AgeGroup source_group = 0; source_group < num_age_groups; ++source_group) {
-        const auto source_susceptible = model.populations.get_flat_index({source_group, IS::Susceptible});
-        const auto source_exposed     = model.populations.get_flat_index({source_group, IS::Exposed});
-        const auto source_no_symptoms = model.populations.get_flat_index({source_group, IS::InfectedNoSymptoms});
-        const auto source_symptoms    = model.populations.get_flat_index({source_group, IS::InfectedSymptoms});
-        const auto source_severe      = model.populations.get_flat_index({source_group, IS::InfectedSevere});
-        const auto source_critical    = model.populations.get_flat_index({source_group, IS::InfectedCritical});
-        const auto source_recovered   = model.populations.get_flat_index({source_group, IS::Recovered});
-        const FP source_population    = pop[source_susceptible] + pop[source_exposed] + pop[source_no_symptoms] +
-                                     pop[source_symptoms] + pop[source_severe] + pop[source_critical] +
-                                     pop[source_recovered];
-        const FP inverse_population =
-            source_population < mio::Limits<FP>::zero_tolerance() ? FP(0.0) : FP(1.0 / source_population);
-        const FP symptomatic_risk = mio::smoother_cosine<FP>(
-            test_and_trace_required, params.template get<mio::osecir::TestAndTraceCapacity<FP>>(),
-            params.template get<mio::osecir::TestAndTraceCapacity<FP>>() *
-                params.template get<mio::osecir::TestAndTraceCapacityMaxRisk<FP>>(),
-            params.template get<mio::osecir::RiskOfInfectionFromSymptomatic<FP>>()[source_group],
-            params.template get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<FP>>()[source_group]);
-        const FP contact_rate = seasonality * contact_matrix.get_matrix_at(mio::SimulationTime<FP>(t))(
-                                                  static_cast<Eigen::Index>((size_t)group),
-                                                  static_cast<Eigen::Index>((size_t)source_group));
-        infection_rate += y[susceptible] * contact_rate * inverse_population *
-                          params.template get<mio::osecir::TransmissionProbabilityOnContact<FP>>()[group] *
-                          (params.template get<mio::osecir::RelativeTransmissionNoSymptoms<FP>>()[source_group] *
-                               pop[source_no_symptoms] +
-                           symptomatic_risk * pop[source_symptoms]);
-    }
-    return infection_rate;
-}
-
-FP recompute_secir_critical_per_severe(const mio::osecir::Model<FP>& model, mio::AgeGroup group,
-                                       Eigen::Ref<const Eigen::VectorX<FP>> pop)
-{
-    using IS           = mio::osecir::InfectionState;
-    const auto& params = model.parameters;
-    FP icu_occupancy   = 0.0;
-    for (mio::AgeGroup source_group = 0; source_group < params.get_num_groups(); ++source_group) {
-        icu_occupancy += pop[model.populations.get_flat_index({source_group, IS::InfectedCritical})];
-    }
-    return mio::smoother_cosine<FP>(icu_occupancy, 0.9 * params.template get<mio::osecir::ICUCapacity<FP>>(),
-                                    params.template get<mio::osecir::ICUCapacity<FP>>(),
-                                    params.template get<mio::osecir::CriticalPerSevere<FP>>()[group], 0.0);
-}
-
-FP recompute_secir_transition_rate(const mio::osecir::Model<FP>& model, const SecirTrackedTransition& transition,
+FP recompute_secir_transition_rate(const PaperSecirModel& model, const SecirTrackedTransition& transition,
                                    Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y,
                                    FP t)
 {
-    using IS           = mio::osecir::InfectionState;
-    const auto group   = transition.group;
-    const auto& params = model.parameters;
-
-    const auto state_value = [&](IS state) {
-        return y[model.populations.get_flat_index({group, state})];
-    };
-
-    switch (transition.kind) {
-    case SecirTransitionKind::Infection:
-        return recompute_secir_infection_rate(model, group, pop, y, t);
-    case SecirTransitionKind::ExposedToNoSymptoms:
-        return state_value(IS::Exposed) / params.template get<mio::osecir::TimeExposed<FP>>()[group];
-    case SecirTransitionKind::NoSymptomsToSymptoms:
-        return (1.0 - params.template get<mio::osecir::RecoveredPerInfectedNoSymptoms<FP>>()[group]) /
-               params.template get<mio::osecir::TimeInfectedNoSymptoms<FP>>()[group] *
-               state_value(IS::InfectedNoSymptoms);
-    case SecirTransitionKind::NoSymptomsToRecovered:
-        return params.template get<mio::osecir::RecoveredPerInfectedNoSymptoms<FP>>()[group] /
-               params.template get<mio::osecir::TimeInfectedNoSymptoms<FP>>()[group] *
-               state_value(IS::InfectedNoSymptoms);
-    case SecirTransitionKind::ConfirmedNoSymptomsToConfirmedSymptoms:
-        return (1.0 - params.template get<mio::osecir::RecoveredPerInfectedNoSymptoms<FP>>()[group]) /
-               params.template get<mio::osecir::TimeInfectedNoSymptoms<FP>>()[group] *
-               state_value(IS::InfectedNoSymptomsConfirmed);
-    case SecirTransitionKind::ConfirmedNoSymptomsToRecovered:
-        return params.template get<mio::osecir::RecoveredPerInfectedNoSymptoms<FP>>()[group] /
-               params.template get<mio::osecir::TimeInfectedNoSymptoms<FP>>()[group] *
-               state_value(IS::InfectedNoSymptomsConfirmed);
-    case SecirTransitionKind::SymptomsToSevere:
-        return params.template get<mio::osecir::SeverePerInfectedSymptoms<FP>>()[group] /
-               params.template get<mio::osecir::TimeInfectedSymptoms<FP>>()[group] * state_value(IS::InfectedSymptoms);
-    case SecirTransitionKind::SymptomsToRecovered:
-        return (1.0 - params.template get<mio::osecir::SeverePerInfectedSymptoms<FP>>()[group]) /
-               params.template get<mio::osecir::TimeInfectedSymptoms<FP>>()[group] * state_value(IS::InfectedSymptoms);
-    case SecirTransitionKind::ConfirmedSymptomsToSevere:
-        return params.template get<mio::osecir::SeverePerInfectedSymptoms<FP>>()[group] /
-               params.template get<mio::osecir::TimeInfectedSymptoms<FP>>()[group] *
-               state_value(IS::InfectedSymptomsConfirmed);
-    case SecirTransitionKind::ConfirmedSymptomsToRecovered:
-        return (1.0 - params.template get<mio::osecir::SeverePerInfectedSymptoms<FP>>()[group]) /
-               params.template get<mio::osecir::TimeInfectedSymptoms<FP>>()[group] *
-               state_value(IS::InfectedSymptomsConfirmed);
-    case SecirTransitionKind::SevereToCritical:
-        return recompute_secir_critical_per_severe(model, group, pop) /
-               params.template get<mio::osecir::TimeInfectedSevere<FP>>()[group] * state_value(IS::InfectedSevere);
-    case SecirTransitionKind::SevereToRecovered:
-        return (1.0 - params.template get<mio::osecir::CriticalPerSevere<FP>>()[group] -
-                params.template get<mio::osecir::DeathsPerSevere<FP>>()[group]) /
-               params.template get<mio::osecir::TimeInfectedSevere<FP>>()[group] * state_value(IS::InfectedSevere);
-    case SecirTransitionKind::SevereToDead: {
-        const FP adjusted_critical = recompute_secir_critical_per_severe(model, group, pop);
-        const FP adjusted_deaths = params.template get<mio::osecir::CriticalPerSevere<FP>>()[group] - adjusted_critical;
-        return (params.template get<mio::osecir::DeathsPerSevere<FP>>()[group] + adjusted_deaths) /
-               params.template get<mio::osecir::TimeInfectedSevere<FP>>()[group] * state_value(IS::InfectedSevere);
-    }
-    case SecirTransitionKind::CriticalToDead:
-        return params.template get<mio::osecir::DeathsPerCritical<FP>>()[group] /
-               params.template get<mio::osecir::TimeInfectedCritical<FP>>()[group] * state_value(IS::InfectedCritical);
-    case SecirTransitionKind::CriticalToRecovered:
-        return (1.0 - params.template get<mio::osecir::DeathsPerCritical<FP>>()[group]) /
-               params.template get<mio::osecir::TimeInfectedCritical<FP>>()[group] * state_value(IS::InfectedCritical);
-    }
-    throw std::runtime_error("Unhandled SECIR transition kind.");
+    return model.get_transition_rate(transition.kind, transition.group, pop, y, t);
 }
 
-size_t get_secir_transition_index(const mio::osecir::Model<FP>& model, const SecirTrackedTransition& transition)
+size_t get_secir_transition_index(const PaperSecirModel& model, const SecirTrackedTransition& transition)
 {
-    using IS = mio::osecir::InfectionState;
-    switch (transition.kind) {
-    case SecirTransitionKind::Infection:
-        return model.template get_flat_flow_index<IS::Susceptible, IS::Exposed>({transition.group});
-    case SecirTransitionKind::ExposedToNoSymptoms:
-        return model.template get_flat_flow_index<IS::Exposed, IS::InfectedNoSymptoms>({transition.group});
-    case SecirTransitionKind::NoSymptomsToSymptoms:
-        return model.template get_flat_flow_index<IS::InfectedNoSymptoms, IS::InfectedSymptoms>({transition.group});
-    case SecirTransitionKind::NoSymptomsToRecovered:
-        return model.template get_flat_flow_index<IS::InfectedNoSymptoms, IS::Recovered>({transition.group});
-    case SecirTransitionKind::ConfirmedNoSymptomsToConfirmedSymptoms:
-        return model.template get_flat_flow_index<IS::InfectedNoSymptomsConfirmed, IS::InfectedSymptomsConfirmed>(
-            {transition.group});
-    case SecirTransitionKind::ConfirmedNoSymptomsToRecovered:
-        return model.template get_flat_flow_index<IS::InfectedNoSymptomsConfirmed, IS::Recovered>({transition.group});
-    case SecirTransitionKind::SymptomsToSevere:
-        return model.template get_flat_flow_index<IS::InfectedSymptoms, IS::InfectedSevere>({transition.group});
-    case SecirTransitionKind::SymptomsToRecovered:
-        return model.template get_flat_flow_index<IS::InfectedSymptoms, IS::Recovered>({transition.group});
-    case SecirTransitionKind::ConfirmedSymptomsToSevere:
-        return model.template get_flat_flow_index<IS::InfectedSymptomsConfirmed, IS::InfectedSevere>(
-            {transition.group});
-    case SecirTransitionKind::ConfirmedSymptomsToRecovered:
-        return model.template get_flat_flow_index<IS::InfectedSymptomsConfirmed, IS::Recovered>({transition.group});
-    case SecirTransitionKind::SevereToCritical:
-        return model.template get_flat_flow_index<IS::InfectedSevere, IS::InfectedCritical>({transition.group});
-    case SecirTransitionKind::SevereToRecovered:
-        return model.template get_flat_flow_index<IS::InfectedSevere, IS::Recovered>({transition.group});
-    case SecirTransitionKind::SevereToDead:
-        return model.template get_flat_flow_index<IS::InfectedSevere, IS::Dead>({transition.group});
-    case SecirTransitionKind::CriticalToDead:
-        return model.template get_flat_flow_index<IS::InfectedCritical, IS::Dead>({transition.group});
-    case SecirTransitionKind::CriticalToRecovered:
-        return model.template get_flat_flow_index<IS::InfectedCritical, IS::Recovered>({transition.group});
-    }
-    throw std::runtime_error("Unhandled SECIR transition kind.");
+    return model.get_transition_index(transition.kind, transition.group);
 }
 
-void validate_recomputed_secir_rates(const mio::osecir::Model<FP>& model)
+void validate_recomputed_secir_rates(const PaperSecirModel& model)
 {
     const auto state = model.get_initial_values();
     const auto transitions =
@@ -1132,7 +870,7 @@ void validate_recomputed_secir_rates(const mio::osecir::Model<FP>& model)
 class RecomputedAuxiliarySecirModel
 {
 public:
-    RecomputedAuxiliarySecirModel(mio::osecir::Model<FP> model, std::vector<SecirTrackedTransition> tracked_transitions)
+    RecomputedAuxiliarySecirModel(PaperSecirModel model, std::vector<SecirTrackedTransition> tracked_transitions)
         : m_model(std::move(model))
         , m_tracked_transitions(std::move(tracked_transitions))
         , m_compartment_dim(static_cast<size_t>(m_model.get_initial_values().size()))
@@ -1172,7 +910,7 @@ public:
     }
 
 private:
-    mio::osecir::Model<FP> m_model;
+    PaperSecirModel m_model;
     std::vector<SecirTrackedTransition> m_tracked_transitions;
     size_t m_compartment_dim;
     Eigen::VectorX<FP> m_initial;
@@ -1248,7 +986,7 @@ DirectComparisonDiagnostics validate_seir_rate_reuse_comparison(const mio::oseir
 }
 
 DirectComparisonDiagnostics validate_secir_implementation_comparison(
-    const mio::osecir::Model<FP>& reference_model,
+    const PaperSecirModel& reference_model,
     const BenchmarkSecirFlowModel<SecirParameterization::Times>& time_model,
     const EquationWiseSecirModel<SecirParameterization::Times>& time_equation_wise_model,
     const BenchmarkSecirFlowModel<SecirParameterization::Rates>& rate_model,
@@ -1489,7 +1227,7 @@ void benchmark_reused_auxiliary_simulation(benchmark::State& state, int num_age_
 void benchmark_recomputed_auxiliary_secir_simulation(benchmark::State& state, int num_age_groups,
                                                      const std::string& selection_order, size_t tracked_transitions)
 {
-    auto base_model              = make_runtime_model<mio::osecir::Model<FP>>(num_age_groups);
+    auto base_model              = make_runtime_model<PaperSecirModel>(num_age_groups);
     const size_t compartment_dim = static_cast<size_t>(base_model.get_initial_values().size());
     const size_t flow_dim        = static_cast<size_t>(base_model.get_initial_flows().size());
     const size_t tracked_transition_pool =
@@ -1583,7 +1321,7 @@ void register_secir_implementation_parameterization(const std::string& parameter
 void register_secir_implementation_benchmarks()
 {
     for (int num_age_groups = 1; num_age_groups <= 6; ++num_age_groups) {
-        const auto source_model = make_runtime_model<mio::osecir::Model<FP>>(num_age_groups);
+        const auto source_model = make_runtime_model<PaperSecirModel>(num_age_groups);
         const BenchmarkSecirFlowModel<SecirParameterization::Times> time_model(source_model.populations,
                                                                                source_model.parameters);
         const BenchmarkSecirFlowModel<SecirParameterization::Rates> rate_model(source_model.populations,
@@ -1659,7 +1397,7 @@ void register_recomputed_auxiliary_secir_benchmarks()
 {
     const std::array<std::string, 3> selection_orders{"group_wise", "other_first", "infection_first"};
     for (const int num_age_groups : {1, 3, 6}) {
-        const auto model = make_runtime_model<mio::osecir::Model<FP>>(num_age_groups);
+        const auto model = make_runtime_model<PaperSecirModel>(num_age_groups);
         validate_recomputed_secir_rates(model);
         const size_t tracked_transition_pool =
             make_secir_transition_order(static_cast<size_t>(num_age_groups), "group_wise").size();
@@ -1699,17 +1437,17 @@ int main(int argc, char** argv)
 {
     mio::set_log_level(mio::LogLevel::critical);
     register_direct_benchmarks<mio::oseir::Model<FP>>("SEIR");
-    register_direct_benchmarks<mio::osecir::Model<FP>>("SECIR");
+    register_direct_benchmarks<PaperSecirModel>("SECIR");
     register_direct_benchmarks<mio::osecirts::Model<FP>>("SECIRTS");
     register_seir_rate_reuse_benchmarks();
     register_secir_implementation_benchmarks();
     register_reused_auxiliary_benchmarks<mio::oseir::Model<FP>>("SEIR");
-    register_reused_auxiliary_benchmarks<mio::osecir::Model<FP>>("SECIR");
+    register_reused_auxiliary_benchmarks<PaperSecirModel>("SECIR");
     register_reused_auxiliary_benchmarks<mio::osecirts::Model<FP>>("SECIRTS");
     register_recomputed_auxiliary_secir_benchmarks();
     if (std::getenv("FLOW_PAPER_CORE_DIAGNOSTIC") != nullptr) {
         register_primary_state_diagnostics<mio::oseir::Model<FP>>("SEIR");
-        register_primary_state_diagnostics<mio::osecir::Model<FP>>("SECIR");
+        register_primary_state_diagnostics<PaperSecirModel>("SECIR");
         register_primary_state_diagnostics<mio::osecirts::Model<FP>>("SECIRTS");
     }
 

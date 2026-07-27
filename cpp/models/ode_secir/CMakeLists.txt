@@ -8,6 +8,7 @@ add_library(ode_secir
     parameters_io.h
     parameters_io.cpp
     model.h
+    model_reduced.h
     model.cpp
 )
 target_link_libraries(ode_secir PUBLIC memilio)
