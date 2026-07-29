@@ -83,7 +83,9 @@ void SimulationMessinaExtended::advance_messina(ScalarType tmax)
     // Compute S' for t_0,..., t_{n0-1}.
     // We set S'(0) due to lack of knowledge of previous values of S.
     // The corresponding flow is then given by -S'.
-    m_model->flows.add_time_point(0., TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, 0.));
+    m_model->flows.add_time_point(0., TimeSeries<ScalarType>::Vector::Constant(
+                                          (size_t)InfectionTransition::Count,
+                                          m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Infected]));
 
     // Compute S'(t) for t_1,..., t_{n0-1} with backwards difference operator. The corresponding flow is then given by -S'.
     for (size_t i = 1; i < (size_t)m_model->populations.get_num_time_points(); i++) {

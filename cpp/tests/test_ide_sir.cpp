@@ -312,9 +312,10 @@ TEST(IdeSir, testFiniteDifferenceApproximation)
         std::vector<ScalarType> errors_max = {};
         std::vector<ScalarType> errors_l2  = {};
 
-        for (size_t dt_exponent : dt_exponents) {
+        for (ScalarType dt_exponent : dt_exponents) {
 
             ScalarType dt     = pow(10, -(ScalarType)dt_exponent);
+            ScalarType div_dt = pow(10, (ScalarType)dt_exponent);
             ScalarType t_init = 4 * dt;
 
             mio::TimeSeries<ScalarType> init_populations((size_t)mio::isir::InfectionState::Count);
@@ -343,7 +344,7 @@ TEST(IdeSir, testFiniteDifferenceApproximation)
             for (size_t i = std::ceil(t_init / dt); i < (size_t)std::ceil(tmax / dt); i++) {
                 model.flows.add_time_point(i * dt, mio::TimeSeries<ScalarType>::Vector::Constant(
                                                        (size_t)mio::isir::InfectionTransition::Count, 0.));
-                model.compute_S_deriv(dt, i);
+                model.compute_S_deriv(div_dt, i);
             }
 
             // Compute error in max norm.
@@ -374,7 +375,7 @@ TEST(IdeSir, testFiniteDifferenceApproximation)
             l2_error_per_step_size = std::pow(dt * l2_error_per_step_size, 1. / 2.);
             errors_l2.push_back(l2_error_per_step_size);
         }
-        std::cout << "FD Order: " << finite_difference_order << std::endl;
+        // std::cout << "FD Order: " << finite_difference_order << std::endl;
         for (size_t i = 0; i < errors_max.size(); i++) {
             // std::cout << "Max error: " << errors_max[i] << std::endl;
             // std::cout << "L2 error: " << errors_l2[i] << std::endl;
