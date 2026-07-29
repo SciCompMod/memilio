@@ -22,7 +22,6 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 STYLE = {
     "groundtruth": {"color": "C0",     "linestyle": ":",  "label": "Groundtruth"},
@@ -45,7 +44,7 @@ PANEL_HEIGHT = 4
 
 
 def get_t0_from_dir_name(dir_name):
-    t0_string = [x for x in dir_name.split("_") if "t0" in x]
+    t0_string = [x for x in dir_name.split("_") if "t0ide" in x  or "t0" in x]
     t0 = float(t0_string[0].split("=")[-1])
     return t0
 
@@ -54,10 +53,12 @@ def load_h5_total(filepath):
     """Load the single dataset's 'Total' array and 'Time' array from an h5 file."""
     with h5py.File(str(filepath) + ".h5", "r") as h5file:
         if len(list(h5file.keys())) > 1:
-            raise gd.DataError("File should contain one dataset.")
+            print("File should contain one dataset.")
+            return
         group_key = list(h5file.keys())[0]
         if len(list(h5file[group_key].keys())) > 3:
-            raise gd.DataError("Expected only one group.")
+            print("Expected only one group.")
+            return
         data = h5file[group_key]
         total = data["Total"][:, :]
         dates = data["Time"][:]
@@ -93,7 +94,7 @@ def _save(fig, save_dir, filename):
     plt.close(fig)
 
 
-def plot_susceptibles(files, fileending, save_dir=""):
+def plot_compartments(files, fileending, save_dir="", zoom = False):
     """
     Plots simulation results (S, I, R) comparing groundtruth/detailed/simple.
 
@@ -109,12 +110,15 @@ def plot_susceptibles(files, fileending, save_dir=""):
                             sharex="all", num="Compare files")
 
     plotted_keys = []
-    groundtruth_total = None
     plot_min = 1e7*np.ones(num_plots)
     plot_max = np.zeros(num_plots)
+    all_dates = []
+    all_totals = []
 
     for key, filepath in zip(FILE_KEYS, files):
         dates, total = load_h5_total(filepath)
+        all_dates.append(dates)
+        all_totals.append(total)
         if key == "groundtruth":
             # groundtruth_total = total
             continue
@@ -134,13 +138,35 @@ def plot_susceptibles(files, fileending, save_dir=""):
         axs[i].vlines(t0, plot_min[i], plot_max[i],
                       color=T0_COLOR, alpha=0.5)
 
+    if zoom:
+        zoom_min = t0 - 7
+        zoom_max = t0 + 7
+        for i in range(num_plots):
+            axs[i].set_xlim(zoom_min, zoom_max)
+            
+            # Calculate y-limits based on data within zoom range
+            zoom_plot_min = 1e7
+            zoom_plot_max = 0
+            for dates, total in zip(all_dates, all_totals):
+                mask = (dates >= zoom_min) & (dates <= zoom_max)
+                if np.any(mask):
+                    zoom_plot_min = min(zoom_plot_min, np.min(total[mask, i]))
+                    zoom_plot_max = max(zoom_plot_max, np.max(total[mask, i]))
+            
+            # Add some padding to the y-limits
+            y_padding = (zoom_plot_max - zoom_plot_min) * 0.1
+            axs[i].set_ylim(zoom_plot_min - y_padding, zoom_plot_max + y_padding)
+
     _add_shared_legend(fig, plotted_keys)
 
     fig.supxlabel("Simulation time [days]", y=0.04)
     fig.supylabel("Number of individuals", y=0.54)
     plt.tight_layout()
 
-    _save(fig, save_dir, f"compare_compartments_{fileending}.png")
+    if zoom:
+        _save(fig, save_dir, f"compare_compartments_{fileending}_zoom.png")
+    else:
+        _save(fig, save_dir, f"compare_compartments_{fileending}.png")
 
 
 def plot_flow_S_to_I(files, fileending, save_dir=""):
@@ -368,7 +394,7 @@ def subfolders_scandir(path):
 if __name__ == "__main__":
 
     root_dir = os.path.join(os.path.dirname(__file__), "../simulation_results")
-    main_dir = "2026-07-24/compare_different_inits_lognorm"
+    main_dir = "2026-07-29/compare_different_inits_lognorm"
 
     relevant_dir = os.path.join(root_dir, main_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
@@ -393,13 +419,17 @@ if __name__ == "__main__":
 
         base = f"dt=1e-{ide_exponent}_gregoryorder={gregory_order}"
 
-        plot_susceptibles(
-            [
-                # os.path.join(result_dir, f"groundtruth_{base}"),
-                os.path.join(result_dir, f"detailed_{base}"),
-                os.path.join(result_dir, f"detailed_short_{base}"),
-                os.path.join(result_dir, f"simple_{base}")],
+        plot_compartments(
+            [os.path.join(result_dir, f"detailed_{base}"),
+             os.path.join(result_dir, f"detailed_short_{base}"),
+             os.path.join(result_dir, f"simple_{base}")],
             fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir)
+
+        plot_compartments(
+                    [os.path.join(result_dir, f"detailed_{base}"),
+                     os.path.join(result_dir, f"detailed_short_{base}"),
+                     os.path.join(result_dir, f"simple_{base}")],
+                    fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir, zoom=True)
 
         # plot_flow_S_to_I(
         #     [os.path.join(result_dir, f"detailed_flows_{base}"),

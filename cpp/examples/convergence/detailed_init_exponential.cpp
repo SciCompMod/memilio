@@ -73,7 +73,7 @@ mio::TimeSeries<ScalarType> compress_timeseries(const mio::TimeSeries<ScalarType
 }
 
 mio::IOResult<std::vector<mio::TimeSeries<ScalarType>>> simulate_ode(ScalarType ode_exponent, ScalarType t0_ode,
-                                                                     ScalarType tmax, int TimeInfected,
+                                                                     ScalarType tmax, ScalarType TimeInfected,
                                                                      std::string save_dir       = "",
                                                                      ScalarType saving_exponent = 0.)
 {
