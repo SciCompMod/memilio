@@ -22,13 +22,14 @@
 #include "ide_sir/infection_state.h"
 #include "ide_sir/parameters.h"
 #include "ide_sir/simulation.h"
+#include "lct_sir/parameters.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/compartments/flow_simulation.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
-#include "ode_sir/model.h"
+#include "lct_sir/model.h"
 #include "memilio/config.h"
 #include "memilio/epidemiology/state_age_function.h"
 #include "memilio/utils/time_series.h"
@@ -39,15 +40,16 @@
 using namespace mio;
 namespace params
 {
-size_t num_agegroups = 1;
+constexpr size_t num_subcomps_infected = 6;
+size_t num_agegroups                   = 1;
 
 ScalarType TransmissionProbabilityOnContact = 0.8;
 ScalarType RiskOfInfectionFromSymptomatic   = 1.;
 ScalarType Seasonality                      = 0.;
 
-ScalarType TimeInfected = 2.;
+ScalarType TimeInfected = 4.;
 
-ScalarType cont_freq = 0.73;
+ScalarType cont_freq = 0.4;
 
 ScalarType total_population = 1e7;
 ScalarType I0               = 1000.;
@@ -55,48 +57,73 @@ ScalarType R0               = 0.;
 ScalarType S0               = total_population - I0 - R0;
 } // namespace params
 
-mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent, ScalarType t0_ode, ScalarType tmax,
+mio::IOResult<mio::TimeSeries<ScalarType>> simulate_lct(ScalarType ode_exponent, ScalarType t0_ode, ScalarType tmax,
                                                         std::string save_dir = "")
 {
     using namespace params;
 
-    ScalarType dt_ode = pow(10, -ode_exponent);
+    ScalarType dt_lct = pow(10, -ode_exponent);
 
-    mio::log_info("Simulating ODE-SIR; t={} ... {} with dt = {}.", t0_ode, tmax, dt_ode);
+    mio::log_info("Simulating ODE-SIR; t={} ... {} with dt = {}.", t0_ode, tmax, dt_lct);
 
-    mio::osir::Model<ScalarType> model(num_agegroups);
+    using InfState = mio::lsir::InfectionState;
+    using LctState = mio::LctInfectionState<ScalarType, InfState, 1, num_subcomps_infected, 1>;
+    using Model    = mio::lsir::Model<ScalarType, LctState>;
 
-    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Susceptible}] = S0;
-    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Infected}]    = I0;
-    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Recovered}]   = R0;
+    Model model;
 
-    model.parameters.set<mio::osir::TimeInfected<ScalarType>>(TimeInfected);
-    model.parameters.set<mio::osir::TransmissionProbabilityOnContact<ScalarType>>(TransmissionProbabilityOnContact);
+    // size_t num_compartments = model.populations.get_num_compartments();
+
+    // Define initial population distribution in infection states, one entry per subcompartment.
+    // Distribute I0 uniformly to the subcompartments.
+    std::vector<ScalarType> pop_infected = std::vector(num_subcomps_infected, I0 / num_subcomps_infected);
+    std::vector<std::vector<ScalarType>> initial_populations = {{S0}, pop_infected, {R0}};
+
+    // Transfer the initial values in initial_populations to the model.
+    std::vector<ScalarType> flat_initial_populations;
+    for (auto&& vec : initial_populations) {
+        flat_initial_populations.insert(flat_initial_populations.end(), vec.begin(), vec.end());
+    }
+    for (size_t i = 0; i < LctState::Count; i++) {
+        model.populations[i] = flat_initial_populations[i];
+    }
+
+    model.parameters.template get<mio::lsir::TimeInfected<ScalarType>>()[0] = TimeInfected;
+    model.parameters.template get<mio::lsir::TransmissionProbabilityOnContact<ScalarType>>()[0] =
+        TransmissionProbabilityOnContact;
+    model.parameters.template get<mio::lsir::RiskOfInfectionFromSymptomatic<ScalarType>>()[0] =
+        RiskOfInfectionFromSymptomatic;
 
     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup<ScalarType>(1, 1);
     contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, cont_freq));
-    model.parameters.get<mio::osir::ContactPatterns<ScalarType>>() = mio::UncertainContactMatrix(contact_matrix);
+    model.parameters.get<mio::lsir::ContactPatterns<ScalarType>>() = mio::UncertainContactMatrix(contact_matrix);
 
     model.check_constraints();
 
-    std::unique_ptr<mio::OdeIntegratorCore<ScalarType>> integrator =
-        std::make_unique<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_fehlberg78>>();
+    // std::unique_ptr<mio::OdeIntegratorCore<ScalarType>> integrator =
+    //     std::make_unique<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_fehlberg78>>();
 
-    auto sim = mio::FlowSimulation<ScalarType, mio::osir::Model<ScalarType>>(model, t0_ode, dt_ode);
-    sim.set_integrator_core(std::move(integrator));
-    sim.set_last_step_tolerance(1e-8);
+    auto result_subcompartments = mio::simulate<ScalarType>(
+        t0_ode, tmax, dt_lct, model,
+        std::make_unique<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_fehlberg78>>());
+    std::cout << "num subcomps total: " << result_subcompartments.get_num_elements() << std::endl;
+    // sim.set_integrator_core(std::move(integrator));
+    // sim.set_last_step_tolerance(1e-8);
 
-    sim.advance(tmax);
-    auto compartments = sim.get_result();
+    // sim.advance(tmax);
+    // auto compartments = sim.get_result();
 
-    std::cout << "Num tps ODE: " << compartments.get_num_time_points() << std::endl;
+    std::cout << "Num tps ODE: " << result_subcompartments.get_num_time_points() << std::endl;
+
+    auto result_compartments = model.calculate_compartments(result_subcompartments);
+    std::cout << "num comps: " << result_compartments.get_num_elements() << std::endl;
 
     if (!save_dir.empty()) {
         // Save compartments.
 
         // auto result = compartments.export_csv(fmt::format("{}/ode_result_compressed.csv", save_dir));
         auto save_result_status_ode =
-            mio::save_result({compartments}, {0}, num_agegroups,
+            mio::save_result({result_compartments}, {0}, num_agegroups,
                              save_dir + "groundtruth_dt=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
 
         if (!save_result_status_ode) {
@@ -105,7 +132,7 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent,
         }
     }
 
-    return mio::success(compartments);
+    return mio::success(result_compartments);
 }
 
 mio::IOResult<mio::TimeSeries<ScalarType>>
@@ -202,7 +229,7 @@ simulate_ide(ScalarType ide_exponent, size_t gregory_order, size_t finite_differ
     mio::isir::ModelMessinaExtendedDetailedInit model(std::move(init_populations), total_population, gregory_order,
                                                       finite_difference_order);
 
-    mio::ExponentialSurvivalFunction survival_func(1. / TimeInfected);
+    mio::GammaSurvivalFunction survival_func(num_subcomps_infected, 0., TimeInfected / num_subcomps_infected);
     std::cout << "mean: " << survival_func.get_mean(dt) << std::endl;
     mio::StateAgeFunctionWrapper dist(survival_func);
 
@@ -222,7 +249,7 @@ simulate_ide(ScalarType ide_exponent, size_t gregory_order, size_t finite_differ
     contact_matrix[0]                      = mio::ContactMatrix<ScalarType>(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     model.parameters.get<mio::isir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    std::cout << "support max: " << model.compute_calctime(dt, 1e-6) << std::endl;
+    std::cout << "support max: " << model.compute_calctime(dt, 1e-7) << std::endl;
 
     // Carry out simulation.
     mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt);
@@ -273,19 +300,20 @@ int main()
     ScalarType t0_ide = 50.;
 
     ScalarType t_init_simple         = t0_ide;
-    ScalarType t_init_detailed       = t0_ide - 40.;
-    ScalarType t_init_detailed_short = t0_ide - 10.;
+    ScalarType t_init_detailed       = t0_ide - 45.;
+    ScalarType t_init_detailed_short = t0_ide - 15.;
 
-    ScalarType tmax = 150.;
+    ScalarType tmax = 100.;
 
     size_t gregory_order           = 3;
     size_t finite_difference_order = 4;
 
     ScalarType dt_exponent = 2.; // Used for both ODE and IDE simulations
 
-    std::string save_dir = fmt::format("../../simulation_results/2026-07-29/compare_different_inits_exp/"
-                                       "nonconst_contacts_tinitgroundtruth={}_tinitdetailed={}_t0ide={}_tmax={}/",
-                                       t0_ode, t_init_detailed, t0_ide, tmax);
+    std::string save_dir =
+        fmt::format("../../simulation_results/2026-07-29/compare_different_inits_erlang_numsubcomps={}_contfreq={}/"
+                    "nonconst_contacts_tinitgroundtruth={}_tinitdetailed={}_t0ide={}_tmax={}/",
+                    num_subcomps_infected, cont_freq, t0_ode, t_init_detailed, t0_ide, tmax);
 
     // Make folder if not existent yet.
     std::filesystem::path dir(save_dir);
@@ -293,7 +321,7 @@ int main()
 
     // Do IDE simulations.
     std::cout << std::endl;
-    mio::IOResult<mio::TimeSeries<ScalarType>> result_groundtruth = simulate_ode(dt_exponent, t0_ode, tmax, save_dir);
+    mio::IOResult<mio::TimeSeries<ScalarType>> result_groundtruth = simulate_lct(dt_exponent, t0_ode, tmax, save_dir);
 
     mio::IOResult<mio::TimeSeries<ScalarType>> result_ide_detailed =
         simulate_ide(dt_exponent, gregory_order, finite_difference_order, t_init_detailed, t0_ide, tmax, save_dir,

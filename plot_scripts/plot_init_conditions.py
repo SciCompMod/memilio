@@ -24,13 +24,14 @@ import matplotlib.pyplot as plt
 
 
 STYLE = {
-    "groundtruth": {"color": "C0",     "linestyle": ":",  "label": "Groundtruth"},
-    "detailed":    {"color": "#88CCEE", "linestyle": "-",  "label": "Detailed long"},
-    "detailed_short":    {"color": "#117733", "linestyle": "--",  "label": "Detailed short"},
+    "groundtruth": {"color": "C0",     "linestyle": "-",  "label": "Groundtruth"},
+    "detailed":    {"color": "#88CCEE", "linestyle": "--",  "label": "Detailed long"},
+    "detailed_short":    {"color": "#117733", "linestyle": ":",  "label": "Detailed short"},
     "simple":      {"color": "#CC6677", "linestyle": ":", "label": "Simple"},
 }
 # order matches input file lists
-FILE_KEYS = ["detailed", "detailed_short", "simple"]
+FILE_KEYS = [ "detailed", "detailed_short", "simple"]
+FILE_KEYS_GROUNDTRUTH = ["groundtruth", "detailed", "detailed_short", "simple"]
 
 LINEWIDTH = 2
 SCATTERSIZE = 12
@@ -115,13 +116,13 @@ def plot_compartments(files, fileending, save_dir="", zoom = False):
     all_dates = []
     all_totals = []
 
-    for key, filepath in zip(FILE_KEYS, files):
+    for key, filepath in zip(FILE_KEYS_GROUNDTRUTH, files):
         dates, total = load_h5_total(filepath)
         all_dates.append(dates)
         all_totals.append(total)
-        if key == "groundtruth":
-            # groundtruth_total = total
-            continue
+        # if key == "groundtruth":
+        #     # groundtruth_total = total
+        #     continue
         plotted_keys.append(key)
         style = STYLE[key]
         for i in range(num_plots):
@@ -394,7 +395,7 @@ def subfolders_scandir(path):
 if __name__ == "__main__":
 
     root_dir = os.path.join(os.path.dirname(__file__), "../simulation_results")
-    main_dir = "2026-07-29/compare_different_inits_lognorm"
+    main_dir = "2026-07-29/compare_different_inits_erlang_numsubcomps=6_contfreq=0.4" #
 
     relevant_dir = os.path.join(root_dir, main_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
@@ -417,18 +418,20 @@ if __name__ == "__main__":
 
         # print(ide_exponent)
 
-        base = f"dt=1e-{ide_exponent}_gregoryorder={gregory_order}"
+        base = f"dt=1e-{ide_exponent}"
 
         plot_compartments(
-            [os.path.join(result_dir, f"detailed_{base}"),
-             os.path.join(result_dir, f"detailed_short_{base}"),
-             os.path.join(result_dir, f"simple_{base}")],
+            [os.path.join(result_dir, f"groundtruth_{base}"),
+             os.path.join(result_dir, f"detailed_{base}_gregoryorder={gregory_order}"),
+             os.path.join(result_dir, f"detailed_short_{base}_gregoryorder={gregory_order}"),
+             os.path.join(result_dir, f"simple_{base}_gregoryorder={gregory_order}")],
             fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir)
 
         plot_compartments(
-                    [os.path.join(result_dir, f"detailed_{base}"),
-                     os.path.join(result_dir, f"detailed_short_{base}"),
-                     os.path.join(result_dir, f"simple_{base}")],
+                    [os.path.join(result_dir, f"groundtruth_{base}"),
+                     os.path.join(result_dir, f"detailed_{base}_gregoryorder={gregory_order}"),
+                     os.path.join(result_dir, f"detailed_short_{base}_gregoryorder={gregory_order}"),
+                     os.path.join(result_dir, f"simple_{base}_gregoryorder={gregory_order}")],
                     fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir, zoom=True)
 
         # plot_flow_S_to_I(
@@ -446,13 +449,16 @@ if __name__ == "__main__":
         #     fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir)
 
         plot_init_conditions(
-            [os.path.join(result_dir, f"detailed_flows_{base}"),
-             os.path.join(result_dir, f"detailed_short_flows_{base}"),
-             os.path.join(result_dir, f"simple_flows_{base}")], [os.path.join(
-                 result_dir, f"detailed_infectionagedistribution_{base}"),
-                os.path.join(
-                 result_dir, f"detailed_short_infectionagedistribution_{base}"),
-                os.path.join(result_dir, f"simple_infectionagedistribution_{base}")],
+            [
+             os.path.join(result_dir, f"detailed_flows_{base}_gregoryorder={gregory_order}"),
+             os.path.join(result_dir, f"detailed_short_flows_{base}_gregoryorder={gregory_order}"),
+             os.path.join(result_dir, f"simple_flows_{base}_gregoryorder={gregory_order}")], 
+            [
+             os.path.join(
+                 result_dir, f"detailed_infectionagedistribution_{base}_gregoryorder={gregory_order}"),
+             os.path.join(
+                 result_dir, f"detailed_short_infectionagedistribution_{base}_gregoryorder={gregory_order}"),
+             os.path.join(result_dir, f"simple_infectionagedistribution_{base}_gregoryorder={gregory_order}")],
             fileending=f"dt=1e-{ide_exponent}",
             save_dir=plot_dir,
         )
