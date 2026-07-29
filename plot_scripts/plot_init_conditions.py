@@ -24,16 +24,15 @@ import matplotlib.pyplot as plt
 
 
 STYLE = {
-    "groundtruth": {"color": "C0",     "linestyle": "-",  "label": "Groundtruth"},
-    "detailed":    {"color": "#88CCEE", "linestyle": "--",  "label": "Detailed long"},
-    "detailed_short":    {"color": "#117733", "linestyle": ":",  "label": "Detailed short"},
-    "simple":      {"color": "#CC6677", "linestyle": ":", "label": "Simple"},
+    "groundtruth":    {"label": "Groundtruth",    "color": "#0072B2", "linestyle": "-",  "linewidth": 5., "alpha":0.3  },
+    "detailed":       {"label": "Detailed long",  "color": "#E69F00", "linestyle": "--", "linewidth": 2., "alpha":1.},
+    "detailed_short": {"label": "Detailed short", "color": "#009E73", "linestyle": "-.", "linewidth": 1.5, "alpha":1.},
+    "simple":         {"label": "Simple",         "color": "#D55E00", "linestyle": ":",  "linewidth": 2., "alpha":1.},
 }
 # order matches input file lists
 FILE_KEYS = [ "detailed", "detailed_short", "simple"]
 FILE_KEYS_GROUNDTRUTH = ["groundtruth", "detailed", "detailed_short", "simple"]
 
-LINEWIDTH = 2
 SCATTERSIZE = 12
 TITLE_FONTSIZE = 11
 T0_COLOR = "gray"
@@ -74,10 +73,10 @@ def _style_axis(ax, title):
 
 
 def _add_shared_legend(fig, used_keys, include_t0=True):
-    handles = [plt.Line2D([0], [0], color=STYLE[k]["color"],
-                          linestyle=STYLE[k]["linestyle"], linewidth=LINEWIDTH,
-                          label=STYLE[k]["label"])
-               for k in used_keys]
+
+    styles = [STYLE[k] for k in used_keys]
+    handles = [plt.Line2D([0], [0], **style)
+               for style in styles]
     if include_t0:
         handles.append(plt.Line2D(
             [0], [0], color=T0_COLOR, alpha=0.5, label=T0_LABEL))
@@ -131,8 +130,7 @@ def plot_compartments(files, fileending, save_dir="", zoom = False):
                 plot_min[i] = np.min(total[:, i])
             if np.max(total[:, i]) > plot_max[i]:
                 plot_max[i] = np.max(total[:, i])
-            axs[i].plot(dates, total[:, i], color=style["color"],
-                        linestyle=style["linestyle"], linewidth=LINEWIDTH)
+            axs[i].plot(dates, total[:, i], **style)
 
     t0 = get_t0_from_dir_name(files[0])
     for i in range(num_plots):
@@ -360,16 +358,15 @@ def plot_init_conditions(files_flows, files_infage_dist, fileending, save_dir=""
     axs[1].set_xlabel("Infection age [days]")
     fig.supylabel("Number of individuals", y=0.57)
 
+    styles = [STYLE[k] for k in plotted_keys]
+
     handles = [
         plt.Line2D(
             [0],
             [0],
-            color=STYLE[key]["color"],
-            linestyle="-",
-            linewidth=LINEWIDTH,
-            label=STYLE[key]["label"],
+            **style,
         )
-        for key in plotted_keys
+        for style in styles
     ]
 
     fig.legend(
@@ -395,7 +392,7 @@ def subfolders_scandir(path):
 if __name__ == "__main__":
 
     root_dir = os.path.join(os.path.dirname(__file__), "../simulation_results")
-    main_dir = "2026-07-29/compare_different_inits_erlang_numsubcomps=6_contfreq=0.4" #
+    main_dir = "2026-07-29/compare_different_inits_exp" 
 
     relevant_dir = os.path.join(root_dir, main_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
