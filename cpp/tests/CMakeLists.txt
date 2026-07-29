@@ -75,6 +75,7 @@ set(TESTSOURCES
     test_lct_secir.cpp
     test_lct_secir_2_diseases.cpp
     test_lct_initializer_flows.cpp
+    test_lct_sir.cpp
     test_glct_secir.cpp
     test_ad.cpp
     test_smm_model.cpp
