@@ -23,6 +23,7 @@
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include <boost/numeric/odeint/stepper/runge_kutta4.hpp>
+#include "memilio/utils/logging.h"
 #include <cmath>
 #include <functional>
 #include <filesystem>
@@ -34,12 +35,12 @@ using namespace mio;
 namespace params
 {
 ScalarType xleft  = 0.;
-ScalarType xright = 4.;
+ScalarType xright = 100.;
 
 ScalarType yleft  = 1.;
 ScalarType yright = 0.;
 
-size_t num_steps = (xright - xleft) * 1000 + 1;
+size_t num_steps = (xright - xleft) * 1000000 + 1;
 
 } // namespace params
 
@@ -50,7 +51,19 @@ ScalarType smoothercos(ScalarType normalized_time, ScalarType yleft, ScalarType 
 
 ScalarType smoothstep_c1(ScalarType normalized_time, ScalarType yleft, ScalarType yright)
 {
-    return yleft + (yright - yleft) * (3. * std::pow(normalized_time, 2) - 2. * std::pow(normalized_time, 3));
+    return yleft + (yright - yleft) * (3. * std::pow(normalized_time, 2.) - 2. * std::pow(normalized_time, 3.));
+}
+
+ScalarType smoothstep_c2(ScalarType normalized_time, ScalarType yleft, ScalarType yright)
+{
+    return yleft + (yright - yleft) * (10. * std::pow(normalized_time, 3.) - 15. * std::pow(normalized_time, 4) +
+                                       6. * std::pow(normalized_time, 5.));
+}
+
+ScalarType smoothstep_c3(ScalarType normalized_time, ScalarType yleft, ScalarType yright)
+{
+    return yleft + (yright - yleft) * (35. * std::pow(normalized_time, 4.) - 84. * std::pow(normalized_time, 5.) +
+                                       70. * std::pow(normalized_time, 6.) - 20. * std::pow(normalized_time, 7.));
 }
 
 ScalarType smoothstep_c4(ScalarType normalized_time, ScalarType yleft, ScalarType yright)
@@ -96,6 +109,8 @@ mio::IOResult<void> run_benchmarks(std::string result_dir, size_t num_runs, size
 
     std::vector<ScalarType> smoothercos_times(num_runs);
     std::vector<ScalarType> smoothstep_c1_times(num_runs);
+    std::vector<ScalarType> smoothstep_c2_times(num_runs);
+    std::vector<ScalarType> smoothstep_c3_times(num_runs);
     std::vector<ScalarType> smoothstep_c4_times(num_runs);
     std::vector<ScalarType> evaluation_times = linspace(xleft, xright, num_steps);
 
@@ -118,16 +133,23 @@ mio::IOResult<void> run_benchmarks(std::string result_dir, size_t num_runs, size
 
     benchmark(smoothercos, smoothercos_times);
     benchmark(smoothstep_c1, smoothstep_c1_times);
+    benchmark(smoothstep_c2, smoothstep_c2_times);
+    benchmark(smoothstep_c3, smoothstep_c3_times);
     benchmark(smoothstep_c4, smoothstep_c4_times);
 
-    mio::TimeSeries<ScalarType> timeseries(3);
+    mio::TimeSeries<ScalarType> timeseries(5);
     for (size_t i = 0; i < num_runs; ++i) {
-        Eigen::VectorXd values(3);
-        values << smoothercos_times[i], smoothstep_c1_times[i], smoothstep_c4_times[i];
+        Eigen::VectorXd values(5);
+        values << smoothercos_times[i], smoothstep_c1_times[i], smoothstep_c2_times[i], smoothstep_c3_times[i],
+            smoothstep_c4_times[i];
         timeseries.add_time_point(i, values);
     }
 
-    BOOST_OUTCOME_TRY(timeseries.export_csv(mio::path_join(result_dir, "smoother_times.csv")));
+    std::string filename = fmt::format("smoother_times_{}warmupruns_{}runs_t0={}_tmax={}_numsteps={}.csv",
+                                       num_warm_up_runs, num_runs, xleft, xright, num_steps);
+    BOOST_OUTCOME_TRY(
+        timeseries.export_csv(mio::path_join(result_dir, filename),
+                              {"smoothercos", "smoothstep_c1", "smoothstep_c2", "smoothstep_c3", "smoothstep_c4"}));
 
     return mio::success();
 }
@@ -139,7 +161,7 @@ int main(int argc, char** argv)
         mio::cli::ParameterSetBuilder()
             .add<"ResultDirectory">(mio::path_join(std::filesystem::current_path().string(), "results_runtime"))
             .add<"NumberRuns">(100, {.alias = "nRun"})
-            .add<"NumberWarmupRuns">(10, {.alias = "nWURun"})
+            .add<"NumberWarmupRuns">(20, {.alias = "nWURun"})
             .build();
 
     auto cli_result = mio::command_line_interface(argv[0], argc, argv, cli_parameters, {"ResultDirectory"});

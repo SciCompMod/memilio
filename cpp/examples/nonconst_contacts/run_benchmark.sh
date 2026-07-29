@@ -11,7 +11,7 @@
 
 # Run this script from build folder with downloaded data in repository
 num_runs=100
-num_warm_up_runs=10
+num_warm_up_runs=20
 
 # Load module
 module purge
