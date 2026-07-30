@@ -57,6 +57,12 @@
 
 #include <chrono>
 
+struct LogLocationInformation : mio::LogOnce {
+    using Type = std::vector<
+        std::tuple<mio::abm::LocationId, mio::abm::LocationType,
+                   mio::geo::GeographicalLocation, size_t, int>>;
+    // returns, for every location: id, type, geo-location, number of cells, capacity
+};
 
 int stringToMinutes(const std::string& input)
 {
@@ -152,15 +158,11 @@ mio::AgeGroup determine_age_group(uint32_t age)
     }
 }
 
-void initialize_model(mio::abm::Model& model, std::string person_file,
-    size_t max_work_size, size_t max_school_size){
-        // void initialize_model(mio::abm::Model& model, std::string person_file, std::string outfile){
-            // Mapping of ABM locations to traffic areas/cells
-            // - each traffic area is mapped to a vector containing strings with LocationType and LocationId
-    using mio::timing::AutoTimer;
-    using mio::timing::TimerRegistrar;
-    AutoTimer<"initialize_model"> timer_ms;
-
+void initialize_model(mio::abm::Model& model, std::string person_file, std::string hosp_file, 
+                      size_t max_work_size, size_t max_school_size)
+{
+    // Mapping of ABM locations to traffic areas/cells
+    // - each traffic area is mapped to a vector containing strings with LocationType and LocationId
     std::map<int, std::vector<std::string>> loc_area_mapping;
     // Mapping of traffic data location ids to ABM location ids
     std::map<int, mio::abm::LocationId> home_locations;
@@ -177,14 +179,62 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
     std::map<int, std::map<mio::abm::LocationId, size_t>> school_sizes;
     std::map<int, std::map<mio::abm::LocationId, size_t>> work_sizes;
 
+    // File pointer
+    std::fstream fin_hosp;
+    // Open an existing file
+    fin_hosp.open(hosp_file, std::ios::in);
+
+    if (!fin_hosp.is_open()) {
+        std::cerr << "Error: could not open file " << hosp_file << "\n";
+        return ;  // or handle error appropriately
+    }
+    else{std::cout << "file open\n";}
 
 
+    std::vector<int32_t> row_hosp;
+    std::vector<std::string> row_string_hosp;
+    std::string line_hosp;
+    // Read the Titles from the Data file
+    std::getline(fin_hosp, line_hosp);
+    line_hosp.erase(std::remove(line_hosp.begin(), line_hosp.end(), '\r'), line_hosp.end());
+    std::vector<std::string> titles_hosp;
+    boost::split(titles_hosp, line_hosp, boost::is_any_of(","));
+    uint32_t count_of_titles_hosp              = 0;
+    std::map<std::string, uint32_t> index_hosp = {};
+    for (auto const& title : titles_hosp) {
+        index_hosp.insert({title, count_of_titles_hosp});
+        row_string_hosp.push_back(title);
+        count_of_titles_hosp++;
+    }
+    while (std::getline(fin_hosp, line_hosp)) {
+        row_hosp.clear();
+
+        // read columns in this row
+        split_line(line_hosp, &row_hosp);
+        line_hosp.erase(std::remove(line_hosp.begin(), line_hosp.end(), '\r'), line_hosp.end());
+
+        int beds          = row_hosp[index_hosp["beds"]];
+        int icu_beds      = row_hosp[index_hosp["icu_beds"]];
+        auto hosp         = model.add_location(mio::abm::LocationType::Hospital);
+        hospitals.push_back(hosp);
+        hospital_weights.push_back(beds);
+        
+        // Add icu if there is one
+        if (icu_beds > 0) {
+            auto icu = model.add_location(mio::abm::LocationType::ICU);
+            icus.push_back(icu);
+            icu_weights.push_back(icu_beds);
+            hosp_to_icu.insert({std::make_pair(mio::abm::LocationType::Hospital, hosp), icu});
+        }
+    }
+
+    
     // File pointer
     std::fstream fin;
     // Open an existing file
     fin.open(person_file, std::ios::in);
-
-    if (!fin.is_open()) {
+    // Read in persons
+   if (!fin.is_open()) {
         std::cerr << "Error: could not open file " << person_file << "\n";
         return ;  // or handle error appropriately
     }
@@ -212,40 +262,7 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
 
         // read columns in this row
         split_line(line, &row);
-        // splitline(line, &row);
         line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-
-        int beds          = row[index["beds"]];
-        int icu_beds      = row[index["icu_beds"]];
-        int hospital_zone = row[index["hospital_zone"]];
-        auto hosp         = model.add_location(mio::abm::LocationType::Hospital);
-        hospitals.push_back(hosp);
-        hospital_weights.push_back(beds);
-        std::string loc =
-            "0" + std::to_string(static_cast<int>(mio::abm::LocationType::Hospital)) + std::to_string(hosp.get());
-        auto zone_iter = loc_area_mapping.find(hospital_zone);
-        if (zone_iter == loc_area_mapping.end()) {
-            loc_area_mapping.insert({hospital_zone, {loc}});
-        }
-        else {
-            loc_area_mapping[hospital_zone].push_back(loc);
-        }
-        // Add icu if there is one
-        if (icu_beds > 0) {
-            auto icu = model.add_location(mio::abm::LocationType::ICU);
-            icus.push_back(icu);
-            icu_weights.push_back(icu_beds);
-            hosp_to_icu.insert({std::make_pair(mio::abm::LocationType::Hospital, hosp), icu});
-            std::string loc_icu =
-                "0" + std::to_string(static_cast<int>(mio::abm::LocationType::ICU)) + std::to_string(icu.get());
-            zone_iter = loc_area_mapping.find(hospital_zone);
-            if (zone_iter == loc_area_mapping.end()) {
-                loc_area_mapping.insert({hospital_zone, {loc_icu}});
-            }
-            else {
-                loc_area_mapping[hospital_zone].push_back(loc_icu);
-            }
-        }
 
         uint32_t age = row[index["age"]];
 
@@ -259,9 +276,6 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
             // if home location does not exists yet, create new location and insert it to mapping
             home = model.add_location(mio::abm::LocationType::Home);
             home_locations.insert({home_id, home});
-            std::string loc_home =
-                "0" + std::to_string(static_cast<int>(mio::abm::LocationType::Home)) + std::to_string(home.get());
-
         }
         else {
             home = home_locations[home_id];
@@ -270,6 +284,7 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
         auto pid     = model.add_person(home, determine_age_group(age));
         auto& person = model.get_person(pid);
         person.set_assigned_location(mio::abm::LocationType::Home, home,model.get_id());
+        // model.get_location(home).increase_size();
 
         int shop_id   = row[index["shop_id"]];
 
@@ -284,8 +299,6 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
             if (shop_id != -1) {
                 shop_locations.insert({shop_id, shop});
             }
-            std::string loc_shop =
-                "0" + std::to_string(static_cast<int>(mio::abm::LocationType::BasicsShop)) + std::to_string(shop.get());
         }
         else {
             shop = shop_locations[shop_id];
@@ -295,7 +308,6 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
         // model.get_location(shop).increase_size();
 
         int event_id   = row[index["event_id"]];
-
         mio::abm::LocationId event;
 
         auto iter_event = event_locations.find(event_id);
@@ -307,8 +319,6 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
             if (event_id != -1) {
                 event_locations.insert({event_id, event});
             }
-            std::string loc_event = "0" + std::to_string(static_cast<int>(mio::abm::LocationType::SocialEvent)) +
-                              std::to_string(event.get());
         }
         else {
             event = event_locations[event_id];
@@ -318,7 +328,7 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
         // model.get_location(event).increase_size();
 
         // Check if person is school-aged
-        if (person.get_age() == mio::AgeGroup(1) || person.get_age() == mio::AgeGroup(2) || person.get_age() == mio::AgeGroup(3)) {
+        if (person.get_age() == mio::AgeGroup(1)) {
             int school_id   = row[index["school_id"]];
 
             mio::abm::LocationId school;
@@ -334,8 +344,6 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
                     // Add school to size map
                     school_sizes[school_id].insert({school, 1});
                 }
-                std::string loc_school = "0" + std::to_string(static_cast<int>(mio::abm::LocationType::School)) +
-                                  std::to_string(school.get());
             }
             else {
                 school = school_locations[school_id];
@@ -356,8 +364,6 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
                         school_locations.insert({school_id, school});
                         // Add school to size map
                         school_sizes[school_id].insert({school, 1});
-                        std::string loc_school = "0" + std::to_string(static_cast<int>(mio::abm::LocationType::School)) +
-                                          std::to_string(school.get());
                     }
                 }
                 else {
@@ -369,7 +375,7 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
             // model.get_location(school).increase_size();
         }
         // Check if person is work-aged
-        if (person.get_age() == mio::AgeGroup(4) || person.get_age() == mio::AgeGroup(5) || person.get_age() == mio::AgeGroup(6) || person.get_age() == mio::AgeGroup(7)) {
+        if (person.get_age() == mio::AgeGroup(2) || person.get_age() == mio::AgeGroup(3)) {
             int work_id   = row[index["work_id"]];
 
             mio::abm::LocationId work;
@@ -385,8 +391,6 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
                     // Add work to size map
                     work_sizes[work_id].insert({work, 1});
                 }
-                std::string loc_id =
-                    "0" + std::to_string(static_cast<int>(mio::abm::LocationType::Work)) + std::to_string(work.get());
             }
             else {
                 work = work_locations[work_id];
@@ -407,8 +411,6 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
                         work_locations.insert({work_id, work});
                         // Add work to size map
                         work_sizes[work_id].insert({work, 1});
-                        std::string loc_work = "0" + std::to_string(static_cast<int>(mio::abm::LocationType::Work)) +
-                                          std::to_string(work.get());
                     }
                 }
                 else {
@@ -420,14 +422,14 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
             // model.get_location(work).increase_size();
         }
         // Assign Hospital and ICU
-        size_t hosp_int = mio::DiscreteDistribution<size_t>::get_instance()(model.get_rng(), hospital_weights);
-        person.set_assigned_location(mio::abm::LocationType::Hospital, hospitals[hosp_int],model.get_id());
-        // model.get_location(hospitals[hosp_int]).increase_size();
-        if (hosp_to_icu.count(std::make_pair(mio::abm::LocationType::Hospital, hospitals[hosp_int])) > 0) {
+        size_t hosp = mio::DiscreteDistribution<size_t>::get_instance()(model.get_rng(), hospital_weights);
+        person.set_assigned_location(mio::abm::LocationType::Hospital, hospitals[hosp],model.get_id());
+        // model.get_location(hospitals[hosp]).increase_size();
+        if (hosp_to_icu.count(std::make_pair(mio::abm::LocationType::Hospital, hospitals[hosp])) > 0) {
             person.set_assigned_location(
                 mio::abm::LocationType::ICU,
-                hosp_to_icu[std::make_pair(mio::abm::LocationType::Hospital, hospitals[hosp_int])],model.get_id());
-            // model.get_location(hosp_to_icu[std::make_pair(mio::abm::LocationType::Hospital, hospitals[hosp_int])])
+                hosp_to_icu[std::make_pair(mio::abm::LocationType::Hospital, hospitals[hosp])],model.get_id());
+            // model.get_location(hosp_to_icu[std::make_pair(mio::abm::LocationType::Hospital, hospitals[hosp])])
             //     .increase_size();
         }
         else {
@@ -435,10 +437,40 @@ void initialize_model(mio::abm::Model& model, std::string person_file,
             person.set_assigned_location(mio::abm::LocationType::ICU, icus[icu],model.get_id());
             // model.get_location(icus[icu]).increase_size();
         }
-
-        // write_mapping_to_file(outfile, loc_area_mapping);
     }
 }
+
+std::string convert_loc_id_to_string(std::tuple<mio::abm::LocationType, uint32_t> tuple_id)
+{
+    return std::to_string(static_cast<std::uint32_t>(std::get<0>(tuple_id))) + "_" +
+           std::to_string(std::get<1>(tuple_id));
+}
+
+template <typename T>
+void write_log_to_file(const T& history)
+{
+    auto logg = history.get_log();
+    // Write the results to a file.
+    auto loc_id      = std::get<1>(logg);
+    auto time_points = std::get<0>(logg);
+    std::string input;
+    std::ofstream myfile(mio::create_directories_or_exit(mio::example_results_dir("abm_history_object")) /
+                         "test_output.txt");
+    myfile << "Locations as numbers:\n";
+    for (auto&& id : loc_id[0]) {
+        myfile << convert_loc_id_to_string(id) << "\n";
+    }
+    myfile << "Timepoints:\n";
+
+    for (auto&& t : time_points) {
+        input += std::to_string(t) + " ";
+    }
+    myfile << input << "\n";
+
+    myfile.close();
+}
+
+
 int main()
 {
     // ---------------------------------------
@@ -461,12 +493,14 @@ int main()
     size_t num_age_groups            = 11;
     auto model  = mio::abm::Model(num_age_groups);
 
+    std::string path_hosp = "/localdata2/wulf_ka/memilio/cpp/examples/df_hosp.csv";
 
-    // std::string path = "/home/wulf_ka/home/abm/memilio/cpp/examples/df_abm_short.csv";
-    std::string path = "/home/wulf_ka/home/abm/memilio/cpp/examples/df_abm_is_my_code_even_running.csv";
+    // std::string path = "/localdata2/wulf_ka/memilio/cpp/examples/df_abm.csv";
+    std::string path = "/localdata2/wulf_ka/memilio/cpp/examples/df_abm_short.csv";
+    // std::string path = "/home/wulf_ka/home/abm/memilio/cpp/examples/df_abm_is_my_code_even_running.csv";
     std::string out  = "/home/wulf_ka/home/abm/memilio/cpp/examples/out";
     
-    initialize_model(model, path, 50,50);
+    initialize_model(model, path, path_hosp, 50,50);
 
     // -------------------------------------
     // ------------ Model Param ------------
@@ -524,11 +558,35 @@ int main()
     mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
         Eigen::Index(mio::abm::InfectionState::Count)};
 
+    struct LogTimePoint : mio::LogAlways {
+        using Type = ScalarType;
+        static Type log(const mio::abm::Simulation<>& sim)
+        {
+            return sim.get_time().hours();
+        }
+    };
+    struct LogLocationIds : mio::LogOnce {
+        using Type = std::vector<std::tuple<mio::abm::LocationType, uint32_t>>;
+        static Type log(const mio::abm::Simulation<>& sim)
+        {
+            Type location_ids{};
+            for (auto& location : sim.get_model().get_locations()) {
+                location_ids.push_back(std::make_tuple(location.get_type(), location.get_id().get()));
+            }
+            return location_ids;
+        }
+    };
+
+    mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds> history;
+
+
     // Run the simulation until tmax with the history object.
     {
     AutoTimer<"advance"> adv_timer_ms;
     sim.advance(tmax, historyTimeSeries);
     }
+    write_log_to_file(history);
+
     // Write results to a file. Also print the filepath to make it easier to find
     auto outpath = mio::create_directories_or_exit(mio::example_results_dir("abm_minimal")) / "history.txt";
     std::ofstream outfile(outpath);
