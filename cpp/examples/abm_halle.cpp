@@ -328,7 +328,7 @@ void initialize_model(mio::abm::Model& model, std::string person_file, std::stri
         // model.get_location(event).increase_size();
 
         // Check if person is school-aged
-        if (person.get_age() == mio::AgeGroup(1)) {
+        if (person.get_age() == mio::AgeGroup(4) || person.get_age() == mio::AgeGroup(5) || person.get_age() == mio::AgeGroup(6) || person.get_age() == mio::AgeGroup(7)) {
             int school_id   = row[index["school_id"]];
 
             mio::abm::LocationId school;
@@ -495,12 +495,12 @@ int main()
 
     std::string path_hosp = "/localdata2/wulf_ka/memilio/cpp/examples/df_hosp.csv";
 
-    // std::string path = "/localdata2/wulf_ka/memilio/cpp/examples/df_abm.csv";
-    std::string path = "/localdata2/wulf_ka/memilio/cpp/examples/df_abm_short.csv";
+    std::string path = "/localdata2/wulf_ka/memilio/cpp/examples/df_abm.csv";
+    // std::string path = "/localdata2/wulf_ka/memilio/cpp/examples/df_abm_short.csv";
     // std::string path = "/home/wulf_ka/home/abm/memilio/cpp/examples/df_abm_is_my_code_even_running.csv";
     std::string out  = "/home/wulf_ka/home/abm/memilio/cpp/examples/out";
     
-    initialize_model(model, path, path_hosp, 50,50);
+    initialize_model(model, path, path_hosp, 500000,500000);
 
     // -------------------------------------
     // ------------ Model Param ------------
@@ -558,6 +558,10 @@ int main()
     mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
         Eigen::Index(mio::abm::InfectionState::Count)};
 
+
+    // -------------------------------------------------
+    // ------------ Location History Object ------------
+    // -------------------------------------------------
     struct LogTimePoint : mio::LogAlways {
         using Type = ScalarType;
         static Type log(const mio::abm::Simulation<>& sim)
@@ -576,17 +580,21 @@ int main()
             return location_ids;
         }
     };
-
+    
     mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds> history;
 
-
+    std::cout << "1" << std::endl;  
     // Run the simulation until tmax with the history object.
     {
     AutoTimer<"advance"> adv_timer_ms;
-    sim.advance(tmax, historyTimeSeries);
+    sim.advance(tmax, history);
     }
-    write_log_to_file(history);
 
+    write_log_to_file(history);
+    
+    std::cout << "2" << std::endl;  
+
+    
     // Write results to a file. Also print the filepath to make it easier to find
     auto outpath = mio::create_directories_or_exit(mio::example_results_dir("abm_minimal")) / "history.txt";
     std::ofstream outfile(outpath);
