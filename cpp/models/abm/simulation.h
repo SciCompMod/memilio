@@ -46,8 +46,6 @@ public:
     Simulation(TimePoint t0, Model&& model)
         : m_model(std::move(model))
         , m_t(t0)
-        // Before the first time step is evolved there is no previous time. m_t_prev is set to m_t so that loggers can
-        // detect this case via get_prev_time() >= get_time() and skip transition-based counting.
         , m_t_prev(t0)
         , m_dt(hours(1))
     {
