@@ -18,6 +18,7 @@
 # limitations under the License.
 #############################################################################
 
+import os
 import unittest
 from unittest.mock import patch, MagicMock
 import numpy as np
@@ -30,16 +31,36 @@ class TestPlotAbmInfectionStates(unittest.TestCase):
 
     @patch('memilio.plot.plotAbmInfectionStates.h5py.File')
     def test_load_h5_results(self, mock_h5file):
+        # load_h5_results checks that the results file exists before opening it, so os.path.exists has to be
+        # patched as well. Only the flat layout (Results_p50.h5) is reported as existing here.
         mock_group = {'Time': np.arange(10), 'Total': np.ones((10, 8))}
         mock_h5file().__enter__().get.return_value = {'0': mock_group}
         mock_h5file().__enter__().items.return_value = [('0', mock_group)]
         mock_h5file().__enter__().__getitem__.return_value = mock_group
-        with patch('memilio.plot.plotAbmInfectionStates.h5py.File', mock_h5file):
+        with patch('memilio.plot.plotAbmInfectionStates.os.path.exists',
+                   side_effect=lambda p: p.endswith('Results_p50.h5')):
             result = abm.load_h5_results('dummy_path', 'p50')
             assert 'Time' in result
             assert 'Total' in result
             np.testing.assert_array_equal(result['Time'], np.arange(10))
             np.testing.assert_array_equal(result['Total'], np.ones((10, 8)))
+
+    @patch('memilio.plot.plotAbmInfectionStates.h5py.File')
+    def test_load_h5_results_nested_layout(self, mock_h5file):
+        # The nested layout (p50/Results.h5) is supported as a fallback.
+        mock_group = {'Time': np.arange(10), 'Total': np.ones((10, 8))}
+        mock_h5file().__enter__().items.return_value = [('0', mock_group)]
+        mock_h5file().__enter__().__getitem__.return_value = mock_group
+        with patch('memilio.plot.plotAbmInfectionStates.os.path.exists',
+                   side_effect=lambda p: p.endswith(os.path.join('p50', 'Results.h5'))):
+            result = abm.load_h5_results('dummy_path', 'p50')
+            np.testing.assert_array_equal(result['Time'], np.arange(10))
+
+    def test_load_h5_results_missing_file(self):
+        # Neither layout exists, so a FileNotFoundError explaining both is raised.
+        with patch('memilio.plot.plotAbmInfectionStates.os.path.exists', return_value=False):
+            with self.assertRaises(FileNotFoundError):
+                abm.load_h5_results('dummy_path', 'p50')
 
     @patch('memilio.plot.plotAbmInfectionStates.load_h5_results')
     @patch('memilio.plot.plotAbmInfectionStates.matplotlib')
@@ -71,19 +92,17 @@ class TestPlotAbmInfectionStates(unittest.TestCase):
             assert mock_ax.set_xticks.called
             assert mock_ax.set_xticklabels.called
 
-            # Test figure settings
-            self.assertEqual(mock_figure.call_count, 2,
-                             "figure should be called twice")
-            # Verify first call is with the figure name
-            mock_figure.assert_any_call('Infection_location_types')
-            # Verify second call is without arguments (for autofmt_xdate)
-            mock_figure.assert_any_call()
+            # Test figure settings. The figure is created once, with its name. Showing the figure is left to the
+            # caller, so plot_infections_loc_types_average must not call plt.show itself.
+            self.assertEqual(mock_figure.call_count, 1,
+                             "figure should be called once")
+            mock_figure.assert_called_once_with('Infection_location_types')
             mock_title.assert_called_once_with(
                 'Number of new infections per location type for the median run, rolling sum over 24 hours')
             mock_legend.assert_called_once()
             mock_xlabel.assert_called_once_with('Date')
             mock_ylabel.assert_called_once_with('Number of individuals')
-            mock_show.assert_called_once()
+            mock_show.assert_not_called()
 
             # Verify legend was called with location type labels
             legend_call_args = mock_legend.call_args

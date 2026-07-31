@@ -46,7 +46,9 @@ public:
     Simulation(TimePoint t0, Model&& model)
         : m_model(std::move(model))
         , m_t(t0)
-        , m_t_prev(t0-hours(1))
+        // Before the first time step is evolved there is no previous time. m_t_prev is set to m_t so that loggers can
+        // detect this case via get_prev_time() >= get_time() and skip transition-based counting.
+        , m_t_prev(t0)
         , m_dt(hours(1))
     {
     }
@@ -87,13 +89,13 @@ public:
     }
 
     /**
-     * @brief Get the previous time of the Simulation.
+     * @brief Get the time of the Simulation before the last evolve step.
+     * Equal to get_time() as long as no time step has been evolved yet.
      */
     TimePoint get_prev_time() const
     {
         return m_t_prev;
     }
-
 
     /**
      * @brief Get the Model that this Simulation evolves.
@@ -115,12 +117,11 @@ private:
         m_model.evolve(m_t, dt);
         m_t_prev = m_t;
         m_t += m_dt;
-
     }
 
     Model m_model; ///< The Model to simulate.
     TimePoint m_t; ///< The current TimePoint of the Simulation.
-    TimePoint m_t_prev; ///< The previous  TimePoint of the Simulation.
+    TimePoint m_t_prev; ///< The TimePoint of the Simulation before the last evolve step.
     TimeSpan m_dt; ///< The length of the time steps.
 };
 

@@ -49,29 +49,27 @@ public:
     }
 
     /**
-     * @brief Return the simulation result aggregated by infection states.
+     * @brief Return the simulation result aggregated by #InfectionState.
      */
-    mio::TimeSeries<double> get_result() const
+    const mio::TimeSeries<double>& get_result() const
     {
         return std::get<0>(history.get_log());
     }
 
-      /**
-     * @brief Return the detailed simulation result aggregated by infection states.
+    /**
+     * @brief Return the detailed simulation result, i.e. the new #Infection%s aggregated by LocationType and AgeGroup.
      */
-    mio::TimeSeries<double> get_result_detailed() const
+    const mio::TimeSeries<double>& get_result_detailed() const
     {
         return std::get<0>(history_detailed.get_log());
     }
 
-
     mio::History<TimeSeriesWriter, LogInfectionState> history{
-        Eigen::Index(InfectionState::Count)}; 
+        Eigen::Index(InfectionState::Count)}; ///< History used to create the result TimeSeries.
 
     mio::History<TimeSeriesWriter, LogInfectionPerLocationTypePerAgeGroup> history_detailed{
-        Eigen::Index(LocationType::Count) * this->get_model().parameters.get_num_groups()};
-
-    
+        Eigen::Index(LocationType::Count) *
+        this->get_model().parameters.get_num_groups()}; ///< History used to create the detailed result TimeSeries.
 };
 
 } // namespace abm

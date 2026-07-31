@@ -35,8 +35,8 @@ from scipy.ndimage import gaussian_filter1d
 # location types from simulation results of the agent-based model (ABM) stored in HDF5 format.
 
 # The used Loggers are:
-# LogInfectionStatePerAgeGroup 
-# LogInfectionPerLocationTypePerAgeGroup 
+# LogInfectionState
+# LogInfectionPerLocationTypePerAgeGroup
 # The output of the loggers of several runs is stored in HDF5 files using mio::save_results in mio/io/result_io.h, see abm_history_object.cpp.
 
 # Adjust these as needed.
@@ -127,7 +127,7 @@ def plot_infections_loc_types_average(
         xtick_step=150):
     """ Plots rolling sum of new infections per 24 hours location type for the median run.
 
-    @param[in] base_path Path to results directory.
+    @param[in] path_to_loc_types Path to results directory.
     @param[in] start_date Start date as string.
     @param[in] colormap Matplotlib colormap.
     @param[in] smooth_sigma Sigma for Gaussian smoothing.
@@ -291,7 +291,7 @@ def plot_infection_states_by_age_group(
     # Dynamically detect available age groups from the data
     available_groups = [key for key in p50_bs.keys() if key.startswith('Group') or key == 'Total']
     # Sort to ensure Group1, Group2, ..., Total order
-    available_groups = sorted(available_groups, key=lambda x: (x != 'Total', x))
+    available_groups = sorted(available_groups, key=lambda x: (x == 'Total', x))
     
     color_plot = matplotlib.colormaps.get_cmap(colormap).colors
     n_states = len(state_labels)
@@ -375,8 +375,8 @@ def main():
                         default='Set1', help="Matplotlib colormap")
     parser.add_argument("--xtick-step", type=int,
                         default=150, help="Step for x-axis ticks (usually hours)")
-    parser.add_argument("--90percentile", action="store_true",
-                        help="If set, plot 90% percentile as well")
+    parser.add_argument("--show-90percentile", action="store_true",
+                        help="If set, plot 90%% percentile as well")
     args = parser.parse_args()
 
     if not args.path_to_infection_states and not args.path_to_loc_types:
@@ -389,7 +389,7 @@ def main():
             start_date=args.start_date,
             colormap=args.colormap,
             xtick_step=args.xtick_step,
-            show90=True
+            show90=args.show_90percentile
         )
     
     if args.path_to_loc_types:
