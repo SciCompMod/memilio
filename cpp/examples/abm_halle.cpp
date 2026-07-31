@@ -48,6 +48,18 @@
 
 #include <chrono>
 
+#include "abm/parameters.h"
+#include "abm/virus_variant.h"
+#include "abm/infection_state.h"
+#include "memilio/io/result_io.h"
+#include "memilio/utils/uncertain_value.h"
+#include "memilio/io/history.h"
+ 
+#include <cmath>
+#include <sstream>
+#include <stdexcept>
+#include <unordered_map>
+
 // struct LogLocationInformation : mio::LogOnce {
 //     using Type = std::vector<
 //         std::tuple<mio::abm::LocationId, mio::abm::LocationType,
@@ -132,6 +144,186 @@ void split_line(std::string string, std::vector<int32_t>* row)
     });
 }
 
+std::string get_person_age_string(const mio::AgeGroup& age)
+{
+    if (age == mio::AgeGroup(0)) {
+        return "Age0to4";
+    }
+    else if (age == mio::AgeGroup(1) || age == mio::AgeGroup(2)) {
+        return "Age5to14";
+    }
+    else if (age == mio::AgeGroup(3) || age == mio::AgeGroup(4) || age == mio::AgeGroup(5)) {
+        return "Age15to34";
+    }
+    else if (age == mio::AgeGroup(6)) {
+        return "Age35to59";
+    }
+    else if (age == mio::AgeGroup(7) || age == mio::AgeGroup(8) || age == mio::AgeGroup(9)) {
+        return "Age60to79";
+    }
+    else if (age == mio::AgeGroup(10)) {
+        return "Age80plus";
+    }
+    else {
+        std::cerr << "Error: Age group cannot be found." << std::endl;
+        return " ";
+    }
+}
+
+/**
+ * Returns parameters for LogNormalDistribution given desired expected value and standard deviation.
+ * @param[in] mean desired expected value
+ * @param[in] std desired standard deviation
+ * @return pair with parameters for LogNormalDistribution
+ */
+std::pair<double, double> get_my_and_sigma(double mean, double std)
+{
+    double my    = log(mean * mean / sqrt(mean * mean + std * std));
+    double sigma = sqrt(log(1 + std * std / (mean * mean)));
+    return {my, sigma};
+}
+
+// ---------------------------------------------------------------------------
+// Stand-in for the Python "parameters" DataFrame. Replace this with whatever
+// your actual C++ parameter-table type/accessor looks like — the important
+// part is that ParameterMap::at(key) exposes .value and .dev, matching
+// parameters.loc[key].value / .dev in the Python version.
+// ---------------------------------------------------------------------------
+struct ParamEntry {
+    double value;
+    double dev;
+};
+using ParameterMap = std::unordered_map<std::string, ParamEntry>;
+ 
+/**
+ * Set infection parameters
+ * @param[in, out] infection_params infection parameters
+ * @param[in] parameters CSV-loaded table of {mean, std} per parameter key
+ * @param[in] num_age_groups number of age groups (0-10 => 11, per get_person_age_string)
+ */
+void set_infection_parameters(mio::abm::Parameters& infection_params, const ParameterMap& parameters,
+                               size_t num_age_groups)
+{
+    auto val = [&](const std::string& key) {
+        return parameters.at(key).value;
+    };
+    auto dev = [&](const std::string& key) {
+        return parameters.at(key).dev;
+    };
+ 
+    infection_params.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] = 0.1;
+    
+    // infection_params.get<mio::abm::ViralShedFactor>()[{mio::abm::VirusVariant::Wildtype}].params() = {val("alpha"), val("beta")};
+    
+    // set parameters for every age group
+    for (size_t i = 0; i < num_age_groups; ++i) {
+        const mio::AgeGroup a = mio::AgeGroup(i);
+        const std::string p   = get_person_age_string(a);
+        
+        if (p.empty()) {
+            // get_person_age_string already logged the error; skip this group.
+            continue;
+        }
+        
+    // gibt es incubation period überhaupt noch?
+    // auto TimeExposedToNoSymptoms =
+        infection_params.get<mio::abm::TimeExposedToNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, a}] = 
+            mio::ParameterDistributionLogNormal(val(p + "_IncubationPeriod"),dev(p + "_IncubationPeriod"));
+
+        
+    // auto TimeInfectedNoSymptomsToSymptoms =
+        infection_params.get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, a}] = 
+            mio::ParameterDistributionLogNormal(val(p + "_InfectedNoSymptomsToSymptoms"),dev(p + "_InfectedNoSymptomsToSymptoms"));
+
+
+    // auto TimeInfectedNoSymptomsToRecovered =
+        infection_params.get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, a}] = 
+            mio::ParameterDistributionLogNormal(val(p + "_InfectedNoSymptomsToRecovered"),dev(p + "_InfectedNoSymptomsToRecovered"));
+
+
+    // auto TimeInfectedSymptomsToRecovered =
+        infection_params.get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, a}] = 
+            mio::ParameterDistributionLogNormal(val(p + "_InfectedSymptomsToRecovered"),dev(p + "_InfectedSymptomsToRecovered"));
+            
+
+    // auto TimeInfectedSymptomsToSevere =        
+        infection_params.get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, a}] = 
+            mio::ParameterDistributionLogNormal(val(p + "_InfectedSymptomsToSevere"),dev(p + "_InfectedSymptomsToSevere"));            
+            
+    // auto TimeInfectedSevereToRecovered =
+        infection_params.get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, a}] = 
+            mio::ParameterDistributionLogNormal(val(p + "_SevereToRecovered"),dev(p + "_SevereToRecovered"));
+
+    // auto TimeInfectedSevereToCritical =
+        infection_params.get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, a}] = 
+            mio::ParameterDistributionLogNormal(val(p + "_SevereToCritical"),dev(p + "_SevereToCritical"));
+
+
+    // auto TimeInfectedCriticalToRecovered =
+        infection_params.get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, a}] = 
+            mio::ParameterDistributionLogNormal(val(p + "_CriticalToRecovered"),dev(p + "_CriticalToRecovered"));
+
+
+    // auto TimeInfectedCriticalToDead =
+        infection_params.get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, a}] = 
+            mio::ParameterDistributionLogNormal(val(p + "_CriticalToDead"),dev(p + "_CriticalToDead"));
+
+
+        infection_params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, a}] =
+            val(p + "_SymptomsPerInfectedNoSymptoms");
+        infection_params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, a}] =
+            val(p + "_SeverePerInfectedSymptoms");
+        infection_params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, a}] =
+            val(p + "_CriticalPerInfectedSevere");
+        infection_params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, a}] =
+            val(p + "_DeathsPerInfectedCritical");
+        infection_params.get<mio::abm::ViralLoadDistributions>()[{mio::abm::VirusVariant::Wildtype, a}] = {
+            mio::ParameterDistributionLogNormal(val("peak_max"),0),
+            mio::ParameterDistributionLogNormal(val("incline"),0),
+            mio::ParameterDistributionLogNormal(val("decline"),0)
+            };
+        infection_params.get<mio::abm::ViralShedParameters>()[{mio::abm::VirusVariant::Wildtype, a}] = 
+            mio::abm::ViralShedTuple(val("alpha"),val("beta"));
+        }
+
+ 
+}
+ 
+// ---------------------------------------------------------------------------
+// Reads a CSV file with header "parameter,value,dev" into a ParameterMap.
+// Each row becomes one entry: parameters["Age0to4_IncubationPeriod"] =
+// {value, dev}, matching the keys set_infection_parameters looks up.
+// ---------------------------------------------------------------------------
+ParameterMap load_parameter_map(const std::string& csv_path)
+{
+    std::ifstream file(csv_path);
+    if (!file.is_open()) {
+        throw std::runtime_error("Could not open parameter file: " + csv_path);
+    }
+ 
+    ParameterMap parameters;
+    std::string line;
+ 
+    // Skip header row ("parameter,value,dev")
+    std::getline(file, line);
+ 
+    while (std::getline(file, line)) {
+        if (line.empty()) {
+            continue;
+        }
+ 
+        std::stringstream ss(line);
+        std::string name, value_str, dev_str;
+ 
+        std::getline(ss, name, ',');
+        std::getline(ss, value_str, ',');
+        std::getline(ss, dev_str, ',');
+ 
+        parameters[name] = ParamEntry{std::stod(value_str), std::stod(dev_str)};
+    }
+ 
+    return parameters;
+}
 
 mio::AgeGroup determine_age_group(uint32_t age)
 {
@@ -170,6 +362,8 @@ mio::AgeGroup determine_age_group(uint32_t age)
     }
 }
 
+
+
 void initialize_model(mio::abm::Model& model, std::string person_file, std::string hosp_file, 
                       size_t max_work_size, size_t max_school_size)
 {
@@ -200,7 +394,7 @@ void initialize_model(mio::abm::Model& model, std::string person_file, std::stri
         std::cerr << "Error: could not open file " << hosp_file << "\n";
         return ;  // or handle error appropriately
     }
-    else{std::cout << "file open\n";}
+    else{std::cout << "Reading in hospitals\n";}
 
 
     std::vector<int32_t> row_hosp;
@@ -250,7 +444,7 @@ void initialize_model(mio::abm::Model& model, std::string person_file, std::stri
         std::cerr << "Error: could not open file " << person_file << "\n";
         return ;  // or handle error appropriately
     }
-    else{std::cout << "file open\n";}
+    else{std::cout << "Reading in people\n";}
 
     std::vector<int32_t> row;
     std::vector<std::string> row_string;
@@ -471,28 +665,38 @@ int main()
     // ------------------------------------
 
     mio::set_log_level(mio::LogLevel::warn);
-    size_t num_age_groups            = 11;
+    size_t num_age_groups = 11;
     auto model  = mio::abm::Model(num_age_groups);
 
     std::string path_hosp = "/localdata2/wulf_ka/memilio/cpp/examples/df_hosp.csv";
 
-    std::string path = "/localdata2/wulf_ka/memilio/cpp/examples/df_abm.csv";
-    // std::string path = "/localdata2/wulf_ka/memilio/cpp/examples/df_abm_short.csv";
+    // std::string path = "/localdata2/wulf_ka/memilio/cpp/examples/df_abm.csv";
+    std::string path = "/localdata2/wulf_ka/memilio/cpp/examples/df_abm_short.csv";
     // std::string path = "/home/wulf_ka/home/abm/memilio/cpp/examples/df_abm_is_my_code_even_running.csv";
-    
-    initialize_model(model, path, path_hosp, 50,45);
 
+    size_t max_work_size = 40;
+    size_t max_school_size = 45;
+    
+    {
+    // init -> innit -> isnt it -> it is, is it not
+    AutoTimer<"it_is,_is_it_not?"> init_timer;
+    initialize_model(model, path, path_hosp, max_work_size, max_school_size);
+    }
     // -------------------------------------
     // ------------ Model Param ------------
     // -------------------------------------
 
-    // Set same infection parameter for all age groups. For example, the incubation period is log normally distributed with parameters 4 and 1.
-    model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() = mio::ParameterDistributionLogNormal(4., 1.);
-    model.parameters.check_constraints();
+    {   
+    AutoTimer<"Setting parameters"> setting_parameter_timer;
+    std::cout << "Setting parameters\n";
+    // // Set same infection parameter for all age groups. For example, the incubation period is log normally distributed with parameters 4 and 1.
+    // model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() = mio::ParameterDistributionLogNormal(4., 1.);
+    // model.parameters.check_constraints();
 
     // Increase aerosol transmission for all locations
-    model.parameters.get<mio::abm::AerosolTransmissionRates>() = 5.0;
+    // model.parameters.get<mio::abm::AerosolTransmissionRates>() = 5.0;
 
+    // Noch aus dem minimal ABM Beispiel
     // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 10.
     auto validity_period       = mio::abm::days(1);
     auto probability           = 0.5;
@@ -518,9 +722,19 @@ int main()
         }
     }
 
+    // Parameter aus dem München model
+
+    ParameterMap parameters = load_parameter_map("/localdata2/wulf_ka/memilio/cpp/examples/infection_param.csv");
+    
+    mio::abm::Parameters infection_params(num_age_groups);
+    set_infection_parameters(infection_params, parameters, num_age_groups);
+    }
+
     // -------------------------------------------------
     // ------------ Location History Object ------------
     // -------------------------------------------------
+    std::cout << "Creating history objects\n";
+
     struct LogTimePoint : mio::LogAlways {
         using Type = ScalarType;
         static Type log(const mio::abm::Simulation<>& sim)
@@ -549,7 +763,7 @@ int main()
     // -----------------------------------
     // ------------ Run Model ------------
     // -----------------------------------
-
+    std::cout << "Running simulation\n";
     // Set start and end time for the simulation.
     auto t0   = mio::abm::TimePoint(0);
     auto tmax = t0 + mio::abm::days(10);
@@ -565,7 +779,7 @@ int main()
     // -------------------------------------------
     // ------------ write log to file ------------
     // -------------------------------------------
-
+    std::cout << "Writing to log files\n";
 
     // history sammelt die Locations die im ABM genutzt werden
     write_log_to_file(history);
