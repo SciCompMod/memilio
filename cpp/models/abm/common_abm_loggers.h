@@ -21,7 +21,7 @@
 #ifndef ABM_COMMON_LOGGERS_H
 #define ABM_COMMON_LOGGERS_H
 
-#include "abm/infection_state.h"
+#include "abm/symptom_state.h"
 #include "abm/person_id.h"
 #include "abm/simulation.h"
 #include "memilio/io/history.h"
@@ -48,7 +48,7 @@ struct mobility_data {
     mio::abm::TimePoint end_time;
     mio::abm::TransportMode transport_mode;
     mio::abm::ActivityType activity_type;
-    mio::abm::InfectionState infection_state;
+    mio::abm::SymptomState symptom_state;
 };
 
 constexpr mio::abm::ActivityType guess_activity_type(mio::abm::LocationType current_location)
@@ -138,7 +138,7 @@ struct LogPersonInformation : mio::LogOnce {
  */
 struct LogDataForMobility : mio::LogAlways {
     using Type = std::vector<std::tuple<mio::abm::PersonId, mio::abm::LocationId, mio::abm::TimePoint,
-                                        mio::abm::TransportMode, mio::abm::ActivityType, mio::abm::InfectionState>>;
+                                        mio::abm::TransportMode, mio::abm::ActivityType, mio::abm::SymptomState>>;
     /** 
      * @brief Log the mobility data of the agents in the simulation.
      * @param[in] sim The simulation of the ABM.
@@ -148,7 +148,7 @@ struct LogDataForMobility : mio::LogAlways {
      * -# The time point.
      * -# The transport mode.
      * -# The activity type.
-     * -# The infection state.
+     * -# The symptom state.
      */
     static Type log(const mio::abm::Simulation<>& sim)
     {
@@ -156,33 +156,32 @@ struct LogDataForMobility : mio::LogAlways {
         for (Person p : sim.get_model().get_persons()) {
             mobility_data.push_back(
                 std::make_tuple(p.get_id(), p.get_location(), sim.get_time(), p.get_last_transport_mode(),
-                                guess_activity_type(p.get_location_type()), p.get_infection_state(sim.get_time())));
+                                guess_activity_type(p.get_location_type()), p.get_symptom_state(sim.get_time())));
         }
         return mobility_data;
     }
 };
 
 /**
-* @brief Logger to log the TimeSeries of the number of Person%s in an #InfectionState.
+* @brief Logger to log the TimeSeries of the number of Person%s in an #SymptomState.
 */
-struct LogInfectionState : mio::LogAlways {
+struct LogSymptomState : mio::LogAlways {
     using Type = std::pair<mio::abm::TimePoint, Eigen::VectorX<ScalarType>>;
     /** 
-     * @brief Log the TimeSeries of the number of Person%s in an #InfectionState.
+     * @brief Log the TimeSeries of the number of Person%s in an #SymptomState.
      * @param[in] sim The simulation of the abm.
-     * @return A pair of the TimePoint and the TimeSeries of the number of Person%s in an #InfectionState.
+     * @return A pair of the TimePoint and the TimeSeries of the number of Person%s in an #SymptomState.
      */
     static Type log(const mio::abm::Simulation<>& sim)
     {
 
-        Eigen::VectorX<ScalarType> sum =
-            Eigen::VectorX<ScalarType>::Zero(Eigen::Index(mio::abm::InfectionState::Count));
-        auto curr_time = sim.get_time();
+        Eigen::VectorX<ScalarType> sum = Eigen::VectorX<ScalarType>::Zero(Eigen::Index(mio::abm::SymptomState::Count));
+        auto curr_time                 = sim.get_time();
         PRAGMA_OMP(for)
         for (auto& location : sim.get_model().get_locations()) {
-            for (uint32_t inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
-                sum[inf_state] += sim.get_model().get_subpopulation(location.get_id(), curr_time,
-                                                                    mio::abm::InfectionState(inf_state));
+            for (uint32_t inf_state = 0; inf_state < (int)mio::abm::SymptomState::Count; inf_state++) {
+                sum[inf_state] +=
+                    sim.get_model().get_subpopulation(location.get_id(), curr_time, mio::abm::SymptomState(inf_state));
             }
         }
         return std::make_pair(curr_time, sum);

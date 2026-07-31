@@ -140,7 +140,7 @@ LocationType go_to_hospital(PersonalRandomNumberGenerator& /*rng*/, const Person
                             TimeSpan /*dt*/, const Parameters& /*params*/)
 {
     auto current_loc = person.get_location_type();
-    if (person.get_infection_state(t) == InfectionState::InfectedSevere) {
+    if (person.get_symptom_state(t) == SymptomState::Severe) {
         return LocationType::Hospital;
     }
     return current_loc;
@@ -150,7 +150,7 @@ LocationType go_to_icu(PersonalRandomNumberGenerator& /*rng*/, const Person& per
                        const Parameters& /*params*/)
 {
     auto current_loc = person.get_location_type();
-    if (person.get_infection_state(t) == InfectionState::InfectedCritical) {
+    if (person.get_symptom_state(t) == SymptomState::Critical) {
         return LocationType::ICU;
     }
     return current_loc;
@@ -161,7 +161,7 @@ LocationType return_home_when_recovered(PersonalRandomNumberGenerator& /*rng*/, 
 {
     auto current_loc = person.get_location_type();
     if ((current_loc == LocationType::Hospital || current_loc == LocationType::ICU) &&
-        person.get_infection_state(t) == InfectionState::Recovered) {
+        person.get_symptom_state(t) == SymptomState::None) {
         return LocationType::Home;
     }
     return current_loc;
@@ -171,7 +171,7 @@ LocationType get_buried(PersonalRandomNumberGenerator& /*rng*/, const Person& pe
                         TimeSpan /*dt*/, const Parameters& /*params*/)
 {
     auto current_loc = person.get_location_type();
-    if (person.get_infection_state(t) == InfectionState::Dead) {
+    if (person.get_symptom_state(t) == SymptomState::Dead) {
         return LocationType::Cemetery;
     }
     return current_loc;

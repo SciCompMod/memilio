@@ -72,8 +72,8 @@ mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list
         //some % of people are infected, large enough to have some infection activity without everyone dying
         auto pct_infected = 0.05;
         if (mio::UniformDistribution<ScalarType>::get_instance()(prng, 0.0, 1.0) < pct_infected) {
-            auto state = mio::abm::InfectionState(
-                mio::UniformIntDistribution<int>::get_instance()(prng, 1, int(mio::abm::InfectionState::Count) - 1));
+            auto state = mio::abm::SymptomState(
+                mio::UniformIntDistribution<int>::get_instance()(prng, 1, int(mio::abm::SymptomState::Count) - 1));
             auto infection = mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                  model.parameters, mio::abm::TimePoint(0), state);
             person.add_new_infection(std::move(infection));
@@ -107,7 +107,7 @@ mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list
     });
     auto random_criteria = [&]() {
         auto random_ages   = sample(ages, 2);
-        auto random_states = std::vector<mio::abm::InfectionState>(0);
+        auto random_states = std::vector<mio::abm::SymptomState>(0);
         return mio::abm::TestingCriteria(random_ages, random_states);
     };
 

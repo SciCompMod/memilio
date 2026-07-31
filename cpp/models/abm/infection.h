@@ -23,7 +23,7 @@
 #include "abm/personal_rng.h"
 #include "memilio/io/default_serialize.h"
 #include "abm/time.h"
-#include "abm/infection_state.h"
+#include "abm/symptom_state.h"
 #include "abm/virus_variant.h"
 #include "abm/parameters.h"
 
@@ -35,11 +35,11 @@ namespace abm
 {
 
 /**
- * @brief Represents a transition period between two infection states.
+ * @brief Represents a transition period between two symptom states.
  */
 struct StateTransition {
-    InfectionState from_state;
-    InfectionState to_state;
+    SymptomState from_state;
+    SymptomState to_state;
     TimeSpan duration; // Duration that the infection stays in from_state before transitioning to to_state.
 };
 
@@ -68,11 +68,11 @@ struct ViralLoad {
 };
 
 /**
- * @brief Distributions of the relative time that people have been in their initial infection state at the beginning of the simulation.
+ * @brief Distributions of the relative time that people have been in their initial symptom state at the beginning of the simulation.
  * Values have to be within [0, 1].
  * This makes it possible to draw from a user-defined distribution instead of drawing from a uniform distribution.
  */
-using InitialInfectionStateDistribution = CustomIndexArray<AbstractParameterDistribution, VirusVariant, AgeGroup>;
+using InitialSymptomStateDistribution = CustomIndexArray<AbstractParameterDistribution, VirusVariant, AgeGroup>;
 
 class Infection
 {
@@ -85,13 +85,15 @@ public:
      * @param[in] age AgeGroup to determine the ViralLoad course.
      * @param[in] params Parameters of the Model.
      * @param[in] init_date Date of initializing the Infection.
-     * @param[in] init_state [Default: InfectionState::Exposed] #InfectionState at time of initializing the Infection.
-     * @param[in] latest_protection [Default: {ProtectionType::NoProtection, TimePoint(0)}] The pair value of last ProtectionType (previous Infection/Vaccination) and TimePoint of that protection.
-     * @param[in] detected [Default: false] If the Infection is detected.     
+     * @param[in] init_state [Default: SymptomState::Exposed] #SymptomState at time of initializing the Infection.
+    * @param[in] detected [Default: false] If the Infection is detected.  
+    * @param[in] recovered [Default: false] If the Person is already recovered at the time of initializing the Infection. Only works if the Person has start_state = SymptomState::None.
+    *  @param[in] latest_protection [Default: {ProtectionType::NoProtection, TimePoint(0)}] The pair value of last ProtectionType (previous Infection/Vaccination) and TimePoint of that protection.
+       
      */
     Infection(PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age, const Parameters& params,
-              TimePoint start_date, InfectionState start_state = InfectionState::Exposed,
-              ProtectionEvent latest_protection = {ProtectionType::NoProtection, TimePoint(0)}, bool detected = false);
+              TimePoint start_date, SymptomState start_state = SymptomState::None, bool recovered = false,
+              bool detected = false, ProtectionEvent latest_protection = {ProtectionType::NoProtection, TimePoint(0)});
 
     /**
      * @brief Create an Infection for a single Person with a time spent in the given initial state that is drawn from the given distribution.
@@ -100,14 +102,14 @@ public:
      * @param[in] age AgeGroup to determine the ViralLoad course.
      * @param[in] params Parameters of the Model.
      * @param[in] init_date Date of initializing the Infection.
-     * @param[in] init_state #InfectionState at time of initializing the Infection.
+     * @param[in] init_state #SymptomState at time of initializing the Infection.
      * @param[in] init_state_dist Distribution to draw the relative time spent in the initial state from. Values have to be within [0, 1].
-     * @param[in] latest_protection The pair value of last ProtectionType (previous Infection/Vaccination) and TimePoint of that protection.
      * @param[in] detected If the Infection is detected.
+     * @param[in] latest_protection The pair value of last ProtectionType (previous Infection/Vaccination) and TimePoint of that protection.
      */
     Infection(PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age, const Parameters& params,
-              TimePoint init_date, InfectionState init_state, const InitialInfectionStateDistribution& init_state_dist,
-              ProtectionEvent latest_protection = {ProtectionType::NoProtection, TimePoint(0)}, bool detected = false);
+              TimePoint init_date, SymptomState init_state, const InitialSymptomStateDistribution& init_state_dist,
+              bool detected = false, ProtectionEvent latest_protection = {ProtectionType::NoProtection, TimePoint(0)});
 
     /**
      * @brief Gets the ViralLoad of the Infection at a given TimePoint.
@@ -138,11 +140,11 @@ public:
     VirusVariant get_virus_variant() const;
 
     /**
-     * @brief Get the #InfectionState of the Infection.
+     * @brief Get the #SymptomState of the Infection.
      * @param[in] t TimePoint of the querry.
-     * @return #InfectionState at the given TimePoint.
+     * @return #SymptomState at the given TimePoint.
      */
-    InfectionState get_infection_state(TimePoint t) const;
+    SymptomState get_symptom_state(TimePoint t) const;
 
     /**
      * @brief Set the Infection to detected.
@@ -159,11 +161,18 @@ public:
     */
     TimePoint get_start_date() const;
 
+    /**
+     * @brief If the Person has recovered from the Infection at a given TimePoint.
+     * @param[in] t TimePoint of the querry.
+     * @return True if the Person has recovered, false otherwise.
+     */
+    bool is_recovered(TimePoint t) const;
+
     /// This method is used by the default serialization feature.
     auto default_serialize()
     {
         return Members("Infection")
-            .add("infection_course", m_infection_course)
+            .add("symptom_course", m_symptom_course)
             .add("virus_variant", m_virus_variant)
             .add("viral_load", m_viral_load)
             .add("log_norm_alpha", m_log_norm_alpha)
@@ -177,39 +186,41 @@ private:
     Infection() = default;
 
     /**
-     * @brief Determine Infection course subsequent to the given #InfectionState start_state.
-     * From the start_state, a random path through the #InfectionState tree is chosen, that is
+     * @brief Determine Infection course subsequent to the given #SymptomState start_state.
+     * From the start_state, a random path through the #SymptomState tree is chosen, that is
      * Susceptible -> InfectedNoSymptoms,
      * InfectedNoSymptoms -> InfectedSymptoms or InfectedNoSymptoms -> Recovered,
      * InfectedSymptoms -> Infected_Severe or InfectedSymptoms -> Recovered,
      * InfectedSevere -> InfectedCritical or InfectedSevere -> Recovered or InfectedSevere -> Dead,
      * InfectedCritical -> Recovered or InfectedCritical -> Dead,
      * until either Recoverd or Dead is reached.
-     * The duration in each #InfectionState is taken from the respective parameter.
+     * The duration in each #SymptomState is taken from the respective parameter.
      * @param[inout] rng PersonalRandomNumberGenerator of the Person.
      * @param[in] age AgeGroup of the Person.
      * @param[in] params Parameters of the Model.
      * @param[in] init_date Date of initializing the Infection.
-     * @param[in] init_state #InfectionState at time of initializing the Infection.
+     * @param[in] init_state #SymptomState at time of initializing the Infection.
+     * @param[in] recovered If the Person is already recovered at the time of initializing the Infection. Only works if the Person has start_state = SymptomState::None.
      * @param[in] latest_protection Latest protection against Infection, has an influence on transition probabilities.
      */
-    void draw_infection_course_forward(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
-                                       TimePoint init_date, InfectionState init_state,
-                                       ProtectionEvent latest_protection);
+    void draw_symptom_course_forward(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
+                                     TimePoint init_date, SymptomState init_state, bool recovered,
+                                     ProtectionEvent latest_protection);
 
     /**
-     * @brief Determine Infection course prior to the given #InfectionState start_state.
-     * From the start_state, a random path through the #InfectionState tree is chosen backwards, until Susceptible is reached.
-     * For more detailed information, refer to draw_infection_course_forward.
+     * @brief Determine Infection course prior to the given #SymptomState start_state.
+     * From the start_state, a random path through the #SymptomState tree is chosen backwards, until Susceptible is reached.
+     * For more detailed information, refer to draw_symptom_course_forward.
      * @param[inout] rng PersonalRandomNumberGenerator of the Person.
      * @param[in] age AgeGroup of the person.
      * @param[in] params Parameters of the Model.
      * @param[in] init_date Date of initializing the Infection.
-     * @param[in] init_state InfectionState at time of initializing the Infection.
+     * @param[in] init_state #SymptomState at time of initializing the Infection.
+     * @param[in] recovered If the Person is already recovered at the time of initializing the Infection. Only works if the Person has start_state = SymptomState::None.
      * @return The starting date of the Infection.
      */
-    TimePoint draw_infection_course_backward(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
-                                             TimePoint init_date, InfectionState init_state);
+    TimePoint draw_symptom_course_backward(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
+                                           TimePoint init_date, SymptomState init_state, bool recovered);
 
     /**
      * @brief Initialize the viral load parameters for the infection.
@@ -233,29 +244,29 @@ private:
                                const Parameters& params);
 
     /**
-     * @brief Get the forward transition from a given infection state.
+     * @brief Get the forward transition from a given symptom state.
      * @param[inout] rng PersonalRandomNumberGenerator of the Person.
      * @param[in] age AgeGroup of the Person.
      * @param[in] params Parameters of the Model.
-     * @param[in] current_state Current infection state.
+     * @param[in] current_state Current symptom state.
      * @param[in] current_time Current time point.
      * @param[in] latest_protection Latest protection against Infection.
      * @return StateTransition representing the next transition.
      */
     StateTransition get_forward_transition(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
-                                           InfectionState current_state, TimePoint current_time,
+                                           SymptomState current_state, TimePoint current_time,
                                            ProtectionEvent latest_protection) const;
 
     /**
-     * @brief Get the backward transition from a given infection state.
+     * @brief Get the backward transition from a given symptom state.
      * @param[inout] rng PersonalRandomNumberGenerator of the Person.
      * @param[in] age AgeGroup of the Person.
      * @param[in] params Parameters of the Model.
-     * @param[in] current_state Current infection state.
+     * @param[in] current_state Current symptom state.
      * @return StateTransition representing the previous transition.
      */
     StateTransition get_backward_transition(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
-                                            InfectionState current_state) const;
+                                            SymptomState current_state) const;
 
     /**
      * @brief Get the backward transition from recovered state.
@@ -296,7 +307,7 @@ private:
     ScalarType get_severity_protection_factor(const Parameters& params, ProtectionEvent latest_protection, AgeGroup age,
                                               TimePoint current_time) const;
 
-    std::vector<std::pair<TimePoint, InfectionState>> m_infection_course; ///< Start date of each #InfectionState.
+    std::vector<std::pair<TimePoint, SymptomState>> m_symptom_course; ///< Start date of each #SymptomState.
     VirusVariant m_virus_variant; ///< Variant of the Infection.
     ViralLoad m_viral_load; ///< ViralLoad of the Infection.
     ScalarType m_log_norm_alpha,
