@@ -104,10 +104,10 @@ TEST_F(TestTestingScheme, runScheme)
     auto person1 =
         make_test_person(this->get_rng(), loc_home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms,
                          start_date - test_params_pcr.required_time);
-    auto rng_person1 = mio::abm::PersonalRandomNumberGenerator(person1);
+    auto rng_person1 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person1);
     auto person2 = make_test_person(this->get_rng(), loc_home, age_group_15_to_34, mio::abm::InfectionState::Recovered,
                                     start_date - test_params_pcr.required_time);
-    auto rng_person2 = mio::abm::PersonalRandomNumberGenerator(person2);
+    auto rng_person2 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person2);
 
     // Mock uniform distribution to control random behavior in testing.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
@@ -153,10 +153,10 @@ TEST_F(TestTestingScheme, initAndRunTestingStrategy)
     auto person1 =
         make_test_person(this->get_rng(), loc_work, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms,
                          start_date - test_params_pcr.required_time);
-    auto rng_person1 = mio::abm::PersonalRandomNumberGenerator(person1);
+    auto rng_person1 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person1);
     auto person2 = make_test_person(this->get_rng(), loc_work, age_group_15_to_34, mio::abm::InfectionState::Recovered,
                                     start_date - test_params_pcr.required_time);
-    auto rng_person2 = mio::abm::PersonalRandomNumberGenerator(person2);
+    auto rng_person2 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person2);
 
     // Mock uniform distribution to control random behavior in testing.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
@@ -291,7 +291,7 @@ TEST_F(TestTestingScheme, testingSchemeResultCaching)
     mio::abm::Location loc_home(mio::abm::LocationType::Home, 0, num_age_groups);
     auto person = make_test_person(this->get_rng(), loc_home, age_group_15_to_34,
                                    mio::abm::InfectionState::InfectedNoSymptoms, start_date);
-    auto rng    = mio::abm::PersonalRandomNumberGenerator(person);
+    auto rng    = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person);
 
     // Mock uniform distribution to control test results
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
@@ -344,12 +344,12 @@ TEST_F(TestTestingScheme, differentTestTypes)
     auto person_infected =
         make_test_person(this->get_rng(), loc_home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms,
                          start_date - test_params_pcr.required_time);
-    auto rng_infected = mio::abm::PersonalRandomNumberGenerator(person_infected);
+    auto rng_infected = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person_infected);
 
     auto person_healthy =
         make_test_person(this->get_rng(), loc_home, age_group_15_to_34, mio::abm::InfectionState::Susceptible,
                          start_date - test_params_pcr.required_time);
-    auto rng_healthy = mio::abm::PersonalRandomNumberGenerator(person_healthy);
+    auto rng_healthy = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person_healthy);
 
     // Mock uniform distribution to control test results
     // Mock uniform distribution to control test results for PCR test with infected person
@@ -439,8 +439,8 @@ TEST_F(TestTestingScheme, multipleSchemesCombination)
     auto adult = make_test_person(this->get_rng(), loc_home, age_group_35_to_59, mio::abm::InfectionState::Susceptible,
                                   start_date);
 
-    auto rng_child = mio::abm::PersonalRandomNumberGenerator(child);
-    auto rng_adult = mio::abm::PersonalRandomNumberGenerator(adult);
+    auto rng_child = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), child);
+    auto rng_adult = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), adult);
 
     // Mock uniform distribution to control test results
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
@@ -495,7 +495,7 @@ TEST_F(TestTestingScheme, locationSpecificSchemes)
     // Create a test person
     auto person =
         make_test_person(this->get_rng(), shop1, age_group_15_to_34, mio::abm::InfectionState::Susceptible, start_date);
-    auto rng = mio::abm::PersonalRandomNumberGenerator(person);
+    auto rng = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person);
 
     // Mock uniform distribution to control test results
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
@@ -541,7 +541,7 @@ TEST_F(TestTestingScheme, testCompliance)
     // Create a test person
     auto person =
         make_test_person(this->get_rng(), shop1, age_group_15_to_34, mio::abm::InfectionState::Susceptible, start_date);
-    auto rng = mio::abm::PersonalRandomNumberGenerator(person);
+    auto rng = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person);
     person.set_compliance(mio::abm::InterventionType::Testing, 0.1); // Set compliance for testing
 
     // Mock uniform distribution to control test results

@@ -354,8 +354,10 @@ private:
         }
 
         // Calculate derivative of the InfectedCritical_1a compartment.
-        // Again split flow from last subcompartment of InfectedSevere_1a between Recovered_1a and InfectedCritical_1a.
-        dydt[Ri_a] += dydt[ICri_1a_first_index] * (1 - params.template get<CriticalPerSevere_a<FP>>()[Group]);
+        // Split flow from last subcompartment of InfectedSevere_1a between Recovered_1a, Dead1a and InfectedCritical_1a.
+        dydt[Ri_a] += dydt[ICri_1a_first_index] * (1 - params.template get<CriticalPerSevere_a<FP>>()[Group] -
+                                                   params.template get<DeathsPerSevere_a<FP>>()[Group]);
+        dydt[Di_a]                = dydt[ICri_1a_first_index] * params.template get<DeathsPerSevere_a<FP>>()[Group];
         dydt[ICri_1a_first_index] = dydt[ICri_1a_first_index] * params.template get<CriticalPerSevere_a<FP>>()[Group];
         for (size_t subcomp = 0;
              subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_1a>() - 1;
@@ -366,8 +368,10 @@ private:
             dydt[ICri_1a_first_index + subcomp + 1] = flow;
         }
         // Calculate derivative of the InfectedCritical_1b compartment.
-        // Again split flow from last subcompartment of InfectedSevere_1b between Recovered_1b and InfectedCritical_1b.
-        dydt[Ri_b] += dydt[ICri_1b_first_index] * (1 - params.template get<CriticalPerSevere_b<FP>>()[Group]);
+        // Split flow from last subcompartment of InfectedSevere_1b between Recovered_1b, Dead_1b and InfectedCritical_1b.
+        dydt[Ri_b] += dydt[ICri_1b_first_index] * (1 - params.template get<CriticalPerSevere_b<FP>>()[Group] -
+                                                   params.template get<DeathsPerSevere_b<FP>>()[Group]);
+        dydt[Di_b]                = dydt[ICri_1b_first_index] * params.template get<DeathsPerSevere_b<FP>>()[Group];
         dydt[ICri_1b_first_index] = dydt[ICri_1b_first_index] * params.template get<CriticalPerSevere_b<FP>>()[Group];
         for (size_t subcomp = 0;
              subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_1b>() - 1;
@@ -512,8 +516,10 @@ private:
         }
 
         // Calculate derivative of the InfectedCritical compartment.
-        // Again split flow from last subcompartment of InfectedSevere_2a between Recovered_2ab and InfectedCritical_2a.
-        dydt[Ri_ab] += dydt[ICri_2a_first_index] * (1 - params.template get<CriticalPerSevere_a<FP>>()[Group]);
+        // Split flow from last subcompartment of InfectedSevere_2a between Recovered_2ab, Dead_2ab and InfectedCritical_2a.
+        dydt[Ri_ab] += dydt[ICri_2a_first_index] * (1 - params.template get<CriticalPerSevere_a<FP>>()[Group] -
+                                                    params.template get<DeathsPerSevere_a<FP>>()[Group]);
+        dydt[Di_a] += dydt[ICri_2a_first_index] * params.template get<DeathsPerSevere_a<FP>>()[Group];
         dydt[ICri_2a_first_index] = dydt[ICri_2a_first_index] * params.template get<CriticalPerSevere_a<FP>>()[Group];
         for (size_t subcomp = 0;
              subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_2a>() - 1;
@@ -524,8 +530,10 @@ private:
             dydt[ICri_2a_first_index + subcomp + 1] = flow;
         }
         // Calculate derivative of the InfectedCritical compartment.
-        // Again split flow from last subcompartment of InfectedSevere_2b between Recovered_2ab and InfectedCritical_2b.
-        dydt[Ri_ab] += dydt[ICri_2b_first_index] * (1 - params.template get<CriticalPerSevere_b<FP>>()[Group]);
+        // Split flow from last subcompartment of InfectedSevere_2b between Recovered_2ab and InfectedCritical_2b.
+        dydt[Ri_ab] += dydt[ICri_2b_first_index] * (1 - params.template get<CriticalPerSevere_b<FP>>()[Group] -
+                                                    params.template get<DeathsPerSevere_b<FP>>()[Group]);
+        dydt[Di_b] += dydt[ICri_2b_first_index] * params.template get<DeathsPerSevere_b<FP>>()[Group];
         dydt[ICri_2b_first_index] = dydt[ICri_2b_first_index] * params.template get<CriticalPerSevere_b<FP>>()[Group];
         for (size_t subcomp = 0;
              subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_2b>() - 1;

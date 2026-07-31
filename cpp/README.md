@@ -20,7 +20,7 @@ MEmilio C++ uses CMake as a build configuration system (https://cmake.org/)
 MEmilio C++ is regularly tested with the following compilers (list will be extended over time):
 - GCC, versions 11 and 13
 - Clang, version 14 and 17
-- MSVC, version 19.43 (Visual Studio 2022)
+- MSVC, versions 19.44+ (Visual Studio 2022) and 19.51+ (Visual Studio 2026)
 
 MEmilio C++ is regularly tested on gitlub runners using Ubuntu 22.04 and 24.04 and Windows Server 2022 and 2025. It is expected to run on any comparable Linux or Windows system. It is currently not tested on MacOS.
 
@@ -28,7 +28,7 @@ The following table lists the dependencies that are used. Most of them are requi
 
 | Library | Version  | Required | Bundled               | Notes |
 |---------|----------|----------|-----------------------|-------|
-| spdlog  | 1.15.0   | Yes      | Yes (git repo)        | https://github.com/gabime/spdlog |
+| spdlog  | 1.17.0   | Yes      | Yes (git repo)        | https://github.com/gabime/spdlog |
 | Eigen   | 3.4.0    | Yes      | Yes (git repo)        | http://gitlab.com/libeigen/eigen |
 | Boost   | 1.84.0   | Yes      | Yes (git repo)        | https://github.com/boostorg/boost |
 | JsonCpp | 1.9.6    | No       | Yes (git repo)        | https://github.com/open-source-parsers/jsoncpp |
@@ -52,7 +52,6 @@ Options can be specified with `cmake .. -D<OPTION>=<VALUE>` or by editing the `b
 - `MEMILIO_BUILD_TESTS`: build unit tests in the test directory, ON or OFF, default ON.
 - `MEMILIO_BUILD_EXAMPLES`: build the example applications in the examples directory, ON or OFF, default ON.
 - `MEMILIO_BUILD_MODELS`: build the separate model libraries in the models directory, ON or OFF, default ON.
-- `MEMILIO_BUILD_SIMULATIONS`: build the simulation applications in the simulations directory, ON or OFF, default ON.
 - `MEMILIO_USE_BUNDLED_SPDLOG/_BOOST/_EIGEN/_JSONCPP`: use the corresponding dependency bundled with this project, ON or OFF, default ON.
 - `MEMILIO_BUILD_BENCHMARKS`: build the benchmarks for this project, ON or OFF, default OFF.
 - `MEMILIO_SANITIZE_ADDRESS/_UNDEFINED`: compile with specified sanitizers to check correctness, ON or OFF, default OFF.

@@ -8,6 +8,11 @@ The package is contained inside the folder `pycode/memilio-plot <https://github.
 
 .. note:: This package is under active development.
 
+Installation
+------------
+
+See :ref:`python-package-installation` for a detailed installation guide.
+
 Dependencies
 ------------
 
@@ -27,4 +32,3 @@ Required python packages:
 - h5py
 - imageio
 - datetime
-

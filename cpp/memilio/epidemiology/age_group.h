@@ -26,8 +26,16 @@ namespace mio
 {
 
 /**
- * @brief The AgeGroup struct is used as a dynamically
- * sized tag for all age dependent categories
+ * @brief Typesafe index representing an age group.
+ * Used as a tag for all age dependent categories in a model.
+ * The number of age groups is determined at runtime.
+ * The underlying size_t value (i.e., the age group index) can be obtained via the get() member function:
+ * @code
+ *   AgeGroup g(2);
+ *   size_t idx = g.get();
+ * @endcode
+ * @see Index
+ * @see TypeSafe
  */
 struct AgeGroup : public Index<AgeGroup> {
     AgeGroup(size_t val)

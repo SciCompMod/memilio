@@ -1,0 +1,62 @@
+model:
+  name: SEIRD
+  namespace: oseird
+  prefix: ode_seird
+
+infection_states:
+  - Susceptible
+  - Exposed
+  - Infected
+  - Recovered
+  - Dead
+
+parameters:
+  - name: TransmissionProbabilityOnContact
+    description: probability of getting infected from a contact
+    type: probability
+    default: 1.0
+    per_age_group: true
+    bounds: [0.0, 1.0]
+
+  - name: TimeExposed
+    description: the latent time in day unit
+    type: time
+    default: 5.2
+    per_age_group: true
+    bounds: [0.1, null]
+
+  - name: TimeInfected
+    description: the infectious time in day unit
+    type: time
+    default: 6.0
+    per_age_group: true
+    bounds: [0.1, null]
+
+  - name: DeathRate
+    description: daily probability of dying while infected
+    type: probability
+    default: 0.01
+    per_age_group: true
+    bounds: [0.0, 1.0]
+
+transitions:
+  - from: Susceptible
+    to: Exposed
+    type: infection
+    parameter: TransmissionProbabilityOnContact
+    infectious_state: Infected
+
+  - from: Exposed
+    to: Infected
+    type: linear
+    parameter: TimeExposed
+
+  - from: Infected
+    to: Recovered
+    type: linear
+    parameter: TimeInfected
+
+  - from: Infected
+    to: Dead
+    type: custom
+    custom_formula: "DeathRate[i] * y[idx_Infected_i]"

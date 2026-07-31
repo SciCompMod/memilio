@@ -27,7 +27,7 @@
 #include "memilio/data/analyze_result.h"
 #include "memilio/io/io.h"
 #include "memilio/io/result_io.h"
-#include "memilio/utils/base_dir.h"
+#include "memilio/io/directories.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/miompi.h"
 #include "memilio/utils/random_number_generator.h"
@@ -47,8 +47,8 @@ mio::abm::Model make_model(const mio::RandomNumberGenerator& rng)
     const auto age_group_15_to_34 = mio::AgeGroup(2);
     const auto age_group_35_to_59 = mio::AgeGroup(3);
     // Create the model with 4 age groups.
-    auto model      = mio::abm::Model(num_age_groups);
-    model.get_rng() = rng;
+    auto model = mio::abm::Model(num_age_groups);
+    model.reset_rng(rng.get_seeds());
 
     // Set same infection parameter for all age groups. For example, the incubation period is log normally distributed with parameters 4 and 1.
     model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() = mio::ParameterDistributionLogNormal(4., 1.);
@@ -112,9 +112,8 @@ mio::abm::Model make_model(const mio::RandomNumberGenerator& rng)
     // Increase aerosol transmission for all locations
     model.parameters.get<mio::abm::AerosolTransmissionRates>() = 10.0;
     // Increase contact rate for all people between 15 and 34 (i.e. people meet more often in the same location)
-    model.get_location(work)
-        .get_infection_parameters()
-        .get<mio::abm::ContactRates>()[{age_group_15_to_34, age_group_15_to_34}] = 10.0;
+    model.get_location(work).get_infection_parameters().get<mio::abm::ContactRates>().get_baseline()(
+        age_group_15_to_34.get(), age_group_15_to_34.get()) = 10.0;
 
     // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 10.
     auto validity_period       = mio::abm::days(1);
@@ -133,8 +132,8 @@ mio::abm::Model make_model(const mio::RandomNumberGenerator& rng)
     std::vector<ScalarType> infection_distribution{0.5, 0.3, 0.05, 0.05, 0.05, 0.05, 0.0, 0.0};
     for (auto& person : model.get_persons()) {
         mio::abm::InfectionState infection_state = mio::abm::InfectionState(
-            mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(), infection_distribution));
-        auto person_rng = mio::abm::PersonalRandomNumberGenerator(person);
+            mio::DiscreteDistribution<size_t>::get_instance()(model.get_rng(), infection_distribution));
+        auto person_rng = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
             person.add_new_infection(mio::abm::Infection(person_rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          model.parameters, start_date, infection_state));
@@ -176,86 +175,80 @@ int main()
     auto t0   = mio::abm::TimePoint(0);
     auto tmax = t0 + mio::abm::days(10);
     // Set the number of simulations to run in the study
-    const size_t num_runs = 10;
+    const size_t num_runs = 3;
+    // Set up an RNG
+    mio::RandomNumberGenerator rng;
+
+    // Optional: set seeds to get reproducible results
+    // rng.seed({1234, 2345, 124324, 7567, 34534, 7});
+
+    // Always synchronise seeds before creating the model, otherwise different MPI ranks will create different models
+    // If you do want to use a different model each run, move the model setup from the ParameterStudy creation into the
+    // simulation setup (i.e. into the create_simulation function argument of ParameterStudy::run)
+    rng.synchronize();
+    auto model = make_model(rng);
 
     // Create a parameter study.
-    // Note that the study for the ABM currently does not make use of the arguments "parameters" or "dt", as we create
-    // a new model for each simulation. Hence we set both arguments to 0.
-    // This is mostly due to https://github.com/SciCompMod/memilio/issues/1400
-    mio::ParameterStudy study(0, t0, tmax, mio::abm::TimeSpan(0), num_runs);
+    // Note that the ABM's step size is fixed, hence we set the effectively unused "dt" argument to 0
+    mio::ParameterStudy study(std::move(model), t0, tmax, mio::abm::TimeSpan(0), num_runs);
+    study.get_rng() = rng; // use the same RNG as the model
 
-    // Optional: set seeds to get reproducable results
-    // study.get_rng().seed({12341234, 53456, 63451, 5232576, 84586, 52345});
+    const auto result_dir = mio::create_directories_or_exit(mio::example_results_dir("abm_parameter_study"));
 
-    const std::string result_dir = mio::path_join(mio::base_dir(), "example_results");
-    std::filesystem::remove_all(result_dir);
-    if (!mio::create_directory(result_dir)) {
-        mio::log_error("Could not create result directory \"{}\".", result_dir);
-        return 1;
-    }
+    // Each run writes its aggregated and its detailed (per location type and age group) result into its own
+    // subdirectory of the result directory.
+    const auto result_dir_standard = mio::create_directories_or_exit(result_dir / "standard_results");
+    const auto result_dir_detailed = mio::create_directories_or_exit(result_dir / "detailed_results");
 
-    const std::string result_directory_standard = mio::path_join(result_dir, "standart_results");
-    if (!mio::create_directory(result_directory_standard)) {
-        mio::log_error("Could not create result directory \"{}\".", result_directory_standard);
-        return 1;
-    }
-
-    const std::string result_dir_detailed = mio::path_join(result_dir, "detailed");
-    if (!mio::create_directory(result_dir_detailed)) {
-        mio::log_error("Could not create result directory \"{}\".", result_dir_detailed);
-        return 1;
-    }
-
+    // Run the study
+    // The first lambda ("create_simulation" argument) sets up the simulation, the second ("process_simulation_result")
+    // allows us to process each simulations result. Be mindful of the memory used for storing these results!
     auto ensemble_results = study.run(
-        [](auto, auto t0_, auto, size_t) {
-            return mio::abm::ResultSimulation(make_model(mio::thread_local_rng()), t0_);
+        [](auto&& model_, auto t0_, auto, size_t run_idx) {
+            auto copy = model_;
+            // using half of the RNG counter for the run index (soft-) limits both the number of runs and RNG draws
+            // per person to 2^16 = 65536
+            const auto ctr = mio::Counter<uint32_t>(static_cast<uint32_t>(run_idx) << 16);
+            copy.reset_rng(ctr);
+            return mio::abm::ResultSimulation(std::move(copy), t0_);
         },
-        [result_dir](auto&& sim, auto&& run_idx) {
+        [&result_dir_standard, &result_dir_detailed](auto&& sim, auto&& run_idx) {
             auto interpolated_result          = mio::interpolate_simulation_result(sim.get_result());
             auto interpolated_result_detailed = mio::interpolate_simulation_result(sim.get_result_detailed());
 
-            std::string outpath = mio::path_join(result_dir, "abm_minimal_run_" + std::to_string(run_idx) + ".txt");
+            const auto outpath = result_dir_standard / ("abm_run_" + std::to_string(run_idx) + ".txt");
             std::ofstream outfile_run(outpath);
             sim.get_result().print_table(outfile_run, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4);
+            std::cout << "Results written to " << outpath.string() << std::endl;
 
-            std::cout << "Results written to " << outpath << std::endl;
+            // The detailed result has one column per (location type, age group) pair, so we let print_table
+            // generate the column names itself.
+            const auto outpath_detailed = result_dir_detailed / ("abm_run_" + std::to_string(run_idx) + ".txt");
+            std::ofstream outfile_run_detailed(outpath_detailed);
+            sim.get_result_detailed().print_table(outfile_run_detailed, {}, 7, 4);
+            std::cout << "Detailed results written to " << outpath_detailed.string() << std::endl;
 
-            return std::vector<mio::TimeSeries<double>>{interpolated_result, interpolated_result_detailed};
+            return std::vector{interpolated_result};
         });
 
-    if (ensemble_results.size() > 0) {
+    // The study collects all results on the root rank, so we only process the results there
+    if (mio::mpi::is_root()) {
+        const auto write_percentile = [&](double p) {
+            auto ensemble_percentiles = ensemble_percentile(ensemble_results, p);
 
-        std::vector<std::vector<mio::TimeSeries<double>>> ensemble_new, ensemble_detailed;
-        for (auto& run : ensemble_results) {
-            ensemble_new.push_back({std::move(run[0])});
-            ensemble_detailed.push_back({std::move(run[1])});
-        }
+            std::ofstream out(result_dir / fmt::format("Results_p{:0<4.2}.txt", p));
+            ensemble_percentiles.front().print_table(out, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7,
+                                                     4);
 
-        // Percentiles for aggregated results
-        auto new_p05 = ensemble_percentile(ensemble_new, 0.05);
-        auto new_p25 = ensemble_percentile(ensemble_new, 0.25);
-        auto new_p50 = ensemble_percentile(ensemble_new, 0.50);
-        auto new_p75 = ensemble_percentile(ensemble_new, 0.75);
-        auto new_p95 = ensemble_percentile(ensemble_new, 0.95);
+            mio::unused(save_result(ensemble_percentiles, {0}, num_age_groups,
+                                    (result_dir / fmt::format("Results_p{:0<4.2}.h5", p)).string()));
+        };
 
-        mio::unused(save_result(new_p05, {0}, num_age_groups, mio::path_join(result_directory_standard, "Results_p05.h5")));
-        mio::unused(save_result(new_p25, {0}, num_age_groups, mio::path_join(result_directory_standard, "Results_p25.h5")));
-        mio::unused(save_result(new_p50, {0}, num_age_groups, mio::path_join(result_directory_standard, "Results_p50.h5")));
-        mio::unused(save_result(new_p75, {0}, num_age_groups, mio::path_join(result_directory_standard, "Results_p75.h5")));
-        mio::unused(save_result(new_p95, {0}, num_age_groups, mio::path_join(result_directory_standard, "Results_p95.h5")));
-
-        // Percentiles for detailed results
-        auto det_p05 = ensemble_percentile(ensemble_detailed, 0.05);
-        auto det_p25 = ensemble_percentile(ensemble_detailed, 0.25);
-        auto det_p50 = ensemble_percentile(ensemble_detailed, 0.50);
-        auto det_p75 = ensemble_percentile(ensemble_detailed, 0.75);
-        auto det_p95 = ensemble_percentile(ensemble_detailed, 0.95);
-
-        mio::unused(save_result(det_p05, {0}, num_age_groups, mio::path_join(result_dir_detailed, "Results_p05.h5")));
-        mio::unused(save_result(det_p25, {0}, num_age_groups, mio::path_join(result_dir_detailed, "Results_p25.h5")));
-        mio::unused(save_result(det_p50, {0}, num_age_groups, mio::path_join(result_dir_detailed, "Results_p50.h5")));
-        mio::unused(save_result(det_p75, {0}, num_age_groups, mio::path_join(result_dir_detailed, "Results_p75.h5")));
-        mio::unused(save_result(det_p95, {0}, num_age_groups, mio::path_join(result_dir_detailed, "Results_p95.h5")));
+        write_percentile(0.05);
+        write_percentile(0.25);
+        write_percentile(0.50);
+        write_percentile(0.75);
+        write_percentile(0.95);
     }
 
     mio::mpi::finalize();

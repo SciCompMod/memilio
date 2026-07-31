@@ -89,6 +89,8 @@ int main()
     model.parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_b<ScalarType>>()[0]      = 0.2;
     model.parameters.get<mio::lsecir2d::CriticalPerSevere_a<ScalarType>>()[0]              = 0.25;
     model.parameters.get<mio::lsecir2d::CriticalPerSevere_b<ScalarType>>()[0]              = 0.25;
+    model.parameters.get<mio::lsecir2d::DeathsPerSevere_a<ScalarType>>()[0]                = 0.1;
+    model.parameters.get<mio::lsecir2d::DeathsPerSevere_b<ScalarType>>()[0]                = 0.1;
     model.parameters.get<mio::lsecir2d::DeathsPerCritical_a<ScalarType>>()[0]              = 0.3;
     model.parameters.get<mio::lsecir2d::DeathsPerCritical_b<ScalarType>>()[0]              = 0.3;
 

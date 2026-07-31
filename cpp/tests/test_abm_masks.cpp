@@ -99,11 +99,11 @@ TEST_F(TestMasks, maskProtection)
         mock_exponential_dist;
     // Person 1 interaction with full protection
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillOnce(testing::Return(1));
-    auto p1_rng = mio::abm::PersonalRandomNumberGenerator(susc_person1);
+    auto p1_rng = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), susc_person1);
     interact_testing(p1_rng, susc_person1, infection_location, {susc_person1, susc_person2, infected1}, t, dt, params);
     // Person 2 interaction without protection
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillOnce(testing::Return(0.5));
-    auto p2_rng = mio::abm::PersonalRandomNumberGenerator(susc_person2);
+    auto p2_rng = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), susc_person2);
     interact_testing(p2_rng, susc_person2, infection_location, {susc_person1, susc_person2, infected1}, t, dt, params);
 
     // susc_person1 (with mask) should remain susceptible

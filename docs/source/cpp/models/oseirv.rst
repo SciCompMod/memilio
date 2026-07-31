@@ -14,7 +14,7 @@ The infection states and transitions are illustrated in the following figure.
 Infection States
 ----------------
 
-The model contains the following **InfectionState**\s:
+The model contains the following ``InfectionState``\s:
 
 .. code-block:: RST
 
@@ -31,7 +31,7 @@ The model contains the following **InfectionState**\s:
 Infection State Transitions
 ---------------------------
 
-The SEIRV model is implemented as a **FlowModel**. Thus, in each time step, the flows (new infections, progressions,
+The SEIRV model is implemented as a ``FlowModel``. Thus, in each time step, the flows (new infections, progressions,
 recoveries) are computed explicitly in addition to compartment values. The defined transitions `FromState, ToState` are:
 
 .. code-block:: RST
@@ -47,12 +47,12 @@ recoveries) are computed explicitly in addition to compartment values. The defin
 Sociodemographic Stratification
 --------------------------------
 
-The population can be stratified by one sociodemographic dimension denoted **AgeGroup** (can be interpreted more
+The population can be stratified by one sociodemographic dimension denoted ``AgeGroup`` (can be interpreted more
 broadly). The number of age groups is specified in the constructor:
 
 .. code-block:: cpp
 
-	mio::oseirv::Model<double> model(num_agegroups);
+	mio::oseirv::Model<ScalarType> model(num_agegroups);
 
 For stratifications with two or more dimensions, see :doc:`Model Creation <../ode_creation>`.
 
@@ -123,16 +123,16 @@ differential infection hazards.
 Initial Conditions
 ------------------
 
-Initial conditions are handled via the **Populations** class. Example for a single age group:
+Initial conditions are handled via the ``Populations`` class. Example for a single age group:
 
 .. code-block:: cpp
 
-	mio::oseirv::Model<double> model(1);
+	mio::oseirv::Model<ScalarType> model(1);
 	// Set total population in age group 0
 	model.populations.set_total(total0);
 
 	// Initialize vaccinated susceptibles (simple example)
-	double vc0 = 0.4; // vaccination coverage
+	ScalarType vc0 = 0.4; // vaccination coverage
 	model.populations[{mio::AgeGroup(0), mio::oseirv::InfectionState::SusceptibleVaccinated}] = vc0 * total0;
 	model.populations[{mio::AgeGroup(0), mio::oseirv::InfectionState::Infected}] = initial_infected;
 	model.populations[{mio::AgeGroup(0), mio::oseirv::InfectionState::Exposed}]  = initial_exposed;
@@ -166,9 +166,9 @@ same pattern. Example with a Runge–Kutta integrator:
 
 .. code-block:: cpp
 
-	double t0   = 0.0;  // start (weeks)
-	double tmax = 20.0; // end
-	double dt   = 0.1;  // initial step size
+	ScalarType t0   = 0.0;  // start (weeks)
+	ScalarType tmax = 20.0; // end
+	ScalarType dt   = 0.1;  // initial step size
 
 	auto integrator = std::make_unique<mio::RKIntegratorCore>();
 	integrator->set_dt_min(0.01);
@@ -189,13 +189,13 @@ Flow simulation (when explicit flows are required):
 Output
 ------
 
-The result of a standard simulation is a ``mio::TimeSeries``:
+The result of a standard simulation is a ``TimeSeries``:
 
 .. code-block:: cpp
 
 	auto n_points = static_cast<size_t>(sim.get_num_time_points());
 	Eigen::VectorXd val_i = sim.get_value(i);
-	double time_i = sim.get_time(i);
+	ScalarType time_i = sim.get_time(i);
 	auto last_val = sim.get_last_value();
 
 Printing and CSV export:
@@ -217,8 +217,8 @@ Time-dependent changes of contact patterns (holidays, interventions) can be mode
 
 .. code-block:: cpp
 
-	mio::ContactMatrixGroup<ScalarType>& cm_h = model.parameters.get<mio::oseirv::ContactPatternsHealthy<double>>();
-	mio::ContactMatrixGroup<ScalarType>& cm_s = model.parameters.get<mio::oseirv::ContactPatternsSick<double>>();
+	mio::ContactMatrixGroup<ScalarType>& cm_h = model.parameters.get<mio::oseirv::ContactPatternsHealthy<ScalarType>>();
+	mio::ContactMatrixGroup<ScalarType>& cm_s = model.parameters.get<mio::oseirv::ContactPatternsSick<ScalarType>>();
 	cm_h[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, base_contacts));
 	cm_s[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, base_contacts_sick));
 
@@ -238,7 +238,4 @@ Literature
 * Weidemann, F., Remschmidt, C., Buda, S. et al. *Is the impact of childhood influenza vaccination less than expected: a transmission modelling study.* BMC Infectious Diseases 17, 258 (2017). https://doi.org/10.1186/s12879-017-2344-6
 
 
-Overview of the ``oseirv`` namespace:
--------------------------------------
-
-.. doxygennamespace:: mio::oseirv
+The code documentation for the model can be found at :CPP-API:`mio::oseirv` .

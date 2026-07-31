@@ -52,7 +52,7 @@ Infection state transitions
 The infection state transitions are explicitly given by the adoption rates and are therefore subject to user input. 
 Adoption rates always depend on their source infection state. If an adoption event requires interaction of agents (e.g. 
 disease transmission), the corresponding rate depends not only on the source infection state, but also on other infection 
-states, the **Influence**\s. An adoption rate that only depends on the source infection state, e.g. recovery or worsening 
+states, the :code:`Influence`\s. An adoption rate that only depends on the source infection state, e.g. recovery or worsening 
 of disease symptoms, is called `first-order` adoption rate and an adoption rate that has influences is called `second-order` 
 adoption rate. Adoption rates are region-dependent; therefore it is possible to have different rates in two regions for 
 the same infection state transition which can be useful when having e.g. region-dependent interventions or contact behavior.
@@ -129,7 +129,7 @@ These populations have the class type ``Populations`` and can be set via:
 
 .. code-block:: cpp
 
-   double pop = 1000, numE = 0.001 * pop, numC = 0.0001 * pop, numI = 0.0001 * pop, numR = 0, numD = 0;
+   ScalarType pop = 1000, numE = 0.001 * pop, numC = 0.0001 * pop, numI = 0.0001 * pop, numR = 0, numD = 0;
 
    //Population is distributed equally to the regions
    for (size_t r = 0; r < num_regions; ++r) {
@@ -179,14 +179,14 @@ are drawn. Then the time is advanced until the time point of the next event - wh
 infection state adoption - and the event takes places. The waiting times of the other events are updated and a new waiting 
 time for the event that just happened is drawn. The simulation saves the system state in discrete time steps.
 
-To simulate the model from ``t0`` to ``tmax`` with given step size ``dt``, a **Simulation** has to be created and advanced 
+To simulate the model from ``t0`` to ``tmax`` with given step size ``dt``, a ``Simulation`` has to be created and advanced 
 until ``tmax``. The step size is only used to regularly save the system state during the simulation.
 
 .. code-block:: cpp
 
-    double t0   = 0.0;
-    double dt   = 0.1;
-    double tmax = 30.;
+    ScalarType t0   = 0.0;
+    ScalarType dt   = 0.1;
+    ScalarType tmax = 30.;
 
     //Pass the model, t0 and dt to the Simulation
     auto sim = mio::smm::Simulation(model, t0, dt);
@@ -197,7 +197,7 @@ until ``tmax``. The step size is only used to regularly save the system state du
 Output
 ------
 
-Subpopulations stratified by region and infection state are saved in a ``mio::TimeSeries`` object which can be accessed and printed as follows:
+Subpopulations stratified by region and infection state are saved in a ``TimeSeries`` object which can be accessed and printed as follows:
 
 .. code-block:: cpp
 
@@ -207,7 +207,7 @@ Subpopulations stratified by region and infection state are saved in a ``mio::Ti
     //Print result object to console. Infection state "Xi" with i=0,1 is the number of agents having infection state X in region i
     result.print_table({"S0", "E0", "C0", "I0", "R0", "D0", "S1", "E1", "C1", "I1", "R1", "D1"})
 
-If one wants to interpolate the aggregated results to a ``mio::TimeSeries`` containing only full days, this can be done by
+If one wants to interpolate the aggregated results to a ``TimeSeries`` containing only full days, this can be done by
 
 .. code-block:: cpp
 
@@ -250,7 +250,7 @@ We can define a model:
 
 Now, for accessing the population, all indices need to be given:
 
--- code-block:: cpp
+.. code-block:: cpp
 
    model.populations[{Region(r), InfectionState::S, Species(0)}] = 100;
    // ...
@@ -265,9 +265,4 @@ Examples
 A full example with ``Status`` including ``InfectionState``, ``Age`` and ``Species`` can be found at 
 `examples/smm.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/smm.cpp>`_
 
-
-
-Overview of the ``smm`` namespace:
------------------------------------
-
-.. doxygennamespace:: mio::smm
+The code documentation for the model can be found at :CPP-API:`mio::smm` .

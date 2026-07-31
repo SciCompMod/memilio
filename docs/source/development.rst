@@ -1,12 +1,12 @@
 Developer workflow
-========================
+==================
 
 We are always happy about contributions to the project! Here you can find more information on our coding guidelines, our git workflow, benchmarking our models and writing documentation. 
 
 Coding guidelines
----------------------
+-----------------
 
-All software is built in modules, unit tests have to be added for each module/functionality. We use  `GoogleTest <https://google.github.io/googletest/>`_ for that
+All software is built in modules, unit tests have to be added for each module/functionality. We use  `GoogleTest <https://google.github.io/googletest/>`__ for that
 and refer to their documentation for further information.
 
 The CI pipeline also automates some code style enforcement via a ``pre-commit``.
@@ -18,7 +18,7 @@ We recommend to configure it locally such that it runs automatically on every co
     pre-commit install
 
 
-For more information about ``pre-commit`` check `here <https://docs.pymc.io/en/latest/contributing/python_style.html>`_ and this short video series: https://calmcode.io/pre-commit/the-problem.html.
+For more information about ``pre-commit`` check `here <https://docs.pymc.io/en/latest/contributing/python_style.html>`__ and this short video series: https://calmcode.io/pre-commit/the-problem.html.
 
 Please be aware that the ``isort`` pre-commit hook accidentally sorts our own code with third party libraries, also see: https://github.com/PyCQA/isort/issues/2068. Be therefore sure to not commit python code from a worktree.
 
@@ -87,9 +87,9 @@ Code Documentation:
 
 
 Mandatory C++ style guidelines
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The style guidelines are adopted from `TiGL <https://github.com/DLR-SC/tigl>`_.
+The style guidelines are adopted from `TiGL <https://github.com/DLR-SC/tigl>`__.
 
 
 **Tabs and Indentation**
@@ -220,9 +220,9 @@ might appear. In that case, update ``clang-format`` or install a newer version (
 
 
 Python coding guidelines
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-Please follow the `PEP 8 -- Style Guide for Python. <https://www.python.org/dev/peps/pep-0008/>`_.
+Please follow the `PEP 8 -- Style Guide for Python. <https://www.python.org/dev/peps/pep-0008/>`__.
 
 
 **Note on maximum line length**
@@ -241,22 +241,22 @@ to your corresponding ``settings.json``.
 Docstrings in Python should be added for every function, as detailed in the C++ coding guidelines. However, the syntax is slightly different than for C++ code. An overview and examples can be found at https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html. 
 
 Figure colors and settings
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In order to ensure that figures in the documentation and in the code have a consistent look, we use the following settings:
 
 **Default color scheme**
 
-- For figures in the documentation, we usually use the `matplotlib <https://matplotlib.org/>`_ library. 
-- The default color cycle is set to the `Set1 <https://matplotlib.org/stable/tutorials/colors/colormaps.html#Qualitative>`_ colormap.
+- For figures in the documentation, we usually use the `matplotlib <https://matplotlib.org/>`__ library. 
+- The default color cycle is set to the `Set1 <https://matplotlib.org/stable/tutorials/colors/colormaps.html#Qualitative>`__ colormap.
 
 **Colorblind-friendly alternatives**
 
 For better accessibility and when creating figures with many categories, consider using colorblind-friendly alternatives:
 
-- Use the `tab10 <https://matplotlib.org/stable/tutorials/colors/colormaps.html>`_ colormap for up to 10 distinct categories
-- For sequential data, prefer `viridis <https://matplotlib.org/stable/tutorials/colors/colormaps.html>`_, `plasma`, or `cividis` colormaps
-- For diverging data, use `RdBu <https://matplotlib.org/stable/tutorials/colors/colormaps.html>`_ or `RdYlBu` colormaps
+- Use the `tab10 <https://matplotlib.org/stable/tutorials/colors/colormaps.html>`__ colormap for up to 10 distinct categories
+- For sequential data, prefer `viridis <https://matplotlib.org/stable/tutorials/colors/colormaps.html>`__, `plasma`, or `cividis` colormaps
+- For diverging data, use `RdBu <https://matplotlib.org/stable/tutorials/colors/colormaps.html>`__ or `RdYlBu` colormaps
 - Avoid using red-green color combinations without additional visual cues (patterns, shapes, etc.)
 
 **General figure guidelines**
@@ -268,10 +268,10 @@ For better accessibility and when creating figures with many categories, conside
 - When possible, test figures with a colorblind simulator to ensure accessibility
 
 Git workflow
-----------------------
+------------
 
 General
-~~~~~~~~~~~~
+~~~~~~~
 
 - There is a main but no release or develop branch. The main branch is always stable and the latest release can be found as a tagged commit on the main branch. Stable means that all tests pass.
 - All actual work is done in task branches, regardless of whether it's a feature, a bugfix, or a performance analysis.
@@ -289,9 +289,9 @@ General
 - When making breaking changes to an interface, consider adding a comment to the end of the doxygen documentation, starting with `CHANGENOTE:`, explaining the change and what actions can be taken for updates. These change notes will be removed after some time. 
 
 Software development in sprints
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The software development process is inspired by `Scrum <https://en.wikipedia.org/wiki/Scrum_(software_development)>`_ and the development of the core developers is organized in sprints. The rules below only partially apply to external (non-core) contributors.
+The software development process is inspired by `Scrum <https://en.wikipedia.org/wiki/Scrum_(software_development)>`__ and the development of the core developers is organized in sprints. The rules below only partially apply to external (non-core) contributors.
 
 **General**
 
@@ -313,7 +313,7 @@ The software development process is inspired by `Scrum <https://en.wikipedia.org
 - Every issue should contain a detailed description of the task and subtasks understandable for all developers in the project.
 - A new issue has no status label. Additional labels should be appended, see the label list below. At this point, it is not necessary to assign it to someone.
 - Every issue should be tagged with at least one of the projects, if possible.
-- Tasks (issues) which are attributed to a sprint are tracked in an `issue board <https://github.com/DLR-SC/memilio/projects>`_ found under "Projects".
+- Tasks (issues) which are attributed to a sprint are tracked in an `issue board <https://github.com/DLR-SC/memilio/projects>`__ found under "Projects".
 
 **Working on an Issue**
 
@@ -350,18 +350,32 @@ The full list of labels that should be used to identify issues can be found at: 
 
 
 Documentation
---------------------
+-------------
 
-The documentation uses `Sphinx <https://www.sphinx-doc.org/en/master/>`_ and is written in reStructuredText, that uses a 
-slightly different syntax than Markdown. A documentation can be found `here <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_.
-This online documentation is generated using `ReadTheDocs <https://readthedocs.org/>`_ and is automatically updated when 
-a pull request is merged into the main branch. Thus, we require you to build the documentation locally to test changes.
-Literature is centrally collected in `literature.rst` and `substitutions <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html#substitutions>`_ 
+The documentation uses `Sphinx <https://www.sphinx-doc.org/en/master/>`__ and is written in reStructuredText (rst), that uses a 
+slightly different syntax than Markdown. A documentation can be found `here <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`__.
+This online documentation is generated using `ReadTheDocs <https://readthedocs.org/>`__ and is automatically updated when 
+a pull request is merged into the main branch. For Pull Requests, a new version of the documentation is built on a second
+server by ReadTheDocs. The checks include the build status and a link to the new documentation.
+Literature is centrally collected in `literature.rst` and `substitutions <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html#substitutions>`__ 
 are used to print it wherever needed.
 
-Please make sure to have a working python environment with a python version that is compatible with 
+The C++ Code documentation is generated using `doxygen <https://doxygen.nl/>`__, visually improved by `doxygen-awesome-css <https://github.com/jothepro/doxygen-awesome-css>`__ 
+and included using `doxysphinx <https://github.com/boschglobal/doxysphinx>`__ . Links to the C++ docs from within the 
+rst files can be generated as in the following examples:
+
+.. code-block:: rst
+
+    :CPP-API:`mio::osir`
+    :CPP-API:`mio::geo::Distance::kilometers`
+    :CPP-API:`Graph Constructor <mio::Graph::Graph>`
+    .. opening angle brackets in the function definition need to be escaped, the following line is also sensitive to the space between the closing brackets
+    :CPP-API:`mio::details::SimulationBase\< FP, M, SystemIntegrator\< FP, Integrands... > >`
+
+
+For a local build, please make sure to have a working python environment with a python version that is compatible with 
 our :doc:`memilio-python packages <python/python_packages>` as well as 
-all packages listed in ``docs/requirements.txt`` and `doxygen <https://doxygen.nl/>`_ installed.
+all packages listed in ``docs/requirements.txt`` and `doxygen <https://doxygen.nl/>`__ installed.
 
 First generate the doxygen output by running 
 
@@ -371,8 +385,8 @@ First generate the doxygen output by running
     doxygen
 
 
-In the ``docs/Doxyfile`` (line 736), you can change for which folders the doxygen output should be generated. For faster 
-build times while testing we recommend to only use e.g. ``../cpp/models/abm``. **Don't commit this change!**
+To test links to the C++ documentation, you need to point sphinx to the correct files. These are given in the ``conf.py`` 
+file as the ``doxylink = ...`` settings. **Don't commit this change!**
 
 Then sphinx can be used to build the documentation:
 

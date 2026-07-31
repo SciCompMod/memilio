@@ -49,8 +49,6 @@ Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, Loca
     , m_test_results({TestType::Count}, TestResult())
     , m_assigned_location_model_ids((int)LocationType::Count)
     , m_person_id(person_id)
-    , m_rng_key(rng.get_key())
-    , m_rng_index(static_cast<uint32_t>(person_id.get()))
 {
     m_random_workgroup        = UniformDistribution<ScalarType>::get_instance()(rng);
     m_random_schoolgroup      = UniformDistribution<ScalarType>::get_instance()(rng);
@@ -62,7 +60,6 @@ Person::Person(const Person& other, PersonId person_id)
     : Person(other)
 {
     m_person_id = person_id;
-    m_rng_index = static_cast<uint32_t>(person_id.get());
 }
 
 bool Person::is_infected(TimePoint t) const

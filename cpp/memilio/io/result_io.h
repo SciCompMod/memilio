@@ -29,9 +29,7 @@
 #include "memilio/data/analyze_result.h"
 #include "memilio/io/mobility_io.h"
 #include "memilio/io/io.h"
-#include "boost/filesystem.hpp"
 
-namespace fs = boost::filesystem;
 namespace mio
 {
 
@@ -111,7 +109,7 @@ IOResult<std::vector<SimulationResult>> read_result(const std::string& filename)
 template <class Model>
 IOResult<void> save_result_with_params(const std::vector<TimeSeries<ScalarType>>& result,
                                        const std::vector<Model>& params, const std::vector<int>& county_ids,
-                                       const fs::path& result_dir, size_t run_idx)
+                                       const std::filesystem::path& result_dir, size_t run_idx)
 {
     auto result_dir_run = result_dir / ("run" + std::to_string(run_idx));
     BOOST_OUTCOME_TRY(create_directory(result_dir_run.string()));
@@ -136,7 +134,8 @@ IOResult<void> save_result_with_params(const std::vector<TimeSeries<ScalarType>>
 template <class Model>
 IOResult<void> save_results(const std::vector<std::vector<TimeSeries<ScalarType>>>& ensemble_results,
                             const std::vector<std::vector<Model>>& ensemble_params, const std::vector<int>& county_ids,
-                            const fs::path& result_dir, bool save_single_runs = true, bool save_percentiles = true)
+                            const std::filesystem::path& result_dir, bool save_single_runs = true,
+                            bool save_percentiles = true)
 {
     //save results and sum of results over nodes
     auto ensemble_result_sum = sum_nodes(ensemble_results);

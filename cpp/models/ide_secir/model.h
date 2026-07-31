@@ -173,30 +173,23 @@ public:
 private:
     // ---- Functionality to calculate the sizes of the compartments for time t0. ----
     /**
-     * @brief Compute the compartment specified in idx_InfectionState at the current time -- only using historic flow 
-     * values and disrespecting potential, previous compartment value.
+     * @brief Compute the compartment infectionState at the current time -- only using historic flow 
+     * values while ignoring a potential, previous compartment value.
      * 
-     * The computation is meaningful for all compartments except Susceptible, Recovered and #Death
+     * The computation is meaningful for all compartments except Susceptible, Recovered and Dead
      * and mostly needed for initialization. 
      * For Susceptible, Recovered and Dead, use corresponding alternative functions.
      *
      * @param[in] dt Time discretization step size.
-     * @param[in] idx_InfectionState Specifies the considered #InfectionState
+     * @param[in] infectionState Specifies the considered #InfectionState.
+     * @param[in] IncomingFlows Vector of #InfectionTransition%s entering the considered #InfectionState. 
+     * @param[in] OutgoingFlows Vector of #InfectionTransition%s leaving the considered #InfectionState. 
      * @param[in] group The AgeGroup for which we want to compute.
-     * @param[in] idx_IncomingFlow Specifies the index of the incoming flow to #InfectionState in transitions. 
-     * @param[in] idx_TransitionDistribution1 Specifies the index of the first relevant TransitionDistribution, 
-     *              related to a flow from the considered #InfectionState to any other #InfectionState.
-     *              This index is also used for related probability.
-     * @param[in] idx_TransitionDistribution2 Specifies the index of the second relevant TransitionDistribution, 
-     *              related to a flow from the considered #InfectionState to any other #InfectionState (in most cases
-     *               to Recovered). 
-     *              Related probability is calculated via 1-probability[idx_TransitionDistribution1].
-     *              Sometimes the second index is not needed, e.g., if probability[idx_TransitionDistribution1]=1.
      */
 
-    void compute_compartment_from_flows(ScalarType dt, Eigen::Index idx_InfectionState, AgeGroup group,
-                                        Eigen::Index idx_IncomingFlow, int idx_TransitionDistribution1,
-                                        int idx_TransitionDistribution2 = 0);
+    void compute_compartment_from_flows(ScalarType dt, InfectionState infectionState,
+                                        std::vector<InfectionTransition> const& IncomingFlows,
+                                        std::vector<InfectionTransition> const& OutgoingFlows, AgeGroup group);
 
     /**
      * @brief Computes the values of the infection compartments subset at initialization.
@@ -288,6 +281,11 @@ private:
      * New value is stored in populations. The value is calculated using the compartment size in the previous 
      * time step and the related flows of the current time step. 
      * Therefore the flows of the current time step should be calculated before using this function.
+     *
+     * @param[in] infectionState Specifies the considered #InfectionState.
+     * @param[in] IncomingFlows Vector of #InfectionTransition%s entering the considered #InfectionState. 
+     * @param[in] OutgoingFlows Vector of #InfectionTransition%s leaving the considered #InfectionState. 
+     * @param[in] group The Age Group for which we want to compute the flow.
      */
     void update_compartment_from_flow(InfectionState infectionState,
                                       std::vector<InfectionTransition> const& IncomingFlows,

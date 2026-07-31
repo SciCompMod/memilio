@@ -1,0 +1,49 @@
+model:
+  name: SEIR
+  namespace: oseir
+  prefix: ode_seir
+
+infection_states:
+  - Susceptible
+  - Exposed
+  - Infected
+  - Recovered
+
+parameters:
+  - name: TransmissionProbabilityOnContact
+    description: probability of getting infected from a contact
+    type: probability
+    default: 1.0
+    per_age_group: true
+    bounds: [0.0, 1.0]
+
+  - name: TimeExposed
+    description: the latent time in day unit
+    type: time
+    default: 5.2
+    per_age_group: true
+    bounds: [0.1, null]
+
+  - name: TimeInfected
+    description: the infectious time in day unit
+    type: time
+    default: 6.0
+    per_age_group: true
+    bounds: [0.1, null]
+
+transitions:
+  - from: Susceptible
+    to: Exposed
+    type: infection
+    parameter: TransmissionProbabilityOnContact
+    infectious_state: Infected
+
+  - from: Exposed
+    to: Infected
+    type: linear
+    parameter: TimeExposed
+
+  - from: Infected
+    to: Recovered
+    type: linear
+    parameter: TimeInfected

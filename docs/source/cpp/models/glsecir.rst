@@ -17,7 +17,7 @@ For the concept see:
 Infection States
 ----------------
 
-The model contains the following list of **InfectionState**\s:
+The model contains the following list of ``InfectionState``\s:
 
 .. code-block:: RST
 
@@ -64,12 +64,77 @@ Below is an overview of the model variables:
      - Vector of size :math:`n_{z}` with the initial probability of starting in any of the subcompartments of compartment :math:`z \in \mathcal{Z}`. The entries should sum up to 1.
    * - :math:`\mathbf{A_{z}^{*}}`
      - ``TransitionMatrix(...z)To(...*)``
-     - Matrix describing the transitions in between the subcompartments of :math:`z \in \mathcal{Z}` that describes the transition to the compartment *.
+     - Matrix describing the transitions in between the subcompartments of :math:`z \in \mathcal{Z}` that describes the transition to the compartment \*.
 
 The model equations are given below. For a simpler description let :math:`\mathcal{Z}=\{E,I_{NS},I_{Sy},I_{Sev},I_{Cr}\}` be the set of the compartments that can be divided into subcompartments.
 
-.. image:: https://github.com/SciCompMod/memilio/assets/70579874/e1da5e1d-e719-4c16-9f14-45374be7c353
-   :alt: equations
+.. math::  
+
+    \begin{align*}
+        %--- Equation 1: S(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}S(t) &= -\frac{S(t)}{N(t)}\,\rho(t)\,\phi(t)
+            \Bigl(
+                \xi_{I_{NS}}(t)\,\mathbf{I}_{NS}(t)^{T}\boldsymbol{\Bbb{1}}
+                + \xi_{I_{Sy}}(t)\,\mathbf{I}_{Sy}(t)^{T}\boldsymbol{\Bbb{1}}
+            \Bigr)
+        \\[8pt]
+        %--- Equation 2: E(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}\mathbf{E}(t) &= \boldsymbol{\alpha}_{E}\,\frac{S(t)}{N(t)}\,\rho(t)\,\phi(t)
+            \Bigl(
+                \xi_{I_{NS}}(t)\,\mathbf{I}_{NS}(t)^{T}\boldsymbol{\Bbb{1}}
+                + \xi_{I_{Sy}}(t)\,\mathbf{I}_{Sy}(t)^{T}\boldsymbol{\Bbb{1}}
+            \Bigr)
+            + \mathbf{A}_{E}^{T}\mathbf{E}(t)
+        \\[8pt]
+        %--- Equation 3: I_NS(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}\mathbf{I}_{NS}(t) &= -\boldsymbol{\alpha}_{I_{NS}}
+            \bigl(\mathbf{A}_{E}\,\boldsymbol{\Bbb{1}}\bigr)^{T}\mathbf{E}(t)
+            +
+            \begin{bmatrix}
+                \mathbf{A}_{I_{NS}}^{I_{Sy}\;T}\,\mathbf{I}_{NS}^{I_{Sy}}(t) \\[4pt]
+                \mathbf{A}_{I_{NS}}^{R\;T}\,\mathbf{I}_{NS}^{R}(t)
+            \end{bmatrix}
+        \\[8pt]
+        %--- Equation 4: I_Sy(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}\mathbf{I}_{Sy}(t) &= -\boldsymbol{\alpha}_{I_{Sy}}
+            \bigl(\mathbf{A}_{I_{NS}}^{I_{Sy}}\,\boldsymbol{\Bbb{1}}\bigr)^{T}\mathbf{I}_{NS}^{I_{Sy}}(t)
+            +
+            \begin{bmatrix}
+                \mathbf{A}_{I_{Sy}}^{I_{Sev}\;T}\,\mathbf{I}_{Sy}^{I_{Sev}}(t) \\[4pt]
+                \mathbf{A}_{I_{Sy}}^{R\;T}\,\mathbf{I}_{Sy}^{R}(t)
+            \end{bmatrix}
+        \\[8pt]
+        %--- Equation 5: I_Sev(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}\mathbf{I}_{Sev}(t) &= -\boldsymbol{\alpha}_{I_{Sev}}
+            \bigl(\mathbf{A}_{I_{Sy}}^{I_{Sev}}\,\boldsymbol{\Bbb{1}}\bigr)^{T}\mathbf{I}_{Sy}^{I_{Sev}}(t)
+            +
+            \begin{bmatrix}
+                \mathbf{A}_{I_{Sev}}^{I_{Crit}\;T}\,\mathbf{I}_{Sev}^{I_{Crit}}(t) \\[4pt]
+                \mathbf{A}_{I_{Sev}}^{D\;T}\,\mathbf{I}_{Sev}^{D}(t) \\[4pt]
+                \mathbf{A}_{I_{Sev}}^{R\;T}\,\mathbf{I}_{Sev}^{R}(t)
+            \end{bmatrix}
+        \\[8pt]
+        %--- Equation 6: I_Crit(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}\mathbf{I}_{Crit}(t) &= -\boldsymbol{\alpha}_{I_{Crit}}
+            \bigl(\mathbf{A}_{I_{Sev}}^{I_{Crit}}\,\boldsymbol{\Bbb{1}}\bigr)^{T}\mathbf{I}_{Sev}^{I_{Crit}}(t)
+            +
+            \begin{bmatrix}
+                \mathbf{A}_{I_{Crit}}^{D\;T}\,\mathbf{I}_{Crit}^{D}(t) \\[4pt]
+                \mathbf{A}_{I_{Crit}}^{R\;T}\,\mathbf{I}_{Crit}^{R}(t)
+            \end{bmatrix}
+        \\[8pt]
+        %--- Equation 7: R(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}R(t) &=
+            -\bigl(\mathbf{A}_{I_{NS}}^{R}\,\boldsymbol{\Bbb{1}}\bigr)^{T}\mathbf{I}_{NS}^{R}(t)
+            -\bigl(\mathbf{A}_{I_{Sy}}^{R}\,\boldsymbol{\Bbb{1}}\bigr)^{T}\mathbf{I}_{Sy}^{R}(t)
+            -\bigl(\mathbf{A}_{I_{Sev}}^{R}\,\boldsymbol{\Bbb{1}}\bigr)^{T}\mathbf{I}_{Sev}^{R}(t)
+            -\bigl(\mathbf{A}_{I_{Crit}}^{R}\,\boldsymbol{\Bbb{1}}\bigr)^{T}\mathbf{I}_{Crit}^{R}(t)
+        \\[8pt]
+        %--- Equation 8: D(t) ---
+        \frac{\textnormal{d}}{\textnormal{d} t}D(t) &=  -\bigl(\mathbf{A}_{I_{Sev}}^{D}\,\boldsymbol{\Bbb{1}}\bigr)^{T}\mathbf{I}_{Sev}^{D}(t)
+            -\bigl(\mathbf{A}_{I_{Crit}}^{D}\,\boldsymbol{\Bbb{1}}\bigr)^{T}\mathbf{I}_{Crit}^{D}(t)
+            \\[2pt]
+    \end{align*}
 
 Note that the bold notation :math:`\mathbf{z}(t)` for :math:`z \in \mathcal{Z}` stands for a vector. If several transitions are possible from a compartment, the vector is split in order to be able to select the stay times until the transitions individually. For example, the order
 
@@ -80,9 +145,21 @@ Note that the bold notation :math:`\mathbf{z}(t)` for :math:`z \in \mathcal{Z}` 
    \mathbf{I_{\text{NS}}^{\text{R}}}(t)
    \end{bmatrix}
 
-is used. Similar holds true for the other compartments :math:`z \in \mathcal{Z}`.
+is used. Similar holds true for the other compartments :math:`z \in \mathcal{Z}`. In particular, we have three transitions 
+originating from the InfectedSevere compartment and the vector is given by
 
-Implicitly, the matrices :math:`\mathbf{A_{z}^{*}}` for one :math:`z \in \mathcal{Z}` are a block of a matrix :math:`\mathbf{A_{z}}` corresponding to the whole vector :math:`\mathbf{z}(t)`. As we have no transitions in between the strains defined for different transition probabilities, we would have many zeros in the matrix. The matrix can be defined as
+.. math::
+
+   \mathbf{I_{\text{Sev}}}(t) = \begin{bmatrix}
+   \mathbf{I_{\text{Sev}}^{\text{Cr}}}(t) \\
+   \mathbf{I_{\text{Sev}}^{\text{D}}}(t) \\
+   \mathbf{I_{\text{Sev}}^{\text{R}}}(t)
+   \end{bmatrix}.
+
+Implicitly, the matrices :math:`\mathbf{A_{z}^{*}}` for one :math:`z \in \mathcal{Z}` are a block of a matrix 
+:math:`\mathbf{A_{z}}` corresponding to the whole vector :math:`\mathbf{z}(t)`. As we have no transitions in between 
+the strains defined for different transition probabilities, we would have many zeros in the matrix. The matrix can be 
+defined as
 
 .. math::
 
@@ -92,7 +169,11 @@ Implicitly, the matrices :math:`\mathbf{A_{z}^{*}}` for one :math:`z \in \mathca
    \mathbf{0} &  \mathbf{A_{z}^{*_2}}
    \end{bmatrix},
 
-where :math:`{*}_{1}` is the compartment of the first transition, e.g., :math:`I_{\text{Sy}}` for :math:`z=I_{\text{NS}}` and :math:`*_{2}` the compartment of the second possible transition, e.g., :math:`R`. Therefore, we just store the non-zero blocks of the matrix. Using these parameters, the phase-type distribution that defines the stay time in compartment :math:`z \in \mathcal{Z}` has the probability density function
+where :math:`{*}_{1}` is the compartment of the first transition, e.g., :math:`I_{\text{Sy}}` for 
+:math:`z=I_{\text{NS}}` and :math:`*_{2}` the compartment of the second possible transition, e.g., :math:`R`. 
+Therefore, we just store the non-zero blocks of the matrix. The number of non-zero blocks corresponds to the number of 
+strains originating from the considered compartment. Using these parameters, the phase-type distribution that defines 
+the stay time in compartment :math:`z \in \mathcal{Z}` has the probability density function
 
 .. math::
 
@@ -124,15 +205,15 @@ Note that in the GLCT model, we define two strains for the compartments `Infecte
 
 .. code-block:: cpp
 
-    constexpr size_t NumExposed = 2, NumInfectedNoSymptoms = 6, NumInfectedSymptoms = 2, NumInfectedSevere = 2,
-                    NumInfectedCritical = 10;
-    using Model    = mio::glsecir::Model<NumExposed, NumInfectedNoSymptoms, NumInfectedSymptoms, NumInfectedSevere,
-                                    NumInfectedCritical>;
-    using LctState = Model::LctState;
+    constexpr size_t NumExposed = 2, NumInfectedNoSymptoms = 6, NumInfectedSymptoms = 2, NumInfectedSevere = 3,
+                     NumInfectedCritical = 10;
+    using Model          = mio::glsecir::Model<ScalarType, NumExposed, NumInfectedNoSymptoms, NumInfectedSymptoms,
+                                               NumInfectedSevere, NumInfectedCritical>;
+    using LctState       = Model::LctState;
     using InfectionState = LctState::InfectionState;
 
     Model model;
-
+    
 We continue by defining some epidemiological parameters needed throughout the model definition and initialization.
 
 .. code-block:: cpp
@@ -145,6 +226,7 @@ We continue by defining some epidemiological parameters needed throughout the mo
     const ScalarType recoveredPerInfectedNoSymptoms = 0.09;
     const ScalarType severePerInfectedSymptoms      = 0.2;
     const ScalarType criticalPerSevere              = 0.25;
+    const ScalarType deathsPerSevere                = 0.;
     const ScalarType deathsPerCritical              = 0.3;
 
 Now, we define the initial values with the distribution of the population into subcompartments. Note that this method of defining the initial values using a vector of vectors is not necessary, but should show how the entries of the initial value vector relate to the defined template parameters of the model or the number of subcompartments. It is also possible to define the initial values directly.
@@ -164,13 +246,14 @@ We continue by defining some epidemiological parameters needed throughout the mo
         {750}, // Susceptible
         {30, 20}, // Exposed
         {20 * (1 - recoveredPerInfectedNoSymptoms), 10 * (1 - recoveredPerInfectedNoSymptoms), // InfectedNoSymptoms
-        10 * (1 - recoveredPerInfectedNoSymptoms), 20 * recoveredPerInfectedNoSymptoms,
-        10 * recoveredPerInfectedNoSymptoms, 10 * recoveredPerInfectedNoSymptoms},
+         10 * (1 - recoveredPerInfectedNoSymptoms), 20 * recoveredPerInfectedNoSymptoms,
+         10 * recoveredPerInfectedNoSymptoms, 10 * recoveredPerInfectedNoSymptoms},
         {50 * severePerInfectedSymptoms, 50 * (1 - severePerInfectedSymptoms)}, // InfectedSymptoms
-        {50 * criticalPerSevere, 50 * (1 - criticalPerSevere)}, // InfectedSevere
-        {10 * deathsPerCritical, 10 * deathsPerCritical, 5 * deathsPerCritical, 3 * deathsPerCritical, // InfectedCritical
-        2 * deathsPerCritical, 10 * (1 - deathsPerCritical), 10 * (1 - deathsPerCritical), 5 * (1 - deathsPerCritical),
-        3 * (1 - deathsPerCritical), 2 * (1 - deathsPerCritical)},
+        {50 * criticalPerSevere, 50 * deathsPerSevere, 50 * (1 - criticalPerSevere - deathsPerSevere)}, // InfectedSevere
+        {10 * deathsPerCritical, 10 * deathsPerCritical, 5 * deathsPerCritical,
+         3 * deathsPerCritical, // InfectedCritical
+         2 * deathsPerCritical, 10 * (1 - deathsPerCritical), 10 * (1 - deathsPerCritical), 5 * (1 - deathsPerCritical),
+         3 * (1 - deathsPerCritical), 2 * (1 - deathsPerCritical)},
         {20}, // Recovered
         {10}}; // Dead
 
@@ -183,18 +266,18 @@ Below, we assert that ``initial_populations`` has the right shape.
         return 1;
     }
     if ((initial_populations[(size_t)InfectionState::Susceptible].size() !=
-        LctState::get_num_subcompartments<InfectionState::Susceptible>()) ||
+         LctState::get_num_subcompartments<InfectionState::Susceptible>()) ||
         (initial_populations[(size_t)InfectionState::Exposed].size() != NumExposed) ||
         (initial_populations[(size_t)InfectionState::InfectedNoSymptoms].size() != NumInfectedNoSymptoms) ||
         (initial_populations[(size_t)InfectionState::InfectedSymptoms].size() != NumInfectedSymptoms) ||
         (initial_populations[(size_t)InfectionState::InfectedSevere].size() != NumInfectedSevere) ||
         (initial_populations[(size_t)InfectionState::InfectedCritical].size() != NumInfectedCritical) ||
         (initial_populations[(size_t)InfectionState::Recovered].size() !=
-        LctState::get_num_subcompartments<InfectionState::Recovered>()) ||
+         LctState::get_num_subcompartments<InfectionState::Recovered>()) ||
         (initial_populations[(size_t)InfectionState::Dead].size() !=
-        LctState::get_num_subcompartments<InfectionState::Dead>())) {
+         LctState::get_num_subcompartments<InfectionState::Dead>())) {
         mio::log_error("The length of at least one vector in initial_populations does not match the related number of "
-                    "subcompartments.");
+                       "subcompartments.");
         return 1;
     }
 
@@ -209,7 +292,6 @@ Finally, we transfer the initial values in ``initial_populations`` to the model.
     for (size_t i = 0; i < LctState::Count; i++) {
         model.populations[mio::Index<LctState>(i)] = flat_initial_populations[i];
     }
-
 
 Since we want to recreate the LCT model as defined in the corresponding example, we set the parameters determining the transition distributions such that we obtain Erlang distributions. 
 
@@ -226,18 +308,17 @@ The get_default of the ``StartingProbabilities(...)`` returns the first unit vec
 
 .. code-block:: cpp
 
-    model.parameters.get<mio::glsecir::StartingProbabilitiesExposed>() =
-        mio::glsecir::StartingProbabilitiesExposed().get_default(
+    model.parameters.get<mio::glsecir::StartingProbabilitiesExposed<ScalarType>>() =
+        mio::glsecir::StartingProbabilitiesExposed<ScalarType>().get_default(
             LctState::get_num_subcompartments<InfectionState::Exposed>());
 
 The get_default function returns the ``TransitionMatrix`` that is required to have an Erlang-distributed stay time with an average of timeExposed.
 
 .. code-block:: cpp
 
-    model.parameters.get<mio::glsecir::TransitionMatrixExposedToInfectedNoSymptoms>() =
-        mio::glsecir::TransitionMatrixExposedToInfectedNoSymptoms().get_default(
-            LctState::get_num_subcompartments<InfectionState::Exposed>(), timeExposed);
-    
+    model.parameters.get<mio::glsecir::TransitionMatrixExposedToInfectedNoSymptoms<ScalarType>>() =
+        mio::glsecir::TransitionMatrixExposedToInfectedNoSymptoms<ScalarType>().get_default(
+            LctState::get_num_subcompartments<InfectionState::Exposed>(), timeExposed);    
 
 We continue with the compartment `InfectedNoSymptoms`. For InfectedNoSymptoms, two strains have to be defined, one for the transition `InfectedNoSymptomsToInfectedSymptoms` and one for the transition `InfectedNoSymptomsToRecovered`.
 The strains have a length of ``NumInfectedNoSymptoms/2`` each as we choose the same number of subcompartments for both strains. Note that the transition probability is included in the vector ``StartingProbabilitiesInfectedNoSymptoms``.
@@ -249,19 +330,19 @@ The strains have a length of ``NumInfectedNoSymptoms/2`` each as we choose the s
     StartingProbabilitiesInfectedNoSymptoms[0] = 1 - recoveredPerInfectedNoSymptoms;
     StartingProbabilitiesInfectedNoSymptoms[(Eigen::Index)(
         LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>() / 2.)] = recoveredPerInfectedNoSymptoms;
-    model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedNoSymptoms>() =
+    model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedNoSymptoms<ScalarType>>() =
         StartingProbabilitiesInfectedNoSymptoms;
 
 Equal transition matrices for the strains have to be defined. They follow the same Erlang distribution such that we get the same result as with the LCT model that can only consider one strain.
 
 .. code-block:: cpp
 
-    model.parameters.get<mio::glsecir::TransitionMatrixInfectedNoSymptomsToInfectedSymptoms>() =
-        mio::glsecir::TransitionMatrixInfectedNoSymptomsToInfectedSymptoms().get_default(
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedNoSymptomsToInfectedSymptoms<ScalarType>>() =
+        mio::glsecir::TransitionMatrixInfectedNoSymptomsToInfectedSymptoms<ScalarType>().get_default(
             (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>() / 2.),
             timeInfectedNoSymptoms);
-    model.parameters.get<mio::glsecir::TransitionMatrixInfectedNoSymptomsToRecovered>() =
-        mio::glsecir::TransitionMatrixInfectedNoSymptomsToRecovered().get_default(
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedNoSymptomsToRecovered<ScalarType>>() =
+        mio::glsecir::TransitionMatrixInfectedNoSymptomsToRecovered<ScalarType>().get_default(
             (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>() / 2.),
             timeInfectedNoSymptoms);
 
@@ -275,12 +356,13 @@ We proceed analogously for the remaining compartments `InfectedSymptoms`, `Infec
     StartingProbabilitiesInfectedSymptoms[0]                                         = severePerInfectedSymptoms;
     StartingProbabilitiesInfectedSymptoms[(Eigen::Index)(
         LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>() / 2.)] = 1 - severePerInfectedSymptoms;
-    model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedSymptoms>() = StartingProbabilitiesInfectedSymptoms;
-    model.parameters.get<mio::glsecir::TransitionMatrixInfectedSymptomsToInfectedSevere>() =
-        mio::glsecir::TransitionMatrixInfectedSymptomsToInfectedSevere().get_default(
+    model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedSymptoms<ScalarType>>() =
+        StartingProbabilitiesInfectedSymptoms;
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedSymptomsToInfectedSevere<ScalarType>>() =
+        mio::glsecir::TransitionMatrixInfectedSymptomsToInfectedSevere<ScalarType>().get_default(
             (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>() / 2.), timeInfectedSymptoms);
-    model.parameters.get<mio::glsecir::TransitionMatrixInfectedSymptomsToRecovered>() =
-        mio::glsecir::TransitionMatrixInfectedSymptomsToRecovered().get_default(
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedSymptomsToRecovered<ScalarType>>() =
+        mio::glsecir::TransitionMatrixInfectedSymptomsToRecovered<ScalarType>().get_default(
             (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>() / 2.), timeInfectedSymptoms);
 
     // InfectedSevere.
@@ -288,14 +370,21 @@ We proceed analogously for the remaining compartments `InfectedSymptoms`, `Infec
         Eigen::VectorX<ScalarType>::Zero(LctState::get_num_subcompartments<InfectionState::InfectedSevere>());
     StartingProbabilitiesInfectedSevere[0]                                         = criticalPerSevere;
     StartingProbabilitiesInfectedSevere[(Eigen::Index)(
-        LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.)] = 1 - criticalPerSevere;
-    model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedSevere>() = StartingProbabilitiesInfectedSevere;
-    model.parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToInfectedCritical>() =
-        mio::glsecir::TransitionMatrixInfectedSevereToInfectedCritical().get_default(
-            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.), timeInfectedSevere);
-    model.parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToRecovered>() =
-        mio::glsecir::TransitionMatrixInfectedSevereToRecovered().get_default(
-            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.), timeInfectedSevere);
+        LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 3.)] = deathsPerSevere;
+    StartingProbabilitiesInfectedSevere[2 * (Eigen::Index)(
+                                                LctState::get_num_subcompartments<InfectionState::InfectedSevere>() /
+                                                3.)] = 1 - criticalPerSevere - deathsPerSevere;
+    model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedSevere<ScalarType>>() =
+        StartingProbabilitiesInfectedSevere;
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToInfectedCritical<ScalarType>>() =
+        mio::glsecir::TransitionMatrixInfectedSevereToInfectedCritical<ScalarType>().get_default(
+            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 3.), timeInfectedSevere);
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToDead<ScalarType>>() =
+        mio::glsecir::TransitionMatrixInfectedSevereToDead<ScalarType>().get_default(
+            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 3.), timeInfectedSevere);
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToRecovered<ScalarType>>() =
+        mio::glsecir::TransitionMatrixInfectedSevereToRecovered<ScalarType>().get_default(
+            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 3.), timeInfectedSevere);
 
     // InfectedCritical.
     Eigen::VectorX<ScalarType> StartingProbabilitiesInfectedCritical =
@@ -303,16 +392,15 @@ We proceed analogously for the remaining compartments `InfectedSymptoms`, `Infec
     StartingProbabilitiesInfectedCritical[0]                                         = deathsPerCritical;
     StartingProbabilitiesInfectedCritical[(Eigen::Index)(
         LctState::get_num_subcompartments<InfectionState::InfectedCritical>() / 2.)] = 1 - deathsPerCritical;
-    model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedCritical>() = StartingProbabilitiesInfectedCritical;
-    model.parameters.get<mio::glsecir::TransitionMatrixInfectedCriticalToDead>() =
-        mio::glsecir::TransitionMatrixInfectedCriticalToDead().get_default(
+    model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedCritical<ScalarType>>() =
+        StartingProbabilitiesInfectedCritical;
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedCriticalToDead<ScalarType>>() =
+        mio::glsecir::TransitionMatrixInfectedCriticalToDead<ScalarType>().get_default(
             (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedCritical>() / 2.), timeInfectedCritical);
-    model.parameters.get<mio::glsecir::TransitionMatrixInfectedCriticalToRecovered>() =
-        mio::glsecir::TransitionMatrixInfectedCriticalToRecovered().get_default(
+    model.parameters.get<mio::glsecir::TransitionMatrixInfectedCriticalToRecovered<ScalarType>>() =
+        mio::glsecir::TransitionMatrixInfectedCriticalToRecovered<ScalarType>().get_default(
             (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedCritical>() / 2.), timeInfectedCritical);
 
-
-.. _Nonpharmaceutical Interventions:
 Nonpharmaceutical Interventions
 -------------------------------
 
@@ -325,24 +413,24 @@ Basic dampings can be added to the contact matrix as follows:
 
     // Create a contact matrix with constant contact rates between all groups.
     ScalarType cont_freq = 10.;
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
-    
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.get<mio::glsecir::ContactPatterns<ScalarType>>();
+    contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, cont_freq));
+
     // Add a uniform damping across all age groups.
-    contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime<ScalarType>(30.));
 
 For age-resolved models, you can apply different dampings to different groups:
 
 .. code-block:: cpp
 
     ScalarType cont_freq = 10.;
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, cont_freq));
-    
+    contact_matrix[0] =
+        mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(num_agegroups, num_agegroups, cont_freq));
+
     // Add a damping that reduces contacts within the same age group by 70% starting at day 30.
-    contact_matrix.add_damping(Eigen::VectorX<ScalarType>::Constant(num_agegroups, 0.7).asDiagonal(),
-                             mio::SimulationTime(30.));
-
-
+    Eigen::MatrixX<ScalarType> damping_matrix = Eigen::VectorX<ScalarType>::Constant(num_agegroups, 0.7).asDiagonal();
+    contact_matrix.add_damping(damping_matrix, mio::SimulationTime<ScalarType>(30.));
 
 For more complex scenarios, such as real-world venue closures or lockdown modeling, you can implement detailed NPIs with location-specific dampings. The GLCT-SECIR model supports contact matrices for different locations (e.g., home, school, work, other) and can apply different dampings to each location.
 
@@ -400,46 +488,48 @@ Simulating the model from :math:`t_0` to :math:`t_{\max}` with initial step size
 
 .. code-block:: cpp
 
-    const ScalarType t0      = 0;
-    const ScalarType tmax    = 10;
-    const ScalarType dt_init = 10;
-        mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(t0, tmax, dt_init, model);
+    const ScalarType t0                = 0;
+    const ScalarType tmax              = 10;
+    const ScalarType dt_init           = 10;
+    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(t0, tmax, dt_init, model);
 
 You can also specify a custom integrator:
 
 .. code-block:: cpp
 
-    auto integrator = std::make_unique<mio::RKIntegratorCore>();
+    auto integrator = std::make_unique<mio::RKIntegratorCore<ScalarType>>();
     integrator->set_dt_min(0.3);
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
-    
-    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(t0, tmax, dt, model, std::move(integrator));
+
+    mio::TimeSeries<ScalarType> result =
+        mio::simulate<ScalarType, Model>(t0, tmax, dt_init, model, std::move(integrator));
 
 Output
 ------
 
-The simulation result is divided by subcompartments. The function ``calculate_compartments()`` aggregates the subcompartments by `InfectionState`\s .
+The simulation result is divided by subcompartments. The function ``calculate_compartments()`` aggregates the subcompartments by infection states .
 
 .. code-block:: cpp
 
     mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_compartments(result);
 
-You can access the data in the `mio::TimeSeries` object as follows:
+You can access the data in the ``TimeSeries`` object as follows:
 
 .. code-block:: cpp
 
     // Get the number of time points.
     auto num_points = static_cast<size_t>(result.get_num_time_points());
-    
-    // Access data at a specific time point.
-    Eigen::VectorX value_at_time_i = result.get_value(i);
-    ScalarType time_i = result.get_time(i);
-    
+
+    // Access data at a specific time point, e.g. i=0.
+    size_t i                                   = 0;
+    Eigen::VectorX<ScalarType> value_at_time_i = result.get_value(i);
+    ScalarType time_i                          = result.get_time(i);
+
     // Access the last time point.
-    Eigen::VectorX last_value = result.get_last_value();
-    ScalarType last_time = result.get_last_time();
+    Eigen::VectorX<ScalarType> last_value = result.get_last_value();
+    ScalarType last_time                  = result.get_last_time();
 
 
 You can print the simulation results as a formatted table:
@@ -448,7 +538,7 @@ You can print the simulation results as a formatted table:
 
     // Print results to console with default formatting.
     result.print_table();
-    
+
     // Print with custom column labels.
     std::vector<std::string> labels = {"S", "E", "C", "I", "H", "U", "R", "D"};
     result.print_table(labels);
@@ -458,7 +548,7 @@ Additionally, you can export the results to a CSV file:
 .. code-block:: cpp
 
     // Export results to CSV with default settings.
-    result.export_csv("simulation_results.csv");
+    auto export_status = result.export_csv("simulation_results.csv");
 
 
 Visualization
@@ -474,8 +564,4 @@ An example can be found at:
 
 - `examples/glct_secir.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/glct_secir.cpp>`_ 
 
-
-Overview of the ``glsecir`` namespace:
---------------------------------------
-
-.. doxygennamespace:: mio::glsecir
+The code documentation for the model can be found at :CPP-API:`mio::glsecir` .
