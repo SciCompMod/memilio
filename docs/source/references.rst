@@ -12,16 +12,15 @@ Recently submitted publications
 
 - |Traveler_estimation|
 
-- |Coupled_Epidemiological_and_Wastewater|
-
-- |Differentially_private_federated_learning|
-
-
 
 Peer-reviewed publications
 --------------------------
 
 **2026**
+
+- |Coupled_Epidemiological_and_Wastewater|
+
+- |Differentially_private_federated_learning|
 
 - |Missing_Transmission_Chains|
 
