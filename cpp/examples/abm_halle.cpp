@@ -19,10 +19,7 @@
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/random_number_generator.h"
-// #include "pybind_util.h"
-// #include "utils/custom_index_array.h"
-// #include "utils/parameter_set.h"
-// #include "utils/index.h"
+
 #include "abm/simulation.h"
 #include "abm/household.h"
 #include "abm/personal_rng.h"
@@ -30,13 +27,7 @@
 #include "boost/algorithm/string/split.hpp"
 #include "boost/algorithm/string/classification.hpp"
 #include "memilio/io/hdf5_cpp.h"
-// #include "munich_postprocessing/output_processing.h"
 
-
-// #include "pybind11/attr.h"
-// #include "pybind11/cast.h"
-// #include "pybind11/pybind11.h"
-// #include "pybind11/operators.h"
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
@@ -57,69 +48,90 @@
 
 #include <chrono>
 
-struct LogLocationInformation : mio::LogOnce {
-    using Type = std::vector<
-        std::tuple<mio::abm::LocationId, mio::abm::LocationType,
-                   mio::geo::GeographicalLocation, size_t, int>>;
-    // returns, for every location: id, type, geo-location, number of cells, capacity
-};
+// struct LogLocationInformation : mio::LogOnce {
+//     using Type = std::vector<
+//         std::tuple<mio::abm::LocationId, mio::abm::LocationType,
+//                    mio::geo::GeographicalLocation, size_t, int>>;
+//     // returns, for every location: id, type, geo-location, number of cells, capacity
+// };
 
-int stringToMinutes(const std::string& input)
+// int stringToMinutes(const std::string& input)
+// {
+//     size_t colonPos = input.find(":");
+//     if (colonPos == std::string::npos) {
+//         // Handle invalid input (no colon found)
+//         return -1; // You can choose a suitable error code here.
+//     }
+    
+//     std::string xStr = input.substr(0, colonPos);
+//     std::string yStr = input.substr(colonPos + 1);
+    
+//     int x = std::stoi(xStr);
+//     int y = std::stoi(yStr);
+//     return x * 60 + y;
+// }
+
+// int longLatToInt(const std::string& input)
+// {
+//     double y = std::stod(input) * 1e+5; //we want the 5 numbers after digit
+//     return (int)y;
+// }
+
+std::string convert_loc_id_to_string(std::tuple<mio::abm::LocationType, uint32_t> tuple_id)
 {
-    size_t colonPos = input.find(":");
-    if (colonPos == std::string::npos) {
-        // Handle invalid input (no colon found)
-        return -1; // You can choose a suitable error code here.
+    return std::to_string(static_cast<std::uint32_t>(std::get<0>(tuple_id))) + "_" +
+           std::to_string(std::get<1>(tuple_id));
+}
+
+template <typename T>
+void write_log_to_file(const T& history)
+{
+    auto logg = history.get_log();
+    // Write the results to a file.
+    auto loc_id      = std::get<1>(logg);
+    auto time_points = std::get<0>(logg);
+
+    std::ofstream myfile(mio::create_directories_or_exit(mio::example_results_dir("abm_history_object")) /
+                         "test_output.txt");
+
+    myfile << "Locations as numbers:\n";
+    if (!loc_id.empty() && !loc_id[0].empty()) {
+        for (auto&& id : loc_id[0]) {
+            myfile << convert_loc_id_to_string(id) << "\n";
+        }
     }
-    
-    std::string xStr = input.substr(0, colonPos);
-    std::string yStr = input.substr(colonPos + 1);
-    
-    int x = std::stoi(xStr);
-    int y = std::stoi(yStr);
-    return x * 60 + y;
+    else {
+        myfile << "(no location data)\n";
+    }
+
+    myfile << "Timepoints:\n";
+    std::string input;
+    for (auto&& t : time_points) {
+        input += std::to_string(t) + " ";
+    }
+    myfile << input << "\n";
+
+    myfile.close();
 }
 
-int longLatToInt(const std::string& input)
-{
-    double y = std::stod(input) * 1e+5; //we want the 5 numbers after digit
-    return (int)y;
-}
 
 void split_line(std::string string, std::vector<int32_t>* row)
 {
     std::vector<std::string> strings;
     boost::split(strings, string, boost::is_any_of(","));
     std::transform(strings.begin(), strings.end(), std::back_inserter(*row), [&](std::string s) {
-        if (s.find(":") != std::string::npos) {
-            return stringToMinutes(s);
-        }
-        else if (s.find(".") != std::string::npos) {
-            return longLatToInt(s);
-        }
-        else {
-            return std::stoi(s);
-        }
+        // if (s.find(":") != std::string::npos) {
+            // return stringToMinutes(s);
+        // }
+        // else if (s.find(".") != std::string::npos) {
+            // return longLatToInt(s);
+        // }
+        // else {
+        return std::stoi(s);
+        // }
     });
 }
 
-void write_mapping_to_file(std::string filename, std::map<int, std::vector<std::string>>& mapping)
-{
-    auto file = fopen(filename.c_str(), "w");
-    if (file == NULL) {
-        mio::log(mio::LogLevel::warn, "Could not open file {}", filename);
-    }
-    else {
-        for (auto it = mapping.begin(); it != mapping.end(); it++) {
-            fprintf(file, "%d", it->first);
-            for (auto s : it->second) {
-                fprintf(file, " %s", s.c_str());
-            }
-            fprintf(file, "\n");
-        }
-        fclose(file);
-    }
-}
 
 mio::AgeGroup determine_age_group(uint32_t age)
 {
@@ -286,7 +298,7 @@ void initialize_model(mio::abm::Model& model, std::string person_file, std::stri
         person.set_assigned_location(mio::abm::LocationType::Home, home,model.get_id());
         // model.get_location(home).increase_size();
 
-        int shop_id   = row[index["shop_id"]];
+        int shop_id   = row[index["shopping_id"]];
 
         mio::abm::LocationId shop;
 
@@ -328,7 +340,8 @@ void initialize_model(mio::abm::Model& model, std::string person_file, std::stri
         // model.get_location(event).increase_size();
 
         // Check if person is school-aged
-        if (person.get_age() == mio::AgeGroup(4) || person.get_age() == mio::AgeGroup(5) || person.get_age() == mio::AgeGroup(6) || person.get_age() == mio::AgeGroup(7)) {
+        // if (0) {
+        if (person.get_age() == mio::AgeGroup(1) || person.get_age() == mio::AgeGroup(2) || person.get_age() == mio::AgeGroup(3)) {
             int school_id   = row[index["school_id"]];
 
             mio::abm::LocationId school;
@@ -375,7 +388,8 @@ void initialize_model(mio::abm::Model& model, std::string person_file, std::stri
             // model.get_location(school).increase_size();
         }
         // Check if person is work-aged
-        if (person.get_age() == mio::AgeGroup(2) || person.get_age() == mio::AgeGroup(3)) {
+        // if (1) {
+        if (person.get_age() == mio::AgeGroup(4) || person.get_age() == mio::AgeGroup(5) || person.get_age() == mio::AgeGroup(6) || person.get_age() == mio::AgeGroup(7)) {
             int work_id   = row[index["work_id"]];
 
             mio::abm::LocationId work;
@@ -440,35 +454,6 @@ void initialize_model(mio::abm::Model& model, std::string person_file, std::stri
     }
 }
 
-std::string convert_loc_id_to_string(std::tuple<mio::abm::LocationType, uint32_t> tuple_id)
-{
-    return std::to_string(static_cast<std::uint32_t>(std::get<0>(tuple_id))) + "_" +
-           std::to_string(std::get<1>(tuple_id));
-}
-
-template <typename T>
-void write_log_to_file(const T& history)
-{
-    auto logg = history.get_log();
-    // Write the results to a file.
-    auto loc_id      = std::get<1>(logg);
-    auto time_points = std::get<0>(logg);
-    std::string input;
-    std::ofstream myfile(mio::create_directories_or_exit(mio::example_results_dir("abm_history_object")) /
-                         "test_output.txt");
-    myfile << "Locations as numbers:\n";
-    for (auto&& id : loc_id[0]) {
-        myfile << convert_loc_id_to_string(id) << "\n";
-    }
-    myfile << "Timepoints:\n";
-
-    for (auto&& t : time_points) {
-        input += std::to_string(t) + " ";
-    }
-    myfile << input << "\n";
-
-    myfile.close();
-}
 
 
 int main()
@@ -480,10 +465,6 @@ int main()
     using mio::timing::AutoTimer;
     using mio::timing::TimerRegistrar;
     AutoTimer<"main"> timer_ms;
-
-
-    std::cout << "Start" << "\n";
-    auto start = std::chrono::high_resolution_clock::now();
 
     // ------------------------------------
     // ------------ Model Init ------------
@@ -498,9 +479,8 @@ int main()
     std::string path = "/localdata2/wulf_ka/memilio/cpp/examples/df_abm.csv";
     // std::string path = "/localdata2/wulf_ka/memilio/cpp/examples/df_abm_short.csv";
     // std::string path = "/home/wulf_ka/home/abm/memilio/cpp/examples/df_abm_is_my_code_even_running.csv";
-    std::string out  = "/home/wulf_ka/home/abm/memilio/cpp/examples/out";
     
-    initialize_model(model, path, path_hosp, 500000,500000);
+    initialize_model(model, path, path_hosp, 50,45);
 
     // -------------------------------------
     // ------------ Model Param ------------
@@ -508,13 +488,7 @@ int main()
 
     // Set same infection parameter for all age groups. For example, the incubation period is log normally distributed with parameters 4 and 1.
     model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() = mio::ParameterDistributionLogNormal(4., 1.);
-
-    auto end_init = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_init = end_init - start;
-    std::cout << "Time for init: " << elapsed_init.count() << " seconds\n";
-
     model.parameters.check_constraints();
-
 
     // Increase aerosol transmission for all locations
     model.parameters.get<mio::abm::AerosolTransmissionRates>() = 5.0;
@@ -544,21 +518,6 @@ int main()
         }
     }
 
-
-    // -----------------------------------
-    // ------------ Run Model ------------
-    // -----------------------------------
-
-    // Set start and end time for the simulation.
-    auto t0   = mio::abm::TimePoint(0);
-    auto tmax = t0 + mio::abm::days(10);
-    auto sim  = mio::abm::Simulation(t0, std::move(model));
-
-    // Create a history object to store the time series of the infection states.
-    mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
-        Eigen::Index(mio::abm::InfectionState::Count)};
-
-
     // -------------------------------------------------
     // ------------ Location History Object ------------
     // -------------------------------------------------
@@ -583,29 +542,40 @@ int main()
     
     mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds> history;
 
-    std::cout << "1" << std::endl;  
+    // Create a history object to store the time series of the infection states.
+    mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
+        Eigen::Index(mio::abm::InfectionState::Count)};
+
+    // -----------------------------------
+    // ------------ Run Model ------------
+    // -----------------------------------
+
+    // Set start and end time for the simulation.
+    auto t0   = mio::abm::TimePoint(0);
+    auto tmax = t0 + mio::abm::days(10);
+    auto sim  = mio::abm::Simulation(t0, std::move(model));
+
     // Run the simulation until tmax with the history object.
     {
     AutoTimer<"advance"> adv_timer_ms;
-    sim.advance(tmax, history);
+    sim.advance(tmax, historyTimeSeries);
     }
 
-    write_log_to_file(history);
-    
-    std::cout << "2" << std::endl;  
 
-    
+    // -------------------------------------------
+    // ------------ write log to file ------------
+    // -------------------------------------------
+
+
+    // history sammelt die Locations die im ABM genutzt werden
+    write_log_to_file(history);
+
     // Write results to a file. Also print the filepath to make it easier to find
     auto outpath = mio::create_directories_or_exit(mio::example_results_dir("abm_minimal")) / "history.txt";
     std::ofstream outfile(outpath);
     std::get<0>(historyTimeSeries.get_log())
         .print_table(outfile, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4);
     std::cout << "Results written to " << outpath << std::endl;
-
-    // Measure runntime
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = end - start;
-    std::cout << "Time total: " << elapsed.count() << " seconds\n";
 
     return 0;
 }
