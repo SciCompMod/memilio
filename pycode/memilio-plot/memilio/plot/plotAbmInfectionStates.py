@@ -86,7 +86,7 @@ def load_h5_results(base_path, percentile):
     file_path_flat = os.path.join(base_path, f"Results_{percentile}.h5")
     # Try subdirectory structure (e.g., p50/Results.h5)
     file_path_nested = os.path.join(base_path, percentile, "Results.h5")
-    
+
     # Determine which file exists
     if os.path.exists(file_path_flat):
         file_path = file_path_flat
@@ -112,7 +112,7 @@ def load_h5_results(base_path, percentile):
             f"    p75/Results.h5\n"
             f"    p95/Results.h5\n"
         )
-    
+
     with h5py.File(file_path, 'r') as f:
         data = {k: v[()] for k, v in f['0'].items()}
     return data
@@ -147,11 +147,12 @@ def plot_infections_loc_types_average(
     # Check if data dimensions match expected location types
     num_cols = total_50.shape[1] if len(total_50.shape) > 1 else 1
     num_location_types = len(location_type_labels)
-    
+
     if num_cols < num_location_types:
-        print(f"Warning: Data has {num_cols} columns but {num_location_types} location types defined.")
+        print(
+            f"Warning: Data has {num_cols} columns but {num_location_types} location types defined.")
         print(f"Only plotting first {num_cols} location types.")
-    
+
     for idx, i in enumerate(location_type_labels.keys()):
         if i >= num_cols:
             break  # Skip if we don't have data for this location type
@@ -164,7 +165,8 @@ def plot_infections_loc_types_average(
             window=indexer, min_periods=1).sum().to_numpy()
         y = y[0::rolling_window].flatten()
         y = gaussian_filter1d(y, sigma=smooth_sigma, mode='nearest')
-        plt.plot(time[0::rolling_window], y, color=color, linewidth=2.5, label=location_type_labels[i])
+        plt.plot(time[0::rolling_window], y, color=color,
+                 linewidth=2.5, label=location_type_labels[i])
 
     plt.legend()  # Auto-generate legend from plot labels
     _format_x_axis(time, start_date, xtick_step)
@@ -289,10 +291,12 @@ def plot_infection_states_by_age_group(
     """
 
     # Dynamically detect available age groups from the data
-    available_groups = [key for key in p50_bs.keys() if key.startswith('Group') or key == 'Total']
+    available_groups = [key for key in p50_bs.keys(
+    ) if key.startswith('Group') or key == 'Total']
     # Sort to ensure Group1, Group2, ..., Total order
-    available_groups = sorted(available_groups, key=lambda x: (x == 'Total', x))
-    
+    available_groups = sorted(
+        available_groups, key=lambda x: (x == 'Total', x))
+
     color_plot = matplotlib.colormaps.get_cmap(colormap).colors
     n_states = len(state_labels)
     fig, ax = plt.subplots(
@@ -304,10 +308,10 @@ def plot_infection_states_by_age_group(
         y75 = p75_bs[group]
         y05 = p05_bs[group] if (show90 and p05_bs is not None) else None
         y95 = p95_bs[group] if (show90 and p95_bs is not None) else None
-        
+
         # Get group label, using default if not in predefined dict
         group_label = age_groups_dict.get(group, group)
-        
+
         for row_idx, (state_idx, label) in enumerate(state_labels.items()):
             _plot_state(
                 ax[row_idx, col_idx], x, y50[:, state_idx], y25[:,
@@ -391,7 +395,7 @@ def main():
             xtick_step=args.xtick_step,
             show90=args.show_90percentile
         )
-    
+
     if args.path_to_loc_types:
         plot_infections_loc_types_average(
             path_to_loc_types=args.path_to_loc_types,
