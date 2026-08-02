@@ -22,8 +22,6 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-import memilio.epidata.getDataIntoPandasDataFrame as gd
-
 from matplotlib.markers import MarkerStyle
 from matplotlib.transforms import Affine2D
 
@@ -44,9 +42,11 @@ def read_groundtruth_ide(data_dir, groundtruth_exponent, gregory_order):
         data_dir, f'result_{model}_dt=1e-{groundtruth_exponent:.0f}_gregoryorder={gregory_order}.h5'), 'r')
 
     if (len(list(h5file.keys())) > 1):
-        raise gd.DataError("File should contain one dataset.")
+        print("File should contain one dataset.")
+        return
     if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
-        raise gd.DataError("Expected only one group.")
+        print("Expected only one group.")
+        return
 
     data = h5file[list(h5file.keys())[0]]
 
@@ -283,7 +283,7 @@ def compute_errors_max(groundtruth, results, groundtruth_save_exponent, timestep
             # print()
 
             # to debug:
-            # groundtruth[0][int(pow(10, groundtruth_exponent)*(t_init))::int(scale_timesteps)][:, compartment] - results[i][0::][:, compartment]
+            # groundtruth[0][int(pow(10, groundtruth_save_exponent)*(t_init))::int(scale_timesteps)][:, compartment] - results[i][0::][:, compartment]
 
             if error_type == "abs":
                 errors[i].append(compute_max_norm(
@@ -302,7 +302,7 @@ def compute_errors_max(groundtruth, results, groundtruth_save_exponent, timestep
     return np.array(errors)
 
 
-def plot_difference_per_timestep(groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init,  gregory_order,  save_dir="", damping_time=-1):
+def plot_difference_per_timestep(groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init,  gregory_order,  save_dir="", damping_time=float(-1)):
     num_errors = 3
 
     # errors = []
@@ -338,10 +338,11 @@ def plot_difference_per_timestep(groundtruth, results, groundtruth_save_exponent
 
             if damping_time != -1:
 
-                difference_zoom = difference[int((damping_time-t0_ide-1)/timestep):int(
-                    (damping_time-t0_ide)/timestep)+1]
-                indices_zoom = indices[int((damping_time-t0_ide-1)/timestep):int(
-                    (damping_time-t0_ide)/timestep)+1]
+                padding_index = 2
+                difference_zoom = difference[int((damping_time-t0_ide-1-padding_index)/timestep):int(
+                    (damping_time-t0_ide+padding_index)/timestep)+1]
+                indices_zoom = indices[int((damping_time-t0_ide-1-padding_index)/timestep):int(
+                    (damping_time-t0_ide+padding_index)/timestep)+1]
 
                 axs_zoom[compartment].scatter(
                     indices_zoom, difference_zoom, s=1)
@@ -637,9 +638,14 @@ def get_tinit_from_dir_name(dir_name):
 def get_dampingtime_ide_from_dir_name(dir_name):
     dampingtime_string = [x for x in dir_name.split(
         "_") if ("dampingtime" in x)]
-    dampingtime = float(dampingtime_string[0].split("=")[-1])
 
-    return dampingtime
+    if dampingtime_string==[]:
+        return float(-1)
+
+    else:
+        return float(dampingtime_string[0].split("=")[-1])
+
+ 
 
 
 def get_tmax_ide_from_dir_name(dir_name):
@@ -661,10 +667,10 @@ def get_tmax_ide_from_dir_name(dir_name):
 def main():
 
     groundtruth_exponent = 6
-    groundtruth_save_exponent = 3
+    groundtruth_save_exponent = 2
     only_S = False
 
-    main_dir = f"2026-07-17/totalpopreduction=1_dtode=1e-6_t0ode=0_timeinf=2"
+    main_dir = f"2026-07-30/convergence_lct_dtode=1e-6_t0ode=0_timeinf=2_contfreq=0.73"
 
     ##############################################
 
@@ -748,8 +754,9 @@ def main():
                 errors_all_gregory_orders_max_weighted.append(
                     errors_max_abs_weighted)
 
+                damping_time = get_dampingtime_ide_from_dir_name(dir_name)
                 plot_difference_per_timestep(
-                    groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init, gregory_order_simulation, plot_dir, damping_time=-1)
+                    groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init, gregory_order_simulation, plot_dir, damping_time=damping_time)
 
                 print()
                 # print(f"Gregory order {gregory_order_simulation}")

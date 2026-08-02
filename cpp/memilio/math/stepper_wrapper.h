@@ -255,7 +255,7 @@ public:
         FP increment      = dt - m_summation_error;
         FP t_temp         = t + increment;
         m_summation_error = (t_temp - t) - increment;
-        std::cout << t << ", " << m_summation_error << std::endl;
+        // std::cout << t << ", " << m_summation_error << std::endl;
         t = t_temp;
         // t += dt;
         return true; // no step size adaption

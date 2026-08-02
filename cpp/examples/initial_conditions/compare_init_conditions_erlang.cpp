@@ -303,15 +303,15 @@ int main()
     ScalarType t_init_detailed       = t0_ide - 45.;
     ScalarType t_init_detailed_short = t0_ide - 15.;
 
-    ScalarType tmax = 100.;
+    ScalarType tmax = 130.;
 
     size_t gregory_order           = 3;
     size_t finite_difference_order = 4;
 
-    ScalarType dt_exponent = 2.; // Used for both ODE and IDE simulations
+    ScalarType dt_exponent = 3.; // Used for both ODE and IDE simulations
 
     std::string save_dir =
-        fmt::format("../../simulation_results/2026-07-29/compare_different_inits_erlang_numsubcomps={}_contfreq={}/"
+        fmt::format("../../simulation_results/2026-07-30/compare_different_inits_erlang_numsubcomps={}_contfreq={}/"
                     "nonconst_contacts_tinitgroundtruth={}_tinitdetailed={}_t0ide={}_tmax={}/",
                     num_subcomps_infected, cont_freq, t0_ode, t_init_detailed, t0_ide, tmax);
 

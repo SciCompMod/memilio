@@ -23,8 +23,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-from memilio.epidata import getDataIntoPandasDataFrame as gd
-
 
 def plot_compartments(files, fileending, save_dir=""):
     """
@@ -55,9 +53,11 @@ def plot_compartments(files, fileending, save_dir=""):
         h5file = h5py.File(str(files[file]) + '.h5', 'r')
 
         if (len(list(h5file.keys())) > 1):
-            raise gd.DataError("File should contain one dataset.")
+            print("File should contain one dataset.")
+            return
         if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
-            raise gd.DataError("Expected only one group.")
+            print("Expected only one group.")
+            return
 
         data = h5file[list(h5file.keys())[0]]
 
@@ -196,12 +196,12 @@ def subfolders_scandir(path, prefix=None):
 if __name__ == '__main__':
 
     groundtruth_exponent = 6
-    save_exponent = 3
+    save_exponent = 2
 
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
 
-    main_dir = f"2026-07-16/S_deriv_analytical_dtode=1e-{groundtruth_exponent}_t0ode=0_timeinf=2/"
+    main_dir = f"2026-07-30/convergence_lct_dtode=1e-6_t0ode=0_timeinf=2_contfreq=0.73"
 
     relevant_dir = os.path.join(root_dir, main_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
@@ -232,9 +232,9 @@ if __name__ == '__main__':
                                    os.path.join(ide_result_dir, f"result_ide_dt=1e-{ide_exponent}_gregoryorder={gregory_order}")],
                                   fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir)
 
-                plot_flows([os.path.join(result_dir, f"result_ode_dt=1e-{groundtruth_exponent}_savedt=1e-{save_exponent}_flows"),
-                            os.path.join(ide_result_dir, f"result_ide_dt=1e-{ide_exponent}_gregoryorder={gregory_order}_flows")],
-                           fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir)
+                # plot_flows([os.path.join(result_dir, f"result_ode_dt=1e-{groundtruth_exponent}_savedt=1e-{save_exponent}_flows"),
+                #             os.path.join(ide_result_dir, f"result_ide_dt=1e-{ide_exponent}_gregoryorder={gregory_order}_flows")],
+                #            fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir)
 
             if ide_exponent is None:
                 print(f"No IDE result file found in {ide_result_dir}")
