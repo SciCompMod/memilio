@@ -78,9 +78,9 @@ public:
 
     // Returns the number of iterations needed in fixed point iteration.
     ScalarType fixed_point_function(ScalarType susceptibles, ScalarType dt, size_t fd_order_contacts = 1,
-                                    ScalarType damping_time = 1000.);
-    size_t compute_S(ScalarType s_init, ScalarType dt, size_t fd_order_contacts = 1, ScalarType damping_time = 1000.,
-                     ScalarType tol = 1e-14, size_t max_iterations = 100);
+                                    bool kahan = true, ScalarType damping_time = 1000.);
+    size_t compute_S(ScalarType s_init, ScalarType dt, size_t fd_order_contacts = 1, bool kahan = true,
+                     ScalarType damping_time = 1000., ScalarType tol = 1e-14, size_t max_iterations = 100);
 
     ScalarType fixed_point_function_S_deriv(ScalarType susceptibles_deriv, ScalarType dt);
     size_t compute_S_deriv_fixedpoint(ScalarType s_deriv_init, ScalarType dt, ScalarType tol = 1e-14,
@@ -102,8 +102,8 @@ public:
 
     void compute_S_deriv_analytical(ScalarType dt, size_t time_point_index);
 
-    void compute_I_and_R(ScalarType dt, size_t time_point_index);
-    void compute_I_and_R(ScalarType dt);
+    void compute_I_and_R(ScalarType dt, bool kahan, size_t time_point_index);
+    void compute_I_and_R(ScalarType dt, bool kahan = true);
 
     void set_transitiondistribution_vector(ScalarType dt, ScalarType tmax, size_t t0_index = 0);
     void set_parameter_vectors(ScalarType dt, ScalarType tmax, size_t t0_index = 0);

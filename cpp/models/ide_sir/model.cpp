@@ -49,6 +49,11 @@ ScalarType kahan_sum(const std::vector<ScalarType>& v)
     return static_cast<ScalarType>(sum);
 }
 
+ScalarType normal_sum(const std::vector<ScalarType>& v)
+{
+    return static_cast<ScalarType>(std::accumulate(v.begin(), v.end(), 0.));
+}
+
 ModelMessinaExtendedDetailedInit::ModelMessinaExtendedDetailedInit(TimeSeries<ScalarType>&& populations_init,
                                                                    ScalarType N_init, size_t gregory_order,
                                                                    size_t finite_difference_order,
@@ -263,7 +268,8 @@ ScalarType ModelMessinaExtendedDetailedInit::phi_deriv_analytical(ScalarType cur
 }
 
 ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType susceptibles, ScalarType dt,
-                                                                  size_t fd_order_contacts, ScalarType damping_time)
+                                                                  size_t fd_order_contacts, bool kahan,
+                                                                  ScalarType damping_time)
 {
     unused(damping_time);
     // Get first time of populations.
@@ -317,8 +323,12 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
                                            m_riskofinffromsymptomatic_vector[j - k] *
                                            m_transitiondistribution_vector[j - k] * relevant_susceptibles);
             }
-
-            inner_sum = kahan_sum(inner_sum_vector);
+            if (kahan) {
+                inner_sum = kahan_sum(inner_sum_vector);
+            }
+            else {
+                inner_sum = normal_sum(inner_sum_vector);
+            }
         }
 
         ScalarType gregory_weight   = 0.;
@@ -357,18 +367,24 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
         sum_vector.push_back(summand);
     }
 
-    sum = kahan_sum(sum_vector);
+    if (kahan) {
+        sum = kahan_sum(sum_vector);
+    }
+    else {
+        sum = normal_sum(sum_vector);
+    }
 
     return populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible] * std::exp(sum);
 }
 
 size_t ModelMessinaExtendedDetailedInit::compute_S(ScalarType s_init, ScalarType dt, size_t fd_order_contacts,
-                                                   ScalarType damping_time, ScalarType tol, size_t max_iterations)
+                                                   bool kahan, ScalarType damping_time, ScalarType tol,
+                                                   size_t max_iterations)
 {
     size_t iter_counter = 0;
     while (iter_counter < max_iterations) {
 
-        ScalarType s_new = fixed_point_function(s_init, dt, fd_order_contacts, damping_time);
+        ScalarType s_new = fixed_point_function(s_init, dt, fd_order_contacts, kahan, damping_time);
 
         if (std::fabs(s_init - s_new) < tol) {
             break;
@@ -876,7 +892,7 @@ void ModelMessinaExtendedDetailedInit::compute_S_deriv(ScalarType div_dt)
     compute_S_deriv(div_dt, time_point_index);
 }
 
-void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t time_point_index)
+void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, bool kahan, size_t time_point_index)
 {
     // Index determining when we switch from one Gregory sum to the other one.
     // TODO: Explain better what the difference between the two Gregory sums is.
@@ -915,7 +931,12 @@ void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t tim
         //                  flows.get_value(j)[(Eigen::Index)InfectionTransition::SusceptibleToInfected];
     }
 
-    sum_infected = kahan_sum(sum_infected_vector);
+    if (kahan) {
+        sum_infected = kahan_sum(sum_infected_vector);
+    }
+    else {
+        sum_infected = normal_sum(sum_infected_vector);
+    }
 
     populations[time_point_index][(Eigen::Index)InfectionState::Infected] =
         m_transitiondistribution_vector[time_point_index] *
@@ -942,12 +963,12 @@ void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t tim
         populations[time_point_index][(Eigen::Index)InfectionState::Infected];
 }
 
-void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt)
+void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, bool kahan)
 {
     // Use the number of time points to determine time_point_index, hence we are calculating I and R for last
     // time point of flows.
     size_t time_point_index = flows.get_num_time_points() - 1;
-    compute_I_and_R(dt, time_point_index);
+    compute_I_and_R(dt, kahan, time_point_index);
 }
 
 void ModelMessinaExtendedDetailedInit::write_infected_per_infection_age(ScalarType dt, size_t time_point_index)

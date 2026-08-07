@@ -158,6 +158,10 @@ add_executable(detailed_init_exponential convergence/detailed_init_exponential.c
 target_link_libraries(detailed_init_exponential PRIVATE memilio ide_sir ode_sir)
 target_compile_options(detailed_init_exponential PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(detailed_init_exponential_kahan convergence/detailed_init_exponential_kahan.cpp)
+target_link_libraries(detailed_init_exponential_kahan PRIVATE memilio ide_sir ode_sir)
+target_compile_options(detailed_init_exponential_kahan PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(detailed_init_erlang convergence/detailed_init_erlang.cpp)
 target_link_libraries(detailed_init_erlang PRIVATE memilio ide_sir lct_sir)
 target_compile_options(detailed_init_erlang PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
