@@ -25,6 +25,8 @@ import matplotlib.pyplot as plt
 from matplotlib.markers import MarkerStyle
 from matplotlib.transforms import Affine2D
 
+sir_dict = {0: 'Susceptible', 1:  'Infected', 2:  'Recovered'}
+
 
 def read_groundtruth_ide(data_dir, groundtruth_exponent, gregory_order):
     """ Read groundtruth from data. We define the groundtruth as the results obtained by the ODE model with timestep dt=1e-6.
@@ -305,24 +307,18 @@ def compute_errors_max(groundtruth, results, groundtruth_save_exponent, timestep
 def plot_difference_per_timestep(groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init,  gregory_order,  save_dir="", damping_time=float(-1)):
     num_errors = 3
 
-    # errors = []
-    # errors_zoom = []
-
-    compartments = ["S", "I", "R"]
-
     # Compute error.
     difference = []
 
     num_plots = 3
-    figsize_x = 12
 
     for i, timestep in enumerate(timesteps_ide):
         fig, axs = plt.subplots(1, num_plots, sharex=True,
-                                figsize=(figsize_x, 3))
+                                figsize=(10, 3.5))
 
         # if damping_time != -1:
         fig_zoom, axs_zoom = plt.subplots(1, num_plots, sharex=True,
-                                          figsize=(figsize_x, 3))
+                                          figsize=(10, 3.5))
 
         for compartment in range(num_errors):
             scale_timesteps = timestep/pow(10, -groundtruth_save_exponent)
@@ -333,8 +329,8 @@ def plot_difference_per_timestep(groundtruth, results, groundtruth_save_exponent
             indices = np.linspace(
                 t0_ide, t0_ide+(len(difference)-1)*timestep, len(difference))
 
-            axs[compartment].scatter(indices, difference, s=1)
-            axs[compartment].set_title(f"{compartments[compartment]}")
+            axs[compartment].scatter(indices, difference, s=1, color="#88CCEE")
+            axs[compartment].set_title(f"{sir_dict[compartment]}")
 
             if damping_time != -1:
 
@@ -345,8 +341,8 @@ def plot_difference_per_timestep(groundtruth, results, groundtruth_save_exponent
                     (damping_time-t0_ide+padding_index)/timestep)+1]
 
                 axs_zoom[compartment].scatter(
-                    indices_zoom, difference_zoom, s=1)
-                axs_zoom[compartment].set_title(f"{compartments[compartment]}")
+                    indices_zoom, difference_zoom, s=1, color="#88CCEE")
+                axs_zoom[compartment].set_title(f"{sir_dict[compartment]}")
 
         fig.supxlabel("Time")
         fig_zoom.supxlabel("Time")
@@ -390,11 +386,12 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
         num_plots = 3
         figsize_x = 10
 
-    num_plotted_results = len(gregory_orders_simulation)
+    figsize_y = 3.5
+    # num_plotted_results = len(gregory_orders_simulation)
 
     fig, axs = plt.subplots(1, num_plots, sharex=True,
-                            figsize=(figsize_x, 3.5))
-    secir_dict = {0: 'Susceptible', 1:  'Infected', 2:  'Recovered'}
+                            figsize=(figsize_x, figsize_y))
+
     labels = [
         f"Gregory order {gregory_order}" for gregory_order in gregory_orders_simulation]
     # labels = ["Trapez. rule", "I Gregory rule", "II Gregory rule"]
@@ -414,7 +411,7 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
     # else:
     #     colors = ["darkred"]
 
-    colors = ["#332288", "#44AA99", "#882255"]  # sand, teal, wine
+    colors = ["#332288", "#44AA99", "#882255"]  # indigo, teal, wine
     gray = "#888888"
 
     for i in range(num_plots):
@@ -474,7 +471,7 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
         ax_obj.set_xscale("log", base=10)
         ax_obj.set_yscale("log", base=10)
 
-        ax_obj.set_title(secir_dict[i], fontsize=10)
+        ax_obj.set_title(sir_dict[i], fontsize=10)
         ax_obj.grid(True, linestyle='--', alpha=0.6)
 
     ax_label = axs if only_S else axs[1]
@@ -501,7 +498,8 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
                          handles[5], handles[2], handles[6], handles[3], handles[7]]
 
     legend = fig.legend(handles=handles_reordered, labels=labels_reordered, ncol=4,  loc='lower center',
-                        fontsize=8, bbox_transform=fig.transFigure, bbox_to_anchor=(0.53, -0.1))  # bbox_to_anchor=(0.5, -0.2), # bbox_to_anchor=(1., -0.1)
+                        # bbox_to_anchor=(0.5, -0.2), # bbox_to_anchor=(1., -0.1)
+                        fontsize=8, bbox_transform=fig.transFigure, bbox_to_anchor=(0.53, -0.1))
     fig.tight_layout()
 
     if save_dir != "":
@@ -639,13 +637,11 @@ def get_dampingtime_ide_from_dir_name(dir_name):
     dampingtime_string = [x for x in dir_name.split(
         "_") if ("dampingtime" in x)]
 
-    if dampingtime_string==[]:
+    if dampingtime_string == []:
         return float(-1)
 
     else:
         return float(dampingtime_string[0].split("=")[-1])
-
- 
 
 
 def get_tmax_ide_from_dir_name(dir_name):
@@ -670,7 +666,7 @@ def main():
     groundtruth_save_exponent = 2
     only_S = False
 
-    main_dir = f"2026-07-30/convergence_lct_dtode=1e-6_t0ode=0_timeinf=2_contfreq=0.73"
+    main_dir = f"2026-08-11/old_example_dtode=1e-6_t0ode=0_timeinf=2_contfreq=0.73"
 
     ##############################################
 
