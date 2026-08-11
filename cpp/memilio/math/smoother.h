@@ -45,7 +45,8 @@ namespace mio
  * @return Floating point cosine-smoothed evaluation of discrete step function
  */
 template <typename FP>
-inline FP smoother_cosine(FP x, FP xleft, FP xright, FP yleft, FP yright, bool smoothcos = true)
+inline FP smoother_cosine(FP x, FP xleft, FP xright, FP yleft, FP yright,
+                          size_t smoothstep_order = 0) // smoothstep_order=0 leads to smoother_cosine
 {
     using std::cos;
     using std::pow;
@@ -59,23 +60,22 @@ inline FP smoother_cosine(FP x, FP xleft, FP xright, FP yleft, FP yright, bool s
 
     FP normalized_time = (x - xleft) / (xright - xleft);
 
-    if (smoothcos) {
-        return FP(0.5) * (yleft - yright) * cos(std::numbers::pi_v<ScalarType> * normalized_time) +
-               FP(0.5) * (yleft + yright);
+    if (smoothstep_order == 3) {
+        // C³ smoothstep
+        return yleft +
+               (yright - yleft) * (FP(35.) * pow(normalized_time, FP(4)) - FP(84.) * pow(normalized_time, FP(5)) +
+                                   FP(70.) * pow(normalized_time, FP(6)) - FP(20.) * pow(normalized_time, FP(7)));
     }
-    else {
-
-        // C⁴
+    if (smoothstep_order == 4) {
+        // C⁴ smoothstep
         return yleft +
                (yright - yleft) * (FP(126.) * pow(normalized_time, FP(5)) - FP(420.) * pow(normalized_time, FP(6)) +
                                    FP(540.) * pow(normalized_time, FP(7)) - FP(315.) * pow(normalized_time, FP(8)) +
                                    FP(70.) * pow(normalized_time, FP(9)));
-
-        // // C³
-        // return yleft +
-        //        (yright - yleft) * (FP(35.) * pow(normalized_time, FP(4)) - FP(84.) * pow(normalized_time, FP(5)) +
-        //                            FP(70.) * pow(normalized_time, FP(6)) - FP(20.) * pow(normalized_time, FP(7)));
     }
+
+    return FP(0.5) * (yleft - yright) * cos(std::numbers::pi_v<ScalarType> * normalized_time) +
+           FP(0.5) * (yleft + yright);
 }
 
 /**
@@ -89,10 +89,10 @@ inline FP smoother_cosine(FP x, FP xleft, FP xright, FP yleft, FP yright, bool s
  */
 template <typename FP, class LeftExpr, class RightExpr>
 auto smoother_cosine(FP x, FP xleft, FP xright, const Eigen::MatrixBase<LeftExpr>& yleft_expr,
-                     const Eigen::MatrixBase<RightExpr>& yright_expr, bool smoothcos = true)
+                     const Eigen::MatrixBase<RightExpr>& yright_expr, size_t smoothstep_order = 4)
 {
     return yleft_expr.binaryExpr(yright_expr, [=](auto yleft, auto yright) {
-        return smoother_cosine<FP>(x, xleft, xright, yleft, yright, smoothcos);
+        return smoother_cosine<FP>(x, xleft, xright, yleft, yright, smoothstep_order);
     });
 }
 

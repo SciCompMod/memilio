@@ -174,67 +174,88 @@ ScalarType ModelMessinaExtendedDetailedInit::sum_part2_weight(size_t n, size_t j
 
 ScalarType ModelMessinaExtendedDetailedInit::compute_phi_deriv(ScalarType dt, size_t j, size_t fd_order,
                                                                ScalarType current_time, ScalarType damping_time,
-                                                               ScalarType init_time)
+                                                               ScalarType init_time, ScalarType smoother_window,
+                                                               size_t smoothstep_order)
 {
     ScalarType deriv = 0;
 
     if (fd_order == 1) {
-        deriv = (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                     SimulationTime<ScalarType>(ScalarType(j) * dt + init_time))(0, 0) -
-                 parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                     SimulationTime<ScalarType>((ScalarType(j) - 1.) * dt + init_time))(0, 0)) /
-                dt;
+        deriv =
+            (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                 SimulationTime<ScalarType>(ScalarType(j) * dt + init_time), smoother_window, smoothstep_order)(0, 0) -
+             parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                 SimulationTime<ScalarType>((ScalarType(j) - 1.) * dt + init_time), smoother_window,
+                 smoothstep_order)(0, 0)) /
+            dt;
     }
 
     if (fd_order == 2) {
         deriv = (3 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                         SimulationTime<ScalarType>(ScalarType(j) * dt + init_time))(0, 0) -
+                         SimulationTime<ScalarType>(ScalarType(j) * dt + init_time), smoother_window,
+                         smoothstep_order)(0, 0) -
                  4 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                         SimulationTime<ScalarType>((ScalarType(j) - 1.) * dt + init_time))(0, 0) +
+                         SimulationTime<ScalarType>((ScalarType(j) - 1.) * dt + init_time), smoother_window,
+                         smoothstep_order)(0, 0) +
                  1 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                         SimulationTime<ScalarType>((ScalarType(j) - 2.) * dt + init_time))(0, 0)) /
+                         SimulationTime<ScalarType>((ScalarType(j) - 2.) * dt + init_time), smoother_window,
+                         smoothstep_order)(0, 0)) /
                 (2 * dt);
     }
 
     if (fd_order == 3) {
         deriv = (11 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                          SimulationTime<ScalarType>(ScalarType(j) * dt + init_time))(0, 0) -
+                          SimulationTime<ScalarType>(ScalarType(j) * dt + init_time), smoother_window,
+                          smoothstep_order)(0, 0) -
                  18 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                          SimulationTime<ScalarType>((ScalarType(j) - 1.) * dt + init_time))(0, 0) +
+                          SimulationTime<ScalarType>((ScalarType(j) - 1.) * dt + init_time), smoother_window,
+                          smoothstep_order)(0, 0) +
                  9 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                         SimulationTime<ScalarType>((ScalarType(j) - 2.) * dt + init_time))(0, 0) -
+                         SimulationTime<ScalarType>((ScalarType(j) - 2.) * dt + init_time), smoother_window,
+                         smoothstep_order)(0, 0) -
                  2 * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                         SimulationTime<ScalarType>((ScalarType(j) - 3.) * dt + init_time))(0, 0)) /
+                         SimulationTime<ScalarType>((ScalarType(j) - 3.) * dt + init_time), smoother_window,
+                         smoothstep_order)(0, 0)) /
                 (6 * dt);
     }
 
     if (fd_order == 4) {
         deriv = (25. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                           SimulationTime<ScalarType>(ScalarType(j) * dt + init_time))(0, 0) -
+                           SimulationTime<ScalarType>(ScalarType(j) * dt + init_time), smoother_window,
+                           smoothstep_order)(0, 0) -
                  48. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                           SimulationTime<ScalarType>((ScalarType(j) - 1.) * dt + init_time))(0, 0) +
+                           SimulationTime<ScalarType>((ScalarType(j) - 1.) * dt + init_time), smoother_window,
+                           smoothstep_order)(0, 0) +
                  36. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                           SimulationTime<ScalarType>((ScalarType(j) - 2.) * dt + init_time))(0, 0) -
+                           SimulationTime<ScalarType>((ScalarType(j) - 2.) * dt + init_time), smoother_window,
+                           smoothstep_order)(0, 0) -
                  16. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                           SimulationTime<ScalarType>((ScalarType(j) - 3.) * dt + init_time))(0, 0) +
+                           SimulationTime<ScalarType>((ScalarType(j) - 3.) * dt + init_time), smoother_window,
+                           smoothstep_order)(0, 0) +
                  3. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                          SimulationTime<ScalarType>((ScalarType(j) - 4.) * dt + init_time))(0, 0)) /
+                          SimulationTime<ScalarType>((ScalarType(j) - 4.) * dt + init_time), smoother_window,
+                          smoothstep_order)(0, 0)) /
                 (12. * dt);
     }
 
     if (fd_order == 5) {
         deriv = (137. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                            SimulationTime<ScalarType>(ScalarType(j) * dt + init_time))(0, 0) -
+                            SimulationTime<ScalarType>(ScalarType(j) * dt + init_time), smoother_window,
+                            smoothstep_order)(0, 0) -
                  300. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                            SimulationTime<ScalarType>((ScalarType(j) - 1.) * dt + init_time))(0, 0) +
+                            SimulationTime<ScalarType>((ScalarType(j) - 1.) * dt + init_time), smoother_window,
+                            smoothstep_order)(0, 0) +
                  300. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                            SimulationTime<ScalarType>((ScalarType(j) - 2.) * dt + init_time))(0, 0) -
+                            SimulationTime<ScalarType>((ScalarType(j) - 2.) * dt + init_time), smoother_window,
+                            smoothstep_order)(0, 0) -
                  200. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                            SimulationTime<ScalarType>((ScalarType(j) - 3.) * dt + init_time))(0, 0) +
+                            SimulationTime<ScalarType>((ScalarType(j) - 3.) * dt + init_time), smoother_window,
+                            smoothstep_order)(0, 0) +
                  75. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                           SimulationTime<ScalarType>((ScalarType(j) - 4.) * dt + init_time))(0, 0) -
+                           SimulationTime<ScalarType>((ScalarType(j) - 4.) * dt + init_time), smoother_window,
+                           smoothstep_order)(0, 0) -
                  12. * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                           SimulationTime<ScalarType>((ScalarType(j) - 5.) * dt + init_time))(0, 0)) /
+                           SimulationTime<ScalarType>((ScalarType(j) - 5.) * dt + init_time), smoother_window,
+                           smoothstep_order)(0, 0)) /
                 (60. * dt);
     }
 
@@ -269,9 +290,9 @@ ScalarType ModelMessinaExtendedDetailedInit::phi_deriv_analytical(ScalarType cur
 
 ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType susceptibles, ScalarType dt,
                                                                   size_t fd_order_contacts, bool kahan,
-                                                                  ScalarType damping_time)
+                                                                  ScalarType damping_time, ScalarType smoother_window,
+                                                                  size_t smoothstep_order)
 {
-    unused(damping_time);
     // Get first time of populations.
     ScalarType init_time = populations.get_time(0);
     // Get the index of the current time step.
@@ -357,10 +378,11 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
                 m_riskofinffromsymptomatic_vector[current_time_index - j] *
                 m_transitiondistribution_vector[current_time_index - j] *
                 (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                     SimulationTime<ScalarType>((current_time_index - (ScalarType)j) * dt + init_time))(0, 0) /
+                     SimulationTime<ScalarType>((current_time_index - (ScalarType)j) * dt + init_time), smoother_window,
+                     smoothstep_order)(0, 0) /
                      m_N * (populations.get_value(0)[(Eigen::Index)InfectionState::Recovered] - m_N) +
                  parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                     SimulationTime<ScalarType>(current_time))(0, 0) *
+                     SimulationTime<ScalarType>(current_time), smoother_window, smoothstep_order)(0, 0) *
                      relevant_susceptibles / m_N) -
             dt * dt * gregory_weight * phi_deriv / m_N * inner_sum;
 
@@ -378,13 +400,14 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
 }
 
 size_t ModelMessinaExtendedDetailedInit::compute_S(ScalarType s_init, ScalarType dt, size_t fd_order_contacts,
-                                                   bool kahan, ScalarType damping_time, ScalarType tol,
-                                                   size_t max_iterations)
+                                                   bool kahan, ScalarType damping_time, ScalarType smoother_window,
+                                                   size_t smoothstep_order, ScalarType tol, size_t max_iterations)
 {
     size_t iter_counter = 0;
     while (iter_counter < max_iterations) {
 
-        ScalarType s_new = fixed_point_function(s_init, dt, fd_order_contacts, kahan, damping_time);
+        ScalarType s_new =
+            fixed_point_function(s_init, dt, fd_order_contacts, kahan, damping_time, smoother_window, smoothstep_order);
 
         if (std::fabs(s_init - s_new) < tol) {
             break;

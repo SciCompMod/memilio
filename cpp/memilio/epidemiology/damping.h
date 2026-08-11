@@ -378,7 +378,8 @@ public:
      * @param t time in the simulation
      * @return matrix expression 
      */
-    auto get_matrix_at(SimulationTime<FP> t) const
+    auto get_matrix_at(SimulationTime<FP> t, FP smoother_window = 1.,
+                       size_t smoothstep_order = 0) const // smoothstep_order=0 leads to smoother_cosine
     {
         assert(!m_accumulated_dampings_cached.empty() &&
                "Cache is not current. Did you disable the automatic cache update?");
@@ -388,13 +389,12 @@ public:
                                        return std::get<SimulationTime<FP>>(tup1) < std::get<SimulationTime<FP>>(tup2);
                                    });
 
-        FP smoother_window = 2.;
-
-        bool smoothcos = false;
-
+        // std::cout << "Smoother window: " << smoother_window << std::endl;
+        // std::cout << "Smoothstep order: " << smoothstep_order << std::endl;
         auto damping = smoother_cosine<FP>(
             t.get(), (std::get<SimulationTime<FP>>(*ub) - mio::SimulationTime<FP>(smoother_window)).get(),
-            std::get<SimulationTime<FP>>(*ub).get(), std::get<Matrix>(*(ub - 1)), std::get<Matrix>(*ub), smoothcos);
+            std::get<SimulationTime<FP>>(*ub).get(), std::get<Matrix>(*(ub - 1)), std::get<Matrix>(*ub),
+            smoothstep_order);
 
         return damping;
     }

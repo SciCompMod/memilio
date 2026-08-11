@@ -61,6 +61,13 @@ public:
     {
     }
 
+    Model(int num_agegroups, ScalarType smoother_window, size_t smoothstep_order)
+        : Base(Populations({AgeGroup(num_agegroups), InfectionState::Count}), ParameterSet(AgeGroup(num_agegroups)))
+        , m_smoother_window(smoother_window)
+        , m_smoothstep_order(smoothstep_order)
+    {
+    }
+
     // void get_derivatives(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
     //                      Eigen::Ref<Eigen::VectorX<FP>> dydt) const override
     // {
@@ -110,11 +117,12 @@ public:
                 const size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
                 const size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
-                const FP Nj        = pop[Sj] + pop[Ij] + pop[Rj];
-                const FP divNj     = (Nj < Limits<FP>::zero_tolerance()) ? FP(0.0) : FP(1.0 / Nj);
-                const FP coeffStoI = params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(
-                                         SimulationTime<FP>(t))(i.get(), j.get()) *
-                                     params.template get<TransmissionProbabilityOnContact<FP>>()[i] * divNj;
+                const FP Nj    = pop[Sj] + pop[Ij] + pop[Rj];
+                const FP divNj = (Nj < Limits<FP>::zero_tolerance()) ? FP(0.0) : FP(1.0 / Nj);
+                const FP coeffStoI =
+                    params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(
+                        SimulationTime<FP>(t), m_smoother_window, m_smoothstep_order)(i.get(), j.get()) *
+                    params.template get<TransmissionProbabilityOnContact<FP>>()[i] * divNj;
 
                 flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>(i)] +=
                     coeffStoI * y[Si] * pop[Ij];
@@ -123,6 +131,10 @@ public:
                 (1.0 / params.template get<TimeInfected<FP>>()[i]) * y[Ii];
         }
     }
+
+private:
+    ScalarType m_smoother_window = 1.;
+    size_t m_smoothstep_order    = 0;
 
     /**
      * serialize this.

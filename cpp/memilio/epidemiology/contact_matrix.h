@@ -187,10 +187,13 @@ public:
      * @param t time in the simulation
      * @return matrix expression (num_groups x num_groups)
      */
-    auto get_matrix_at(SimulationTime<FP> t) const
+    auto get_matrix_at(SimulationTime<FP> t, FP smoother_window = 1., size_t smoothstep_order = 0) const
     {
-        assert(Shape::get_shape_of(m_dampings.get_matrix_at(t)) == Shape::get_shape_of(m_baseline));
-        return m_baseline - (m_dampings.get_matrix_at(t).array() * (m_baseline - m_minimum).array()).matrix();
+        assert(Shape::get_shape_of(m_dampings.get_matrix_at(t, smoother_window, smoothstep_order)) ==
+               Shape::get_shape_of(m_baseline));
+        return m_baseline - (m_dampings.get_matrix_at(t, smoother_window, smoothstep_order).array() *
+                             (m_baseline - m_minimum).array())
+                                .matrix();
     }
 
     /**
@@ -389,13 +392,16 @@ public:
      * @param t point in time
      * @return matrix expression of size num_groups x num_groups
      */
-    auto get_matrix_at(SimulationTime<FP> t) const
+    auto get_matrix_at(SimulationTime<FP> t, FP smoother_window = 1., size_t smoothstep_order = 0) const
     {
         return Eigen::Matrix<FP, Eigen::Dynamic, Eigen::Dynamic>::NullaryExpr(
-            get_shape().rows(), get_shape().cols(), [t, this](Eigen::Index i, Eigen::Index j) {
-                return std::accumulate(m_matrices.begin(), m_matrices.end(), FP(0.0), [t, i, j](FP s, auto& m) {
-                    return evaluate_intermediate<FP>(s + m.get_matrix_at(t)(i, j));
-                });
+            get_shape().rows(), get_shape().cols(),
+            [t, smoother_window, smoothstep_order, this](Eigen::Index i, Eigen::Index j) {
+                return std::accumulate(m_matrices.begin(), m_matrices.end(), FP(0.0),
+                                       [t, smoother_window, smoothstep_order, i, j](FP s, auto& m) {
+                                           return evaluate_intermediate<FP>(
+                                               s + m.get_matrix_at(t, smoother_window, smoothstep_order)(i, j));
+                                       });
             });
     }
 
