@@ -21,19 +21,26 @@ import h5py
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
 
 
 STYLE = {
-    "groundtruth":    {"label": "Groundtruth",    "color": "#0072B2", "linestyle": "-",  "linewidth": 5., "alpha":0.3  },
-    "detailed":       {"label": "Detailed long",  "color": "#E69F00", "linestyle": "--", "linewidth": 2., "alpha":1.},
-    "detailed_short": {"label": "Detailed short", "color": "#009E73", "linestyle": "-.", "linewidth": 1.5, "alpha":1.},
-    "simple":         {"label": "Simple",         "color": "#D55E00", "linestyle": ":",  "linewidth": 2., "alpha":1.},
+    "groundtruth":    {"label": "Ground truth",    "color": "#0072B2", "linestyle": "-",  "linewidth": 5., "alpha":0.3  },
+    "detailed":       {"label": "Long initialization",  "color": "#E69F00", "linestyle": "--", "linewidth": 2., "alpha":1.},
+    "detailed_short": {"label": "Short initialization", "color": "#009E73", "linestyle": "-.", "linewidth": 1.5, "alpha":1.},
+    "simple":         {"label": "Memoryless",         "color": "#D55E00", "linestyle": ":",  "linewidth": 2., "alpha":1.},
+}
+
+STYLE_SCATTER = {
+    "groundtruth":    {"label": "Ground truth",    "color": "#0072B2", "linestyle": "-",  "linewidth": 5., "alpha":0.3, "s":12  },
+    "detailed":       {"label": "Long initialization",  "color": "#E69F00", "linestyle": "-", "linewidth": 2., "alpha":1., "s":28},
+    "detailed_short": {"label": "Short initialization", "color": "#009E73", "linestyle": "-", "linewidth": 2., "alpha":1.,"s":12},
+    "simple":         {"label": "Memoryless",         "color": "#D55E00", "linestyle": "-",  "linewidth": 2., "alpha":1.,"s":12},
 }
 # order matches input file lists
 FILE_KEYS = [ "detailed", "detailed_short", "simple"]
 FILE_KEYS_GROUNDTRUTH = ["groundtruth", "detailed", "detailed_short", "simple"]
 
-SCATTERSIZE = 12
 TITLE_FONTSIZE = 11
 T0_COLOR = "gray"
 T0_LABEL = r"$t_0$"
@@ -115,8 +122,13 @@ def plot_compartments(files, fileending, save_dir="", zoom = False):
     all_dates = []
     all_totals = []
 
+    t0 = get_t0_from_dir_name(files[0])
+
+    groundtruth_diff =0
+
     for key, filepath in zip(FILE_KEYS_GROUNDTRUTH, files):
         dates, total = load_h5_total(filepath)
+        dates = dates - t0
         all_dates.append(dates)
         all_totals.append(total)
         # if key == "groundtruth":
@@ -132,14 +144,30 @@ def plot_compartments(files, fileending, save_dir="", zoom = False):
                 plot_max[i] = np.max(total[:, i])
             axs[i].plot(dates, total[:, i], **style)
 
-    t0 = get_t0_from_dir_name(files[0])
+
+            
+            if zoom and i==0:
+                print(key)
+                t0_index = np.where(np.isclose(dates, 0))[0][0]
+                print("Num Susceptibles at 0:", total[t0_index, i])
+                t_7_5_index= np.where(np.isclose(dates, 7.5))[0][0]
+                print("Num Susceptibles at 7.5:", total[t_7_5_index, i])
+                diff = total[t0_index, i]- total[t_7_5_index, i]
+                print("Diff:", diff)
+                if key == "groundtruth":
+                    groundtruth_diff=diff
+                print("Relative diff compared to ground truth:", diff/groundtruth_diff)
+                print()
+                
+
+
     for i in range(num_plots):
-        axs[i].vlines(t0, plot_min[i], plot_max[i],
+        axs[i].vlines(0, plot_min[i], plot_max[i],
                       color=T0_COLOR, alpha=0.5)
 
     if zoom:
-        zoom_min = t0 - 7
-        zoom_max = t0 + 7
+        zoom_min = 0. - 7.5
+        zoom_max = 0. + 7.5
         for i in range(num_plots):
             axs[i].set_xlim(zoom_min, zoom_max)
             
@@ -156,9 +184,11 @@ def plot_compartments(files, fileending, save_dir="", zoom = False):
             y_padding = (zoom_plot_max - zoom_plot_min) * 0.1
             axs[i].set_ylim(zoom_plot_min - y_padding, zoom_plot_max + y_padding)
 
+            
+
     _add_shared_legend(fig, plotted_keys)
 
-    fig.supxlabel("Simulation time [days]", y=0.04)
+    fig.supxlabel("Time [days]", y=0.04)
     fig.supylabel("Number of individuals", y=0.54)
     plt.tight_layout()
 
@@ -192,12 +222,12 @@ def plot_flow_S_to_I(files, fileending, save_dir=""):
         if key == "detailed":
             tinit_detailed = dates[0]
         plotted_keys.append(key)
-        style = STYLE[key]
+        style = STYLE_SCATTER[key]
 
         t0_index = np.where(np.isclose(dates, t0))[0][0]
         ax.scatter(dates[:t0_index+1], total[:, 0][:t0_index+1], color=style["color"],
                    marker="o",
-                   s=SCATTERSIZE,
+                   s=style["s"],
                    linewidths=0,
                    edgecolors="none")
 
@@ -218,7 +248,7 @@ def plot_flow_S_to_I(files, fileending, save_dir=""):
     fig.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.5, -0.08),
                ncol=len(handles), fancybox=False, shadow=False, frameon=False)
 
-    fig.supxlabel("Simulation time [days]",  y=0.04)
+    fig.supxlabel("Time [days]",  y=0.04)
     fig.supylabel("Number of individuals", y=0.65)
     plt.tight_layout()
 
@@ -246,10 +276,10 @@ def plot_infectionage_distribution(files, fileending, save_dir=""):
         if key == "groundtruth":
             continue
         plotted_keys.append(key)
-        style = STYLE[key]
+        style = STYLE_SCATTER[key]
         ax.scatter(dates, total, color=style["color"],
                    linestyle=style["linestyle"], marker="o",
-                   s=SCATTERSIZE,
+                   s=style["s"],
                    linewidths=0,
                    edgecolors="none")
 
@@ -309,14 +339,15 @@ def plot_init_conditions(files_flows, files_infage_dist, fileending, save_dir=""
     # Plot the flow data.
     for key, filepath in zip(FILE_KEYS, files_flows):
         dates_flow, total_flow = load_h5_total(filepath)
+        dates_flow = dates_flow-t0
 
         if key == "detailed":
             tinit_detailed = dates_flow[0]
 
-        style = STYLE[key]
+        style = STYLE_SCATTER[key]
         plotted_keys.append(key)
 
-        t0_indices = np.where(np.isclose(dates_flow, t0))[0]
+        t0_indices = np.where(np.isclose(dates_flow, 0.))[0]
         if len(t0_indices) == 0:
             raise ValueError(
                 f"Could not find t0={t0} in flow file '{filepath}'."
@@ -329,7 +360,7 @@ def plot_init_conditions(files_flows, files_infage_dist, fileending, save_dir=""
             total_flow[:t0_index + 1, 0],
             color=style["color"],
             marker="o",
-            s=SCATTERSIZE,
+            s=style["s"],
             linewidths=0,
             edgecolors="none",
             zorder=2,
@@ -338,36 +369,35 @@ def plot_init_conditions(files_flows, files_infage_dist, fileending, save_dir=""
     # Plot the infection-age distributions.
     for key, filepath in zip(FILE_KEYS, files_infage_dist):
         dates_age, total_age = load_h5_total(filepath)
-        style = STYLE[key]
+        style = STYLE_SCATTER[key]
 
         axs[1].scatter(
             dates_age,
             total_age,
             color=style["color"],
             marker="o",
-            s=SCATTERSIZE,
+            s=style["s"],
             linewidths=0,
             edgecolors="none",
             zorder=2,
         )
 
     if tinit_detailed is not None:
-        axs[0].set_xlim(tinit_detailed - 2, t0 + 2)
+        axs[0].set_xlim(tinit_detailed - 2, 0. + 2)
 
-    axs[0].set_xlabel("Simulation time [days]")
+    axs[0].set_xlabel("Time [days]")
     axs[1].set_xlabel("Infection age [days]")
     fig.supylabel("Number of individuals", y=0.57)
 
-    styles = [STYLE[k] for k in plotted_keys]
+    axs[0].xaxis.set_major_locator(MultipleLocator(10))
+    axs[1].xaxis.set_major_locator(MultipleLocator(10))
 
-    handles = [
-        plt.Line2D(
-            [0],
-            [0],
-            **style,
-        )
-        for style in styles
-    ]
+    # styles = [STYLE_SCATTER[k] for k in plotted_keys]
+
+    handles = [plt.Line2D([0], [0], color=STYLE_SCATTER[k]["color"],
+                              linestyle="-", linewidth=STYLE_SCATTER[k]["linewidth"],
+                              label=STYLE_SCATTER[k]["label"])
+                   for k in plotted_keys]
 
     fig.legend(
         handles=handles,
@@ -392,7 +422,7 @@ def subfolders_scandir(path):
 if __name__ == "__main__":
 
     root_dir = os.path.join(os.path.dirname(__file__), "../simulation_results")
-    main_dir = "2026-07-29/compare_different_inits_exp" 
+    main_dir = "2026-07-29/compare_different_inits_erlang_numsubcomps=6_contfreq=0.4" 
 
     relevant_dir = os.path.join(root_dir, main_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
