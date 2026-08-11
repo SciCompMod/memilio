@@ -45,8 +45,6 @@ ScalarType TransmissionProbabilityOnContact = 0.8;
 ScalarType RiskOfInfectionFromSymptomatic   = 1.;
 ScalarType Seasonality                      = 0.;
 
-ScalarType cont_freq = 0.73;
-
 ScalarType totalpop_reduction = 1.;
 ScalarType total_population   = 1e7 / totalpop_reduction;
 ScalarType I0                 = 1000. / totalpop_reduction;
@@ -74,7 +72,7 @@ mio::TimeSeries<ScalarType> compress_timeseries(const mio::TimeSeries<ScalarType
 
 mio::IOResult<std::vector<mio::TimeSeries<ScalarType>>> simulate_ode(ScalarType ode_exponent, ScalarType t0_ode,
                                                                      ScalarType tmax, ScalarType TimeInfected,
-                                                                     std::string save_dir       = "",
+                                                                     ScalarType cont_freq, std::string save_dir = "",
                                                                      ScalarType saving_exponent = 0.)
 {
     using namespace params;
@@ -147,12 +145,12 @@ mio::IOResult<std::vector<mio::TimeSeries<ScalarType>>> simulate_ode(ScalarType 
 
 mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarType ode_exponent, size_t gregory_order,
                                  size_t finite_difference_order, ScalarType t_init_window, ScalarType t0_ide,
-                                 ScalarType tmax, ScalarType TimeInfected, std::string save_dir = "",
+                                 ScalarType tmax, ScalarType TimeInfected, ScalarType cont_freq,
+                                 std::string save_dir = "", bool kahan = true,
                                  mio::TimeSeries<ScalarType> compartments_groundtruth =
                                      mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
                                  mio::TimeSeries<ScalarType> flows_groundtruth =
-                                     mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionTransition::Count),
-                                 bool kahan = true)
+                                     mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionTransition::Count))
 {
     using namespace params;
     using Vec = mio::TimeSeries<ScalarType>::Vector;
@@ -311,7 +309,7 @@ int main()
     // Compute groundtruth with ODE model.
     ScalarType ode_exponent = 6.;
 
-    std::vector<ScalarType> time_infected_values = {2.};
+    std::vector<ScalarType> time_infected_values = {4.};
     // Support max with tol = 1e-8:
     // T_I=1: support max = 18.43
     // T_I=2: support max = 36.85
@@ -319,15 +317,15 @@ int main()
     // T_I=4: support max = 73.69
 
     ScalarType t0_ode                    = 0.;
-    ScalarType t0_ide                    = 50.;
-    std::vector<ScalarType> init_windows = {40.};
+    ScalarType t0_ide                    = 100.;
+    std::vector<ScalarType> init_windows = {90., 40.};
     std::vector<ScalarType> tmax_values  = {t0_ide + 100.};
 
     bool kahan = true;
 
     std::vector<size_t> finite_difference_orders = {4};
 
-    std::vector<ScalarType> ide_exponents = {3.};
+    std::vector<ScalarType> ide_exponents = {-1., 0., 1., 2., 3.};
     std::vector<size_t> gregory_orders    = {1, 2, 3};
 
     std::vector<std::vector<ScalarType>> timeinf_tmax_values;
@@ -344,13 +342,16 @@ int main()
         ScalarType time_infected = value_tuple[0];
         ScalarType tmax          = value_tuple[1];
 
+        ScalarType cont_freq = 1.46 / time_infected;
+
         for (size_t finite_difference_order : finite_difference_orders) {
             std::cout << "FD order: " << finite_difference_order << std::endl;
 
-            std::string save_dir = fmt::format(
-                "../../simulation_results/2026-08-02/with_kahan_dtode=1e-{}_t0ode={}_timeinf={}_contfreq={}/"
-                "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
-                ode_exponent, t0_ode, time_infected, cont_freq, t0_ide, tmax, finite_difference_order);
+            std::string save_dir =
+                fmt::format("./simulation_results/2026-08-11/"
+                            "final_fd_orders_dtode=1e-{}_t0ode={}_timeinf={}_contfreq={}/"
+                            "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
+                            ode_exponent, t0_ode, time_infected, cont_freq, t0_ide, tmax, finite_difference_order);
 
             // Make folder if not existent yet.
             std::filesystem::path dir(save_dir);
@@ -359,7 +360,7 @@ int main()
             ScalarType saving_exponent = *std::max_element(ide_exponents.begin(), ide_exponents.end());
             // ScalarType saving_exponent = ode_exponent;
             auto result_ode =
-                simulate_ode(ode_exponent, t0_ode, tmax, time_infected, save_dir, saving_exponent).value();
+                simulate_ode(ode_exponent, t0_ode, tmax, time_infected, cont_freq, save_dir, saving_exponent).value();
 
             auto compartments_ode = result_ode[0];
             // auto flows_ode        = result_ode[1];
@@ -377,9 +378,9 @@ int main()
                 for (size_t gregory_order : gregory_orders) {
                     std::cout << std::endl;
                     std::cout << "Gregory order: " << gregory_order << std::endl;
-                    mio::IOResult<void> result_ide =
-                        simulate_ide(ide_exponents, saving_exponent, gregory_order, finite_difference_order,
-                                     init_window, t0_ide, tmax, time_infected, save_dir_ide, compartments_ode, kahan);
+                    mio::IOResult<void> result_ide = simulate_ide(
+                        ide_exponents, saving_exponent, gregory_order, finite_difference_order, init_window, t0_ide,
+                        tmax, time_infected, cont_freq, save_dir_ide, kahan, compartments_ode);
                 }
             }
         }
