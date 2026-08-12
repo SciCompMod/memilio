@@ -311,7 +311,8 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
         ScalarType inner_sum = 0.;
         std::vector<ScalarType> inner_sum_vector{};
 
-        ScalarType phi_deriv = compute_phi_deriv(dt, j, fd_order_contacts, current_time, damping_time, init_time);
+        ScalarType phi_deriv = compute_phi_deriv(dt, j, fd_order_contacts, current_time, damping_time, init_time,
+                                                 smoother_window, smoothstep_order);
 
         if (j > 0 && abs(phi_deriv) > 1e-10) {
 
