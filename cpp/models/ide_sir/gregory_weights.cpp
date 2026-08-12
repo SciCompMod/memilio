@@ -54,29 +54,17 @@ std::vector<Eigen::MatrixX<ScalarType>> get_gregoryweights(size_t gregory_order)
             24. / scale_gregory_weights;
     }
 
-    // // Other weights.
-    // if (gregory_order == 3) {
-    //     scale_gregory_weights = 24.;
-    //     gregoryWeights_sigma << 11. / scale_gregory_weights, 23. / scale_gregory_weights, 29. / scale_gregory_weights,
-    //         11. / scale_gregory_weights, 24. / scale_gregory_weights, 24. / scale_gregory_weights,
-    //         11. / scale_gregory_weights, 24. / scale_gregory_weights, 25. / scale_gregory_weights;
-    //     gregoryWeights_omega << 9. / scale_gregory_weights, 28. / scale_gregory_weights, 23. / scale_gregory_weights,
-    //         24. / scale_gregory_weights;
-    // }
-
-    // if (gregory_order == 4) {
-    //     scale_gregory_weights = 720.;
-    //     gregoryWeights_sigma << 311. / scale_gregory_weights, 796. / scale_gregory_weights,
-    //         606. / scale_gregory_weights, 916. / scale_gregory_weights, //
-    //         311. / scale_gregory_weights, 777. / scale_gregory_weights, 712. / scale_gregory_weights,
-    //         652. / scale_gregory_weights, //
-    //         311. / scale_gregory_weights, 777. / scale_gregory_weights, 693. / scale_gregory_weights,
-    //         758. / scale_gregory_weights, //
-    //         311. / scale_gregory_weights, 777. / scale_gregory_weights, 693. / scale_gregory_weights,
-    //         739. / scale_gregory_weights, //
-    //         gregoryWeights_omega << 251. / scale_gregory_weights, 897. / scale_gregory_weights,
-    //         633. / scale_gregory_weights, 739. / scale_gregory_weights, 720. / scale_gregory_weights;
-    // }
+    if (gregory_order == 4) {
+        scale_gregory_weights = 720.;
+        gregoryWeights_sigma << 251. / scale_gregory_weights, 916. / scale_gregory_weights,
+            546. / scale_gregory_weights, 916. / scale_gregory_weights, 251. / scale_gregory_weights,
+            897. / scale_gregory_weights, 652. / scale_gregory_weights, 652. / scale_gregory_weights,
+            251. / scale_gregory_weights, 897. / scale_gregory_weights, 633. / scale_gregory_weights,
+            758. / scale_gregory_weights, 251. / scale_gregory_weights, 897. / scale_gregory_weights,
+            633. / scale_gregory_weights, 739. / scale_gregory_weights;
+        gregoryWeights_omega << 251. / scale_gregory_weights, 897. / scale_gregory_weights,
+            633. / scale_gregory_weights, 739. / scale_gregory_weights, 720. / scale_gregory_weights;
+    }
 
     return {gregoryWeights_sigma, gregoryWeights_omega};
 }

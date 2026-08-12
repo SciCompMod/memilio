@@ -207,7 +207,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarTy
                       << std::endl;
 
             while (init_populations.get_last_time() < t0_ide - 1e-10) {
-                start_index += groundtruth_index_factor;
+                std::round(start_index += groundtruth_index_factor);
                 for (size_t compartment : compartments) {
                     vec_init[compartment] = compartments_groundtruth.get_value(std::round(start_index))[compartment];
                 }
@@ -225,7 +225,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarTy
 
                 init_flows_ts.add_time_point(t_init, vec_init_flows);
 
-                while (init_flows_ts.get_last_time() < t_init - 1e-10) {
+                while (init_flows_ts.get_last_time() < t0_ide - 1e-10) {
                     for (size_t flow : flows) {
                         vec_init_flows[flow] =
                             (flows_groundtruth.get_value(
@@ -278,7 +278,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarTy
             mio::TimeSeries<ScalarType> compartments = sim.get_result();
             mio::TimeSeries<ScalarType> flows        = sim.get_flows();
 
-            auto result = compartments.export_csv(fmt::format("{}/ide_result.csv", save_dir));
+            // auto result = compartments.export_csv(fmt::format("{}/ide_result.csv", save_dir));
 
             auto save_result_status_ide =
                 mio::save_result({compartments}, {0}, num_agegroups,
@@ -309,7 +309,7 @@ int main()
     // Compute groundtruth with ODE model.
     ScalarType ode_exponent = 6.;
 
-    std::vector<ScalarType> time_infected_values = {4.};
+    std::vector<ScalarType> time_infected_values = {2.};
     // Support max with tol = 1e-8:
     // T_I=1: support max = 18.43
     // T_I=2: support max = 36.85
@@ -317,16 +317,16 @@ int main()
     // T_I=4: support max = 73.69
 
     ScalarType t0_ode                    = 0.;
-    ScalarType t0_ide                    = 100.;
-    std::vector<ScalarType> init_windows = {90., 40.};
+    ScalarType t0_ide                    = 50.;
+    std::vector<ScalarType> init_windows = {40.};
     std::vector<ScalarType> tmax_values  = {t0_ide + 100.};
 
     bool kahan = true;
 
     std::vector<size_t> finite_difference_orders = {4};
 
-    std::vector<ScalarType> ide_exponents = {-1., 0., 1., 2., 3.};
-    std::vector<size_t> gregory_orders    = {1, 2, 3};
+    std::vector<ScalarType> ide_exponents = {0., 1., 2., 3.};
+    std::vector<size_t> gregory_orders    = {1, 2, 3, 4};
 
     std::vector<std::vector<ScalarType>> timeinf_tmax_values;
 
@@ -348,8 +348,8 @@ int main()
             std::cout << "FD order: " << finite_difference_order << std::endl;
 
             std::string save_dir =
-                fmt::format("./simulation_results/2026-08-11/"
-                            "final_fd_orders_dtode=1e-{}_t0ode={}_timeinf={}_contfreq={}/"
+                fmt::format("./simulation_results/2026-08-12/"
+                            "baseline_new_order_dtode=1e-{}_t0ode={}_timeinf={}_contfreq={}/"
                             "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
                             ode_exponent, t0_ode, time_infected, cont_freq, t0_ide, tmax, finite_difference_order);
 
