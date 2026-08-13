@@ -171,4 +171,86 @@ TEST(TestSimulation, ResultSimulation)
     }
     EXPECT_EQ(sim.get_result().get_value(0)[(Eigen::Index)mio::abm::InfectionState::Susceptible], 1.0);
     EXPECT_EQ(sim.get_result().get_value(N - 1)[(Eigen::Index)mio::abm::InfectionState::Susceptible], 1.0);
+
+    // the detailed result has the same time points, but is resolved by LocationType and AgeGroup
+    ASSERT_EQ(sim.get_result_detailed().get_num_time_points(), N);
+    EXPECT_THAT(sim.get_result_detailed().get_times(), ElementsAreLinspace(t0.days(), tmax.days(), N));
+    EXPECT_EQ(sim.get_result_detailed().get_num_elements(),
+              Eigen::Index((size_t)mio::abm::LocationType::Count * num_age_groups));
+    // nobody gets infected in this setup, so no new Infection is ever counted
+    for (const auto& tp : sim.get_result_detailed()) {
+        EXPECT_EQ(tp.sum(), 0.0);
+    }
+}
+
+TEST(TestSimulation, resultSimulationDetailedCountsNewInfections)
+{
+    // a Person that becomes Exposed during the Simulation must show up in the detailed result at its LocationType and
+    // AgeGroup, while a Person that is already Exposed at t0 must not be counted.
+    auto model    = mio::abm::Model(num_age_groups);
+    auto home     = model.add_location(mio::abm::LocationType::Home);
+    const auto t0 = mio::abm::TimePoint(0);
+
+    // an Exposed Person at initialization, and a second one that only becomes Exposed after the first time step
+    auto initially_exposed = add_test_person(model, home, age_group_15_to_34, mio::abm::InfectionState::Exposed, t0);
+    auto newly_exposed     = add_test_person(model, home, age_group_35_to_59, mio::abm::InfectionState::Susceptible, t0);
+    model.assign_location(initially_exposed, home);
+    model.assign_location(newly_exposed, home);
+
+    // give the second Person an Infection that starts in the Exposed state one hour in, i.e. after the first step
+    const auto t_infection = t0 + mio::abm::hours(1);
+    auto& person           = model.get_person(newly_exposed);
+    auto rng_person        = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
+    person.add_new_infection(mio::abm::Infection(rng_person, mio::abm::VirusVariant::Wildtype, person.get_age(),
+                                                 model.parameters, t_infection,
+                                                 mio::abm::InfectionState::Exposed));
+
+    auto sim = mio::abm::ResultSimulation(std::move(model), t0);
+    sim.advance(t0 + mio::abm::hours(2));
+
+    const auto& detailed = sim.get_result_detailed();
+    const auto index     = Eigen::Index((size_t)mio::abm::LocationType::Count * (size_t)age_group_35_to_59.get() +
+                                    (size_t)mio::abm::LocationType::Home);
+
+    // the initially Exposed Person is not counted, since there is no previous time step at t0
+    EXPECT_EQ(detailed.get_value(0).sum(), 0.0);
+    // the new Infection of the second Person is counted exactly once, at Home and in its AgeGroup
+    double total = 0.0;
+    for (Eigen::Index i = 1; i < detailed.get_num_time_points(); ++i) {
+        total += detailed.get_value(i).sum();
+    }
+    EXPECT_EQ(total, 1.0);
+    EXPECT_EQ(detailed.get_value(1)[index], 1.0);
+}
+
+TEST(TestSimulation, logInfectionStatePerAgeGroup)
+{
+    // LogInfectionStatePerAgeGroup counts every Person by AgeGroup and InfectionState
+    auto model = mio::abm::Model(num_age_groups);
+    auto home  = model.add_location(mio::abm::LocationType::Home);
+
+    auto p1 = add_test_person(model, home, age_group_5_to_14, mio::abm::InfectionState::Susceptible);
+    auto p2 = add_test_person(model, home, age_group_5_to_14, mio::abm::InfectionState::Susceptible);
+    auto p3 = add_test_person(model, home, age_group_60_to_79, mio::abm::InfectionState::Dead);
+    model.assign_location(p1, home);
+    model.assign_location(p2, home);
+    model.assign_location(p3, home);
+
+    auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(model));
+    mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionStatePerAgeGroup> history{
+        Eigen::Index((size_t)mio::abm::InfectionState::Count * num_age_groups)};
+    sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(1), history);
+
+    const auto& log = std::get<0>(history.get_log());
+    ASSERT_EQ(log.get_num_time_points(), 2);
+    EXPECT_EQ(log.get_num_elements(), Eigen::Index((size_t)mio::abm::InfectionState::Count * num_age_groups));
+
+    const auto idx = [](mio::AgeGroup age, mio::abm::InfectionState state) {
+        return Eigen::Index((size_t)mio::abm::InfectionState::Count * (size_t)age.get() + (size_t)state);
+    };
+    for (Eigen::Index i = 0; i < log.get_num_time_points(); ++i) {
+        EXPECT_EQ(log.get_value(i).sum(), 3.0);
+        EXPECT_EQ(log.get_value(i)[idx(age_group_5_to_14, mio::abm::InfectionState::Susceptible)], 2.0);
+        EXPECT_EQ(log.get_value(i)[idx(age_group_60_to_79, mio::abm::InfectionState::Dead)], 1.0);
+    }
 }
