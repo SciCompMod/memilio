@@ -21,6 +21,7 @@ import h5py
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 
 from matplotlib.markers import MarkerStyle
 from matplotlib.transforms import Affine2D
@@ -336,16 +337,23 @@ def plot_difference_per_timestep(groundtruth, results, groundtruth_save_exponent
 
                 padding_index = 2
                 difference_zoom = difference[int((damping_time-t0_ide-1-padding_index)/timestep):int(
-                    (damping_time-t0_ide+padding_index)/timestep)+1]
+                    (damping_time-t0_ide+padding_index-1)/timestep)+1]
                 indices_zoom = indices[int((damping_time-t0_ide-1-padding_index)/timestep):int(
-                    (damping_time-t0_ide+padding_index)/timestep)+1]
+                    (damping_time-t0_ide+padding_index-1)/timestep)+1]
 
                 axs_zoom[compartment].scatter(
-                    indices_zoom, difference_zoom, s=1, color="#88CCEE")
+                    indices_zoom, difference_zoom, s=1, color="#882255")
                 axs_zoom[compartment].set_title(f"{sir_dict[compartment]}")
+                axs_zoom[compartment].xaxis.set_major_locator(
+                    ticker.MultipleLocator(1))
 
         fig.supxlabel("Time")
-        fig_zoom.supxlabel("Time")
+
+        axs_zoom[1].set_xlabel(r'Time', fontsize=12, labelpad=15)
+        # fig_zoom.supxlabel("Time", fontsize=12, labelpad=15)
+        axs_zoom[0].set_ylabel("Difference", fontsize=12, labelpad=10)
+
+        fig_zoom.tight_layout()
 
         if save_dir != "":
             if not os.path.isdir(f"{save_dir}/differences"):
@@ -393,13 +401,15 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
                             figsize=(figsize_x, figsize_y))
 
     labels = [
-        f"Gregory order {gregory_order}" for gregory_order in gregory_orders_simulation]
+        f"Gregory rule {gregory_order}" for gregory_order in gregory_orders_simulation]
     # labels = ["Trapez. rule", "I Gregory rule", "II Gregory rule"]
     labels.insert(0, "")
     labels.append(r"$\mathcal{O}(\Delta t)$")
     labels.append(r"$\mathcal{O}(\Delta t^2)$")
     labels.append(r"$\mathcal{O}(\Delta t^3)$")
     labels.append(r"$\mathcal{O}(\Delta t^4)$")
+    if len(gregory_orders_simulation) == 4:
+        labels.append(r"$\mathcal{O}(\Delta t^5)$")
 
     handles = [plt.Line2D([], [], color='none')]
 
@@ -411,7 +421,7 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
     # else:
     #     colors = ["darkred"]
 
-    colors = ["#332288", "#44AA99", "#882255"]  # indigo, teal, wine
+    colors = ["#332288", "#44AA99", "#882255", "#88CCEE"]  # indigo, teal, wine
     gray = "#888888"
 
     for i in range(num_plots):
@@ -458,12 +468,21 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
         fourth = ax_obj.plot(plotted_timesteps, comparison,
                              '--', color=colors[2], linewidth=1.2, alpha=0.5, label=r"$\mathcal{O}(\Delta t^4)$")
 
+        if len(gregory_orders_simulation) == 4:
+            plotted_timesteps = timesteps_ide[:6]
+            comparison = [0.5*(1/first_timestep)**5*errors_all_gregory_orders[3]
+                          [0, i]*dt**5 for dt in plotted_timesteps]
+            fifth = ax_obj.plot(plotted_timesteps, comparison,
+                                '--', color=colors[3], linewidth=1.2, alpha=0.5, label=r"$\mathcal{O}(\Delta t^5)$")
+
         # Append lines to handles for legend.
         if i == 0:
             handles.append(first[0])
             handles.append(second[0])
             handles.append(third[0])
             handles.append(fourth[0])
+            if len(gregory_orders_simulation) == 4:
+                handles.append(fifth[0])
             # Invert x axis only for one plot so that sharex=True and invert_xaxis work as intended.
             ax_obj.invert_xaxis()
 
@@ -491,13 +510,23 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
 
     # print(handles)
 
-    labels_reordered = [labels[0], labels[4], labels[1],
-                        labels[5], labels[2], labels[6], labels[3], labels[7]]
+    if len(gregory_orders_simulation) == 4:
+        labels_reordered = [labels[0], labels[5], labels[1],
+                            labels[6], labels[2], labels[7], labels[3], labels[8], labels[4], labels[9]]
 
-    handles_reordered = [handles[0], handles[4], handles[1],
-                         handles[5], handles[2], handles[6], handles[3], handles[7]]
+        handles_reordered = [handles[0], handles[5], handles[1],
+                             handles[6], handles[2], handles[7], handles[3], handles[8], handles[4], handles[9]]
+        ncol = 5
 
-    legend = fig.legend(handles=handles_reordered, labels=labels_reordered, ncol=4,  loc='lower center',
+    else:
+        labels_reordered = [labels[0], labels[4], labels[1],
+                            labels[5], labels[2], labels[6], labels[3], labels[7]]
+
+        handles_reordered = [handles[0], handles[4], handles[1],
+                             handles[5], handles[2], handles[6], handles[3], handles[7]]
+        ncol = 4
+
+    legend = fig.legend(handles=handles_reordered, labels=labels_reordered, ncol=ncol,  loc='lower center',
                         # bbox_to_anchor=(0.5, -0.2), # bbox_to_anchor=(1., -0.1)
                         fontsize=8, bbox_transform=fig.transFigure, bbox_to_anchor=(0.53, -0.1))
     fig.tight_layout()
@@ -584,7 +613,7 @@ def plot_total_pop_diff(gregory_orders_simulation, fd_orders, timesteps_ide, tot
         r"Relative deviation at $t_\max$", fontsize=12)
 
     axs.set_title(
-        f"Gregory order {gregory_orders_simulation[gregory_index]}")
+        f"Gregory rule {gregory_orders_simulation[gregory_index]}")
 
     plt.tight_layout()
 
@@ -663,10 +692,10 @@ def get_tmax_ide_from_dir_name(dir_name):
 def main():
 
     groundtruth_exponent = 6
-    groundtruth_save_exponent = 2
+    groundtruth_save_exponent = 3
     only_S = False
 
-    main_dir = f"2026-08-11/old_example_dtode=1e-6_t0ode=0_timeinf=2_contfreq=0.73"
+    main_dir = f"2026-08-12/no_kahan_short_dtode=1e-6_t0ode=0_timeinf=2_contfreq=0.73"
 
     ##############################################
 
@@ -718,7 +747,8 @@ def main():
             errors_all_gregory_orders_max_weighted = []
 
             # Get exponents for which IDE simulations have been computed for considered directory.
-            ide_exponents = get_ide_exponents(ide_result_dir)
+            # ide_exponents = get_ide_exponents(ide_result_dir)
+            ide_exponents = [0, 1, 2, 3]
 
             # Calculate time steps resulting from ide_exponents.
             timesteps_ide = []
@@ -727,7 +757,7 @@ def main():
 
             # Compute errors and total population at end of simulation.
             for gregory_order_simulation in gregory_orders_simulation:
-                print(f"Gregory order {gregory_order_simulation}")
+                print(f"Gregory rule {gregory_order_simulation}")
                 # Read results from IDE simulations.
                 results = read_data(ide_result_dir, ide_exponents,
                                     gregory_order_simulation)

@@ -73,7 +73,8 @@ public:
     ScalarType compute_phi_deriv(ScalarType dt, size_t j, size_t fd_order, ScalarType current_time,
                                  ScalarType damping_time, ScalarType init_time, ScalarType smoother_window = 1.,
                                  size_t smoothstep_order = 0.);
-    ScalarType phi_deriv_analytical(ScalarType current_time, ScalarType damping_time, ScalarType smoother_window = 1.);
+    ScalarType phi_deriv_analytical(ScalarType current_time, ScalarType damping_time, ScalarType smoother_window = 1.,
+                                    size_t smoothstep_order = 0.);
 
     ScalarType compute_gamma_deriv(ScalarType dt, size_t time_point_index, size_t fd_order);
 

@@ -188,7 +188,7 @@ mio::IOResult<void> simulate_ide(ScalarType ide_exponent, ScalarType ode_exponen
         init_populations.add_time_point(t_init, vec_init);
 
         while (init_populations.get_last_time() < t0_ide - 1e-10) {
-            start_index += groundtruth_index_factor;
+            std::round(start_index += groundtruth_index_factor);
             for (size_t compartment : compartments) {
                 vec_init[compartment] = compartments_groundtruth.get_value(std::round(start_index))[compartment];
             }
@@ -255,29 +255,31 @@ int main()
     ScalarType init_window = 40.;
     ScalarType tmax        = 60.;
 
-    ScalarType damping      = 0.05;
+    ScalarType damping      = 0.1;
     ScalarType damping_time = 55.372907;
 
     std::vector<size_t> gregory_orders = {1, 2, 3};
     size_t finite_difference_order     = 4;
     size_t fd_order_contacts           = 4;
-    size_t smoothstep_order            = 4; // smoothstep_order=0 leads to smoother_cosine
+    size_t smoothstep_order            = 0; // possible values: 0, 3 or 4; smoothstep_order=0 leads to smoother_cosine
     ScalarType smoother_window         = 2.;
 
     // Compute groundtruth with ODE model.
     ScalarType ode_exponent               = 6.;
-    std::vector<ScalarType> ide_exponents = {0, 1, 2, 3};
+    std::vector<ScalarType> ide_exponents = {0, 1, 2};
 
     std::string save_dir =
-        fmt::format("./simulation_results/2026-08-11/smoothstepc{}_fdordercontacts={}_smootherwindow=2_t0ode={}/"
+        fmt::format("./simulation_results/2026-08-13/"
+                    "phi_deriv_analytical_smoothstepc{}_fdordercontacts={}_smootherwindow={}_t0ode={}/"
                     "nonconst_contacts_t0ide={}_tmax={}_dampingtime={}_damping={}/",
-                    smoothstep_order, fd_order_contacts, t0_ode, t0_ide, tmax, damping_time, damping);
+                    smoothstep_order, fd_order_contacts, smoother_window, t0_ode, t0_ide, tmax, damping_time, damping);
 
     // Make folder if not existent yet.
     std::filesystem::path dir(save_dir);
     std::filesystem::create_directories(dir);
 
-    ScalarType saving_exponent = *std::max_element(ide_exponents.begin(), ide_exponents.end());
+    // ScalarType saving_exponent = *std::max_element(ide_exponents.begin(), ide_exponents.end());
+    ScalarType saving_exponent = 3.;
     std::cout << "saving exp: " << saving_exponent << std::endl;
     auto result_ode = simulate_ode(ode_exponent, t0_ode, tmax, time_infected, damping, damping_time, save_dir,
                                    saving_exponent, smoother_window, smoothstep_order)
