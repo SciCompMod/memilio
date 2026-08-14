@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Khoa Nguyen
@@ -25,6 +25,7 @@
 #include "abm/location_id.h"
 #include "abm/location_type.h"
 #include "abm/parameters.h"
+#include "abm/pcr_surveillance.h"
 #include "abm/person_id.h"
 #include "abm/personal_rng.h"
 #include "memilio/io/default_serialize.h"
@@ -37,6 +38,7 @@
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/random_number_generator.h"
 #include <cstdint>
+#include <utility>
 
 namespace mio
 {
@@ -55,7 +57,7 @@ public:
      * @param[in, out] location Initial Location of the Person.
      * @param[in] age The AgeGroup of the Person.
      * @param[in] person_index Index of the Person.
-     * 
+     *
      */
     explicit Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location_id,
                     int location_model_id, AgeGroup age, PersonId person_id = PersonId::invalid_ID());
@@ -269,6 +271,16 @@ public:
     void remove_quarantine();
 
     /**
+     * @brief Starts home isolation for the Person, if the Person complies to the Isolation
+     * InterventionType. Used to apply a test result once it has been reported, e.g. by
+     * PcrSurveillance, as opposed to TestingScheme/get_tested which apply the result
+     * immediately.
+     * @param[inout] rng PersonalRandomNumberGenerator of the Person.
+     * @param[in] t TimePoint the isolation starts.
+     */
+    void start_isolation(PersonalRandomNumberGenerator& rng, TimePoint t);
+
+    /**
      * @brief Simulates a viral test and returns the test result of the Person.
      * If the test is positive, the Person has to quarantine.
      * If the test is negative, quarantine ends.
@@ -278,6 +290,21 @@ public:
      * @return True if the test result of the Person is positive.
      */
     bool get_tested(PersonalRandomNumberGenerator& rng, TimePoint t, const TestParameters& params);
+
+    /**
+     * @brief Simulates a PCR test according to the per-agent test-outcome model. Reports a
+     * CT value Ci = a - b * Vi(t) + noise for infected Persons (positive iff the sample is
+     * adequate and Ci < cutoff), or a false positive with probability (1 - specificity) for
+     * uninfected Persons. Unlike get_tested(), this does not itself start/end isolation or
+     * record a TestResult. Results are applied by callers (e.g. PcrSurveillance) once its
+     * reporting delay has elapsed.
+     * @param[inout] rng PersonalRandomNumberGenerator of the Person.
+     * @param[in] t TimePoint the sample is taken.
+     * @param[in] params Parameters of the PCR assay.
+     * @return Pair of (test positive, reported CT value).
+     */
+    std::pair<bool, ScalarType> get_tested_pcr(PersonalRandomNumberGenerator& rng, TimePoint t,
+                                               const PcrAssayParameters& params) const;
 
     /**
      * @brief Get the PersonId of the Person.
@@ -435,8 +462,10 @@ public:
      * @param[in] t The TimePoint of the test.
      * @param[in] type The TestType of the test.
      * @param[in] result The result of the test.
+     * @param[in] ct_value The reported CT value of the test, if applicable (default: NaN).
     */
-    void add_test_result(TimePoint t, TestType type, bool result);
+    void add_test_result(TimePoint t, TestType type, bool result,
+                         ScalarType ct_value = std::numeric_limits<ScalarType>::quiet_NaN());
 
     /**
      * @brief Get the most recent TestResult performed from the Person based on the TestType.

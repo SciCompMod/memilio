@@ -5,10 +5,10 @@
 /**
  * @file city_parameters.h
  * @brief Parameters for building a representative German city
- * 
+ *
  * This file contains demographic and infrastructure parameters based on German statistics
  * to create realistic city simulations.
- * 
+ *
  * Sources:
  * - German Federal Statistical Office (Destatis) 2024: Population: Germany, reference date, age Code: 12411-0005
  * - German Federal Statistical Office: Household statistics 2024 Code: 12421-0100
@@ -92,28 +92,28 @@ struct CityInfrastructure {
 
     std::vector<int> calc_household_sizes(int population) const
     {
-        const int n_bins = HOUSEHOLD_SIZE_DISTRIBUTION.size();
+        const size_t n_bins = HOUSEHOLD_SIZE_DISTRIBUTION.size();
 
         // 1. Estimate household count based on average household size
         double avg_household_size = 0.0;
-        for (int i = 0; i < n_bins; ++i)
+        for (size_t i = 0; i < n_bins; ++i)
             avg_household_size += (i + 1) * HOUSEHOLD_SIZE_DISTRIBUTION[i];
 
         int estimated_total_households = static_cast<int>(std::round(population / avg_household_size));
 
         // 2. Calculate raw household numbers per bin
         std::vector<double> raw_households(n_bins);
-        for (int i = 0; i < n_bins; ++i)
+        for (size_t i = 0; i < n_bins; ++i)
             raw_households[i] = estimated_total_households * HOUSEHOLD_SIZE_DISTRIBUTION[i];
 
         // 3. Round and fix totals
         std::vector<int> households_by_size(n_bins);
-        for (int i = 0; i < n_bins; ++i)
+        for (size_t i = 0; i < n_bins; ++i)
             households_by_size[i] = static_cast<int>(std::round(raw_households[i]));
 
         // 4. Ensure population total is correct
         int total_people = 0;
-        for (int i = 0; i < n_bins; ++i)
+        for (size_t i = 0; i < n_bins; ++i)
             total_people += households_by_size[i] * (i + 1);
 
         int diff = population - total_people;

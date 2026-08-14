@@ -42,6 +42,7 @@ set(TESTSOURCES
     test_abm_simulation.cpp
     test_abm_serialization.cpp
     test_abm_testing_strategy.cpp
+    test_abm_pcr_surveillance.cpp
     test_abm_model.cpp
     test_math_floating_point.cpp
     test_math_time_series_functor.cpp

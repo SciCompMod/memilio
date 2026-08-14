@@ -14,6 +14,8 @@ add_library(abm
     personal_rng.h
     testing_strategy.cpp
     testing_strategy.h
+    pcr_surveillance.cpp
+    pcr_surveillance.h
     model.cpp
     model.h
     location_type.h

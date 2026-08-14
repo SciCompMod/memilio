@@ -25,6 +25,7 @@
 #include "abm/location_type.h"
 #include "abm/mobility_data.h"
 #include "abm/parameters.h"
+#include "abm/pcr_surveillance.h"
 #include "abm/location.h"
 #include "abm/person.h"
 #include "abm/person_id.h"
@@ -108,6 +109,7 @@ public:
         , m_activeness_statuses(other.m_activeness_statuses)
         , m_has_locations(other.m_has_locations)
         , m_testing_strategy(other.m_testing_strategy)
+        , m_surveillance_testing(other.m_surveillance_testing)
         , m_trip_list(other.m_trip_list)
         , m_use_mobility_rules(other.m_use_mobility_rules)
         , m_mobility_rules(other.m_mobility_rules)
@@ -324,6 +326,20 @@ public:
     TestingStrategy& get_testing_strategy();
 
     const TestingStrategy& get_testing_strategy() const;
+
+    /**
+     * @brief Get the PcrSurveillance testing process.
+     * @return Reference to the budget-constrained PCR surveillance testing process.
+     */
+    PcrSurveillance& get_surveillance_testing()
+    {
+        return m_surveillance_testing;
+    }
+
+    const PcrSurveillance& get_surveillance_testing() const
+    {
+        return m_surveillance_testing;
+    }
 
     /** 
      * @brief The simulation parameters of the Model.
@@ -693,6 +709,7 @@ protected:
     std::bitset<size_t(LocationType::Count)>
         m_has_locations; ///< Flags for each LocationType, set if a Location of that type exists.
     TestingStrategy m_testing_strategy; ///< List of TestingScheme%s that are checked for testing.
+    PcrSurveillance m_surveillance_testing; ///< Budget-constrained PCR surveillance testing process.
     TripList m_trip_list; ///< List of all Trip%s the Person%s do.
     bool m_use_mobility_rules; ///< Whether mobility rules are considered.
     std::vector<MobilityRuleType> m_mobility_rules; ///< Rules that govern the mobility between Location%s.

@@ -86,6 +86,7 @@ void Model::evolve(TimePoint t, TimeSpan dt)
     interaction(t, dt);
     log_info("ABM Model mobility.");
     perform_mobility(t, dt);
+    m_surveillance_testing.run(t, dt, *this);
 }
 
 void Model::interaction(TimePoint t, TimeSpan dt)

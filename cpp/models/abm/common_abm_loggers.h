@@ -23,12 +23,16 @@
 
 #include "abm/infection_state.h"
 #include "abm/person_id.h"
+#include "abm/pcr_surveillance.h"
 #include "abm/simulation.h"
 #include "memilio/io/history.h"
 #include "memilio/utils/time_series.h"
 #include "models/abm/location_type.h"
 #include "abm/mobility_data.h"
 #include "memilio/utils/mioomp.h"
+#include <algorithm>
+#include <cmath>
+#include <vector>
 
 namespace mio
 {
@@ -277,123 +281,21 @@ struct LogCycleThreshhold : mio::LogAlways {
 
 
 /**
- * @brief Logs CT histograms for one or more (age-group, location-type) clusters per day.
- *
- * Each cluster produces an independent 41-bin histogram (CT 0..40).
- * Uninfected persons (and recovered with zero viral load) are binned at CT=40:
- * 40 = "not detected", 0 = maximum viral load.
- * The sum of each histogram equals the number of persons in that cluster that morning.
- * Fires at a fixed hour each day (default 8), matching LogSchoolCohort's schedule.
- *
- * Output Type: pair<TimePoint, vector<VectorX<uint32_t>>> — one histogram per cluster,
- * in the same order as the clusters passed to the constructor.
+ * @brief Logs the raw PcrTestRecords resolved by mio::abm::PcrSurveillance that step.
+ * Only logs on steps where something was actually resolved.
  */
-struct LogCTCluster {
-    using ClusterSpec = std::pair<mio::AgeGroup, mio::abm::LocationType>;
-    using Type        = std::pair<mio::abm::TimePoint, std::vector<Eigen::VectorX<uint32_t>>>;
+struct LogSurveillanceRecords {
+    using Type = std::vector<mio::abm::PcrTestRecord>;
 
-    explicit LogCTCluster(std::vector<ClusterSpec> clusters, int hour = 10)
-        : m_clusters(std::move(clusters)), m_hour(hour)
+    static bool should_log(const mio::abm::Simulation<>& sim)
     {
+        return !sim.get_model().get_surveillance_testing().get_resolved_records().empty();
     }
 
-    bool should_log(const mio::abm::Simulation<>& sim)
+    static Type log(const mio::abm::Simulation<>& sim)
     {
-        return sim.get_time().hour_of_day() == m_hour;
+        return sim.get_model().get_surveillance_testing().get_resolved_records();
     }
-
-    Type log(const mio::abm::Simulation<>& sim)
-    {
-        constexpr int num_bins       = 41;
-        constexpr int max_ct         = 40;
-        constexpr double log10_slope = 3.32192809489; // 1/log10(2)
-
-        const auto t = sim.get_time();
-        std::vector<Eigen::VectorX<uint32_t>> hists(m_clusters.size(),
-                                                     Eigen::VectorX<uint32_t>::Zero(num_bins));
-
-        for (const auto& person : sim.get_model().get_persons()) {
-            const auto age      = person.get_age();
-            const auto loc_type = sim.get_model().get_location(person.get_location()).get_type();
-            for (size_t c = 0; c < m_clusters.size(); ++c) {
-                if (m_clusters[c].first != age || m_clusters[c].second != loc_type)
-                    continue;
-                const auto& infections = person.get_infection_vector();
-                if (infections.empty()) {
-                    hists[c][max_ct] += 1;
-                } else {
-                    const ScalarType vl = infections[0].get_viral_load(t);
-                    const int bin = std::clamp(static_cast<int>(max_ct - vl * log10_slope), 0, num_bins - 1);
-                    hists[c][bin] += 1;
-                }
-            }
-        }
-        return {t, std::move(hists)};
-    }
-
-private:
-    std::vector<ClusterSpec> m_clusters;
-    int                      m_hour;
-};
-
-/**
- * @brief Logs CT values for a fixed cohort of school students once per day at 8AM.
- *
- * The cohort is sampled on the first 8AM when students are present at a School location.
- * Each subsequent 8AM the same individuals are re-observed.
- *
- * Encoding (matches LogCTCluster): 0 = max viral load, 40 = not detected (uninfected
- * or below threshold), 255 = unused budget slot (cohort smaller than max_budget).
- */
-struct LogSchoolCohort {
-    using Type = std::pair<mio::abm::TimePoint, std::vector<uint8_t>>;
-
-    explicit LogSchoolCohort(int max_budget = 100) : m_max_budget(max_budget) {}
-
-    bool should_log(const mio::abm::Simulation<>& sim)
-    {
-        return sim.get_time().hour_of_day() == 8;
-    }
-
-    Type log(const mio::abm::Simulation<>& sim)
-    {
-        const auto& persons = sim.get_model().get_persons();
-
-        if (m_cohort.empty()) {
-            std::vector<size_t> candidates;
-            for (size_t i = 0; i < persons.size(); ++i) {
-                if (sim.get_model().get_location(persons[i].get_location()).get_type() ==
-                    mio::abm::LocationType::School) {
-                    candidates.push_back(i);
-                }
-            }
-            std::shuffle(candidates.begin(), candidates.end(), mio::thread_local_rng());
-            size_t n = std::min(candidates.size(), size_t(m_max_budget));
-            m_cohort.assign(candidates.begin(), candidates.begin() + n);
-        }
-
-        auto t = sim.get_time();
-        std::vector<uint8_t> cts(m_max_budget, 255); // 255 = unused slot
-
-        for (size_t i = 0; i < m_cohort.size(); ++i) {
-            const auto& infections = persons[m_cohort[i]].get_infection_vector();
-            if (infections.empty()) {
-                cts[i] = static_cast<uint8_t>(s_max_ct); // 40 = not detected
-            }
-            else {
-                ScalarType vl = infections[0].get_viral_load(t);
-                int ct        = static_cast<int>(s_max_ct - vl * s_log10_slope);
-                cts[i]        = static_cast<uint8_t>(std::clamp(ct, 0, s_max_ct));
-            }
-        }
-        return {t, cts};
-    }
-
-private:
-    static constexpr int    s_max_ct      = 40;
-    static constexpr double s_log10_slope = 3.32192809489; // 1/log10(2)
-    int                     m_max_budget;
-    std::vector<size_t>     m_cohort;
 };
 
 /**

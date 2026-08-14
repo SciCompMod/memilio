@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2026 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Khoa Nguyen
@@ -206,6 +206,35 @@ bool Person::get_tested(PersonalRandomNumberGenerator& rng, TimePoint t, const T
     }
 }
 
+void Person::start_isolation(PersonalRandomNumberGenerator& rng, TimePoint t)
+{
+    if (is_compliant(rng, InterventionType::Isolation)) {
+        m_home_isolation_start = t;
+    }
+}
+
+std::pair<bool, ScalarType> Person::get_tested_pcr(PersonalRandomNumberGenerator& rng, TimePoint t,
+                                                    const PcrAssayParameters& params) const
+{
+    if (is_infected(t)) {
+        const ScalarType log10_viral_load = get_infection().get_viral_load(t);
+        const ScalarType noise            = NormalDistribution<double>::get_instance()(rng, 0.0, params.sigma);
+        const ScalarType ct_value         = params.a - params.b * log10_viral_load + noise;
+        const bool sample_adequate = UniformDistribution<ScalarType>::get_instance()(rng) < params.sample_adequacy;
+        const bool positive        = sample_adequate && ct_value < params.cutoff;
+        return {positive, ct_value};
+    }
+    else {
+        const bool contaminated = UniformDistribution<ScalarType>::get_instance()(rng) >= params.specificity;
+        if (contaminated) {
+            const ScalarType ct_value =
+                NormalDistribution<double>::get_instance()(rng, params.contam_mean, params.contam_sd);
+            return {ct_value < params.cutoff, ct_value};
+        }
+        return {false, std::numeric_limits<ScalarType>::quiet_NaN()};
+    }
+}
+
 PersonId Person::get_id() const
 {
     return m_person_id;
@@ -277,10 +306,10 @@ void Person::set_mask(MaskType type, TimePoint t)
     m_mask.change_mask(type, t);
 }
 
-void Person::add_test_result(TimePoint t, TestType type, bool result)
+void Person::add_test_result(TimePoint t, TestType type, bool result, ScalarType ct_value)
 {
     // Remove outdated test results or replace the old result of the same type
-    m_test_results[{type}] = {t, result};
+    m_test_results[{type}] = {t, result, ct_value};
 }
 
 TestResult Person::get_test_result(TestType type) const
