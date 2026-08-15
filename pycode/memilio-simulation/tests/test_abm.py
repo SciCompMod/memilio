@@ -116,6 +116,43 @@ class TestAbm(unittest.TestCase):
         t1 = t0 + abm.days(1)
         sim.advance(t1)
 
+    def test_history(self):
+        """ """
+        t0 = abm.TimePoint(0)
+        sim = abm.Simulation(t0, num_age_groups)
+        model = sim.model
+
+        # add some locations and persons
+        home_id = model.add_location(abm.LocationType.Home)
+        social_event_id = model.add_location(abm.LocationType.SocialEvent)
+        work_id = model.add_location(abm.LocationType.Work)
+        p1_id = model.add_person(home_id, mio.AgeGroup(0))
+        p2_id = model.add_person(home_id, mio.AgeGroup(2))
+
+        for loc_id in [home_id, social_event_id, work_id]:
+            model.assign_location(p1_id, loc_id)
+            model.assign_location(p2_id, loc_id)
+
+        # trips
+        trip_list = abm.TripList()
+        trip_list.add_trips(
+            [abm.Trip(abm.PersonId(0), abm.TimePoint(0) + abm.hours(8), social_event_id), abm.Trip(abm.PersonId(1), abm.TimePoint(0) + abm.hours(8), work_id)])
+
+        model.trip_list = trip_list
+        model.use_mobility_rules = False
+        self.assertEqual(model.trip_list.num_trips(), 2)
+
+        # history
+        history = abm.TimeSeriesWriterLogInfectionStateHistory(
+            mio.TimeSeries(len(abm.InfectionState.values())))
+
+        # run
+        t1 = t0 + abm.hours(50)
+        sim.advance(t1, history)
+        log = history.get_log()[0]
+
+        self.assertEqual(log.get_num_time_points(), 51)
+
 
 if __name__ == '__main__':
     unittest.main()

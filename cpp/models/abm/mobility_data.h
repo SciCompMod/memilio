@@ -55,7 +55,8 @@ enum class ActivityType : uint32_t
     PrivateMatters,
     OtherActivity,
     Home,
-    UnknownActivity
+    UnknownActivity,
+    Count //last!!
 };
 
 } // namespace abm
