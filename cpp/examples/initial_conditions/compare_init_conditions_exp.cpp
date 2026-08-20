@@ -272,9 +272,9 @@ int main()
     ScalarType t0_ode = 0.;
     ScalarType t0_ide = 50.;
 
-    ScalarType t_init_simple         = t0_ide;
-    ScalarType t_init_detailed       = t0_ide - 40.;
-    ScalarType t_init_detailed_short = t0_ide - 10.;
+    ScalarType t_init_memoryless = t0_ide;
+    ScalarType t_init_long_init  = t0_ide - 40.;
+    ScalarType t_init_short_init = t0_ide - 15.;
 
     ScalarType tmax = 150.;
 
@@ -283,27 +283,31 @@ int main()
 
     ScalarType dt_exponent = 2.; // Used for both ODE and IDE simulations
 
-    std::string save_dir = fmt::format("../../simulation_results/2026-07-29/compare_different_inits_exp/"
+    std::string save_dir = fmt::format("../../simulation_results/2026-08-18/compare_different_inits_exp/"
                                        "nonconst_contacts_tinitgroundtruth={}_tinitdetailed={}_t0ide={}_tmax={}/",
-                                       t0_ode, t_init_detailed, t0_ide, tmax);
+                                       t0_ode, t_init_long_init, t0_ide, tmax);
 
     // Make folder if not existent yet.
     std::filesystem::path dir(save_dir);
     std::filesystem::create_directories(dir);
 
-    // Do IDE simulations.
     std::cout << std::endl;
+
+    // ODE
     mio::IOResult<mio::TimeSeries<ScalarType>> result_groundtruth = simulate_ode(dt_exponent, t0_ode, tmax, save_dir);
 
+    // Long init
     mio::IOResult<mio::TimeSeries<ScalarType>> result_ide_detailed =
-        simulate_ide(dt_exponent, gregory_order, finite_difference_order, t_init_detailed, t0_ide, tmax, save_dir,
+        simulate_ide(dt_exponent, gregory_order, finite_difference_order, t_init_long_init, t0_ide, tmax, save_dir,
                      "detailed", result_groundtruth.value(), t0_ide);
 
+    // Short init
     mio::IOResult<mio::TimeSeries<ScalarType>> result_ide_detailed_short =
-        simulate_ide(dt_exponent, gregory_order, finite_difference_order, t_init_detailed_short, t0_ide, tmax, save_dir,
+        simulate_ide(dt_exponent, gregory_order, finite_difference_order, t_init_short_init, t0_ide, tmax, save_dir,
                      "detailed_short", result_groundtruth.value(), t0_ide);
 
+    // Memoryless
     mio::IOResult<mio::TimeSeries<ScalarType>> result_ide_simple =
-        simulate_ide(dt_exponent, gregory_order, finite_difference_order, t_init_simple, t0_ide, tmax, save_dir,
+        simulate_ide(dt_exponent, gregory_order, finite_difference_order, t_init_memoryless, t0_ide, tmax, save_dir,
                      "simple", result_groundtruth.value(), t0_ide);
 }

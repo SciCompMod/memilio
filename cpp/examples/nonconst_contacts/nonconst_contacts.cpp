@@ -146,7 +146,7 @@ mio::IOResult<void> simulate_ide(ScalarType ide_exponent, ScalarType ode_exponen
                                  size_t finite_difference_order, ScalarType t_init_window, ScalarType t0_ide,
                                  ScalarType tmax, ScalarType TimeInfected, ScalarType damping, ScalarType damping_time,
                                  ScalarType smoother_window = 2., size_t smoothstep_order = 4.,
-                                 std::string save_dir = "",
+                                 std::string save_dir = "", bool kahan = true,
                                  mio::TimeSeries<ScalarType> compartments_groundtruth =
                                      mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
                                  size_t fd_order_contacts = 4)
@@ -225,7 +225,7 @@ mio::IOResult<void> simulate_ide(ScalarType ide_exponent, ScalarType ode_exponen
 
     // Carry out simulation.
     mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide, div_dt_ide);
-    sim.advance(tmax, true, fd_order_contacts, damping_time, smoother_window, smoothstep_order);
+    sim.advance(tmax, kahan, fd_order_contacts, damping_time, smoother_window, smoothstep_order);
 
     if (!save_dir.empty()) {
         // Save compartments.
@@ -253,53 +253,66 @@ int main()
     ScalarType t0_ode      = 0.;
     ScalarType t0_ide      = 50.;
     ScalarType init_window = 40.;
-    ScalarType tmax        = 60.;
+    ScalarType tmax        = 55.;
 
     ScalarType damping      = 0.1;
-    ScalarType damping_time = 55.372907;
+    ScalarType damping_time = 53.372907;
+    // ScalarType damping_time = 53.;
 
     std::vector<size_t> gregory_orders = {1, 2, 3};
-    size_t finite_difference_order     = 4;
-    size_t fd_order_contacts           = 4;
-    size_t smoothstep_order            = 0; // possible values: 0, 3 or 4; smoothstep_order=0 leads to smoother_cosine
-    ScalarType smoother_window         = 2.;
+
+    size_t smoothstep_order    = 4; // possible values: 0, 1, 3 or 4; smoothstep_order=0 leads to smoother_cosine
+    ScalarType smoother_window = 2.;
 
     // Compute groundtruth with ODE model.
     ScalarType ode_exponent               = 6.;
-    std::vector<ScalarType> ide_exponents = {0, 1, 2};
+    std::vector<ScalarType> ide_exponents = {3.};
 
-    std::string save_dir =
-        fmt::format("./simulation_results/2026-08-13/"
-                    "phi_deriv_analytical_smoothstepc{}_fdordercontacts={}_smootherwindow={}_t0ode={}/"
-                    "nonconst_contacts_t0ide={}_tmax={}_dampingtime={}_damping={}/",
-                    smoothstep_order, fd_order_contacts, smoother_window, t0_ode, t0_ide, tmax, damping_time, damping);
+    bool kahan = false;
 
-    // Make folder if not existent yet.
-    std::filesystem::path dir(save_dir);
-    std::filesystem::create_directories(dir);
+    // size_t finite_difference_order = 4;
+    // size_t fd_order_contacts       = 4;
+    std::vector<size_t> fd_orders = {4};
 
-    // ScalarType saving_exponent = *std::max_element(ide_exponents.begin(), ide_exponents.end());
-    ScalarType saving_exponent = 3.;
-    std::cout << "saving exp: " << saving_exponent << std::endl;
-    auto result_ode = simulate_ode(ode_exponent, t0_ode, tmax, time_infected, damping, damping_time, save_dir,
-                                   saving_exponent, smoother_window, smoothstep_order)
-                          .value();
+    for (size_t finite_difference_order : fd_orders) {
 
-    ScalarType t_init        = t0_ide - init_window;
-    std::string save_dir_ide = fmt::format("{}/tinit={}/", save_dir, t_init);
-    // Make folder if not existent yet.
-    std::filesystem::path dir_ide(save_dir_ide);
-    std::filesystem::create_directories(dir_ide);
+        // size_t fd_order_contacts = finite_difference_order;
+        size_t fd_order_contacts = 1000;
 
-    // Do IDE simulations.
-    for (size_t gregory_order : gregory_orders) {
-        std::cout << "Gregory order: " << gregory_order << std::endl;
-        for (ScalarType ide_exponent : ide_exponents) {
-            std::cout << std::endl;
-            mio::IOResult<void> result_ide =
-                simulate_ide(ide_exponent, saving_exponent, gregory_order, finite_difference_order, init_window, t0_ide,
-                             tmax, time_infected, damping, damping_time, smoother_window, smoothstep_order,
-                             save_dir_ide, result_ode, fd_order_contacts);
+        std::string save_dir =
+            fmt::format("./simulation_results/2026-08-20/"
+                        "phi_deriv_analytical_smoothstepc{}_fd_order={}_smootherwindow={}_t0ode={}_kahan={}/"
+                        "nonconst_contacts_t0ide={}_tmax={}_dampingtime={}_damping={}/",
+                        smoothstep_order, finite_difference_order, smoother_window, t0_ode, kahan, t0_ide, tmax,
+                        damping_time, damping);
+
+        // Make folder if not existent yet.
+        std::filesystem::path dir(save_dir);
+        std::filesystem::create_directories(dir);
+
+        // ScalarType saving_exponent = *std::max_element(ide_exponents.begin(), ide_exponents.end());
+        ScalarType saving_exponent = 3.;
+        std::cout << "saving exp: " << saving_exponent << std::endl;
+        auto result_ode = simulate_ode(ode_exponent, t0_ode, tmax, time_infected, damping, damping_time, save_dir,
+                                       saving_exponent, smoother_window, smoothstep_order)
+                              .value();
+
+        ScalarType t_init        = t0_ide - init_window;
+        std::string save_dir_ide = fmt::format("{}/tinit={}/", save_dir, t_init);
+        // Make folder if not existent yet.
+        std::filesystem::path dir_ide(save_dir_ide);
+        std::filesystem::create_directories(dir_ide);
+
+        // Do IDE simulations.
+        for (size_t gregory_order : gregory_orders) {
+            std::cout << "Gregory order: " << gregory_order << std::endl;
+            for (ScalarType ide_exponent : ide_exponents) {
+                std::cout << std::endl;
+                mio::IOResult<void> result_ide =
+                    simulate_ide(ide_exponent, saving_exponent, gregory_order, finite_difference_order, init_window,
+                                 t0_ide, tmax, time_infected, damping, damping_time, smoother_window, smoothstep_order,
+                                 save_dir_ide, kahan, result_ode, fd_order_contacts);
+            }
         }
     }
 }

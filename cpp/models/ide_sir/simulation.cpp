@@ -40,7 +40,7 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool kahan,
                                                     ScalarType damping_time, ScalarType smoother_window,
                                                     size_t smoothstep_order)
 {
-    if ((smoothstep_order != 0) && (smoothstep_order != 3) && (smoothstep_order != 4)) {
+    if ((smoothstep_order != 0) && (smoothstep_order != 1) && (smoothstep_order != 3) && (smoothstep_order != 4)) {
         throw std::invalid_argument("smoothstep_order must be 0, 3, or 4");
     }
     // Get index of t0, i.e. index of last time point of given initial values.

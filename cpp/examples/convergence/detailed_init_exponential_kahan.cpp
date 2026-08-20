@@ -321,12 +321,12 @@ int main()
     std::vector<ScalarType> init_windows = {40.};
     std::vector<ScalarType> tmax_values  = {t0_ide + 100.};
 
-    bool kahan = true;
+    bool kahan = false;
 
     std::vector<size_t> finite_difference_orders = {4};
 
     std::vector<ScalarType> ide_exponents = {0., 1., 2., 3.};
-    std::vector<size_t> gregory_orders    = {1, 2, 3, 4};
+    std::vector<size_t> gregory_orders    = {1, 2, 3};
 
     std::vector<std::vector<ScalarType>> timeinf_tmax_values;
 
@@ -347,11 +347,11 @@ int main()
         for (size_t finite_difference_order : finite_difference_orders) {
             std::cout << "FD order: " << finite_difference_order << std::endl;
 
-            std::string save_dir =
-                fmt::format("./simulation_results/2026-08-12/"
-                            "baseline_new_order_dtode=1e-{}_t0ode={}_timeinf={}_contfreq={}/"
-                            "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
-                            ode_exponent, t0_ode, time_infected, cont_freq, t0_ide, tmax, finite_difference_order);
+            std::string save_dir = fmt::format(
+                "./simulation_results/2026-08-18/"
+                "phi_deriv_analytical_dtode=1e-{}_t0ode={}_timeinf={}_contfreq={}_kahan={}/"
+                "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
+                ode_exponent, t0_ode, time_infected, cont_freq, kahan, t0_ide, tmax, finite_difference_order);
 
             // Make folder if not existent yet.
             std::filesystem::path dir(save_dir);

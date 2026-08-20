@@ -178,6 +178,7 @@ ScalarType ModelMessinaExtendedDetailedInit::compute_phi_deriv(ScalarType dt, si
                                                                size_t smoothstep_order)
 {
     ScalarType deriv = 0;
+    unused(current_time);
 
     if (fd_order == 1) {
         deriv =
@@ -260,7 +261,7 @@ ScalarType ModelMessinaExtendedDetailedInit::compute_phi_deriv(ScalarType dt, si
     }
 
     if (fd_order == 1000) {
-        deriv = phi_deriv_analytical(current_time, damping_time);
+        deriv = phi_deriv_analytical(ScalarType(j) * dt + init_time, damping_time, smoother_window, smoothstep_order);
     }
 
     return deriv;
@@ -282,24 +283,27 @@ ScalarType ModelMessinaExtendedDetailedInit::phi_deriv_analytical(ScalarType cur
     ScalarType yright = parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
         SimulationTime<ScalarType>(xright), smoother_window, smoothstep_order)(0, 0);
 
-    ScalarType deriv = 0.;
+    ScalarType deriv           = 0.;
+    ScalarType normalized_time = (current_time - xleft) / (xright - xleft);
 
     if (smoothstep_order == 0) {
         deriv = -0.5 * (yleft - yright) / (xright - xleft) * std::numbers::pi_v<ScalarType> *
-                std::sin(std::numbers::pi_v<ScalarType> / (xright - xleft) * (current_time - xleft));
+                std::sin(std::numbers::pi_v<ScalarType> * normalized_time);
     }
 
-    if (smoothstep_order == 3 || smoothstep_order == 4) {
-        std::cout << "no formula available for analytical derivative" << std::endl;
+    if (smoothstep_order == 1) {
+        deriv = (yright - yleft) / (xright - xleft) * 6. * normalized_time * (1. - normalized_time);
     }
-    // if (smoothstep_order == 3) {
-    //     deriv = -0.5 * (yleft - yright) / (xright - xleft) * std::numbers::pi_v<ScalarType> *
-    //             std::sin(std::numbers::pi_v<ScalarType> / (xright - xleft) * (current_time - xleft));
-    // }
-    // if (smoothstep_order == 4) {
-    //     deriv = -0.5 * (yleft - yright) / (xright - xleft) * std::numbers::pi_v<ScalarType> *
-    //             std::sin(std::numbers::pi_v<ScalarType> / (xright - xleft) * (current_time - xleft));
-    // }
+
+    if (smoothstep_order == 3) {
+        deriv = (yright - yleft) / (xright - xleft) * 140. * std::pow(normalized_time, 3) *
+                std::pow(1. - normalized_time, 3);
+    }
+
+    if (smoothstep_order == 4) {
+        deriv = (yright - yleft) / (xright - xleft) * 630. * std::pow(normalized_time, 4) *
+                std::pow(1. - normalized_time, 4);
+    }
 
     return deriv;
 }

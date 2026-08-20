@@ -66,8 +66,9 @@ public:
         , m_smoother_window(smoother_window)
         , m_smoothstep_order(smoothstep_order)
     {
-        if ((m_smoothstep_order != 0) && (m_smoothstep_order != 3) && (m_smoothstep_order != 4)) {
-            throw std::invalid_argument("smoothstep_order must be 0, 3, or 4");
+        if ((m_smoothstep_order != 0) && (m_smoothstep_order != 1) && (m_smoothstep_order != 3) &&
+            (m_smoothstep_order != 4)) {
+            throw std::invalid_argument("smoothstep_order must be 0, 1, 3, or 4");
         }
     }
 

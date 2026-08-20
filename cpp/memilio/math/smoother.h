@@ -60,6 +60,11 @@ inline FP smoother_cosine(FP x, FP xleft, FP xright, FP yleft, FP yright,
 
     FP normalized_time = (x - xleft) / (xright - xleft);
 
+    if (smoothstep_order == 1) {
+        // C³ smoothstep
+        return yleft + (yright - yleft) * (FP(3.) * pow(normalized_time, FP(2)) - FP(2.) * pow(normalized_time, FP(3)));
+    }
+
     if (smoothstep_order == 3) {
         // C³ smoothstep
         return yleft +
