@@ -59,8 +59,9 @@ public:
      * Run the simulation from the current time to tmax.
      * @param tmax Time to stop.
      */
-    void advance(ScalarType tmax, bool kahan = false, size_t fd_order_contacts = 4, ScalarType damping_time = 1000.,
-                 ScalarType smoother_window = 1., size_t smoothstep_order = 0);
+    void advance(ScalarType tmax, bool kahan = false, bool more_precise_s_deriv = false, ScalarType cutoff_window = 0.,
+                 size_t fd_order_contacts = 4, ScalarType damping_time = 1000., ScalarType smoother_window = 1.,
+                 size_t smoothstep_order = 0);
 
     void advance_S_deriv_analytical(ScalarType tmax, size_t fd_order_contacts = 4, ScalarType damping_time = 1000.);
 

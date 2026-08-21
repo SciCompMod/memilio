@@ -149,8 +149,11 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarTy
                                  std::string save_dir = "", bool kahan = true,
                                  mio::TimeSeries<ScalarType> compartments_groundtruth =
                                      mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
-                                 mio::TimeSeries<ScalarType> flows_groundtruth =
-                                     mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionTransition::Count))
+                                 bool more_precise_s_deriv = false
+                                 //  ,
+                                 //  mio::TimeSeries<ScalarType> flows_groundtruth =
+                                 //      mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionTransition::Count)
+)
 {
     using namespace params;
     using Vec = mio::TimeSeries<ScalarType>::Vector;
@@ -163,6 +166,8 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarTy
 
         mio::TimeSeries<ScalarType> init_populations((size_t)mio::isir::InfectionState::Count);
         mio::TimeSeries<ScalarType> init_flows_ts((size_t)mio::isir::InfectionTransition::Count);
+
+        ScalarType cutoff_window = 0;
 
         if (compartments_groundtruth.get_num_time_points() == 0) {
             std::cout << "No groundtruth was given.\n";
@@ -188,23 +193,36 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarTy
 
             // ScalarType t0_ode = compartments_groundtruth.get_time(0);
             ScalarType t_init = t0_ide - t_init_window;
-            int start_index   = std::round(t_init * div_dt_groundtruth);
+            ScalarType t0_ode = compartments_groundtruth.get_time(0);
+            cutoff_window     = t_init - t0_ode;
+
+            int start_index       = 0;
+            ScalarType start_time = 0;
+            if (more_precise_s_deriv) {
+                start_time = t0_ode;
+            }
+            else {
+                start_time = t_init;
+            }
+            // compartments_groundtruth is indexed from its own start time t0_ode, not from absolute time 0, so the
+            // index into it has to be computed relative to t0_ode.
+            start_index = std::round((start_time - t0_ode) * div_dt_groundtruth);
 
             // Add values to init_populations.
             for (size_t compartment : compartments) {
                 vec_init[compartment] = compartments_groundtruth.get_value(start_index)[compartment];
             }
-            std::cout << "t init index: " << start_index << std::endl;
+            // std::cout << "t init index: " << start_index << std::endl;
 
-            init_populations.add_time_point(t_init, vec_init);
+            init_populations.add_time_point(start_time, vec_init);
 
-            std::cout << "init_pop t_init: " << init_populations.get_last_time() << std::endl;
+            // std::cout << "init_pop t_init: " << init_populations.get_last_time() << std::endl;
 
-            std::cout << "diff S at t_init: "
-                      << compartments_groundtruth.get_value(
-                             std::round(t_init * div_dt_groundtruth))[(size_t)mio::isir::InfectionState::Susceptible] -
-                             init_populations.get_last_value()[(size_t)mio::isir::InfectionState::Susceptible]
-                      << std::endl;
+            // std::cout << "diff S at t_init: "
+            //           << compartments_groundtruth.get_value(
+            //                  std::round(t_init * div_dt_groundtruth))[(size_t)mio::isir::InfectionState::Susceptible] -
+            //                  init_populations.get_last_value()[(size_t)mio::isir::InfectionState::Susceptible]
+            //   << std::endl;
 
             while (init_populations.get_last_time() < t0_ide - 1e-10) {
                 std::round(start_index += groundtruth_index_factor);
@@ -215,30 +233,30 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarTy
                 init_populations.add_time_point(init_populations.get_last_time() + dt_ide, vec_init);
             }
 
-            if (flows_groundtruth.get_num_time_points() > 0) {
-                std::cout << "Initializing with given groundtruth for flows.\n";
-                // Add values to init_flows_ts.
-                vec_init_flows[(size_t)mio::isir::InfectionTransition::SusceptibleToInfected] =
-                    compartments_groundtruth.get_value(0)[(size_t)mio::isir::InfectionState::Infected];
-                vec_init_flows[(size_t)mio::isir::InfectionTransition::InfectedToRecovered] =
-                    compartments_groundtruth.get_value(0)[(size_t)mio::isir::InfectionState::Recovered];
+            // if (flows_groundtruth.get_num_time_points() > 0) {
+            //     std::cout << "Initializing with given groundtruth for flows.\n";
+            //     // Add values to init_flows_ts.
+            //     vec_init_flows[(size_t)mio::isir::InfectionTransition::SusceptibleToInfected] =
+            //         compartments_groundtruth.get_value(0)[(size_t)mio::isir::InfectionState::Infected];
+            //     vec_init_flows[(size_t)mio::isir::InfectionTransition::InfectedToRecovered] =
+            //         compartments_groundtruth.get_value(0)[(size_t)mio::isir::InfectionState::Recovered];
 
-                init_flows_ts.add_time_point(t_init, vec_init_flows);
+            //     init_flows_ts.add_time_point(t_init, vec_init_flows);
 
-                while (init_flows_ts.get_last_time() < t0_ide - 1e-10) {
-                    for (size_t flow : flows) {
-                        vec_init_flows[flow] =
-                            (flows_groundtruth.get_value(
-                                 int(std::round(t_init * div_dt_groundtruth) +
-                                     init_flows_ts.get_num_time_points() * groundtruth_index_factor))[flow] -
-                             flows_groundtruth.get_value(
-                                 int(std::round(t_init * div_dt_groundtruth) +
-                                     (init_flows_ts.get_num_time_points() - 1) * groundtruth_index_factor))[flow]) /
-                            dt_ide;
-                    }
-                    init_flows_ts.add_time_point(init_flows_ts.get_last_time() + dt_ide, vec_init_flows);
-                }
-            }
+            //     while (init_flows_ts.get_last_time() < t0_ide - 1e-10) {
+            //         for (size_t flow : flows) {
+            //             vec_init_flows[flow] =
+            //                 (flows_groundtruth.get_value(
+            //                      int(std::round(t_init * div_dt_groundtruth) +
+            //                          init_flows_ts.get_num_time_points() * groundtruth_index_factor))[flow] -
+            //                  flows_groundtruth.get_value(
+            //                      int(std::round(t_init * div_dt_groundtruth) +
+            //                          (init_flows_ts.get_num_time_points() - 1) * groundtruth_index_factor))[flow]) /
+            //                 dt_ide;
+            //         }
+            //         init_flows_ts.add_time_point(init_flows_ts.get_last_time() + dt_ide, vec_init_flows);
+            //     }
+            // }
         }
 
         // Initialize model.
@@ -265,12 +283,14 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarTy
         // mio::UncertainContactMatrix<ScalarType> contact_matrix = scale_contact_matrix(scaling_factor_contacts);
         model.parameters.get<mio::isir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-        std::cout << "support max: " << model.compute_calctime(dt_ide, 1e-7) << std::endl;
+        // std::cout << "support max: " << model.compute_calctime(dt_ide, 1e-7) << std::endl;
 
         // Carry out simulation.
         mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide, div_dt_ide);
         // size_t fd_order_contacts = 1;
-        sim.advance(tmax, kahan);
+
+        sim.advance(tmax, kahan, more_precise_s_deriv, cutoff_window);
+
         // sim.advance_S_deriv_analytical(tmax);
 
         if (!save_dir.empty()) {
@@ -310,22 +330,18 @@ int main()
     ScalarType ode_exponent = 6.;
 
     std::vector<ScalarType> time_infected_values = {2.};
-    // Support max with tol = 1e-8:
-    // T_I=1: support max = 18.43
-    // T_I=2: support max = 36.85
-    // T_I=3: support max = 55.27
-    // T_I=4: support max = 73.69
 
-    ScalarType t0_ode                    = 0.;
+    ScalarType t0_ode                    = -10.;
     ScalarType t0_ide                    = 50.;
-    std::vector<ScalarType> init_windows = {40.};
+    std::vector<ScalarType> init_windows = {0., 10., 20., 30., 50.};
     std::vector<ScalarType> tmax_values  = {t0_ide + 100.};
 
-    bool kahan = false;
+    bool kahan                = false;
+    bool more_precise_s_deriv = true;
 
     std::vector<size_t> finite_difference_orders = {4};
 
-    std::vector<ScalarType> ide_exponents = {0., 1., 2., 3.};
+    std::vector<ScalarType> ide_exponents = {3.};
     std::vector<size_t> gregory_orders    = {1, 2, 3};
 
     std::vector<std::vector<ScalarType>> timeinf_tmax_values;
@@ -348,8 +364,8 @@ int main()
             std::cout << "FD order: " << finite_difference_order << std::endl;
 
             std::string save_dir = fmt::format(
-                "./simulation_results/2026-08-18/"
-                "phi_deriv_analytical_dtode=1e-{}_t0ode={}_timeinf={}_contfreq={}_kahan={}/"
+                "./simulation_results/2026-08-21/"
+                "more_precise_S_deriv_dtode=1e-{}_t0ode={}_timeinf={}_contfreq={}_kahan={}/"
                 "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
                 ode_exponent, t0_ode, time_infected, cont_freq, kahan, t0_ide, tmax, finite_difference_order);
 
@@ -380,7 +396,7 @@ int main()
                     std::cout << "Gregory order: " << gregory_order << std::endl;
                     mio::IOResult<void> result_ide = simulate_ide(
                         ide_exponents, saving_exponent, gregory_order, finite_difference_order, init_window, t0_ide,
-                        tmax, time_infected, cont_freq, save_dir_ide, kahan, compartments_ode);
+                        tmax, time_infected, cont_freq, save_dir_ide, kahan, compartments_ode, more_precise_s_deriv);
                 }
             }
         }

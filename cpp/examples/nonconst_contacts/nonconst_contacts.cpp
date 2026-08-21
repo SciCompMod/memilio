@@ -225,7 +225,7 @@ mio::IOResult<void> simulate_ide(ScalarType ide_exponent, ScalarType ode_exponen
 
     // Carry out simulation.
     mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide, div_dt_ide);
-    sim.advance(tmax, kahan, fd_order_contacts, damping_time, smoother_window, smoothstep_order);
+    sim.advance(tmax, kahan, true, 0., fd_order_contacts, damping_time, smoother_window, smoothstep_order);
 
     if (!save_dir.empty()) {
         // Save compartments.
