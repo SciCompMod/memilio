@@ -32,7 +32,7 @@ namespace abm
 
 void PcrSurveillance::run(TimePoint t, TimeSpan /*dt*/, Model& model)
 {
-    const bool surveillance_on = m_budget.budget_fraction > 0.0;
+    const bool surveillance_on = m_budget.event_budget_fraction > 0.0;
     const bool diagnostic_on   = m_p_careseek > 0.0;
     if (!surveillance_on && !diagnostic_on) {
         return;
@@ -80,11 +80,12 @@ void PcrSurveillance::resolve_pending(TimePoint t, Model& model)
 
 void PcrSurveillance::run_surveillance(TimePoint t, Model& model)
 {
-    // Random sample of the non-isolated, alive population
+    // Random sample of the non-isolated, alive, currently test-eligible population
     std::vector<PersonId> frame;
     for (auto& person : model.get_persons()) {
         if (person.is_in_quarantine(t, model.parameters) ||
-            person.get_infection_state(t) == InfectionState::Dead) {
+            person.get_infection_state(t) == InfectionState::Dead ||
+            !is_eligible_for_test(person.get_id(), t)) {
             continue;
         }
         frame.push_back(person.get_id());
@@ -92,7 +93,7 @@ void PcrSurveillance::run_surveillance(TimePoint t, Model& model)
 
     const auto population_size = model.get_persons().size();
     const auto n_sample =
-        static_cast<size_t>(std::llround(static_cast<double>(population_size) * m_budget.budget_fraction));
+        static_cast<size_t>(std::llround(static_cast<double>(population_size) * m_budget.event_budget_fraction));
 
     std::shuffle(frame.begin(), frame.end(), mio::thread_local_rng());
     const size_t n_take = std::min(n_sample, frame.size());
@@ -103,11 +104,12 @@ void PcrSurveillance::run_surveillance(TimePoint t, Model& model)
 
 void PcrSurveillance::run_diagnostic(TimePoint t, Model& model)
 {
-    // Demand-driven: each symptomatic, non-isolated Person seeks a test today with hazard
+    // Each symptomatic, non-isolated Person seeks a test today with hazard
     // m_p_careseek. False Positives are not modeled.
     for (auto& person : model.get_persons()) {
         if (person.is_in_quarantine(t, model.parameters) ||
-            person.get_infection_state(t) != InfectionState::InfectedSymptoms) {
+            person.get_infection_state(t) != InfectionState::InfectedSymptoms ||
+            !is_eligible_for_test(person.get_id(), t)) {
             continue;
         }
         auto rng = PersonalRandomNumberGenerator(model.get_rng(), person);
@@ -122,8 +124,22 @@ void PcrSurveillance::test_person(PersonId id, TimePoint t, Model& model, TestSo
     Person& person      = model.get_person(id);
     auto rng            = PersonalRandomNumberGenerator(model.get_rng(), person);
     auto [positive, ct] = person.get_tested_pcr(rng, t, m_assay);
-    m_pending.push_back(PcrTestRecord{id, person.get_age(), person.get_location_type(), t,
-                                      t + m_budget.reporting_delay, ct, positive, source});
+    const TimePoint report_time = t + m_budget.reporting_delay;
+    m_pending.push_back(
+        PcrTestRecord{id, person.get_age(), person.get_location_type(), t, report_time, ct, positive, source});
+    m_last_test[id.get()] = LastTest{t, report_time};
+}
+
+bool PcrSurveillance::is_eligible_for_test(PersonId id, TimePoint t) const
+{
+    auto it = m_last_test.find(id.get());
+    if (it == m_last_test.end()) {
+        return true;
+    }
+    // Not while a previous test has a pending result, and not within
+    // min_retest_gap of the last sample. As a consequence, rules out same-day 
+    // double-testing across streams and back-to-back testing on consecutive days.
+    return t >= it->second.report_time && (t - it->second.test_time) >= m_budget.min_retest_gap;
 }
 
 } // namespace abm

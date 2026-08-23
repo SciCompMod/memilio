@@ -27,6 +27,7 @@
 #include "memilio/epidemiology/age_group.h"
 
 #include <cstdint>
+#include <unordered_map>
 #include <vector>
 
 namespace mio
@@ -69,10 +70,17 @@ enum class TestSource : std::uint32_t {
  * @brief The active-surveillance testing "design" d: how much to sample and how often.
  */
 struct TestingBudget {
-    ScalarType budget_fraction = 0.0; ///< Fraction of the population sampled per surveillance event. 0 disables surveillance.
+    /// Fraction of the population sampled at each surveillance event.
+    /// 0 disables surveillance.
+    ScalarType event_budget_fraction = 0.0;
     int test_period_days = 1; ///< Surveillance samples every test_period_days days (cadence). 1 = daily.
     int test_hour = 8; ///< Hour of day at which sampling occurs.
     TimeSpan reporting_delay = days(1); ///< Delay between taking a sample and acting on/reporting its result.
+    /// Minimum time between two PCR tests (Survey or Diagnostic) of the same Person. Since this is
+    /// always >= reporting_delay by construction of the default, it also rules out testing someone
+    /// while a previous result is still pending; the two conditions are nonetheless checked
+    /// independently in PcrSurveillance so the guarantee holds regardless of how these are configured.
+    TimeSpan min_retest_gap = days(2);
 };
 
 /**
@@ -92,9 +100,9 @@ struct PcrTestRecord {
 /**
  * @brief Two independent PCR testing processes with delayed reporting.
  *
- * - Active surveillance: every TestingBudget::test_period_days days at
- *   TestingBudget::test_hour, a random `budget_fraction * population` sample of the non-isolated
- *   population is PCR-tested
+ * - Active surveillance: every TestingBudget::test_period_days days at TestingBudget::test_hour,
+ *   a random `event_budget_fraction * population` sample of the non-isolated population is
+ *   PCR-tested
  * - Diagnostic care-seeking: each day at test_hour, every symptomatic, non-isolated Person seeks
  *   a test with per-day hazard `p_careseek`. This suppresses the epidemic through isolation.
  *
@@ -138,16 +146,27 @@ public:
     }
 
 private:
+    /// @brief Time window of the most recent PCR test (either source) taken from one Person.
+    struct LastTest {
+        TimePoint test_time; ///< TimePoint the sample was taken.
+        TimePoint report_time; ///< TimePoint the result is/was acted upon.
+    };
+
     void resolve_pending(TimePoint t, Model& model);
     void run_surveillance(TimePoint t, Model& model); ///< periodic random sample of the non-isolated population
     void run_diagnostic(TimePoint t, Model& model); ///< daily care-seeking hazard over symptomatic non-isolated Persons
     void test_person(PersonId id, TimePoint t, Model& model, TestSource source);
+    /// @brief Whether a Person may be tested (by either source) at time t: not while a previous
+    /// result of theirs is still pending, and not within m_budget.min_retest_gap of their last
+    /// sample -- so nobody is ever double-tested the same day or tested on back-to-back days.
+    bool is_eligible_for_test(PersonId id, TimePoint t) const;
 
     TestingBudget m_budget{};
     PcrAssayParameters m_assay{};
     ScalarType m_p_careseek = 0.0; ///< Per-day probability a symptomatic non-isolated Person seeks a diagnostic test.
     std::vector<PcrTestRecord> m_pending; ///< Tests taken but not yet reported.
     std::vector<PcrTestRecord> m_resolved_records; ///< Results resolved by the most recent run().
+    std::unordered_map<std::uint64_t, LastTest> m_last_test; ///< Most recent test window per Person, keyed by PersonId.
 };
 
 } // namespace abm

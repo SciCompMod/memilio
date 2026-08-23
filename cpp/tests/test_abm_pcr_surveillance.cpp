@@ -39,13 +39,13 @@ mio::abm::PcrAssayParameters deterministic_assay()
 
 // A surveillance-only design that samples the whole (tiny test) population every day.
 // Diagnostic care-seeking is disabled (p_careseek = 0).
-mio::abm::TestingBudget survey_design(mio::TimeSpan reporting_delay, int test_hour)
+mio::abm::TestingBudget survey_design(mio::abm::TimeSpan reporting_delay, int test_hour)
 {
     mio::abm::TestingBudget design;
-    design.budget_fraction  = 1.0;
-    design.test_period_days = 1;
-    design.test_hour        = test_hour;
-    design.reporting_delay  = reporting_delay;
+    design.event_budget_fraction = 1.0;
+    design.test_period_days      = 1;
+    design.test_hour             = test_hour;
+    design.reporting_delay       = reporting_delay;
     return design;
 }
 } // namespace
@@ -175,6 +175,64 @@ TEST_F(TestPcrSurveillance, surveillanceRespectsCadence)
     EXPECT_EQ(surveillance.get_resolved_records().size(), 1u) << "day 2 is a surveillance day again";
 }
 
+TEST_F(TestPcrSurveillance, noSameDayDoubleTestAcrossSurveyAndDiagnostic)
+{
+    mio::abm::Model model(num_age_groups);
+    auto home     = model.add_location(mio::abm::LocationType::Home);
+    const auto t0 = mio::abm::TimePoint(0) + mio::abm::hours(8);
+
+    // Symptomatic and infected: eligible for both Survey (event_budget_fraction=1.0 samples
+    // everyone) and Diagnostic (p_careseek=1.0) testing on the same day.
+    add_test_person(model, home, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms, t0);
+
+    mio::abm::TestingBudget design = survey_design(mio::abm::hours(0), t0.hour_of_day());
+
+    mio::abm::PcrSurveillance surveillance;
+    surveillance.configure(design, deterministic_assay(), /*p_careseek=*/1.0);
+
+    surveillance.run(t0, mio::abm::hours(1), model); // both streams would want to sample this Person
+    surveillance.run(t0 + mio::abm::hours(1), mio::abm::hours(1), model); // resolves it
+
+    EXPECT_EQ(surveillance.get_resolved_records().size(), 1u)
+        << "a Person must not be tested twice on the same day, even across Survey and Diagnostic";
+}
+
+TEST_F(TestPcrSurveillance, minRetestGapBlocksBackToBackTesting)
+{
+    mio::abm::Model model(num_age_groups);
+    auto home     = model.add_location(mio::abm::LocationType::Home);
+    const auto t0 = mio::abm::TimePoint(0) + mio::abm::hours(8);
+
+    // Susceptible: always tests negative and so never isolates, so any gap in retesting can only
+    // be due to the retest-gap guard, not isolation excluding the Person from the survey frame.
+    add_test_person(model, home, age_group_15_to_34, mio::abm::InfectionState::Susceptible, t0);
+
+    // Default min_retest_gap is days(2).
+    mio::abm::TestingBudget design = survey_design(mio::abm::hours(0), t0.hour_of_day());
+
+    mio::abm::PcrSurveillance surveillance;
+    surveillance.configure(design, deterministic_assay(), /*p_careseek=*/0.0);
+
+    // Day 0: sampled.
+    surveillance.run(t0, mio::abm::hours(1), model);
+    surveillance.run(t0 + mio::abm::hours(1), mio::abm::hours(1), model);
+    EXPECT_EQ(surveillance.get_resolved_records().size(), 1u) << "day 0: sampled";
+
+    // Day 1: within min_retest_gap of day 0's sample -- must be skipped.
+    const auto day1 = t0 + mio::abm::days(1);
+    surveillance.run(day1, mio::abm::hours(1), model);
+    surveillance.run(day1 + mio::abm::hours(1), mio::abm::hours(1), model);
+    EXPECT_TRUE(surveillance.get_resolved_records().empty())
+        << "day 1: within min_retest_gap of the last sample, must not be retested";
+
+    // Day 2: min_retest_gap has elapsed -- eligible again.
+    const auto day2 = t0 + mio::abm::days(2);
+    surveillance.run(day2, mio::abm::hours(1), model);
+    surveillance.run(day2 + mio::abm::hours(1), mio::abm::hours(1), model);
+    EXPECT_EQ(surveillance.get_resolved_records().size(), 1u)
+        << "day 2: min_retest_gap has elapsed, Person is eligible again";
+}
+
 TEST_F(TestPcrSurveillance, diagnosticCareSeekingTestsSymptomaticOnly)
 {
     mio::abm::Model model(num_age_groups);
@@ -187,9 +245,9 @@ TEST_F(TestPcrSurveillance, diagnosticCareSeekingTestsSymptomaticOnly)
     add_test_person(model, home, age_group_35_to_59, mio::abm::InfectionState::InfectedNoSymptoms, t0);
 
     mio::abm::TestingBudget design;
-    design.budget_fraction  = 0.0;
-    design.test_hour        = t0.hour_of_day();
-    design.reporting_delay  = mio::abm::hours(1);
+    design.event_budget_fraction = 0.0;
+    design.test_hour             = t0.hour_of_day();
+    design.reporting_delay       = mio::abm::hours(1);
 
     mio::abm::PcrSurveillance surveillance;
     surveillance.configure(design, deterministic_assay(), /*p_careseek=*/1.0);

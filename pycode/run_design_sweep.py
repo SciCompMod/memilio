@@ -1,12 +1,4 @@
-"""Design-amortized CT-vs-binary information-gain sweep over the 2-D surveillance design
-(total testing budget x testing frequency).
-
-budget_fraction is the fraction sampled per surveillance event. A design is (total_budget,
-period): total tests-per-person over the run, and the cadence (test every `period` days). Both
-`total_budget` and `frequency = 1/period` are direct conditions in the neural network,
-so one CT workflow and one binary workflow learn p(theta | X, d) amortized over designs.
-
-Usage: python run_design_sweep.py
+"""Design-amortized CT-vs-binary information-gain sweep over the surveillance design.
 """
 import os
 
@@ -14,9 +6,9 @@ if "KERAS_BACKEND" not in os.environ:
     os.environ["KERAS_BACKEND"] = "jax"
 
 import csv
+import itertools
 import json
-import warnings
-from collections.abc import Collection
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
@@ -26,253 +18,256 @@ import matplotlib.pyplot as plt
 import numpy as np
 import keras
 import bayesflow as bf
-from scipy import stats
 
-from memilio.simulation.abm import ABMPopulation, TestingBudget
+from memilio.simulation.abm import ABMPopulation
 from abm_batch import run_batch_designs
+from abm_inference import (
+    PARAM_KEYS, PAR_NAMES, TOTAL_POPULATION,
+    SOURCES_SURVEY, SOURCES_DIAGNOSTIC, SOURCES_POOLED,
+    prior_theta, make_design, make_val_at_design, build_workflow, _assemble,
+    estimate_mutual_information, sample_posterior, local_jacobian_svd,
+    shared_bounds, apply_recovery_bounds, apply_pairgrid_bounds, plot_local_identifiability,
+    total_budget_for_rate, rate_per_100k_per_day,
+)
+import simulation_cache
+
+# Set None to not use Cache
+CACHE_DIR = simulation_cache.CACHE_DIR
+
+# Fixed parent for every run's results folder 
+OUTPUT_DIR = Path(__file__).parent / "design_sweep_results"
+
+SOURCES_NAMES = {SOURCES_SURVEY: "survey", SOURCES_DIAGNOSTIC: "diagnostic", SOURCES_POOLED: "pooled"}
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Configuration
 # ─────────────────────────────────────────────────────────────────────────────
-TOTAL_POPULATION = 10000
-QUARANTINE_COMPLIANCE = 0.6     # city-level P(isolate | positive), fixed per training run
-N_TRAIN = 16000
-N_VAL_PER_DESIGN = 600
+@dataclass
+class SweepConfig:
+    """Class to hold main knobs for a single sweep run."""
+    n_train: int = 100000
+    n_val_per_design: int = 1000
 
-SIM_DAYS = 30
-SURVEY, DIAGNOSTIC = 0, 1        # source tags from forward_pass
-N_CT_BINS = 41                   # CT 0..40
+    total_population: int = TOTAL_POPULATION
+    early_stop_patience: int = 15
+    early_stop_start_from_epoch: int = 50
+    train_epochs: int = 120
 
-# Design priors (amortised over): total_budget ~ log-uniform, period from a discrete set.
-DESIGN_TOTAL_LO, DESIGN_TOTAL_HI = 0.1, 1.5   # total survey tests per person over the run
-PERIODS = [1, 2, 3, 5, 7]                      # cadence: sample every `period` days
+    sources: frozenset = SOURCES_SURVEY
+    scale_by_tests: bool = True
 
-# Grid at which to report Delta (the surface).
-TOTAL_BUDGET_GRID = [0.15, 0.3, 0.6, 1.0, 1.5]
-PERIOD_GRID = [1, 2, 3, 5, 7]
+    design_rate_lo: float = 50       # tests / 100k people / day
+    design_rate_hi: float = 2000     # tests / 100k people / day
+    periods: list = field(default_factory=lambda: [1, 2, 3])  # cadence: sample every N days
 
-# theta priors (full-support lognormal, matching joint_inference).
-PRIOR_BETA_S,  PRIOR_BETA_SCALE  = 0.5, 1.0
-PRIOR_TEXP_S, PRIOR_TEXP_SCALE = 0.4, 5.0
+    # Grid at which to report Delta.
+    rate_grid: list = field(default_factory=lambda: [50, 100, 200, 400, 600, 800, 1000, 1300, 1600, 2000])
+    period_grid: list = field(default_factory=lambda: [1, 2, 3])
 
-NUM_POSTERIOR_SAMPLES = 500
-OUTPUT_DIR = Path(__file__).parent / "design_sweep_results"
+    @property
+    def design_total_lo(self):
+        return total_budget_for_rate(self.design_rate_lo)
 
+    @property
+    def design_total_hi(self):
+        return total_budget_for_rate(self.design_rate_hi)
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Data-generating process
-# ─────────────────────────────────────────────────────────────────────────────
-def n_events(period, sim_days=SIM_DAYS):
-    """Number of surveillance events (testing days 0, period, 2*period, ... < sim_days)."""
-    return (sim_days - 1) // period + 1
+    @property
+    def total_budget_grid(self):
+        return [total_budget_for_rate(r) for r in self.rate_grid]
 
-
-def records_to_histogram(out, sources: Collection[int] = frozenset({SURVEY}), sim_days=SIM_DAYS, n_bins=N_CT_BINS):
-    """forward_pass() dict -> (sim_days, n_bins) city-wide daily CT histogram of positives.
-    `sources` is a set of stream tags to pool: {0}=survey, {1}=diagnostic, {0, 1}=both.
-    Positives are out['positives'] = [day, person, age, loc, ct, source]."""
-    city = np.zeros((sim_days, n_bins))
-    pos = out["positives"]
-    if pos.shape[0]:
-        m = np.isin(pos[:, 5], list(sources))
-        days = np.round(pos[m, 0]).astype(int)
-        cts = np.clip(np.round(pos[m, 4]).astype(int), 0, n_bins - 1)
-        valid = (days >= 0) & (days < sim_days)
-        np.add.at(city, (days[valid], cts[valid]), 1)
-    return city
-
-
-def prior_theta(rng):
-    return {
-        "beta":  rng.lognormal(np.log(PRIOR_BETA_SCALE),  PRIOR_BETA_S),
-        "t_exposed": rng.lognormal(np.log(PRIOR_TEXP_SCALE), PRIOR_TEXP_S),
-    }
+    def tag(self):
+        """Short string identifying this config, for use in results folder names."""
+        parts = [
+            SOURCES_NAMES.get(self.sources, "sources" + "".join(str(s) for s in sorted(self.sources))),
+            "rate" if self.scale_by_tests else "count",
+            f"train{self.n_train // 1000}k",
+            f"ep{self.train_epochs}",
+            f"r{self.design_rate_lo}-{self.design_rate_hi}",
+        ]
+        if self.total_population != TOTAL_POPULATION:
+            parts.append(f"pop{self.total_population}")
+        if self.early_stop_patience != 15:
+            parts.append(f"pat{self.early_stop_patience}")
+        return "_".join(parts)
 
 
-def prior_log_prob(beta, t_exposed):
-    return (stats.lognorm.logpdf(beta,  s=PRIOR_BETA_S,  scale=PRIOR_BETA_SCALE)
-            + stats.lognorm.logpdf(t_exposed, s=PRIOR_TEXP_S, scale=PRIOR_TEXP_SCALE))
-
-
-def make_design(total_budget, period):
-    """(total_budget, period) -> a TestingBudget whose per-event fraction sums to total_budget."""
-    per_event = total_budget / n_events(period)
-    return TestingBudget(budget_fraction=float(per_event), test_period_days=int(period))
-
-
-def _assemble(draws, totals, periods, outs):
-    city = np.stack([records_to_histogram(o, {SURVEY}) for o in outs])
-    return {
-        "beta":  np.array([d["beta"]  for d in draws], dtype=np.float64).reshape(-1, 1),
-        "t_exposed": np.array([d["t_exposed"] for d in draws], dtype=np.float64).reshape(-1, 1),
-        # design conditions, already in network-friendly form:
-        "log_budget": np.log(np.asarray(totals, dtype=np.float64)).reshape(-1, 1),
-        "frequency":  (1.0 / np.asarray(periods, dtype=np.float64)).reshape(-1, 1),
-        "histogram_ct":  city,
-        "histogram_bin": city.sum(axis=-1),
-        "n_ever_infected": np.array([o["n_ever_infected"][0, 0] for o in outs], dtype=np.float64),
-    }
-
-
-def make_training_dataset(n, population, rng, show_progress=True):
+def make_training_dataset(n, population, rng, config, show_progress=True):
     """Mixed-design training set: theta AND (total_budget, period) drawn per simulation."""
     draws = [prior_theta(rng) for _ in range(n)]
-    totals = np.exp(rng.uniform(np.log(DESIGN_TOTAL_LO), np.log(DESIGN_TOTAL_HI), n))
-    periods = rng.choice(PERIODS, n)
+    totals = np.exp(rng.uniform(np.log(config.design_total_lo), np.log(config.design_total_hi), n))
+    periods = rng.choice(config.periods, n)
+    # make_val_at_design() assumes one fixed design.
     designs = [make_design(t, p) for t, p in zip(totals, periods)]
-    outs = run_batch_designs(draws, designs, population, show_progress=show_progress)
-    return _assemble(draws, totals, periods, outs)
-
-
-def make_val_at_design(n, population, total_budget, period, rng):
-    """Validation set at a single fixed design."""
-    draws = [prior_theta(rng) for _ in range(n)]
-    designs = [make_design(total_budget, period)] * n
-    outs = run_batch_designs(draws, designs, population, show_progress=False)
-    return _assemble(draws, np.full(n, total_budget), np.full(n, period), outs)
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Model
-# ─────────────────────────────────────────────────────────────────────────────
-class GRU(bf.networks.SummaryNetwork):
-    def __init__(self, hidden_dim=128, summary_dim=16, dropout=0.2, recurrent_dropout=0.1, **kwargs):
-        super().__init__(**kwargs)
-        self.gru1 = keras.layers.GRU(hidden_dim, return_sequences=True,
-                                     dropout=dropout, recurrent_dropout=recurrent_dropout)
-        self.gru2 = keras.layers.GRU(hidden_dim, dropout=dropout, recurrent_dropout=recurrent_dropout)
-        self.summary_stats = keras.layers.Dense(summary_dim)
-
-    def call(self, time_series, **kwargs):
-        training = kwargs.get("stage") == "training"
-        x = self.gru1(time_series, training=training)
-        x = self.gru2(x, training=training)
-        return self.summary_stats(x)
-
-
-def build_workflow(summary_key):
-    """Infers (beta, t_exposed) from a histogram summary AND the design (log_budget, frequency) as
-    direct conditions -- so one trained network handles any (total_budget, period)."""
-    adapter = (
-        bf.adapters.Adapter()
-        .convert_dtype("float64", "float32")
-        .as_time_series(summary_key)
-        .concatenate(["beta", "t_exposed"], into="inference_variables")
-        .concatenate(["log_budget", "frequency"], into="inference_conditions")
-        .rename(summary_key, "summary_variables")
-        .log(["inference_variables", "summary_variables"], p1=True)
-    )
-    return bf.BasicWorkflow(
-        adapter=adapter,
-        inference_network=bf.networks.CouplingFlow(),
-        summary_network=GRU(),
-        standardize=["inference_variables", "inference_conditions"],
-    )
-
-
-def estimate_mutual_information(workflow, val, x_key, num_posterior_samples=NUM_POSTERIOR_SAMPLES, val_batch=32):
-    """I(theta;X|d) for a validation set at a fixed design; the design (log_budget, frequency,
-    carried in `val`) is passed as a condition to sample() and log_prob()."""
-    n_val = len(val["beta"])
-    kls = np.empty(n_val)
-    n_invalid, n_total = 0, 0
-    cond_keys = ("log_budget", "frequency")
-    for start in range(0, n_val, val_batch):
-        idx = slice(start, min(start + val_batch, n_val))
-        cond = {x_key: val[x_key][idx], **{k: val[k][idx] for k in cond_keys}}
-        post = workflow.sample(conditions=cond, num_samples=num_posterior_samples)
-        beta_s, t_exposed_s = post["beta"].reshape(-1, 1), post["t_exposed"].reshape(-1, 1)
-        b = val["beta"][idx].shape[0]
-        tiled = {x_key: np.repeat(val[x_key][idx], num_posterior_samples, axis=0)}
-        for k in cond_keys:
-            tiled[k] = np.repeat(val[k][idx], num_posterior_samples, axis=0)
-        log_q = workflow.log_prob(data={**tiled, "beta": beta_s, "t_exposed": t_exposed_s})
-        log_q = log_q.reshape(b, num_posterior_samples)
-        log_p = prior_log_prob(beta_s, t_exposed_s).reshape(b, num_posterior_samples)
-        diff = np.where(np.isfinite(log_q) & np.isfinite(log_p), log_q - log_p, np.nan)
-        n_invalid += np.isnan(diff).sum()
-        n_total += diff.size
-        kls[idx] = np.nanmean(diff, axis=1)
-    return kls, n_invalid / n_total
+    outs = run_batch_designs(draws, designs, population, show_progress=show_progress, max_workers=os.cpu_count())
+    return _assemble(draws, totals, periods, outs, sources=config.sources, scale_by_tests=config.scale_by_tests)
 
 
 def log(msg):
     print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}", flush=True)
 
 
-def main():
-    global OUTPUT_DIR
-    OUTPUT_DIR = OUTPUT_DIR.parent / f"{OUTPUT_DIR.name}_{datetime.now():%Y%m%d_%H%M%S}"
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    log(f"Writing results to {OUTPUT_DIR}")
+def _training_data_from_cache_or_simulate(config, population, rng):
+    """Training set only. From the on-disk cache if it currently has enough examples, else
+    simulated fresh. The early-stopping validation set is always simulated fresh."""
+    available = simulation_cache.cache_size(CACHE_DIR) if CACHE_DIR is not None else 0
+    if available >= config.n_train:
+        manifest = simulation_cache.read_manifest_config(CACHE_DIR)
+        if manifest["total_population"] != config.total_population:
+            log(f"cache at {CACHE_DIR} was generated with population={manifest['total_population']}, "
+               f"but this config wants {config.total_population} -- simulating fresh instead.")
+        else:
+            log(f"loading training data from cache ({CACHE_DIR}, {available:,} examples available, "
+               f"cache design range {manifest['design_rate_lo']}-{manifest['design_rate_hi']}/100k/day "
+               f"periods={manifest['periods']} -- check these cover what this config needs)...")
+            return simulation_cache.load_cached_dataset(CACHE_DIR, n=config.n_train, sources=config.sources,
+                                                         scale_by_tests=config.scale_by_tests, rng=rng)
+    elif CACHE_DIR is not None:
+        log(f"cache at {CACHE_DIR} has {available:,}/{config.n_train:,} examples needed -- simulating fresh instead.")
+
+    log(f"Simulating mixed-design training data (n={config.n_train}, population={config.total_population})...")
+    return make_training_dataset(config.n_train, population, rng, config)
+
+
+def main(config=None):
+    """Run one full sweep for `config` (a SweepConfig; defaults to SweepConfig()).
+    Returns the output_dir where results were written."""
+    config = config or SweepConfig()
+    output_dir = OUTPUT_DIR / f"{config.tag()}_{datetime.now():%Y%m%d_%H%M%S}"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    log(f"Writing results to {output_dir}")
 
     rng = np.random.default_rng(20260813)
-    population = ABMPopulation(total_population=TOTAL_POPULATION, quarantine_compliance=QUARANTINE_COMPLIANCE)
+    population = ABMPopulation(total_population=config.total_population)
 
-    log(f"Simulating mixed-design training data (n={N_TRAIN})...")
-    raw_train = make_training_dataset(N_TRAIN, population, rng)
+    raw_train = _training_data_from_cache_or_simulate(config, population, rng)
     log("Simulating a mixed-design validation set (for early stopping)...")
-    raw_val = make_training_dataset(N_VAL_PER_DESIGN * 2, population, rng)
+    raw_val = make_training_dataset(config.n_val_per_design * 2, population, rng, config)
 
-    early_stop = keras.callbacks.EarlyStopping(monitor="val_loss", patience=15,
-                                               restore_best_weights=True, start_from_epoch=50)
-    workflows = {}
-    for key, label in [("histogram_ct", "ct"), ("histogram_bin", "bin")]:
+    early_stop = keras.callbacks.EarlyStopping(monitor="val_loss", patience=config.early_stop_patience,
+                                               restore_best_weights=True,
+                                               start_from_epoch=config.early_stop_start_from_epoch)
+
+    _prior_draws = [prior_theta(rng) for _ in range(2000)]
+    prior_draws = {k: np.array([d[k] for d in _prior_draws]) for k in PARAM_KEYS}
+    jacobian_pairs = list(itertools.combinations(PARAM_KEYS, 2))
+
+    KEY_LABEL = [("histogram_ct", "ct"), ("histogram_bin", "bin")]
+
+    workflows, posts = {}, {}
+    for key, label in KEY_LABEL:
         log(f"Training {label} workflow (design-amortized)...")
-        wf = build_workflow(key)
-        hist = wf.fit_offline(data=raw_train, epochs=300, batch_size=64,
+        wf = build_workflow(key, checkpoint_dir=output_dir)
+        hist = wf.fit_offline(data=raw_train, epochs=config.train_epochs, batch_size=64,
                               validation_data=raw_val, callbacks=[early_stop])
         f = bf.diagnostics.plots.loss(hist)
-        f.savefig(OUTPUT_DIR / f"loss_{label}.png", dpi=150, bbox_inches="tight")
+        f.savefig(output_dir / f"loss_{label}.png", dpi=150, bbox_inches="tight")
         plt.close(f)
+
+        log(f"Sampling {label} posterior on the held-out mixed-design validation set...")
+        workflows[label] = wf
+        posts[label] = sample_posterior(wf, raw_val, key)
+
+    bounds = shared_bounds(raw_val, posts)
+
+    example_indices = [0, 1, 2]
+    for key, label in KEY_LABEL:
+        wf, post = workflows[label], posts[label]
+        log(f"Posterior diagnostics ({label})...")
+
+        f = bf.diagnostics.plots.recovery(
+            post, raw_val, variable_keys=PARAM_KEYS, variable_names=PAR_NAMES)
+        apply_recovery_bounds(f, bounds)
+        f.suptitle(f"Recovery -- {label} (design-amortized)", y=1.02)
+        f.savefig(output_dir / f"recovery_{label}.png", dpi=150, bbox_inches="tight")
+        plt.close(f)
+
+        f = bf.diagnostics.plots.calibration_ecdf(
+            post, raw_val, variable_keys=PARAM_KEYS,
+            variable_names=PAR_NAMES, difference=True)
+        f.suptitle(f"ECDF calibration -- {label} (design-amortized)", y=1.02)
+        f.savefig(output_dir / f"calibration_ecdf_{label}.png", dpi=150, bbox_inches="tight")
+        plt.close(f)
+
+        for example_idx in [0, 1]:
+            g = bf.diagnostics.plots.pairs_posterior(
+                estimates=post, targets=raw_val, priors=prior_draws, dataset_id=example_idx,
+                variable_keys=PARAM_KEYS, variable_names=PAR_NAMES)
+            apply_pairgrid_bounds(g, bounds)
+            g.figure.suptitle(f"{label} -- prior vs posterior (example #{example_idx})", y=1.02)
+            g.figure.savefig(output_dir / f"pairs_posterior_{label}_{example_idx}.png",
+                             dpi=150, bbox_inches="tight")
+            plt.close(g.figure)
+
+        log(f"Local Jacobian identifiability ({label})...")
+        for idx in example_indices:
+            S, U, _ = local_jacobian_svd(wf, raw_val, idx, key)
+            ratio = S[0] / S[-1] if S[-1] > 0 else np.inf
+            sloppy_dir = U[:, np.argmax(S)]
+            log(f"    instance #{idx}: local FRACTIONAL posterior std={S.round(3)} (ratio={ratio:.1f}x), "
+                f"sloppiest direction in log-theta ({','.join(PARAM_KEYS)})={sloppy_dir.round(3)}")
+        for p1, p2 in jacobian_pairs:
+            f = plot_local_identifiability(wf, post, raw_val, key, example_indices, label,
+                                          var_pair=(p1, p2), bounds=bounds)
+            f.savefig(output_dir / f"local_identifiability_{label}_{p1}_{p2}.png",
+                     dpi=150, bbox_inches="tight")
+            plt.close(f)
+
         workflows[label] = wf
 
+    total_budget_grid = config.total_budget_grid
     rows = []
-    for total_budget in TOTAL_BUDGET_GRID:
-        for period in PERIOD_GRID:
-            log(f"[budget={total_budget} period={period}] simulating validation set and estimating Delta...")
-            val = make_val_at_design(N_VAL_PER_DESIGN, population, total_budget, period, rng)
-            kl_ct,  _ = estimate_mutual_information(workflows["ct"],  val, "histogram_ct")
-            kl_bin, _ = estimate_mutual_information(workflows["bin"], val, "histogram_bin")
+    for total_budget in total_budget_grid:
+        rate = rate_per_100k_per_day(total_budget)
+        for period in config.period_grid:
+            log(f"[rate={rate:.0f}/100k/day period={period}] simulating validation set and estimating Delta...")
+            val = make_val_at_design(config.n_val_per_design, population, total_budget, period, rng,
+                                     sources=config.sources, scale_by_tests=config.scale_by_tests)
+            kl_ct,  frac_invalid_ct  = estimate_mutual_information(workflows["ct"],  val, "histogram_ct")
+            kl_bin, frac_invalid_bin = estimate_mutual_information(workflows["bin"], val, "histogram_bin")
             I_ct, I_bin = kl_ct.mean(), kl_bin.mean()
             delta = I_ct - I_bin
             se_delta = (kl_ct - kl_bin).std(ddof=1) / np.sqrt(len(kl_ct))
             rows.append({
-                "total_budget": total_budget, "period": period, "frequency": 1.0 / period,
+                "total_budget": total_budget, "rate_per_100k_per_day": rate,
+                "period": period, "frequency": 1.0 / period,
                 "I_ct": I_ct, "I_bin": I_bin, "delta": delta, "se_delta": se_delta,
                 "n_ever_infected": float(val["n_ever_infected"].mean()),
+                "frac_invalid_ct": frac_invalid_ct, "frac_invalid_bin": frac_invalid_bin,
             })
             log(f"    I_ct={I_ct:.3f} I_bin={I_bin:.3f} delta={delta:.3f} +/- {se_delta:.3f} "
-                f"| n_ever_infected~{val['n_ever_infected'].mean():.0f}")
+                f"| n_ever_infected~{val['n_ever_infected'].mean():.0f} "
+                f"| out-of-support: ct={frac_invalid_ct:.2%} bin={frac_invalid_bin:.2%}")
 
-    # ── Save + plot Delta(total_budget, period) surface ────────────────────────
-    with open(OUTPUT_DIR / "design_sweep.csv", "w", newline="") as fh:
+    with open(output_dir / "design_sweep.csv", "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))
         w.writeheader(); w.writerows(rows)
-    with open(OUTPUT_DIR / "design_sweep.json", "w") as fh:
+    with open(output_dir / "design_sweep.json", "w") as fh:
         json.dump(rows, fh, indent=2)
 
-    def grid(field):
-        g = np.full((len(TOTAL_BUDGET_GRID), len(PERIOD_GRID)), np.nan)
+    def grid(field_name):
+        g = np.full((len(total_budget_grid), len(config.period_grid)), np.nan)
         for r in rows:
-            g[TOTAL_BUDGET_GRID.index(r["total_budget"]), PERIOD_GRID.index(r["period"])] = r[field]
+            g[total_budget_grid.index(r["total_budget"]), config.period_grid.index(r["period"])] = r[field_name]
         return g
 
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
-    for ax, (field, title) in zip(axes, [("delta", "Delta(d) [nats]"),
-                                         ("I_ct", "I_ct [nats]"),
-                                         ("n_ever_infected", "epidemic size (ever infected)")]):
-        im = ax.imshow(grid(field), origin="lower", aspect="auto", cmap="viridis")
-        ax.set_xticks(range(len(PERIOD_GRID))); ax.set_xticklabels(PERIOD_GRID)
-        ax.set_yticks(range(len(TOTAL_BUDGET_GRID))); ax.set_yticklabels(TOTAL_BUDGET_GRID)
+    for ax, (field_name, title) in zip(axes, [("delta", "Delta(d) [nats]"),
+                                               ("I_ct", "I_ct [nats]"),
+                                               ("n_ever_infected", "epidemic size (ever infected)")]):
+        im = ax.imshow(grid(field_name), origin="lower", aspect="auto", cmap="viridis")
+        ax.set_xticks(range(len(config.period_grid))); ax.set_xticklabels(config.period_grid)
+        ax.set_yticks(range(len(config.rate_grid))); ax.set_yticklabels(config.rate_grid)
         ax.set_xlabel("period (days between surveillance events)")
-        ax.set_ylabel("total_budget (tests/person)")
+        ax.set_ylabel("tests / 100k people / day")
         ax.set_title(title)
         fig.colorbar(im, ax=ax)
     fig.tight_layout()
-    fig.savefig(OUTPUT_DIR / "design_sweep.png", dpi=150, bbox_inches="tight")
+    fig.savefig(output_dir / "design_sweep.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
-    log(f"Sweep complete. Delta surface -> {OUTPUT_DIR / 'design_sweep.png'}")
+    log(f"Sweep complete. Delta surface -> {output_dir / 'design_sweep.png'}")
+    return output_dir
 
 
 if __name__ == "__main__":

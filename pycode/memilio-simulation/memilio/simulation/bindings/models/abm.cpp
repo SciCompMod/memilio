@@ -240,61 +240,63 @@ PYBIND11_MODULE(_simulation_abm, m)
     m.attr("__version__") = "dev";
 
     py::class_<mio::abm::TestingBudget>(m, "TestingBudget",
-      "Active-surveillance testing design d: budget_fraction is the share of the population "
-      "sampled per surveillance event, test_period_days the cadence (sample every N days), "
-      "test_hour the hour of day, reporting_delay_days the lab turnaround. budget_fraction = 0 "
-      "disables surveillance. (Diagnostic symptomatic care-seeking is a separate fixed process "
-      "configured inside forward_pass, not part of this design.)")
-        .def(py::init([](ScalarType budget_fraction, int test_period_days, int test_hour,
-                         ScalarType reporting_delay_days) {
+      "Active-surveillance testing design d: event_budget_fraction is the share of the "
+      "population sampled at each surveillance event. test_period_days is "
+      "the cadence (sample every N days), test_hour the hour of day, reporting_delay_days the lab "
+      "turnaround, min_retest_gap_days the minimum time between two PCR tests of the same Person "
+      "event_budget_fraction = 0 disables surveillance. ")
+        .def(py::init([](ScalarType event_budget_fraction, int test_period_days, int test_hour,
+                         ScalarType reporting_delay_days, ScalarType min_retest_gap_days) {
                  mio::abm::TestingBudget design;
-                 design.budget_fraction  = budget_fraction;
-                 design.test_period_days = test_period_days;
-                 design.test_hour        = test_hour;
-                 design.reporting_delay  = mio::abm::days(reporting_delay_days);
+                 design.event_budget_fraction = event_budget_fraction;
+                 design.test_period_days      = test_period_days;
+                 design.test_hour             = test_hour;
+                 design.reporting_delay       = mio::abm::days(reporting_delay_days);
+                 design.min_retest_gap        = mio::abm::days(min_retest_gap_days);
                  return design;
              }),
-             py::arg("budget_fraction") = 0.01, py::arg("test_period_days") = 1, py::arg("test_hour") = 8,
-             py::arg("reporting_delay_days") = 1.0)
-        .def_readwrite("budget_fraction", &mio::abm::TestingBudget::budget_fraction)
+             py::arg("event_budget_fraction") = 0.01, py::arg("test_period_days") = 1, py::arg("test_hour") = 8,
+             py::arg("reporting_delay_days") = 1.0, py::arg("min_retest_gap_days") = 2.0)
+        .def_readwrite("event_budget_fraction", &mio::abm::TestingBudget::event_budget_fraction)
         .def_readwrite("test_period_days", &mio::abm::TestingBudget::test_period_days)
         .def_readwrite("test_hour", &mio::abm::TestingBudget::test_hour)
         .def(py::pickle(
             [](const mio::abm::TestingBudget& d) { // __getstate__
-                return py::make_tuple(d.budget_fraction, d.test_period_days, d.test_hour,
-                                      d.reporting_delay.seconds());
+                return py::make_tuple(d.event_budget_fraction, d.test_period_days, d.test_hour,
+                                      d.reporting_delay.seconds(), d.min_retest_gap.seconds());
             },
             [](py::tuple t) { // __setstate__
-                if (t.size() != 4) {
+                if (t.size() != 5) {
                     throw std::runtime_error("Invalid TestingBudget pickled state.");
                 }
                 mio::abm::TestingBudget d;
-                d.budget_fraction  = t[0].cast<ScalarType>();
-                d.test_period_days = t[1].cast<int>();
-                d.test_hour        = t[2].cast<int>();
-                d.reporting_delay  = mio::abm::TimeSpan(t[3].cast<int>());
+                d.event_budget_fraction = t[0].cast<ScalarType>();
+                d.test_period_days      = t[1].cast<int>();
+                d.test_hour             = t[2].cast<int>();
+                d.reporting_delay       = mio::abm::TimeSpan(t[3].cast<int>());
+                d.min_retest_gap        = mio::abm::TimeSpan(t[4].cast<int>());
                 return d;
             }));
 
     py::class_<ABMPopulation>(m, "ABMPopulation",
       "Pre-built ABM population from CityBuilder: German-demographics-based households, "
       "schools, workplaces, shops, events, and hospital/ICU. Construct once, reuse across many "
-      "forward_pass() calls to avoid rebuilding the structure. quarantine_compliance in [0,1] is "
-      "the probability a Person isolates on a positive result (set on all agents at build).")
-        .def(py::init<int, ScalarType>(), py::arg("total_population") = 500,
-             py::arg("quarantine_compliance") = 1.0, py::call_guard<py::gil_scoped_release>());
+      "forward_pass() calls to avoid rebuilding the structure.")
+        .def(py::init<int>(), py::arg("total_population") = 500,
+             py::call_guard<py::gil_scoped_release>());
 
     m.def("forward_pass", &forward_pass,
       py::arg("population"), py::arg("params"), py::arg("design") = mio::abm::TestingBudget{0.01},
       py::call_guard<py::gil_scoped_release>(),
-      "Run the ABM forward pass using a pre-built population, with active PCR surveillance (per "
-      "`design`, see TestingBudget) plus a fixed diagnostic care-seeking process. `params` is a "
-      "dict mapping parameter names to values (e.g. {'beta': 1.0, 'kappa': 5.0}); recognised keys: "
-      "'beta', 'kappa', 'time_presymptomatic', 'time_asymptomatic_recovery', 'symptom_prob'. "
-      "Unknown keys raise ValueError; omitted keys keep the model default. Releases the GIL, so "
-      "it's safe to call concurrently from multiple Python threads sharing one ABMPopulation. "
-      "Returns a dict of raw resolved tests (all aggregation deferred to Python): 'positives' "
-      "(n_pos, 6) [test_day, person_id, age, location, ct, source] one row per positive test "
+      "Run the ABM forward pass using a pre-built population, with active PCR surveillance "
+      "plus a fixed diagnostic care-seeking process. `params` is a dict mapping parameter "
+      "names to values (e.g. {'beta': 1.0, 'kappa': 5.0}); recognised keys: "
+      "'beta', 'kappa', 'time_presymptomatic', 'time_asymptomatic_recovery', 'symptom_prob', "
+      "'quarantine_compliance'. "
+      "Unknown keys raise ValueError; omitted keys keep the model default. Releases the GIL "
+      "to allow concurrent calls from multiple Python threads sharing one ABMPopulation. "
+      "Returns a dict of raw resolved tests: "
+      "'positives' (n_pos, 6) [test_day, person_id, age, location, ct, source] one row per positive test "
       "(source 0 = survey / active surveillance = the analysed stream X, 1 = diagnostic); "
       "'negatives' (n_groups, 5) [test_day, source, age, location, count] negatives aggregated to "
       "counts; 'n_ever_infected' (1, 1) an epidemic-size diagnostic.");

@@ -11,7 +11,7 @@
 struct ABMPopulation {
     struct Impl;
     std::shared_ptr<Impl> impl;
-    explicit ABMPopulation(int total_population = 500, ScalarType quarantine_compliance = 1.0);
+    explicit ABMPopulation(int total_population = 500);
 };
 
 // Runs one forward pass

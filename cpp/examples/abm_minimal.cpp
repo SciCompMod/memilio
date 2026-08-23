@@ -39,8 +39,8 @@ int main()
     // every day. Results are reported and isolation started on a positive with  a 1-day delay.
     // Diagnostic care-seeking runs (symptomatic individuals) alongside surveillance with the hazard fixed inside forward_pass().
     mio::abm::TestingBudget design;
-    design.budget_fraction  = 0.05;
-    design.test_period_days = 1;
+    design.event_budget_fraction = 0.05;
+    design.test_period_days      = 1;
 
     const ScalarType beta  = 1.0;
     const ScalarType t_exposed = 5.0;

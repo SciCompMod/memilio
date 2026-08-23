@@ -44,7 +44,7 @@ constexpr ScalarType kCareSeekPerDay = 0.19;
 struct ABMPopulation::Impl {
     mio::abm::Model model;
 
-    explicit Impl(int total_population, ScalarType quarantine_compliance)
+    explicit Impl(int total_population)
         : model(CityBuilder::build_world(CityConfig{total_population}, mio::thread_local_rng()))
     {
         // Stochastic viral-load kinetics.
@@ -53,17 +53,11 @@ struct ABMPopulation::Impl {
             mio::AbstractParameterDistribution(mio::ParameterDistributionUniform(1.4, 2.6)),      // incline
             mio::AbstractParameterDistribution(mio::ParameterDistributionUniform(-0.24, -0.10)),  // decline
         };
-
-        // Probability a Person actually isolates on a positive result (gates start_isolation).
-        // Fixed per built population.
-        for (auto& person : model.get_persons()) {
-            person.set_compliance(mio::abm::InterventionType::Isolation, quarantine_compliance);
-        }
     }
 };
 
-ABMPopulation::ABMPopulation(int total_population, ScalarType quarantine_compliance)
-    : impl(std::make_shared<Impl>(total_population, quarantine_compliance))
+ABMPopulation::ABMPopulation(int total_population)
+    : impl(std::make_shared<Impl>(total_population))
 {
 }
 
@@ -91,6 +85,11 @@ void apply_params(mio::abm::Model& model, const std::map<std::string, ScalarType
         else if (name == "symptom_prob") {
             model.parameters.get<mio::abm::SymptomsPerInfectedNoSymptoms>() =
                 mio::UncertainValue<ScalarType>(value);
+        }
+        else if (name == "quarantine_compliance") {
+            for (auto& person : model.get_persons()) {
+                person.set_compliance(mio::abm::InterventionType::Isolation, value);
+            }
         }
         else {
             throw std::invalid_argument("forward_pass: unknown parameter '" + name + "'");
