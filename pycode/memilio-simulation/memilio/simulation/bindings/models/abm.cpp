@@ -292,7 +292,7 @@ PYBIND11_MODULE(_simulation_abm, m)
       "plus a fixed diagnostic care-seeking process. `params` is a dict mapping parameter "
       "names to values (e.g. {'beta': 1.0, 'kappa': 5.0}); recognised keys: "
       "'beta', 'kappa', 'time_presymptomatic', 'time_asymptomatic_recovery', 'symptom_prob', "
-      "'quarantine_compliance'. "
+      "'quarantine_compliance', 'care_seeking_prob'. "
       "Unknown keys raise ValueError; omitted keys keep the model default. Releases the GIL "
       "to allow concurrent calls from multiple Python threads sharing one ABMPopulation. "
       "Returns a dict of raw resolved tests: "

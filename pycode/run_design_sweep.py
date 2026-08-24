@@ -6,7 +6,6 @@ if "KERAS_BACKEND" not in os.environ:
     os.environ["KERAS_BACKEND"] = "jax"
 
 import csv
-import itertools
 import json
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -22,11 +21,11 @@ import bayesflow as bf
 from memilio.simulation.abm import ABMPopulation
 from abm_batch import run_batch_designs
 from abm_inference import (
-    PARAM_KEYS, PAR_NAMES, TOTAL_POPULATION,
+    PARAM_KEYS, PAR_NAMES, TOTAL_POPULATION, EPIDEMIC_PARAM_KEYS,
     SOURCES_SURVEY, SOURCES_DIAGNOSTIC, SOURCES_POOLED,
     prior_theta, make_design, make_val_at_design, build_workflow, _assemble,
     estimate_mutual_information, sample_posterior, local_jacobian_svd,
-    shared_bounds, apply_recovery_bounds, apply_pairgrid_bounds, plot_local_identifiability,
+    shared_bounds, apply_recovery_bounds, apply_pairgrid_bounds, plot_posterior_comparison_grid,
     total_budget_for_rate, rate_per_100k_per_day,
 )
 import simulation_cache
@@ -151,7 +150,6 @@ def main(config=None):
 
     _prior_draws = [prior_theta(rng) for _ in range(2000)]
     prior_draws = {k: np.array([d[k] for d in _prior_draws]) for k in PARAM_KEYS}
-    jacobian_pairs = list(itertools.combinations(PARAM_KEYS, 2))
 
     KEY_LABEL = [("histogram_ct", "ct"), ("histogram_bin", "bin")]
 
@@ -207,14 +205,15 @@ def main(config=None):
             sloppy_dir = U[:, np.argmax(S)]
             log(f"    instance #{idx}: local FRACTIONAL posterior std={S.round(3)} (ratio={ratio:.1f}x), "
                 f"sloppiest direction in log-theta ({','.join(PARAM_KEYS)})={sloppy_dir.round(3)}")
-        for p1, p2 in jacobian_pairs:
-            f = plot_local_identifiability(wf, post, raw_val, key, example_indices, label,
-                                          var_pair=(p1, p2), bounds=bounds)
-            f.savefig(output_dir / f"local_identifiability_{label}_{p1}_{p2}.png",
-                     dpi=150, bbox_inches="tight")
-            plt.close(f)
 
         workflows[label] = wf
+
+
+    log("Posterior comparison grids (CT vs binary)...")
+    for idx in example_indices:
+        f = plot_posterior_comparison_grid(posts, raw_val, idx, bounds=bounds)
+        f.savefig(output_dir / f"posterior_comparison_{idx}.png", dpi=150, bbox_inches="tight")
+        plt.close(f)
 
     total_budget_grid = config.total_budget_grid
     rows = []
@@ -224,8 +223,10 @@ def main(config=None):
             log(f"[rate={rate:.0f}/100k/day period={period}] simulating validation set and estimating Delta...")
             val = make_val_at_design(config.n_val_per_design, population, total_budget, period, rng,
                                      sources=config.sources, scale_by_tests=config.scale_by_tests)
-            kl_ct,  frac_invalid_ct  = estimate_mutual_information(workflows["ct"],  val, "histogram_ct")
-            kl_bin, frac_invalid_bin = estimate_mutual_information(workflows["bin"], val, "histogram_bin")
+            kl_ct,  frac_invalid_ct  = estimate_mutual_information(workflows["ct"],  val, "histogram_ct",
+                                                                    keep_keys=EPIDEMIC_PARAM_KEYS)
+            kl_bin, frac_invalid_bin = estimate_mutual_information(workflows["bin"], val, "histogram_bin",
+                                                                    keep_keys=EPIDEMIC_PARAM_KEYS)
             I_ct, I_bin = kl_ct.mean(), kl_bin.mean()
             delta = I_ct - I_bin
             se_delta = (kl_ct - kl_bin).std(ddof=1) / np.sqrt(len(kl_ct))
@@ -253,8 +254,8 @@ def main(config=None):
         return g
 
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
-    for ax, (field_name, title) in zip(axes, [("delta", "Delta(d) [nats]"),
-                                               ("I_ct", "I_ct [nats]"),
+    for ax, (field_name, title) in zip(axes, [("delta", "Delta(d) [nats] (epidemic params only)"),
+                                               ("I_ct", "I_ct [nats] (epidemic params only)"),
                                                ("n_ever_infected", "epidemic size (ever infected)")]):
         im = ax.imshow(grid(field_name), origin="lower", aspect="auto", cmap="viridis")
         ax.set_xticks(range(len(config.period_grid))); ax.set_xticklabels(config.period_grid)

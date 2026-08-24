@@ -1,25 +1,3 @@
-"""A large, reusable, on-disk cache of ABM simulation examples.
-
-Survey and Diagnostic streams are stored separately, so load_cached_dataset() can reconstruct ANY
-combination later without resimulating: summing the two streams reproduces SOURCES_POOLED exactly,
-and dividing by the (optionally stream-summed) totals reproduces scale_by_tests=True's rate
-exactly. Shards are written with np.savez_compressed -- the histograms are genuinely sparse
-(measured: ~89%/67% exactly-zero cells for Survey/Diagnostic at these design-prior ranges), so
-gzip does far more work than the naive float32 size suggests: ~293MB/shard uncompressed but ~18MB
-/shard measured on disk, i.e. ~1.8GB for the full 3M-example target, not ~29GB. Caching per-event
-raw records instead (rather than these pre-binned histograms) would run ~83-330GB even before
-compression (measured), for the sake of reconstructing per-person/age/location detail the training
-pipeline has never used anyway (only day/CT-bin/source) -- not worth it.
-
-Written in resumable SHARDS (SHARD_SIZE examples/file), not one giant array: an interruption loses
-at most the shard in progress, not the whole cache, and you can start USING however many shards
-exist already -- via load_cached_dataset() -- without waiting for TARGET_N to be reached. Re-
-running this script after a stop just continues from the highest existing shard index.
-
-Usage:
-    python simulation_cache.py                  # generate/resume up to TARGET_N examples
-Load what exists so far from any other script with load_cached_dataset(CACHE_DIR, n=...).
-"""
 import os
 
 if "KERAS_BACKEND" not in os.environ:
@@ -41,9 +19,8 @@ from abm_inference import (
 
 # ─────────────────────────────────────────────────────────────────────────────
 CACHE_DIR = Path(__file__).parent / "simulation_cache_data"
-SHARD_SIZE = 30_000     # examples/shard, ~50-60min/shard -- an interruption loses at most that
-                        # much, not the whole run.
-TARGET_N = 3_000_000    # generate/resume up to this many examples total.
+SHARD_SIZE = 10_000         
+TARGET_N = 200_000    
 
 TOTAL_POPULATION_ = TOTAL_POPULATION
 DESIGN_RATE_LO, DESIGN_RATE_HI = 50, 2000   # tests / 100k people / day
@@ -114,13 +91,13 @@ def _load_or_init_manifest(cache_dir):
 
 def generate_shard(shard_idx, cache_dir, population, rng):
     """Simulate SHARD_SIZE fresh examples and write them as shard_{idx:05d}.npz. rng is shared
-    across shards (advance it, don't recreate it) so examples are never repeated."""
+    across shards so examples are never repeated."""
     draws = [prior_theta(rng) for _ in range(SHARD_SIZE)]
     totals = np.exp(rng.uniform(np.log(total_budget_for_rate(DESIGN_RATE_LO)),
                                 np.log(total_budget_for_rate(DESIGN_RATE_HI)), SHARD_SIZE))
     periods = rng.choice(PERIODS, SHARD_SIZE)
     designs = [make_design(t, p) for t, p in zip(totals, periods)]
-    outs = run_batch_designs(draws, designs, population, show_progress=True, max_workers=os.cpu_count())
+    outs = run_batch_designs(draws, designs, population, show_progress=True, max_workers=14)
     data = _assemble_dual_stream(draws, totals, periods, outs)
 
     path = Path(cache_dir) / f"shard_{shard_idx:05d}.npz"

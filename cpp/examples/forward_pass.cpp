@@ -37,8 +37,9 @@ namespace
 // set_log_level sets global state, so it must only ever run once, not once per call.
 std::once_flag g_log_level_once;
 
-// Per-day probability a symptomatic, non-isolated Person seeks a diagnostic PCR test.
-constexpr ScalarType kCareSeekPerDay = 0.19;
+// Default per-day probability a symptomatic, non-isolated Person seeks a diagnostic PCR test,
+// used when "care_seeking_prob" is omitted from params (see apply_params() below).
+constexpr ScalarType kCareSeekPerDayDefault = 0.19;
 } // namespace
 
 struct ABMPopulation::Impl {
@@ -64,7 +65,8 @@ ABMPopulation::ABMPopulation(int total_population)
 namespace
 {
 // Apply the inference parameters in `params` to `model`
-void apply_params(mio::abm::Model& model, const std::map<std::string, ScalarType>& params)
+void apply_params(mio::abm::Model& model, const std::map<std::string, ScalarType>& params,
+                   ScalarType& care_seeking_prob_out)
 {
     for (const auto& [name, value] : params) {
         if (name == "beta") {
@@ -91,6 +93,9 @@ void apply_params(mio::abm::Model& model, const std::map<std::string, ScalarType
                 person.set_compliance(mio::abm::InterventionType::Isolation, value);
             }
         }
+        else if (name == "care_seeking_prob") {
+            care_seeking_prob_out = value;
+        }
         else {
             throw std::invalid_argument("forward_pass: unknown parameter '" + name + "'");
         }
@@ -108,10 +113,11 @@ std::map<std::string, Eigen::MatrixXd> forward_pass(const ABMPopulation& populat
 
     // Copy the pre-built population and set inference parameters on the copy.
     auto model = population.impl->model;
-    apply_params(model, params);
+    ScalarType care_seeking_prob = kCareSeekPerDayDefault;
+    apply_params(model, params, care_seeking_prob);
 
     // Configure the surveillance design
-    model.get_surveillance_testing().configure(design, mio::abm::PcrAssayParameters{}, kCareSeekPerDay);
+    model.get_surveillance_testing().configure(design, mio::abm::PcrAssayParameters{}, care_seeking_prob);
 
     auto start_date = mio::abm::TimePoint(0);
     std::vector<ScalarType> infection_distribution{0.9, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
