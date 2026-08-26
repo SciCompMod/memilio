@@ -331,7 +331,7 @@ def plot_difference_per_timestep(groundtruth, results, groundtruth_save_exponent
                 t0_ide, t0_ide+(len(difference)-1)*timestep, len(difference))
 
             axs[compartment].scatter(indices, difference, s=1, color="#88CCEE")
-            axs[compartment].set_title(f"{sir_dict[compartment]}")
+            axs[compartment].set_title(f"{sir_dict[compartment]}", fontsize=12)
 
             if damping_time != -1:
 
@@ -490,7 +490,7 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
         ax_obj.set_xscale("log", base=10)
         ax_obj.set_yscale("log", base=10)
 
-        ax_obj.set_title(sir_dict[i], fontsize=10)
+        ax_obj.set_title(sir_dict[i], fontsize=12)
         ax_obj.grid(True, linestyle='--', alpha=0.6)
 
     ax_label = axs if only_S else axs[1]
@@ -528,7 +528,7 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
 
     legend = fig.legend(handles=handles_reordered, labels=labels_reordered, ncol=ncol,  loc='lower center',
                         # bbox_to_anchor=(0.5, -0.2), # bbox_to_anchor=(1., -0.1)
-                        fontsize=8, bbox_transform=fig.transFigure, bbox_to_anchor=(0.53, -0.1))
+                        fontsize=12, bbox_transform=fig.transFigure, bbox_to_anchor=(0.53, -0.2))
     fig.tight_layout()
 
     if save_dir != "":
@@ -697,7 +697,7 @@ def main():
 
     cutoff_window = 0
 
-    main_dir = f"2026-08-18/examine_fd_smoothstepc0_fd_order=4_smootherwindow=2_t0ode=0_kahan=false"
+    main_dir = f"2026-08-21/phi_deriv_analytical_smoothstepc0_fd_order=4_smootherwindow=2_t0ode=0_kahan=false"
 
     ##############################################
 
@@ -732,6 +732,7 @@ def main():
         for ide_sub_dir in ide_sub_dirs:
             if ide_sub_dir != "":
                 t_init = get_tinit_from_dir_name(ide_sub_dir)
+
                 ide_result_dir = os.path.join(parent_dir, ide_sub_dir)
                 plot_dir = os.path.join(os.path.dirname(
                     __file__),  f"../plots/{main_dir}/{dir_name}/{ide_sub_dir}")

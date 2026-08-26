@@ -23,22 +23,31 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 
+blue = "#0072B2"
+red = "#9F1C0B99"
+# red ="#B51C08"
+green = "#009E73"
+# green = "#34993F"
+# green = "#5EB97A"
+yellow = "#E69F00"
+orange = "#D55E00"
+
 
 STYLE = {
-    "groundtruth":    {"label": "Ground truth",    "color": "#0072B2", "linestyle": "-",  "linewidth": 5., "alpha":0.3  },
-    "detailed":       {"label": "Long initialization",  "color": "#E69F00", "linestyle": "--", "linewidth": 2., "alpha":1.},
-    "detailed_short": {"label": "Short initialization", "color": "#009E73", "linestyle": "-.", "linewidth": 1.5, "alpha":1.},
-    "simple":         {"label": "Memoryless",         "color": "#D55E00", "linestyle": ":",  "linewidth": 2., "alpha":1.},
+    "groundtruth":    {"label": "Ground truth",    "color": "#0072B2", "linestyle": "-",  "linewidth": 7., "alpha": 0.3},
+    "detailed":       {"label": "Long initialization",  "color": green, "linestyle": "--", "linewidth": 2., "alpha": 1.},
+    "detailed_short": {"label": "Short initialization", "color": yellow, "linestyle": "-.", "linewidth": 1.5, "alpha": 1.},
+    "simple":         {"label": "Memoryless",         "color": red, "linestyle": ":",  "linewidth": 2., "alpha": 1.},
 }
 
 STYLE_SCATTER = {
-    "groundtruth":    {"label": "Ground truth",    "color": "#0072B2", "linestyle": "-",  "linewidth": 5., "alpha":0.3, "s":12  },
-    "detailed":       {"label": "Long initialization",  "color": "#E69F00", "linestyle": "-", "linewidth": 2., "alpha":1., "s":28},
-    "detailed_short": {"label": "Short initialization", "color": "#009E73", "linestyle": "-", "linewidth": 2., "alpha":1.,"s":12},
-    "simple":         {"label": "Memoryless",         "color": "#D55E00", "linestyle": "-",  "linewidth": 2., "alpha":1.,"s":12},
+    "groundtruth":    {"label": "Ground truth",    "color": "#0072B2", "linestyle": "-",  "linewidth": 5., "alpha": 0.3, "s": 12},
+    "detailed":       {"label": "Long initialization",  "color": green, "linestyle": "-", "linewidth": 2., "alpha": 1., "s": 28},
+    "detailed_short": {"label": "Short initialization", "color": yellow, "linestyle": "-", "linewidth": 2., "alpha": 1., "s": 12},
+    "simple":         {"label": "Memoryless",         "color": red, "linestyle": "-",  "linewidth": 2., "alpha": 1., "s": 12},
 }
 # order matches input file lists
-FILE_KEYS = [ "detailed", "detailed_short", "simple"]
+FILE_KEYS = ["detailed", "detailed_short", "simple"]
 FILE_KEYS_GROUNDTRUTH = ["groundtruth", "detailed", "detailed_short", "simple"]
 
 TITLE_FONTSIZE = 11
@@ -51,7 +60,7 @@ PANEL_HEIGHT = 4
 
 
 def get_t0_from_dir_name(dir_name):
-    t0_string = [x for x in dir_name.split("_") if "t0ide" in x  or "t0" in x]
+    t0_string = [x for x in dir_name.split("_") if "t0ide" in x or "t0" in x]
     t0 = float(t0_string[0].split("=")[-1])
     return t0
 
@@ -101,7 +110,7 @@ def _save(fig, save_dir, filename):
     plt.close(fig)
 
 
-def plot_compartments(files, fileending, save_dir="", zoom = False):
+def plot_compartments(files, fileending, save_dir="", zoom=False):
     """
     Plots simulation results (S, I, R) comparing groundtruth/detailed/simple.
 
@@ -124,7 +133,7 @@ def plot_compartments(files, fileending, save_dir="", zoom = False):
 
     t0 = get_t0_from_dir_name(files[0])
 
-    groundtruth_diff =0
+    groundtruth_diff = 0
 
     for key, filepath in zip(FILE_KEYS_GROUNDTRUTH, files):
         dates, total = load_h5_total(filepath)
@@ -144,22 +153,19 @@ def plot_compartments(files, fileending, save_dir="", zoom = False):
                 plot_max[i] = np.max(total[:, i])
             axs[i].plot(dates, total[:, i], **style)
 
-
-            
-            if zoom and i==0:
+            if zoom and i == 0:
                 print(key)
                 t0_index = np.where(np.isclose(dates, 0))[0][0]
                 print("Num Susceptibles at 0:", total[t0_index, i])
-                t_7_5_index= np.where(np.isclose(dates, 7.5))[0][0]
+                t_7_5_index = np.where(np.isclose(dates, 7.5))[0][0]
                 print("Num Susceptibles at 7.5:", total[t_7_5_index, i])
-                diff = total[t0_index, i]- total[t_7_5_index, i]
+                diff = total[t0_index, i] - total[t_7_5_index, i]
                 print("Diff:", diff)
                 if key == "groundtruth":
-                    groundtruth_diff=diff
-                print("Relative diff compared to ground truth:", diff/groundtruth_diff)
+                    groundtruth_diff = diff
+                print("Relative diff compared to ground truth:",
+                      diff/groundtruth_diff)
                 print()
-                
-
 
     for i in range(num_plots):
         axs[i].vlines(0, plot_min[i], plot_max[i],
@@ -170,7 +176,7 @@ def plot_compartments(files, fileending, save_dir="", zoom = False):
         zoom_max = 0. + 7.5
         for i in range(num_plots):
             axs[i].set_xlim(zoom_min, zoom_max)
-            
+
             # Calculate y-limits based on data within zoom range
             zoom_plot_min = 1e7
             zoom_plot_max = 0
@@ -179,12 +185,11 @@ def plot_compartments(files, fileending, save_dir="", zoom = False):
                 if np.any(mask):
                     zoom_plot_min = min(zoom_plot_min, np.min(total[mask, i]))
                     zoom_plot_max = max(zoom_plot_max, np.max(total[mask, i]))
-            
+
             # Add some padding to the y-limits
             y_padding = (zoom_plot_max - zoom_plot_min) * 0.1
-            axs[i].set_ylim(zoom_plot_min - y_padding, zoom_plot_max + y_padding)
-
-            
+            axs[i].set_ylim(zoom_plot_min - y_padding,
+                            zoom_plot_max + y_padding)
 
     _add_shared_legend(fig, plotted_keys)
 
@@ -395,9 +400,9 @@ def plot_init_conditions(files_flows, files_infage_dist, fileending, save_dir=""
     # styles = [STYLE_SCATTER[k] for k in plotted_keys]
 
     handles = [plt.Line2D([0], [0], color=STYLE_SCATTER[k]["color"],
-                              linestyle="-", linewidth=STYLE_SCATTER[k]["linewidth"],
-                              label=STYLE_SCATTER[k]["label"])
-                   for k in plotted_keys]
+                          linestyle="-", linewidth=STYLE_SCATTER[k]["linewidth"],
+                          label=STYLE_SCATTER[k]["label"])
+               for k in plotted_keys]
 
     fig.legend(
         handles=handles,
@@ -422,7 +427,8 @@ def subfolders_scandir(path):
 if __name__ == "__main__":
 
     root_dir = os.path.join(os.path.dirname(__file__), "../simulation_results")
-    main_dir = "2026-07-29/compare_different_inits_erlang_numsubcomps=6_contfreq=0.4" 
+    # main_dir = "2026-08-18/compare_different_inits_erlang_numsubcomps=6_contfreq=0.4"
+    main_dir = "2026-08-18/compare_different_inits_exp"
 
     relevant_dir = os.path.join(root_dir, main_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
@@ -449,17 +455,21 @@ if __name__ == "__main__":
 
         plot_compartments(
             [os.path.join(result_dir, f"groundtruth_{base}"),
-             os.path.join(result_dir, f"detailed_{base}_gregoryorder={gregory_order}"),
-             os.path.join(result_dir, f"detailed_short_{base}_gregoryorder={gregory_order}"),
+             os.path.join(
+                 result_dir, f"detailed_{base}_gregoryorder={gregory_order}"),
+             os.path.join(
+                 result_dir, f"detailed_short_{base}_gregoryorder={gregory_order}"),
              os.path.join(result_dir, f"simple_{base}_gregoryorder={gregory_order}")],
             fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir)
 
         plot_compartments(
-                    [os.path.join(result_dir, f"groundtruth_{base}"),
-                     os.path.join(result_dir, f"detailed_{base}_gregoryorder={gregory_order}"),
-                     os.path.join(result_dir, f"detailed_short_{base}_gregoryorder={gregory_order}"),
-                     os.path.join(result_dir, f"simple_{base}_gregoryorder={gregory_order}")],
-                    fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir, zoom=True)
+            [os.path.join(result_dir, f"groundtruth_{base}"),
+             os.path.join(
+                result_dir, f"detailed_{base}_gregoryorder={gregory_order}"),
+             os.path.join(
+                result_dir, f"detailed_short_{base}_gregoryorder={gregory_order}"),
+             os.path.join(result_dir, f"simple_{base}_gregoryorder={gregory_order}")],
+            fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir, zoom=True)
 
         # plot_flow_S_to_I(
         #     [os.path.join(result_dir, f"detailed_flows_{base}"),
@@ -477,15 +487,17 @@ if __name__ == "__main__":
 
         plot_init_conditions(
             [
-             os.path.join(result_dir, f"detailed_flows_{base}_gregoryorder={gregory_order}"),
-             os.path.join(result_dir, f"detailed_short_flows_{base}_gregoryorder={gregory_order}"),
-             os.path.join(result_dir, f"simple_flows_{base}_gregoryorder={gregory_order}")], 
+                os.path.join(
+                    result_dir, f"detailed_flows_{base}_gregoryorder={gregory_order}"),
+                os.path.join(
+                    result_dir, f"detailed_short_flows_{base}_gregoryorder={gregory_order}"),
+                os.path.join(result_dir, f"simple_flows_{base}_gregoryorder={gregory_order}")],
             [
-             os.path.join(
-                 result_dir, f"detailed_infectionagedistribution_{base}_gregoryorder={gregory_order}"),
-             os.path.join(
-                 result_dir, f"detailed_short_infectionagedistribution_{base}_gregoryorder={gregory_order}"),
-             os.path.join(result_dir, f"simple_infectionagedistribution_{base}_gregoryorder={gregory_order}")],
+                os.path.join(
+                    result_dir, f"detailed_infectionagedistribution_{base}_gregoryorder={gregory_order}"),
+                os.path.join(
+                    result_dir, f"detailed_short_infectionagedistribution_{base}_gregoryorder={gregory_order}"),
+                os.path.join(result_dir, f"simple_infectionagedistribution_{base}_gregoryorder={gregory_order}")],
             fileending=f"dt=1e-{ide_exponent}",
             save_dir=plot_dir,
         )

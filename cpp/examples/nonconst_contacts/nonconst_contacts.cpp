@@ -225,7 +225,7 @@ mio::IOResult<void> simulate_ide(ScalarType ide_exponent, ScalarType ode_exponen
 
     // Carry out simulation.
     mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide, div_dt_ide);
-    sim.advance(tmax, kahan, true, 0., fd_order_contacts, damping_time, smoother_window, smoothstep_order);
+    sim.advance(tmax, kahan, true, 10., fd_order_contacts, damping_time, smoother_window, smoothstep_order);
 
     if (!save_dir.empty()) {
         // Save compartments.
@@ -261,12 +261,12 @@ int main()
 
     std::vector<size_t> gregory_orders = {1, 2, 3};
 
-    size_t smoothstep_order    = 4; // possible values: 0, 1, 3 or 4; smoothstep_order=0 leads to smoother_cosine
+    size_t smoothstep_order    = 0; // possible values: 0, 1, 3 or 4; smoothstep_order=0 leads to smoother_cosine
     ScalarType smoother_window = 2.;
 
     // Compute groundtruth with ODE model.
     ScalarType ode_exponent               = 6.;
-    std::vector<ScalarType> ide_exponents = {3.};
+    std::vector<ScalarType> ide_exponents = {0., 1., 2., 3.};
 
     bool kahan = false;
 
@@ -280,7 +280,7 @@ int main()
         size_t fd_order_contacts = 1000;
 
         std::string save_dir =
-            fmt::format("./simulation_results/2026-08-20/"
+            fmt::format("./simulation_results/2026-08-21/"
                         "phi_deriv_analytical_smoothstepc{}_fd_order={}_smootherwindow={}_t0ode={}_kahan={}/"
                         "nonconst_contacts_t0ide={}_tmax={}_dampingtime={}_damping={}/",
                         smoothstep_order, finite_difference_order, smoother_window, t0_ode, kahan, t0_ide, tmax,
