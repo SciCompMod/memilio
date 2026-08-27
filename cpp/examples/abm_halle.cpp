@@ -670,8 +670,8 @@ int main()
 
     std::string path_hosp = "/localdata2/wulf_ka/memilio/cpp/examples/df_hosp.csv";
 
-    // std::string path = "/localdata2/wulf_ka/memilio/cpp/examples/df_abm.csv";
-    std::string path = "/localdata2/wulf_ka/memilio/cpp/examples/df_abm_short.csv";
+    std::string path = "/localdata2/wulf_ka/memilio/cpp/examples/df_abm.csv";
+    // std::string path = "/localdata2/wulf_ka/memilio/cpp/examples/df_abm_short.csv";
     // std::string path = "/home/wulf_ka/home/abm/memilio/cpp/examples/df_abm_is_my_code_even_running.csv";
 
     size_t max_work_size = 40;
