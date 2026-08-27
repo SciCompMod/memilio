@@ -35,7 +35,7 @@ int main()
     const auto age_group_5_to_14  = mio::AgeGroup(1);
     const auto age_group_15_to_34 = mio::AgeGroup(2);
     const auto age_group_35_to_59 = mio::AgeGroup(3);
-
+    
     // Create the model with 4 age groups.
     auto model = mio::abm::Model(num_age_groups);
     // Set same infection parameter for all age groups. For example, the incubation period is log normally distributed with parameters 4 and 1.

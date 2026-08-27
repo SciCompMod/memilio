@@ -34,10 +34,7 @@
 #include <cstdint>
 
 #include "memilio/timer/auto_timer.h"
-#include "memilio/timer/table_printer.h"
 #include "memilio/timer/timer_registrar.h"
-
-
 
 namespace mio
 {
@@ -86,23 +83,27 @@ PersonId Model::add_person(Person&& person)
 }
 
 void Model::evolve(TimePoint t, TimeSpan dt)
-{
+{   
     using mio::timing::AutoTimer;
     using mio::timing::TimerRegistrar;
-{
-    AutoTimer<"model","begin_step"> timer_begin_step;
+    {
+    AutoTimer<"begin_step"> timer_begin_setp;
     begin_step(t, dt);
-}   
+    }
+    {
     log_info("ABM Model interaction.");
-{
-    AutoTimer<"model","interaction"> timer_interaction;
+    }
+    {
+    AutoTimer<"interaction"> timer_interaction;
     interaction(t, dt);
-}    
+    }
+    {
     log_info("ABM Model mobility.");
-{    
-    AutoTimer<"model","perform_mobility"> timer_perform_mobility;
+    }
+    {
+    AutoTimer<"perform_mobility"> timer_perform_mobility;
     perform_mobility(t, dt);
-}    
+    }
 }
 
 void Model::interaction(TimePoint t, TimeSpan dt)
