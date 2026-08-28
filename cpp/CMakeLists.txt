@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED "20")
 option(MEMILIO_BUILD_TESTS "Build memilio unit tests." ON)
 option(MEMILIO_BUILD_EXAMPLES "Build memilio examples." ON)
 option(MEMILIO_BUILD_MODELS "Build memilio models." ON)
+option(MEMILIO_BUILD_SIMULATIONS "Build memilio simulations." ON)
 option(MEMILIO_BUILD_BENCHMARKS "Build memilio benchmarks with google benchmark." OFF)
 option(MEMILIO_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
 option(MEMILIO_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
@@ -215,6 +216,10 @@ endif()
 
 if(MEMILIO_BUILD_EXAMPLES)
     add_subdirectory(examples)
+endif()
+
+if(MEMILIO_BUILD_SIMULATIONS)
+    add_subdirectory(simulations/abm_halle_pais)
 endif()
 
 if(MEMILIO_BUILD_TESTS)
