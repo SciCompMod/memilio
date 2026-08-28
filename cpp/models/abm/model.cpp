@@ -97,6 +97,9 @@ void Model::interaction(TimePoint t, TimeSpan dt)
             assert(m_persons[person_index].get_location_model_id() == m_id &&
                    "Person is not in this model but still active.");
             interact(m_persons[person_index], t, dt);
+            // Advance the post-acute infection syndrome, which evolves independently of the acute infection.
+            auto personal_rng = PersonalRandomNumberGenerator(m_rng, m_persons[person_index]);
+            m_persons[person_index].update_pais(parameters, personal_rng, t, dt);
         }
     }
 }

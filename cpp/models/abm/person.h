@@ -127,6 +127,23 @@ public:
     bool has_active_pais(TimePoint t) const;
 
     /**
+     * @brief Returns the PAISState of the Person at the TimePoint, or PAISState::Count if it has no PAIS.
+     * @param[in] t TimePoint of querry. Usually the current time of the Simulation.
+     * @return The PAISState at the TimePoint.
+     */
+    PAISState get_pais_state(TimePoint t) const;
+
+    /**
+     * @brief Advance the PAIS of the Person by one time step.
+     * Does nothing for Person%s whose PAIS has not started (yet).
+     * @param[in] params The Parameters of the Simulation.
+     * @param[in] rng PersonalRandomNumberGenerator.
+     * @param[in] t TimePoint of querry. Usually the current time of the Simulation.
+     * @param[in] dt The time step size of the Simulation.
+     */
+    void update_pais(const Parameters& params, PersonalRandomNumberGenerator& rng, TimePoint t, TimeSpan dt);
+
+    /**
      * @brief Get the InfectionState of the Person at a specific TimePoint.
      * @param[in] t TimePoint of querry. Usually the current time of the Simulation.
      * @return The InfectionState of the latest Infection at time t.

@@ -84,6 +84,16 @@ bool Person::has_active_pais(TimePoint t) const
     return true;
 }
 
+PAISState Person::get_pais_state(TimePoint t) const
+{
+    return m_pais.get_severity(t);
+}
+
+void Person::update_pais(const Parameters& params, PersonalRandomNumberGenerator& rng, TimePoint t, TimeSpan dt)
+{
+    m_pais.update_severity(params, rng, t, dt);
+}
+
 InfectionState Person::get_infection_state(TimePoint t) const
 {
     if (m_infections.empty()) {

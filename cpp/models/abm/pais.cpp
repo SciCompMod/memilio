@@ -29,17 +29,23 @@ namespace abm
 
 void PAIS::update_severity(const Parameters& params, PersonalRandomNumberGenerator& rng, TimePoint t, TimeSpan dt)
 {
-    if (severity.empty() || t > severity.back().first) {
-        return; // only update if the last update was before t
+    if (severity.empty() || t <= severity.back().first) {
+        return; // only update if PAIS has already started and the last update was before t
     }
-    std::pair<PAISState, ScalarType> transmission_probs[static_cast<uint32_t>(PAISState::Count)];
-
+    const auto current = severity.back().second;
+    // Collect the transition rates out of the current state. The diagonal is skipped, since staying in
+    // the current state is not an event of its own: it is the complement of all transitions happening.
+    std::pair<PAISState, ScalarType> transition_rates[static_cast<uint32_t>(PAISState::Count) - 1];
+    size_t num_transitions = 0;
     for (auto&& v : enum_members<PAISState>()) {
-        transmission_probs[static_cast<uint32_t>(v)] = {
-            v, params.get<PAISTransitionMatrix>()(static_cast<Eigen::Index>(severity.back().second),
+        if (v == current) {
+            continue;
+        }
+        transition_rates[num_transitions++] = {
+            v, params.get<PAISTransitionMatrix>()(static_cast<Eigen::Index>(current),
                                                   static_cast<Eigen::Index>(v))};
     }
-    auto severity_new = random_transition(rng, severity.back().second, dt, transmission_probs);
+    auto severity_new = random_transition(rng, current, dt, transition_rates);
     if (severity_new != severity.back().second) {
         this->severity.push_back({t, severity_new}); // only update if there is a change in severity
     }
@@ -71,10 +77,14 @@ void PAIS::init_or_refresh(const Parameters& params, Person& p, PersonalRandomNu
                     inf.get_virus_variant(), get_vaccination_class(p.get_vaccinations().size())}];
             }
 
-            auto& uniform_dist = UniformDistribution<ScalarType>::get_instance();
-            if (uniform_dist(rng) < pais_prob) {
-                TimePoint time_recovered = inf.get_infection_state_start_date(InfectionState::Recovered);
-                add_new_severity(time_recovered, highest_state);
+            // Draw only if the outcome is not already determined. PAISProbability is zero by default, so
+            // this keeps the random number stream of a model that does not use PAIS unchanged.
+            if (pais_prob > 0.0) {
+                auto& uniform_dist = UniformDistribution<ScalarType>::get_instance();
+                if (uniform_dist(rng) < pais_prob) {
+                    TimePoint time_recovered = inf.get_infection_state_start_date(InfectionState::Recovered);
+                    add_new_severity(time_recovered, highest_state);
+                }
             }
         }
     }

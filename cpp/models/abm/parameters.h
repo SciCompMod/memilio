@@ -509,15 +509,17 @@ struct PAISProtectionAtSecondInfection {
 
 /**
  * @brief Transition Matrix between PAIS states.
- * Each value give the probability that a Person with a certain PAISState transitions to another PAISState within a day.
- * The first index is the from state and the second index is the to state.
+ * Each value gives the rate (in 1/day) at which a Person with a certain PAISState transitions to another PAISState.
+ * The first index is the from state and the second index is the to state. Diagonal entries are ignored, since
+ * remaining in the current state is the complement of all outgoing transitions rather than an event of its own.
  */
 struct PAISTransitionMatrix {
     using Type = Eigen::MatrixXd;
     static Type get_default(AgeGroup /*size*/)
     {
-        return Eigen::MatrixXd::Identity(static_cast<Eigen::Index>(PAISState::Count),
-                                         static_cast<Eigen::Index>(PAISState::Count));
+        // No transitions by default, i.e. a PAIS keeps the severity it was assigned at onset.
+        return Eigen::MatrixXd::Zero(static_cast<Eigen::Index>(PAISState::Count),
+                                     static_cast<Eigen::Index>(PAISState::Count));
     }
     static std::string name()
     {
