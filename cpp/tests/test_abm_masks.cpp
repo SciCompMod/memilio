@@ -84,7 +84,7 @@ TEST_F(TestMasks, maskProtection)
     auto susc_person2 = mio::abm::Person(this->get_rng(), infection_location.get_type(), infection_location.get_id(),
                                          infection_location.get_model_id(), age_group_15_to_34);
     // Infected person interacting with susceptible persons
-    auto infected1 = make_test_person(this->get_rng(), infection_location, age_group_15_to_34,
+    auto infected1 = make_test_person(this->get_rng(), infection_location, age_group_15_to_34, mio::abm::Sex::Male,
                                       mio::abm::InfectionState::InfectedSymptoms, t, params); // infected 7 days prior
 
     // Cache precomputed results for 1-day intervals

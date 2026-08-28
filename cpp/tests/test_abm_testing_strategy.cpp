@@ -31,7 +31,7 @@ TEST_F(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
     mio::abm::Location work(mio::abm::LocationType::Work, 0, num_age_groups);
     auto person =
-        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms);
+        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedSymptoms);
 
     mio::abm::TimePoint t{0};
     // Initialize testing criteria with no age group or infection state set.
@@ -102,10 +102,10 @@ TEST_F(TestTestingScheme, runScheme)
     mio::abm::Location loc_work(mio::abm::LocationType::Work, 0, num_age_groups);
     // Since tests are performed before start_date, the InfectionState of all the Person have to take into account the test's required_time
     auto person1 =
-        make_test_person(this->get_rng(), loc_home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms,
+        make_test_person(this->get_rng(), loc_home, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedNoSymptoms,
                          start_date - test_params_pcr.required_time);
     auto rng_person1 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person1);
-    auto person2 = make_test_person(this->get_rng(), loc_home, age_group_15_to_34, mio::abm::InfectionState::Recovered,
+    auto person2 = make_test_person(this->get_rng(), loc_home, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::Recovered,
                                     start_date - test_params_pcr.required_time);
     auto rng_person2 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person2);
 
@@ -151,10 +151,10 @@ TEST_F(TestTestingScheme, initAndRunTestingStrategy)
     mio::abm::Location loc_work(mio::abm::LocationType::Work, 0);
     // Since tests are performed before start_date, the InfectionState of all the Person have to take into account the test's required_time
     auto person1 =
-        make_test_person(this->get_rng(), loc_work, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms,
+        make_test_person(this->get_rng(), loc_work, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedNoSymptoms,
                          start_date - test_params_pcr.required_time);
     auto rng_person1 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person1);
-    auto person2 = make_test_person(this->get_rng(), loc_work, age_group_15_to_34, mio::abm::InfectionState::Recovered,
+    auto person2 = make_test_person(this->get_rng(), loc_work, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::Recovered,
                                     start_date - test_params_pcr.required_time);
     auto rng_person2 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person2);
 
@@ -191,13 +191,13 @@ TEST_F(TestTestingCriteria, testingCriteriaEdgeCases)
 
     // Test with various infection states
     auto person_exposed =
-        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::InfectionState::Exposed);
+        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::Exposed);
     auto person_symptoms =
-        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms);
+        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedSymptoms);
     auto person_no_symptoms =
-        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
+        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedNoSymptoms);
     auto person_recovered =
-        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::InfectionState::Recovered);
+        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::Recovered);
 
     mio::abm::TimePoint t{0};
 
@@ -218,13 +218,13 @@ TEST_F(TestTestingCriteria, testingCriteriaEdgeCases)
 
     // Create persons with different age groups
     auto person_young =
-        make_test_person(this->get_rng(), home, age_group_5_to_14, mio::abm::InfectionState::Susceptible);
+        make_test_person(this->get_rng(), home, age_group_5_to_14, mio::abm::Sex::Male, mio::abm::InfectionState::Susceptible);
     auto person_adult =
-        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::InfectionState::Susceptible);
+        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::Susceptible);
     auto person_older =
-        make_test_person(this->get_rng(), home, age_group_35_to_59, mio::abm::InfectionState::Susceptible);
+        make_test_person(this->get_rng(), home, age_group_35_to_59, mio::abm::Sex::Male, mio::abm::InfectionState::Susceptible);
     auto person_senior =
-        make_test_person(this->get_rng(), home, age_group_60_to_79, mio::abm::InfectionState::Susceptible);
+        make_test_person(this->get_rng(), home, age_group_60_to_79, mio::abm::Sex::Male, mio::abm::InfectionState::Susceptible);
 
     // Should match only specified age groups
     EXPECT_EQ(testing_criteria_age.evaluate(person_young, t), false);
@@ -237,11 +237,11 @@ TEST_F(TestTestingCriteria, testingCriteriaEdgeCases)
 
     // Should match only when both criteria are met
     auto person_adult_infected =
-        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms);
+        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedSymptoms);
     auto person_young_infected =
-        make_test_person(this->get_rng(), home, age_group_5_to_14, mio::abm::InfectionState::InfectedSymptoms);
+        make_test_person(this->get_rng(), home, age_group_5_to_14, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedSymptoms);
     auto person_adult_recovered =
-        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::InfectionState::Recovered);
+        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::Recovered);
 
     EXPECT_EQ(testing_criteria_both.evaluate(person_adult_infected, t), true);
     EXPECT_EQ(testing_criteria_both.evaluate(person_young_infected, t), false);
@@ -289,7 +289,7 @@ TEST_F(TestTestingScheme, testingSchemeResultCaching)
 
     // Create test person and location
     mio::abm::Location loc_home(mio::abm::LocationType::Home, 0, num_age_groups);
-    auto person = make_test_person(this->get_rng(), loc_home, age_group_15_to_34,
+    auto person = make_test_person(this->get_rng(), loc_home, age_group_15_to_34, mio::abm::Sex::Male,
                                    mio::abm::InfectionState::InfectedNoSymptoms, start_date);
     auto rng    = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person);
 
@@ -342,12 +342,12 @@ TEST_F(TestTestingScheme, differentTestTypes)
     // Create test persons with different infection states
     mio::abm::Location loc_home(mio::abm::LocationType::Home, 0, num_age_groups);
     auto person_infected =
-        make_test_person(this->get_rng(), loc_home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms,
+        make_test_person(this->get_rng(), loc_home, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedNoSymptoms,
                          start_date - test_params_pcr.required_time);
     auto rng_infected = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person_infected);
 
     auto person_healthy =
-        make_test_person(this->get_rng(), loc_home, age_group_15_to_34, mio::abm::InfectionState::Susceptible,
+        make_test_person(this->get_rng(), loc_home, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::Susceptible,
                          start_date - test_params_pcr.required_time);
     auto rng_healthy = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person_healthy);
 
@@ -434,9 +434,9 @@ TEST_F(TestTestingScheme, multipleSchemesCombination)
     mio::abm::Location loc_shop(mio::abm::LocationType::BasicsShop, 3, num_age_groups);
 
     // Create persons of different age groups
-    auto child = make_test_person(this->get_rng(), loc_home, age_group_5_to_14, mio::abm::InfectionState::Susceptible,
+    auto child = make_test_person(this->get_rng(), loc_home, age_group_5_to_14, mio::abm::Sex::Male, mio::abm::InfectionState::Susceptible,
                                   start_date);
-    auto adult = make_test_person(this->get_rng(), loc_home, age_group_35_to_59, mio::abm::InfectionState::Susceptible,
+    auto adult = make_test_person(this->get_rng(), loc_home, age_group_35_to_59, mio::abm::Sex::Male, mio::abm::InfectionState::Susceptible,
                                   start_date);
 
     auto rng_child = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), child);
@@ -494,7 +494,7 @@ TEST_F(TestTestingScheme, locationSpecificSchemes)
 
     // Create a test person
     auto person =
-        make_test_person(this->get_rng(), shop1, age_group_15_to_34, mio::abm::InfectionState::Susceptible, start_date);
+        make_test_person(this->get_rng(), shop1, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::Susceptible, start_date);
     auto rng = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person);
 
     // Mock uniform distribution to control test results
@@ -540,7 +540,7 @@ TEST_F(TestTestingScheme, testCompliance)
 
     // Create a test person
     auto person =
-        make_test_person(this->get_rng(), shop1, age_group_15_to_34, mio::abm::InfectionState::Susceptible, start_date);
+        make_test_person(this->get_rng(), shop1, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::Susceptible, start_date);
     auto rng = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person);
     person.set_compliance(mio::abm::InterventionType::Testing, 0.1); // Set compliance for testing
 

@@ -102,11 +102,11 @@ TEST_F(TestLocation, interact)
     // Setup location with some chance of exposure
     mio::abm::Location location(mio::abm::LocationType::Work, 0, num_age_groups);
     location.get_infection_parameters().get<mio::abm::UseLocationCapacityForTransmissions>() = true;
-    auto infected1 = make_test_person(this->get_rng(), location, age_group_15_to_34,
+    auto infected1 = make_test_person(this->get_rng(), location, age_group_15_to_34, mio::abm::Sex::Male,
                                       mio::abm::InfectionState::InfectedNoSymptoms, t, params);
-    auto infected2 = make_test_person(this->get_rng(), location, age_group_80_plus,
+    auto infected2 = make_test_person(this->get_rng(), location, age_group_80_plus, mio::abm::Sex::Male,
                                       mio::abm::InfectionState::InfectedSymptoms, t, params);
-    auto infected3 = make_test_person(this->get_rng(), location, age_group_5_to_14,
+    auto infected3 = make_test_person(this->get_rng(), location, age_group_5_to_14, mio::abm::Sex::Male,
                                       mio::abm::InfectionState::InfectedSymptoms, t, params);
     std::vector<mio::abm::Person> local_population{infected1, infected2, infected3};
 
@@ -116,7 +116,7 @@ TEST_F(TestLocation, interact)
 
     // Create a susceptible person and test interaction.
     auto susceptible =
-        make_test_person(this->get_rng(), location, age, mio::abm::InfectionState::Susceptible, t, params);
+        make_test_person(this->get_rng(), location, age, mio::abm::Sex::Male, mio::abm::InfectionState::Susceptible, t, params);
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.5)); // Probability of no infection
     auto person_rng = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), susceptible);
     interact_testing(person_rng, susceptible, location, local_population, t, dt, params);

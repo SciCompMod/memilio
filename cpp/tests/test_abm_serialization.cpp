@@ -209,6 +209,8 @@ TEST(TestAbmSerialization, Person)
     reference_json["rnd_schoolgroup"]                    = Json::Value((double)i++);
     reference_json["rnd_workgroup"]                      = Json::Value((double)i++);
     reference_json["rng_counter"]                        = Json::UInt(i++);
+    // Sex is an enum, so it has to stay a valid value rather than follow the counter.
+    reference_json["sex"]                                = Json::UInt(0);
     reference_json["test_results"] =
         mio::serialize_json(mio::CustomIndexArray<mio::abm::TestResult, mio::abm::TestType>{}).value();
     reference_json["time_at_location"]["seconds"] = Json::Int(i++);

@@ -161,12 +161,12 @@ TEST_F(TestModel, getSubpopulationCombined)
     auto home1   = model.add_location(mio::abm::LocationType::Home);
 
     // Add persons to these locations with various infection states.
-    add_test_person(model, school1, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
-    add_test_person(model, school1, age_group_15_to_34, mio::abm::InfectionState::Susceptible);
-    add_test_person(model, school2, age_group_15_to_34, mio::abm::InfectionState::Susceptible);
-    add_test_person(model, school2, age_group_15_to_34, mio::abm::InfectionState::Susceptible);
-    add_test_person(model, school3, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
-    add_test_person(model, home1, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
+    add_test_person(model, school1, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedNoSymptoms);
+    add_test_person(model, school1, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::Susceptible);
+    add_test_person(model, school2, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::Susceptible);
+    add_test_person(model, school2, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::Susceptible);
+    add_test_person(model, school3, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedNoSymptoms);
+    add_test_person(model, home1, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedNoSymptoms);
 
     // Verify the count of susceptible persons across all School locations.
     EXPECT_EQ(model.get_subpopulation_combined_per_location_type(t, mio::abm::InfectionState::Susceptible,
@@ -251,9 +251,9 @@ TEST_F(TestModel, evolveStateTransition)
     // Add locations and persons to the model with different initial infection states.
     auto location1 = model.add_location(mio::abm::LocationType::School);
     auto location2 = model.add_location(mio::abm::LocationType::Work);
-    add_test_person(model, location1, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
-    add_test_person(model, location1, age_group_15_to_34, mio::abm::InfectionState::Susceptible);
-    add_test_person(model, location2, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms);
+    add_test_person(model, location1, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedNoSymptoms);
+    add_test_person(model, location1, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::Susceptible);
+    add_test_person(model, location2, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedSymptoms);
 
     auto& p1 = model.get_persons()[0];
     auto& p2 = model.get_persons()[1];
@@ -312,8 +312,8 @@ TEST_F(TestModel, evolveMobilityRules)
         .WillOnce(testing::Return(0.8)) // draw random school hour
         .WillRepeatedly(testing::Return(1.0));
 
-    auto pid2 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible, t);
-    auto pid1 = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+    auto pid2 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::Sex::Male, mio::abm::InfectionState::Susceptible, t);
+    auto pid1 = add_test_person(model, home_id, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedNoSymptoms, t);
 
     auto& p1 = model.get_person(pid1);
     auto& p2 = model.get_person(pid2);
@@ -558,9 +558,9 @@ TEST_F(TestModel, checkMobilityOfDeadPerson)
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).WillRepeatedly(testing::Return(1.0));
 
     // Create a person that is dead at time t
-    add_test_person(model, icu_id, age_group_60_to_79, mio::abm::InfectionState::Dead, t);
+    add_test_person(model, icu_id, age_group_60_to_79, mio::abm::Sex::Male, mio::abm::InfectionState::Dead, t);
     // Create a person that is severe at hospital and will be dead at time t + dt
-    add_test_person(model, hospital_id, age_group_60_to_79, mio::abm::InfectionState::Dead, t + dt);
+    add_test_person(model, hospital_id, age_group_60_to_79, mio::abm::Sex::Male, mio::abm::InfectionState::Dead, t + dt);
 
     auto& p_dead   = model.get_persons()[0];
     auto& p_severe = model.get_persons()[1];
@@ -615,7 +615,7 @@ TEST_F(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     auto test_time = mio::abm::minutes(30);
     // Add a person to the model with an infection state that requires testing.
     // Since tests are performed before current_time, the InfectionState of the Person has to take into account test_time
-    auto pid        = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms,
+    auto pid        = add_test_person(model, home_id, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedSymptoms,
                                       current_time - test_time);
     auto& person    = model.get_person(pid);
     auto rng_person = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
@@ -855,14 +855,14 @@ TEST_F(TestModel, mobilityRulesWithAppliedNPIs)
 
     // Since tests are performed before t, the InfectionState of all the Person have to take into account test_time
     auto p_id_compliant_go_to_work =
-        add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::Susceptible, t - test_time);
+        add_test_person(model, home_id, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::Susceptible, t - test_time);
     auto p_id_compliant_go_to_school =
-        add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible, t - test_time);
+        add_test_person(model, home_id, age_group_5_to_14, mio::abm::Sex::Male, mio::abm::InfectionState::Susceptible, t - test_time);
     auto p_id_no_mask =
-        add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::Susceptible, t - test_time);
-    auto p_id_no_test      = add_test_person(model, home_id, age_group_15_to_34,
+        add_test_person(model, home_id, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::Susceptible, t - test_time);
+    auto p_id_no_test      = add_test_person(model, home_id, age_group_15_to_34, mio::abm::Sex::Male,
                                              mio::abm::InfectionState::InfectedNoSymptoms, t - test_time);
-    auto p_id_no_isolation = add_test_person(model, home_id, age_group_15_to_34,
+    auto p_id_no_isolation = add_test_person(model, home_id, age_group_15_to_34, mio::abm::Sex::Male,
                                              mio::abm::InfectionState::InfectedNoSymptoms, t - test_time);
 
     auto& p_compliant_go_to_work   = model.get_person(p_id_compliant_go_to_work);
@@ -971,14 +971,14 @@ TEST_F(TestModel, mobilityTripWithAppliedNPIs)
 
     // Since tests are performed before t, the InfectionState of all the Person have to take into account test_time
     auto p_id_compliant_go_to_work =
-        add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::Susceptible, t - test_time);
+        add_test_person(model, home_id, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::Susceptible, t - test_time);
     auto p_id_compliant_go_to_school =
-        add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible, t - test_time);
+        add_test_person(model, home_id, age_group_5_to_14, mio::abm::Sex::Male, mio::abm::InfectionState::Susceptible, t - test_time);
     auto p_id_no_mask =
-        add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::Susceptible, t - test_time);
-    auto p_id_no_test      = add_test_person(model, home_id, age_group_15_to_34,
+        add_test_person(model, home_id, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::Susceptible, t - test_time);
+    auto p_id_no_test      = add_test_person(model, home_id, age_group_15_to_34, mio::abm::Sex::Male,
                                              mio::abm::InfectionState::InfectedNoSymptoms, t - test_time);
-    auto p_id_no_isolation = add_test_person(model, home_id, age_group_15_to_34,
+    auto p_id_no_isolation = add_test_person(model, home_id, age_group_15_to_34, mio::abm::Sex::Male,
                                              mio::abm::InfectionState::InfectedNoSymptoms, t - test_time);
 
     auto& p_compliant_go_to_work   = model.get_person(p_id_compliant_go_to_work);
@@ -1090,7 +1090,7 @@ TEST_F(TestModel, personCanDieInHospital)
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).WillRepeatedly(testing::Return(0.09));
 
     // Create a person that has InfectedSymptoms at time t - dt. The person is dead at time t + dt
-    add_test_person(model, home_id, age_group_60_to_79, mio::abm::InfectionState::Dead, t + dt);
+    add_test_person(model, home_id, age_group_60_to_79, mio::abm::Sex::Male, mio::abm::InfectionState::Dead, t + dt);
 
     auto& p_severe = model.get_persons()[0];
     p_severe.set_assigned_location(mio::abm::LocationType::Hospital, hospital_id, model.get_id());

@@ -82,9 +82,9 @@ TEST(TestSimulation, advanceWithCommonHistory)
     auto basics_id   = model.add_location(mio::abm::LocationType::BasicsShop);
     auto public_id   = model.add_location(mio::abm::LocationType::PublicTransport);
 
-    auto person1 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::Exposed);
-    auto person2 = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::Exposed);
-    auto person3 = add_test_person(model, home_id, age_group_35_to_59, mio::abm::InfectionState::Dead);
+    auto person1 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::Sex::Male, mio::abm::InfectionState::Exposed);
+    auto person2 = add_test_person(model, home_id, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::Exposed);
+    auto person3 = add_test_person(model, home_id, age_group_35_to_59, mio::abm::Sex::Male, mio::abm::InfectionState::Dead);
 
     model.assign_location(person1, home_id);
     model.assign_location(person2, home_id);

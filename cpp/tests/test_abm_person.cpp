@@ -61,7 +61,7 @@ TEST_F(TestPerson, change_location)
     mio::abm::Location loc1(mio::abm::LocationType::PublicTransport, 1, 6, 0, 1);
     mio::abm::Location loc2(mio::abm::LocationType::School, 2, num_age_groups);
     mio::abm::Location loc3(mio::abm::LocationType::PublicTransport, 3, 6, 0, 2);
-    auto person = make_test_person(this->get_rng(), home, age_group_0_to_4, mio::abm::InfectionState::Recovered);
+    auto person = make_test_person(this->get_rng(), home, age_group_0_to_4, mio::abm::Sex::Male, mio::abm::InfectionState::Recovered);
 
     // Check that a person does not change location to its current location
     person.add_time_at_location(mio::abm::hours(1));
@@ -160,7 +160,7 @@ TEST_F(TestPerson, quarantine)
     infection_parameters.get<mio::abm::AgeGroupGotoSchool>().set_multiple({age_group_5_to_14}, true);
     infection_parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
 
-    auto person     = make_test_person(this->get_rng(), home, age_group_35_to_59,
+    auto person     = make_test_person(this->get_rng(), home, age_group_35_to_59, mio::abm::Sex::Male,
                                        mio::abm::InfectionState::InfectedSymptoms, t_morning, infection_parameters);
     auto rng_person = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person);
 
@@ -188,7 +188,7 @@ TEST_F(TestPerson, get_tested)
     mio::abm::TimePoint t(0);
     mio::abm::Location loc(mio::abm::LocationType::Home, 0, num_age_groups);
     auto infected =
-        make_test_person(this->get_rng(), loc, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms);
+        make_test_person(this->get_rng(), loc, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedSymptoms);
     auto rng_infected = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), infected);
     auto susceptible =
         mio::abm::Person(this->get_rng(), loc.get_type(), loc.get_id(), loc.get_model_id(), age_group_15_to_34);
@@ -254,7 +254,7 @@ TEST_F(TestPerson, getCells)
     mio::abm::Location location(mio::abm::LocationType::PublicTransport, 1, 6, 0, 7);
     // Create a test person at the home location.
     auto person =
-        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
+        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedNoSymptoms);
 
     // Move the person to a new location with specified cells (3, 5).
     EXPECT_TRUE(mio::abm::change_location(person, location, mio::abm::TransportMode::Unknown, {3, 5}));
@@ -363,7 +363,8 @@ TEST_F(TestPerson, getLatestProtection)
  */
 TEST_F(TestPerson, rng)
 {
-    auto p = mio::abm::Person(this->get_rng(), mio::abm::LocationType::Home, 0, 0, age_group_35_to_59, 13);
+    auto p = mio::abm::Person(this->get_rng(), mio::abm::LocationType::Home, 0, 0, age_group_35_to_59,
+                              mio::abm::Sex::Male, mio::abm::PersonId(13));
 
     EXPECT_EQ(p.get_rng_counter(), mio::Counter<uint32_t>(0));
 

@@ -456,7 +456,7 @@ TEST_F(TestMobilityRules, quarantine)
     mio::abm::Location hospital(mio::abm::LocationType::Hospital, 0, num_age_groups);
 
     auto p_inf1 =
-        make_test_person(this->get_rng(), work, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms, t);
+        make_test_person(this->get_rng(), work, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedSymptoms, t);
     auto rng_inf1 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_inf1);
     p_inf1.get_tested(rng_inf1, t, test_params);
     // Check detected infected person quarantines at home
@@ -464,14 +464,14 @@ TEST_F(TestMobilityRules, quarantine)
               mio::abm::LocationType::Home);
 
     auto p_inf2 =
-        make_test_person(this->get_rng(), work, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms, t);
+        make_test_person(this->get_rng(), work, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedSymptoms, t);
     auto rng_inf2 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_inf2);
     // Check that undetected infected person does not quaratine
     EXPECT_EQ(mio::abm::go_to_quarantine(rng_inf2, p_inf2, t, dt, mio::abm::Parameters(num_age_groups)),
               mio::abm::LocationType::Work);
 
     auto p_inf3 =
-        make_test_person(this->get_rng(), hospital, age_group_15_to_34, mio::abm::InfectionState::InfectedSevere, t);
+        make_test_person(this->get_rng(), hospital, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedSevere, t);
     auto rng_inf3 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_inf3);
     p_inf1.get_tested(rng_inf3, t, test_params);
     // Check that detected infected person does not leave hospital to quarantine
@@ -488,7 +488,7 @@ TEST_F(TestMobilityRules, hospital)
     auto t  = mio::abm::TimePoint(12346);
     auto dt = mio::abm::hours(1);
     auto p_inf =
-        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::InfectionState::InfectedSevere, t);
+        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedSevere, t);
     auto rng_inf = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_inf);
 
     // Ensure person goes to the hospital when severely infected
@@ -496,7 +496,7 @@ TEST_F(TestMobilityRules, hospital)
               mio::abm::LocationType::Hospital);
 
     auto p_car =
-        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms);
+        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedSymptoms);
     auto rng_car = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_car);
     // Ensure person has infection symptoms still stay at home
     EXPECT_EQ(mio::abm::go_to_hospital(rng_car, p_car, t, dt, mio::abm::Parameters(num_age_groups)),
@@ -517,7 +517,7 @@ TEST_F(TestMobilityRules, go_shopping)
     auto dt        = mio::abm::hours(1);
 
     // Create an infected child in the hospital
-    auto p_hosp   = make_test_person(this->get_rng(), hospital, age_group_0_to_4,
+    auto p_hosp   = make_test_person(this->get_rng(), hospital, age_group_0_to_4, mio::abm::Sex::Male,
                                      mio::abm::InfectionState::InfectedSymptoms, t_weekday);
     auto rng_hosp = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_hosp);
     // Create a healthy elderly person at home
@@ -556,7 +556,7 @@ TEST_F(TestMobilityRules, shop_return)
     // Create a person at a basic shop who is asymptomatically infected
     mio::abm::Location shop(mio::abm::LocationType::BasicsShop, 0, num_age_groups);
     auto p =
-        make_test_person(this->get_rng(), shop, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+        make_test_person(this->get_rng(), shop, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedNoSymptoms, t);
     auto rng_p = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p);
     // Simulate the person spending 1 hour at the shop
     p.add_time_at_location(dt);
@@ -636,7 +636,7 @@ TEST_F(TestMobilityRules, icu)
     auto t  = mio::abm::TimePoint(12346);
     auto dt = mio::abm::hours(1);
     auto p_hosp =
-        make_test_person(this->get_rng(), hospital, age_group_15_to_34, mio::abm::InfectionState::InfectedCritical, t);
+        make_test_person(this->get_rng(), hospital, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedCritical, t);
     auto rng_hosp = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_hosp);
 
     // Ensure critically infected person goes to the ICU
@@ -645,7 +645,7 @@ TEST_F(TestMobilityRules, icu)
 
     mio::abm::Location work(mio::abm::LocationType::Work, 1, num_age_groups);
     auto p_work =
-        make_test_person(this->get_rng(), work, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms, t);
+        make_test_person(this->get_rng(), work, age_group_15_to_34, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedSymptoms, t);
     auto rng_work = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_work);
     // Ensure infected with symptions person can still go to work
     EXPECT_EQ(mio::abm::go_to_icu(rng_work, p_work, t, dt, mio::abm::Parameters(num_age_groups)),
@@ -661,10 +661,10 @@ TEST_F(TestMobilityRules, recover)
     auto t  = mio::abm::TimePoint(12346);
     auto dt = mio::abm::hours(1);
     auto p_rec =
-        make_test_person(this->get_rng(), hospital, age_group_60_to_79, mio::abm::InfectionState::Recovered, t);
+        make_test_person(this->get_rng(), hospital, age_group_60_to_79, mio::abm::Sex::Male, mio::abm::InfectionState::Recovered, t);
     auto rng_rec = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_rec);
     auto p_inf =
-        make_test_person(this->get_rng(), hospital, age_group_60_to_79, mio::abm::InfectionState::InfectedSevere, t);
+        make_test_person(this->get_rng(), hospital, age_group_60_to_79, mio::abm::Sex::Male, mio::abm::InfectionState::InfectedSevere, t);
     auto rng_inf = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_inf);
     // Ensure recovered person returns home and infected severe person stay in hospital
     EXPECT_EQ(mio::abm::return_home_when_recovered(rng_rec, p_rec, t, dt, {num_age_groups}),
@@ -681,7 +681,7 @@ TEST_F(TestMobilityRules, dead)
     mio::abm::Location icu(mio::abm::LocationType::ICU, 0);
     auto t      = mio::abm::TimePoint(12346);
     auto dt     = mio::abm::hours(1);
-    auto p_dead = make_test_person(this->get_rng(), icu, age_group_60_to_79, mio::abm::InfectionState::Dead, t);
+    auto p_dead = make_test_person(this->get_rng(), icu, age_group_60_to_79, mio::abm::Sex::Male, mio::abm::InfectionState::Dead, t);
     auto p_rng  = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_dead);
 
     EXPECT_EQ(mio::abm::get_buried(p_rng, p_dead, t, dt, {num_age_groups}), mio::abm::LocationType::Cemetery);
