@@ -109,6 +109,23 @@ TimeSeries<FP> simulate(FP t0, FP tmax, FP dt, Model const& model,
     return sim.get_result();
 }
 
+template <typename FP, class Model, class Sim = mio::Simulation<FP, Model>>
+double simulate_runtime(FP t0, FP tmax, FP dt, Model const& model,
+                        std::unique_ptr<OdeIntegratorCore<FP>>&& integrator_core = nullptr)
+{
+    model.check_constraints();
+    Sim sim(model, t0, dt);
+    if (integrator_core) {
+        sim.set_integrator_core(std::move(integrator_core));
+    }
+    double start_time = omp_get_wtime();
+    // LIKWID_MARKER_START("simulation.advance()");
+    sim.advance(tmax);
+    double end_time = omp_get_wtime();
+    // LIKWID_MARKER_STOP("simulation.advance()");
+    return end_time - start_time;
+}
+
 } // namespace mio
 
 #endif // MIO_COMPARTMENTS_SIMULATION_H
