@@ -664,21 +664,24 @@ int main()
     // ------------ Model Init ------------
     // ------------------------------------
 
-    mio::set_log_level(mio::LogLevel::info);
-    size_t num_age_groups            = 11;
+    mio::set_log_level(mio::LogLevel::warn);
+    size_t num_age_groups = 11;
     auto model  = mio::abm::Model(num_age_groups);
 
+    std::string path_hosp = "/home/wulf_ka/home/abm/memilio/cpp/examples/df_hosp.csv";
 
-    std::string path = "/home/wulf_ka/home/abm/memilio/cpp/examples/df_abm_short.csv";
+    std::string path = "/home/wulf_ka/home/abm/memilio/cpp/examples/df_abm.csv";
+    // std::string path = "/home/wulf_ka/home/abm/memilio/cpp/examples/df_abm_short.csv";
     // std::string path = "/home/wulf_ka/home/abm/memilio/cpp/examples/df_abm_is_my_code_even_running.csv";
-    std::string out  = "/home/wulf_ka/home/abm/memilio/cpp/examples/out";
+
+    size_t max_work_size = 40;
+    size_t max_school_size = 45;
     
-    initialize_model(model, path, 50,50);
-
-    for (auto& location : model.get_locations()) {
-            mio::log_info("Location {}, Type {}", location.get_id().get(), int(location.get_type()));
-        }
-
+    {
+    // init -> innit -> isnt it -> it is, is it not
+    AutoTimer<"it_is,_is_it_not?"> init_timer;
+    initialize_model(model, path, path_hosp, max_work_size, max_school_size);
+    }
     // -------------------------------------
     // ------------ Model Param ------------
     // -------------------------------------
@@ -721,7 +724,7 @@ int main()
 
     // Parameter aus dem München model
 
-    ParameterMap parameters = load_parameter_map("/localdata2/wulf_ka/memilio/cpp/examples/infection_param.csv");
+    ParameterMap parameters = load_parameter_map("/home/wulf_ka/home/abm/memilio/infection_param.csv");
     
     mio::abm::Parameters infection_params(num_age_groups);
     set_infection_parameters(infection_params, parameters, num_age_groups);
@@ -769,7 +772,7 @@ int main()
     // Run the simulation until tmax with the history object.
     {
     AutoTimer<"advance"> adv_timer_ms;
-    sim.advance(tmax, historyTimeSeries);
+    sim.advance(tmax, history);
     }
 
 
