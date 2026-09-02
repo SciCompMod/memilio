@@ -177,7 +177,9 @@ message(STATUS "Downloading Random123 library")
 include(FetchContent)
 FetchContent_Declare(Random123
     GIT_REPOSITORY https://github.com/DEShawResearch/random123
-    GIT_TAG ${MEMILIO_RANDOM123_VERSION})
+    GIT_TAG ${MEMILIO_RANDOM123_VERSION}
+    PATCH_COMMAND ${patch_random123_wasm}
+    UPDATE_DISCONNECTED 1)
 FetchContent_MakeAvailable(Random123)
 
 add_library(Random123 INTERFACE)
