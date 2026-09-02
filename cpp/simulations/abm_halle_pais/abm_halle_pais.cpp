@@ -228,13 +228,15 @@ int main(int argc, char** argv)
             .add<"population_file", std::string>(mio::path_join(mio::data_dir().string(),
                                                                 "Germany/halle_population_data.csv"),
                                                  {.description = "CSV holding the Halle population."})
+            .add<"contact_dir", std::string>(mio::path_join(mio::data_dir().string(), "Germany/contacts"),
+                                             {.description = "Directory with the German baseline contact matrices."})
             .add<"cases_file", std::string>("", {.description = "CSV holding the reported cases, for the "
                                                                 "infection history. See prepare_data.py."})
             .add<"vaccinations_file", std::string>("", {.description = "CSV holding the vaccinations, for the "
                                                                        "vaccination history. See prepare_data.py."})
             .add<"start_date", std::string>("2022-07-01", {.description = "First day of the simulation."})
             .add<"num_days">(90, {"d", "Length of the simulation in days."})
-            .add<"history_lookback_days">(365, {.description = "Length of the window before the start date that "
+            .add<"history_lookback_days">(90, {.description = "Length of the window before the start date that "
                                                                "the histories are seeded from."})
             .add<"allow_missing_history">(false, {.description = "Run without infection and vaccination history. "
                                                                   "Only for smoke tests, never for a fit."})
@@ -264,6 +266,7 @@ int main(int argc, char** argv)
 
     mio::halle::ModelSetup setup;
     setup.person_file           = parameters.get<"population_file">();
+    setup.contact_dir           = parameters.get<"contact_dir">();
     setup.cases_file            = parameters.get<"cases_file">();
     setup.vaccinations_file     = parameters.get<"vaccinations_file">();
     setup.history_lookback_days = parameters.get<"history_lookback_days">();

@@ -968,7 +968,7 @@ int main()
     const std::string infections_vaccinations_file =
         mio::path_join(mio::base_dir(), "AIMS_Halle_Data/260304_infections_vaccines_halle.csv");
     auto sim =
-        mio::abm::Simulation(t0, std::move(make_model(infections_vaccinations_file, t0, mio::thread_local_rng())));
+        mio::abm::Simulation(t0, make_model(infections_vaccinations_file, t0, mio::thread_local_rng()));
 
     // Create a history object to store the time series of the number of recovered (detected) persons and the number of vaccinations for each age group.
     mio::History<mio::abm::TimeSeriesWriter, LogRecoveredDetected> historyRecoveredDetected{

@@ -22,7 +22,8 @@
 #include "abm/infection.h"
 #include "abm/location_type.h"
 #include "abm/personal_rng.h"
-#include "abm/testing_strategy.h"
+#include "memilio/io/mobility_io.h"
+#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
 
 #include <algorithm>
@@ -51,7 +52,7 @@ std::pair<double, double> mu_and_sigma(double mean, double stddev)
 template <class Parameter>
 void set_transition_time(abm::Parameters& params, double mean, double stddev)
 {
-    const auto p             = mu_and_sigma(mean, stddev);
+    const auto p            = mu_and_sigma(mean, stddev);
     params.get<Parameter>() = ParameterDistributionLogNormal(p.first, p.second);
 }
 
@@ -152,7 +153,8 @@ IOResult<std::vector<PersonRow>> read_population_file(const std::string& filenam
         }
         const auto values = split_csv_line(line);
         if (values.size() < header.size()) {
-            return failure(StatusCode::InvalidFileFormat, "Population file " + filename + " has too few values in line " +
+            return failure(StatusCode::InvalidFileFormat, "Population file " + filename +
+                                                              " has too few values in line " +
                                                               std::to_string(line_number) + ".");
         }
         PersonRow row;
@@ -175,16 +177,15 @@ IOResult<std::vector<PersonRow>> read_population_file(const std::string& filenam
  * @brief Add the locations of the population file to the model and assign every Person to them.
  *
  * Location ids of the input data are mapped onto model locations lazily, so only locations that are
- * actually used are created. School and workplace capacities are enforced by splitting oversized
- * locations, since the input data assigns far more Person%s to a single location than can plausibly
- * meet there.
+ * actually used are created. The input topology is taken exactly as given: one model Location per id,
+ * never split. The sizes it implies are plausible as institutions (schools median 104 and at most 700
+ * Person%s, workplaces median 11 with a tail up to 4464, which is the scale of Halle's large employers),
+ * so there is nothing to correct here.
  */
-void add_persons_and_locations(abm::Model& model, const std::vector<PersonRow>& rows, const ModelSetup& setup)
+void add_persons_and_locations(abm::Model& model, const std::vector<PersonRow>& rows)
 {
-    // Location type of the input id -> model location. Schools and workplaces additionally track their
-    // current occupancy, so they can be split once they are full.
-    std::map<int, abm::LocationId> homes, events, shops;
-    std::map<int, std::pair<abm::LocationId, size_t>> schools, works;
+    // Location id of the input data -> model location, one per id.
+    std::map<int, abm::LocationId> homes, events, shops, schools, works;
 
     auto get_or_add = [&model](std::map<int, abm::LocationId>& known, int input_id, abm::LocationType type) {
         auto it = known.find(input_id);
@@ -192,17 +193,6 @@ void add_persons_and_locations(abm::Model& model, const std::vector<PersonRow>& 
             it = known.emplace(input_id, model.add_location(type)).first;
         }
         return it->second;
-    };
-    auto get_or_add_capped = [&model](std::map<int, std::pair<abm::LocationId, size_t>>& known, int input_id,
-                                      abm::LocationType type, size_t max_size) {
-        auto it = known.find(input_id);
-        if (it == known.end() || it->second.second >= max_size) {
-            auto location   = model.add_location(type);
-            known[input_id] = {location, 0};
-            it              = known.find(input_id);
-        }
-        ++it->second.second;
-        return it->second.first;
     };
 
     // The population file has no sex column, but the PAIS parameters are stratified by sex, so it is drawn
@@ -219,14 +209,86 @@ void add_persons_and_locations(abm::Model& model, const std::vector<PersonRow>& 
         model.assign_location(pid, get_or_add(events, row.event_id, abm::LocationType::SocialEvent));
         model.assign_location(pid, get_or_add(shops, row.shopping_id, abm::LocationType::BasicsShop));
         if (model.parameters.get<abm::AgeGroupGotoSchool>()[row.age]) {
-            model.assign_location(
-                pid, get_or_add_capped(schools, row.school_id, abm::LocationType::School, setup.max_school_size));
+            model.assign_location(pid, get_or_add(schools, row.school_id, abm::LocationType::School));
         }
         if (model.parameters.get<abm::AgeGroupGotoWork>()[row.age]) {
-            model.assign_location(pid,
-                                  get_or_add_capped(works, row.work_id, abm::LocationType::Work, setup.max_work_size));
+            model.assign_location(pid, get_or_add(works, row.work_id, abm::LocationType::Work));
         }
     }
+}
+
+/**
+ * @brief Set the age resolved contact rates of every Location from the German baseline contact matrices.
+ *
+ * ContactRates defaults to an all-zero baseline, so without this there is no contact transmission at all
+ * and the epidemic is driven purely by the seeded history.
+ *
+ * The matrices are read from data/Germany/contacts rather than hardcoded, which is the same source the
+ * setups on the abmXpanvadere and AIMS branches copied their tables from. Those copies both carry the
+ * same transcription error in the home matrix (0.0504 where the file has 0.4504), which reading the file
+ * avoids. The per-location factors are those of set_local_parameters_ger() on abmXpanvadere: they scale a
+ * daily contact count to the time a Person spends at that location type and to the contact intensity
+ * there.
+ *
+ * @param[in,out] model The model whose locations are given contact rates.
+ * @param[in] contact_dir Directory holding baseline_home.txt and the other baseline matrices.
+ */
+IOResult<void> set_contact_rates(abm::Model& model, const std::string& contact_dir)
+{
+    const auto size = static_cast<Eigen::Index>(num_age_groups);
+    BOOST_OUTCOME_TRY(auto&& home, read_mobility_plain(path_join(contact_dir, "baseline_home.txt")));
+    BOOST_OUTCOME_TRY(auto&& school, read_mobility_plain(path_join(contact_dir, "baseline_school_pf_aver.txt")));
+    BOOST_OUTCOME_TRY(auto&& work, read_mobility_plain(path_join(contact_dir, "baseline_work.txt")));
+    BOOST_OUTCOME_TRY(auto&& other, read_mobility_plain(path_join(contact_dir, "baseline_other.txt")));
+
+    for (const auto& [name, matrix] :
+         {std::make_pair("baseline_home.txt", &home), std::make_pair("baseline_school_pf_aver.txt", &school),
+          std::make_pair("baseline_work.txt", &work), std::make_pair("baseline_other.txt", &other)}) {
+        if (matrix->rows() != size || matrix->cols() != size) {
+            return failure(StatusCode::InvalidValue, std::string(name) + " is not a " + std::to_string(num_age_groups) +
+                                                         "x" + std::to_string(num_age_groups) + " matrix.");
+        }
+    }
+
+    auto as_contact_matrix = [](const Eigen::MatrixXd& baseline, double factor) {
+        auto matrix           = ContactMatrix<ScalarType>(baseline.rows());
+        matrix.get_baseline() = baseline * factor;
+        return matrix;
+    };
+
+    // Factors from set_local_parameters_ger(): hours spent at the location type times contact intensity.
+    const auto rates_home   = as_contact_matrix(home, 1.4 * 15.0);
+    const auto rates_school = as_contact_matrix(school, 4.8);
+    const auto rates_work   = as_contact_matrix(work, 3.0 * 0.5);
+    const auto rates_event  = as_contact_matrix(other, 1.2 * 2.0 * 6.0);
+    const auto rates_shop   = as_contact_matrix(other, 0.8 * 0.33 * 12.0);
+    // Hospital, ICU and the transport types keep one contact per age group pair per day.
+    auto rates_default           = ContactMatrix<ScalarType>(size);
+    rates_default.get_baseline() = Eigen::MatrixXd::Constant(size, size, 1.0);
+
+    for (auto& location : model.get_locations()) {
+        switch (location.get_type()) {
+        case abm::LocationType::Home:
+            location.get_infection_parameters().get<abm::ContactRates>() = rates_home;
+            break;
+        case abm::LocationType::School:
+            location.get_infection_parameters().get<abm::ContactRates>() = rates_school;
+            break;
+        case abm::LocationType::Work:
+            location.get_infection_parameters().get<abm::ContactRates>() = rates_work;
+            break;
+        case abm::LocationType::SocialEvent:
+            location.get_infection_parameters().get<abm::ContactRates>() = rates_event;
+            break;
+        case abm::LocationType::BasicsShop:
+            location.get_infection_parameters().get<abm::ContactRates>() = rates_shop;
+            break;
+        default:
+            location.get_infection_parameters().get<abm::ContactRates>() = rates_default;
+            break;
+        }
+    }
+    return success();
 }
 
 /**
@@ -237,67 +299,12 @@ void add_persons_and_locations(abm::Model& model, const std::vector<PersonRow>& 
  */
 void add_infrastructure(abm::Model& model)
 {
-    const auto hospital = model.add_location(abm::LocationType::Hospital);
-    model.get_location(hospital).get_infection_parameters().set<abm::MaximumContacts>(5);
-    const auto icu = model.add_location(abm::LocationType::ICU);
-    model.get_location(icu).get_infection_parameters().set<abm::MaximumContacts>(5);
-
-    // The population file assigns very many Person%s to a single shop or social event, so the number of
-    // contacts per Person has to be capped to keep these locations from acting as implausible hubs.
-    for (auto& location : model.get_locations()) {
-        switch (location.get_type()) {
-        case abm::LocationType::BasicsShop:
-            location.get_infection_parameters().set<abm::MaximumContacts>(20);
-            break;
-        case abm::LocationType::SocialEvent:
-            location.get_infection_parameters().set<abm::MaximumContacts>(5);
-            break;
-        case abm::LocationType::School:
-        case abm::LocationType::Work:
-            location.get_infection_parameters().set<abm::MaximumContacts>(20);
-            break;
-        default:
-            break;
-        }
-    }
-}
-
-/**
- * @brief Add the testing schemes for the two fitted testing parameters.
- *
- * Testing is the only measure in this setup, so a single pair of schemes covers the whole simulation
- * instead of the per-period schemes the ABM paper needed for its lockdown phases.
- *
- * @param[in,out] model The model to add the schemes to.
- * @param[in] t0 Start of the simulation.
- * @param[in] tmax End of the simulation.
- * @param[in] probability_sympt Probability that a symptomatic Person is tested.
- * @param[in] ratio_asympt_to_sympt Factor by which testing of asymptomatic Person%s is less likely.
- */
-void add_testing_strategy(abm::Model& model, abm::TimePoint t0, abm::TimePoint tmax, double probability_sympt,
-                          double ratio_asympt_to_sympt)
-{
-    const double probability_asympt = probability_sympt / ratio_asympt_to_sympt;
-    const auto test_parameters      = model.parameters.get<abm::TestData>()[abm::TestType::Antigen];
-    const auto min_time_between     = abm::days(3);
-
-    const auto sympt_states  = std::vector<abm::InfectionState>{abm::InfectionState::InfectedSymptoms,
-                                                                abm::InfectionState::InfectedSevere,
-                                                                abm::InfectionState::InfectedCritical};
-    const auto asympt_states = std::vector<abm::InfectionState>{
-        abm::InfectionState::InfectedNoSymptoms, abm::InfectionState::Exposed, abm::InfectionState::Susceptible,
-        abm::InfectionState::Recovered};
-
-    const auto scheme_sympt = abm::TestingScheme(abm::TestingCriteria({}, sympt_states), min_time_between, t0, tmax,
-                                                 test_parameters, probability_sympt);
-    const auto scheme_asympt = abm::TestingScheme(abm::TestingCriteria({}, asympt_states), min_time_between, t0, tmax,
-                                                  test_parameters, probability_asympt);
-
-    const auto tested_locations = std::vector<abm::LocationType>{
-        abm::LocationType::School, abm::LocationType::Work, abm::LocationType::BasicsShop,
-        abm::LocationType::SocialEvent};
-    model.get_testing_strategy().add_scheme(tested_locations, scheme_sympt);
-    model.get_testing_strategy().add_scheme(tested_locations, scheme_asympt);
+    // A Hospital and an ICU are required for the severe and critical branch of the infection, and
+    // therefore for the deaths that this simulation is fitted against. No MaximumContacts is set on any
+    // location: the contact matrices of set_contact_rates() are used as they are, which is also what
+    // set_local_parameters_ger() on the abmXpanvadere branch does.
+    model.add_location(abm::LocationType::Hospital);
+    model.add_location(abm::LocationType::ICU);
 }
 
 /// @brief A daily time series per age group, read from a CSV with columns date, age_group and a value column.
@@ -363,8 +370,8 @@ IOResult<DailySeries> read_daily_series(const std::string& filename, const std::
     }
 
     DailySeries series;
-    series.first_date       = min_date;
-    const auto num_days     = static_cast<size_t>(get_offset_in_days(max_date, min_date)) + 1;
+    series.first_date   = min_date;
+    const auto num_days = static_cast<size_t>(get_offset_in_days(max_date, min_date)) + 1;
     series.values.assign(num_age_groups, std::vector<double>(num_days, 0.0));
     for (const auto& [date, age, value] : entries) {
         series.values[age][static_cast<size_t>(get_offset_in_days(date, min_date))] += value;
@@ -384,8 +391,8 @@ std::vector<size_t> sample_without_replacement(RandomNumberGenerator& rng, size_
     std::vector<size_t> result(count);
     auto& uniform_int = UniformIntDistribution<size_t>::get_instance();
     for (size_t i = 0; i < count; ++i) {
-        const size_t j  = uniform_int(rng, i, size - 1);
-        auto value_at   = [&swapped](size_t k) {
+        const size_t j = uniform_int(rng, i, size - 1);
+        auto value_at  = [&swapped](size_t k) {
             const auto it = swapped.find(k);
             return it == swapped.end() ? k : it->second;
         };
@@ -447,14 +454,22 @@ void seed_history(abm::Model& model, const DailySeries* cases, const DailySeries
                     total += std::max(0.0, series.values[age][static_cast<size_t>(offset)]);
                 }
             }
-            const size_t count = std::min(static_cast<size_t>(total * scale), persons_by_age[age].size());
+            const size_t requested = static_cast<size_t>(total * scale);
+            const size_t count     = std::min(requested, persons_by_age[age].size());
+            if (requested > persons_by_age[age].size()) {
+                // Loudly, because a clamp here silently removes every susceptible of this age group and
+                // the epidemic then cannot run at all. Shorten history_lookback_days if this appears.
+                log_warning("Seeding {} in age group {} saturated: {} requested for {} persons. The whole age "
+                            "group is seeded and no susceptible is left.",
+                            is_infection ? "infections" : "vaccinations", age, requested, persons_by_age[age].size());
+            }
             if (count == 0) {
                 continue;
             }
             const auto chosen = sample_without_replacement(rng, persons_by_age[age].size(), count);
             const auto days   = sample_days(series, age, count);
             for (size_t i = 0; i < count; ++i) {
-                const auto pid = persons_by_age[age][chosen[i]];
+                const auto pid  = persons_by_age[age][chosen[i]];
                 const auto date = t0 + abm::days(days[i]);
                 auto& person    = model.get_person(pid);
                 auto prng       = abm::PersonalRandomNumberGenerator(model.get_rng(), person);
@@ -552,10 +567,11 @@ void set_pais_parameters(abm::Parameters& params)
     for (const auto& [vaccination_class, table] : by_class) {
         for (size_t row = 0; row < table->size(); ++row) {
             const auto age = AgeGroup(row + 2); // The table starts at age group 2 (15-34).
-            params.get<abm::PAISProbability>()[{abm::VirusVariant::Wildtype, age, abm::Sex::Female,
-                                                vaccination_class}] = (*table)[row][0];
-            params.get<abm::PAISProbability>()[{abm::VirusVariant::Wildtype, age, abm::Sex::Male,
-                                                vaccination_class}] = (*table)[row][1];
+            params
+                .get<abm::PAISProbability>()[{abm::VirusVariant::Wildtype, age, abm::Sex::Female, vaccination_class}] =
+                (*table)[row][0];
+            params.get<abm::PAISProbability>()[{abm::VirusVariant::Wildtype, age, abm::Sex::Male, vaccination_class}] =
+                (*table)[row][1];
         }
     }
 
@@ -576,16 +592,16 @@ void set_pais_parameters(abm::Parameters& params)
     // probabilities while PAISTransitionMatrix is consumed as rates, and its Medium row (Medium->Severe
     // 0.99998 per day, Medium->Medium 1e-9) leaves no one in the medium state for more than a day under
     // either reading. The semantics of those numbers need to be settled before they are used here.
-    auto rates = Eigen::MatrixXd::Zero(static_cast<Eigen::Index>(abm::PAISState::Count),
-                                       static_cast<Eigen::Index>(abm::PAISState::Count))
-                     .eval();
-    const auto medium = static_cast<Eigen::Index>(abm::PAISState::Medium);
-    const auto severe = static_cast<Eigen::Index>(abm::PAISState::Severe);
-    const auto healthy = static_cast<Eigen::Index>(abm::PAISState::Healthy);
-    rates(medium, healthy) = 1.0 / 120.0;
-    rates(medium, severe)  = 1.0 / 2000.0;
-    rates(severe, medium)  = 1.0 / 180.0;
-    rates(severe, healthy) = 1.0 / 365.0;
+    auto rates                              = Eigen::MatrixXd::Zero(static_cast<Eigen::Index>(abm::PAISState::Count),
+                                                                    static_cast<Eigen::Index>(abm::PAISState::Count))
+                                                  .eval();
+    const auto medium                       = static_cast<Eigen::Index>(abm::PAISState::Medium);
+    const auto severe                       = static_cast<Eigen::Index>(abm::PAISState::Severe);
+    const auto healthy                      = static_cast<Eigen::Index>(abm::PAISState::Healthy);
+    rates(medium, healthy)                  = 1.0 / 120.0;
+    rates(medium, severe)                   = 1.0 / 2000.0;
+    rates(severe, medium)                   = 1.0 / 180.0;
+    rates(severe, healthy)                  = 1.0 / 365.0;
     params.get<abm::PAISTransitionMatrix>() = rates;
 }
 
@@ -597,10 +613,8 @@ const std::vector<FitParameter>& fit_parameters()
     // is the only measure in this setup. The PAIS parameters are not fitted either: they act only on the
     // PAIS output channels, so without PAIS data the likelihood would be flat in all of them.
     static const std::vector<FitParameter> parameters{
-        {"viral_shedding_rate", 1.4, 2.0},
-        {"dark_figure", 2.5, 5.5},
-        {"testing_probability_sympt", 0.01, 0.045},
-        {"ratio_asympt_to_sympt", 2.0, 15.0},
+        {"viral_shedding_rate", 0.1, 20.0},
+        {"dark_figure", 2.5, 10.0},
     };
     return parameters;
 }
@@ -665,14 +679,17 @@ IOResult<abm::Model> make_model(const ModelSetup& setup, const std::vector<doubl
 
     set_fixed_infection_parameters(model.parameters);
     set_pais_parameters(model.parameters);
-    // viral_shedding_rate is the only fitted parameter acting on the model parameters directly. dark_figure
-    // is applied when seeding the history, the two testing parameters when building the testing strategy.
+    // viral_shedding_rate is the only fitted parameter acting on the model parameters directly;
+    // dark_figure is applied when seeding the history.
     model.parameters.get<abm::InfectionRateFromViralShed>()[abm::VirusVariant::Wildtype] = theta[0];
 
     BOOST_OUTCOME_TRY(auto&& rows, read_population_file(setup.person_file));
-    add_persons_and_locations(model, rows, setup);
+    add_persons_and_locations(model, rows);
     add_infrastructure(model);
-    add_testing_strategy(model, t0, tmax, theta[2], theta[3]);
+    BOOST_OUTCOME_TRY(set_contact_rates(model, setup.contact_dir));
+    // No testing and no other intervention is applied for now. tmax is kept in the signature because it
+    // is what a testing scheme would need as its validity period once testing is reinstated.
+    unused(tmax);
 
     if (has_history) {
         BOOST_OUTCOME_TRY(auto&& cases, read_daily_series(setup.cases_file, "new_cases"));

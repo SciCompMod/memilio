@@ -56,8 +56,8 @@ struct FitParameter {
  * @brief The parameters estimated by the fit, in the order used by every parameter vector.
  *
  * This table is the single place where the fitted parameters are defined: adding or removing an entry
- * changes the dimension of the fit without any other code change. Note that no contact reduction or
- * other non-pharmaceutical intervention is fitted, since testing is the only measure in this setup.
+ * changes the dimension of the fit without any other code change. No intervention is modelled at present,
+ * so neither a contact reduction nor a testing frequency appears here.
  */
 const std::vector<FitParameter>& fit_parameters();
 
@@ -91,9 +91,17 @@ struct ModelSetup {
     std::string person_file{}; ///< CSV with columns age,home_id,school_id,work_id,shopping_id,event_id.
     std::string cases_file{}; ///< CSV with columns date,age_group,new_cases (reported), for the infection history.
     std::string vaccinations_file{}; ///< CSV with columns date,age_group,new_doses, for the vaccination history.
-    size_t max_school_size = 600; ///< Maximum number of Person%s assigned to one school.
-    size_t max_work_size   = 100; ///< Maximum number of Person%s assigned to one workplace.
-    int history_lookback_days = 365; ///< Length of the window before t0 from which the histories are seeded.
+    std::string contact_dir{}; ///< Directory with the German baseline contact matrices.
+    /**
+     * @brief Length of the window before t0 from which the histories are seeded.
+     *
+     * 90 days by default. Longer windows overcount immunity, because a Person is seeded at most once here
+     * while the reported cases they are drawn from include reinfections: over a full year around the
+     * Omicron wave, reported cases times a dark figure of 4 exceed the population of Halle, which seeds
+     * every agent as recovered and leaves no susceptible for the epidemic to run in. 90 days also matches
+     * the window over which SeverityProtectionFactor is defined.
+     */
+    int history_lookback_days = 90;
     /**
      * @brief Allow building a model without infection and vaccination history.
      *
@@ -113,7 +121,8 @@ struct ModelSetup {
  * @param[in] theta The fitted parameters, see fit_parameters().
  * @param[in] start_date Calendar date that @p t0 corresponds to, used to align the input data.
  * @param[in] t0 Start of the simulation.
- * @param[in] tmax End of the simulation, needed to give the testing schemes their validity period.
+ * @param[in] tmax End of the simulation. Currently unused; kept because a testing scheme would need it as
+ *                 its validity period once testing is reinstated.
  * @param[in] rng Random number generator used for the whole model, so a run is reproducible from its seed.
  * @return The model, or an error if an input file could not be read.
  */
