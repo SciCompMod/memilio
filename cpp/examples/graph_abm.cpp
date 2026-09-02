@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 
+#include "abm/activity_type.h"
 #include "abm/household.h"
 #include "abm/model.h"
 #include "abm/infection_state.h"
@@ -167,7 +168,7 @@ int main()
 
     //Create locations for both models
     //model 1
-    auto event_m1 = model1.add_location(mio::abm::LocationType::SocialEvent);
+    auto event_m1 = model1.add_location(mio::abm::LocationType::Recreation);
     model1.get_location(event_m1).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
     auto hospital_m1 = model1.add_location(mio::abm::LocationType::Hospital);
     model1.get_location(hospital_m1).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
@@ -180,7 +181,7 @@ int main()
     auto work_m1 = model1.add_location(mio::abm::LocationType::Work);
     model1.get_location(work_m1).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
     //model 2
-    auto event_m2 = model2.add_location(mio::abm::LocationType::SocialEvent);
+    auto event_m2 = model2.add_location(mio::abm::LocationType::Recreation);
     model2.get_location(event_m2).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
     auto hospital_m2 = model2.add_location(mio::abm::LocationType::Hospital);
     model2.get_location(hospital_m2).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
@@ -206,22 +207,22 @@ int main()
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          model1.parameters, start_date, infection_state));
         }
-        person.set_assigned_location(mio::abm::LocationType::SocialEvent, event_m1, model1.get_id());
-        person.set_assigned_location(mio::abm::LocationType::BasicsShop, shop_m1, model1.get_id());
-        person.set_assigned_location(mio::abm::LocationType::Hospital, hospital_m1, model1.get_id());
-        person.set_assigned_location(mio::abm::LocationType::ICU, icu_m1, model1.get_id());
+        person.set_assigned_location(mio::abm::ActivityType::Recreation, event_m1, model1.get_id());
+        person.set_assigned_location(mio::abm::ActivityType::BasicsShop, shop_m1, model1.get_id());
+        person.set_assigned_location(mio::abm::ActivityType::Hospital, hospital_m1, model1.get_id());
+        person.set_assigned_location(mio::abm::ActivityType::ICU, icu_m1, model1.get_id());
         if (person.get_age() == age_group_children) {
-            person.set_assigned_location(mio::abm::LocationType::School, school_m1, model1.get_id());
+            person.set_assigned_location(mio::abm::ActivityType::School, school_m1, model1.get_id());
         }
         if (person.get_age() == age_group_adults) {
             //10% of adults in model 1 work in model 2
             size_t work_model = mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(),
                                                                                   std::vector<double>{0.9, 0.1});
             if (work_model == 1) { //person works in other model
-                person.set_assigned_location(mio::abm::LocationType::Work, work_m2, model2.get_id());
+                person.set_assigned_location(mio::abm::ActivityType::Work, work_m2, model2.get_id());
             }
             else { //person works in same model
-                person.set_assigned_location(mio::abm::LocationType::Work, work_m1, model1.get_id());
+                person.set_assigned_location(mio::abm::ActivityType::Work, work_m1, model1.get_id());
             }
         }
     }
@@ -236,22 +237,22 @@ int main()
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          model2.parameters, start_date, infection_state));
         }
-        person.set_assigned_location(mio::abm::LocationType::SocialEvent, event_m2, model2.get_id());
-        person.set_assigned_location(mio::abm::LocationType::BasicsShop, shop_m2, model2.get_id());
-        person.set_assigned_location(mio::abm::LocationType::Hospital, hospital_m2, model2.get_id());
-        person.set_assigned_location(mio::abm::LocationType::ICU, icu_m2, model2.get_id());
+        person.set_assigned_location(mio::abm::ActivityType::Recreation, event_m2, model2.get_id());
+        person.set_assigned_location(mio::abm::ActivityType::BasicsShop, shop_m2, model2.get_id());
+        person.set_assigned_location(mio::abm::ActivityType::Hospital, hospital_m2, model2.get_id());
+        person.set_assigned_location(mio::abm::ActivityType::ICU, icu_m2, model2.get_id());
         if (person.get_age() == age_group_children) {
-            person.set_assigned_location(mio::abm::LocationType::School, school_m2, model2.get_id());
+            person.set_assigned_location(mio::abm::ActivityType::School, school_m2, model2.get_id());
         }
         if (person.get_age() == age_group_adults) {
             //20% of adults in model 2 work in model 1
             size_t work_model = mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(),
                                                                                   std::vector<double>{0.2, 0.8});
             if (work_model == 1) { //person works in same model
-                person.set_assigned_location(mio::abm::LocationType::Work, work_m2, model2.get_id());
+                person.set_assigned_location(mio::abm::ActivityType::Work, work_m2, model2.get_id());
             }
             else { //person works in other model
-                person.set_assigned_location(mio::abm::LocationType::Work, work_m1, model1.get_id());
+                person.set_assigned_location(mio::abm::ActivityType::Work, work_m1, model1.get_id());
             }
         }
     }

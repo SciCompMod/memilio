@@ -23,6 +23,7 @@
 #include "abm/common_abm_loggers.h"
 #include "memilio/io/directories.h"
 
+#include <cstddef>
 #include <fstream>
 
 int main()
@@ -80,7 +81,7 @@ int main()
 
     // Add one social event with 5 maximum contacts.
     // Maximum contacs limit the number of people that a person can infect while being at this location.
-    auto event = model.add_location(mio::abm::LocationType::SocialEvent);
+    auto event = model.add_location(mio::abm::LocationType::Recreation);
     model.get_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
     // Add hospital and ICU with 5 maximum contacs.
     auto hospital = model.add_location(mio::abm::LocationType::Hospital);
@@ -128,21 +129,39 @@ int main()
         }
     }
 
+    size_t num_teachers     = 0;
+    size_t num_hosp_doctors = 0;
+    size_t num_icu_doctors  = 0;
+
     // Assign locations to the people
     for (auto& person : model.get_persons()) {
         const auto id = person.get_id();
         //assign shop and event
-        model.assign_location(id, event);
-        model.assign_location(id, shop);
+        model.assign_location(id, event, mio::abm::ActivityType::Recreation);
+        model.assign_location(id, shop, mio::abm::ActivityType::BasicsShop);
         //assign hospital and ICU
-        model.assign_location(id, hospital);
-        model.assign_location(id, icu);
+        model.assign_location(id, hospital, mio::abm::ActivityType::Hospital);
+        model.assign_location(id, icu, mio::abm::ActivityType::ICU);
         //assign work/school to people depending on their age
         if (person.get_age() == age_group_5_to_14) {
-            model.assign_location(id, school);
+            model.assign_location(id, school, mio::abm::ActivityType::School);
         }
         if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
-            model.assign_location(id, work);
+            if (num_teachers < 3) {
+                model.assign_location(id, school, mio::abm::ActivityType::Work);
+                num_teachers++;
+            }
+            else if (num_hosp_doctors < 1) {
+                model.assign_location(id, hospital, mio::abm::ActivityType::Work);
+                num_hosp_doctors++;
+            }
+            else if (num_icu_doctors < 1) {
+                model.assign_location(id, icu, mio::abm::ActivityType::Work);
+                num_icu_doctors++;
+            }
+            else {
+                model.assign_location(id, work, mio::abm::ActivityType::Work);
+            }
         }
     }
 
