@@ -263,6 +263,18 @@ MultiRunSimulator::run_single_simulation(mio::abm::Model&& model,
         results.contact_hours = calculate_contact_hours(person_states);
     }
 
+    if (config.write_person_locations) {
+        results.person_locations.reserve(person_states.size());
+        for (const auto& step : person_states) {
+            std::vector<std::pair<uint32_t, uint32_t>> locations;
+            locations.reserve(step.size());
+            for (const auto& state : step) {
+                locations.emplace_back(static_cast<uint32_t>(state.person_id.get()), state.location_id.get());
+            }
+            results.person_locations.push_back(std::move(locations));
+        }
+    }
+
     return mio::success(results);
 }
 
@@ -395,6 +407,23 @@ mio::IOResult<void> save_ensemble(const std::vector<std::vector<mio::TimeSeries<
     return mio::success();
 }
 
+/// @brief Write where every Person was at every hour of one run.
+void save_person_locations(const std::vector<std::vector<std::pair<uint32_t, uint32_t>>>& person_locations,
+                           const std::string& filename)
+{
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Error: could not open " << filename << " for writing.\n";
+        return;
+    }
+    file << "Timestep,Person_ID,Location_ID\n";
+    for (size_t t = 0; t < person_locations.size(); ++t) {
+        for (const auto& [person_id, location_id] : person_locations[t]) {
+            file << t << "," << person_id << "," << location_id << "\n";
+        }
+    }
+}
+
 } // namespace
 
 mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResults& results,
@@ -449,7 +478,7 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
     CityBuilder::save_city_to_file(config.city_config, base_dir + "/city_config.csv");
 
     // Per run detail.
-    if (config.write_infection_events || config.write_contacts) {
+    if (config.write_infection_events || config.write_contacts || config.write_person_locations) {
         const std::string runs_dir = base_dir + "/runs";
         BOOST_OUTCOME_TRY(mio::create_directory(runs_dir));
         for (size_t run = 0; run < results.all_runs.size(); ++run) {
@@ -460,6 +489,10 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
             }
             if (config.write_contacts) {
                 save_contact_hours(results.all_runs[run].contact_hours, prefix + "_contact_hours.csv");
+            }
+            if (config.write_person_locations) {
+                save_person_locations(results.all_runs[run].person_locations,
+                                      prefix + "_person_locations.csv");
             }
         }
     }

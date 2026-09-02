@@ -65,6 +65,8 @@ void print_help(const char* program_name)
     std::cout << "  --seed <number>            Seed for reproducibility (default: built in seed)\n";
     std::cout << "  --no_infection_events      Do not write the per run infection event csv\n";
     std::cout << "  --write_contacts           Write the pairwise contact hours per run (expensive)\n";
+    std::cout << "  --write_person_locations   Write where everybody was every hour (large; needed for\n";
+    std::cout << "                             the transmission tree plots)\n";
     std::cout << "  --print_city               Print the derived city infrastructure and exit\n";
     std::cout << "  --help                     Show this message\n";
     std::cout << "\nExamples:\n";
@@ -149,6 +151,9 @@ CommandLine parse_command_line(int argc, char* argv[])
         }
         else if (arg == "--write_contacts") {
             config.write_contacts = true;
+        }
+        else if (arg == "--write_person_locations") {
+            config.write_person_locations = true;
         }
         else if (arg == "--print_city") {
             cli.print_city_only = true;

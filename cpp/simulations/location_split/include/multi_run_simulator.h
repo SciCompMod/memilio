@@ -27,6 +27,7 @@ struct MultiRunConfig {
     uint32_t custom_seed         = 0; ///< 0 means "use the built in seed".
     bool write_infection_events  = true; ///< Write one csv of infection events per run.
     bool write_contacts          = false; ///< Write the pairwise contact hours. Quadratic in the location size.
+    bool write_person_locations  = false; ///< Write where every Person was at every hour. Large.
 };
 
 /// @brief One new Infection, with the Location the Person was at when it happened.
@@ -54,6 +55,9 @@ struct SimulationResults {
     std::vector<mio::abm::PersonId> initial_infections;
     /// (person 1, person 2, location, hours spent together). Only filled if requested.
     std::vector<std::tuple<uint32_t, uint32_t, uint32_t, uint32_t>> contact_hours;
+    /// Per time step, the Location of every Person. Only filled if requested. Needed to reconstruct
+    /// who infected whom, because the infector must have shared the Location with the infectee.
+    std::vector<std::vector<std::pair<uint32_t, uint32_t>>> person_locations;
 
     double average_household_size_of_initial_infections           = 0.0;
     double average_persons_above_age_group_0_in_initial_households = 0.0;
