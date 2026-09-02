@@ -20,8 +20,19 @@
 
 #include <iostream>
 
-int main()
+extern "C" {
+#include "julia_init.h"
+}
+#include "JuliaTestPkg.h"
+
+int main(int argc, char* argv[])
 {
+    init_julia(argc, argv);
+
     std::cout << "Test\n";
+    printint(39);
+    std::cout << "mean = " << mean_of_two(3, 7) << "\n";
+
+    shutdown_julia(0);
     return 0;
 }

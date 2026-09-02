@@ -6,6 +6,7 @@ export mean_of_two
 
 Base.@ccallable function printint(n::Cint)::Cvoid
     println("Your integer is $n")
+    flush(stdout)
     return nothing
 end
 
