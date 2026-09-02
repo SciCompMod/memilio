@@ -42,6 +42,7 @@ else:
 from jinja2 import Environment, PackageLoader, StrictUndefined
 
 from .schema import (
+    DerivedQuantityConfig,
     ModelConfig,
     ModelMeta,
     ParameterConfig,
@@ -338,6 +339,11 @@ class Generator:
                 )
             )
 
+        derived_quantities = [
+            DerivedQuantityConfig(name=d["name"], formula=d["formula"])
+            for d in raw.get("derived_quantities", [])
+        ]
+
         transitions = []
         for t in raw["transitions"]:
             raw_infectious_states = t.get("infectious_states")
@@ -359,6 +365,7 @@ class Generator:
                     to_state=t["to"],
                     type=t["type"],
                     parameter=t.get("parameter"),
+                    rate=t.get("rate"),
                     infectious_state=infectious_states[0]
                     if infectious_states else None,
                     infectious_states=infectious_states,
@@ -368,5 +375,6 @@ class Generator:
             meta=meta,
             infection_states=states,
             parameters=parameters,
+            derived_quantities=derived_quantities,
             transitions=transitions,
         )
