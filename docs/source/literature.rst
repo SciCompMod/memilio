@@ -66,7 +66,7 @@
 .. |Missing_Transmission_Chains_DOI| replace:: DOI:10.1016/j.chaos.2026.118179
 .. _Missing_Transmission_Chains_DOI: https://doi.org/10.1016/j.chaos.2026.118179
 
-.. |Traveler_estimation| replace:: Zunker H, Schmieding R, Hasenauer J, Kühn M J (2026). *Efficient numerical computation of traveler states in explicit mobility-based metapopulation models: Mathematical theory and application to epidemics*. arXiv. |Traveler_estimation_DOI|_
-.. |Traveler_estimation_DOI| replace:: DOI:10.1016/10.48550/arXiv.2603.11275
-.. _Traveler_estimation_DOI: https://doi.org/10.48550/arXiv.2603.11275
+.. |Traveler_estimation| replace:: Zunker H, Schmieding R, Hasenauer J, Kühn M J (2026). *Efficient numerical computation of traveler states in explicit mobility-based metapopulation models: Mathematical theory and application to epidemics*. *Mathematics and Computers in Simulation*. |Traveler_estimation_DOI|_
+.. |Traveler_estimation_DOI| replace:: DOI:10.1016/j.matcom.2026.08.029
+.. _Traveler_estimation_DOI: https://doi.org/10.1016/j.matcom.2026.08.029
 
