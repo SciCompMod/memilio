@@ -1,6 +1,6 @@
-.. |MEmilio_citation| replace:: Bicker J, Gerstein C, Kerkmann D, Korf S, Schmieding R, Wendler A, Zunker H, Abele D, Betz M, Nguyen K, Plötzke L, Volmer K, SchmidtA,  Waßmuth N, Lenz P, Richter D, Tritzschak H, Hannemann-Tamas R, Litz J, Johannssen P, Borges M, Jungklaus A, Heger M, Lange A, Kluth E, Rack K, Wieland V, Arruda J, Binder S, Klitz M, Siggel M, Dahmen M, Basermann A, Meyer-Hermann M, Hasenauer J, Kühn MJ. (2026). *MEmilio -- A high performance Modular EpideMIcs simuLatIOn software for multi-scale and comparative simulations of infectious disease dynamics*. Submitted for publication. |MEmilio_DOI|_
-.. |MEmilio_DOI| replace:: DOI:10.48550/arXiv.2602.11381
-.. _MEmilio_DOI: https://doi.org/10.48550/arXiv.2602.11381
+.. |MEmilio_citation| replace:: Bicker J, Gerstein C, Kerkmann D, Korf S, Schmieding R, Wendler A, Zunker H, Abele D, Betz M, Nguyen K, Plötzke L, Volmer K, SchmidtA,  Waßmuth N, Lenz P, Richter D, Tritzschak H, Hannemann-Tamas R, Litz J, Johannssen P, Borges M, Jungklaus A, Heger M, Lange A, Kluth E, Rack K, Wieland V, Arruda J, Binder S, Klitz M, Siggel M, Dahmen M, Basermann A, Meyer-Hermann M, Hasenauer J, Kühn MJ. (2026). *MEmilio: a high performance Modular EpideMIcs simuLatIOn software for multi-scale and comparative simulations of infectious disease dynamics*. *Scientific Reports* 16, 26950. |MEmilio_DOI|_
+.. |MEmilio_DOI| replace:: DOI:10.1038/s41598-026-66481-6
+.. _MEmilio_DOI: https://doi.org/10.1038/s41598-026-66481-6
 
 .. |Novel_travel_time_aware_metapopulation_models| replace:: Zunker H, Schmieding R, Kerkmann D, Schengen A, Diexer S, Mikolajczyk R, Meyer-Hermann M, Kühn MJ. (2024). *Novel travel time aware metapopulation models and multi-layer waning immunity for late-phase epidemic and endemic scenarios*. *PLOS Computational Biology* 20(12): e1012630. |Novel_travel_time_aware_metapopulation_models_DOI|_
 .. |Novel_travel_time_aware_metapopulation_models_DOI| replace:: DOI:10.1371/journal.pcbi.1012630 
@@ -66,7 +66,7 @@
 .. |Missing_Transmission_Chains_DOI| replace:: DOI:10.1016/j.chaos.2026.118179
 .. _Missing_Transmission_Chains_DOI: https://doi.org/10.1016/j.chaos.2026.118179
 
-.. |Traveler_estimation| replace:: Zunker H, Schmieding R, Hasenauer J, Kühn M J (2026). *Efficient numerical computation of traveler states in explicit mobility-based metapopulation models: Mathematical theory and application to epidemics*. arXiv. |Traveler_estimation_DOI|_
-.. |Traveler_estimation_DOI| replace:: DOI:10.1016/10.48550/arXiv.2603.11275
-.. _Traveler_estimation_DOI: https://doi.org/10.48550/arXiv.2603.11275
+.. |Traveler_estimation| replace:: Zunker H, Schmieding R, Hasenauer J, Kühn M J (2026). *Efficient numerical computation of traveler states in explicit mobility-based metapopulation models: Mathematical theory and application to epidemics*. *Mathematics and Computers in Simulation*. |Traveler_estimation_DOI|_
+.. |Traveler_estimation_DOI| replace:: DOI:10.1016/j.matcom.2026.08.029
+.. _Traveler_estimation_DOI: https://doi.org/10.1016/j.matcom.2026.08.029
 
