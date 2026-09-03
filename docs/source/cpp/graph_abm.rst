@@ -100,10 +100,10 @@ Assigning infection states and locations to persons in all models can be done vi
     //Add infection to persons in home1
     auto rng_child1 = mio::abm::PersonalRandomNumberGenerator(child1);
     child1.add_new_infection(mio::abm::Infection(rng_child1, mio::abm::VirusVariant::Wildtype, child1.get_age(),
-                                                         model1.parameters, start_date, mio::abm::InfectionState::InfectedNoSymptoms));
+                                                         model1.parameters, start_date, mio::abm::InfectionState::InfectedNoSymptoms), rng_child1, start_date, model1.parameters);
     auto rng_adult1 = mio::abm::PersonalRandomNumberGenerator(adult1);
     adult1.add_new_infection(mio::abm::Infection(rng_adult1, mio::abm::VirusVariant::Wildtype, adult1.get_age(),
-                                                         model1.parameters, start_date, mio::abm::InfectionState::Exposed));
+                                                         model1.parameters, start_date, mio::abm::InfectionState::Exposed), rng_adult1, start_date, model1.parameters);
 
     //Assign Event, Shop, Hospital and ICU to all persons, school only to the child and work to the adults
     //Event
