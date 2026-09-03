@@ -25,9 +25,9 @@ extern "C" {
 }
 #include "JuliaTestPkg.h"
 
-int main(int argc, char* argv[])
+int main()
 {
-    init_julia(argc, argv);
+    init_julia(0, nullptr);
 
     std::cout << "Test\n";
     printint(39);
