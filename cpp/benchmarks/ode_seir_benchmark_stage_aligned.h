@@ -38,11 +38,11 @@ namespace mio::benchmark_mio
 constexpr double step_size                                  = 0.5;
 constexpr double total_traveler_fraction                    = 0.1;
 constexpr int traveler_chunk_size                           = 256;
-constexpr int integration_steps                             = 20;
+constexpr int integration_steps                             = 64;
 constexpr std::array<int, 4> age_group_counts               = {1, 3, 6, 8};
 constexpr std::array<std::pair<int, int>, 7> problem_shapes = {
-    std::pair{17, 16},   std::pair{33, 32},   std::pair{65, 64},    std::pair{129, 128},
-    std::pair{257, 256}, std::pair{513, 512}, std::pair{1025, 1024}};
+    std::pair{16, 15},   std::pair{32, 31},   std::pair{64, 63},    std::pair{128, 127},
+    std::pair{256, 255}, std::pair{512, 511}, std::pair{1024, 1023}};
 
 /**
  * Synthetic, destination-oriented SEIR state used by all three benchmarks.

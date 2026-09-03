@@ -34,10 +34,10 @@ namespace mio::benchmark_mio
 {
 
 inline constexpr double step_size                       = 0.5;
-inline constexpr int integration_steps                  = 20;
+inline constexpr int integration_steps                  = 64;
 inline constexpr int maximum_groups                     = 8;
 inline constexpr std::array<int, 4> age_group_counts    = {1, 3, 6, 8};
-inline constexpr std::array<int, 7> patch_counts        = {17, 33, 65, 129, 257, 513, 1025};
+inline constexpr std::array<int, 7> patch_counts        = {16, 32, 64, 128, 256, 512, 1024};
 inline constexpr double validation_relative_tolerance   = 1e-10;
 inline constexpr double validation_absolute_denominator = 1.0;
 
@@ -147,7 +147,7 @@ struct ImplicitProblem {
                     weight_sum += 1.0 + 0.02 * ((17 * origin + 13 * patch) % 23);
                 }
             }
-            const double mobile_fraction = 0.12 + 0.04 * static_cast<double>(origin % 7) / 6.0;
+            const double mobile_fraction = 0.10 + 0.10 * static_cast<double>(origin % 7) / 6.0;
             for (int patch = 0; patch < patches; ++patch) {
                 const double value =
                     patch == origin ? 1.0 - mobile_fraction
