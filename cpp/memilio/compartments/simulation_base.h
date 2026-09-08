@@ -154,6 +154,31 @@ public:
     }
     /** @} */
 
+    /**
+     * @brief Change the tolerance for the last time step.
+     * @param last_step_tolerance The new last_step_tolerance.
+     */
+    void set_last_step_tolerance(FP new_tol)
+    {
+        m_integrator.set_last_step_tolerance(new_tol);
+    }
+
+    /**
+     * @brief Access the tolerance for the last time step.
+     * @return A reference to the last_step_tolerance.
+     * @{
+     */
+    FP& get_last_step_tolerance()
+    {
+        return m_integrator.get_last_step_tolerance();
+    }
+
+    const FP& get_last_step_tolerance() const
+    {
+        return m_integrator.get_last_step_tolerance();
+    }
+    /** @} */
+
 protected:
     /**
      * @brief Run the simulation up to a given time.
