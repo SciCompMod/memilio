@@ -47,6 +47,16 @@ class Test_ParameterDistribution(unittest.TestCase):
         self.assertGreaterEqual(n, -1)
         self.assertLessEqual(n, 1)
 
+    def test_lognormal(self):
+        """ """
+        N = mio.ParameterDistributionLogNormal(0.0, 0.5)
+        # properties
+        self.assertEqual(N.log_mean, 0.0)  # std_dev automatically adapted
+
+        # sample
+        n = N.get_sample()
+        self.assertGreaterEqual(n, 0)
+
     def test_polymorphic(self):
         """ """
         uv = mio.UncertainValue()

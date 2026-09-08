@@ -23,6 +23,7 @@
 #include "abm/model.h"
 #include "abm/time.h"
 #include "memilio/io/history.h"
+#include <vector>
 
 namespace mio
 {
@@ -74,6 +75,20 @@ public:
         while (m_t < tmax) {
             evolve_model(tmax);
             (history.log(*this), ...);
+        }
+    }
+
+    void advance(TimePoint tmax, std::vector<details::AbstractHistory<Simulation>> histories)
+    {
+        //log initial system state
+        for (auto& history : histories) {
+            history.log(*this);
+        }
+        while (m_t < tmax) {
+            evolve_model(tmax);
+            for (auto& history : histories) {
+                history.log(*this);
+            }
         }
     }
 
