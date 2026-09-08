@@ -197,10 +197,13 @@ In order to allow the on-the-fly computation of newly infected (or hospitalized 
      - Target compartment (must be in ``infection_states``, must differ from ``from``)
    * - ``type``
      - yes
-     - ``infection``, ``linear``, or ``custom``
+     - ``infection``, ``linear``, ``rate``, or ``custom``
    * - ``parameter``
-     - for ``infection`` and ``linear``
+     - for ``infection``, ``linear``, and simple ``rate``
      - Name of the driving parameter (must be in ``parameters``)
+   * - ``rate``
+     - alternatively for ``rate``
+     - Formula for the source-proportional rate. Names from ``infection_states``, ``parameters``, and ``derived_quantities`` are replaced in generated C++.
    * - ``infectious_state``
      - for ``infection``
      - Compartment whose population drives the force of infection (e.g. ``Infected``). You can pass a single state or a list of states (e.g. ``[InfectedNoSymptoms, InfectedSymptoms]``), in which case their populations are summed in the force of infection.
@@ -239,6 +242,33 @@ In order to allow the on-the-fly computation of newly infected (or hospitalized 
        {X}'_i \leftarrow -\frac{1}{T_i} \cdot X_i
 
     where :math:`T_i` is the time parameter for age group *i*.
+
+``rate``
+    The `rate` flow is a simple outflow proportional to the compartment size
+    using the parameter directly as a rate:
+
+    .. math::
+
+       {X}'_i \leftarrow -r_i \cdot X_i
+
+    where :math:`r_i` is the rate parameter for age group *i*. Unlike
+    ``linear``, setting :math:`r_i = 0` disables the transition.
+
+    Instead of ``parameter``, ``rate`` may specify a formula, e.g.
+    ``rate: "a1 * lambda_human"``. Formula names may refer to states,
+    parameters, or previously defined ``derived_quantities``.
+
+``derived_quantities``
+    Optional local quantities can be defined before ``transitions`` and reused
+    in ``rate`` formulas:
+
+    .. code-block:: yaml
+
+       derived_quantities:
+         - name: N
+           formula: "Susceptible + Infected"
+         - name: lambda_human
+           formula: "safe_div(Infected, N)"
 
 ``custom``
     For `custom`, a placeholder is inserted into ``get_flows()`` with a ``TODO`` comment.
@@ -423,6 +453,7 @@ Common validation errors:
 * Missing or empty ``model``, ``infection_states``, ``parameters``, or ``transitions`` section
 * Fewer than two infection states, or duplicate state names
 * Parameter ``type`` is not one of ``probability``, ``time``, ``custom``
+* Transition ``type`` is not one of ``infection``, ``linear``, ``rate``, ``custom``
 * ``parameter`` or ``infectious_state`` / ``infectious_states`` in a transition references an unknown name
 * A transition has the same ``from`` and ``to`` state (self-loop)
 
