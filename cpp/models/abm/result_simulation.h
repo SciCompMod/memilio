@@ -49,15 +49,15 @@ public:
     }
 
     /**
-     * @brief Return the simulation result aggregated by infection states.
+     * @brief Return the simulation result aggregated by symptom states.
      */
     const mio::TimeSeries<double>& get_result() const
     {
         return get<0>(history.get_log());
     }
 
-    mio::History<TimeSeriesWriter, LogInfectionState> history{
-        Eigen::Index(InfectionState::Count)}; ///< History used to create the result TimeSeries.
+    mio::History<TimeSeriesWriter, LogSymptomState> history{
+        Eigen::Index(SymptomState::Count)}; ///< History used to create the result TimeSeries.
 };
 
 } // namespace abm

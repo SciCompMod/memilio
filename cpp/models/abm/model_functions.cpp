@@ -76,7 +76,7 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
         return cell < location.get_cells().size();
     }));
 
-    if (person.get_infection_state(t) == InfectionState::Susceptible) {
+    if (!person.is_infected(t)) {
         auto& local_parameters = location.get_infection_parameters();
         // TODO: we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells
         auto age_receiver          = person.get_age();
@@ -100,10 +100,10 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
                 random_transition(personal_rng, VirusVariant::Count, dt,
                                   local_indiv_expected_trans); // use VirusVariant::Count for no virus submission
             if (virus != VirusVariant::Count) {
-                person.add_new_infection(Infection(personal_rng, virus, age_receiver, global_parameters, t + dt / 2,
-                                                   mio::abm::InfectionState::Exposed,
-                                                   person.get_latest_protection(t + dt / 2),
-                                                   false)); // Starting time in second order approximation
+                person.add_new_infection(
+                    Infection(personal_rng, virus, age_receiver, global_parameters, t + dt / 2,
+                              mio::abm::SymptomState::None, false, false,
+                              person.get_latest_protection(t + dt / 2))); // Starting time in second order approximation
             }
         }
     }

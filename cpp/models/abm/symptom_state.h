@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_ABM_INFECTION_STATE_H
-#define MIO_ABM_INFECTION_STATE_H
+#ifndef MIO_ABM_SYMPTOM_STATE_H
+#define MIO_ABM_SYMPTOM_STATE_H
 
 #include <cstdint>
 
@@ -28,18 +28,15 @@ namespace abm
 {
 
 /** 
- * @brief #InfectionState in ABM.
+ * @brief #SymptomState in ABM.
  * Can be used as 0-based index.
  */
-enum class InfectionState : std::uint32_t
+enum class SymptomState : std::uint32_t
 {
-    Susceptible = 0,
-    Exposed,
-    InfectedNoSymptoms,
-    InfectedSymptoms,
-    InfectedSevere,
-    InfectedCritical,
-    Recovered,
+    None = 0,
+    Moderate,
+    Severe,
+    Critical,
     Dead,
 
     Count //last!!
