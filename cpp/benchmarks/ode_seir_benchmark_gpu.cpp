@@ -216,8 +216,22 @@ void benchmark_stage_aligned_cuda(benchmark::State& state)
         return;
     }
 
-    cudaStream_t stream = nullptr;
-    status              = cudaStreamCreate(&stream);
+    cudaStream_t stream        = nullptr;
+    cudaGraph_t graph          = nullptr;
+    cudaGraphExec_t graph_exec = nullptr;
+    const auto destroy_cuda_objects = [&]() {
+        if (graph_exec != nullptr) {
+            cudaGraphExecDestroy(graph_exec);
+        }
+        if (graph != nullptr) {
+            cudaGraphDestroy(graph);
+        }
+        if (stream != nullptr) {
+            cudaStreamDestroy(stream);
+        }
+    };
+
+    status = cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking);
     if (status == cudaSuccess) {
         status = upload(contact_beta, problem.contact_beta, stream);
     }
@@ -233,9 +247,52 @@ void benchmark_stage_aligned_cuda(benchmark::State& state)
     if (status != cudaSuccess) {
         const auto message = cuda_error(status, "CUDA setup failed");
         state.SkipWithError(message.c_str());
-        if (stream != nullptr) {
-            cudaStreamDestroy(stream);
+        destroy_cuda_objects();
+        return;
+    }
+
+    const auto enqueue_steps = [&](int steps) {
+        cudaError_t launch_status = cudaSuccess;
+        for (int step = 0; step < steps && launch_status == cudaSuccess; ++step) {
+            launch_status =
+                launch_seir_stage_aligned_rk4_step(totals.get(), travelers.get(), lambda.get(), contact_beta.get(),
+                                                   rate_exposed.get(), rate_infected.get(), problem.patches,
+                                                   problem.travelers_per_patch, problem.groups, step_size, stream);
         }
+        return launch_status;
+    };
+
+    status = upload(totals, problem.totals, stream);
+    if (status == cudaSuccess) {
+        status = upload(travelers, problem.travelers, stream);
+    }
+    if (status == cudaSuccess) {
+        status = enqueue_steps(1);
+    }
+    if (status == cudaSuccess) {
+        status = cudaStreamSynchronize(stream);
+    }
+    if (status == cudaSuccess) {
+        status = cudaStreamBeginCapture(stream, cudaStreamCaptureModeGlobal);
+    }
+    if (status == cudaSuccess) {
+        const auto capture_status = enqueue_steps(integration_steps);
+        const auto end_status     = cudaStreamEndCapture(stream, &graph);
+        status                    = capture_status == cudaSuccess ? end_status : capture_status;
+    }
+    if (status == cudaSuccess) {
+        status = cudaGraphInstantiate(&graph_exec, graph, 0);
+    }
+    if (status == cudaSuccess) {
+        status = cudaGraphUpload(graph_exec, stream);
+    }
+    if (status == cudaSuccess) {
+        status = cudaStreamSynchronize(stream);
+    }
+    if (status != cudaSuccess) {
+        const auto message = cuda_error(status, "CUDA graph setup failed");
+        state.SkipWithError(message.c_str());
+        destroy_cuda_objects();
         return;
     }
 
@@ -252,12 +309,7 @@ void benchmark_stage_aligned_cuda(benchmark::State& state)
         state.ResumeTiming();
 
         if (status == cudaSuccess) {
-            for (int step = 0; step < integration_steps && status == cudaSuccess; ++step) {
-                status =
-                    launch_seir_stage_aligned_rk4_step(totals.get(), travelers.get(), lambda.get(), contact_beta.get(),
-                                                       rate_exposed.get(), rate_infected.get(), problem.patches,
-                                                       problem.travelers_per_patch, problem.groups, step_size, stream);
-            }
+            status = cudaGraphLaunch(graph_exec, stream);
         }
         if (status == cudaSuccess) {
             status = cudaStreamSynchronize(stream);
@@ -269,9 +321,7 @@ void benchmark_stage_aligned_cuda(benchmark::State& state)
         }
         benchmark::DoNotOptimize(travelers.get());
     }
-    if (stream != nullptr) {
-        cudaStreamDestroy(stream);
-    }
+    destroy_cuda_objects();
 
     state.counters["patches"]    = problem.patches;
     state.counters["edges"]      = static_cast<double>(problem.edges());
@@ -287,6 +337,8 @@ void apply_cuda_shapes(benchmark::internal::Benchmark* benchmark)
             benchmark->Args({patches, travelers, groups});
         }
     }
+    benchmark->Args(
+        {stage_aligned_strong_scaling_patches, stage_aligned_strong_scaling_patches - 1, 6});
 }
 
 } // namespace mio::benchmark_mio

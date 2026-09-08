@@ -35,6 +35,7 @@ namespace mio::benchmark_mio
 
 inline constexpr double step_size                       = 0.5;
 inline constexpr int integration_steps                  = 64;
+inline constexpr int implicit_strong_scaling_patches    = 8192;
 inline constexpr int maximum_groups                     = 8;
 inline constexpr std::array<int, 4> age_group_counts    = {1, 3, 6, 8};
 inline constexpr std::array<int, 7> patch_counts        = {16, 32, 64, 128, 256, 512, 1024};

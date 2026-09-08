@@ -27,6 +27,7 @@
 #include <cstdint>
 #include <iostream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #ifdef _OPENMP
@@ -37,6 +38,10 @@ namespace mio::benchmark_mio
 {
 
 #ifdef _OPENMP
+inline constexpr std::array<int, 5> scalability_thread_counts = {1, 16, 32, 64, 128};
+inline constexpr std::array<std::pair<int, int>, 5> weak_scaling_shapes = {
+    std::pair{512, 1}, std::pair{2048, 16}, std::pair{2896, 32}, std::pair{4096, 64}, std::pair{5792, 128}};
+
 template <int G, int Stage>
 void advance_openmp_stage(ImplicitProblem& problem, double dt)
 {
@@ -205,32 +210,23 @@ void apply_shapes(benchmark::internal::Benchmark* benchmark)
             benchmark->Args({patches, groups});
         }
     }
+    benchmark->Args({implicit_strong_scaling_patches, 6});
 }
 
 #ifdef _OPENMP
-std::vector<int> benchmark_thread_counts()
-{
-    const int maximum       = omp_get_max_threads();
-    std::vector<int> counts = {1, std::max(1, maximum / 8), std::max(1, maximum / 4), std::max(1, maximum / 2),
-                               maximum};
-    std::sort(counts.begin(), counts.end());
-    counts.erase(std::unique(counts.begin(), counts.end()), counts.end());
-    return counts;
-}
-
 void apply_openmp_shapes(benchmark::internal::Benchmark* benchmark)
 {
-    const auto thread_counts  = benchmark_thread_counts();
-    const int maximum_threads = thread_counts.back();
+    constexpr int maximum_threads = scalability_thread_counts.back();
     for (int patches : patch_counts) {
         for (int groups : age_group_counts) {
             benchmark->Args({patches, groups, maximum_threads});
         }
     }
-    for (int threads : thread_counts) {
-        if (threads != maximum_threads) {
-            benchmark->Args({patch_counts.back(), 6, threads});
-        }
+    for (int threads : scalability_thread_counts) {
+        benchmark->Args({implicit_strong_scaling_patches, 6, threads});
+    }
+    for (const auto& [patches, threads] : weak_scaling_shapes) {
+        benchmark->Args({patches, 6, threads});
     }
 }
 

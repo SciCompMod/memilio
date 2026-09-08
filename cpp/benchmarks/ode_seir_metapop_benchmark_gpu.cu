@@ -258,7 +258,7 @@ private:
             enqueue_step();
         }
         check_cuda(cudaStreamEndCapture(m_stream, &m_graph), "cudaStreamEndCapture");
-        check_cuda(cudaGraphInstantiate(&m_graph_exec, m_graph, nullptr, nullptr, 0), "cudaGraphInstantiate");
+        check_cuda(cudaGraphInstantiate(&m_graph_exec, m_graph, 0), "cudaGraphInstantiate");
         check_cuda(cudaGraphUpload(m_graph_exec, m_stream), "cudaGraphUpload");
         check_cuda(cudaStreamSynchronize(m_stream), "finish CUDA graph upload");
     }
@@ -391,6 +391,7 @@ void apply_shapes(benchmark::internal::Benchmark* benchmark)
             benchmark->Args({patches, groups});
         }
     }
+    benchmark->Args({implicit_strong_scaling_patches, 6});
 }
 
 template <int G>

@@ -39,6 +39,7 @@ constexpr double step_size                                  = 0.5;
 constexpr double total_traveler_fraction                    = 0.1;
 constexpr int traveler_chunk_size                           = 256;
 constexpr int integration_steps                             = 64;
+constexpr int stage_aligned_strong_scaling_patches          = 8192;
 constexpr std::array<int, 4> age_group_counts               = {1, 3, 6, 8};
 constexpr std::array<std::pair<int, int>, 7> problem_shapes = {
     std::pair{16, 15},   std::pair{32, 31},   std::pair{64, 63},    std::pair{128, 127},

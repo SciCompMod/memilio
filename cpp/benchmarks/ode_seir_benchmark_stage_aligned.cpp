@@ -22,7 +22,13 @@
 #include "ode_seir_benchmark_stage_aligned.h"
 
 #include <algorithm>
+#include <array>
+#include <cmath>
 #include <cstdint>
+#include <iostream>
+#include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 #ifdef _OPENMP
@@ -69,20 +75,15 @@ void benchmark_stage_aligned_serial(benchmark::State& state)
 }
 
 #ifdef _OPENMP
+inline constexpr std::array<int, 5> scalability_thread_counts = {1, 16, 32, 64, 128};
+inline constexpr std::array<std::pair<int, int>, 5> weak_scaling_shapes = {
+    std::pair{512, 1}, std::pair{2048, 16}, std::pair{2896, 32}, std::pair{4096, 64}, std::pair{5792, 128}};
+
 void benchmark_stage_aligned_openmp(benchmark::State& state)
 {
     benchmark_stage_aligned(state, static_cast<int>(state.range(3)));
 }
 
-std::vector<int> benchmark_thread_counts()
-{
-    const int maximum       = omp_get_max_threads();
-    std::vector<int> counts = {1, std::max(1, maximum / 8), std::max(1, maximum / 4), std::max(1, maximum / 2),
-                               maximum};
-    std::sort(counts.begin(), counts.end());
-    counts.erase(std::unique(counts.begin(), counts.end()), counts.end());
-    return counts;
-}
 #endif
 
 void apply_problem_shapes(benchmark::internal::Benchmark* benchmark)
@@ -92,24 +93,69 @@ void apply_problem_shapes(benchmark::internal::Benchmark* benchmark)
             benchmark->Args({patches, travelers, groups});
         }
     }
+    benchmark->Args(
+        {stage_aligned_strong_scaling_patches, stage_aligned_strong_scaling_patches - 1, 6});
 }
 
 #ifdef _OPENMP
 void apply_openmp_shapes(benchmark::internal::Benchmark* benchmark)
 {
-    const auto thread_counts  = benchmark_thread_counts();
-    const int maximum_threads = thread_counts.back();
+    constexpr int maximum_threads = scalability_thread_counts.back();
     for (const auto& [patches, travelers] : problem_shapes) {
         for (int groups : age_group_counts) {
             benchmark->Args({patches, travelers, groups, maximum_threads});
         }
     }
-    const auto [patches, travelers] = problem_shapes.back();
-    for (int threads : thread_counts) {
-        if (threads != maximum_threads) {
-            benchmark->Args({patches, travelers, 6, threads});
-        }
+    for (int threads : scalability_thread_counts) {
+        benchmark->Args(
+            {stage_aligned_strong_scaling_patches, stage_aligned_strong_scaling_patches - 1, 6, threads});
     }
+    for (const auto& [weak_patches, threads] : weak_scaling_shapes) {
+        benchmark->Args({weak_patches, weak_patches - 1, 6, threads});
+    }
+}
+
+template <int G>
+bool validate_openmp(int threads, std::string& error)
+{
+    constexpr int validation_patches = 263;
+    StageAlignedProblem serial(validation_patches, validation_patches - 1, G);
+    StageAlignedProblem parallel(validation_patches, validation_patches - 1, G);
+    advance_stage_aligned(serial, step_size, 0, integration_steps);
+    advance_stage_aligned(parallel, step_size, threads, integration_steps);
+
+    double maximum_absolute_error = 0.0;
+    double maximum_relative_error = 0.0;
+    bool values_match             = true;
+    const auto compare = [&](const std::vector<double>& expected, const std::vector<double>& actual) {
+        for (size_t index = 0; index < expected.size(); ++index) {
+            const double absolute_error = std::abs(expected[index] - actual[index]);
+            const double relative_error = absolute_error / std::max(1.0, std::abs(expected[index]));
+            maximum_absolute_error      = std::max(maximum_absolute_error, absolute_error);
+            maximum_relative_error      = std::max(maximum_relative_error, relative_error);
+            if (!std::isfinite(actual[index]) || absolute_error > 1e-10 * (1.0 + std::abs(expected[index]))) {
+                values_match = false;
+            }
+        }
+    };
+    compare(serial.totals, parallel.totals);
+    compare(serial.travelers, parallel.travelers);
+
+    std::cout << "Stage-aligned OpenMP validation N_G=" << G << ": max_abs=" << maximum_absolute_error
+              << ", max_rel=" << maximum_relative_error << '\n';
+    if (!values_match) {
+        error = "Serial and OpenMP stage-aligned results differ for N_G=" + std::to_string(G) +
+                " (max_abs=" + std::to_string(maximum_absolute_error) +
+                ", max_rel=" + std::to_string(maximum_relative_error) + ").";
+    }
+    return values_match;
+}
+
+bool validate_openmp_all(std::string& error)
+{
+    const int threads = omp_get_max_threads();
+    return validate_openmp<1>(threads, error) && validate_openmp<3>(threads, error) &&
+           validate_openmp<6>(threads, error) && validate_openmp<8>(threads, error);
 }
 #endif
 
@@ -129,12 +175,12 @@ BENCHMARK(mio::benchmark_mio::benchmark_stage_aligned_openmp)
     ->UseRealTime();
 #endif
 
-#ifdef LIKWID_PERFMON
 int main(int argc, char** argv)
 {
 #ifdef _OPENMP
     omp_set_dynamic(0);
 #endif
+#ifdef LIKWID_PERFMON
     LIKWID_MARKER_INIT;
     LIKWID_MARKER_THREADINIT;
 #ifdef _OPENMP
@@ -143,16 +189,37 @@ int main(int argc, char** argv)
         LIKWID_MARKER_THREADINIT;
     }
 #endif
+#endif
+
+    bool needs_validation = true;
+    for (int index = 1; index < argc; ++index) {
+        const std::string_view argument(argv[index]);
+        if (argument.starts_with("--benchmark_list_tests") || argument == "--help" || argument == "-h") {
+            needs_validation = false;
+        }
+    }
     ::benchmark::Initialize(&argc, argv);
     if (::benchmark::ReportUnrecognizedArguments(argc, argv)) {
+#ifdef LIKWID_PERFMON
         LIKWID_MARKER_CLOSE;
+#endif
         return 1;
     }
+#ifdef _OPENMP
+    std::string error;
+    if (needs_validation && !mio::benchmark_mio::validate_openmp_all(error)) {
+        std::cerr << error << '\n';
+        ::benchmark::Shutdown();
+#ifdef LIKWID_PERFMON
+        LIKWID_MARKER_CLOSE;
+#endif
+        return 1;
+    }
+#endif
     ::benchmark::RunSpecifiedBenchmarks();
     ::benchmark::Shutdown();
+#ifdef LIKWID_PERFMON
     LIKWID_MARKER_CLOSE;
+#endif
     return 0;
 }
-#else
-BENCHMARK_MAIN();
-#endif
