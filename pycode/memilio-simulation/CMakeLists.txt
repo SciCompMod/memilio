@@ -14,8 +14,9 @@ endif()
 set(CMAKE_CXX_STANDARD "20")
 set(CMAKE_CXX_STANDARD_REQUIRED "20")
 
+option(MEMILIO_BUILD_SHARED_LIBS "Build memilio as a shared library." ON)
 option(MEMILIO_USE_BUNDLED_PYBIND11 "Use pybind11 bundled with this library." ON)
-mark_as_advanced(MEMILIO_USE_BUNDLED_PYBIND11)
+mark_as_advanced(MEMILIO_BUILD_SHARED_LIBS MEMILIO_USE_BUNDLED_PYBIND11)
 
 include(GNUInstallDirs) # set to gnu folders. No cache variable so this is not global
 
