@@ -20,6 +20,7 @@
 
 #include "benchmark/benchmark.h"
 #include "ode_seir_benchmark_stage_aligned.h"
+#include "ode_seir_runtime_explicit.h"
 
 #include <algorithm>
 #include <array>
@@ -40,10 +41,12 @@ namespace mio::benchmark_mio
 
 void set_counters(benchmark::State& state, const StageAlignedProblem& problem, int threads)
 {
-    state.counters["patches"]    = problem.patches;
-    state.counters["edges"]      = static_cast<double>(problem.edges());
-    state.counters["age_groups"] = problem.groups;
-    state.counters["steps"]      = integration_steps;
+    state.counters["patches"]                = problem.patches;
+    state.counters["edges"]                  = static_cast<double>(problem.edges());
+    state.counters["age_groups"]             = problem.groups;
+    state.counters["steps"]                  = integration_steps;
+    state.counters["implementation_version"] = stage_aligned_implementation_version;
+    state.counters["temporal_block_steps"]   = temporal_block_steps;
     if (threads > 0) {
         state.counters["threads"] = threads;
     }
@@ -56,10 +59,10 @@ void benchmark_stage_aligned(benchmark::State& state, int threads)
     omp_set_dynamic(0);
 #endif
     StageAlignedProblem problem(static_cast<int>(state.range(0)), static_cast<int>(state.range(1)),
-                                static_cast<int>(state.range(2)));
+                                static_cast<int>(state.range(2)), threads);
     for (auto _ : state) {
         state.PauseTiming();
-        problem.reset_state();
+        problem.reset_state(threads);
         state.ResumeTiming();
         advance_stage_aligned(problem, step_size, threads, integration_steps);
         benchmark::DoNotOptimize(problem.totals.data());
@@ -75,7 +78,7 @@ void benchmark_stage_aligned_serial(benchmark::State& state)
 }
 
 #ifdef _OPENMP
-inline constexpr std::array<int, 5> scalability_thread_counts = {1, 16, 32, 64, 128};
+inline constexpr std::array<int, 5> scalability_thread_counts           = {1, 16, 32, 64, 128};
 inline constexpr std::array<std::pair<int, int>, 5> weak_scaling_shapes = {
     std::pair{512, 1}, std::pair{2048, 16}, std::pair{2896, 32}, std::pair{4096, 64}, std::pair{5792, 128}};
 
@@ -93,8 +96,7 @@ void apply_problem_shapes(benchmark::internal::Benchmark* benchmark)
             benchmark->Args({patches, travelers, groups});
         }
     }
-    benchmark->Args(
-        {stage_aligned_strong_scaling_patches, stage_aligned_strong_scaling_patches - 1, 6});
+    benchmark->Args({stage_aligned_strong_scaling_patches, stage_aligned_strong_scaling_patches - 1, 6});
 }
 
 #ifdef _OPENMP
@@ -107,57 +109,143 @@ void apply_openmp_shapes(benchmark::internal::Benchmark* benchmark)
         }
     }
     for (int threads : scalability_thread_counts) {
-        benchmark->Args(
-            {stage_aligned_strong_scaling_patches, stage_aligned_strong_scaling_patches - 1, 6, threads});
+        benchmark->Args({stage_aligned_strong_scaling_patches, stage_aligned_strong_scaling_patches - 1, 6, threads});
     }
     for (const auto& [weak_patches, threads] : weak_scaling_shapes) {
         benchmark->Args({weak_patches, weak_patches - 1, 6, threads});
     }
 }
+#endif
 
 template <int G>
-bool validate_openmp(int threads, std::string& error)
+bool validate_blocked(int threads, std::string& error)
 {
     constexpr int validation_patches = 263;
-    StageAlignedProblem serial(validation_patches, validation_patches - 1, G);
-    StageAlignedProblem parallel(validation_patches, validation_patches - 1, G);
-    advance_stage_aligned(serial, step_size, 0, integration_steps);
-    advance_stage_aligned(parallel, step_size, threads, integration_steps);
-
-    double maximum_absolute_error = 0.0;
-    double maximum_relative_error = 0.0;
-    bool values_match             = true;
-    const auto compare = [&](const std::vector<double>& expected, const std::vector<double>& actual) {
+    double maximum_absolute_error    = 0.0;
+    double maximum_relative_error    = 0.0;
+    bool values_match                = true;
+    const auto compare               = [&](const auto& expected, const auto& actual) {
+        if (expected.size() != actual.size()) {
+            values_match = false;
+            return;
+        }
         for (size_t index = 0; index < expected.size(); ++index) {
             const double absolute_error = std::abs(expected[index] - actual[index]);
             const double relative_error = absolute_error / std::max(1.0, std::abs(expected[index]));
             maximum_absolute_error      = std::max(maximum_absolute_error, absolute_error);
             maximum_relative_error      = std::max(maximum_relative_error, relative_error);
-            if (!std::isfinite(actual[index]) || absolute_error > 1e-10 * (1.0 + std::abs(expected[index]))) {
+            if (!std::isfinite(expected[index]) || !std::isfinite(actual[index]) ||
+                absolute_error > 1e-10 * (1.0 + std::abs(expected[index]))) {
                 values_match = false;
             }
         }
     };
-    compare(serial.totals, parallel.totals);
-    compare(serial.travelers, parallel.travelers);
+    // Tiny and partial tiles, multiple patches and a partial second time block.
+    for (const auto& [patches, travelers] : {std::pair{3, 2}, std::pair{validation_patches, 262}}) {
+        for (int steps : {1, 3, temporal_block_steps, temporal_block_steps + 1}) {
+            StageAlignedProblem reference(patches, travelers, G);
+            StageAlignedProblem serial(patches, travelers, G);
+            StageAlignedProblem parallel(patches, travelers, G, threads);
+            // Check parallel initialization, then break the proportionality of
+            // traveler compartments to exercise independent traveler dynamics.
+            compare(reference.totals, parallel.totals);
+            compare(reference.travelers, parallel.travelers);
+            for (size_t index = 0; index < reference.travelers.size(); ++index) {
+                reference.travelers[index] *= 0.9 + 0.01 * ((index * 7) % 13);
+            }
+            for (int group = 0; group < G; ++group) {
+                reference.rate_exposed[group] *= 1.0 + 0.02 * group;
+                reference.rate_infected[group] *= 1.0 + 0.03 * group;
+            }
+            serial   = reference;
+            parallel = reference;
+            advance_stage_aligned_reference(reference, step_size, steps);
+            advance_stage_aligned(serial, step_size, 0, steps);
+            advance_stage_aligned(parallel, step_size, threads, steps);
+            compare(reference.totals, serial.totals);
+            compare(reference.travelers, serial.travelers);
+            compare(reference.totals, parallel.totals);
+            compare(reference.travelers, parallel.travelers);
+            compare(reference.stage_lambda, serial.stage_lambda);
+            compare(reference.stage_lambda, parallel.stage_lambda);
+            serial.reset_state();
+            parallel.reset_state(threads);
+            compare(serial.totals, parallel.totals);
+            compare(serial.travelers, parallel.travelers);
+        }
+    }
 
-    std::cout << "Stage-aligned OpenMP validation N_G=" << G << ": max_abs=" << maximum_absolute_error
+    std::cout << "Stage-aligned stepwise/blocked validation N_G=" << G << ": max_abs=" << maximum_absolute_error
               << ", max_rel=" << maximum_relative_error << '\n';
     if (!values_match) {
-        error = "Serial and OpenMP stage-aligned results differ for N_G=" + std::to_string(G) +
+        error = "Stepwise and blocked stage-aligned results differ for N_G=" + std::to_string(G) +
                 " (max_abs=" + std::to_string(maximum_absolute_error) +
                 ", max_rel=" + std::to_string(maximum_relative_error) + ").";
     }
     return values_match;
 }
 
-bool validate_openmp_all(std::string& error)
+bool validate_blocked_all(std::string& error)
 {
+#ifdef _OPENMP
     const int threads = omp_get_max_threads();
-    return validate_openmp<1>(threads, error) && validate_openmp<3>(threads, error) &&
-           validate_openmp<6>(threads, error) && validate_openmp<8>(threads, error);
-}
+#else
+    const int threads = 0;
 #endif
+    return validate_blocked<1>(threads, error) && validate_blocked<3>(threads, error) &&
+           validate_blocked<6>(threads, error) && validate_blocked<8>(threads, error);
+}
+namespace scenario = mio::runtime_scenario;
+template <int G>
+void runtime_benchmark_impl(benchmark::State& state, int threads)
+{
+    try {
+        scenario::Inputs inputs(static_cast<int>(state.range(0)), G);
+        scenario::ExplicitProblem problem(inputs, threads);
+        const auto time = scenario::schedule();
+        for (auto _ : state) {
+            state.PauseTiming();
+            problem.reset();
+            state.ResumeTiming();
+            scenario::advance_explicit<G>(problem, time, threads);
+            benchmark::DoNotOptimize(problem.core.totals.data());
+            benchmark::DoNotOptimize(problem.core.travelers.data());
+            benchmark::ClobberMemory();
+        }
+        scenario::check_population(inputs, problem.core.totals);
+        scenario::counters(state, inputs, true, threads > 0 ? threads : 1);
+    }
+    catch (const std::exception& error) {
+        state.SkipWithError(error.what());
+    }
+}
+void runtime_dispatch(benchmark::State& state, int threads)
+{
+    switch (static_cast<int>(state.range(1))) {
+    case 1:
+        runtime_benchmark_impl<1>(state, threads);
+        break;
+    case 3:
+        runtime_benchmark_impl<3>(state, threads);
+        break;
+    case 6:
+        runtime_benchmark_impl<6>(state, threads);
+        break;
+    case 8:
+        runtime_benchmark_impl<8>(state, threads);
+        break;
+    default:
+        state.SkipWithError("Unsupported runtime age groups.");
+    }
+}
+void runtime_serial(benchmark::State& state)
+{
+    runtime_dispatch(state, 0);
+}
+void runtime_openmp(benchmark::State& state)
+{
+    runtime_dispatch(state, static_cast<int>(state.range(2)));
+}
 
 } // namespace mio::benchmark_mio
 
@@ -191,10 +279,18 @@ int main(int argc, char** argv)
 #endif
 #endif
 
+    const bool runtime = mio::runtime_scenario::enabled();
+    if (runtime) {
+        mio::runtime_scenario::register_shapes("runtime/explicit/serial", mio::benchmark_mio::runtime_serial);
+#ifdef _OPENMP
+        mio::runtime_scenario::register_shapes("runtime/explicit/openmp", mio::benchmark_mio::runtime_openmp,
+                                               omp_get_max_threads());
+#endif
+    }
     bool needs_validation = true;
     for (int index = 1; index < argc; ++index) {
         const std::string_view argument(argv[index]);
-        if (argument.starts_with("--benchmark_list_tests") || argument == "--help" || argument == "-h") {
+        if (mio::runtime_scenario::informational_argument(argument)) {
             needs_validation = false;
         }
     }
@@ -205,9 +301,27 @@ int main(int argc, char** argv)
 #endif
         return 1;
     }
-#ifdef _OPENMP
     std::string error;
-    if (needs_validation && !mio::benchmark_mio::validate_openmp_all(error)) {
+    try {
+        if (runtime && needs_validation) {
+            mio::runtime_scenario::validate_accuracy();
+#ifdef _OPENMP
+            const int threads = omp_get_max_threads();
+#else
+            const int threads = 0;
+#endif
+            mio::runtime_scenario::validate_explicit_cpu<1>(threads);
+            mio::runtime_scenario::validate_explicit_cpu<3>(threads);
+            mio::runtime_scenario::validate_explicit_cpu<6>(threads);
+            mio::runtime_scenario::validate_explicit_cpu<8>(threads);
+        }
+    }
+    catch (const std::exception& exception) {
+        std::cerr << "Runtime validation failed: " << exception.what() << '\n';
+        ::benchmark::Shutdown();
+        return 1;
+    }
+    if (!runtime && needs_validation && !mio::benchmark_mio::validate_blocked_all(error)) {
         std::cerr << error << '\n';
         ::benchmark::Shutdown();
 #ifdef LIKWID_PERFMON
@@ -215,7 +329,6 @@ int main(int argc, char** argv)
 #endif
         return 1;
     }
-#endif
     ::benchmark::RunSpecifiedBenchmarks();
     ::benchmark::Shutdown();
 #ifdef LIKWID_PERFMON

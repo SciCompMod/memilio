@@ -20,6 +20,7 @@
 
 #include "benchmark/benchmark.h"
 #include "ode_seir_metapop_benchmark.h"
+#include "ode_seir_runtime_scenario.h"
 
 #include <cublas_v2.h>
 #include <cuda_runtime.h>
@@ -130,9 +131,11 @@ template <int G>
 class GpuRunner
 {
 public:
-    explicit GpuRunner(const ImplicitProblem& problem)
+    explicit GpuRunner(const ImplicitProblem& problem, double dt = step_size, int graph_steps = integration_steps)
         : m_patches(problem.patches)
         , m_state_size(problem.state.size())
+        , m_dt(dt)
+        , m_graph_steps(graph_steps)
     {
         try {
             check_cuda(cudaStreamCreateWithFlags(&m_stream, cudaStreamNonBlocking), "cudaStreamCreateWithFlags");
@@ -174,7 +177,7 @@ public:
         release();
     }
 
-    GpuRunner(const GpuRunner&)            = delete;
+    GpuRunner(const GpuRunner&) = delete;
     GpuRunner& operator=(const GpuRunner&) = delete;
 
     void reset(const std::vector<double>& state)
@@ -185,9 +188,11 @@ public:
         check_cuda(cudaStreamSynchronize(m_stream), "finish state upload");
     }
 
-    void run()
+    void run(int replays = 1)
     {
-        check_cuda(cudaGraphLaunch(m_graph_exec, m_stream), "cudaGraphLaunch");
+        for (int replay = 0; replay < replays; ++replay) {
+            check_cuda(cudaGraphLaunch(m_graph_exec, m_stream), "cudaGraphLaunch");
+        }
         check_cuda(cudaStreamSynchronize(m_stream), "finish CUDA integration");
     }
 
@@ -223,9 +228,9 @@ private:
     {
         const double* current = Stage == 0 ? m_state : m_stage_state;
         // m_commuting stores row-major H, which cuBLAS views as column-major H^T.
-        check_cublas(cublasDgemm(m_cublas, CUBLAS_OP_N, CUBLAS_OP_N, m_patches, G, m_patches, &m_one,
-                                 m_commuting, m_patches, current + 2 * m_patches, 3 * m_patches, &m_zero,
-                                 m_present_share, m_patches),
+        check_cublas(cublasDgemm(m_cublas, CUBLAS_OP_N, CUBLAS_OP_N, m_patches, G, m_patches, &m_one, m_commuting,
+                                 m_patches, current + 2 * m_patches, 3 * m_patches, &m_zero, m_present_share,
+                                 m_patches),
                      "cublasDgemm(H^T I)");
         constexpr int point_threads = 256;
         const size_t share_values   = static_cast<size_t>(G) * m_patches;
@@ -233,13 +238,12 @@ private:
         normalize_present_share<<<share_blocks, point_threads, 0, m_stream>>>(
             m_present_share, m_inverse_present_population, share_values);
         check_cuda(cudaGetLastError(), "normalize_present_share");
-        check_cublas(cublasDgemm(m_cublas, CUBLAS_OP_T, CUBLAS_OP_N, m_patches, G, m_patches, &m_one,
-                                 m_commuting, m_patches, m_present_share, m_patches, &m_zero, m_mobile_share,
-                                 m_patches),
+        check_cublas(cublasDgemm(m_cublas, CUBLAS_OP_T, CUBLAS_OP_N, m_patches, G, m_patches, &m_one, m_commuting,
+                                 m_patches, m_present_share, m_patches, &m_zero, m_mobile_share, m_patches),
                      "cublasDgemm(H U)");
         const int point_blocks = (m_patches + 255) / 256;
         rhs_and_rk_kernel<G, Stage><<<point_blocks, 256, 0, m_stream>>>(
-            m_state, m_stage_state, m_result, m_mobile_share, m_inverse_population, m_patches, step_size);
+            m_state, m_stage_state, m_result, m_mobile_share, m_inverse_population, m_patches, m_dt);
         check_cuda(cudaGetLastError(), "rhs_and_rk_kernel");
     }
 
@@ -254,7 +258,7 @@ private:
     void capture_graph()
     {
         check_cuda(cudaStreamBeginCapture(m_stream, cudaStreamCaptureModeGlobal), "cudaStreamBeginCapture");
-        for (int step = 0; step < integration_steps; ++step) {
+        for (int step = 0; step < m_graph_steps; ++step) {
             enqueue_step();
         }
         check_cuda(cudaStreamEndCapture(m_stream, &m_graph), "cudaStreamEndCapture");
@@ -289,6 +293,8 @@ private:
 
     int m_patches;
     size_t m_state_size;
+    double m_dt;
+    int m_graph_steps;
     cudaStream_t m_stream                = nullptr;
     cublasHandle_t m_cublas              = nullptr;
     cudaGraph_t m_graph                  = nullptr;
@@ -455,6 +461,73 @@ bool validate_all(std::string& error)
     return validate<1>(error) && validate<3>(error) && validate<6>(error) && validate<8>(error);
 }
 
+namespace scenario = mio::runtime_scenario;
+template <int G>
+void runtime_cuda_impl(benchmark::State& state)
+{
+    try {
+        const scenario::Inputs inputs(static_cast<int>(state.range(0)), G);
+        const auto time = scenario::schedule();
+        ImplicitProblem problem(inputs.p, G);
+        scenario::configure_implicit(problem, inputs);
+        GpuRunner<G> runner(problem, time.dt(), 2 * time.half_day_steps);
+        for (auto _ : state) {
+            state.PauseTiming();
+            runner.reset(problem.initial_state);
+            state.ResumeTiming();
+            // Both GPU models replay a one-day graph once per simulated day.
+            runner.run(time.days);
+            benchmark::DoNotOptimize(runner.device_state());
+        }
+        scenario::check_population(inputs, scenario::implicit_residents(inputs, runner.download()));
+        scenario::counters(state, inputs, false, 0);
+    }
+    catch (const std::exception& error) {
+        state.SkipWithError(error.what());
+    }
+}
+void runtime_cuda(benchmark::State& state)
+{
+    switch (static_cast<int>(state.range(1))) {
+    case 1:
+        runtime_cuda_impl<1>(state);
+        break;
+    case 3:
+        runtime_cuda_impl<3>(state);
+        break;
+    case 6:
+        runtime_cuda_impl<6>(state);
+        break;
+    case 8:
+        runtime_cuda_impl<8>(state);
+        break;
+    default:
+        state.SkipWithError("Unsupported runtime age groups.");
+    }
+}
+template <int G>
+void validate_runtime_gpu()
+{
+    for (int patches : {3, 263}) {
+        for (int phase_steps : {1, 32}) {
+            const scenario::Inputs inputs(patches, G);
+            const scenario::Schedule time{2, phase_steps};
+            ImplicitProblem problem(patches, G);
+            scenario::configure_implicit(problem, inputs);
+            advance_cpu<G>(problem, time.dt(), time.total_steps());
+            const auto expected = scenario::implicit_residents(inputs, problem.state);
+            if (patches == 3)
+                scenario::compare(inputs, scenario::Reference(inputs, false).run(time), expected);
+            GpuRunner<G> runner(problem, time.dt(), 2 * phase_steps);
+            for (int replay = 0; replay < 2; ++replay) {
+                runner.reset(problem.initial_state);
+                runner.run(time.days);
+                scenario::compare(inputs, expected, scenario::implicit_residents(inputs, runner.download()));
+            }
+        }
+    }
+    std::cout << "Runtime implicit daily CUDA graph N_G=" << G << ": passed\n";
+}
 } // namespace mio::benchmark_mio
 
 BENCHMARK(mio::benchmark_mio::benchmark_serial)
@@ -471,10 +544,13 @@ BENCHMARK(mio::benchmark_mio::benchmark_cuda)
 
 int main(int argc, char** argv)
 {
+    const bool runtime = mio::runtime_scenario::enabled();
+    if (runtime)
+        mio::runtime_scenario::register_shapes("runtime/implicit/cuda", mio::benchmark_mio::runtime_cuda);
     bool needs_device = true;
     for (int index = 1; index < argc; ++index) {
         const std::string_view argument(argv[index]);
-        if (argument.find("--benchmark_list_tests") == 0 || argument == "--help" || argument == "-h") {
+        if (mio::runtime_scenario::informational_argument(argument)) {
             needs_device = false;
         }
     }
@@ -487,8 +563,15 @@ int main(int argc, char** argv)
             cudaDeviceProp properties{};
             mio::benchmark_mio::check_cuda(cudaGetDeviceProperties(&properties, 0), "cudaGetDeviceProperties");
             std::cout << "GPU: " << properties.name << '\n';
+            if (runtime) {
+                mio::runtime_scenario::validate_accuracy();
+                mio::benchmark_mio::validate_runtime_gpu<1>();
+                mio::benchmark_mio::validate_runtime_gpu<3>();
+                mio::benchmark_mio::validate_runtime_gpu<6>();
+                mio::benchmark_mio::validate_runtime_gpu<8>();
+            }
             std::string error;
-            if (!mio::benchmark_mio::validate_all(error)) {
+            if (!runtime && !mio::benchmark_mio::validate_all(error)) {
                 std::cerr << error << '\n';
                 ::benchmark::Shutdown();
                 return 1;

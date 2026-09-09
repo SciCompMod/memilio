@@ -24,6 +24,8 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <memory>
+#include <new>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -39,11 +41,39 @@ constexpr double step_size                                  = 0.5;
 constexpr double total_traveler_fraction                    = 0.1;
 constexpr int traveler_chunk_size                           = 256;
 constexpr int integration_steps                             = 64;
+constexpr int temporal_block_steps                          = 64;
+constexpr int stage_aligned_implementation_version          = 2;
 constexpr int stage_aligned_strong_scaling_patches          = 8192;
 constexpr std::array<int, 4> age_group_counts               = {1, 3, 6, 8};
 constexpr std::array<std::pair<int, int>, 7> problem_shapes = {
     std::pair{16, 15},   std::pair{32, 31},   std::pair{64, 63},    std::pair{128, 127},
     std::pair{256, 255}, std::pair{512, 511}, std::pair{1024, 1023}};
+
+// Default-initialize scalar elements without writing their pages on the allocating
+// thread. reset_state() MUST fill every element before it is read. With local
+// NUMA allocation, the static patch owner then performs the actual first touch.
+template <class T>
+struct FirstTouchAllocator : std::allocator<T> {
+    template <class U>
+    struct rebind {
+        using other = FirstTouchAllocator<U>;
+    };
+    FirstTouchAllocator() = default;
+    template <class U>
+    FirstTouchAllocator(const FirstTouchAllocator<U>&) noexcept
+    {
+    }
+    template <class U>
+    void construct(U* pointer)
+    {
+        ::new (static_cast<void*>(pointer)) U;
+    }
+    template <class U, class... Args>
+    void construct(U* pointer, Args&&... args)
+    {
+        ::new (static_cast<void*>(pointer)) U(std::forward<Args>(args)...);
+    }
+};
 
 /**
  * Synthetic, destination-oriented SEIR state used by all three benchmarks.
@@ -61,13 +91,13 @@ struct StageAlignedProblem {
     int travelers_per_patch;
     int groups;
     std::vector<double> totals;
-    std::vector<double> travelers;
+    std::vector<double, FirstTouchAllocator<double>> travelers;
     std::vector<double> contact_beta;
     std::vector<double> rate_exposed;
     std::vector<double> rate_infected;
     std::vector<double> stage_lambda;
 
-    StageAlignedProblem(int num_patches, int num_travelers_per_patch, int num_groups)
+    StageAlignedProblem(int num_patches, int num_travelers_per_patch, int num_groups, int threads = 0)
         : patches(num_patches)
         , travelers_per_patch(num_travelers_per_patch)
         , groups(num_groups)
@@ -87,7 +117,7 @@ struct StageAlignedProblem {
                 contact_beta[static_cast<size_t>(i) * groups + j] = 0.27 / (1.0 + std::abs(i - j));
             }
         }
-        reset_state();
+        reset_state(threads);
     }
 
     int compartments() const
@@ -100,13 +130,21 @@ struct StageAlignedProblem {
         return static_cast<size_t>(patches) * travelers_per_patch;
     }
 
-    void reset_state()
+    void reset_state(int threads = 0)
     {
+#ifndef _OPENMP
+        if (threads > 0) {
+            throw std::invalid_argument("Parallel initialization requires OpenMP.");
+        }
+#endif
         const double exposed    = 100.0 / groups;
         const double infected   = 100.0 / groups;
         const double recovered  = 100.0 / groups;
         const double population = 10000.0 / groups;
 
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (threads > 0) num_threads(threads > 0 ? threads : 1)
+#endif
         for (int p = 0; p < patches; ++p) {
             const double patch_position = static_cast<double>(p + 1) / static_cast<double>(patches + 1);
             const double patch_scale    = 0.95 + 0.1 * patch_position;
@@ -191,7 +229,8 @@ inline void integrate_totals(StageAlignedProblem& problem, int patch, double dt)
 }
 
 template <int G>
-inline void integrate_traveler_chunk(StageAlignedProblem& problem, int patch, int group, int first, int last, double dt)
+inline void integrate_traveler_chunk(StageAlignedProblem& problem, int patch, int group, int first, int last, double dt,
+                                     const double* history = nullptr)
 {
     const int stride          = problem.travelers_per_patch;
     const size_t patch_offset = static_cast<size_t>(patch) * 4 * G * stride;
@@ -201,13 +240,17 @@ inline void integrate_traveler_chunk(StageAlignedProblem& problem, int patch, in
     double* recovered         = infected + stride;
     const double rate_e       = problem.rate_exposed[group];
     const double rate_i       = problem.rate_infected[group];
-    const double lambda1      = problem.stage_lambda[static_cast<size_t>(group) * problem.patches + patch];
-    const double lambda2      = problem.stage_lambda[static_cast<size_t>(G + group) * problem.patches + patch];
-    const double lambda3      = problem.stage_lambda[static_cast<size_t>(2 * G + group) * problem.patches + patch];
-    const double lambda4      = problem.stage_lambda[static_cast<size_t>(3 * G + group) * problem.patches + patch];
-    const double half_dt      = 0.5 * dt;
-    const double sixth_dt     = dt / 6.0;
-    const double third_dt     = dt / 3.0;
+    const double lambda1 =
+        history ? history[0] : problem.stage_lambda[static_cast<size_t>(group) * problem.patches + patch];
+    const double lambda2 =
+        history ? history[1] : problem.stage_lambda[static_cast<size_t>(G + group) * problem.patches + patch];
+    const double lambda3 =
+        history ? history[2] : problem.stage_lambda[static_cast<size_t>(2 * G + group) * problem.patches + patch];
+    const double lambda4 =
+        history ? history[3] : problem.stage_lambda[static_cast<size_t>(3 * G + group) * problem.patches + patch];
+    const double half_dt  = 0.5 * dt;
+    const double sixth_dt = dt / 6.0;
+    const double third_dt = dt / 3.0;
 
 #ifdef _OPENMP
 #pragma omp simd
@@ -262,7 +305,7 @@ inline void integrate_traveler_chunk(StageAlignedProblem& problem, int patch, in
 }
 
 template <int G>
-inline void advance_stage_aligned_impl(StageAlignedProblem& problem, double dt, int threads, int steps)
+inline void advance_stage_aligned_stepwise_impl(StageAlignedProblem& problem, double dt, int threads, int steps)
 {
     const int chunks      = (problem.travelers_per_patch + traveler_chunk_size - 1) / traveler_chunk_size;
     const long long tasks = static_cast<long long>(problem.patches) * G * chunks;
@@ -322,6 +365,97 @@ inline void advance_stage_aligned_impl(StageAlignedProblem& problem, double dt, 
 #ifdef LIKWID_PERFMON
     LIKWID_MARKER_STOP("stage_aligned_serial");
 #endif
+}
+
+// Each patch is independent between mobility events. Its small lambda history
+// is private to its owner; a 256-traveler/group tile (8 KiB) stays cache-resident
+// while all steps in the block are applied. Rate generation remains timed.
+template <int G>
+inline void advance_stage_aligned_patch(StageAlignedProblem& problem, int patch, double dt, int steps)
+{
+    std::array<double, G * temporal_block_steps * 4> history;
+    for (int completed = 0; completed < steps;) {
+        const int count = std::min(temporal_block_steps, steps - completed);
+        for (int step = 0; step < count; ++step) {
+            integrate_totals<G>(problem, patch, dt);
+            for (int group = 0; group < G; ++group) {
+                for (int stage = 0; stage < 4; ++stage) {
+                    history[(group * temporal_block_steps + step) * 4 + stage] =
+                        problem.stage_lambda[static_cast<size_t>(stage * G + group) * problem.patches + patch];
+                }
+            }
+        }
+        for (int group = 0; group < G; ++group) {
+            for (int first = 0; first < problem.travelers_per_patch; first += traveler_chunk_size) {
+                const int last = std::min(first + traveler_chunk_size, problem.travelers_per_patch);
+                for (int step = 0; step < count; ++step) {
+                    integrate_traveler_chunk<G>(problem, patch, group, first, last, dt,
+                                                history.data() + (group * temporal_block_steps + step) * 4);
+                }
+            }
+        }
+        completed += count;
+    }
+}
+
+template <int G>
+inline void advance_stage_aligned_impl(StageAlignedProblem& problem, double dt, int threads, int steps)
+{
+#ifdef _OPENMP
+    if (threads > 0) {
+#pragma omp parallel num_threads(threads)
+        {
+#ifdef LIKWID_PERFMON
+            LIKWID_MARKER_START("stage_aligned_openmp");
+#endif
+#pragma omp for schedule(static)
+            for (int patch = 0; patch < problem.patches; ++patch) {
+                advance_stage_aligned_patch<G>(problem, patch, dt, steps);
+            }
+#ifdef LIKWID_PERFMON
+            LIKWID_MARKER_STOP("stage_aligned_openmp");
+#endif
+        }
+        return;
+    }
+#else
+    if (threads > 0) {
+        throw std::invalid_argument("OpenMP benchmark requested without OpenMP support.");
+    }
+#endif
+#ifdef LIKWID_PERFMON
+    LIKWID_MARKER_START("stage_aligned_serial");
+#endif
+    for (int patch = 0; patch < problem.patches; ++patch) {
+        advance_stage_aligned_patch<G>(problem, patch, dt, steps);
+    }
+#ifdef LIKWID_PERFMON
+    LIKWID_MARKER_STOP("stage_aligned_serial");
+#endif
+}
+
+// The original step-major ordering is retained as a numerical reference only.
+inline void advance_stage_aligned_reference(StageAlignedProblem& problem, double dt, int steps)
+{
+    if (steps <= 0) {
+        throw std::invalid_argument("The number of integration steps must be positive.");
+    }
+    switch (problem.groups) {
+    case 1:
+        advance_stage_aligned_stepwise_impl<1>(problem, dt, 0, steps);
+        break;
+    case 3:
+        advance_stage_aligned_stepwise_impl<3>(problem, dt, 0, steps);
+        break;
+    case 6:
+        advance_stage_aligned_stepwise_impl<6>(problem, dt, 0, steps);
+        break;
+    case 8:
+        advance_stage_aligned_stepwise_impl<8>(problem, dt, 0, steps);
+        break;
+    default:
+        throw std::invalid_argument("Unsupported number of age groups.");
+    }
 }
 
 inline void advance_stage_aligned(StageAlignedProblem& problem, double dt = step_size, int threads = 0, int steps = 1)
