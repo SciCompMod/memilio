@@ -16,8 +16,12 @@
 namespace mio::runtime_scenario
 {
 inline constexpr int version                = 1;
+// Separate the registered grid from the unchanged physical scenario. Version 1
+// contained only the original 28 shapes; version 2 adds four large G=6 shapes.
+inline constexpr int shape_set_version      = 2;
 inline constexpr double accuracy_tolerance  = 1e-6; // fraction of initial resident population
 inline constexpr std::array<int, 7> patches = {16, 32, 64, 128, 256, 512, 1024};
+inline constexpr std::array<int, 4> large_patches = {2048, 4096, 8192, 16384};
 inline constexpr std::array<int, 4> groups  = {1, 3, 6, 8};
 inline double maximum_refinement_error      = 0.0;
 inline bool accuracy_checked                = false;
@@ -412,6 +416,7 @@ inline void counters(benchmark::State& state, const Inputs& in, bool explicit_mo
         throw std::runtime_error("The runtime accuracy gate has not been executed.");
     const auto time                                 = schedule();
     state.counters["scenario_version"]              = version;
+    state.counters["shape_set_version"]             = shape_set_version;
     state.counters["patches"]                       = in.p;
     state.counters["age_groups"]                    = in.g;
     state.counters["cpu_threads"]                   = threads;
@@ -439,6 +444,13 @@ inline void register_shapes(const char* name, void (*function)(benchmark::State&
             else
                 b->Args({p, g});
         }
+    }
+    // Extend the size range at G=6 only, not the full patch/age-group product.
+    for (int p : large_patches) {
+        if (threads > 0)
+            b->Args({p, 6, threads});
+        else
+            b->Args({p, 6});
     }
     if (threads > 0)
         b->ArgNames({"patches", "age_groups", "threads"});
