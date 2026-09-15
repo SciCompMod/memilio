@@ -55,7 +55,7 @@ schools, workplaces, or homes. The matrices can be loaded or stored in the parti
 In the ``ContactPatterns`` parameter, each matrix element stores baseline contact rates :math:`c_{i,j}` between sociodemographic 
 group :math:`i` and group :math:`j`. The dimension of the matrix is automatically defined by the model initiation and it is reduced 
 to one value if no stratifcation is used. The values can be adjusted during the simulation, e.g., through implementing 
-nonpharmaceutical interventions, see the section on :ref:`Nonpharmaceutical Interventions`.
+nonpharmaceutical interventions, see the section on :ref:`Nonpharmaceutical Interventions ODE`.
 Parameters can get accessed via ``model.parameters.get<Param<ScalarType>>()`` and set via either 
 ``model.parameters.get<Param<ScalarType>>() = value`` or ``model.parameters.set<Param<ScalarType>>(value)``. 
 
@@ -75,7 +75,7 @@ the simulation, set the initial conditions via ``model.populations[{AgeGroup::Ag
 each ``InfectionState`` and sociodemographic group.
 
 
-.. _Nonpharmaceutical Interventions:
+.. _Nonpharmaceutical Interventions ODE:
 
 Nonpharmaceutical interventions
 -------------------------------

@@ -16,29 +16,22 @@ runs:
     - name: Make artifact dir
       shell: bash
       run: |
-        if [ "${{ inputs.package }}" != "simulation" ]; then
-          cd pycode/memilio-${{ inputs.package }}/
-        # else stay in root directory
-        fi
+        cd pycode/memilio-${{ inputs.package }}/
         mkdir wheelhouse
     - name: Build Python Wheels
       shell: bash
       run: |
-        if [ "${{ inputs.package }}" != "simulation" ]; then
-          cd pycode/memilio-${{ inputs.package }}/
-        # else stay in root directory
-        fi
-        /opt/python/cp39-cp39/bin/python -m pip install --upgrade pip setuptools wheel
-        /opt/python/cp313-cp313/bin/python -m pip install --upgrade pip setuptools wheel
-        /opt/python/cp39-cp39/bin/python -m pip install scikit-build scikit-build-core 
-        /opt/python/cp313-cp313/bin/python -m pip install scikit-build scikit-build-core
-        # Install setuptools-scm only for memilio-simulation
-        if [ "${{ inputs.package }}" == "simulation" ]; then
-          /opt/python/cp39-cp39/bin/python -m pip install setuptools-scm
-          /opt/python/cp313-cp313/bin/python -m pip install setuptools-scm
-        fi
-        /opt/python/cp39-cp39/bin/python -m build --no-isolation --wheel
-        /opt/python/cp313-cp313/bin/python -m build --no-isolation --wheel
+        cd pycode/memilio-${{ inputs.package }}/
+        # install dependencies and build wheels with specified python versions
+        for python_cmd in /opt/python/cp39-cp39/bin/python /opt/python/cp313-cp313/bin/python
+        do
+          $python_cmd -m pip install --upgrade pip setuptools wheel
+          $python_cmd -m pip install scikit-build scikit-build-core
+          if [ "${{ inputs.package }}" == "simulation" ]
+            then $python_cmd -m pip install setuptools-scm
+          fi
+          $python_cmd -m build --no-isolation --wheel
+        done    
         # Exclude memilio-generation, because its a pure python package, cmake is only used in the build process to retrieve data from cpp
         if [[ -f "CMakeLists.txt" ]] && [ "${{ inputs.package }}" != "generation" ]; then 
           # includes native dependencies in the wheel
@@ -47,11 +40,7 @@ runs:
           # no auditwheel necessary for pure python packages, so only copy the wheels to the same output directory 
           cp dist/*.whl wheelhouse
         fi
-        if [ "${{ inputs.package }}" != "simulation" ]; then
-          cp -r wheelhouse ..
-        else
-          cp -r wheelhouse pycode
-        fi 
+        cp -r wheelhouse ..
     - name: Upload Python Wheels
       uses: actions/upload-artifact@v7
       with:

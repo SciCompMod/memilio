@@ -60,11 +60,11 @@ Initial conditions
 
 To initialize the model, the following inputs need to be passed to the model constructor:
 
-- a ``TimeSeries`` containing the number of `Susceptible`s for a large enough number of time points before the start of the simulation,
+- a ``TimeSeries`` containing the number of `Susceptible`\s for a large enough number of time points before the start of the simulation,
 - the time step size :math:`dt` used for numerical integration,
 - the size of the population of the considered region :math:`N`. 
 
-The initialization of the model can be done as follows where we set the `Susceptible`s from :math:`-15, \dots, 0` based on the total population and the time of the previous time point.
+The initialization of the model can be done as follows where we set the `Susceptible`\s from :math:`-15, \dots, 0` based on the total population and the time of the previous time point.
 
 .. code-block:: cpp
 
@@ -83,7 +83,6 @@ The initialization of the model can be done as follows where we set the `Suscept
     // Initialize model.
     mio::iseir::Model model(std::move(init), dt, N);
 
-.. _Nonpharmaceutical Interventions:
 Nonpharmaceutical Interventions
 -------------------------------
 

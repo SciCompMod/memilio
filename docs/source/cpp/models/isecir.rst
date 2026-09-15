@@ -198,12 +198,10 @@ There are different options for initializing a fictional scenario. Regardless of
 
             model.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] = 1000.;
 
-        - If none of the above is used, the force of infection formula and the values for the initial transitions are used consistently with the numerical scheme proposed in `Messina et al (2022) <https://doi.org/10.3934/jcd.2021029>`_ to set the `Susceptible`s. 
+        - If none of the above is used, the force of infection formula and the values for the initial transitions are used consistently with the numerical scheme proposed in `Messina et al (2022) <https://doi.org/10.3934/jcd.2021029>`__ to set the `Susceptible`\s.
 
-- The file `parameters_io <https://github.com/SciCompMod/memilio/blob/main/cpp/models/ide_secir/parameters_io.h>`_ provides functionality to compute initial data for the IDE-SECIR model based on real data. An example for this initialization method can be found at  `IDE initialization example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ide_initialization.cpp>`_.
+- The file `parameters_io <https://github.com/SciCompMod/memilio/blob/main/cpp/models/ide_secir/parameters_io.h>`_ provides functionality to compute initial data for the IDE-SECIR model based on real data. An example for this initialization method can be found at  `IDE initialization example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ide_initialization.cpp>`__.
 
-
-.. _Nonpharmaceutical Interventions:
 Nonpharmaceutical Interventions
 -------------------------------
 

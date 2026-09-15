@@ -169,8 +169,8 @@ For LCT models, the class ``CompartmentalModel`` requires the following template
 - type of floating point type, here ``ScalarType``,
 - a class ``InfectionState`` containing the compartments, see above,
 - the class ``LctPopulations`` which is a class template for compartment populations of LCT models depending on the 
-floating point type and the considered ``LctStates`` and determines the type of the public member ``populations`` which contains 
-the number of individuals per subcompartment and is used to pass initial conditions to the model,
+  floating point type and the considered ``LctStates`` and determines the type of the public member ``populations`` which contains 
+  the number of individuals per subcompartment and is used to pass initial conditions to the model,
 - the class ``Parameters`` containing all required parameters, see above. 
 
 The function ``get_derivatives()`` evaluates the right-hand-side of the ODE :math:`dydt = f(y, t)` that we want to solve, see above.

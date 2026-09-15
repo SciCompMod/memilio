@@ -30,9 +30,9 @@
 .. |Risk-mediated_dynamic_regulation_DOI| replace:: DOI:10.1016/j.chaos.2025.116782
 .. _Risk-mediated_dynamic_regulation_DOI: https://doi.org/10.1016/j.chaos.2025.116782
 
-.. |Differentially_private_federated_learning| replace:: Kerkouche R, Zunker H, Fritz M, Kühn MJ. (2025) *Differentially private federated learning for localized control of infectious disease dynamics*. arXiv. |Differentially_private_federated_learning_DOI|_
-.. |Differentially_private_federated_learning_DOI| replace:: arXiv:2509.14024v1
-.. _Differentially_private_federated_learning_DOI: https://doi.org/10.48550/arXiv.2509.14024
+.. |Differentially_private_federated_learning| replace:: Kerkouche R, Zunker H, Fritz M, Kühn MJ. (2026) *Differentially private federated learning for localized control of infectious disease dynamics*. *Scientific Reports* 16, 20808. |Differentially_private_federated_learning_DOI|_
+.. |Differentially_private_federated_learning_DOI| replace:: DOI:10.1038/s41598-026-60725-1
+.. _Differentially_private_federated_learning_DOI: https://doi.org/10.1038/s41598-026-60725-1
 
 .. |Integrative_Modeling_of_the| replace:: Schmid N, Bicker J , Hofmann AF, Wallrafen-Sam K, Kerkmann D, Wieser A, Kühn MJ, Hasenauer J (2025). *Integrative Modeling of the Spread of Serious Infectious Diseases and Corresponding Wastewater Dynamics*. *Epidemics* 51:100836. |Integrative_Modeling_of_the_DOI|_
 .. |Integrative_Modeling_of_the_DOI| replace:: DOI:10.1016/j.epidem.2025.100836
@@ -58,9 +58,9 @@
 .. |Assessment_of_effective_mitigation_DOI| replace:: DOI:10.1016/j.mbs.2021.108648
 .. _Assessment_of_effective_mitigation_DOI: https://doi.org/10.1016/j.mbs.2021.108648
 
-.. |Coupled_Epidemiological_and_Wastewater| replace:: Bicker J, Tomza N, Wallrafen-Sam K, Schmid N, Hofmann A., et al. (2025). *Coupled Epidemiological and Wastwater Modeling at the Urban Scale: A Case Study for Munich*. medRxiv. |Coupled_Epidemiological_and_Wastewater_DOI|_
-.. |Coupled_Epidemiological_and_Wastewater_DOI| replace:: DOI:10.1101/2025.09.25.25336633
-.. _Coupled_Epidemiological_and_Wastewater_DOI: https://doi.org/10.1101/2025.09.25.25336633
+.. |Coupled_Epidemiological_and_Wastewater| replace:: Bicker J, Tomza N, Wallrafen-Sam K, Schmid N, Hofmann A., et al. (2026). *Coupled epidemiological and wastwater modeling at the urban scale: A case study for Munich*. *iScience* 29. |Coupled_Epidemiological_and_Wastewater_DOI|_
+.. |Coupled_Epidemiological_and_Wastewater_DOI| replace:: DOI:10.1016/j.isci.2026.116891
+.. _Coupled_Epidemiological_and_Wastewater_DOI: https://doi.org/10.1016/j.isci.2026.116891
 
 .. |Missing_Transmission_Chains| replace:: Korf S, Wagner S J, Köster G, Kühn M J (2026). *On the Effect of Missing Transmission Chain Information in Agent-Based Models: Outcomes of Superspreading Events and Workplace Transmission*. *Chaos, Solitons & Fractals* 208 (2), July 2026, 118179. |Missing_Transmission_Chains_DOI|_
 .. |Missing_Transmission_Chains_DOI| replace:: DOI:10.1016/j.chaos.2026.118179
