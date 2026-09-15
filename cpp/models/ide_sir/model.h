@@ -77,6 +77,7 @@ public:
                                     size_t smoothstep_order = 0.);
 
     ScalarType compute_gamma_deriv(ScalarType dt, size_t time_point_index, size_t fd_order);
+    ScalarType compute_gamma_deriv_analytical(ScalarType dt, size_t time_point_index);
 
     // Returns the number of iterations needed in fixed point iteration.
     ScalarType fixed_point_function(ScalarType susceptibles, ScalarType dt, size_t fd_order_contacts = 1,
@@ -104,6 +105,8 @@ public:
 
     void compute_S_deriv_forward(ScalarType div_dt, size_t time_point_index);
 
+    // void compute_S_deriv_analytical(ScalarType div_dt, size_t time_point_index);
+
     void compute_S_deriv_analytical(ScalarType dt, size_t time_point_index);
 
     void compute_I_and_R(ScalarType dt, bool kahan, size_t time_point_index);
@@ -120,15 +123,18 @@ public:
     // people in defined #InfectionState%s for every AgeGroup.
     TimeSeries<ScalarType> flows                      = TimeSeries<ScalarType>((size_t)InfectionTransition::Count);
     TimeSeries<ScalarType> infected_per_infection_age = TimeSeries<ScalarType>(1);
+    std::vector<ScalarType> m_transmissionproboncontact_vector;
+    std::vector<ScalarType> m_riskofinffromsymptomatic_vector;
+    ScalarType m_N;
 
 private:
     // ---- Private parameters. ----
-    ScalarType m_N; ///< Vector containing the total population size of the considered region for every AgeGroup.
+    ///< Vector containing the total population size of the considered region for every AgeGroup.
     size_t m_gregory_order;
     size_t m_finite_difference_order;
     std::vector<ScalarType> m_transitiondistribution_vector;
-    std::vector<ScalarType> m_transmissionproboncontact_vector;
-    std::vector<ScalarType> m_riskofinffromsymptomatic_vector;
+    // std::vector<ScalarType> m_transmissionproboncontact_vector;
+    // std::vector<ScalarType> m_riskofinffromsymptomatic_vector;
     ScalarType m_calctime;
     ScalarType m_tol{1e-10};
 };

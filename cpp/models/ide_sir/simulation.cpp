@@ -68,7 +68,17 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool kahan,
         //                                 m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Recovered]) /
         //                                m_model->populations.get_value(0).sum();
 
-        ScalarType first_flow_approx = m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Infected];
+        // ScalarType first_flow_approx = m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Infected] / m_dt;
+        ScalarType first_flow_approx =
+            m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible] *
+            m_model->m_transmissionproboncontact_vector[0] * m_model->m_riskofinffromsymptomatic_vector[0] *
+            m_model->parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                SimulationTime<ScalarType>(m_model->populations.get_time(0)), smoother_window, smoothstep_order)(0, 0) /
+            m_model->m_N * m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Infected];
+        // (m_model->m_transmissionproboncontact_vector[0] * m_model->m_riskofinffromsymptomatic_vector[0] *
+        //  m_model->parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+        //      SimulationTime<ScalarType>(m_model->populations.get_time(0))) *
+        //  m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Infected]);
 
         ScalarType t_flows_init = m_model->populations.get_time(0);
         m_model->flows.add_time_point(t_flows_init, TimeSeries<ScalarType>::Vector::Constant(
@@ -76,7 +86,6 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool kahan,
         std::cout << "Flows first tp: " << m_model->flows.get_time(0) << std::endl;
         // Compute S'(t) for t_1,..., t_{n0-1} with backwards difference operator. The corresponding flow is then given by -S'.
         for (size_t i = 1; i < (size_t)m_model->populations.get_num_time_points(); i++) {
-
             ScalarType increment         = m_dt - m_summation_error_flows_init;
             ScalarType t_temp            = t_flows_init + increment;
             m_summation_error_flows_init = (t_temp - t_flows_init) - increment;
@@ -87,6 +96,14 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool kahan,
                 t_flows_init, TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, 0.));
 
             m_model->compute_S_deriv(m_div_dt, i);
+            // if (i <= 4) {
+            //     m_model->compute_S_deriv_forward(m_div_dt, i);
+            // }
+            // else {
+            //     m_model->compute_S_deriv(m_div_dt, i);
+            // }
+
+            // m_model->compute_S_deriv_analytical(m_dt, i);
         }
 
         if (more_precise_s_deriv) {
@@ -154,6 +171,8 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool kahan,
 
         // Compute S'.
         m_model->compute_S_deriv(m_div_dt);
+        // size_t index = m_model->flows.get_num_time_points() - 1;
+        // m_model->compute_S_deriv_analytical(m_dt, index);
 
         // Compute I and R.
         m_model->compute_I_and_R(m_dt, kahan);
