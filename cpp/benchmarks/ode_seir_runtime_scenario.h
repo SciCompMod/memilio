@@ -11,7 +11,11 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 namespace mio::runtime_scenario
 {
@@ -23,8 +27,37 @@ inline constexpr double accuracy_tolerance  = 1e-6; // fraction of initial resid
 inline constexpr std::array<int, 7> patches = {16, 32, 64, 128, 256, 512, 1024};
 inline constexpr std::array<int, 4> large_patches = {2048, 4096, 8192, 16384};
 inline constexpr std::array<int, 4> groups  = {1, 3, 6, 8};
+inline constexpr int scaling_shape_set_version = 3;
+inline constexpr int strong_patches = 8192;
+inline constexpr std::array<std::pair<int, int>, 5> weak_scaling_shapes = {
+    std::pair{1, 512}, std::pair{16, 2048}, std::pair{32, 2896}, std::pair{64, 4096}, std::pair{128, 5792}};
 inline double maximum_refinement_error      = 0.0;
 inline bool accuracy_checked                = false;
+
+inline std::string experiment()
+{
+    const char* value = std::getenv("RUNTIME_EXPERIMENT");
+    const std::string selected = value ? value : "runtime";
+    if (selected != "runtime" && selected != "strong" && selected != "weak" && selected != "scaling")
+        throw std::invalid_argument("RUNTIME_EXPERIMENT must be runtime, strong, weak or scaling.");
+    return selected;
+}
+
+inline void check_openmp_team()
+{
+#ifdef _OPENMP
+    const int requested = omp_get_max_threads();
+    int actual = 0;
+#pragma omp parallel num_threads(requested)
+    {
+#pragma omp single
+        actual = omp_get_num_threads();
+    }
+    if (actual != requested)
+        throw std::runtime_error("OpenMP created " + std::to_string(actual) + " threads, expected " +
+                                 std::to_string(requested) + "; check OMP_THREAD_LIMIT and allocation.");
+#endif
+}
 
 inline bool informational_argument(std::string_view argument)
 {
@@ -390,6 +423,8 @@ private:
 
 inline void validate_accuracy()
 {
+    // Before any measured work: requested resource counts must be real teams.
+    check_openmp_team();
     accuracy_checked  = false;
     const auto coarse = schedule();
     const Schedule fine{coarse.days, 2 * coarse.half_day_steps};
@@ -416,7 +451,8 @@ inline void counters(benchmark::State& state, const Inputs& in, bool explicit_mo
         throw std::runtime_error("The runtime accuracy gate has not been executed.");
     const auto time                                 = schedule();
     state.counters["scenario_version"]              = version;
-    state.counters["shape_set_version"]             = shape_set_version;
+    state.counters["shape_set_version"]             =
+        experiment() == "runtime" ? shape_set_version : scaling_shape_set_version;
     state.counters["patches"]                       = in.p;
     state.counters["age_groups"]                    = in.g;
     state.counters["cpu_threads"]                   = threads;
@@ -436,6 +472,27 @@ inline void counters(benchmark::State& state, const Inputs& in, bool explicit_mo
 
 inline void register_shapes(const char* name, void (*function)(benchmark::State&), int threads = 0)
 {
+    const auto selected = experiment();
+    if (selected != "runtime") {
+        // Scaling uses the exact same OpenMP functions, including OMP1. Never
+        // register serial/GPU baselines as scaling cases.
+        if (threads <= 0)
+            return;
+        const auto shape = std::find_if(weak_scaling_shapes.begin(), weak_scaling_shapes.end(),
+                                       [threads](const auto& item) { return item.first == threads; });
+        if (shape == weak_scaling_shapes.end())
+            throw std::invalid_argument("Daily scaling supports 1, 16, 32, 64 or 128 OpenMP threads.");
+        for (const char* kind : {"strong", "weak"}) {
+            if (selected != "scaling" && selected != kind)
+                continue;
+            const auto scaling_name = std::string(kind) + std::string(name).substr(7);
+            benchmark::RegisterBenchmark(scaling_name.c_str(), function)
+                ->Args({std::string_view(kind) == "strong" ? strong_patches : shape->second, 6, threads})
+                ->ArgNames({"patches", "age_groups", "threads"})
+                ->UseRealTime();
+        }
+        return;
+    }
     auto* b = benchmark::RegisterBenchmark(name, function);
     for (int p : patches) {
         for (int g : groups) {
