@@ -53,6 +53,9 @@ ScalarType total_population = 1e7;
 ScalarType I0               = 1000.;
 ScalarType R0               = 0.;
 ScalarType S0               = total_population - I0 - R0;
+
+bool kahan                = false;
+bool more_precise_s_deriv = false;
 } // namespace params
 
 mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent, ScalarType t0_ode, ScalarType tmax,
@@ -88,6 +91,7 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent,
 
     sim.advance(tmax);
     auto compartments = sim.get_result();
+    auto flows        = sim.get_flows();
 
     std::cout << "Num tps ODE: " << compartments.get_num_time_points() << std::endl;
 
@@ -98,6 +102,9 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent,
         auto save_result_status_ode =
             mio::save_result({compartments}, {0}, num_agegroups,
                              save_dir + "groundtruth_dt=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
+        auto save_result_status_ode_flows =
+            mio::save_result({flows}, {0}, num_agegroups,
+                             save_dir + "groundtruth_flows_dt=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
 
         if (!save_result_status_ode) {
             return mio::failure(mio::StatusCode::InvalidValue,
@@ -226,7 +233,7 @@ simulate_ide(ScalarType ide_exponent, size_t gregory_order, size_t finite_differ
 
     // Carry out simulation.
     mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt);
-    sim.advance(tmax);
+    sim.advance(tmax, kahan, more_precise_s_deriv);
     mio::TimeSeries<ScalarType> compartments = sim.get_result();
     mio::TimeSeries<ScalarType> flows        = sim.get_flows();
 
@@ -283,9 +290,10 @@ int main()
 
     ScalarType dt_exponent = 2.; // Used for both ODE and IDE simulations
 
-    std::string save_dir = fmt::format("../../simulation_results/2026-08-18/compare_different_inits_exp/"
-                                       "nonconst_contacts_tinitgroundtruth={}_tinitdetailed={}_t0ide={}_tmax={}/",
-                                       t0_ode, t_init_long_init, t0_ide, tmax);
+    std::string save_dir = fmt::format(
+        "../../simulation_results/2026-09-11/S_deriv_analytical_compare_different_inits_exp_kahan={}_buffer={}/"
+        "nonconst_contacts_tinitgroundtruth={}_tinitdetailed={}_t0ide={}_tmax={}/",
+        kahan, more_precise_s_deriv, t0_ode, t_init_long_init, t0_ide, tmax);
 
     // Make folder if not existent yet.
     std::filesystem::path dir(save_dir);

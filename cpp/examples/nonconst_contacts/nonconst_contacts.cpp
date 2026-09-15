@@ -49,6 +49,9 @@ ScalarType S0               = 9999000.;
 ScalarType I0               = 1000.;
 ScalarType R0               = 0.;
 ScalarType total_population = S0 + I0 + R0;
+
+bool kahan                = false;
+bool more_precise_s_deriv = false;
 } // namespace params
 
 mio::UncertainContactMatrix<ScalarType> scale_contact_matrix(ScalarType damping, ScalarType damping_time)
@@ -146,7 +149,7 @@ mio::IOResult<void> simulate_ide(ScalarType ide_exponent, ScalarType ode_exponen
                                  size_t finite_difference_order, ScalarType t_init_window, ScalarType t0_ide,
                                  ScalarType tmax, ScalarType TimeInfected, ScalarType damping, ScalarType damping_time,
                                  ScalarType smoother_window = 2., size_t smoothstep_order = 4.,
-                                 std::string save_dir = "", bool kahan = true,
+                                 std::string save_dir = "",
                                  mio::TimeSeries<ScalarType> compartments_groundtruth =
                                      mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
                                  size_t fd_order_contacts = 4)
@@ -225,7 +228,8 @@ mio::IOResult<void> simulate_ide(ScalarType ide_exponent, ScalarType ode_exponen
 
     // Carry out simulation.
     mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide, div_dt_ide);
-    sim.advance(tmax, kahan, true, 10., fd_order_contacts, damping_time, smoother_window, smoothstep_order);
+    sim.advance(tmax, kahan, more_precise_s_deriv, 10., fd_order_contacts, damping_time, smoother_window,
+                smoothstep_order);
 
     if (!save_dir.empty()) {
         // Save compartments.
@@ -268,8 +272,6 @@ int main()
     ScalarType ode_exponent               = 6.;
     std::vector<ScalarType> ide_exponents = {0., 1., 2., 3.};
 
-    bool kahan = false;
-
     // size_t finite_difference_order = 4;
     // size_t fd_order_contacts       = 4;
     std::vector<size_t> fd_orders = {4};
@@ -280,11 +282,11 @@ int main()
         size_t fd_order_contacts = 1000;
 
         std::string save_dir =
-            fmt::format("./simulation_results/2026-08-21/"
-                        "phi_deriv_analytical_smoothstepc{}_fd_order={}_smootherwindow={}_t0ode={}_kahan={}/"
+            fmt::format("./simulation_results/2026-09-08/"
+                        "phi_deriv_analytical_smoothstepc{}_fd_order={}_smootherwindow={}_t0ode={}_kahan={}_buffer={}/"
                         "nonconst_contacts_t0ide={}_tmax={}_dampingtime={}_damping={}/",
-                        smoothstep_order, finite_difference_order, smoother_window, t0_ode, kahan, t0_ide, tmax,
-                        damping_time, damping);
+                        smoothstep_order, finite_difference_order, smoother_window, t0_ode, kahan, more_precise_s_deriv,
+                        t0_ide, tmax, damping_time, damping);
 
         // Make folder if not existent yet.
         std::filesystem::path dir(save_dir);
@@ -311,7 +313,7 @@ int main()
                 mio::IOResult<void> result_ide =
                     simulate_ide(ide_exponent, saving_exponent, gregory_order, finite_difference_order, init_window,
                                  t0_ide, tmax, time_infected, damping, damping_time, smoother_window, smoothstep_order,
-                                 save_dir_ide, kahan, result_ode, fd_order_contacts);
+                                 save_dir_ide, result_ode, fd_order_contacts);
             }
         }
     }

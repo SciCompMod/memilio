@@ -331,17 +331,17 @@ int main()
 
     std::vector<ScalarType> time_infected_values = {2.};
 
-    ScalarType t0_ode                    = -10.;
+    ScalarType t0_ode                    = 0.;
     ScalarType t0_ide                    = 50.;
-    std::vector<ScalarType> init_windows = {0., 10., 20., 30., 50.};
+    std::vector<ScalarType> init_windows = {0., 10.};
     std::vector<ScalarType> tmax_values  = {t0_ide + 100.};
 
     bool kahan                = false;
-    bool more_precise_s_deriv = true;
+    bool more_precise_s_deriv = false;
 
     std::vector<size_t> finite_difference_orders = {4};
 
-    std::vector<ScalarType> ide_exponents = {3.};
+    std::vector<ScalarType> ide_exponents = {0., 1., 2., 3.};
     std::vector<size_t> gregory_orders    = {1, 2, 3};
 
     std::vector<std::vector<ScalarType>> timeinf_tmax_values;
@@ -363,17 +363,19 @@ int main()
         for (size_t finite_difference_order : finite_difference_orders) {
             std::cout << "FD order: " << finite_difference_order << std::endl;
 
-            std::string save_dir = fmt::format(
-                "./simulation_results/2026-08-21/"
-                "more_precise_S_deriv_dtode=1e-{}_t0ode={}_timeinf={}_contfreq={}_kahan={}/"
-                "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
-                ode_exponent, t0_ode, time_infected, cont_freq, kahan, t0_ide, tmax, finite_difference_order);
+            std::string save_dir =
+                fmt::format("./simulation_results/2026-09-15/"
+                            "S_deriv_forward_dtode=1e-{}_t0ode={}_timeinf={}_contfreq={}_kahan={}_buffer={}/"
+                            "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
+                            ode_exponent, t0_ode, time_infected, cont_freq, kahan, more_precise_s_deriv, t0_ide, tmax,
+                            finite_difference_order);
 
             // Make folder if not existent yet.
             std::filesystem::path dir(save_dir);
             std::filesystem::create_directories(dir);
 
-            ScalarType saving_exponent = *std::max_element(ide_exponents.begin(), ide_exponents.end());
+            // ScalarType saving_exponent = *std::max_element(ide_exponents.begin(), ide_exponents.end());
+            ScalarType saving_exponent = 3.;
             // ScalarType saving_exponent = ode_exponent;
             auto result_ode =
                 simulate_ode(ode_exponent, t0_ode, tmax, time_infected, cont_freq, save_dir, saving_exponent).value();

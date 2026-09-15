@@ -40,14 +40,14 @@
 using namespace mio;
 namespace params
 {
-constexpr size_t num_subcomps_infected = 6;
+constexpr size_t num_subcomps_infected = 9;
 size_t num_agegroups                   = 1;
 
 ScalarType TransmissionProbabilityOnContact = 0.8;
 ScalarType RiskOfInfectionFromSymptomatic   = 1.;
 ScalarType Seasonality                      = 0.;
 
-ScalarType TimeInfected = 4.;
+ScalarType TimeInfected = 6.;
 
 ScalarType cont_freq = 0.4;
 
@@ -55,6 +55,9 @@ ScalarType total_population = 1e7;
 ScalarType I0               = 1000.;
 ScalarType R0               = 0.;
 ScalarType S0               = total_population - I0 - R0;
+
+bool kahan                = false;
+bool more_precise_s_deriv = false;
 } // namespace params
 
 mio::IOResult<mio::TimeSeries<ScalarType>> simulate_lct(ScalarType ode_exponent, ScalarType t0_ode, ScalarType tmax,
@@ -253,7 +256,7 @@ simulate_ide(ScalarType ide_exponent, size_t gregory_order, size_t finite_differ
 
     // Carry out simulation.
     mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt);
-    sim.advance(tmax);
+    sim.advance(tmax, kahan, more_precise_s_deriv);
     mio::TimeSeries<ScalarType> compartments = sim.get_result();
     mio::TimeSeries<ScalarType> flows        = sim.get_flows();
 
@@ -310,10 +313,11 @@ int main()
 
     ScalarType dt_exponent = 2.; // Used for both ODE and IDE simulations
 
-    std::string save_dir =
-        fmt::format("../../simulation_results/2026-08-18/compare_different_inits_erlang_numsubcomps={}_contfreq={}/"
-                    "nonconst_contacts_tinitgroundtruth={}_tinitdetailed={}_t0ide={}_tmax={}/",
-                    num_subcomps_infected, cont_freq, t0_ode, t_init_long_init, t0_ide, tmax);
+    std::string save_dir = fmt::format(
+        "../../simulation_results/2026-09-11/"
+        "shorter_S_deriv_forward_compare_different_inits_erlang_numsubcomps={}_contfreq={}_kahan={}_buffer={}/"
+        "nonconst_contacts_tinitgroundtruth={}_tinitshort={}_t0ide={}_tmax={}/",
+        num_subcomps_infected, cont_freq, kahan, more_precise_s_deriv, t0_ode, t_init_short_init, t0_ide, tmax);
 
     // Make folder if not existent yet.
     std::filesystem::path dir(save_dir);

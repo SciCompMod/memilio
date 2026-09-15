@@ -329,6 +329,7 @@ def plot_difference_per_timestep(groundtruth, results, groundtruth_save_exponent
 
             indices = np.linspace(
                 t0_ide, t0_ide+(len(difference)-1)*timestep, len(difference))
+            indices = indices - t0_ide
 
             axs[compartment].scatter(indices, difference, s=1, color="#88CCEE")
             axs[compartment].set_title(f"{sir_dict[compartment]}", fontsize=12)
@@ -502,11 +503,11 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
 
     if error_type == "rel":
         ylabel = fig.supylabel(
-            r"$err_{rel}$", fontsize=12)
+            r"$err_{rel-old}$", fontsize=12)
 
     if error_type == "weighted":
         ylabel = fig.supylabel(
-            r"$err_{weighted}$", fontsize=12)
+            r"$err_{rel}$", fontsize=12)
 
     # print(handles)
 
@@ -544,9 +545,9 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
         if error_type == "abs":
             filename += "_abs"
         elif error_type == "rel":
-            filename += "_rel"
+            filename += "_rel_old"
         elif error_type == "weighted":
-            filename += "_weighted"
+            filename += "_rel"
 
         plt.savefig(filename + ".png", format='png', bbox_extra_artists=(legend, ylabel), bbox_inches='tight',
                     dpi=500)
@@ -697,7 +698,7 @@ def main():
 
     cutoff_window = 0
 
-    main_dir = f"2026-08-21/phi_deriv_analytical_smoothstepc0_fd_order=4_smootherwindow=2_t0ode=0_kahan=false"
+    main_dir = f"2026-09-11/S_deriv_forward_small_example_dtode=1e-6_t0ode=0_timeinf=2_contfreq=0.73_kahan=false_buffer=false"
 
     ##############################################
 
