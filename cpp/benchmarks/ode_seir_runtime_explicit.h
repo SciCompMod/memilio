@@ -3,6 +3,7 @@
 #define MIO_ODE_SEIR_RUNTIME_EXPLICIT_H
 #include "ode_seir_benchmark_stage_aligned.h"
 #include "ode_seir_runtime_scenario.h"
+#include <chrono>
 
 namespace mio::runtime_scenario
 {
@@ -29,17 +30,23 @@ struct ExplicitProblem {
 };
 
 template <int G>
-void explicit_day_workshare(ExplicitProblem& p, Schedule time)
+inline void explicit_home_workshare(ExplicitProblem& p, Schedule time)
 {
-    auto& core        = p.core;
-    const int patches = core.patches, travelers = patches - 1;
+    auto& core = p.core;
 #ifdef _OPENMP
 #pragma omp for schedule(static)
 #endif
-    for (int patch = 0; patch < patches; ++patch) {
+    for (int patch = 0; patch < core.patches; ++patch) {
         for (int step = 0; step < time.half_day_steps; ++step)
             benchmark_mio::integrate_totals<G>(core, patch, time.dt());
     }
+}
+
+template <int G>
+inline void explicit_departure_workshare(ExplicitProblem& p)
+{
+    auto& core        = p.core;
+    const int patches = core.patches, travelers = patches - 1;
     // Departure must read an immutable resident snapshot while destination
     // totals and off-diagonal travelers are populated in parallel.
 #ifdef _OPENMP
@@ -67,13 +74,26 @@ void explicit_day_workshare(ExplicitProblem& p, Schedule time)
             core.totals[static_cast<size_t>(c) * patches + dest] = total;
         }
     }
+}
+
+template <int G>
+inline void explicit_away_workshare(ExplicitProblem& p, Schedule time)
+{
+    auto& core = p.core;
 #ifdef _OPENMP
 #pragma omp for schedule(static)
 #endif
-    for (int patch = 0; patch < patches; ++patch) {
+    for (int patch = 0; patch < core.patches; ++patch) {
         // Never cross the return event, even if the kernel's time tile is larger.
         benchmark_mio::advance_stage_aligned_patch<G>(core, patch, time.dt(), time.half_day_steps);
     }
+}
+
+template <int G>
+inline void explicit_return_workshare(ExplicitProblem& p)
+{
+    auto& core        = p.core;
+    const int patches = core.patches, travelers = patches - 1;
 #ifdef _OPENMP
 #pragma omp for schedule(static)
 #endif
@@ -100,6 +120,15 @@ void explicit_day_workshare(ExplicitProblem& p, Schedule time)
 }
 
 template <int G>
+inline void explicit_day_workshare(ExplicitProblem& p, Schedule time)
+{
+    explicit_home_workshare<G>(p, time);
+    explicit_departure_workshare<G>(p);
+    explicit_away_workshare<G>(p, time);
+    explicit_return_workshare<G>(p);
+}
+
+template <int G>
 void advance_explicit(ExplicitProblem& problem, Schedule time, int threads = 0)
 {
 #ifndef _OPENMP
@@ -114,8 +143,66 @@ void advance_explicit(ExplicitProblem& problem, Schedule time, int threads = 0)
     }
 }
 
+struct ExplicitPhaseTimes {
+    double home_seconds      = 0.0;
+    double departure_seconds = 0.0;
+    double away_seconds      = 0.0;
+    double return_seconds    = 0.0;
+    double profiled_seconds  = 0.0;
+};
+
+using ExplicitPhaseClock = std::chrono::steady_clock;
+
+template <class Work>
+inline void profile_explicit_workshare(double& seconds, Work&& work)
+{
+    // Each thread owns its start variable, but only the same master thread
+    // writes and reads its timestamp. Workers cannot start before this clock.
+    ExplicitPhaseClock::time_point start;
+#ifdef _OPENMP
+#pragma omp master
+#endif
+    {
+        start = ExplicitPhaseClock::now();
+    }
+#ifdef _OPENMP
+#pragma omp barrier
+#endif
+    work(); // Its existing final workshare barrier waits for every worker.
+#ifdef _OPENMP
+#pragma omp master
+#endif
+    {
+        seconds += std::chrono::duration<double>(ExplicitPhaseClock::now() - start).count();
+    }
+}
+
 template <int G>
-void validate_explicit_cpu(int threads)
+ExplicitPhaseTimes advance_explicit_profiled(ExplicitProblem& problem, Schedule time, int threads = 0)
+{
+#ifndef _OPENMP
+    if (threads > 0)
+        throw std::invalid_argument("Runtime OpenMP requires OpenMP support.");
+#endif
+    ExplicitPhaseTimes result;
+    const auto start = ExplicitPhaseClock::now();
+#ifdef _OPENMP
+#pragma omp parallel if (threads > 0) num_threads(threads > 0 ? threads : 1)
+#endif
+    {
+        for (int day = 0; day < time.days; ++day) {
+            profile_explicit_workshare(result.home_seconds, [&] { explicit_home_workshare<G>(problem, time); });
+            profile_explicit_workshare(result.departure_seconds, [&] { explicit_departure_workshare<G>(problem); });
+            profile_explicit_workshare(result.away_seconds, [&] { explicit_away_workshare<G>(problem, time); });
+            profile_explicit_workshare(result.return_seconds, [&] { explicit_return_workshare<G>(problem); });
+        }
+    }
+    result.profiled_seconds = std::chrono::duration<double>(ExplicitPhaseClock::now() - start).count();
+    return result;
+}
+
+template <int G>
+void validate_explicit_cpu(int threads, bool validate_phases = false)
 {
     for (bool no_mobility : {false, true}) {
         Inputs in(3, G, no_mobility);
@@ -127,10 +214,28 @@ void validate_explicit_cpu(int threads)
                 actual.reset();
                 advance_explicit<G>(actual, time, threads);
                 compare(in, expected, actual.core.totals);
+                if (validate_phases) {
+                    const auto control = actual.core.totals;
+                    actual.reset();
+                    const auto phases = advance_explicit_profiled<G>(actual, time, threads);
+                    compare(in, expected, actual.core.totals);
+                    compare(in, control, actual.core.totals);
+                    for (double elapsed : {phases.home_seconds, phases.departure_seconds, phases.away_seconds,
+                                           phases.return_seconds, phases.profiled_seconds}) {
+                        if (!std::isfinite(elapsed) || elapsed < 0.0)
+                            throw std::runtime_error("Invalid explicit phase duration.");
+                    }
+                    const double accounted = phases.home_seconds + phases.departure_seconds + phases.away_seconds +
+                                             phases.return_seconds;
+                    if (phases.profiled_seconds <= 0.0 || accounted > phases.profiled_seconds * (1.0 + 1e-10))
+                        throw std::runtime_error("Explicit phase durations exceed the profiled trajectory.");
+                }
             }
         }
     }
     std::cout << "Runtime explicit full-state reference N_G=" << G << ": passed\n";
+    if (validate_phases)
+        std::cout << "Explicit phase/control reference and accounting N_G=" << G << ": passed\n";
 }
 } // namespace mio::runtime_scenario
 #endif

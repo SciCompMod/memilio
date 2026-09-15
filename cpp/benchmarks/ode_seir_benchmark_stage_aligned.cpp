@@ -27,6 +27,7 @@
 #include <cmath>
 #include <cstdint>
 #include <iostream>
+#include <map>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -247,6 +248,79 @@ void runtime_openmp(benchmark::State& state)
     runtime_dispatch(state, static_cast<int>(state.range(2)));
 }
 
+void runtime_phase_openmp(benchmark::State& state)
+{
+    try {
+        if (state.range(1) != 6) {
+            state.SkipWithError("Explicit phase diagnostics require six age groups.");
+            return;
+        }
+        const int threads = static_cast<int>(state.range(2));
+        scenario::Inputs inputs(static_cast<int>(state.range(0)), 6);
+        scenario::ExplicitProblem problem(inputs, threads);
+        const auto time = scenario::schedule();
+        std::vector<double> control_residents(inputs.initial.size()), profiled_residents(inputs.initial.size());
+        // Google Benchmark invokes this callback separately for each raw
+        // repetition. Alternate ordering per shape/thread pair to expose, not
+        // systematically favor, effects of the immediately preceding run.
+        static std::map<std::pair<int, int>, size_t> repetitions;
+        const bool control_first = repetitions[{inputs.p, threads}]++ % 2 == 0;
+        scenario::ExplicitPhaseTimes phases;
+        double control_seconds = 0.0;
+        const auto run_control = [&] {
+            problem.reset();
+            const auto start = scenario::ExplicitPhaseClock::now();
+            scenario::advance_explicit<6>(problem, time, threads);
+            control_seconds =
+                std::chrono::duration<double>(scenario::ExplicitPhaseClock::now() - start).count();
+            benchmark::DoNotOptimize(problem.core.totals.data());
+            benchmark::DoNotOptimize(problem.core.travelers.data());
+            benchmark::ClobberMemory();
+            control_residents = problem.core.totals;
+        };
+        for (auto _ : state) {
+            state.PauseTiming();
+            if (control_first)
+                run_control();
+            problem.reset();
+            state.ResumeTiming();
+            phases = scenario::advance_explicit_profiled<6>(problem, time, threads);
+            benchmark::DoNotOptimize(problem.core.totals.data());
+            benchmark::DoNotOptimize(problem.core.travelers.data());
+            benchmark::ClobberMemory();
+            state.PauseTiming();
+            profiled_residents = problem.core.totals;
+            if (!control_first)
+                run_control();
+            // Both are independent trajectories from the same initial state.
+            // compare() also checks finite/nonnegative states and population
+            // conservation. Copying and validation are outside both timers.
+            scenario::compare(inputs, control_residents, profiled_residents);
+            state.ResumeTiming();
+        }
+        if (state.iterations() != 1) {
+            state.SkipWithError("Phase diagnostics require exactly one paired trajectory per repetition.");
+            return;
+        }
+        scenario::counters(state, inputs, true, threads);
+        const double integration_seconds = phases.home_seconds + phases.away_seconds;
+        state.counters["home_seconds"] = phases.home_seconds;
+        state.counters["away_seconds"] = phases.away_seconds;
+        state.counters["integration_seconds"] = integration_seconds;
+        state.counters["departure_seconds"] = phases.departure_seconds;
+        state.counters["return_seconds"] = phases.return_seconds;
+        state.counters["profiled_seconds"] = phases.profiled_seconds;
+        state.counters["unattributed_seconds"] =
+            phases.profiled_seconds - integration_seconds - phases.departure_seconds - phases.return_seconds;
+        state.counters["control_seconds"] = control_seconds;
+        state.counters["control_first"] = control_first ? 1 : 0;
+        state.counters["phase_validation_passed"] = 1;
+    }
+    catch (const std::exception& error) {
+        state.SkipWithError(error.what());
+    }
+}
+
 } // namespace mio::benchmark_mio
 
 BENCHMARK(mio::benchmark_mio::benchmark_stage_aligned_serial)
@@ -283,8 +357,9 @@ int main(int argc, char** argv)
     if (runtime) {
         mio::runtime_scenario::register_shapes("runtime/explicit/serial", mio::benchmark_mio::runtime_serial);
 #ifdef _OPENMP
-        mio::runtime_scenario::register_shapes("runtime/explicit/openmp", mio::benchmark_mio::runtime_openmp,
-                                               omp_get_max_threads());
+        const auto callback = mio::runtime_scenario::experiment() == "phases" ?
+                                  mio::benchmark_mio::runtime_phase_openmp : mio::benchmark_mio::runtime_openmp;
+        mio::runtime_scenario::register_shapes("runtime/explicit/openmp", callback, omp_get_max_threads());
 #endif
     }
     bool needs_validation = true;
@@ -310,10 +385,11 @@ int main(int argc, char** argv)
 #else
             const int threads = 0;
 #endif
-            mio::runtime_scenario::validate_explicit_cpu<1>(threads);
-            mio::runtime_scenario::validate_explicit_cpu<3>(threads);
-            mio::runtime_scenario::validate_explicit_cpu<6>(threads);
-            mio::runtime_scenario::validate_explicit_cpu<8>(threads);
+            const bool validate_phases = mio::runtime_scenario::experiment() == "phases";
+            mio::runtime_scenario::validate_explicit_cpu<1>(threads, validate_phases);
+            mio::runtime_scenario::validate_explicit_cpu<3>(threads, validate_phases);
+            mio::runtime_scenario::validate_explicit_cpu<6>(threads, validate_phases);
+            mio::runtime_scenario::validate_explicit_cpu<8>(threads, validate_phases);
         }
     }
     catch (const std::exception& exception) {

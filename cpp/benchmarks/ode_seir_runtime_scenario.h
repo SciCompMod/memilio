@@ -28,6 +28,8 @@ inline constexpr std::array<int, 7> patches = {16, 32, 64, 128, 256, 512, 1024};
 inline constexpr std::array<int, 4> large_patches = {2048, 4096, 8192, 16384};
 inline constexpr std::array<int, 4> groups  = {1, 3, 6, 8};
 inline constexpr int scaling_shape_set_version = 3;
+inline constexpr int phase_shape_set_version = 4;
+inline constexpr std::array<int, 3> phase_threads = {1, 16, 128};
 inline constexpr int strong_patches = 8192;
 inline constexpr std::array<std::pair<int, int>, 5> weak_scaling_shapes = {
     std::pair{1, 512}, std::pair{16, 2048}, std::pair{32, 2896}, std::pair{64, 4096}, std::pair{128, 5792}};
@@ -38,8 +40,9 @@ inline std::string experiment()
 {
     const char* value = std::getenv("RUNTIME_EXPERIMENT");
     const std::string selected = value ? value : "runtime";
-    if (selected != "runtime" && selected != "strong" && selected != "weak" && selected != "scaling")
-        throw std::invalid_argument("RUNTIME_EXPERIMENT must be runtime, strong, weak or scaling.");
+    if (selected != "runtime" && selected != "strong" && selected != "weak" && selected != "scaling" &&
+        selected != "phases")
+        throw std::invalid_argument("RUNTIME_EXPERIMENT must be runtime, strong, weak, scaling or phases.");
     return selected;
 }
 
@@ -452,7 +455,8 @@ inline void counters(benchmark::State& state, const Inputs& in, bool explicit_mo
     const auto time                                 = schedule();
     state.counters["scenario_version"]              = version;
     state.counters["shape_set_version"]             =
-        experiment() == "runtime" ? shape_set_version : scaling_shape_set_version;
+        experiment() == "runtime" ? shape_set_version :
+        experiment() == "phases" ? phase_shape_set_version : scaling_shape_set_version;
     state.counters["patches"]                       = in.p;
     state.counters["age_groups"]                    = in.g;
     state.counters["cpu_threads"]                   = threads;
@@ -473,6 +477,26 @@ inline void counters(benchmark::State& state, const Inputs& in, bool explicit_mo
 inline void register_shapes(const char* name, void (*function)(benchmark::State&), int threads = 0)
 {
     const auto selected = experiment();
+    if (selected == "phases") {
+        // A small explicit-only diagnostic grid, separate from authoritative
+        // total runtime/scaling measurements. Each sample pairs one profiled
+        // trajectory with an untimed-by-Google-Benchmark control trajectory.
+        if (std::string_view(name) != "runtime/explicit/openmp")
+            return;
+        if (std::find(phase_threads.begin(), phase_threads.end(), threads) == phase_threads.end())
+            throw std::invalid_argument("Phase diagnostics support 1, 16 or 128 OpenMP threads.");
+        const auto shape = std::find_if(weak_scaling_shapes.begin(), weak_scaling_shapes.end(),
+                                       [threads](const auto& item) { return item.first == threads; });
+        for (const char* kind : {"strong", "weak"}) {
+            const auto phase_name = std::string("phase_") + kind + "/explicit/openmp";
+            benchmark::RegisterBenchmark(phase_name.c_str(), function)
+                ->Args({std::string_view(kind) == "strong" ? strong_patches : shape->second, 6, threads})
+                ->ArgNames({"patches", "age_groups", "threads"})
+                ->Iterations(1)
+                ->UseRealTime();
+        }
+        return;
+    }
     if (selected != "runtime") {
         // Scaling uses the exact same OpenMP functions, including OMP1. Never
         // register serial/GPU baselines as scaling cases.
