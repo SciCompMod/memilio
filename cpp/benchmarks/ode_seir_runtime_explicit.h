@@ -1,4 +1,22 @@
-/* Copyright (C) 2026 MEmilio. Licensed under the Apache License, Version 2.0. */
+/*
+* Copyright (C) 2020-2026 MEmilio
+*
+* Authors: Henrik Zunker
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 #ifndef MIO_ODE_SEIR_RUNTIME_EXPLICIT_H
 #define MIO_ODE_SEIR_RUNTIME_EXPLICIT_H
 #include "ode_seir_benchmark_stage_aligned.h"
@@ -142,6 +160,32 @@ void advance_explicit(ExplicitProblem& problem, Schedule time, int threads = 0)
             explicit_day_workshare<G>(problem, time);
     }
 }
+
+#ifdef MEMILIO_BENCHMARK_ROOFLINE
+template <int G>
+void advance_explicit_roofline(ExplicitProblem& problem, Schedule time, int threads)
+{
+    if (threads <= 0)
+        throw std::invalid_argument("CPU roofline requires OpenMP threads.");
+    const int measured_day = benchmark_roofline::selected_day() - 1;
+#ifdef _OPENMP
+#pragma omp parallel num_threads(threads)
+#endif
+    {
+        for (int day = 0; day < time.days; ++day) {
+            if (day == measured_day) {
+                benchmark_roofline::cpu_region("explicit_home", [&] { explicit_home_workshare<G>(problem, time); });
+                benchmark_roofline::cpu_region("explicit_departure", [&] { explicit_departure_workshare<G>(problem); });
+                benchmark_roofline::cpu_region("explicit_away", [&] { explicit_away_workshare<G>(problem, time); });
+                benchmark_roofline::cpu_region("explicit_return", [&] { explicit_return_workshare<G>(problem); });
+            }
+            else {
+                explicit_day_workshare<G>(problem, time);
+            }
+        }
+    }
+}
+#endif
 
 struct ExplicitPhaseTimes {
     double home_seconds      = 0.0;

@@ -204,16 +204,31 @@ void runtime_benchmark_impl(benchmark::State& state, int threads)
         scenario::Inputs inputs(static_cast<int>(state.range(0)), G);
         scenario::ExplicitProblem problem(inputs, threads);
         const auto time = scenario::schedule();
+#ifdef MEMILIO_BENCHMARK_ROOFLINE
+        const bool roofline = mio::benchmark_roofline::enabled();
+        mio::benchmark_roofline::CpuSession markers(
+            {"explicit_home", "explicit_departure", "explicit_away", "explicit_return"});
+#endif
         for (auto _ : state) {
             state.PauseTiming();
             problem.reset();
             state.ResumeTiming();
-            scenario::advance_explicit<G>(problem, time, threads);
+#ifdef MEMILIO_BENCHMARK_ROOFLINE
+            if (roofline)
+                scenario::advance_explicit_roofline<G>(problem, time, threads);
+            else
+#endif
+                scenario::advance_explicit<G>(problem, time, threads);
             benchmark::DoNotOptimize(problem.core.totals.data());
             benchmark::DoNotOptimize(problem.core.travelers.data());
             benchmark::ClobberMemory();
         }
         scenario::check_population(inputs, problem.core.totals);
+#ifdef MEMILIO_BENCHMARK_ROOFLINE
+        markers.check();
+        if (roofline)
+            state.counters["roofline_profile_window_completed"] = 1;
+#endif
         scenario::counters(state, inputs, true, threads > 0 ? threads : 1);
     }
     catch (const std::exception& error) {
@@ -357,7 +372,7 @@ int main(int argc, char** argv)
     if (runtime) {
         mio::runtime_scenario::register_shapes("runtime/explicit/serial", mio::benchmark_mio::runtime_serial);
 #ifdef _OPENMP
-        const auto callback = mio::runtime_scenario::experiment() == "phases" ?
+        const auto callback = mio::runtime_scenario::phase_experiment() ?
                                   mio::benchmark_mio::runtime_phase_openmp : mio::benchmark_mio::runtime_openmp;
         mio::runtime_scenario::register_shapes("runtime/explicit/openmp", callback, omp_get_max_threads());
 #endif
@@ -385,7 +400,7 @@ int main(int argc, char** argv)
 #else
             const int threads = 0;
 #endif
-            const bool validate_phases = mio::runtime_scenario::experiment() == "phases";
+            const bool validate_phases = mio::runtime_scenario::phase_experiment();
             mio::runtime_scenario::validate_explicit_cpu<1>(threads, validate_phases);
             mio::runtime_scenario::validate_explicit_cpu<3>(threads, validate_phases);
             mio::runtime_scenario::validate_explicit_cpu<6>(threads, validate_phases);

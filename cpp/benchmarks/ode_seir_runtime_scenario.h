@@ -1,8 +1,27 @@
-/* Copyright (C) 2026 MEmilio. Licensed under the Apache License, Version 2.0. */
+/*
+* Copyright (C) 2020-2026 MEmilio
+*
+* Authors: Henrik Zunker
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 #ifndef MIO_ODE_SEIR_RUNTIME_SCENARIO_H
 #define MIO_ODE_SEIR_RUNTIME_SCENARIO_H
 
 #include "benchmark/benchmark.h"
+#include "ode_seir_roofline.h"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -30,6 +49,10 @@ inline constexpr std::array<int, 4> groups  = {1, 3, 6, 8};
 inline constexpr int scaling_shape_set_version = 3;
 inline constexpr int phase_shape_set_version = 4;
 inline constexpr std::array<int, 3> phase_threads = {1, 16, 128};
+// Version 5 is reserved for the independent roofline experiment. Only the
+// diagnostic grid changes here, not the scenario, timers or implementation.
+inline constexpr int weak_phase_shape_set_version = 6;
+inline constexpr std::array<int, 3> weak_phase_threads = {16, 32, 64};
 inline constexpr int strong_patches = 8192;
 inline constexpr std::array<std::pair<int, int>, 5> weak_scaling_shapes = {
     std::pair{1, 512}, std::pair{16, 2048}, std::pair{32, 2896}, std::pair{64, 4096}, std::pair{128, 5792}};
@@ -41,9 +64,15 @@ inline std::string experiment()
     const char* value = std::getenv("RUNTIME_EXPERIMENT");
     const std::string selected = value ? value : "runtime";
     if (selected != "runtime" && selected != "strong" && selected != "weak" && selected != "scaling" &&
-        selected != "phases")
-        throw std::invalid_argument("RUNTIME_EXPERIMENT must be runtime, strong, weak, scaling or phases.");
+        selected != "phases" && selected != "phases-weak")
+        throw std::invalid_argument("RUNTIME_EXPERIMENT must be runtime, strong, weak, scaling, phases or phases-weak.");
     return selected;
+}
+
+inline bool phase_experiment()
+{
+    const auto selected = experiment();
+    return selected == "phases" || selected == "phases-weak";
 }
 
 inline void check_openmp_team()
@@ -456,6 +485,7 @@ inline void counters(benchmark::State& state, const Inputs& in, bool explicit_mo
     state.counters["scenario_version"]              = version;
     state.counters["shape_set_version"]             =
         experiment() == "runtime" ? shape_set_version :
+        experiment() == "phases-weak" ? weak_phase_shape_set_version :
         experiment() == "phases" ? phase_shape_set_version : scaling_shape_set_version;
     state.counters["patches"]                       = in.p;
     state.counters["age_groups"]                    = in.g;
@@ -472,22 +502,44 @@ inline void counters(benchmark::State& state, const Inputs& in, bool explicit_mo
     state.counters["refinement_error"]              = maximum_refinement_error;
     state.counters["accuracy_tolerance"]            = accuracy_tolerance;
     state.counters["refinement_validation_patches"] = 8;
+    if (benchmark_roofline::enabled()) {
+        if (state.iterations() != 1)
+            throw std::runtime_error("Roofline requires exactly one trajectory per profiler invocation.");
+        state.counters["shape_set_version"] = 5;
+        state.counters["roofline_version"] = 1;
+        state.counters["roofline_day"] = benchmark_roofline::selected_day();
+        state.counters["roofline_profiled_days"] = 1;
+        state.counters["diagnostic"] = 1;
+    }
 }
 
 inline void register_shapes(const char* name, void (*function)(benchmark::State&), int threads = 0)
 {
     const auto selected = experiment();
-    if (selected == "phases") {
+    const bool roofline = benchmark_roofline::enabled();
+    if (roofline) {
+        if (selected != "runtime")
+            throw std::invalid_argument("Roofline is separate from scaling/phases; use RUNTIME_EXPERIMENT=runtime.");
+        benchmark_roofline::selected_day();
+        if (std::string_view(name).find("/serial") != std::string_view::npos)
+            return; // CPU roofline uses physical OpenMP cores, not serial baselines.
+    }
+    if (phase_experiment()) {
         // A small explicit-only diagnostic grid, separate from authoritative
         // total runtime/scaling measurements. Each sample pairs one profiled
         // trajectory with an untimed-by-Google-Benchmark control trajectory.
         if (std::string_view(name) != "runtime/explicit/openmp")
             return;
-        if (std::find(phase_threads.begin(), phase_threads.end(), threads) == phase_threads.end())
-            throw std::invalid_argument("Phase diagnostics support 1, 16 or 128 OpenMP threads.");
+        const bool weak_only = selected == "phases-weak";
+        const auto& selected_threads = weak_only ? weak_phase_threads : phase_threads;
+        if (std::find(selected_threads.begin(), selected_threads.end(), threads) == selected_threads.end())
+            throw std::invalid_argument(weak_only ? "Weak phase diagnostics support 16, 32 or 64 OpenMP threads." :
+                                                   "Phase diagnostics support 1, 16 or 128 OpenMP threads.");
         const auto shape = std::find_if(weak_scaling_shapes.begin(), weak_scaling_shapes.end(),
                                        [threads](const auto& item) { return item.first == threads; });
         for (const char* kind : {"strong", "weak"}) {
+            if (weak_only && std::string_view(kind) != "weak")
+                continue;
             const auto phase_name = std::string("phase_") + kind + "/explicit/openmp";
             benchmark::RegisterBenchmark(phase_name.c_str(), function)
                 ->Args({std::string_view(kind) == "strong" ? strong_patches : shape->second, 6, threads})
@@ -517,7 +569,10 @@ inline void register_shapes(const char* name, void (*function)(benchmark::State&
         }
         return;
     }
-    auto* b = benchmark::RegisterBenchmark(name, function);
+    const auto registered_name = roofline ? "roofline" + std::string(name).substr(7) : std::string(name);
+    auto* b = benchmark::RegisterBenchmark(registered_name.c_str(), function);
+    if (roofline)
+        b->Iterations(1);
     for (int p : patches) {
         for (int g : groups) {
             if (threads > 0)

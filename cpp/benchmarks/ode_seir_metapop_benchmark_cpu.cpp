@@ -120,6 +120,33 @@ void advance_openmp(ImplicitProblem& problem, int threads, double dt = step_size
         }
     }
 }
+
+#ifdef MEMILIO_BENCHMARK_ROOFLINE
+template <int G>
+void advance_openmp_roofline(ImplicitProblem& problem, int threads, scenario::Schedule time)
+{
+    if (threads <= 0)
+        throw std::invalid_argument("CPU roofline requires OpenMP threads.");
+    const int measured_day = mio::benchmark_roofline::selected_day() - 1;
+#pragma omp parallel num_threads(threads)
+    {
+        for (int day = 0; day < time.days; ++day) {
+            const auto advance_day = [&] {
+                for (int step = 0; step < 2 * time.half_day_steps; ++step) {
+                    advance_openmp_stage<G, 0>(problem, time.dt());
+                    advance_openmp_stage<G, 1>(problem, time.dt());
+                    advance_openmp_stage<G, 2>(problem, time.dt());
+                    advance_openmp_stage<G, 3>(problem, time.dt());
+                }
+            };
+            if (day == measured_day)
+                mio::benchmark_roofline::cpu_region("implicit_integration", advance_day);
+            else
+                advance_day();
+        }
+    }
+}
+#endif
 #endif
 
 void set_counters(benchmark::State& state, const ImplicitProblem& problem, int threads = 0)
@@ -281,11 +308,20 @@ void runtime_benchmark_impl(benchmark::State& state, int threads)
         const auto time = scenario::schedule();
         ImplicitProblem problem(inputs.p, G);
         scenario::configure_implicit(problem, inputs);
+#ifdef MEMILIO_BENCHMARK_ROOFLINE
+        const bool roofline = mio::benchmark_roofline::enabled();
+        mio::benchmark_roofline::CpuSession markers({"implicit_integration"});
+#endif
         for (auto _ : state) {
             state.PauseTiming();
             problem.reset_state();
             state.ResumeTiming();
 #ifdef _OPENMP
+#ifdef MEMILIO_BENCHMARK_ROOFLINE
+            if (roofline)
+                advance_openmp_roofline<G>(problem, threads, time);
+            else
+#endif
             if (threads > 0)
                 advance_openmp<G>(problem, threads, time.dt(), time.total_steps());
             else
@@ -295,6 +331,11 @@ void runtime_benchmark_impl(benchmark::State& state, int threads)
             benchmark::ClobberMemory();
         }
         scenario::check_population(inputs, scenario::implicit_residents(inputs, problem.state));
+#ifdef MEMILIO_BENCHMARK_ROOFLINE
+        markers.check();
+        if (roofline)
+            state.counters["roofline_profile_window_completed"] = 1;
+#endif
         scenario::counters(state, inputs, false, threads > 0 ? threads : 1);
     }
     catch (const std::exception& error) {

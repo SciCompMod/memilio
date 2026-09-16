@@ -21,6 +21,7 @@
 #include "benchmark/benchmark.h"
 #include "ode_seir_benchmark_stage_aligned.h"
 #include "ode_seir_runtime_explicit.h"
+#include "ode_seir_roofline_cuda.h"
 
 #include <cuda_runtime_api.h>
 
@@ -458,8 +459,16 @@ public:
         require(upload(totals, initial, stream), "reset daily residents");
         require(cudaStreamSynchronize(stream), "finish daily reset");
     }
-    void run()
+    void run(bool profile = false)
     {
+#ifdef MEMILIO_BENCHMARK_ROOFLINE
+        if (profile) {
+            mio::benchmark_roofline::run_profiled_cuda_days(executable, stream, time.days);
+            return;
+        }
+#else
+        (void)profile;
+#endif
         for (int day = 0; day < time.days; ++day)
             require(cudaGraphLaunch(executable, stream), "launch daily graph");
         require(cudaStreamSynchronize(stream), "finish daily simulation");
@@ -517,17 +526,24 @@ private:
 void runtime_cuda(benchmark::State& state)
 {
     try {
+        const bool profile = mio::benchmark_roofline::enabled();
+        if (profile)
+            (void)mio::benchmark_roofline::selected_day();
         scenario::Inputs inputs(static_cast<int>(state.range(0)), static_cast<int>(state.range(1)));
         RuntimeGpuRunner runner(inputs, scenario::schedule());
+        bool profile_window_completed = false;
         for (auto _ : state) {
             state.PauseTiming();
             runner.reset(inputs.initial);
             state.ResumeTiming();
-            runner.run();
+            runner.run(profile);
+            profile_window_completed = profile;
             benchmark::DoNotOptimize(runner.device_state());
         }
         scenario::check_population(inputs, runner.download());
         scenario::counters(state, inputs, true, 0);
+        if (profile)
+            state.counters["roofline_profile_window_completed"] = profile_window_completed ? 1 : 0;
     }
     catch (const std::exception& error) {
         state.SkipWithError(error.what());
@@ -597,6 +613,8 @@ int main(int argc, char** argv)
     std::string error;
     try {
         if (runtime && needs_device) {
+            if (mio::benchmark_roofline::enabled())
+                (void)mio::benchmark_roofline::selected_day();
             mio::runtime_scenario::validate_accuracy();
             mio::benchmark_mio::validate_runtime_gpu<1>();
             mio::benchmark_mio::validate_runtime_gpu<3>();

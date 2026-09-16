@@ -21,6 +21,7 @@
 #include "benchmark/benchmark.h"
 #include "ode_seir_metapop_benchmark.h"
 #include "ode_seir_runtime_scenario.h"
+#include "ode_seir_roofline_cuda.h"
 
 #include <cublas_v2.h>
 #include <cuda_runtime.h>
@@ -188,8 +189,16 @@ public:
         check_cuda(cudaStreamSynchronize(m_stream), "finish state upload");
     }
 
-    void run(int replays = 1)
+    void run(int replays = 1, bool profile = false)
     {
+#ifdef MEMILIO_BENCHMARK_ROOFLINE
+        if (profile) {
+            mio::benchmark_roofline::run_profiled_cuda_days(m_graph_exec, m_stream, replays);
+            return;
+        }
+#else
+        (void)profile;
+#endif
         for (int replay = 0; replay < replays; ++replay) {
             check_cuda(cudaGraphLaunch(m_graph_exec, m_stream), "cudaGraphLaunch");
         }
@@ -466,21 +475,28 @@ template <int G>
 void runtime_cuda_impl(benchmark::State& state)
 {
     try {
+        const bool profile = mio::benchmark_roofline::enabled();
+        if (profile)
+            (void)mio::benchmark_roofline::selected_day();
         const scenario::Inputs inputs(static_cast<int>(state.range(0)), G);
         const auto time = scenario::schedule();
         ImplicitProblem problem(inputs.p, G);
         scenario::configure_implicit(problem, inputs);
         GpuRunner<G> runner(problem, time.dt(), 2 * time.half_day_steps);
+        bool profile_window_completed = false;
         for (auto _ : state) {
             state.PauseTiming();
             runner.reset(problem.initial_state);
             state.ResumeTiming();
             // Both GPU models replay a one-day graph once per simulated day.
-            runner.run(time.days);
+            runner.run(time.days, profile);
+            profile_window_completed = profile;
             benchmark::DoNotOptimize(runner.device_state());
         }
         scenario::check_population(inputs, scenario::implicit_residents(inputs, runner.download()));
         scenario::counters(state, inputs, false, 0);
+        if (profile)
+            state.counters["roofline_profile_window_completed"] = profile_window_completed ? 1 : 0;
     }
     catch (const std::exception& error) {
         state.SkipWithError(error.what());
@@ -560,6 +576,8 @@ int main(int argc, char** argv)
     }
     if (needs_device) {
         try {
+            if (runtime && mio::benchmark_roofline::enabled())
+                (void)mio::benchmark_roofline::selected_day();
             cudaDeviceProp properties{};
             mio::benchmark_mio::check_cuda(cudaGetDeviceProperties(&properties, 0), "cudaGetDeviceProperties");
             std::cout << "GPU: " << properties.name << '\n';
