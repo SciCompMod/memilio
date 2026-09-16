@@ -52,6 +52,7 @@ ScalarType total_population = S0 + I0 + R0;
 
 bool kahan                = false;
 bool more_precise_s_deriv = false;
+bool forward_fd           = false;
 } // namespace params
 
 mio::UncertainContactMatrix<ScalarType> scale_contact_matrix(ScalarType damping, ScalarType damping_time)
@@ -226,9 +227,8 @@ mio::IOResult<void> simulate_ide(ScalarType ide_exponent, ScalarType ode_exponen
 
     // Carry out simulation.
     mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide, div_dt_ide);
-    bool S_deriv_forward = false;
-    sim.advance(tmax, kahan, more_precise_s_deriv, S_deriv_forward, 10., fd_order_contacts, damping_time,
-                smoother_window, smoothstep_order);
+    sim.advance(tmax, kahan, more_precise_s_deriv, forward_fd, 10., fd_order_contacts, damping_time, smoother_window,
+                smoothstep_order);
 
     if (!save_dir.empty()) {
         // Save compartments.

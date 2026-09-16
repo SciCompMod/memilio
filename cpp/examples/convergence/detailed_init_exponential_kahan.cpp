@@ -149,11 +149,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarTy
                                  std::string save_dir = "", bool kahan = true,
                                  mio::TimeSeries<ScalarType> compartments_groundtruth =
                                      mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
-                                 bool more_precise_s_deriv = false
-                                 //  ,
-                                 //  mio::TimeSeries<ScalarType> flows_groundtruth =
-                                 //      mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionTransition::Count)
-)
+                                 bool more_precise_s_deriv = false, bool forward_fd = false)
 {
     using namespace params;
     using Vec = mio::TimeSeries<ScalarType>::Vector;
@@ -289,7 +285,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarTy
         mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide, div_dt_ide);
         // size_t fd_order_contacts = 1;
 
-        sim.advance(tmax, kahan, more_precise_s_deriv, cutoff_window);
+        sim.advance(tmax, kahan, more_precise_s_deriv, forward_fd, cutoff_window);
 
         // sim.advance_S_deriv_analytical(tmax);
 
@@ -338,6 +334,7 @@ int main()
 
     bool kahan                = false;
     bool more_precise_s_deriv = false;
+    bool forward_fd           = false;
 
     std::vector<size_t> finite_difference_orders = {4};
 
@@ -365,10 +362,10 @@ int main()
 
             std::string save_dir =
                 fmt::format("./simulation_results/2026-09-15/"
-                            "baseline_dtode=1e-{}_t0ode={}_timeinf={}_contfreq={}_kahan={}_buffer={}/"
+                            "baseline_dtode=1e-{}_t0ode={}_timeinf={}_contfreq={}_kahan={}_buffer={}_forwardfd={}/"
                             "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
-                            ode_exponent, t0_ode, time_infected, cont_freq, kahan, more_precise_s_deriv, t0_ide, tmax,
-                            finite_difference_order);
+                            ode_exponent, t0_ode, time_infected, cont_freq, kahan, more_precise_s_deriv, forward_fd,
+                            t0_ide, tmax, finite_difference_order);
 
             // Make folder if not existent yet.
             std::filesystem::path dir(save_dir);
@@ -396,9 +393,10 @@ int main()
                 for (size_t gregory_order : gregory_orders) {
                     std::cout << std::endl;
                     std::cout << "Gregory order: " << gregory_order << std::endl;
-                    mio::IOResult<void> result_ide = simulate_ide(
-                        ide_exponents, saving_exponent, gregory_order, finite_difference_order, init_window, t0_ide,
-                        tmax, time_infected, cont_freq, save_dir_ide, kahan, compartments_ode, more_precise_s_deriv);
+                    mio::IOResult<void> result_ide =
+                        simulate_ide(ide_exponents, saving_exponent, gregory_order, finite_difference_order,
+                                     init_window, t0_ide, tmax, time_infected, cont_freq, save_dir_ide, kahan,
+                                     compartments_ode, more_precise_s_deriv, forward_fd);
                 }
             }
         }
