@@ -44,7 +44,7 @@ STYLE_SCATTER = {
     "groundtruth":    {"label": "Ground truth",    "color": "#0072B2", "linestyle": "-",  "linewidth": 5., "alpha": 0.3, "s": 12},
     "detailed":       {"label": "Long initialization",  "color": green, "linestyle": "-", "linewidth": 2., "alpha": 1., "s": 28},
     "detailed_short": {"label": "Short initialization", "color": yellow, "linestyle": "-", "linewidth": 2., "alpha": 1., "s": 12},
-    "simple":         {"label": "Memoryless",         "color": red, "linestyle": "-",  "linewidth": 2., "alpha": 1., "s": 12},
+    "simple":         {"label": "Memoryless",         "color": red, "linestyle": "-",  "linewidth": 2., "alpha": 1., "s": 35},
 }
 # order matches input file lists
 FILE_KEYS = ["detailed", "detailed_short", "simple"]
@@ -427,8 +427,9 @@ def subfolders_scandir(path):
 if __name__ == "__main__":
 
     root_dir = os.path.join(os.path.dirname(__file__), "../simulation_results")
-    # main_dir = "2026-08-18/compare_different_inits_erlang_numsubcomps=6_contfreq=0.4"
-    main_dir = "2026-08-18/compare_different_inits_exp"
+
+    # main_dir = "2026-09-15/compare_different_inits_erlang_numsubcomps=6_contfreq=0.4_kahan=false_buffer=false"
+    main_dir = "2026-09-15/compare_different_inits_exp_kahan=false_buffer=false"
 
     relevant_dir = os.path.join(root_dir, main_dir)
     sub_dirs = subfolders_scandir(relevant_dir)

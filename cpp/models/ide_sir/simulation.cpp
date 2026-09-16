@@ -37,9 +37,9 @@ namespace isir
 using Vec = mio::TimeSeries<ScalarType>::Vector;
 
 void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool kahan, bool more_precise_s_deriv,
-                                                    ScalarType cutoff_window, size_t fd_order_contacts,
-                                                    ScalarType damping_time, ScalarType smoother_window,
-                                                    size_t smoothstep_order)
+                                                    bool S_deriv_forward, ScalarType cutoff_window,
+                                                    size_t fd_order_contacts, ScalarType damping_time,
+                                                    ScalarType smoother_window, size_t smoothstep_order)
 {
     if ((smoothstep_order != 0) && (smoothstep_order != 1) && (smoothstep_order != 3) && (smoothstep_order != 4)) {
         throw std::invalid_argument("smoothstep_order must be 0, 3, or 4");
@@ -54,31 +54,16 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool kahan,
     mio::log_info("Simulating IDE-SIR from t0 = {} until tmax = {} with dt = {}.", m_model->populations.get_last_time(),
                   tmax, m_dt);
 
-    // Compute S' for t_0,..., t_{n0-1}.
-    // We set S'(0) due to lack of knowledge of previous values of S.
-    // The corresponding flow is then given by -S'.
-    // TODO: Initialize S'(0) in a different way?
-
+    // Compute S' for t_a,...,t0.
     if (m_model->flows.get_num_time_points() == 0) {
 
-        // ScalarType first_flow_approx = m_model->parameters.get<TransmissionProbabilityOnContact>().eval(0) *
-        //                                m_model->parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-        //                                    SimulationTime<ScalarType>(0.))(0, 0) *
-        //                                (m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Infected] +
-        //                                 m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Recovered]) /
-        //                                m_model->populations.get_value(0).sum();
-
-        // ScalarType first_flow_approx = m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Infected] / m_dt;
+        // Set S'(t_a) accrording to analytical derivative.
         ScalarType first_flow_approx =
             m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible] *
             m_model->m_transmissionproboncontact_vector[0] * m_model->m_riskofinffromsymptomatic_vector[0] *
             m_model->parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
                 SimulationTime<ScalarType>(m_model->populations.get_time(0)), smoother_window, smoothstep_order)(0, 0) /
             m_model->m_N * m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Infected];
-        // (m_model->m_transmissionproboncontact_vector[0] * m_model->m_riskofinffromsymptomatic_vector[0] *
-        //  m_model->parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-        //      SimulationTime<ScalarType>(m_model->populations.get_time(0))) *
-        //  m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Infected]);
 
         ScalarType t_flows_init = m_model->populations.get_time(0);
         m_model->flows.add_time_point(t_flows_init, TimeSeries<ScalarType>::Vector::Constant(
@@ -95,15 +80,16 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool kahan,
             m_model->flows.add_time_point(
                 t_flows_init, TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, 0.));
 
-            m_model->compute_S_deriv(m_div_dt, i);
-            // if (i <= 4) {
-            //     m_model->compute_S_deriv_forward(m_div_dt, i);
-            // }
-            // else {
-            //     m_model->compute_S_deriv(m_div_dt, i);
-            // }
+            if (S_deriv_forward) {
+                if (i <= 4) {
+                    m_model->compute_S_deriv_forward(m_div_dt, i);
+                }
+                else {
+                    m_model->compute_S_deriv(m_div_dt, i);
+                }
+            }
 
-            // m_model->compute_S_deriv_analytical(m_dt, i);
+            m_model->compute_S_deriv(m_div_dt, i);
         }
 
         if (more_precise_s_deriv) {
@@ -171,8 +157,6 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool kahan,
 
         // Compute S'.
         m_model->compute_S_deriv(m_div_dt);
-        // size_t index = m_model->flows.get_num_time_points() - 1;
-        // m_model->compute_S_deriv_analytical(m_dt, index);
 
         // Compute I and R.
         m_model->compute_I_and_R(m_dt, kahan);

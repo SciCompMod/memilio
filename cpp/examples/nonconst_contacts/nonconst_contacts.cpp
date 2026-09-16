@@ -219,8 +219,6 @@ mio::IOResult<void> simulate_ide(ScalarType ide_exponent, ScalarType ode_exponen
     mio::StateAgeFunctionWrapper riskofinfection_wrapper(riskofinfection);
     model.parameters.get<mio::isir::RiskOfInfectionFromSymptomatic>() = riskofinfection_wrapper;
 
-    // mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
-    // contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     mio::UncertainContactMatrix<ScalarType> contact_matrix = scale_contact_matrix(damping, damping_time);
     model.parameters.get<mio::isir::ContactPatterns>()     = mio::UncertainContactMatrix(contact_matrix);
 
@@ -228,8 +226,9 @@ mio::IOResult<void> simulate_ide(ScalarType ide_exponent, ScalarType ode_exponen
 
     // Carry out simulation.
     mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide, div_dt_ide);
-    sim.advance(tmax, kahan, more_precise_s_deriv, 10., fd_order_contacts, damping_time, smoother_window,
-                smoothstep_order);
+    bool S_deriv_forward = false;
+    sim.advance(tmax, kahan, more_precise_s_deriv, S_deriv_forward, 10., fd_order_contacts, damping_time,
+                smoother_window, smoothstep_order);
 
     if (!save_dir.empty()) {
         // Save compartments.
@@ -261,11 +260,10 @@ int main()
 
     ScalarType damping      = 0.1;
     ScalarType damping_time = 53.372907;
-    // ScalarType damping_time = 53.;
 
-    std::vector<size_t> gregory_orders = {1, 2, 3};
+    std::vector<size_t> gregory_orders = {1};
 
-    size_t smoothstep_order    = 0; // possible values: 0, 1, 3 or 4; smoothstep_order=0 leads to smoother_cosine
+    size_t smoothstep_order    = 4; // possible values: 0, 1, 3 or 4; smoothstep_order=0 leads to smoother_cosine
     ScalarType smoother_window = 2.;
 
     // Compute groundtruth with ODE model.
@@ -282,7 +280,7 @@ int main()
         size_t fd_order_contacts = 1000;
 
         std::string save_dir =
-            fmt::format("./simulation_results/2026-09-08/"
+            fmt::format("./simulation_results/2026-09-15/"
                         "phi_deriv_analytical_smoothstepc{}_fd_order={}_smootherwindow={}_t0ode={}_kahan={}_buffer={}/"
                         "nonconst_contacts_t0ide={}_tmax={}_dampingtime={}_damping={}/",
                         smoothstep_order, finite_difference_order, smoother_window, t0_ode, kahan, more_precise_s_deriv,

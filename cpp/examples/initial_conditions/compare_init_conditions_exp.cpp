@@ -290,10 +290,10 @@ int main()
 
     ScalarType dt_exponent = 2.; // Used for both ODE and IDE simulations
 
-    std::string save_dir = fmt::format(
-        "../../simulation_results/2026-09-11/S_deriv_analytical_compare_different_inits_exp_kahan={}_buffer={}/"
-        "nonconst_contacts_tinitgroundtruth={}_tinitdetailed={}_t0ide={}_tmax={}/",
-        kahan, more_precise_s_deriv, t0_ode, t_init_long_init, t0_ide, tmax);
+    std::string save_dir =
+        fmt::format("../../simulation_results/2026-09-15/compare_different_inits_exp_kahan={}_buffer={}/"
+                    "nonconst_contacts_tinitgroundtruth={}_tinitdetailed={}_t0ide={}_tmax={}/",
+                    kahan, more_precise_s_deriv, t0_ode, t_init_long_init, t0_ide, tmax);
 
     // Make folder if not existent yet.
     std::filesystem::path dir(save_dir);

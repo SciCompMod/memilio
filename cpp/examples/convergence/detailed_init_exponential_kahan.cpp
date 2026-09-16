@@ -333,7 +333,7 @@ int main()
 
     ScalarType t0_ode                    = 0.;
     ScalarType t0_ide                    = 50.;
-    std::vector<ScalarType> init_windows = {0., 10.};
+    std::vector<ScalarType> init_windows = {40.};
     std::vector<ScalarType> tmax_values  = {t0_ide + 100.};
 
     bool kahan                = false;
@@ -365,7 +365,7 @@ int main()
 
             std::string save_dir =
                 fmt::format("./simulation_results/2026-09-15/"
-                            "S_deriv_forward_dtode=1e-{}_t0ode={}_timeinf={}_contfreq={}_kahan={}_buffer={}/"
+                            "baseline_dtode=1e-{}_t0ode={}_timeinf={}_contfreq={}_kahan={}_buffer={}/"
                             "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
                             ode_exponent, t0_ode, time_infected, cont_freq, kahan, more_precise_s_deriv, t0_ide, tmax,
                             finite_difference_order);
