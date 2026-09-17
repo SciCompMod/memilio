@@ -166,6 +166,7 @@ if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/sde_seirvv)
     add_subdirectory(models/graph_abm)
     add_subdirectory(models/smm)
+    add_subdirectory(models/lsmm)
 endif()
 
 if(MEMILIO_BUILD_EXAMPLES)

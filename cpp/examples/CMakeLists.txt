@@ -164,6 +164,10 @@ add_executable(dabm_example d_abm.cpp)
 target_link_libraries(dabm_example PRIVATE memilio d_abm)
 target_compile_options(dabm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(lsmm_example lsmm.cpp)
+target_link_libraries(lsmm_example PRIVATE memilio lsmm)
+target_compile_options(lsmm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(smm_example smm.cpp)
 target_link_libraries(smm_example PRIVATE memilio smm)
 target_compile_options(smm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
