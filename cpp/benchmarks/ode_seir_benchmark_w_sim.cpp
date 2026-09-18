@@ -19,6 +19,7 @@
 */
 
 #include "benchmark/benchmark.h"
+#include <cmath>
 #include "memilio/compartments/flow_simulation.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/time_series.h"
@@ -70,7 +71,7 @@ namespace benchmark_mio
 using ModelType = mio::oseir::Model<ScalarType>;
 using SimType   = mio::FlowSimulation<ScalarType, ModelType>;
 
-void setup_model_benchmark(ModelType& model, size_t num_agegroups = 6)
+void setup_model_benchmark(ModelType& model, size_t num_agegroups)
 {
     const double total_population = 10000.0;
     for (mio::AgeGroup i = 0; i < model.parameters.get_num_groups(); i++) {
@@ -164,9 +165,9 @@ void setup_explicit_model_benchmark(mio::oseir::StandardModelLagrangian& model_e
 
     model_explicit.parameters.set<mio::oseir::TimeExposed<ScalarType>>(5.2);
     model_explicit.parameters.set<mio::oseir::TimeInfected<ScalarType>>(6);
-    model_explicit.parameters.set<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>(0.04);
+    model_explicit.parameters.set<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>(0.1);
     mio::ContactMatrixGroup& contact_matrix = model_explicit.parameters.get<mio::oseir::ContactPatterns<ScalarType>>();
-    contact_matrix[0].get_baseline().setConstant(1.0);
+    contact_matrix[0].get_baseline().setConstant(2.7);
     model_explicit.check_constraints();
 }
 
@@ -222,142 +223,152 @@ static void bench_stage_aligned_rk4(::benchmark::State& state)
     for (auto _ : state) {
         for (auto patch = 0; patch < num_patches; patch++) {
             state.PauseTiming();
-            ModelType model(num_age_groups);
-            setup_model_benchmark(model);
+            {
+                ModelType model(num_age_groups);
+                setup_model_benchmark(model, num_age_groups);
 
-            Eigen::VectorXd current_totals = model.populations.get_compartments();
+                Eigen::VectorXd current_totals = model.populations.get_compartments();
 
-            double mobile_fraction = 0.1 * num_commuter_groups;
-            Eigen::VectorXd initial_mobile =
-                current_totals * (num_commuter_groups > 0 ? (mobile_fraction / num_commuter_groups) : 0.0);
-            std::vector<Eigen::VectorXd> mobile_pops(num_commuter_groups, initial_mobile);
+                const double mobile_fraction = 0.5;
+                Eigen::VectorXd initial_mobile =
+                    current_totals * (num_commuter_groups > 0 ? (mobile_fraction / num_commuter_groups) : 0.0);
+                std::vector<Eigen::VectorXd> mobile_pops(num_commuter_groups, initial_mobile);
 
-            const size_t NC = current_totals.size();
-            RK4StageCache cache;
-            cache.resize(NC, num_age_groups);
+                const size_t NC = current_totals.size();
+                RK4StageCache cache;
+                cache.resize(NC, num_age_groups);
 
-            auto ic = mio::oseir::make_seir_index_cache(model);
+                auto ic = mio::oseir::make_seir_index_cache(model);
 
-            std::vector<double> rate_E(num_age_groups, 0.0), rate_I(num_age_groups, 0.0);
-            for (size_t g = 0; g < num_age_groups; ++g) {
-                double t_E =
-                    model.parameters.get<mio::oseir::TimeExposed<ScalarType>>()[mio::AgeGroup(static_cast<int>(g))];
-                double t_I =
-                    model.parameters.get<mio::oseir::TimeInfected<ScalarType>>()[mio::AgeGroup(static_cast<int>(g))];
-                rate_E[g] = (t_E > 1e-10) ? (1.0 / t_E) : 0.0;
-                rate_I[g] = (t_I > 1e-10) ? (1.0 / t_I) : 0.0;
-            }
-
-            auto compute_lambda = [&](const Eigen::VectorXd& y, double tt, std::vector<double>& lambda_out) {
-                lambda_out.assign(num_age_groups, 0.0);
-                for (size_t j = 0; j < num_age_groups; ++j) {
-                    const double Nj    = y[ic.S[j]] + y[ic.E[j]] + y[ic.I[j]] + y[ic.R[j]];
-                    const double divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
-                    for (size_t i = 0; i < num_age_groups; ++i) {
-                        const double coeff =
-                            model.parameters.get<mio::oseir::ContactPatterns<ScalarType>>()
-                                .get_cont_freq_mat()
-                                .get_matrix_at(tt)(i, j) *
-                            model.parameters
-                                .get<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>()[mio::AgeGroup(
-                                    static_cast<int>(i))] *
-                            divNj;
-                        lambda_out[i] += coeff * y[ic.I[j]];
-                    }
+                std::vector<double> rate_E(num_age_groups, 0.0), rate_I(num_age_groups, 0.0);
+                for (size_t g = 0; g < num_age_groups; ++g) {
+                    double t_E =
+                        model.parameters.get<mio::oseir::TimeExposed<ScalarType>>()[mio::AgeGroup(static_cast<int>(g))];
+                    double t_I =
+                        model.parameters.get<mio::oseir::TimeInfected<ScalarType>>()[mio::AgeGroup(static_cast<int>(g))];
+                    rate_E[g] = (t_E > 1e-10) ? (1.0 / t_E) : 0.0;
+                    rate_I[g] = (t_I > 1e-10) ? (1.0 / t_I) : 0.0;
                 }
-            };
 
-            Eigen::VectorXd k1_com(NC), k2_com(NC), k3_com(NC), k4_com(NC);
-            Eigen::VectorXd Xc2(NC), Xc3(NC), Xc4(NC);
-
-            state.ResumeTiming();
-
-            for (ScalarType t = t0; t < t_max; t += dt) {
-
-                // Integrate totals
-                // Stage 1
-                cache.y[0] = current_totals;
-                model.get_derivatives(cache.y[0], cache.y[0], t, cache.k_tot[0]);
-                compute_lambda(cache.y[0], t, cache.lambda[0]);
-
-                // Stage 2
-                cache.y[1] = cache.y[0] + (dt * 0.5) * cache.k_tot[0];
-                model.get_derivatives(cache.y[1], cache.y[1], t + 0.5 * dt, cache.k_tot[1]);
-                compute_lambda(cache.y[1], t + 0.5 * dt, cache.lambda[1]);
-
-                // Stage 3
-                cache.y[2] = cache.y[0] + (dt * 0.5) * cache.k_tot[1];
-                model.get_derivatives(cache.y[2], cache.y[2], t + 0.5 * dt, cache.k_tot[2]);
-                compute_lambda(cache.y[2], t + 0.5 * dt, cache.lambda[2]);
-
-                // Stage 4
-                cache.y[3] = cache.y[0] + dt * cache.k_tot[2];
-                model.get_derivatives(cache.y[3], cache.y[3], t + dt, cache.k_tot[3]);
-                compute_lambda(cache.y[3], t + dt, cache.lambda[3]);
-
-                Eigen::VectorXd next_totals = current_totals + (dt / 6.0) * (cache.k_tot[0] + 2 * cache.k_tot[1] +
-                                                                             2 * cache.k_tot[2] + cache.k_tot[3]);
-
-                // Reconstruction
-                for (int cg = 0; cg < num_commuter_groups; ++cg) {
-                    Eigen::Ref<Eigen::VectorXd> Xc = mobile_pops[cg];
-
-                    // Stage 1
-                    for (size_t g = 0; g < num_age_groups; ++g) {
-                        int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
-                        double fSE = cache.lambda[0][g] * Xc[iS];
-                        double fEI = rate_E[g] * Xc[iE];
-                        double fIR = rate_I[g] * Xc[iI];
-                        k1_com[iS] = -fSE;
-                        k1_com[iE] = fSE - fEI;
-                        k1_com[iI] = fEI - fIR;
-                        k1_com[iR] = fIR;
+                auto compute_lambda = [&](const Eigen::VectorXd& y, double tt, std::vector<double>& lambda_out) {
+                    lambda_out.assign(num_age_groups, 0.0);
+                    for (size_t j = 0; j < num_age_groups; ++j) {
+                        const double Nj    = y[ic.S[j]] + y[ic.E[j]] + y[ic.I[j]] + y[ic.R[j]];
+                        const double divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
+                        for (size_t i = 0; i < num_age_groups; ++i) {
+                            const double coeff =
+                                model.parameters.get<mio::oseir::ContactPatterns<ScalarType>>()
+                                    .get_cont_freq_mat()
+                                    .get_matrix_at(tt)(i, j) *
+                                model.parameters
+                                    .get<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>()[mio::AgeGroup(
+                                        static_cast<int>(i))] *
+                                divNj;
+                            lambda_out[i] += coeff * y[ic.I[j]];
+                        }
                     }
+                };
+
+                Eigen::VectorXd k1_com(NC), k2_com(NC), k3_com(NC), k4_com(NC);
+                Eigen::VectorXd Xc2(NC), Xc3(NC), Xc4(NC);
+
+                state.ResumeTiming();
+
+                for (int step = 0; step < static_cast<int>(std::llround((t_max - t0) / dt)); ++step) {
+                    const ScalarType t = t0 + step * dt;
+
+                    // Integrate totals
+                    // Stage 1
+                    cache.y[0] = current_totals;
+                    model.get_derivatives(cache.y[0], cache.y[0], t, cache.k_tot[0]);
+                    compute_lambda(cache.y[0], t, cache.lambda[0]);
 
                     // Stage 2
-                    Xc2 = Xc + (dt * 0.5) * k1_com;
-                    for (size_t g = 0; g < num_age_groups; ++g) {
-                        int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
-                        double fSE = cache.lambda[1][g] * Xc2[iS];
-                        double fEI = rate_E[g] * Xc2[iE];
-                        double fIR = rate_I[g] * Xc2[iI];
-                        k2_com[iS] = -fSE;
-                        k2_com[iE] = fSE - fEI;
-                        k2_com[iI] = fEI - fIR;
-                        k2_com[iR] = fIR;
-                    }
+                    cache.y[1] = cache.y[0] + (dt * 0.5) * cache.k_tot[0];
+                    model.get_derivatives(cache.y[1], cache.y[1], t + 0.5 * dt, cache.k_tot[1]);
+                    compute_lambda(cache.y[1], t + 0.5 * dt, cache.lambda[1]);
 
                     // Stage 3
-                    Xc3 = Xc + (dt * 0.5) * k2_com;
-                    for (size_t g = 0; g < num_age_groups; ++g) {
-                        int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
-                        double fSE = cache.lambda[2][g] * Xc3[iS];
-                        double fEI = rate_E[g] * Xc3[iE];
-                        double fIR = rate_I[g] * Xc3[iI];
-                        k3_com[iS] = -fSE;
-                        k3_com[iE] = fSE - fEI;
-                        k3_com[iI] = fEI - fIR;
-                        k3_com[iR] = fIR;
-                    }
+                    cache.y[2] = cache.y[0] + (dt * 0.5) * cache.k_tot[1];
+                    model.get_derivatives(cache.y[2], cache.y[2], t + 0.5 * dt, cache.k_tot[2]);
+                    compute_lambda(cache.y[2], t + 0.5 * dt, cache.lambda[2]);
 
                     // Stage 4
-                    Xc4 = Xc + dt * k3_com;
-                    for (size_t g = 0; g < num_age_groups; ++g) {
-                        int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
-                        double fSE = cache.lambda[3][g] * Xc4[iS];
-                        double fEI = rate_E[g] * Xc4[iE];
-                        double fIR = rate_I[g] * Xc4[iI];
-                        k4_com[iS] = -fSE;
-                        k4_com[iE] = fSE - fEI;
-                        k4_com[iI] = fEI - fIR;
-                        k4_com[iR] = fIR;
-                    }
+                    cache.y[3] = cache.y[0] + dt * cache.k_tot[2];
+                    model.get_derivatives(cache.y[3], cache.y[3], t + dt, cache.k_tot[3]);
+                    compute_lambda(cache.y[3], t + dt, cache.lambda[3]);
 
-                    Xc += (dt / 6.0) * (k1_com + 2.0 * k2_com + 2.0 * k3_com + k4_com);
+                    Eigen::VectorXd next_totals = current_totals + (dt / 6.0) * (cache.k_tot[0] + 2 * cache.k_tot[1] +
+                                                                                 2 * cache.k_tot[2] + cache.k_tot[3]);
+
+                    // Reconstruction
+                    for (int cg = 0; cg < num_commuter_groups; ++cg) {
+                        Eigen::Ref<Eigen::VectorXd> Xc = mobile_pops[cg];
+
+                        // Stage 1
+                        for (size_t g = 0; g < num_age_groups; ++g) {
+                            int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
+                            double fSE = cache.lambda[0][g] * Xc[iS];
+                            double fEI = rate_E[g] * Xc[iE];
+                            double fIR = rate_I[g] * Xc[iI];
+                            k1_com[iS] = -fSE;
+                            k1_com[iE] = fSE - fEI;
+                            k1_com[iI] = fEI - fIR;
+                            k1_com[iR] = fIR;
+                        }
+
+                        // Stage 2
+                        Xc2 = Xc + (dt * 0.5) * k1_com;
+                        for (size_t g = 0; g < num_age_groups; ++g) {
+                            int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
+                            double fSE = cache.lambda[1][g] * Xc2[iS];
+                            double fEI = rate_E[g] * Xc2[iE];
+                            double fIR = rate_I[g] * Xc2[iI];
+                            k2_com[iS] = -fSE;
+                            k2_com[iE] = fSE - fEI;
+                            k2_com[iI] = fEI - fIR;
+                            k2_com[iR] = fIR;
+                        }
+
+                        // Stage 3
+                        Xc3 = Xc + (dt * 0.5) * k2_com;
+                        for (size_t g = 0; g < num_age_groups; ++g) {
+                            int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
+                            double fSE = cache.lambda[2][g] * Xc3[iS];
+                            double fEI = rate_E[g] * Xc3[iE];
+                            double fIR = rate_I[g] * Xc3[iI];
+                            k3_com[iS] = -fSE;
+                            k3_com[iE] = fSE - fEI;
+                            k3_com[iI] = fEI - fIR;
+                            k3_com[iR] = fIR;
+                        }
+
+                        // Stage 4
+                        Xc4 = Xc + dt * k3_com;
+                        for (size_t g = 0; g < num_age_groups; ++g) {
+                            int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
+                            double fSE = cache.lambda[3][g] * Xc4[iS];
+                            double fEI = rate_E[g] * Xc4[iE];
+                            double fIR = rate_I[g] * Xc4[iI];
+                            k4_com[iS] = -fSE;
+                            k4_com[iE] = fSE - fEI;
+                            k4_com[iI] = fEI - fIR;
+                            k4_com[iR] = fIR;
+                        }
+
+                        Xc += (dt / 6.0) * (k1_com + 2.0 * k2_com + 2.0 * k3_com + k4_com);
+                    }
+                    current_totals = next_totals;
                 }
-                current_totals = next_totals;
-            }
-            benchmark::DoNotOptimize(mobile_pops);
+                Eigen::VectorXd resident = current_totals;
+                for (const auto& mobile : mobile_pops) {
+                    resident -= mobile;
+                }
+                benchmark::DoNotOptimize(resident);
+                benchmark::DoNotOptimize(mobile_pops);
+                state.PauseTiming();
+            } // Destroy setup and endpoint storage outside the timed interval.
+            state.ResumeTiming();
         }
     }
 }
@@ -372,15 +383,20 @@ static void bench_standard_lagrangian_rk4(::benchmark::State& state)
     for (auto _ : state) {
         for (auto patch = 0; patch < num_patches; patch++) {
             state.PauseTiming();
-            mio::oseir::StandardModelLagrangian model_explicit(num_age_groups, num_commuter_groups);
-            setup_explicit_model_benchmark(model_explicit, num_age_groups, num_commuter_groups);
-            mio::oseir::StandardLagrangianSim sim_explicit(model_explicit, t0, dt);
-            auto integrator_rk =
-                std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta4>>();
-            sim_explicit.set_integrator(integrator_rk);
-            state.ResumeTiming();
+            {
+                mio::oseir::StandardModelLagrangian model_explicit(num_age_groups, num_commuter_groups);
+                setup_explicit_model_benchmark(model_explicit, num_age_groups, num_commuter_groups);
+                mio::oseir::StandardLagrangianSim sim_explicit(model_explicit, t0, dt);
+                auto integrator_rk =
+                    std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta4>>();
+                sim_explicit.set_integrator(integrator_rk);
+                state.ResumeTiming();
 
-            sim_explicit.advance(t_max);
+                sim_explicit.advance(t_max);
+                benchmark::DoNotOptimize(sim_explicit.get_result().get_last_value());
+                state.PauseTiming();
+            } // Destroy setup and endpoint storage outside the timed interval.
+            state.ResumeTiming();
         }
     }
 }
@@ -395,14 +411,19 @@ static void bench_standard_lagrangian_euler(::benchmark::State& state)
     for (auto _ : state) {
         for (auto patch = 0; patch < num_patches; patch++) {
             state.PauseTiming();
-            mio::oseir::StandardModelLagrangian model_explicit(num_age_groups, num_commuter_groups);
-            setup_explicit_model_benchmark(model_explicit, num_age_groups, num_commuter_groups);
-            mio::oseir::StandardLagrangianSim sim_explicit(model_explicit, t0, dt);
-            auto integrator_euler = std::make_shared<mio::EulerIntegratorCore<ScalarType>>();
-            sim_explicit.set_integrator(integrator_euler);
-            state.ResumeTiming();
+            {
+                mio::oseir::StandardModelLagrangian model_explicit(num_age_groups, num_commuter_groups);
+                setup_explicit_model_benchmark(model_explicit, num_age_groups, num_commuter_groups);
+                mio::oseir::StandardLagrangianSim sim_explicit(model_explicit, t0, dt);
+                auto integrator_euler = std::make_shared<mio::EulerIntegratorCore<ScalarType>>();
+                sim_explicit.set_integrator(integrator_euler);
+                state.ResumeTiming();
 
-            sim_explicit.advance(t_max);
+                sim_explicit.advance(t_max);
+                benchmark::DoNotOptimize(sim_explicit.get_result().get_last_value());
+                state.PauseTiming();
+            } // Destroy setup and endpoint storage outside the timed interval.
+            state.ResumeTiming();
         }
     }
 }
@@ -417,80 +438,90 @@ static void bench_stage_aligned_euler(::benchmark::State& state)
     for (auto _ : state) {
         for (auto patch = 0; patch < num_patches; patch++) {
             state.PauseTiming();
-            ModelType model(num_age_groups);
-            setup_model_benchmark(model);
+            {
+                ModelType model(num_age_groups);
+                setup_model_benchmark(model, num_age_groups);
 
-            Eigen::VectorXd current_totals = model.populations.get_compartments();
+                Eigen::VectorXd current_totals = model.populations.get_compartments();
 
-            double mobile_fraction = 0.1 * num_commuter_groups;
-            Eigen::VectorXd initial_mobile =
-                current_totals * (num_commuter_groups > 0 ? (mobile_fraction / num_commuter_groups) : 0.0);
-            std::vector<Eigen::VectorXd> mobile_pops(num_commuter_groups, initial_mobile);
+                const double mobile_fraction = 0.5;
+                Eigen::VectorXd initial_mobile =
+                    current_totals * (num_commuter_groups > 0 ? (mobile_fraction / num_commuter_groups) : 0.0);
+                std::vector<Eigen::VectorXd> mobile_pops(num_commuter_groups, initial_mobile);
 
-            const size_t NC = current_totals.size();
-            auto ic         = mio::oseir::make_seir_index_cache(model);
+                const size_t NC = current_totals.size();
+                auto ic         = mio::oseir::make_seir_index_cache(model);
 
-            std::vector<double> rate_E(num_age_groups, 0.0), rate_I(num_age_groups, 0.0);
-            for (size_t g = 0; g < num_age_groups; ++g) {
-                double t_E =
-                    model.parameters.get<mio::oseir::TimeExposed<ScalarType>>()[mio::AgeGroup(static_cast<int>(g))];
-                double t_I =
-                    model.parameters.get<mio::oseir::TimeInfected<ScalarType>>()[mio::AgeGroup(static_cast<int>(g))];
-                rate_E[g] = (t_E > 1e-10) ? (1.0 / t_E) : 0.0;
-                rate_I[g] = (t_I > 1e-10) ? (1.0 / t_I) : 0.0;
-            }
-
-            auto compute_lambda = [&](const Eigen::VectorXd& y, double tt, std::vector<double>& lambda_out) {
-                lambda_out.assign(num_age_groups, 0.0);
-                for (size_t j = 0; j < num_age_groups; ++j) {
-                    const double Nj    = y[ic.S[j]] + y[ic.E[j]] + y[ic.I[j]] + y[ic.R[j]];
-                    const double divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
-                    for (size_t i = 0; i < num_age_groups; ++i) {
-                        const double coeff =
-                            model.parameters.get<mio::oseir::ContactPatterns<ScalarType>>()
-                                .get_cont_freq_mat()
-                                .get_matrix_at(tt)(i, j) *
-                            model.parameters
-                                .get<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>()[mio::AgeGroup(
-                                    static_cast<int>(i))] *
-                            divNj;
-                        lambda_out[i] += coeff * y[ic.I[j]];
-                    }
+                std::vector<double> rate_E(num_age_groups, 0.0), rate_I(num_age_groups, 0.0);
+                for (size_t g = 0; g < num_age_groups; ++g) {
+                    double t_E =
+                        model.parameters.get<mio::oseir::TimeExposed<ScalarType>>()[mio::AgeGroup(static_cast<int>(g))];
+                    double t_I =
+                        model.parameters.get<mio::oseir::TimeInfected<ScalarType>>()[mio::AgeGroup(static_cast<int>(g))];
+                    rate_E[g] = (t_E > 1e-10) ? (1.0 / t_E) : 0.0;
+                    rate_I[g] = (t_I > 1e-10) ? (1.0 / t_I) : 0.0;
                 }
-            };
 
-            Eigen::VectorXd k_tot(NC);
-            std::vector<double> current_lambda(num_age_groups, 0.0);
+                auto compute_lambda = [&](const Eigen::VectorXd& y, double tt, std::vector<double>& lambda_out) {
+                    lambda_out.assign(num_age_groups, 0.0);
+                    for (size_t j = 0; j < num_age_groups; ++j) {
+                        const double Nj    = y[ic.S[j]] + y[ic.E[j]] + y[ic.I[j]] + y[ic.R[j]];
+                        const double divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
+                        for (size_t i = 0; i < num_age_groups; ++i) {
+                            const double coeff =
+                                model.parameters.get<mio::oseir::ContactPatterns<ScalarType>>()
+                                    .get_cont_freq_mat()
+                                    .get_matrix_at(tt)(i, j) *
+                                model.parameters
+                                    .get<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>()[mio::AgeGroup(
+                                        static_cast<int>(i))] *
+                                divNj;
+                            lambda_out[i] += coeff * y[ic.I[j]];
+                        }
+                    }
+                };
 
+                Eigen::VectorXd k_tot(NC);
+                std::vector<double> current_lambda(num_age_groups, 0.0);
+
+                state.ResumeTiming();
+
+                for (int step = 0; step < static_cast<int>(std::llround((t_max - t0) / dt)); ++step) {
+                    const ScalarType t = t0 + step * dt;
+
+                    // Solve totals with Euler
+                    model.get_derivatives(current_totals, current_totals, t, k_tot);
+                    compute_lambda(current_totals, t, current_lambda);
+                    Eigen::VectorXd next_totals = current_totals + dt * k_tot;
+
+                    // reconstruction commuter groups
+                    for (int cg = 0; cg < num_commuter_groups; ++cg) {
+                        Eigen::Ref<Eigen::VectorXd> Xc = mobile_pops[cg];
+
+                        for (size_t g = 0; g < num_age_groups; ++g) {
+                            int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
+
+                            double fSE = current_lambda[g] * Xc[iS];
+                            double fEI = rate_E[g] * Xc[iE];
+                            double fIR = rate_I[g] * Xc[iI];
+
+                            Xc[iS] += dt * (-fSE);
+                            Xc[iE] += dt * (fSE - fEI);
+                            Xc[iI] += dt * (fEI - fIR);
+                            Xc[iR] += dt * (fIR);
+                        }
+                    }
+                    current_totals = next_totals;
+                }
+                Eigen::VectorXd resident = current_totals;
+                for (const auto& mobile : mobile_pops) {
+                    resident -= mobile;
+                }
+                benchmark::DoNotOptimize(resident);
+                benchmark::DoNotOptimize(mobile_pops);
+                state.PauseTiming();
+            } // Destroy setup and endpoint storage outside the timed interval.
             state.ResumeTiming();
-
-            for (ScalarType t = t0; t < t_max; t += dt) {
-
-                // Solve totals with Euler
-                model.get_derivatives(current_totals, current_totals, t, k_tot);
-                compute_lambda(current_totals, t, current_lambda);
-                Eigen::VectorXd next_totals = current_totals + dt * k_tot;
-
-                // reconstruction commuter groups
-                for (int cg = 0; cg < num_commuter_groups; ++cg) {
-                    Eigen::Ref<Eigen::VectorXd> Xc = mobile_pops[cg];
-
-                    for (size_t g = 0; g < num_age_groups; ++g) {
-                        int iS = ic.S[g], iE = ic.E[g], iI = ic.I[g], iR = ic.R[g];
-
-                        double fSE = current_lambda[g] * Xc[iS];
-                        double fEI = rate_E[g] * Xc[iE];
-                        double fIR = rate_I[g] * Xc[iI];
-
-                        Xc[iS] += dt * (-fSE);
-                        Xc[iE] += dt * (fSE - fEI);
-                        Xc[iI] += dt * (fEI - fIR);
-                        Xc[iR] += dt * (fIR);
-                    }
-                }
-                current_totals = next_totals;
-            }
-            benchmark::DoNotOptimize(mobile_pops);
         }
     }
 }
@@ -507,7 +538,7 @@ static void bench_stage_aligned_hybrid(::benchmark::State& state)
 
             state.PauseTiming();
             ModelType model(num_age_groups);
-            setup_model_benchmark(model);
+            setup_model_benchmark(model, num_age_groups);
             SimType sim(model, t0, dt);
 
             auto integrator_rk =
@@ -525,7 +556,7 @@ static void bench_stage_aligned_hybrid(::benchmark::State& state)
                                        ? static_cast<size_t>(seir_res.get_num_time_points()) - 1
                                        : 0;
 
-            double mobile_fraction = 0.1 * num_commuter_groups;
+            const double mobile_fraction = 0.5;
             Eigen::VectorXd initial_mobile =
                 seir_res.get_value(0) * (num_commuter_groups > 0 ? (mobile_fraction / num_commuter_groups) : 0.0);
             std::vector<Eigen::VectorXd> mobile_pops(static_cast<size_t>(num_commuter_groups), initial_mobile);
@@ -609,55 +640,61 @@ static void bench_matrix_phi_reconstruction(::benchmark::State& state)
         for (auto patch = 0; patch < num_patches; patch++) {
 
             state.PauseTiming();
-            ModelType model(num_age_groups);
-            setup_model_benchmark(model);
+            {
+                ModelType model(num_age_groups);
+                setup_model_benchmark(model, num_age_groups);
 
-            // Dimensions
-            size_t NC          = (size_t)model.populations.get_num_compartments();
-            size_t system_size = NC + NC * NC;
+                // Dimensions
+                size_t NC          = (size_t)model.populations.get_num_compartments();
+                size_t system_size = NC + NC * NC;
 
-            // Initial state: y0 = [z0, Identity]
-            Eigen::VectorXd y0(system_size);
-            y0.head(NC)        = model.populations.get_compartments();
-            Eigen::MatrixXd Id = Eigen::MatrixXd::Identity(NC, NC);
-            y0.tail(NC * NC)   = Eigen::Map<Eigen::VectorXd>(Id.data(), NC * NC);
+                // Initial state: y0 = [z0, Identity]
+                Eigen::VectorXd y0(system_size);
+                y0.head(NC)        = model.populations.get_compartments();
+                Eigen::MatrixXd Id = Eigen::MatrixXd::Identity(NC, NC);
+                y0.tail(NC * NC)   = Eigen::Map<Eigen::VectorXd>(Id.data(), NC * NC);
 
-            // Integrator Setup
-            Integrator stepper;
-            mio::oseir::AugmentedPhiSystem sys(model);
+                // Integrator Setup
+                Integrator stepper;
+                mio::oseir::AugmentedPhiSystem sys(model);
 
-            // Commuter initialization (as a matrix)
-            double mobile_fraction = 0.1 * num_commuter_groups;
-            Eigen::VectorXd initial_mobile_pop =
-                y0.head(NC) * (num_commuter_groups > 0 ? (mobile_fraction / num_commuter_groups) : 0.0);
+                // Commuter initialization (as a matrix)
+                const double mobile_fraction = 0.5;
+                Eigen::VectorXd initial_mobile_pop =
+                    y0.head(NC) * (num_commuter_groups > 0 ? (mobile_fraction / num_commuter_groups) : 0.0);
 
-            // Matrix X0: size (NC x num_commuter_groups)
-            Eigen::MatrixXd X0(NC, num_commuter_groups);
-            for (int cg = 0; cg < num_commuter_groups; ++cg) {
-                X0.col(cg) = initial_mobile_pop;
-            }
+                // Matrix X0: size (NC x num_commuter_groups)
+                Eigen::MatrixXd X0(NC, num_commuter_groups);
+                for (int cg = 0; cg < num_commuter_groups; ++cg) {
+                    X0.col(cg) = initial_mobile_pop;
+                }
 
-            // Result matrix (overwritten in each step)
-            Eigen::MatrixXd Xt(NC, num_commuter_groups);
+                // Result matrix (overwritten in each step)
+                Eigen::MatrixXd Xt(NC, num_commuter_groups);
 
+                state.ResumeTiming();
+
+                // 1. Integrate (z and Phi) over the entire period t_max
+
+                double t          = t0;
+                Eigen::VectorXd y = y0;
+                while (t < t_max_phi - 1e-10) {
+                    double dt_eff = std::min(dt_phi, t_max_phi - t);
+                    stepper.do_step(sys, y, t, dt_eff);
+                    t += dt_eff;
+                }
+
+                // 2. Reconstruction at tmax
+                // Update all commuter groups: X(t) = Phi(t, t0) * X(t0)
+                const auto Phi_final = Eigen::Map<const Eigen::MatrixXd>(y.tail(NC * NC).data(), NC, NC);
+                Xt.noalias()         = Phi_final * X0;
+
+                Eigen::VectorXd resident = y.head(NC) - Xt.rowwise().sum();
+                benchmark::DoNotOptimize(resident);
+                benchmark::DoNotOptimize(Xt);
+                state.PauseTiming();
+            } // Destroy setup and endpoint storage outside the timed interval.
             state.ResumeTiming();
-
-            // 1. Integrate (z and Phi) over the entire period t_max
-
-            double t          = t0;
-            Eigen::VectorXd y = y0;
-            while (t < t_max_phi - 1e-10) {
-                double dt_eff = std::min(dt_phi, t_max_phi - t);
-                stepper.do_step(sys, y, t, dt_eff);
-                t += dt_eff;
-            }
-
-            // 2. Reconstruction at tmax
-            // Update all commuter groups: X(t) = Phi(t, t0) * X(t0)
-            const auto Phi_final = Eigen::Map<const Eigen::MatrixXd>(y.tail(NC * NC).data(), NC, NC);
-            Xt.noalias()         = Phi_final * X0;
-
-            benchmark::DoNotOptimize(Xt);
         }
     }
 }
@@ -762,56 +799,62 @@ static void bench_matrix_phi_reconstruction_blockdiag(::benchmark::State& state)
     for (auto _ : state) {
         for (auto patch = 0; patch < num_patches; patch++) {
             state.PauseTiming();
-            ModelType model(num_age_groups);
-            setup_model_benchmark(model);
+            {
+                ModelType model(num_age_groups);
+                setup_model_benchmark(model, num_age_groups);
 
-            size_t G  = num_age_groups;
-            size_t NC = 4 * G;
+                size_t G  = num_age_groups;
+                size_t NC = 4 * G;
 
-            // NC + G * 16
-            size_t system_size = NC + G * 16;
+                // NC + G * 16
+                size_t system_size = NC + G * 16;
 
-            Eigen::VectorXd y0(system_size);
-            y0.head(NC) = model.populations.get_compartments();
+                Eigen::VectorXd y0(system_size);
+                y0.head(NC) = model.populations.get_compartments();
 
-            // Initialize the diagonal blocks with Identity
-            for (size_t g = 0; g < G; ++g) {
-                Eigen::Map<Eigen::Matrix4d>(y0.data() + NC + g * 16) = Eigen::Matrix4d::Identity();
-            }
+                // Initialize the diagonal blocks with Identity
+                for (size_t g = 0; g < G; ++g) {
+                    Eigen::Map<Eigen::Matrix4d>(y0.data() + NC + g * 16) = Eigen::Matrix4d::Identity();
+                }
 
-            Integrator stepper;
-            AugmentedPhiSystemBlockDiag sys(model);
+                Integrator stepper;
+                AugmentedPhiSystemBlockDiag sys(model);
 
-            double mobile_fraction = 0.1 * num_commuter_groups;
-            Eigen::VectorXd initial_mobile_pop =
-                y0.head(NC) * (num_commuter_groups > 0 ? (mobile_fraction / num_commuter_groups) : 0.0);
+                const double mobile_fraction = 0.5;
+                Eigen::VectorXd initial_mobile_pop =
+                    y0.head(NC) * (num_commuter_groups > 0 ? (mobile_fraction / num_commuter_groups) : 0.0);
 
-            Eigen::MatrixXd X0(NC, num_commuter_groups);
-            for (int cg = 0; cg < num_commuter_groups; ++cg) {
-                X0.col(cg) = initial_mobile_pop;
-            }
-            Eigen::MatrixXd Xt(NC, num_commuter_groups);
+                Eigen::MatrixXd X0(NC, num_commuter_groups);
+                for (int cg = 0; cg < num_commuter_groups; ++cg) {
+                    X0.col(cg) = initial_mobile_pop;
+                }
+                Eigen::MatrixXd Xt(NC, num_commuter_groups);
 
+                state.ResumeTiming();
+
+                // 1. Integrate over the entire period t_max
+                double t          = t0;
+                Eigen::VectorXd y = y0;
+                while (t < t_max_phi - 1e-10) {
+                    double dt_eff = std::min(dt_phi, t_max_phi - t);
+                    stepper.do_step(sys, y, t, dt_eff);
+                    t += dt_eff;
+                }
+
+                // 2. Block-Diagonal Reconstruction
+                for (size_t g = 0; g < G; ++g) {
+                    const auto Phi_g = Eigen::Map<const Eigen::Matrix4d>(y.data() + NC + g * 16);
+                    // MEmilio stores age groups sequentially: S_g, E_g, I_g, R_g are contiguous (size 4)
+                    Xt.block(4 * g, 0, 4, num_commuter_groups).noalias() =
+                        Phi_g * X0.block(4 * g, 0, 4, num_commuter_groups);
+                }
+
+                Eigen::VectorXd resident = y.head(NC) - Xt.rowwise().sum();
+                benchmark::DoNotOptimize(resident);
+                benchmark::DoNotOptimize(Xt);
+                state.PauseTiming();
+            } // Destroy setup and endpoint storage outside the timed interval.
             state.ResumeTiming();
-
-            // 1. Integrate over the entire period t_max
-            double t          = t0;
-            Eigen::VectorXd y = y0;
-            while (t < t_max_phi - 1e-10) {
-                double dt_eff = std::min(dt_phi, t_max_phi - t);
-                stepper.do_step(sys, y, t, dt_eff);
-                t += dt_eff;
-            }
-
-            // 2. Block-Diagonal Reconstruction
-            for (size_t g = 0; g < G; ++g) {
-                const auto Phi_g = Eigen::Map<const Eigen::Matrix4d>(y.data() + NC + g * 16);
-                // MEmilio stores age groups sequentially: S_g, E_g, I_g, R_g are contiguous (size 4)
-                Xt.block(4 * g, 0, 4, num_commuter_groups).noalias() =
-                    Phi_g * X0.block(4 * g, 0, 4, num_commuter_groups);
-            }
-
-            benchmark::DoNotOptimize(Xt);
         }
     }
 }
@@ -931,68 +974,74 @@ static void bench_matrix_phi_reconstruction_blocktri(::benchmark::State& state)
     for (auto _ : state) {
         for (auto patch = 0; patch < num_patches; patch++) {
             state.PauseTiming();
-            ModelType model(num_age_groups);
-            setup_model_benchmark(model);
+            {
+                ModelType model(num_age_groups);
+                setup_model_benchmark(model, num_age_groups);
 
-            size_t G  = num_age_groups;
-            size_t NC = 4 * G;
+                size_t G  = num_age_groups;
+                size_t NC = 4 * G;
 
-            // NC + G * 10
-            size_t system_size = NC + G * seir_phi_tri_entries;
+                // NC + G * 10
+                size_t system_size = NC + G * seir_phi_tri_entries;
 
-            Eigen::VectorXd y0(system_size);
-            y0.head(NC) = model.populations.get_compartments();
+                Eigen::VectorXd y0(system_size);
+                y0.head(NC) = model.populations.get_compartments();
 
-            for (size_t g = 0; g < G; ++g) {
-                auto phi = Eigen::Map<SeirPhiTriVector>(y0.data() + NC + g * seir_phi_tri_entries);
-                phi.setZero();
-                phi[Phi00] = 1.0;
-                phi[Phi11] = 1.0;
-                phi[Phi22] = 1.0;
-                phi[Phi33] = 1.0;
-            }
-
-            Integrator stepper;
-            AugmentedPhiSystemBlockTri sys(model);
-
-            double mobile_fraction = 0.1 * num_commuter_groups;
-            Eigen::VectorXd initial_mobile_pop =
-                y0.head(NC) * (num_commuter_groups > 0 ? (mobile_fraction / num_commuter_groups) : 0.0);
-
-            Eigen::MatrixXd X0(NC, num_commuter_groups);
-            for (int cg = 0; cg < num_commuter_groups; ++cg) {
-                X0.col(cg) = initial_mobile_pop;
-            }
-            Eigen::MatrixXd Xt(NC, num_commuter_groups);
-
-            state.ResumeTiming();
-
-            double t          = t0;
-            Eigen::VectorXd y = y0;
-            while (t < t_max_phi - 1e-10) {
-                double dt_eff = std::min(dt_phi, t_max_phi - t);
-                stepper.do_step(sys, y, t, dt_eff);
-                t += dt_eff;
-            }
-
-            for (size_t g = 0; g < G; ++g) {
-                const auto phi         = Eigen::Map<const SeirPhiTriVector>(y.data() + NC + g * seir_phi_tri_entries);
-                const Eigen::Index row = static_cast<Eigen::Index>(4 * g);
-
-                for (Eigen::Index cg = 0; cg < static_cast<Eigen::Index>(num_commuter_groups); ++cg) {
-                    const double xS = X0(row + 0, cg);
-                    const double xE = X0(row + 1, cg);
-                    const double xI = X0(row + 2, cg);
-                    const double xR = X0(row + 3, cg);
-
-                    Xt(row + 0, cg) = phi[Phi00] * xS;
-                    Xt(row + 1, cg) = phi[Phi10] * xS + phi[Phi11] * xE;
-                    Xt(row + 2, cg) = phi[Phi20] * xS + phi[Phi21] * xE + phi[Phi22] * xI;
-                    Xt(row + 3, cg) = phi[Phi30] * xS + phi[Phi31] * xE + phi[Phi32] * xI + phi[Phi33] * xR;
+                for (size_t g = 0; g < G; ++g) {
+                    auto phi = Eigen::Map<SeirPhiTriVector>(y0.data() + NC + g * seir_phi_tri_entries);
+                    phi.setZero();
+                    phi[Phi00] = 1.0;
+                    phi[Phi11] = 1.0;
+                    phi[Phi22] = 1.0;
+                    phi[Phi33] = 1.0;
                 }
-            }
 
-            benchmark::DoNotOptimize(Xt);
+                Integrator stepper;
+                AugmentedPhiSystemBlockTri sys(model);
+
+                const double mobile_fraction = 0.5;
+                Eigen::VectorXd initial_mobile_pop =
+                    y0.head(NC) * (num_commuter_groups > 0 ? (mobile_fraction / num_commuter_groups) : 0.0);
+
+                Eigen::MatrixXd X0(NC, num_commuter_groups);
+                for (int cg = 0; cg < num_commuter_groups; ++cg) {
+                    X0.col(cg) = initial_mobile_pop;
+                }
+                Eigen::MatrixXd Xt(NC, num_commuter_groups);
+
+                state.ResumeTiming();
+
+                double t          = t0;
+                Eigen::VectorXd y = y0;
+                while (t < t_max_phi - 1e-10) {
+                    double dt_eff = std::min(dt_phi, t_max_phi - t);
+                    stepper.do_step(sys, y, t, dt_eff);
+                    t += dt_eff;
+                }
+
+                for (size_t g = 0; g < G; ++g) {
+                    const auto phi         = Eigen::Map<const SeirPhiTriVector>(y.data() + NC + g * seir_phi_tri_entries);
+                    const Eigen::Index row = static_cast<Eigen::Index>(4 * g);
+
+                    for (Eigen::Index cg = 0; cg < static_cast<Eigen::Index>(num_commuter_groups); ++cg) {
+                        const double xS = X0(row + 0, cg);
+                        const double xE = X0(row + 1, cg);
+                        const double xI = X0(row + 2, cg);
+                        const double xR = X0(row + 3, cg);
+
+                        Xt(row + 0, cg) = phi[Phi00] * xS;
+                        Xt(row + 1, cg) = phi[Phi10] * xS + phi[Phi11] * xE;
+                        Xt(row + 2, cg) = phi[Phi20] * xS + phi[Phi21] * xE + phi[Phi22] * xI;
+                        Xt(row + 3, cg) = phi[Phi30] * xS + phi[Phi31] * xE + phi[Phi32] * xI + phi[Phi33] * xR;
+                    }
+                }
+
+                Eigen::VectorXd resident = y.head(NC) - Xt.rowwise().sum();
+                benchmark::DoNotOptimize(resident);
+                benchmark::DoNotOptimize(Xt);
+                state.PauseTiming();
+            } // Destroy setup and endpoint storage outside the timed interval.
+            state.ResumeTiming();
         }
     }
 }
