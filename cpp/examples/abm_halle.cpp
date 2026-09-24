@@ -668,7 +668,7 @@ int main()
     size_t num_age_groups = 11;
     auto model  = mio::abm::Model(num_age_groups);
 
-    std::string path_hosp = "/home/wulf_ka/home/abm/memilio/cpp/examples/df_hosp.csv";
+    std::string path_hosp = "/home/wulf_ka/home/abm/memilio/cpp/examples/df_hosp_koeln_handmade.csv";
 
     std::string path = "/home/wulf_ka/home/abm/memilio/cpp/examples/df_abm.csv";
     // std::string path = "/home/wulf_ka/home/abm/memilio/cpp/examples/df_abm_short.csv";
@@ -772,7 +772,7 @@ int main()
     // Run the simulation until tmax with the history object.
     {
     AutoTimer<"advance"> adv_timer_ms;
-    sim.advance(tmax, history);
+    sim.advance(tmax, historyTimeSeries);
     }
 
 
