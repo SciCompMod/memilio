@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Anna Wendler
@@ -70,6 +70,63 @@ mio::TimeSeries<ScalarType> compress_timeseries(const mio::TimeSeries<ScalarType
     return removed;
 }
 
+ScalarType kahan_sum(const std::vector<ScalarType>& v)
+{
+    long double sum = 0.0L;
+    long double c   = 0.0L;
+    for (auto x : v) {
+        long double y = (long double)x - c;
+        long double t = sum + y;
+        c             = (t - sum) - y;
+        sum           = t;
+    }
+    return static_cast<ScalarType>(sum);
+}
+
+// First order backward finite difference approximation of S'(t_index) on the (raw, dt_ode-spaced) groundtruth
+// Susceptible values, mirroring ModelMessinaExtendedDetailedInit::compute_S_deriv's first order stencil. Same
+// cancellation concern as the fourth order stencil below, so the two terms are also Kahan-summed.
+ScalarType s_deriv_fd1_kahan(const mio::TimeSeries<ScalarType>& groundtruth, int index, int stride, ScalarType div_dt)
+{
+    std::vector<ScalarType> terms = {
+        groundtruth.get_value(index)[(size_t)mio::isir::InfectionState::Susceptible],
+        -groundtruth.get_value(index - stride)[(size_t)mio::isir::InfectionState::Susceptible]};
+    return -kahan_sum(terms) * div_dt;
+}
+
+// Fourth order backward finite difference approximation of S'(t_index) on the (raw, dt_ode-spaced) groundtruth
+// Susceptible values, mirroring ModelMessinaExtendedDetailedInit::compute_S_deriv's fourth order stencil.
+// The stencil differences values of order total_population (~1e7) over a very small dt_ode, so the terms nearly
+// cancel; summing them in double precision loses most significant digits before the division by div_dt/12
+// amplifies whatever rounding error remains. Accumulating with Kahan (compensated) summation in long double,
+// as mio::isir::kahan_sum does for the analogous cancellation-prone sums in model.cpp, keeps that rounding error
+// far below the O(dt_ode^4) truncation error the stencil is supposed to have.
+ScalarType s_deriv_fd4_kahan(const mio::TimeSeries<ScalarType>& groundtruth, int index, int stride, ScalarType div_dt)
+{
+    std::vector<ScalarType> terms = {
+        25 * groundtruth.get_value(index)[(size_t)mio::isir::InfectionState::Susceptible],
+        -48 * groundtruth.get_value(index - stride)[(size_t)mio::isir::InfectionState::Susceptible],
+        36 * groundtruth.get_value(index - 2 * stride)[(size_t)mio::isir::InfectionState::Susceptible],
+        -16 * groundtruth.get_value(index - 3 * stride)[(size_t)mio::isir::InfectionState::Susceptible],
+        3 * groundtruth.get_value(index - 4 * stride)[(size_t)mio::isir::InfectionState::Susceptible]};
+    return -kahan_sum(terms) * (div_dt / 12.);
+}
+
+// Dispatches to the backward finite difference stencil of the requested order (1 or 4) for S'(t_index). The stencil
+// points are spaced `stride` groundtruth indices apart, i.e. the effective step size is stride * dt_ode = 1/div_dt.
+ScalarType s_deriv_fd_kahan(const mio::TimeSeries<ScalarType>& groundtruth, int index, int stride, ScalarType div_dt,
+                            size_t order)
+{
+    switch (order) {
+    case 1:
+        return s_deriv_fd1_kahan(groundtruth, index, stride, div_dt);
+    case 4:
+        return s_deriv_fd4_kahan(groundtruth, index, stride, div_dt);
+    default:
+        throw std::invalid_argument("s_deriv_fd_kahan: unsupported finite difference order (must be 1 or 4).");
+    }
+}
+
 mio::IOResult<std::vector<mio::TimeSeries<ScalarType>>> simulate_ode(ScalarType ode_exponent, ScalarType t0_ode,
                                                                      ScalarType tmax, ScalarType TimeInfected,
                                                                      ScalarType cont_freq, std::string save_dir = "",
@@ -110,19 +167,14 @@ mio::IOResult<std::vector<mio::TimeSeries<ScalarType>>> simulate_ode(ScalarType 
 
     std::cout << "Num tps ODE: " << compartments.get_num_time_points() << std::endl;
 
-    mio::TimeSeries<ScalarType> compressed_compartments =
-        mio::TimeSeries<ScalarType>((Eigen::Index)mio::isir::InfectionState::Count);
-    mio::TimeSeries<ScalarType> compressed_flows =
-        mio::TimeSeries<ScalarType>((Eigen::Index)mio::isir::InfectionTransition::Count);
+    mio::TimeSeries<ScalarType> compressed_compartments = compress_timeseries(compartments, saving_exponent);
+    mio::TimeSeries<ScalarType> compressed_flows        = compress_timeseries(flows, saving_exponent);
+
+    std::cout << "Num tps ODE compressed: " << compressed_compartments.get_num_time_points() << std::endl;
 
     if (!save_dir.empty()) {
         // Save compartments.
-        compressed_compartments = compress_timeseries(compartments, saving_exponent);
-        compressed_flows        = compress_timeseries(flows, saving_exponent);
-
-        std::cout << "Num tps ODE compressed: " << compressed_compartments.get_num_time_points() << std::endl;
-
-        auto result = compressed_compartments.export_csv(fmt::format("{}/ode_result_compressed.csv", save_dir));
+        // auto result = compressed_compartments.export_csv(fmt::format("{}/ode_result_compressed.csv", save_dir));
         auto save_result_status_ode =
             mio::save_result({compressed_compartments}, {0}, num_agegroups,
                              save_dir + "result_ode_dt=1e-" + fmt::format("{:.0f}", ode_exponent) + "_savedt=1e-" +
@@ -139,7 +191,7 @@ mio::IOResult<std::vector<mio::TimeSeries<ScalarType>>> simulate_ode(ScalarType 
         }
     }
 
-    auto results = {compressed_compartments, flows};
+    auto results = {compartments, flows};
     return mio::success(results);
 }
 
@@ -149,7 +201,10 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarTy
                                  std::string save_dir = "", bool kahan = true,
                                  mio::TimeSeries<ScalarType> compartments_groundtruth =
                                      mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
-                                 bool more_precise_s_deriv = false, bool forward_fd = false)
+                                 bool more_precise_s_deriv = false, bool forward_fd = false,
+                                 mio::TimeSeries<ScalarType> flows_groundtruth =
+                                     mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
+                                 size_t s_deriv_fd_order = 0, ScalarType flow_init_exponent = -1.)
 {
     using namespace params;
     using Vec = mio::TimeSeries<ScalarType>::Vector;
@@ -187,7 +242,6 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarTy
             std::vector<size_t> flows = {(size_t)mio::isir::InfectionTransition::SusceptibleToInfected,
                                          (size_t)mio::isir::InfectionTransition::InfectedToRecovered};
 
-            // ScalarType t0_ode = compartments_groundtruth.get_time(0);
             ScalarType t_init = t0_ide - t_init_window;
             ScalarType t0_ode = compartments_groundtruth.get_time(0);
             cutoff_window     = t_init - t0_ode;
@@ -208,17 +262,8 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarTy
             for (size_t compartment : compartments) {
                 vec_init[compartment] = compartments_groundtruth.get_value(start_index)[compartment];
             }
-            // std::cout << "t init index: " << start_index << std::endl;
 
             init_populations.add_time_point(start_time, vec_init);
-
-            // std::cout << "init_pop t_init: " << init_populations.get_last_time() << std::endl;
-
-            // std::cout << "diff S at t_init: "
-            //           << compartments_groundtruth.get_value(
-            //                  std::round(t_init * div_dt_groundtruth))[(size_t)mio::isir::InfectionState::Susceptible] -
-            //                  init_populations.get_last_value()[(size_t)mio::isir::InfectionState::Susceptible]
-            //   << std::endl;
 
             while (init_populations.get_last_time() < t0_ide - 1e-10) {
                 std::round(start_index += groundtruth_index_factor);
@@ -229,30 +274,60 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarTy
                 init_populations.add_time_point(init_populations.get_last_time() + dt_ide, vec_init);
             }
 
-            // if (flows_groundtruth.get_num_time_points() > 0) {
-            //     std::cout << "Initializing with given groundtruth for flows.\n";
-            //     // Add values to init_flows_ts.
-            //     vec_init_flows[(size_t)mio::isir::InfectionTransition::SusceptibleToInfected] =
-            //         compartments_groundtruth.get_value(0)[(size_t)mio::isir::InfectionState::Infected];
-            //     vec_init_flows[(size_t)mio::isir::InfectionTransition::InfectedToRecovered] =
-            //         compartments_groundtruth.get_value(0)[(size_t)mio::isir::InfectionState::Recovered];
+            if (flows_groundtruth.get_num_time_points() > 0) {
+                std::cout << "Initializing with given groundtruth for flows.\n";
+                // Compute the flow rate at t_init as a backward difference of the cumulative groundtruth flows,
+                // consistent with how every later point of init_flows_ts is derived below. (Using compartment
+                // values here, as was done previously, mixes up populations and flow rates and leaves the point
+                // at t_init inconsistent with the rest of the series.)
+                // The backward differences use the step size dt_flow_init = 10^-flow_init_exponent (default: dt_ode),
+                // which is independent of dt_ide. It has to be a multiple of dt_ode so that all stencil points
+                // coincide with groundtruth time points. Note that very small steps amplify rounding errors.
+                ScalarType used_flow_init_exponent = flow_init_exponent < 0. ? ode_exponent : flow_init_exponent;
+                if (used_flow_init_exponent > ode_exponent) {
+                    return mio::failure(mio::StatusCode::InvalidValue,
+                                        "flow_init_exponent must not exceed ode_exponent, i.e. the flow "
+                                        "initialization step must not be smaller than dt_ode.");
+                }
+                ScalarType div_dt_flow_init = std::pow(10, used_flow_init_exponent);
+                int flow_init_stride        = int(std::round(std::pow(10, ode_exponent - used_flow_init_exponent)));
+                std::cout << "Flow initialization with dt = 1e-" << used_flow_init_exponent
+                          << " (stride in groundtruth indices: " << flow_init_stride << ")" << std::endl;
+                int t_init_index = int(std::round(t_init * div_dt_groundtruth));
+                for (size_t flow : flows) {
+                    if (s_deriv_fd_order > 0 && flow == (size_t)mio::isir::InfectionTransition::SusceptibleToInfected) {
+                        // Compute the S -> I flow as -S' via a backward finite difference scheme of the requested
+                        // order, applied to the groundtruth Susceptible values with step dt_flow_init.
+                        vec_init_flows[flow] = s_deriv_fd_kahan(compartments_groundtruth, t_init_index,
+                                                                flow_init_stride, div_dt_flow_init, s_deriv_fd_order);
+                    }
+                    else {
+                        vec_init_flows[flow] = (flows_groundtruth.get_value(t_init_index)[flow] -
+                                                flows_groundtruth.get_value(t_init_index - flow_init_stride)[flow]) *
+                                               div_dt_flow_init;
+                    }
+                }
 
-            //     init_flows_ts.add_time_point(t_init, vec_init_flows);
+                init_flows_ts.add_time_point(t_init, vec_init_flows);
 
-            //     while (init_flows_ts.get_last_time() < t0_ide - 1e-10) {
-            //         for (size_t flow : flows) {
-            //             vec_init_flows[flow] =
-            //                 (flows_groundtruth.get_value(
-            //                      int(std::round(t_init * div_dt_groundtruth) +
-            //                          init_flows_ts.get_num_time_points() * groundtruth_index_factor))[flow] -
-            //                  flows_groundtruth.get_value(
-            //                      int(std::round(t_init * div_dt_groundtruth) +
-            //                          (init_flows_ts.get_num_time_points() - 1) * groundtruth_index_factor))[flow]) /
-            //                 dt_ide;
-            //         }
-            //         init_flows_ts.add_time_point(init_flows_ts.get_last_time() + dt_ide, vec_init_flows);
-            //     }
-            // }
+                while (init_flows_ts.get_last_time() < t0_ide - 1e-10) {
+                    int index = int(std::round(t_init * div_dt_groundtruth) +
+                                    init_flows_ts.get_num_time_points() * groundtruth_index_factor);
+                    for (size_t flow : flows) {
+                        if (s_deriv_fd_order > 0 &&
+                            flow == (size_t)mio::isir::InfectionTransition::SusceptibleToInfected) {
+                            vec_init_flows[flow] = s_deriv_fd_kahan(compartments_groundtruth, index, flow_init_stride,
+                                                                    div_dt_flow_init, s_deriv_fd_order);
+                        }
+                        else {
+                            vec_init_flows[flow] = (flows_groundtruth.get_value(index)[flow] -
+                                                    flows_groundtruth.get_value(index - flow_init_stride)[flow]) *
+                                                   div_dt_flow_init;
+                        }
+                    }
+                    init_flows_ts.add_time_point(init_flows_ts.get_last_time() + dt_ide, vec_init_flows);
+                }
+            }
         }
 
         // Initialize model.
@@ -317,7 +392,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarTy
 
 int main()
 {
-    /* In this example we want to examine the convergence behavior under the assumption of exponential stay time 
+    /* In this example we want to examine the convergence behavior under the assumption of exponential stay time
     distributions. In this case, we can compare the solution of the IDE simulation with a corresponding ODE solution. */
 
     using namespace params;
@@ -329,16 +404,22 @@ int main()
 
     ScalarType t0_ode                    = 0.;
     ScalarType t0_ide                    = 50.;
-    std::vector<ScalarType> init_windows = {40.};
+    std::vector<ScalarType> init_windows = {0., 10.};
     std::vector<ScalarType> tmax_values  = {t0_ide + 100.};
 
     bool kahan                = false;
     bool more_precise_s_deriv = false;
-    bool forward_fd           = false;
+    bool forward_fd           = true;
+    // Order of the backward finite difference scheme used to derive the initial S -> I flow from the groundtruth
+    // Susceptible values; 0 disables this and falls back to differencing the groundtruth's cumulative flows.
+    // size_t s_deriv_fd_order = 0;
+    // Step size dt = 1e-flow_init_exponent used in the finite differences that initialize the flows. Must not exceed
+    // ode_exponent (dt_ode is the finest possible choice); a negative value selects dt_ode.
+    // ScalarType flow_init_exponent = 6.;
 
     std::vector<size_t> finite_difference_orders = {4};
 
-    std::vector<ScalarType> ide_exponents = {0., 1., 2., 3.};
+    std::vector<ScalarType> ide_exponents = {3.};
     std::vector<size_t> gregory_orders    = {1, 2, 3};
 
     std::vector<std::vector<ScalarType>> timeinf_tmax_values;
@@ -361,8 +442,8 @@ int main()
             std::cout << "FD order: " << finite_difference_order << std::endl;
 
             std::string save_dir =
-                fmt::format("./simulation_results/2026-09-15/"
-                            "baseline_dtode=1e-{}_t0ode={}_timeinf={}_contfreq={}_kahan={}_buffer={}_forwardfd={}/"
+                fmt::format("./simulation_results/2026-09-24/"
+                            "forward_ta_dtode=1e-{}_t0ode={}_timeinf={}_contfreq={}_kahan={}_buffer={}_forwardfd={}/"
                             "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
                             ode_exponent, t0_ode, time_infected, cont_freq, kahan, more_precise_s_deriv, forward_fd,
                             t0_ide, tmax, finite_difference_order);
@@ -378,7 +459,7 @@ int main()
                 simulate_ode(ode_exponent, t0_ode, tmax, time_infected, cont_freq, save_dir, saving_exponent).value();
 
             auto compartments_ode = result_ode[0];
-            // auto flows_ode        = result_ode[1];
+            auto flows_ode        = result_ode[1];
 
             for (ScalarType init_window : init_windows) {
                 ScalarType t_init = t0_ide - init_window;
@@ -393,10 +474,14 @@ int main()
                 for (size_t gregory_order : gregory_orders) {
                     std::cout << std::endl;
                     std::cout << "Gregory order: " << gregory_order << std::endl;
+                    // compartments_ode and flows_ode are raw (dt_ode-spaced) groundtruth series, so the
+                    // groundtruth resolution passed to simulate_ide must be the true ode_exponent, not
+                    // saving_exponent (which only applies to the compressed results written to disk).
                     mio::IOResult<void> result_ide =
-                        simulate_ide(ide_exponents, saving_exponent, gregory_order, finite_difference_order,
-                                     init_window, t0_ide, tmax, time_infected, cont_freq, save_dir_ide, kahan,
-                                     compartments_ode, more_precise_s_deriv, forward_fd);
+                        simulate_ide(ide_exponents, ode_exponent, gregory_order, finite_difference_order, init_window,
+                                     t0_ide, tmax, time_infected, cont_freq, save_dir_ide, kahan, compartments_ode,
+                                     more_precise_s_deriv, forward_fd);
+                    //flows_ode, s_deriv_fd_order, flow_init_exponent
                 }
             }
         }
