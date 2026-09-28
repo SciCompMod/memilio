@@ -122,6 +122,7 @@ public:
     TimeSeries<ScalarType> populations; ///< TimeSeries containing points of time and the corresponding number of
     // people in defined #InfectionState%s for every AgeGroup.
     TimeSeries<ScalarType> flows                      = TimeSeries<ScalarType>((size_t)InfectionTransition::Count);
+    TimeSeries<ScalarType> flows_groundtruth          = TimeSeries<ScalarType>((size_t)InfectionTransition::Count);
     TimeSeries<ScalarType> infected_per_infection_age = TimeSeries<ScalarType>(1);
     std::vector<ScalarType> m_transmissionproboncontact_vector;
     std::vector<ScalarType> m_riskofinffromsymptomatic_vector;
