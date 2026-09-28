@@ -12,17 +12,16 @@ def plot_column_means(csv_path: str, time_col: str = "Time", out_path: str | Non
     data_cols = [c for c in df.columns if c != time_col]
     means = df[data_cols].mean()
 
-    fig, axes = plt.subplots(1, 1, figsize=(10, 5.5))
+    fig, axes = plt.subplots(1, 1, figsize=(16, 8.5))
+    axes.yaxis.grid(True, linestyle="--", alpha=0.4)
+    axes.set_axisbelow(True)
 
-    # --- Distinct color per bar (colorblind-friendly qualitative palette) ---
     n_bars = len(means)
-    cmap = mpl.colormaps["tab10" if n_bars <= 10 else "tab20"]
-    # colors = [cmap(i % cmap.N) for i in range(n_bars)]
-    colors = ["#0072B2", "#E69F00", "#009E73", "#D55E00", "#CC79A7"]
-    colors = ["#5B8A8A", "#C97064", "#D4A24C", "#6E7F91", "#8FA876"]
+    colors = ["#332288", "#44AA99", "#882255", "#88CCEE",  "#2E8B57"]
+    colors = colors[::-1]
     x_pos = np.arange(n_bars)
     bars = axes.bar(x_pos, means.values, color=colors, width=0.6,
-                    edgecolor="white", linewidth=0.8, alpha=0.8)
+                    edgecolor="white", linewidth=0.8, alpha=1.)
 
     # --- Value labels on top of each bar ---
     for rect, val in zip(bars, means.values):
@@ -33,7 +32,7 @@ def plot_column_means(csv_path: str, time_col: str = "Time", out_path: str | Non
             textcoords="offset points",
             ha="center",
             va="bottom",
-            fontsize=10,
+            fontsize=20,
         )
 
     # --- Remove x-tick labels; use a legend instead ---
@@ -41,12 +40,13 @@ def plot_column_means(csv_path: str, time_col: str = "Time", out_path: str | Non
     axes.set_xticklabels([])
     axes.tick_params(axis="x", length=0)  # hide tick marks too
 
-    axes.set_title("Run time", fontsize=15, pad=12)
-    axes.set_ylabel("Time [seconds]", fontsize=15)
+    axes.tick_params(axis='y', labelsize=16)
+
+    axes.set_title("Run time", fontsize=32, pad=12)
+    axes.set_ylabel("Time [seconds]", fontsize=32)
 
     # Light horizontal gridlines behind the bars, no top/right spines
-    axes.yaxis.grid(True, linestyle="--", alpha=0.4)
-    axes.set_axisbelow(True)
+
     # axes.spines["top"].set_visible(False)
     # axes.spines["right"].set_visible(False)
 
@@ -58,11 +58,11 @@ def plot_column_means(csv_path: str, time_col: str = "Time", out_path: str | Non
         bars,
         labels,
         title=None,
-        loc="lower center",
-        bbox_to_anchor=(0.5, -0.2),
+        loc="center left",
+        bbox_to_anchor=(1.02, 0.5),
         # frameon=False,
-        fontsize=12,
-        ncols=5
+        fontsize=28,
+        ncols=1
     )
 
     fig.tight_layout()
