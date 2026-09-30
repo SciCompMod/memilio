@@ -40,11 +40,11 @@ import numpy as np
 import pandas as pd
 from matplotlib.ticker import FuncFormatter, NullFormatter
 
-# Categorical palette in a fixed, colorblind-safe order. Compartment i is
-# always drawn with _COLORS[i % 8]; from the ninth compartment on, the line
-# style changes instead of introducing new hues.
-_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100',
-           '#e87ba4', '#008300', '#4a3aa7', '#e34948']
+# Colors of matplotlib's 'tab10' colormap, the colorblind-friendly palette.
+# Compartment i is always drawn with _COLORS[i % 10]; from the eleventh
+# compartment on, the line style changes instead of introducing new hues.
+_COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+           '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
 _LINESTYLES = ['-', '--', '-.', ':']
 
 _GRID_COLOR = '#e1e0d9'
@@ -391,7 +391,7 @@ def plot_time_series(
                               groups=['0-19', '20+'], title='ODE SEIR')
         ax.figure.savefig('seir.pdf')
 
-    Every compartment has a fixed color. For more than eight compartments,
+    Every compartment has a fixed color. For more than ten compartments,
     the colors are reused with a different line style; consider ``select``
     to plot only the compartments of interest.
 
