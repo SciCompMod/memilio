@@ -32,6 +32,33 @@ class Test_UncertainValue(unittest.TestCase):
         uv.value = 1.0
         self.assertEqual(uv.value, 1.0)
 
+    def test_operators(self):
+        uv = mio.UncertainValue(2.0)
+        # addition
+        self.assertEqual(uv + 1.0, 3.0)
+        self.assertEqual(1.0 + uv, 3.0)
+        self.assertEqual(uv.value, 2.0)
+        uv += 1.0
+        self.assertEqual(uv.value, 3.0)
+        # subtraction
+        self.assertEqual(uv - 1.0, 2.0)
+        self.assertEqual(1.0 - uv, -2.0)
+        self.assertEqual(uv.value, 3.0)
+        uv -= 1.0
+        self.assertEqual(uv.value, 2.0)
+        # multiplication
+        self.assertEqual(uv * 3.0, 6.0)
+        self.assertEqual(3.0 * uv, 6.0)
+        self.assertEqual(uv.value, 2.0)
+        uv *= 3.0
+        self.assertEqual(uv.value, 6.0)
+        # division
+        self.assertEqual(uv / 3.0, 2.0)
+        self.assertEqual(12.0 / uv, 2.0)
+        self.assertEqual(uv.value, 6.0)
+        uv /= 3.0
+        self.assertEqual(uv.value, 2.0)
+
     def test_distribution(self):
         """ """
         uv = mio.UncertainValue(0)
