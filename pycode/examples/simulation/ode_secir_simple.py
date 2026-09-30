@@ -18,31 +18,27 @@
 # limitations under the License.
 #############################################################################
 import argparse
-from datetime import date, datetime
+from datetime import date
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 
-from memilio.simulation import AgeGroup, ContactMatrix, Damping, UncertainContactMatrix
-from memilio.simulation.osecir import Index_InfectionState
+from memilio.plot.plotTimeSeries import plot_time_series
+from memilio.simulation import AgeGroup, Damping
 from memilio.simulation.osecir import InfectionState as State
-from memilio.simulation.osecir import (Model, Simulation,
-                                       interpolate_simulation_result, simulate)
+from memilio.simulation.osecir import (Model, interpolate_simulation_result,
+                                       simulate)
 
 
 def run_ode_secir_simulation(show_plot=True):
     """Runs the c++ ODE SECIHURD model using one age group
     and plots the results
 
-    :param show_plot:  (Default value = True)
+    :param show_plot: Whether to show the figure interactively.
+        (Default value = True)
 
     """
 
-    # Define Comartment names
-    compartments = [
-        'Susceptible', 'Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms',
-        'InfectedSevere', 'InfectedCritical', 'Recovered', 'Dead']
     # Define population of age groups
     populations = [83000]
 
@@ -52,7 +48,6 @@ def run_ode_secir_simulation(show_plot=True):
     start_year = 2019
     dt = 0.1
     num_groups = 1
-    num_compartments = len(compartments)
 
     # Initialize Parameters
     model = Model(1)
@@ -112,39 +107,14 @@ def run_ode_secir_simulation(show_plot=True):
     result = interpolate_simulation_result(result)
 
     print(result.get_last_value())
-    num_time_points = result.get_num_time_points()
-    result_array = result.as_ndarray()
-    t = result_array[0, :]
-    group_data = np.transpose(result_array[1:, :])
 
-    # sum over all groups
-    data = np.zeros((num_time_points, num_compartments))
-    for i in range(num_groups):
-        data += group_data[:, i * num_compartments: (i + 1) * num_compartments]
-
-    # Plot Results
-    datelist = np.array(
-        pd.date_range(
-            datetime(start_year, start_month, start_day),
-            periods=days, freq='D').strftime('%m-%d').tolist())
-
-    tick_range = (np.arange(int(days / 10) + 1) * 10)
-    tick_range[-1] -= 1
-    fig, ax = plt.subplots()
-    ax.plot(t, data[:, 0], label='#Susceptible')
-    ax.plot(t, data[:, 1], label='#Exposed')
-    ax.plot(t, data[:, 2], label='#Carrying')
-    ax.plot(t, data[:, 3], label='#InfectedSymptoms')
-    ax.plot(t, data[:, 4], label='#Hospitalzed')
-    ax.plot(t, data[:, 5], label='#InfectedCritical')
-    ax.plot(t, data[:, 6], label='#Recovered')
-    ax.plot(t, data[:, 7], label='#Died')
-    ax.set_title("ODE SECIR model simulation")
-    ax.set_xticks(tick_range)
-    ax.set_xticklabels(datelist[tick_range], rotation=45)
-    ax.legend()
-    fig.tight_layout
-    fig.savefig('osecir_simple.pdf')
+    # Plot results: one line per compartment (infection state) on a date
+    # axis. The names are taken from the InfectionState enum of the model.
+    ax = plot_time_series(
+        result, labels=State.values(),
+        start_date=date(start_year, start_month, start_day),
+        title="ODE SECIR model simulation")
+    ax.figure.savefig('osecir_simple.pdf')
 
     if show_plot:
         plt.show()
