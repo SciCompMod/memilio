@@ -83,7 +83,7 @@ def _names(items) -> list[str]:
     (e.g. members of an InfectionState enum) into a list of strings.
 
     :param items: Iterable of strings or named objects, or a non-iterable
-        object with a ``values()`` method returning such an iterable (for 
+        object with a ``values()`` method returning such an iterable (for
         example the ``InfectionState`` enums of the bindings).
     :returns: List of names.
     """
@@ -172,13 +172,13 @@ def time_series_to_dataframe(
     """ Converts a TimeSeries into a tidy (long-form) pandas DataFrame.
 
     The frame has one row per time point and element with the columns
-    ``Time``, ``Date`` (only if ``start_date`` is given), ``Group`` (only if
-    ``groups`` is given), ``Compartment`` and ``Value``. ``Compartment`` and
-    ``Group`` are ordered categoricals in the order of the TimeSeries, so the
-    frame can be used directly with grammar-of-graphics libraries such as
-    seaborn, plotnine or altair. A wide table (one column per compartment,
-    summed over groups) is obtained by
-    ``df.pivot_table(index='Time', columns='Compartment', values='Value',
+    ``Time``, ``Date`` (only if ``start_date`` is given), ``Groups`` (only
+    if ``groups`` is given), ``Compartments`` and ``Values``.
+    ``Compartments`` and ``Groups`` are ordered categoricals in the order of
+    the TimeSeries, so the frame can be used directly with
+    grammar-of-graphics libraries such as seaborn, plotnine or altair. A wide
+    table (one column per compartment, summed over groups) is obtained by
+    ``df.pivot_table(index='Time', columns='Compartments', values='Values',
     aggfunc='sum')``.
 
     :param time_series: ``memilio.simulation.TimeSeries`` (or any object with
