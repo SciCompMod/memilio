@@ -60,7 +60,7 @@ void bind_uncertain_value(py::module_& m, std::string const& name)
         .def(double() + py::self)
         .def(
             "__iadd__",
-            [](mio::UncertainValue<double>& a, double b) {
+            [](mio::UncertainValue<double>& a, double b) -> auto& {
                 a += b;
                 return a;
             },
@@ -69,7 +69,7 @@ void bind_uncertain_value(py::module_& m, std::string const& name)
         .def(double() - py::self)
         .def(
             "__isub__",
-            [](mio::UncertainValue<double>& a, double b) {
+            [](mio::UncertainValue<double>& a, double b) -> auto& {
                 a -= b;
                 return a;
             },
@@ -78,7 +78,7 @@ void bind_uncertain_value(py::module_& m, std::string const& name)
         .def(double() * py::self)
         .def(
             "__imul__",
-            [](mio::UncertainValue<double>& a, double b) {
+            [](mio::UncertainValue<double>& a, double b) -> auto& {
                 a *= b;
                 return a;
             },
@@ -87,7 +87,7 @@ void bind_uncertain_value(py::module_& m, std::string const& name)
         .def(double() / py::self)
         .def(
             "__itruediv__",
-            [](mio::UncertainValue<double>& a, double b) {
+            [](mio::UncertainValue<double>& a, double b) -> auto& {
                 a /= b;
                 return a;
             },
