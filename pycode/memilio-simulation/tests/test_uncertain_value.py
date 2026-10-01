@@ -59,6 +59,19 @@ class Test_UncertainValue(unittest.TestCase):
         uv /= 3.0
         self.assertEqual(uv.value, 2.0)
 
+    def test_inplace_operators_keep_identity(self):
+        uv = mio.UncertainValue(2.0)
+        alias = uv
+        uv += 1.0
+        self.assertIs(uv, alias)
+        uv -= 1.0
+        self.assertIs(uv, alias)
+        uv *= 2.0
+        self.assertIs(uv, alias)
+        uv /= 2.0
+        self.assertIs(uv, alias)
+        self.assertEqual(alias.value, 2.0)
+
     def test_distribution(self):
         """ """
         uv = mio.UncertainValue(0)
