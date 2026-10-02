@@ -108,6 +108,6 @@ simulations of the :doc:`MEmilio Python bindings <m-simulation>`:
   ``layout='constrained'`` or save them with ``bbox_inches='tight'``.
 
 ``time_series_to_dataframe`` converts a ``TimeSeries`` into a tidy pandas ``DataFrame`` with the columns ``Time``,
-``Group``, ``Compartment`` and ``Value`` (and ``Date`` if a start date is given) for use with other libraries such as
+``Groups``, ``Compartments`` and ``Values`` (and ``Date`` if a start date is given) for use with other libraries such as
 seaborn, plotnine or altair. A complete example is given in
 `examples/plot/plotSimulationResults.py <https://github.com/SciCompMod/memilio/blob/main/pycode/examples/plot/plotSimulationResults.py>`_.

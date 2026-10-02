@@ -438,7 +438,8 @@ def plot_time_series(
     :param figsize: Size of the figure in inches if a new figure is created.
         (Default value = (8, 4.5))
     :param plot_kwargs: Additional keyword arguments passed to
-        ``matplotlib.axes.Axes.plot`` for every line, e.g. ``linewidth``.
+        ``matplotlib.axes.Axes.plot`` for every line, e.g. ``linewidth``. This
+        overwrites the default settings.
     :returns: The matplotlib axes containing the plot. Use ``ax.figure`` to
         access and save the figure.
     """

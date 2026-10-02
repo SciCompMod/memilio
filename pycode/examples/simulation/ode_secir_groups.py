@@ -17,6 +17,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
+
+# This example requires memilio.simulation and memilio.plot to be installed!
+
 import argparse
 import os
 from datetime import date

@@ -52,7 +52,7 @@ def run_ode_seir_simulation(days=100, dt=0.1):
         group = AgeGroup(i)
         model.parameters.TimeExposed[group] = 5.2
         model.parameters.TimeInfected[group] = 6.
-        model.parameters.TransmissionProbabilityOnContact[group] = 1. * i
+        model.parameters.TransmissionProbabilityOnContact[group] = 1. * (i+1)
         model.populations[group, InfectionState.Exposed] = 100
         model.populations[group, InfectionState.Infected] = 50
         model.populations[group, InfectionState.Recovered] = 10
