@@ -46,7 +46,7 @@ inline constexpr double accuracy_tolerance  = 1e-6; // fraction of initial resid
 inline constexpr std::array<int, 7> patches = {16, 32, 64, 128, 256, 512, 1024};
 inline constexpr std::array<int, 4> large_patches = {2048, 4096, 8192, 16384};
 inline constexpr std::array<int, 4> groups  = {1, 3, 6, 8};
-inline constexpr int scaling_shape_set_version = 3;
+inline constexpr int scaling_shape_set_version = 7;
 inline constexpr int phase_shape_set_version = 4;
 inline constexpr std::array<int, 3> phase_threads = {1, 16, 128};
 // Version 5 is reserved for the independent roofline experiment. Only the
@@ -54,8 +54,9 @@ inline constexpr std::array<int, 3> phase_threads = {1, 16, 128};
 inline constexpr int weak_phase_shape_set_version = 6;
 inline constexpr std::array<int, 3> weak_phase_threads = {16, 32, 64};
 inline constexpr int strong_patches = 8192;
-inline constexpr std::array<std::pair<int, int>, 5> weak_scaling_shapes = {
-    std::pair{1, 512}, std::pair{16, 2048}, std::pair{32, 2896}, std::pair{64, 4096}, std::pair{128, 5792}};
+inline constexpr std::array<std::pair<int, int>, 8> weak_scaling_shapes = {
+    std::pair{1, 512}, std::pair{2, 724}, std::pair{4, 1024}, std::pair{8, 1448},
+    std::pair{16, 2048}, std::pair{32, 2896}, std::pair{64, 4096}, std::pair{128, 5792}};
 inline double maximum_refinement_error      = 0.0;
 inline bool accuracy_checked                = false;
 
@@ -557,7 +558,7 @@ inline void register_shapes(const char* name, void (*function)(benchmark::State&
         const auto shape = std::find_if(weak_scaling_shapes.begin(), weak_scaling_shapes.end(),
                                        [threads](const auto& item) { return item.first == threads; });
         if (shape == weak_scaling_shapes.end())
-            throw std::invalid_argument("Daily scaling supports 1, 16, 32, 64 or 128 OpenMP threads.");
+            throw std::invalid_argument("Daily scaling supports 1, 2, 4, 8, 16, 32, 64 or 128 OpenMP threads.");
         for (const char* kind : {"strong", "weak"}) {
             if (selected != "scaling" && selected != kind)
                 continue;
