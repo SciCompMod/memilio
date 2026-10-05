@@ -18,16 +18,18 @@
 * limitations under the License.
 */
 #include "abm_helpers.h"
+#include "abm/activity_type.h"
 #include "abm/person.h"
 #include "abm/person_id.h"
 #include "memilio/utils/random_number_generator.h"
 
-mio::abm::Person make_test_person(mio::RandomNumberGenerator& rng, mio::abm::Location& location, mio::AgeGroup age,
+mio::abm::Person make_test_person(mio::RandomNumberGenerator& rng, mio::abm::Location& location,
+                                  mio::abm::ActivityType actvty_type, mio::AgeGroup age,
                                   mio::abm::InfectionState infection_state, mio::abm::TimePoint t,
                                   mio::abm::Parameters params, mio::abm::PersonId id)
 {
     assert(age.get() < params.get_num_groups());
-    mio::abm::Person p(rng, location.get_type(), location.get_id(), location.get_model_id(), age, id);
+    mio::abm::Person p(rng, location.get_type(), actvty_type, location.get_id(), location.get_model_id(), age, id);
     if (infection_state != mio::abm::InfectionState::Susceptible) {
         auto rng_p = mio::abm::PersonalRandomNumberGenerator(rng, p);
         p.add_new_infection(
@@ -36,11 +38,13 @@ mio::abm::Person make_test_person(mio::RandomNumberGenerator& rng, mio::abm::Loc
     return p;
 }
 
-mio::abm::PersonId add_test_person(mio::abm::Model& model, mio::abm::LocationId loc_id, mio::AgeGroup age,
+mio::abm::PersonId add_test_person(mio::abm::Model& model, mio::abm::LocationId loc_id,
+                                   mio::abm::ActivityType actvty_type, mio::AgeGroup age,
                                    mio::abm::InfectionState infection_state, mio::abm::TimePoint t)
 {
-    return model.add_person(make_test_person(model.get_rng(), model.get_location(loc_id), age, infection_state, t,
-                                             model.parameters, static_cast<uint64_t>(model.get_persons().size())));
+    return model.add_person(make_test_person(model.get_rng(), model.get_location(loc_id), actvty_type, age,
+                                             infection_state, t, model.parameters,
+                                             static_cast<uint64_t>(model.get_persons().size())));
 }
 
 void interact_testing(mio::abm::PersonalRandomNumberGenerator& personal_rng, mio::abm::Person& person,

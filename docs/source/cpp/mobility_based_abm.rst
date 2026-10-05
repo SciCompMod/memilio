@@ -123,13 +123,13 @@ level of the susceptible person.
 Mobility phase
 ~~~~~~~~~~~~~~
 
-During the mobility phase, each person may change their location.
+During the mobility phase, each person may change their location. A person can move between its assigned locations according to different activity types that can but not have to match the location type. For instance, a location of ``LocationType::School`` can be assigned to students with ``ActivityType::School`` but also to teachers using ``ActivityType::Work``.
 
-The available location types defined in `location_type.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/location_type.h>`_ are:
+The available location and activity types defined in `location_type.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/location_type.h>`_ and `activity_type.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/activity_type.h>`_ , respectively, are:
 
    * **Home**: Home location of a person
-   * **School**: School location for children
-   * **Work**: Workplace for adults
+   * **School**: School location
+   * **Work**: Workplace
    * **SocialEvent**: Locations for social gatherings (e.g., parties, events)
    * **BasicsShop**: Basic shop for essential goods (e.g., grocery store)
    * **Hospital**: Hospital for severely infected persons
@@ -164,7 +164,7 @@ The optional mobility rules consist of:
    * Going to a social event in the evening or on weekends
    * Going to a shop randomly during the day (except Sunday)
 
-Another way of mobility is using trips. A trip consists of the ID of the person that performs this trip, a time point when this trip is performed, and the destination.
+Another way of mobility is using trips. A trip consists of the ID of the person that performs this trip, a time point when this trip is performed, the destination and the activity type at the destination.
 At the beginning of the simulation, a list with all trips is initialized and followed during the simulation. The agents do the same trips every day. As before, agents that are
 in quarantine or in the hospital cannot change their location. Trips can be used even for locations that are not the assigned locations for the respective person.
 
@@ -222,7 +222,7 @@ People are added with an age. Then we have to assign them, so the model knows th
 
 .. code-block:: cpp
 
-   auto person = model.add_person(home, age_group_0_to_4);
+   auto person = model.add_person(home, age_group_0_to_4, mio::abm::ActivityType::Home);
    person.set_assigned_location(home);
 
 Note that adding the person to the model in one location does not mean that this location is in the list of assigned locations the person can visit afterwards.

@@ -20,6 +20,7 @@
 #ifndef ABM_HELPERS_H
 #define ABM_HELPERS_H
 
+#include "abm/activity_type.h"
 #include "abm/model.h"
 #include "abm/person_id.h"
 
@@ -94,17 +95,18 @@ struct ScopedMockDistribution {
  * @brief Create a Person without a Model object. Intended for simple use in tests.
  */
 mio::abm::Person make_test_person(mio::RandomNumberGenerator& rng, mio::abm::Location& location,
-                                  mio::AgeGroup age                        = age_group_15_to_34,
+                                  mio::abm::ActivityType actvty_type, mio::AgeGroup age = age_group_15_to_34,
                                   mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
                                   mio::abm::TimePoint t                    = mio::abm::TimePoint(0),
                                   mio::abm::Parameters params              = mio::abm::Parameters(num_age_groups),
-                                  mio::abm::PersonId id                    = mio::abm::PersonId(0));
+
+                                  mio::abm::PersonId id = mio::abm::PersonId(0));
 
 /**
  * @brief Add a Person to the Model. Intended for simple use in tests.
  */
 mio::abm::PersonId add_test_person(mio::abm::Model& model, mio::abm::LocationId loc_id,
-                                   mio::AgeGroup age                        = age_group_15_to_34,
+                                   mio::abm::ActivityType actvty_type, mio::AgeGroup age = age_group_15_to_34,
                                    mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
                                    mio::abm::TimePoint t                    = mio::abm::TimePoint(0));
 

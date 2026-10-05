@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "abm/mobility_rules.h"
+#include "abm/activity_type.h"
 #include "abm/person.h"
 #include "abm/random_events.h"
 #include "abm/location_type.h"
@@ -28,151 +29,150 @@ namespace mio
 namespace abm
 {
 
-LocationType random_mobility(PersonalRandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
+ActivityType random_mobility(PersonalRandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
                              const Parameters& params)
 {
-    auto current_loc     = person.get_location_type();
+    auto current_loc     = person.get_activity_type();
     auto make_transition = [current_loc](auto l) {
         return std::make_pair(l, l == current_loc ? 0. : 1.);
     };
     if (t < params.get<LockdownDate>()) {
         return random_transition(rng, current_loc, dt,
-                                 {make_transition(LocationType::Work), make_transition(LocationType::Home),
-                                  make_transition(LocationType::School), make_transition(LocationType::SocialEvent),
-                                  make_transition(LocationType::BasicsShop)});
+                                 {make_transition(ActivityType::Work), make_transition(ActivityType::Home),
+                                  make_transition(ActivityType::School), make_transition(ActivityType::Recreation),
+                                  make_transition(ActivityType::BasicsShop)});
     }
     return current_loc;
 }
 
-LocationType go_to_school(PersonalRandomNumberGenerator& /*rng*/, const Person& person, TimePoint t, TimeSpan dt,
+ActivityType go_to_school(PersonalRandomNumberGenerator& /*rng*/, const Person& person, TimePoint t, TimeSpan dt,
                           const Parameters& params)
 {
-    auto current_loc = person.get_location_type();
+    auto current_loc = person.get_activity_type();
 
-    if (current_loc == LocationType::Home && t < params.get<LockdownDate>() && t.day_of_week() < 5 &&
+    if (current_loc == ActivityType::Home && t < params.get<LockdownDate>() && t.day_of_week() < 5 &&
         person.get_go_to_school_time(params) >= t.time_since_midnight() &&
         person.get_go_to_school_time(params) < t.time_since_midnight() + dt &&
         params.get<AgeGroupGotoSchool>()[person.get_age()] && person.goes_to_school(t, params) &&
         !person.is_in_quarantine(t, params)) {
-        return LocationType::School;
+        return ActivityType::School;
     }
     //return home
-    if (current_loc == LocationType::School && t.hour_of_day() >= 15) {
-        return LocationType::Home;
+    if (current_loc == ActivityType::School && t.hour_of_day() >= 15) {
+        return ActivityType::Home;
     }
     return current_loc;
 }
 
-LocationType go_to_work(PersonalRandomNumberGenerator& /*rng*/, const Person& person, TimePoint t, TimeSpan dt,
+ActivityType go_to_work(PersonalRandomNumberGenerator& /*rng*/, const Person& person, TimePoint t, TimeSpan dt,
                         const Parameters& params)
 {
-    auto current_loc = person.get_location_type();
+    auto current_loc = person.get_activity_type();
 
-    if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
+    if (current_loc == ActivityType::Home && t < params.get<LockdownDate>() &&
         params.get<AgeGroupGotoWork>()[person.get_age()] && t.day_of_week() < 5 &&
         t.time_since_midnight() + dt > person.get_go_to_work_time(params) &&
         t.time_since_midnight() <= person.get_go_to_work_time(params) && person.goes_to_work(t, params) &&
         !person.is_in_quarantine(t, params)) {
-        return LocationType::Work;
+        return ActivityType::Work;
     }
     //return home
-    if (current_loc == LocationType::Work && t.hour_of_day() >= 17) {
-        return LocationType::Home;
+    if (current_loc == ActivityType::Work && t.hour_of_day() >= 17) {
+        return ActivityType::Home;
     }
     return current_loc;
 }
 
-LocationType go_to_shop(PersonalRandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
+ActivityType go_to_shop(PersonalRandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
                         const Parameters& params)
 {
-    auto current_loc = person.get_location_type();
+    auto current_loc = person.get_activity_type();
     //leave
-    if (t.day_of_week() < 6 && t.hour_of_day() > 7 && t.hour_of_day() < 22 && current_loc == LocationType::Home &&
+    if (t.day_of_week() < 6 && t.hour_of_day() > 7 && t.hour_of_day() < 22 && current_loc == ActivityType::Home &&
         !person.is_in_quarantine(t, params)) {
         return random_transition(rng, current_loc, dt,
-                                 {{LocationType::BasicsShop, params.get<BasicShoppingRate>()[person.get_age()]}});
+                                 {{ActivityType::BasicsShop, params.get<BasicShoppingRate>()[person.get_age()]}});
     }
 
     //return home
-    if (current_loc == LocationType::BasicsShop && person.get_time_at_location() >= hours(1)) {
-        return LocationType::Home;
+    if (current_loc == ActivityType::BasicsShop && person.get_time_at_location() >= hours(1)) {
+        return ActivityType::Home;
     }
 
     return current_loc;
 }
 
-LocationType go_to_event(PersonalRandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
-                         const Parameters& params)
+ActivityType go_to_recreation(PersonalRandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
+                              const Parameters& params)
 {
-    auto current_loc = person.get_location_type();
+    auto current_loc = person.get_activity_type();
     //leave
-    if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
+    if (current_loc == ActivityType::Home && t < params.get<LockdownDate>() &&
         ((t.day_of_week() <= 4 && t.hour_of_day() >= 19 && t.hour_of_day() < 22) ||
          (t.day_of_week() >= 5 && t.hour_of_day() >= 10 && t.hour_of_day() < 22)) &&
         !person.is_in_quarantine(t, params)) {
         return random_transition(
             rng, current_loc, dt,
-            {{LocationType::SocialEvent, params.get<SocialEventRate>().get_matrix_at(
-                                             SimulationTime<ScalarType>(t.days()))[(size_t)person.get_age()]}});
+            {{ActivityType::Recreation, params.get<SocialEventRate>().get_matrix_at(
+                                            SimulationTime<ScalarType>(t.days()))[(size_t)person.get_age()]}});
     }
 
     //return home
-    if (current_loc == LocationType::SocialEvent && t.hour_of_day() >= 20 &&
-        person.get_time_at_location() >= hours(2)) {
-        return LocationType::Home;
+    if (current_loc == ActivityType::Recreation && t.hour_of_day() >= 20 && person.get_time_at_location() >= hours(2)) {
+        return ActivityType::Home;
     }
 
     return current_loc;
 }
 
-LocationType go_to_quarantine(PersonalRandomNumberGenerator& /*rng*/, const Person& person, TimePoint t,
+ActivityType go_to_quarantine(PersonalRandomNumberGenerator& /*rng*/, const Person& person, TimePoint t,
                               TimeSpan /*dt*/, const Parameters& params)
 {
-    auto current_loc = person.get_location_type();
-    if (person.is_in_quarantine(t, params) && current_loc != LocationType::Hospital &&
-        current_loc != LocationType::ICU) {
-        return LocationType::Home;
+    auto current_loc = person.get_activity_type();
+    if (person.is_in_quarantine(t, params) && current_loc != ActivityType::Hospital &&
+        current_loc != ActivityType::ICU) {
+        return ActivityType::Home;
     }
     return current_loc;
 }
 
-LocationType go_to_hospital(PersonalRandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t,
+ActivityType go_to_hospital(PersonalRandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t,
                             TimeSpan /*dt*/, const Parameters& /*params*/)
 {
-    auto current_loc = person.get_location_type();
+    auto current_loc = person.get_activity_type();
     if (person.get_infection_state(t) == InfectionState::InfectedSevere) {
-        return LocationType::Hospital;
+        return ActivityType::Hospital;
     }
     return current_loc;
 }
 
-LocationType go_to_icu(PersonalRandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t, TimeSpan /*dt*/,
+ActivityType go_to_icu(PersonalRandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t, TimeSpan /*dt*/,
                        const Parameters& /*params*/)
 {
-    auto current_loc = person.get_location_type();
+    auto current_loc = person.get_activity_type();
     if (person.get_infection_state(t) == InfectionState::InfectedCritical) {
-        return LocationType::ICU;
+        return ActivityType::ICU;
     }
     return current_loc;
 }
 
-LocationType return_home_when_recovered(PersonalRandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t,
+ActivityType return_home_when_recovered(PersonalRandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t,
                                         TimeSpan /*dt*/, const Parameters& /*params*/)
 {
-    auto current_loc = person.get_location_type();
-    if ((current_loc == LocationType::Hospital || current_loc == LocationType::ICU) &&
+    auto current_loc = person.get_activity_type();
+    if ((current_loc == ActivityType::Hospital || current_loc == ActivityType::ICU) &&
         person.get_infection_state(t) == InfectionState::Recovered) {
-        return LocationType::Home;
+        return ActivityType::Home;
     }
     return current_loc;
 }
 
-LocationType get_buried(PersonalRandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t,
+ActivityType get_buried(PersonalRandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t,
                         TimeSpan /*dt*/, const Parameters& /*params*/)
 {
-    auto current_loc = person.get_location_type();
+    auto current_loc = person.get_activity_type();
     if (person.get_infection_state(t) == InfectionState::Dead) {
-        return LocationType::Cemetery;
+        return ActivityType::Cemetery;
     }
     return current_loc;
 }
