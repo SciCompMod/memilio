@@ -20,7 +20,7 @@
 
 #include "abm/household.h"
 #include "abm/model.h"
-#include "abm/infection_state.h"
+#include "abm/symptom_state.h"
 #include "abm/location_type.h"
 #include "abm/time.h"
 #include "abm/person_id.h"

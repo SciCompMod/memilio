@@ -51,11 +51,11 @@ public:
     /**
      * @brief Create a TestingCriteria.
      * @param[in] ages Vector of AgeGroup%s that are either allowed or required to be tested.
-     * @param[in] infection_states Vector of #InfectionState%s that are either allowed or required to be tested.
-     * An empty vector of ages or none bitset of #InfectionStates% means that no condition on the corresponding property
+     * @param[in] symptom_states Vector of #SymptomState%s that are either allowed or required to be tested.
+     * An empty vector of ages or none bitset of #SymptomStates% means that no condition on the corresponding property
      * is set!
      */
-    TestingCriteria(const std::vector<AgeGroup>& ages, const std::vector<InfectionState>& infection_states);
+    TestingCriteria(const std::vector<AgeGroup>& ages, const std::vector<SymptomState>& symptom_states);
 
     /**
      * @brief Compares two TestingCriteria for functional equality.
@@ -71,13 +71,13 @@ public:
 
     auto default_serialize()
     {
-        return Members("TestingCriteria").add("ages", m_ages).add("infection_states", m_infection_states);
+        return Members("TestingCriteria").add("ages", m_ages).add("symptom_states", m_symptom_states);
     }
 
 private:
     std::bitset<MAX_NUM_AGE_GROUPS> m_ages; ///< Set of #AgeGroup%s that are either allowed or required to be tested.
-    std::bitset<(size_t)InfectionState::Count>
-        m_infection_states; /**< BitSet of #InfectionState%s that are either allowed or required to
+    std::bitset<(size_t)SymptomState::Count>
+        m_symptom_states; /**< BitSet of #SymptomState%s that are either allowed or required to
     be tested.*/
 };
 
