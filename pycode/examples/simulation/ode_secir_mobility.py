@@ -123,7 +123,6 @@ def run_ode_secir_mobility_simulation(plot_results=True):
         region_results = [region0_result, region1_result]
         region_labels = ['Region 0', 'Region 1']
 
-        # All compartments of each region on a logarithmic axis.
         fig, axes = plt.subplots(1, 2, figsize=(16, 5), layout='constrained')
         for region_result, region_label, ax in zip(
                 region_results, region_labels, axes):
