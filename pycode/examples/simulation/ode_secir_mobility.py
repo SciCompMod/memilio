@@ -17,13 +17,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
+
+# This example requires memilio.simulation and memilio.plot to be installed!
+
 import argparse
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 import memilio.simulation as mio
 import memilio.simulation.osecir as osecir
+from memilio.plot.plotTimeSeries import plot_time_series
 
 
 def run_ode_secir_mobility_simulation(plot_results=True):
@@ -115,58 +119,35 @@ def run_ode_secir_mobility_simulation(plot_results=True):
     region1_result = osecir.interpolate_simulation_result(
         sim.graph.get_node(1).property.result)
 
-    if (plot_results):
-        results = [region0_result.as_ndarray(), region1_result.as_ndarray()]
-        t = results[0][0, :]
-        tick_range = (np.arange(int((len(t) - 1) / 10) + 1) * 10)
-        tick_range[-1] -= 1
+    if plot_results:
+        region_results = [region0_result, region1_result]
+        region_labels = ['Region 0', 'Region 1']
 
-        fig, ax = plt.subplots(figsize=(10, 6))
-        for idx, result_region in enumerate(results):
-            region_label = f'Region {idx}'
-            ax.plot(t, result_region[1, :],
-                    label=f'{region_label} - #Susceptible')
-            ax.plot(t, result_region[2, :], label=f'{region_label} - #Exposed')
-            ax.plot(t, result_region[3, :] + result_region[4, :],
-                    label=f'{region_label} - #InfectedNoSymptoms')
-            ax.plot(t, result_region[5, :] + result_region[6, :],
-                    label=f'{region_label} - #InfectedSymptoms')
-            ax.plot(t, result_region[7, :],
-                    label=f'{region_label} - #Hospitalzed')
-            ax.plot(t, result_region[8, :],
-                    label=f'{region_label} - #InfectedCritical')
-            ax.plot(t, result_region[9, :],
-                    label=f'{region_label} - #Recovered')
-            ax.plot(t, result_region[10, :], label=f'{region_label} - #Dead')
-
-        ax.set_title(
-            "ODE SECIR simulation results for both regions (entire population)")
-        ax.set_xticks(tick_range)
-        ax.legend(loc='upper right', bbox_to_anchor=(1, 0.6))
-        plt.yscale('log')
-        fig.tight_layout
+        fig, axes = plt.subplots(1, 2, figsize=(16, 5), layout='constrained')
+        for region_result, region_label, ax in zip(
+                region_results, region_labels, axes):
+            plot_time_series(
+                region_result, labels=osecir.InfectionState.values(),
+                ax=ax, title=region_label)
+        fig.suptitle('ODE SECIR simulation results for both regions')
         fig.savefig('osecir_mobility_by_compartments.pdf')
 
-        fig, ax = plt.subplots(5, 2, figsize=(12, 15))
-        compartments = [
-            'Susceptible', 'Exposed', 'InfectedNoSymptoms',
-            'InfectedNoSymptomsConfirmed', 'InfectedSymptoms',
-            'InfectedSymptomsConfirmed', 'InfectedSevere', 'InfectedCritical',
-            'Recovered', 'Dead']
-        num_compartments = len(compartments)
+        # Stack the results of the regions into one array with the elements
+        # ordered region by region (the interpolated results share the same
+        # time points), so that the regions can be passed as groups.
+        results = np.vstack([region0_result.as_ndarray(),
+                             region1_result.as_ndarray()[1:]])
 
-        for i, title in zip(range(num_compartments), compartments):
-            ax[int(np.floor(i / 2)), int(i % 2)].plot(t,
-                                                      results[0][i+1, :], label="Region 0")
-            ax[int(np.floor(i / 2)), int(i % 2)].plot(t,
-                                                      results[1][i+1, :], label="Region 1")
-            ax[int(np.floor(i / 2)), int(i % 2)].set_title(title, fontsize=10)
-            ax[int(np.floor(i / 2)), int(i % 2)].legend()
-            ax[int(np.floor(i / 2)), int(i % 2)].set_xticks(tick_range)
-
-        plt.subplots_adjust(hspace=0.5, bottom=0.1, top=0.9)
+        # One panel per compartment with one line per region.
+        fig, axes = plt.subplots(5, 2, figsize=(14, 16), layout='constrained')
+        for state, ax in zip(osecir.InfectionState.values(), axes.flat):
+            plot_time_series(
+                results, labels=osecir.InfectionState.values(),
+                groups=region_labels, sum_groups=False, select=state, ax=ax,
+                title=state.name)
         fig.suptitle('Simulation results for each region in each compartment')
         fig.savefig('osecir_region_results_compartments.pdf')
+        plt.close('all')
 
 
 if __name__ == "__main__":
