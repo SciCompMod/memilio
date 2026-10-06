@@ -15,7 +15,7 @@ fit_npe.py        ensemble + deaths   -> posterior over the fitted parameters
 
 ## What is fitted
 
-Four parameters, with the prior bounds of the grid search in the ABM paper
+Two parameters, with the prior bounds of the grid search in the ABM paper
 (`cpp/simulations/paper_abm_bs_testing.cpp` on branch `abm_paper_test_bs`):
 
 | Parameter | Prior | Paper optimum | Acts on |
@@ -29,9 +29,6 @@ paper's `contact_red_lockdown` is therefore absent, and so are its two testing p
 on nothing and the fit would treat them as pure noise dimensions. `add_testing_strategy()` and the two
 parameters are recoverable from git history when testing is reinstated; `make_model` still takes `tmax`
 for exactly that reason.
-
-Measured while testing was still in: sweeping both testing parameters across their full priors moved
-deaths by only about 10% (2183 to 1967 over 90 days), so they were weakly identified by deaths even then.
 
 `MaximumContacts` is not set on any location. It rescales each `ContactRates` row to sum to at most its
 value, so setting it would partly undo the contact matrices of `set_contact_rates()`;
@@ -56,8 +53,8 @@ covers its prior range, which is the empirical version of this check.
 | --- | --- | --- |
 | `halle_population_data.csv` | `age,home_id,school_id,event_id,shopping_id,work_id` | provided; `age` is an index into an 11-group scheme |
 | `halle_cases.csv` | `date,age_group,new_cases` | `prepare_data.py` |
-
 | `halle_vaccinations.csv` | `date,age_group,new_doses` | `prepare_data.py` |
+| `260304_infections_vaccines_halle.csv` | `age_group,ih_infection_{1..4}_date,ih_vaccine_{1..3}_date` | Halle cohort; alternative to the two files above |
 | `halle_deaths.csv` | `date,deaths` (cumulative) | `prepare_data.py` |
 | `priors.csv` | `name,lower,upper` | `abm_halle_pais --mode '"priors"'` |
 
@@ -68,6 +65,32 @@ covered. `vacc_county_ageinf_ma7.json` is now present, so the state-level split 
 `halle_cases.csv` is an **input, not a fit target**: `dark_figure` times the reported cases is what seeds
 the pre-`t0` infection history, and therefore the immunity and the pre-existing PAIS at `t0`. It is needed
 even though no case channel enters the objective.
+
+### Cohort history
+
+Instead of the reported cases, the history can be taken from the individual histories of the Halle cohort
+with `--history_file`, which cannot be combined with `--cases_file`/`--vaccinations_file`. Every agent is
+given the full pre-`t0` history of one cohort member of its age, drawn with replacement. The cohort already
+records each infection date, so **`dark_figure` is not fitted in this mode** and the parameter vector is
+only `viral_shedding_rate`; `--mode '"priors"'` and the ensemble header reflect that.
+
+Compared with `cpp/examples/abm_aims_halle.cpp`, which seeded from an earlier version of the same file:
+
+- Events are replayed in date order. The PAIS probability depends on the number of vaccinations at the time
+  of the infection, and adding all infections before all vaccinations made every historical infection count
+  as unvaccinated.
+- Infections are drawn with the latest protection before them, as during the simulation.
+- Fatal courses are redrawn, since the cohort members survived their infections.
+- An infection starting while the previous one is still running is skipped (a handful of rows have
+  reinfections under 90 days apart), and dates recorded twice in the same row are kept once.
+- PAIS is advanced in daily steps from its onset to `t0`. Without this, a PAIS from 2021 is still in its
+  initial state at `t0`: on a 20 000 person test population this was 869 active PAIS at `t0` instead of 352.
+- Age bins straddling two model age groups (`30-39`, `70+`) serve both, weighted by the years they cover,
+  instead of each row being assigned to one of them at random.
+- All draws use the model's random number generator, so a run is reproducible from its seed.
+
+The cohort has **no one under 18**. Age groups 0-4 and 5-14, and the 15-17 part of 15-34, therefore start
+without any history, fully susceptible and without PAIS; a warning says so at model build.
 
 `age_group` is the index 0–5 of the six RKI groups (0-4, 5-14, 15-34, 35-59, 60-79, 80+). The population
 file's `age` column uses a different, finer scheme, which `age_group_from_input()` aggregates onto these

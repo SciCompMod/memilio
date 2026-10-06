@@ -292,19 +292,24 @@ IOResult<void> set_contact_rates(abm::Model& model, const std::string& contact_d
 }
 
 /**
- * @brief Add the hospital, ICU and cemetery infrastructure and cap the contacts of the shared locations.
+ * @brief Add a Hospital and an ICU and assign every Person to both.
  *
- * A Hospital and an ICU are required for the severe and critical branch of the infection, and therefore for
- * the deaths that this simulation is fitted against.
+ * Must be called after all Person%s are added. The mobility rules send severe and critical cases to the
+ * Hospital and the ICU, but Model::perform_mobility only moves a Person to a location type they are
+ * assigned to. Without the assignment they stay where they are, mostly at home, and keep infecting their
+ * household. The infection course, and with it the deaths, is drawn in advance and does not depend on this.
+ *
+ * No MaximumContacts is set on any location: the contact matrices of set_contact_rates() are used as they
+ * are, which is also what set_local_parameters_ger() on the abmXpanvadere branch does.
  */
 void add_infrastructure(abm::Model& model)
 {
-    // A Hospital and an ICU are required for the severe and critical branch of the infection, and
-    // therefore for the deaths that this simulation is fitted against. No MaximumContacts is set on any
-    // location: the contact matrices of set_contact_rates() are used as they are, which is also what
-    // set_local_parameters_ger() on the abmXpanvadere branch does.
-    model.add_location(abm::LocationType::Hospital);
-    model.add_location(abm::LocationType::ICU);
+    const auto hospital = model.add_location(abm::LocationType::Hospital);
+    const auto icu      = model.add_location(abm::LocationType::ICU);
+    for (auto& person : model.get_persons()) {
+        model.assign_location(person.get_id(), hospital);
+        model.assign_location(person.get_id(), icu);
+    }
 }
 
 /// @brief A daily time series per age group, read from a CSV with columns date, age_group and a value column.
@@ -494,6 +499,264 @@ void seed_history(abm::Model& model, const DailySeries* cases, const DailySeries
     }
 }
 
+/// @brief The age bins of the cohort file, in the order used by Cohort::members.
+const std::array<std::string, 7> cohort_age_bins{"18-20", "20-29", "30-39", "40-49", "50-59", "60-69", "70+"};
+
+/**
+ * @brief Which cohort age bins stand in for each model age group, weighted by the share of the group they cover.
+ *
+ * A bin that straddles two model age groups is used by both, with the number of years it contributes to each
+ * as weight: 30-39 is half 30-34 and half 35-39, and 70+ covers 70-79 of the 60-79 group and all of 80+.
+ * Weighting by years is a proxy for weighting by population; it keeps every row of a straddling bin available
+ * to both groups, instead of splitting the rows of an already small bin at random.
+ * Age groups 0-4 and 5-14 have no stand-in, since the cohort has no one under 18.
+ */
+const std::array<std::vector<std::pair<size_t, double>>, num_age_groups> cohort_donor_bins{{
+    {}, // 0-4
+    {}, // 5-14
+    {{0, 2.0}, {1, 10.0}, {2, 5.0}}, // 15-34: 18-19, 20-29, 30-34. 15-17 is not covered.
+    {{2, 5.0}, {3, 10.0}, {4, 10.0}}, // 35-59: 35-39, 40-49, 50-59
+    {{5, 10.0}, {6, 10.0}}, // 60-79: 60-69, 70-79
+    {{6, 1.0}}, // 80+
+}};
+
+/// @brief The individual history of one cohort member, restricted to before the start of the simulation.
+struct CohortMember {
+    std::vector<Date> infections{}; ///< Sorted, without duplicates.
+    std::vector<Date> vaccinations{}; ///< Sorted, without duplicates.
+};
+
+/// @brief The cohort, grouped by the age bins of cohort_age_bins.
+struct Cohort {
+    std::array<std::vector<CohortMember>, cohort_age_bins.size()> members{};
+};
+
+/**
+ * @brief Read the cohort history file.
+ *
+ * Only events strictly before @p start_date are kept, since everything from @p start_date on is simulated.
+ * Dates that appear twice in the same row are kept once: the same infection or vaccination recorded twice
+ * would otherwise be replayed twice. An unknown age bin or an unparseable date is an error rather than a
+ * silent default, so that a changed file format cannot quietly misplace persons.
+ */
+IOResult<Cohort> read_cohort_file(const std::string& filename, Date start_date)
+{
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        return failure(StatusCode::FileNotFound, "Could not open cohort history file " + filename);
+    }
+    std::string line;
+    if (!std::getline(file, line)) {
+        return failure(StatusCode::InvalidFileFormat, "Cohort history file " + filename + " is empty.");
+    }
+    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+
+    std::map<std::string, size_t> column;
+    const auto header = split_csv_line(line);
+    for (size_t i = 0; i < header.size(); ++i) {
+        column[header[i]] = i;
+    }
+    const std::vector<std::string> infection_columns{"ih_infection_1_date", "ih_infection_2_date",
+                                                     "ih_infection_3_date", "ih_infection_4_date"};
+    const std::vector<std::string> vaccination_columns{"ih_vaccine_1_date", "ih_vaccine_2_date",
+                                                       "ih_vaccine_3_date"};
+    std::vector<std::string> required{"age_group"};
+    required.insert(required.end(), infection_columns.begin(), infection_columns.end());
+    required.insert(required.end(), vaccination_columns.begin(), vaccination_columns.end());
+    for (const auto& name : required) {
+        if (column.count(name) == 0) {
+            return failure(StatusCode::InvalidFileFormat,
+                           "Cohort history file " + filename + " has no column \"" + name + "\".");
+        }
+    }
+
+    // Parse the given columns of a row into the sorted, distinct dates before start_date.
+    auto read_dates = [&](const std::vector<std::string>& values, const std::vector<std::string>& columns,
+                          size_t line_number) -> IOResult<std::vector<Date>> {
+        std::vector<Date> dates;
+        for (const auto& name : columns) {
+            const auto& value = values[column.at(name)];
+            if (value == "NA" || value.empty()) {
+                continue;
+            }
+            auto date = parse_date(value);
+            if (!date) {
+                return failure(StatusCode::InvalidValue, "Cohort history file " + filename + " has invalid date \"" +
+                                                             value + "\" in line " + std::to_string(line_number) +
+                                                             ".");
+            }
+            if (get_offset_in_days(date.value(), start_date) < 0) {
+                dates.push_back(date.value());
+            }
+        }
+        std::sort(dates.begin(), dates.end(), [](const Date& a, const Date& b) {
+            return get_offset_in_days(a, b) < 0;
+        });
+        dates.erase(std::unique(dates.begin(), dates.end()), dates.end());
+        return success(dates);
+    };
+
+    Cohort cohort;
+    size_t line_number = 1;
+    size_t num_members = 0;
+    while (std::getline(file, line)) {
+        ++line_number;
+        line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+        if (line.empty()) {
+            continue;
+        }
+        const auto values = split_csv_line(line);
+        if (values.size() < header.size()) {
+            return failure(StatusCode::InvalidFileFormat, "Cohort history file " + filename +
+                                                              " has too few values in line " +
+                                                              std::to_string(line_number) + ".");
+        }
+        const auto& bin_name = values[column["age_group"]];
+        const auto bin       = std::find(cohort_age_bins.begin(), cohort_age_bins.end(), bin_name);
+        if (bin == cohort_age_bins.end()) {
+            return failure(StatusCode::InvalidValue, "Cohort history file " + filename + " has unknown age group \"" +
+                                                         bin_name + "\" in line " + std::to_string(line_number) +
+                                                         ".");
+        }
+        CohortMember member;
+        BOOST_OUTCOME_TRY(auto&& infections, read_dates(values, infection_columns, line_number));
+        BOOST_OUTCOME_TRY(auto&& vaccinations, read_dates(values, vaccination_columns, line_number));
+        member.infections   = infections;
+        member.vaccinations = vaccinations;
+        cohort.members[static_cast<size_t>(bin - cohort_age_bins.begin())].push_back(member);
+        ++num_members;
+    }
+    if (num_members == 0) {
+        return failure(StatusCode::InvalidFileFormat, "Cohort history file " + filename + " contains no rows.");
+    }
+    return success(cohort);
+}
+
+/**
+ * @brief Seed the infection and vaccination history of the population from the cohort.
+ *
+ * Every Person is given the full history of one cohort member of their age, drawn with replacement, as in
+ * abm_aims_halle.cpp. Differences to that setup, each of which changes the state at @p t0:
+ * - Infections and vaccinations are replayed in the order they happened. PAIS::init_or_refresh draws the
+ *   PAIS probability from the number of vaccinations the Person has at the time of the infection, so adding
+ *   all infections before all vaccinations would treat every historical infection as unvaccinated.
+ * - Each infection is drawn with the protection of the Person's latest infection or vaccination before it,
+ *   as during the simulation, so prior immunity reduces its severity.
+ * - Infection courses ending in death are redrawn. The cohort consists of persons who survived all of their
+ *   recorded infections, and the population file is the population after them, so a death here would remove
+ *   a Person twice.
+ * - An infection that starts while the previous one has not ended is skipped, since the model keeps only one
+ *   active infection per Person.
+ * - PAIS::update_severity only runs during the simulation, so a PAIS acquired in the history would otherwise
+ *   stay in its initial state until @p t0. It is advanced in daily steps from its onset up to every later
+ *   infection, which may refresh it, and then up to @p t0.
+ */
+void seed_cohort_history(abm::Model& model, const Cohort& cohort, abm::TimePoint t0, Date start_date)
+{
+    constexpr int max_redraws = 100;
+    const auto& params        = model.parameters;
+    auto to_time_point        = [&](const Date& date) {
+        return t0 + abm::days(get_offset_in_days(date, start_date));
+    };
+
+    // Advance the PAIS of a Person from `from` to `to` in daily steps. Persons without a PAIS by `to` are
+    // skipped, which is most of them.
+    auto advance_pais = [&](abm::Person& person, abm::PersonalRandomNumberGenerator& prng, abm::TimePoint from,
+                            abm::TimePoint to) {
+        if (person.get_pais_state(to) == abm::PAISState::Count) {
+            return;
+        }
+        for (auto t = from + abm::days(1); t <= to; t += abm::days(1)) {
+            person.update_pais(params, prng, t, abm::days(1));
+        }
+    };
+
+    std::array<size_t, num_age_groups> num_unseeded{};
+    size_t num_infections = 0, num_vaccinations = 0, num_overlapping = 0, num_redrawn = 0, num_pais = 0;
+    auto& discrete    = DiscreteDistribution<size_t>::get_instance();
+    auto& uniform_int = UniformIntDistribution<size_t>::get_instance();
+
+    for (auto& person : model.get_persons()) {
+        const auto age = person.get_age().get();
+        std::vector<size_t> bins;
+        std::vector<double> weights;
+        for (const auto& [bin, weight] : cohort_donor_bins[age]) {
+            if (!cohort.members[bin].empty()) {
+                bins.push_back(bin);
+                weights.push_back(weight);
+            }
+        }
+        if (bins.empty()) {
+            ++num_unseeded[age];
+            continue;
+        }
+        // The Person's own generator, so the drawn history does not depend on the order Persons are visited.
+        auto prng          = abm::PersonalRandomNumberGenerator(model.get_rng(), person);
+        const auto& donors = cohort.members[bins[discrete(prng, weights)]];
+        const auto& member = donors[uniform_int(prng, size_t(0), donors.size() - 1)];
+
+        // Merge both histories into one chronological list. On the same day, the infection comes first,
+        // since a vaccination cannot have acted yet.
+        std::vector<std::pair<abm::TimePoint, bool>> events; // (time, is_infection)
+        for (const auto& date : member.infections) {
+            events.emplace_back(to_time_point(date), true);
+        }
+        for (const auto& date : member.vaccinations) {
+            events.emplace_back(to_time_point(date), false);
+        }
+        std::stable_sort(events.begin(), events.end(), [](const auto& a, const auto& b) {
+            return a.first < b.first;
+        });
+        if (events.empty()) {
+            continue;
+        }
+
+        auto pais_clock = events.front().first;
+        for (const auto& [t, is_infection] : events) {
+            advance_pais(person, prng, pais_clock, t);
+            pais_clock = t;
+            if (!is_infection) {
+                person.add_new_vaccination(abm::ProtectionType::GenericVaccine, t);
+                ++num_vaccinations;
+                continue;
+            }
+            const auto state = person.get_infection_state(t);
+            if (state != abm::InfectionState::Susceptible && state != abm::InfectionState::Recovered) {
+                ++num_overlapping;
+                continue;
+            }
+            auto draw = [&]() {
+                return abm::Infection(prng, abm::VirusVariant::Wildtype, person.get_age(), params, t,
+                                      abm::InfectionState::Exposed, person.get_latest_protection(t), false);
+            };
+            auto infection = draw();
+            for (int i = 0; i < max_redraws && infection.get_highest_infection_state().second ==
+                                                    abm::InfectionState::Dead;
+                 ++i) {
+                infection = draw();
+                ++num_redrawn;
+            }
+            person.add_new_infection(std::move(infection), prng, t, params);
+            ++num_infections;
+        }
+        advance_pais(person, prng, pais_clock, t0);
+        if (person.has_active_pais(t0)) {
+            ++num_pais;
+        }
+    }
+
+    for (size_t age = 0; age < num_age_groups; ++age) {
+        if (num_unseeded[age] > 0) {
+            log_warning("The cohort has no member of age group {}, so its {} persons start without infection or "
+                        "vaccination history, i.e. fully susceptible and without PAIS.",
+                        age, num_unseeded[age]);
+        }
+    }
+    log_info("Seeded {} infections and {} vaccinations from the cohort; skipped {} infections overlapping an "
+             "earlier one and redrew {} fatal courses. {} persons have an active PAIS at t0.",
+             num_infections, num_vaccinations, num_overlapping, num_redrawn, num_pais);
+}
+
 /// @brief Set the infection parameters that are not fitted. Values follow the Halle setup of abm_aims_halle.cpp.
 void set_fixed_infection_parameters(abm::Parameters& params)
 {
@@ -607,16 +870,20 @@ void set_pais_parameters(abm::Parameters& params)
 
 } // namespace
 
-const std::vector<FitParameter>& fit_parameters()
+const std::vector<FitParameter>& fit_parameters(HistorySource source)
 {
     // Bounds taken from the grid search of the ABM paper. No contact reduction is fitted, since testing
     // is the only measure in this setup. The PAIS parameters are not fitted either: they act only on the
     // PAIS output channels, so without PAIS data the likelihood would be flat in all of them.
-    static const std::vector<FitParameter> parameters{
+    // viral_shedding_rate must stay the first entry, since make_model reads it as theta[0].
+    static const std::vector<FitParameter> reported_cases{
         {"viral_shedding_rate", 0.1, 20.0},
         {"dark_figure", 2.5, 10.0},
     };
-    return parameters;
+    static const std::vector<FitParameter> cohort{
+        {"viral_shedding_rate", 0.1, 20.0},
+    };
+    return source == HistorySource::Cohort ? cohort : reported_cases;
 }
 
 const std::vector<std::string>& observable_channels()
@@ -627,9 +894,9 @@ const std::vector<std::string>& observable_channels()
     return channels;
 }
 
-std::vector<double> sample_prior(RandomNumberGenerator& rng)
+std::vector<double> sample_prior(RandomNumberGenerator& rng, HistorySource source)
 {
-    const auto& priors = fit_parameters();
+    const auto& priors = fit_parameters(source);
     std::vector<double> theta(priors.size());
     auto& uniform = UniformDistribution<double>::get_instance();
     for (size_t i = 0; i < priors.size(); ++i) {
@@ -638,9 +905,9 @@ std::vector<double> sample_prior(RandomNumberGenerator& rng)
     return theta;
 }
 
-bool is_in_prior_support(const std::vector<double>& theta)
+bool is_in_prior_support(const std::vector<double>& theta, HistorySource source)
 {
-    const auto& priors = fit_parameters();
+    const auto& priors = fit_parameters(source);
     if (theta.size() != priors.size()) {
         return false;
     }
@@ -655,17 +922,23 @@ bool is_in_prior_support(const std::vector<double>& theta)
 IOResult<abm::Model> make_model(const ModelSetup& setup, const std::vector<double>& theta, Date start_date,
                                 abm::TimePoint t0, abm::TimePoint tmax, const RandomNumberGenerator& rng)
 {
-    if (!is_in_prior_support(theta)) {
+    const auto source = setup.history_source();
+    if (!is_in_prior_support(theta, source)) {
         return failure(StatusCode::InvalidValue, "Parameter vector is outside the prior support.");
     }
     if (setup.person_file.empty()) {
         return failure(StatusCode::InvalidValue, "No population file given.");
     }
-    const bool has_history = !setup.cases_file.empty() && !setup.vaccinations_file.empty();
+    if (source == HistorySource::Cohort && (!setup.cases_file.empty() || !setup.vaccinations_file.empty())) {
+        return failure(StatusCode::InvalidValue, "A cohort history file cannot be combined with a cases or a "
+                                                 "vaccinations file. Give either the cohort or the reported data.");
+    }
+    const bool has_history =
+        source == HistorySource::Cohort || (!setup.cases_file.empty() && !setup.vaccinations_file.empty());
     if (!has_history && !setup.allow_missing_history) {
         return failure(StatusCode::InvalidValue,
-                       "No infection and vaccination history given. Pass both a cases and a vaccinations file, or "
-                       "set allow_missing_history for a smoke test.");
+                       "No infection and vaccination history given. Pass a cohort history file, or both a cases and "
+                       "a vaccinations file, or set allow_missing_history for a smoke test.");
     }
 
     auto model      = abm::Model(num_age_groups, halle_county_id);
@@ -680,7 +953,7 @@ IOResult<abm::Model> make_model(const ModelSetup& setup, const std::vector<doubl
     set_fixed_infection_parameters(model.parameters);
     set_pais_parameters(model.parameters);
     // viral_shedding_rate is the only fitted parameter acting on the model parameters directly;
-    // dark_figure is applied when seeding the history.
+    // dark_figure, if fitted, is applied when seeding the reported cases history.
     model.parameters.get<abm::InfectionRateFromViralShed>()[abm::VirusVariant::Wildtype] = theta[0];
 
     BOOST_OUTCOME_TRY(auto&& rows, read_population_file(setup.person_file));
@@ -691,7 +964,11 @@ IOResult<abm::Model> make_model(const ModelSetup& setup, const std::vector<doubl
     // is what a testing scheme would need as its validity period once testing is reinstated.
     unused(tmax);
 
-    if (has_history) {
+    if (source == HistorySource::Cohort) {
+        BOOST_OUTCOME_TRY(auto&& cohort, read_cohort_file(setup.history_file, start_date));
+        seed_cohort_history(model, cohort, t0, start_date);
+    }
+    else if (has_history) {
         BOOST_OUTCOME_TRY(auto&& cases, read_daily_series(setup.cases_file, "new_cases"));
         BOOST_OUTCOME_TRY(auto&& vaccinations, read_daily_series(setup.vaccinations_file, "new_doses"));
         seed_history(model, &cases, &vaccinations, t0, start_date, theta[1], setup.history_lookback_days,

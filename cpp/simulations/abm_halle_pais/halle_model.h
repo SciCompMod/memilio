@@ -53,13 +53,30 @@ struct FitParameter {
 };
 
 /**
+ * @brief Where the infection and vaccination history before t0 comes from.
+ */
+enum class HistorySource
+{
+    /// Reported cases per age group, scaled by the fitted dark figure, plus reported vaccinations.
+    ReportedCases,
+    /// Individual histories of a cohort of Halle residents, replayed on the agents of the model.
+    Cohort,
+};
+
+/**
  * @brief The parameters estimated by the fit, in the order used by every parameter vector.
  *
  * This table is the single place where the fitted parameters are defined: adding or removing an entry
  * changes the dimension of the fit without any other code change. No intervention is modelled at present,
  * so neither a contact reduction nor a testing frequency appears here.
+ *
+ * The cohort history already holds every infection date of its members, so there is no dark figure to
+ * scale it by. dark_figure is therefore only fitted with the reported cases history; with the cohort it
+ * would act on nothing and only add a flat dimension to the posterior.
+ *
+ * @param[in] source The history source the model is built with.
  */
-const std::vector<FitParameter>& fit_parameters();
+const std::vector<FitParameter>& fit_parameters(HistorySource source);
 
 /**
  * @brief The channels of the summary statistic that the fit compares against real data.
@@ -70,15 +87,17 @@ const std::vector<std::string>& observable_channels();
 /**
  * @brief Draw a parameter vector from the (uniform) prior.
  * @param[in,out] rng Random number generator.
+ * @param[in] source The history source, see fit_parameters().
  * @return A parameter vector with one entry per entry of fit_parameters().
  */
-std::vector<double> sample_prior(RandomNumberGenerator& rng);
+std::vector<double> sample_prior(RandomNumberGenerator& rng, HistorySource source);
 
 /**
  * @brief Check whether a parameter vector lies inside the prior support.
  * @param[in] theta A parameter vector with one entry per entry of fit_parameters().
+ * @param[in] source The history source, see fit_parameters().
  */
-bool is_in_prior_support(const std::vector<double>& theta);
+bool is_in_prior_support(const std::vector<double>& theta, HistorySource source);
 
 /**
  * @brief Everything needed to build the Halle model that is not being fitted.
@@ -91,15 +110,24 @@ struct ModelSetup {
     std::string person_file{}; ///< CSV with columns age,home_id,school_id,work_id,shopping_id,event_id.
     std::string cases_file{}; ///< CSV with columns date,age_group,new_cases (reported), for the infection history.
     std::string vaccinations_file{}; ///< CSV with columns date,age_group,new_doses, for the vaccination history.
+    /**
+     * @brief CSV with one row per cohort member, holding their individual infection and vaccination dates.
+     *
+     * Columns age_group, ih_infection_1_date to ih_infection_4_date and ih_vaccine_1_date to
+     * ih_vaccine_3_date, with dates as YYYY-MM-DD or NA. If given, the history is taken from this file
+     * instead of cases_file and vaccinations_file, which must then be empty.
+     */
+    std::string history_file{};
     std::string contact_dir{}; ///< Directory with the German baseline contact matrices.
     /**
-     * @brief Length of the window before t0 from which the histories are seeded.
+     * @brief Length of the window before t0 from which the reported cases history is seeded.
      *
      * 90 days by default. Longer windows overcount immunity, because a Person is seeded at most once here
      * while the reported cases they are drawn from include reinfections: over a full year around the
      * Omicron wave, reported cases times a dark figure of 4 exceed the population of Halle, which seeds
      * every agent as recovered and leaves no susceptible for the epidemic to run in. 90 days also matches
-     * the window over which SeverityProtectionFactor is defined.
+     * the window over which SeverityProtectionFactor is defined. Not used by the cohort history, which
+     * replays the full history of every cohort member up to t0.
      */
     int history_lookback_days = 90;
     /**
@@ -109,16 +137,23 @@ struct ModelSetup {
      * immunity and no pre-existing PAIS at t0, which silently changes the epidemic that is being fitted.
      */
     bool allow_missing_history = false;
+
+    /// @brief The history source selected by the files that are set.
+    HistorySource history_source() const
+    {
+        return history_file.empty() ? HistorySource::ReportedCases : HistorySource::Cohort;
+    }
 };
 
 /**
  * @brief Build the Halle ABM.
  *
  * Builds the population and its locations from the Halle population file, then seeds the infection and
- * vaccination histories so that immunity and pre-existing PAIS are in their correct state at @p t0.
+ * vaccination histories so that immunity and pre-existing PAIS are in their correct state at @p t0. The
+ * histories come either from the reported cases or from the cohort file, see ModelSetup::history_source().
  *
  * @param[in] setup The non-fitted parts of the model.
- * @param[in] theta The fitted parameters, see fit_parameters().
+ * @param[in] theta The fitted parameters, see fit_parameters(setup.history_source()).
  * @param[in] start_date Calendar date that @p t0 corresponds to, used to align the input data.
  * @param[in] t0 Start of the simulation.
  * @param[in] tmax End of the simulation. Currently unused; kept because a testing scheme would need it as

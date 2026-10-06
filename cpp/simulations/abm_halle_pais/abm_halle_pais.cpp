@@ -180,14 +180,15 @@ mio::IOResult<void> write_observable(const std::string& path, const Observable& 
  * The header names every column, so that fit_npe.py does not need to know the parameter or channel
  * layout, and adding a fitted parameter needs no change on the Python side.
  */
-mio::IOResult<void> write_ensemble(const std::string& path, const std::vector<std::vector<double>>& thetas,
+mio::IOResult<void> write_ensemble(const std::string& path, mio::halle::HistorySource source,
+                                   const std::vector<std::vector<double>>& thetas,
                                    const std::vector<std::vector<double>>& observables, int num_days)
 {
     std::ofstream file(path);
     if (!file.is_open()) {
         return mio::failure(mio::StatusCode::FileNotFound, "Could not open " + path + " for writing.");
     }
-    for (const auto& parameter : mio::halle::fit_parameters()) {
+    for (const auto& parameter : mio::halle::fit_parameters(source)) {
         file << parameter.name << ',';
     }
     const auto& channels = mio::halle::observable_channels();
@@ -234,6 +235,10 @@ int main(int argc, char** argv)
                                                                 "infection history. See prepare_data.py."})
             .add<"vaccinations_file", std::string>("", {.description = "CSV holding the vaccinations, for the "
                                                                        "vaccination history. See prepare_data.py."})
+            .add<"history_file", std::string>("", {.description = "CSV holding the individual infection and "
+                                                                  "vaccination histories of a cohort. Replaces "
+                                                                  "cases_file and vaccinations_file, and removes "
+                                                                  "dark_figure from the fit."})
             .add<"start_date", std::string>("2022-07-01", {.description = "First day of the simulation."})
             .add<"num_days">(90, {"d", "Length of the simulation in days."})
             .add<"history_lookback_days">(90, {.description = "Length of the window before the start date that "
@@ -269,6 +274,7 @@ int main(int argc, char** argv)
     setup.contact_dir           = parameters.get<"contact_dir">();
     setup.cases_file            = parameters.get<"cases_file">();
     setup.vaccinations_file     = parameters.get<"vaccinations_file">();
+    setup.history_file          = parameters.get<"history_file">();
     setup.history_lookback_days = parameters.get<"history_lookback_days">();
     setup.allow_missing_history = parameters.get<"allow_missing_history">();
 
@@ -285,6 +291,7 @@ int main(int argc, char** argv)
     const auto output_dir = parameters.get<"output_dir">();
     const auto mode       = parameters.get<"mode">();
     const uint64_t seed   = static_cast<uint64_t>(parameters.get<"seed">());
+    const auto source     = setup.history_source();
 
     if (rank == 0 && !mio::create_directory(output_dir)) {
         std::cout << "Could not create output directory " << output_dir << "\n";
@@ -295,7 +302,7 @@ int main(int argc, char** argv)
     if (mode == "simulate") {
         auto theta = parameters.get<"theta">();
         if (theta.empty()) {
-            for (const auto& parameter : mio::halle::fit_parameters()) {
+            for (const auto& parameter : mio::halle::fit_parameters(source)) {
                 theta.push_back(0.5 * (parameter.lower + parameter.upper));
             }
         }
@@ -328,7 +335,7 @@ int main(int argc, char** argv)
             // does not depend on how many ranks the ensemble is spread over.
             auto prior_rng = mio::RandomNumberGenerator();
             prior_rng.seed({static_cast<uint32_t>(seed), static_cast<uint32_t>(run)});
-            const auto theta = mio::halle::sample_prior(prior_rng);
+            const auto theta = mio::halle::sample_prior(prior_rng, source);
 
             auto result = run_once(setup, theta, start_date, num_days, seed + 1000000ULL + static_cast<uint64_t>(run));
             if (!result) {
@@ -344,7 +351,7 @@ int main(int argc, char** argv)
         // Each rank writes its own shard. Concatenating shards is cheaper and less fragile than gathering
         // large observable vectors through MPI, and fit_npe.py reads a directory of shards.
         const auto shard = mio::path_join(output_dir, "ensemble_rank" + std::to_string(rank) + ".csv");
-        auto written     = write_ensemble(shard, thetas, observables, num_days);
+        auto written     = write_ensemble(shard, source, thetas, observables, num_days);
         if (!written) {
             std::cout << written.error().formatted_message() << "\n";
             mio::mpi::finalize();
@@ -364,7 +371,7 @@ int main(int argc, char** argv)
                 return 1;
             }
             file << "name,lower,upper\n";
-            for (const auto& parameter : mio::halle::fit_parameters()) {
+            for (const auto& parameter : mio::halle::fit_parameters(source)) {
                 file << parameter.name << ',' << parameter.lower << ',' << parameter.upper << '\n';
             }
             std::cout << "Wrote " << path << "\n";
