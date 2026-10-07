@@ -870,20 +870,16 @@ void set_pais_parameters(abm::Parameters& params)
 
 } // namespace
 
-const std::vector<FitParameter>& fit_parameters(HistorySource source)
+const std::vector<FitParameter>& fit_parameters()
 {
     // Bounds taken from the grid search of the ABM paper. No contact reduction is fitted, since testing
     // is the only measure in this setup. The PAIS parameters are not fitted either: they act only on the
     // PAIS output channels, so without PAIS data the likelihood would be flat in all of them.
-    // viral_shedding_rate must stay the first entry, since make_model reads it as theta[0].
-    static const std::vector<FitParameter> reported_cases{
+    static const std::vector<FitParameter> parameters{
         {"viral_shedding_rate", 0.1, 20.0},
         {"dark_figure", 2.5, 10.0},
     };
-    static const std::vector<FitParameter> cohort{
-        {"viral_shedding_rate", 0.1, 20.0},
-    };
-    return source == HistorySource::Cohort ? cohort : reported_cases;
+    return parameters;
 }
 
 const std::vector<std::string>& observable_channels()
@@ -894,9 +890,9 @@ const std::vector<std::string>& observable_channels()
     return channels;
 }
 
-std::vector<double> sample_prior(RandomNumberGenerator& rng, HistorySource source)
+std::vector<double> sample_prior(RandomNumberGenerator& rng)
 {
-    const auto& priors = fit_parameters(source);
+    const auto& priors = fit_parameters();
     std::vector<double> theta(priors.size());
     auto& uniform = UniformDistribution<double>::get_instance();
     for (size_t i = 0; i < priors.size(); ++i) {
@@ -905,9 +901,9 @@ std::vector<double> sample_prior(RandomNumberGenerator& rng, HistorySource sourc
     return theta;
 }
 
-bool is_in_prior_support(const std::vector<double>& theta, HistorySource source)
+bool is_in_prior_support(const std::vector<double>& theta)
 {
-    const auto& priors = fit_parameters(source);
+    const auto& priors = fit_parameters();
     if (theta.size() != priors.size()) {
         return false;
     }
@@ -919,22 +915,25 @@ bool is_in_prior_support(const std::vector<double>& theta, HistorySource source)
     return true;
 }
 
-IOResult<abm::Model> make_model(const ModelSetup& setup, const std::vector<double>& theta, Date start_date,
+IOResult<abm::Model> make_model(std::string person_file, std::string contact_dir, std::string history_file, int history_lookback_days,
+                                bool allow_missing_history, const std::vector<double>& theta, Date start_date,
                                 abm::TimePoint t0, abm::TimePoint tmax, const RandomNumberGenerator& rng)
 {
+    ModelSetup setup;
+    setup.person_file           = std::move(person_file);
+    setup.contact_dir           = std::move(contact_dir);
+    setup.history_file          = std::move(history_file);
+    setup.history_lookback_days = history_lookback_days;
+    setup.allow_missing_history = allow_missing_history;
+
     const auto source = setup.history_source();
-    if (!is_in_prior_support(theta, source)) {
+    if (!is_in_prior_support(theta)) {
         return failure(StatusCode::InvalidValue, "Parameter vector is outside the prior support.");
     }
     if (setup.person_file.empty()) {
         return failure(StatusCode::InvalidValue, "No population file given.");
     }
-    if (source == HistorySource::Cohort && (!setup.cases_file.empty() || !setup.vaccinations_file.empty())) {
-        return failure(StatusCode::InvalidValue, "A cohort history file cannot be combined with a cases or a "
-                                                 "vaccinations file. Give either the cohort or the reported data.");
-    }
-    const bool has_history =
-        source == HistorySource::Cohort || (!setup.cases_file.empty() && !setup.vaccinations_file.empty());
+    const bool has_history = source == HistorySource::Cohort;
     if (!has_history && !setup.allow_missing_history) {
         return failure(StatusCode::InvalidValue,
                        "No infection and vaccination history given. Pass a cohort history file, or both a cases and "
@@ -962,19 +961,10 @@ IOResult<abm::Model> make_model(const ModelSetup& setup, const std::vector<doubl
     BOOST_OUTCOME_TRY(set_contact_rates(model, setup.contact_dir));
     // No testing and no other intervention is applied for now. tmax is kept in the signature because it
     // is what a testing scheme would need as its validity period once testing is reinstated.
-    unused(tmax);
 
-    if (source == HistorySource::Cohort) {
-        BOOST_OUTCOME_TRY(auto&& cohort, read_cohort_file(setup.history_file, start_date));
-        seed_cohort_history(model, cohort, t0, start_date);
-    }
-    else if (has_history) {
-        BOOST_OUTCOME_TRY(auto&& cases, read_daily_series(setup.cases_file, "new_cases"));
-        BOOST_OUTCOME_TRY(auto&& vaccinations, read_daily_series(setup.vaccinations_file, "new_doses"));
-        seed_history(model, &cases, &vaccinations, t0, start_date, theta[1], setup.history_lookback_days,
-                     model.get_rng());
-    }
-    else {
+    BOOST_OUTCOME_TRY(auto&& cohort, read_cohort_file(setup.history_file, start_date));
+    seed_cohort_history(model, cohort, t0, start_date);
+    if(!has_history) {
         log_warning("Building the model without infection and vaccination history. The population has no immunity "
                     "and no pre-existing PAIS at the start of the simulation.");
     }

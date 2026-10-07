@@ -143,6 +143,12 @@ add_pymio_module(_simulation_omseirs4
     LINKED_LIBRARIES memilio ode_mseirs4
     SOURCES memilio/simulation/bindings/models/omseirs4.cpp
 )
+add_pymio_module(_simulation_halle_abm
+    LINKED_LIBRARIES memilio abm
+    SOURCES memilio/simulation/bindings/models/abm_pais.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../cpp/simulations/abm_halle_pais/halle_model.cpp)
+
+target_include_directories(_simulation_halle_abm PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../cpp/simulations/abm_halle_pais)
 
 # install all shared memilio libraries, which were given as "LINKED_LIBRARIES" to add_pymio_module
 list(REMOVE_DUPLICATES PYMIO_MEMILIO_LIBS_LIST)

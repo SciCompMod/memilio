@@ -67,14 +67,14 @@ struct LogChannels : mio::LogAlways {
         std::array<double, num_channels> values{0.0, 0.0, 0.0};
         const auto t = sim.get_time();
         for (auto& person : sim.get_model().get_persons()) {
-            if (person.get_infection_state(t) == mio::abm::InfectionState::Dead) {
+            switch (person.get_infection_state(t)) {
+            case mio::abm::InfectionState::Dead:
                 values[0] += 1.0;
-            }
-            switch (person.get_pais_state(t)) {
-            case mio::abm::PAISState::Medium:
+                break;
+            case mio::abm::InfectionState::InfectedSevere:
                 values[1] += 1.0;
                 break;
-            case mio::abm::PAISState::Severe:
+            case mio::abm::InfectionState::InfectedCritical:
                 values[2] += 1.0;
                 break;
             default:
@@ -104,24 +104,31 @@ struct Observable {
     }
 };
 
+
+
 /**
  * @brief Run the model once and return the observable.
- * @param[in] setup The non-fitted parts of the model.
+ *
+ * The non-fitted inputs are those of mio::halle::make_model(), passed one by one so that this function can
+ * be bound to Python directly.
+ *
  * @param[in] theta The fitted parameters.
  * @param[in] start_date Calendar date of the start of the simulation.
  * @param[in] num_days Length of the simulation in days.
- * @param[in] seed Seed of this run, so that a run is reproducible.
  */
-mio::IOResult<Observable> run_once(const mio::halle::ModelSetup& setup, const std::vector<double>& theta,
-                                   mio::Date start_date, int num_days, uint64_t seed)
+mio::IOResult<Observable> run_once(std::string person_file, std::string contact_dir, std::string history_file, int history_lookback_days,
+                                   bool allow_missing_history, const std::vector<double>& theta, mio::Date start_date,
+                                   int num_days)
 {
     const auto t0   = mio::abm::TimePoint(0);
     const auto tmax = t0 + mio::abm::days(num_days);
 
     auto rng = mio::RandomNumberGenerator();
-    rng.seed({static_cast<uint32_t>(seed & 0xFFFFFFFF), static_cast<uint32_t>(seed >> 32)});
 
-    BOOST_OUTCOME_TRY(auto&& model, mio::halle::make_model(setup, theta, start_date, t0, tmax, rng));
+    BOOST_OUTCOME_TRY(auto&& model,
+                      mio::halle::make_model(person_file, contact_dir, history_file,
+                                             history_lookback_days, allow_missing_history, theta, start_date, t0,
+                                             tmax, rng));
     auto sim = mio::abm::Simulation(t0, std::move(model));
 
     mio::History<mio::DataWriterToMemory, LogChannels> history;
@@ -151,6 +158,7 @@ mio::IOResult<Observable> run_once(const mio::halle::ModelSetup& setup, const st
     }
     return mio::success(observable);
 }
+
 
 /// @brief Write one observable as a CSV with a Day column and one column per channel.
 mio::IOResult<void> write_observable(const std::string& path, const Observable& observable)
@@ -188,7 +196,7 @@ mio::IOResult<void> write_ensemble(const std::string& path, mio::halle::HistoryS
     if (!file.is_open()) {
         return mio::failure(mio::StatusCode::FileNotFound, "Could not open " + path + " for writing.");
     }
-    for (const auto& parameter : mio::halle::fit_parameters(source)) {
+    for (const auto& parameter : mio::halle::fit_parameters()) {
         file << parameter.name << ',';
     }
     const auto& channels = mio::halle::observable_channels();
@@ -302,11 +310,11 @@ int main(int argc, char** argv)
     if (mode == "simulate") {
         auto theta = parameters.get<"theta">();
         if (theta.empty()) {
-            for (const auto& parameter : mio::halle::fit_parameters(source)) {
+            for (const auto& parameter : mio::halle::fit_parameters()) {
                 theta.push_back(0.5 * (parameter.lower + parameter.upper));
             }
         }
-        auto result = run_once(setup, theta, start_date, num_days, seed);
+        auto result = run_once(setup.person_file, setup.contact_dir, setup.history_file, setup.history_lookback_days, setup.allow_missing_history, theta, start_date, num_days);
         if (!result) {
             std::cout << result.error().formatted_message() << "\n";
             mio::mpi::finalize();
@@ -335,9 +343,9 @@ int main(int argc, char** argv)
             // does not depend on how many ranks the ensemble is spread over.
             auto prior_rng = mio::RandomNumberGenerator();
             prior_rng.seed({static_cast<uint32_t>(seed), static_cast<uint32_t>(run)});
-            const auto theta = mio::halle::sample_prior(prior_rng, source);
+            const auto theta = mio::halle::sample_prior(prior_rng);
 
-            auto result = run_once(setup, theta, start_date, num_days, seed + 1000000ULL + static_cast<uint64_t>(run));
+            auto result = run_once(setup.person_file, setup.contact_dir, setup.history_file, setup.history_lookback_days, setup.allow_missing_history, theta, start_date, num_days);
             if (!result) {
                 std::cout << "Rank " << rank << " run " << run << " failed: "
                           << result.error().formatted_message() << "\n";
@@ -371,7 +379,7 @@ int main(int argc, char** argv)
                 return 1;
             }
             file << "name,lower,upper\n";
-            for (const auto& parameter : mio::halle::fit_parameters(source)) {
+            for (const auto& parameter : mio::halle::fit_parameters()) {
                 file << parameter.name << ',' << parameter.lower << ',' << parameter.upper << '\n';
             }
             std::cout << "Wrote " << path << "\n";

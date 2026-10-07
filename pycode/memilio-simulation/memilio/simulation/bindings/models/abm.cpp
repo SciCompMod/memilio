@@ -201,8 +201,8 @@ PYBIND11_MODULE(_simulation_abm, m)
     pymio::bind_class<mio::abm::Model, pymio::EnablePickling::Never>(m, "Model")
         .def(py::init<int32_t>())
         .def("add_location", &mio::abm::Model::add_location, py::arg("location_type"), py::arg("num_cells") = 1)
-        .def("add_person", py::overload_cast<mio::abm::LocationId, mio::AgeGroup>(&mio::abm::Model::add_person),
-             py::arg("location_id"), py::arg("age_group"))
+        .def("add_person", py::overload_cast<mio::abm::LocationId, mio::AgeGroup, mio::abm::Sex>(&mio::abm::Model::add_person),
+             py::arg("location_id"), py::arg("age_group"), py::arg("sex"))
         .def("assign_location",
              py::overload_cast<mio::abm::PersonId, mio::abm::LocationId>(&mio::abm::Model::assign_location),
              py::arg("person_id"), py::arg("location_id"))

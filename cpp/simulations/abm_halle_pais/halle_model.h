@@ -69,14 +69,8 @@ enum class HistorySource
  * This table is the single place where the fitted parameters are defined: adding or removing an entry
  * changes the dimension of the fit without any other code change. No intervention is modelled at present,
  * so neither a contact reduction nor a testing frequency appears here.
- *
- * The cohort history already holds every infection date of its members, so there is no dark figure to
- * scale it by. dark_figure is therefore only fitted with the reported cases history; with the cohort it
- * would act on nothing and only add a flat dimension to the posterior.
- *
- * @param[in] source The history source the model is built with.
  */
-const std::vector<FitParameter>& fit_parameters(HistorySource source);
+const std::vector<FitParameter>& fit_parameters();
 
 /**
  * @brief The channels of the summary statistic that the fit compares against real data.
@@ -87,17 +81,15 @@ const std::vector<std::string>& observable_channels();
 /**
  * @brief Draw a parameter vector from the (uniform) prior.
  * @param[in,out] rng Random number generator.
- * @param[in] source The history source, see fit_parameters().
  * @return A parameter vector with one entry per entry of fit_parameters().
  */
-std::vector<double> sample_prior(RandomNumberGenerator& rng, HistorySource source);
+std::vector<double> sample_prior(RandomNumberGenerator& rng);
 
 /**
  * @brief Check whether a parameter vector lies inside the prior support.
  * @param[in] theta A parameter vector with one entry per entry of fit_parameters().
- * @param[in] source The history source, see fit_parameters().
  */
-bool is_in_prior_support(const std::vector<double>& theta, HistorySource source);
+bool is_in_prior_support(const std::vector<double>& theta);
 
 /**
  * @brief Everything needed to build the Halle model that is not being fitted.
@@ -152,8 +144,15 @@ struct ModelSetup {
  * vaccination histories so that immunity and pre-existing PAIS are in their correct state at @p t0. The
  * histories come either from the reported cases or from the cohort file, see ModelSetup::history_source().
  *
- * @param[in] setup The non-fitted parts of the model.
- * @param[in] theta The fitted parameters, see fit_parameters(setup.history_source()).
+ * The non-fitted inputs are passed one by one rather than as a ModelSetup so that the function can be
+ * bound to Python directly; see the members of ModelSetup for their meaning.
+ *
+ * @param[in] person_file See ModelSetup::person_file.
+ * @param[in] contact_dir See ModelSetup::contact_dir.
+ * @param[in] history_file See ModelSetup::history_file. Empty to use cases_file and vaccinations_file.
+ * @param[in] history_lookback_days See ModelSetup::history_lookback_days.
+ * @param[in] allow_missing_history See ModelSetup::allow_missing_history.
+ * @param[in] theta The fitted parameters, see fit_parameters().
  * @param[in] start_date Calendar date that @p t0 corresponds to, used to align the input data.
  * @param[in] t0 Start of the simulation.
  * @param[in] tmax End of the simulation. Currently unused; kept because a testing scheme would need it as
@@ -161,7 +160,8 @@ struct ModelSetup {
  * @param[in] rng Random number generator used for the whole model, so a run is reproducible from its seed.
  * @return The model, or an error if an input file could not be read.
  */
-IOResult<abm::Model> make_model(const ModelSetup& setup, const std::vector<double>& theta, Date start_date,
+IOResult<abm::Model> make_model(std::string person_file, std::string contact_dir, std::string history_file, int history_lookback_days,
+                                bool allow_missing_history, const std::vector<double>& theta, Date start_date,
                                 abm::TimePoint t0, abm::TimePoint tmax, const RandomNumberGenerator& rng);
 
 } // namespace halle

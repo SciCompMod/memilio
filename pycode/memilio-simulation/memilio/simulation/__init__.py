@@ -59,5 +59,9 @@ def __getattr__(attr):
         import memilio.simulation.ssirs as ssirs
         return ssirs
 
+    elif attr == "halle_abm":
+        import memilio.simulation.halle_abm as halle_abm
+        return halle_abm
+
     raise AttributeError("module {!r} has no attribute "
                          "{!r}".format(__name__, attr))
