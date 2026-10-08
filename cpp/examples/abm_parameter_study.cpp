@@ -17,10 +17,11 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/result_simulation.h"
+#include "abm/common_abm_loggers.h"
 #include "abm/household.h"
 #include "abm/lockdown_rules.h"
 #include "abm/model.h"
+#include "abm/simulation.h"
 #include "abm/time.h"
 
 #include "memilio/compartments/parameter_studies.h"
@@ -165,6 +166,44 @@ mio::abm::Model make_model(const mio::RandomNumberGenerator& rng)
     return model;
 }
 
+/**
+ * @brief Simulation for this study, holding the Histories needed to evaluate a run.
+ * ParameterStudy only calls advance(tmax), so the Simulation has to own its Histories. Besides the result aggregated by
+ * #InfectionState, it logs the new Infections per LocationType and AgeGroup.
+ */
+class StudySimulation : public mio::abm::Simulation<>
+{
+public:
+    StudySimulation(mio::abm::Model&& model, mio::abm::TimePoint t0)
+        : Simulation(t0, std::move(model))
+        , history_detailed{Eigen::Index((size_t)mio::abm::LocationType::Count *
+                                        get_model().parameters.get_num_groups())}
+    {
+    }
+
+    void advance(mio::abm::TimePoint tmax)
+    {
+        Simulation::advance(tmax, history, history_detailed);
+    }
+
+    /// @brief The result aggregated by #InfectionState.
+    const mio::TimeSeries<ScalarType>& get_result() const
+    {
+        return std::get<0>(history.get_log());
+    }
+
+    /// @brief The new Infections per LocationType and AgeGroup.
+    const mio::TimeSeries<ScalarType>& get_result_detailed() const
+    {
+        return std::get<0>(history_detailed.get_log());
+    }
+
+private:
+    mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> history{
+        Eigen::Index(mio::abm::InfectionState::Count)};
+    mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionPerLocationTypePerAgeGroup> history_detailed;
+};
+
 int main()
 {
     mio::mpi::init();
@@ -200,9 +239,6 @@ int main()
     const auto result_dir_standard = mio::create_directories_or_exit(result_dir / "standard_results");
     const auto result_dir_detailed = mio::create_directories_or_exit(result_dir / "detailed_results");
 
-    // Collects the detailed result of each run, see the process_simulation_result lambda below.
-    std::vector<std::vector<mio::TimeSeries<ScalarType>>> ensemble_results_detailed;
-
     // Run the study
     // The first lambda ("create_simulation" argument) sets up the simulation, the second ("process_simulation_result")
     // allows us to process each simulations result. Be mindful of the memory used for storing these results!
@@ -213,9 +249,9 @@ int main()
             // per person to 2^16 = 65536
             const auto ctr = mio::Counter<uint32_t>(static_cast<uint32_t>(run_idx) << 16);
             copy.reset_rng(ctr);
-            return mio::abm::ResultSimulation(std::move(copy), t0_);
+            return StudySimulation(std::move(copy), t0_);
         },
-        [&result_dir_standard, &result_dir_detailed, &ensemble_results_detailed](auto&& sim, auto&& run_idx) {
+        [&result_dir_standard, &result_dir_detailed](auto&& sim, auto&& run_idx) {
             auto interpolated_result          = mio::interpolate_simulation_result(sim.get_result());
             auto interpolated_result_detailed = mio::interpolate_simulation_result(sim.get_result_detailed());
 
@@ -231,20 +267,25 @@ int main()
             sim.get_result_detailed().print_table(outfile_run_detailed, {}, 7, 4);
             std::cout << "Detailed results written to " << outpath_detailed.string() << std::endl;
 
-            // The detailed result is collected separately, because ensemble_percentile requires all entries of an
-            // ensemble to have the same number of elements, which the two results do not have.
-            ensemble_results_detailed.push_back({interpolated_result_detailed});
-
-            return std::vector{interpolated_result};
+            // Both results are returned, so that the study gathers them from all MPI ranks on the root rank.
+            return std::vector{interpolated_result, interpolated_result_detailed};
         });
 
     // The study collects all results on the root rank, so we only process the results there
     if (mio::mpi::is_root()) {
+        // Split the gathered results into one ensemble per result, because ensemble_percentile requires all entries
+        // of an ensemble to have the same number of elements, which the two results do not have.
+        std::vector<std::vector<mio::TimeSeries<ScalarType>>> ensemble_results_standard, ensemble_results_detailed;
+        for (auto& run_result : ensemble_results) {
+            ensemble_results_standard.push_back({std::move(run_result[0])});
+            ensemble_results_detailed.push_back({std::move(run_result[1])});
+        }
+
         // The percentiles are written in the "Results_p05.h5" layout expected by
         // pycode/memilio-plot/memilio/plot/plotAbmInfectionStates.py, so that the results of this example can be
         // plotted directly. The percentile is given in whole percent to match that file name.
         const auto write_percentile = [&](int p) {
-            auto ensemble_percentiles          = ensemble_percentile(ensemble_results, p / 100.0);
+            auto ensemble_percentiles          = ensemble_percentile(ensemble_results_standard, p / 100.0);
             auto ensemble_percentiles_detailed = ensemble_percentile(ensemble_results_detailed, p / 100.0);
 
             std::ofstream out(result_dir_standard / fmt::format("Results_p{:02d}.txt", p));
@@ -254,10 +295,18 @@ int main()
             // save_result splits each row into num_groups groups. Both results are a single vector per time point,
             // so they are written as one group each, whose "Total" holds all entries of that vector. Passing the
             // number of age groups here would instead split those entries across that many groups.
-            mio::unused(mio::save_result(ensemble_percentiles, {0}, 1,
-                                         (result_dir_standard / fmt::format("Results_p{:02d}.h5", p)).string()));
-            mio::unused(mio::save_result(ensemble_percentiles_detailed, {0}, 1,
-                                         (result_dir_detailed / fmt::format("Results_p{:02d}.h5", p)).string()));
+            const auto save_status = mio::save_result(
+                ensemble_percentiles, {0}, 1, (result_dir_standard / fmt::format("Results_p{:02d}.h5", p)).string());
+            if (!save_status) {
+                std::cout << "Error writing result: " << save_status.error().formatted_message() << std::endl;
+            }
+            const auto save_status_detailed =
+                mio::save_result(ensemble_percentiles_detailed, {0}, 1,
+                                 (result_dir_detailed / fmt::format("Results_p{:02d}.h5", p)).string());
+            if (!save_status_detailed) {
+                std::cout << "Error writing detailed result: " << save_status_detailed.error().formatted_message()
+                          << std::endl;
+            }
         };
 
         write_percentile(5);
