@@ -380,18 +380,18 @@ LocationId Model::find_location(LocationType type, const PersonId person) const
 
 size_t Model::get_subpopulation_combined(TimePoint t, InfectionState s) const
 {
-    return std::accumulate(m_locations.begin(), m_locations.end(), (size_t)0,
-                           [t, s, this](size_t running_sum, const Location& loc) {
-                               return running_sum + get_subpopulation(loc.get_id(), t, s);
-                           });
+    // a single pass over all Persons, instead of calling get_subpopulation for every Location
+    return std::count_if(m_persons.begin(), m_persons.end(), [&](auto&& p) {
+        return p.get_location_model_id() == m_id && p.get_infection_state(t) == s;
+    });
 }
 
 size_t Model::get_subpopulation_combined_per_location_type(TimePoint t, InfectionState s, LocationType type) const
 {
-    return std::accumulate(
-        m_locations.begin(), m_locations.end(), (size_t)0, [t, s, type, this](size_t running_sum, const Location& loc) {
-            return loc.get_type() == type ? running_sum + get_subpopulation(loc.get_id(), t, s) : running_sum;
-        });
+    // a single pass over all Persons, instead of calling get_subpopulation for every Location
+    return std::count_if(m_persons.begin(), m_persons.end(), [&](auto&& p) {
+        return p.get_location_model_id() == m_id && p.get_location_type() == type && p.get_infection_state(t) == s;
+    });
 }
 
 TripList& Model::get_trip_list()
