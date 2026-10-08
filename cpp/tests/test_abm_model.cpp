@@ -178,6 +178,14 @@ TEST_F(TestModel, getSubpopulationCombined)
               2);
     // Verify the total count of persons with no symptoms across all locations.
     EXPECT_EQ(model.get_subpopulation_combined(t, mio::abm::InfectionState::InfectedNoSymptoms), 3);
+
+    // A person currently located in another model (e.g. in a graph ABM) is not counted.
+    auto visitor = add_test_person(model, school1, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
+    model.get_person(visitor).set_location(mio::abm::LocationType::School, school1, model.get_id() + 1);
+    EXPECT_EQ(model.get_subpopulation_combined_per_location_type(t, mio::abm::InfectionState::InfectedNoSymptoms,
+                                                                 mio::abm::LocationType::School),
+              2);
+    EXPECT_EQ(model.get_subpopulation_combined(t, mio::abm::InfectionState::InfectedNoSymptoms), 3);
 }
 
 /**

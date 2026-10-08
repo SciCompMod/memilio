@@ -394,6 +394,8 @@ public:
 
     /**
      * @brief Get the number of Person%s of a particular #InfectionState for all Cell%s.
+     * Note that this iterates over all Person%s of the Model. To count the Person%s of many Location%s or
+     * #InfectionState%s, do not call this in a loop, but count them in a single pass over get_persons() instead.
      * @param[in] location A LocationId from the Model.
      * @param[in] t TimePoint of querry.
      * @param[in] state #InfectionState of interest.

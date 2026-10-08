@@ -51,17 +51,29 @@ struct Logger : mio::LogAlways {
     {
         Type location_information{};
         location_information.reserve(size_t(mio::abm::LocationType::Count));
-        auto t = sim.get_time();
-        for (auto&& loc : sim.get_model().get_locations()) {
-            std::map<mio::abm::InfectionState, size_t> persons_per_infection_state;
+        auto t             = sim.get_time();
+        const auto& model  = sim.get_model();
+        const auto num_loc = model.get_locations().size();
+
+        // Count the Persons per Location and InfectionState in a single pass over all Persons, instead of calling
+        // get_subpopulation for every Location and InfectionState, which iterates over all Persons each time.
+        std::vector<std::map<mio::abm::InfectionState, size_t>> persons_per_infection_state(num_loc);
+        for (auto& counts : persons_per_infection_state) {
             for (size_t i = 0; i < static_cast<size_t>(mio::abm::InfectionState::Count); ++i) {
-                auto inf_state = mio::abm::InfectionState(i);
-                persons_per_infection_state.insert(
-                    {inf_state, sim.get_model().get_subpopulation(loc.get_id(), t, inf_state)});
+                counts[mio::abm::InfectionState(i)] = 0;
             }
+        }
+        for (auto&& person : model.get_persons()) {
+            // Persons currently located in another model are counted there
+            if (person.get_location_model_id() == model.get_id()) {
+                ++persons_per_infection_state[person.get_location().get()][person.get_infection_state(t)];
+            }
+        }
+
+        for (auto&& loc : model.get_locations()) {
             location_information.push_back(std::make_tuple(loc.get_model_id(), loc.get_type(), loc.get_id(),
-                                                           sim.get_model().get_number_persons(loc.get_id()),
-                                                           persons_per_infection_state));
+                                                           model.get_number_persons(loc.get_id()),
+                                                           persons_per_infection_state[loc.get_id().get()]));
         }
         return location_information;
     }
