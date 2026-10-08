@@ -21,6 +21,7 @@
 #define MIO_IO_HISTORY_H
 
 #include "memilio/utils/metaprogramming.h"
+#include <memory>
 #include <vector>
 #include <tuple>
 
@@ -108,6 +109,19 @@ public:
         return m_data;
     }
 
+    /**
+     * @brief Access the data of the given Logger.
+     * This function only works with Writers that stores its records in a tuple, like DataWriterToMemory.
+     * @return A read-only reference to the Logger's records.
+     */
+    template <class Logger>
+        requires(is_type_in_list_v<Logger, Loggers...> &&
+                 std::tuple_size_v<typename WriteWrapper::Data> == sizeof...(Loggers))
+    const auto& get_log() const
+    {
+        return std::get<index_of_type_v<Logger, Loggers...>>(m_data);
+    }
+
 private:
     typename WriteWrapper::Data m_data;
     std::tuple<Loggers...> m_loggers;
@@ -126,6 +140,35 @@ private:
         }
     }
 };
+
+namespace details
+{
+
+template <class T>
+class AbstractHistory
+{
+public:
+    template <template <class...> class Writer, class... Loggers>
+    AbstractHistory(History<Writer, Loggers...>& history)
+        : m_history(static_cast<void*>(&history), [](void*) {})
+        , m_log([](const std::shared_ptr<void>& h, const T& t) {
+            using H = History<Writer, Loggers...>;
+            static_cast<H*>(h.get())->log(t);
+        })
+    {
+    }
+
+    void log(const T& t)
+    {
+        m_log(m_history, t);
+    }
+
+private:
+    std::shared_ptr<void> m_history; ///< A non-owning pointer to the History.
+    void (*m_log)(const std::shared_ptr<void>&, const T&); ///< Function pointer that stores the
+};
+
+} // namespace details
 
 template <class... Loggers>
 using HistoryWithMemoryWriter = History<DataWriterToMemory, Loggers...>;
