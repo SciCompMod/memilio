@@ -185,9 +185,6 @@ struct LogInfectionState : mio::LogAlways {
             Eigen::VectorX<ScalarType>::Zero(Eigen::Index(mio::abm::InfectionState::Count));
         const auto curr_time = sim.get_time();
         const auto& model    = sim.get_model();
-        // A single pass over all Person%s, instead of calling get_subpopulation for every Location and
-        // #InfectionState, which would iterate over all Person%s each time. Person%s currently located in another
-        // Model (e.g. in a graph ABM) are not counted, same as in get_subpopulation.
         for (const Person& p : model.get_persons()) {
             if (p.get_location_model_id() == model.get_id()) {
                 sum[(Eigen::Index)p.get_infection_state(curr_time)] += 1;
@@ -274,7 +271,6 @@ private:
     mio::abm::TimePoint m_prev_time{0}; ///< Time of the previous log.
     std::vector<mio::abm::LocationType> m_prev_location_types; ///< LocationType of each Person at the previous log.
 };
-
 
 /**
 * @brief This is like the DataWriterToMemory, but it only logs time series data.
