@@ -22,9 +22,10 @@
 
 #include "abm/mask_type.h"
 #include "abm/time.h"
+#include "abm/sex.h"
 #include "abm/infection_state.h"
 #include "abm/virus_variant.h"
-#include "abm/protection_event.h"
+#include "abm/pais_state.h"
 #include "abm/protection_event.h"
 #include "abm/test_type.h"
 #include "memilio/config.h"
@@ -460,6 +461,71 @@ struct HighViralLoadProtectionFactor {
 };
 
 /**
+ * @brief Personal probability to obtain post-acute infection symptoms (PAIS), which depends on #ProtectionType,
+ * #AgeGroup, #Sex and #VirusVariant and the amount of previous vaccinations. Its value is between 0 and 1.
+ * The role of previous infections and the strength of the acute infection are considered separately.
+ */
+struct PAISProbability {
+    using Type = CustomIndexArray<ScalarType, VirusVariant, AgeGroup, Sex, VaccinationClass>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type({VirusVariant::Count, size, Sex::Count, VaccinationClass::Count}, 0.0);
+    }
+    static std::string name()
+    {
+        return "PAISProbability";
+    }
+};
+
+/**
+ * @brief Multiplicative factor to determine the probability of developing post-acute infection symptoms (PAIS) based on the severity of the acute infection.
+ */
+struct PAISProbabilitySeverityFactor {
+    using Type = CustomIndexArray<ScalarType, VirusVariant, VaccinationClass>;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return Type({VirusVariant::Count, VaccinationClass::Count}, 1.0);
+    }
+    static std::string name()
+    {
+        return "PAISProbabilitySeverityFactor";
+    }
+};
+
+/**
+ * @brief Multiplicative factor to determine the probability of developing post-acute infection symptoms (PAIS) if the Person has not had PAIS after the first infection.
+ */
+struct PAISProtectionAtSecondInfection {
+    using Type = CustomIndexArray<ScalarType, VirusVariant, VaccinationClass>;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return Type({VirusVariant::Count, VaccinationClass::Count}, 1.0);
+    }
+    static std::string name()
+    {
+        return "PAISProtectionAtSecondInfection";
+    }
+};
+
+/**
+ * @brief Transition Matrix between PAIS states.
+ * Each value give the probability that a Person with a certain PAISState transitions to another PAISState within a day.
+ * The first index is the from state and the second index is the to state.
+ */
+struct PAISTransitionMatrix {
+    using Type = Eigen::MatrixXd;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return Eigen::MatrixXd::Identity(static_cast<Eigen::Index>(PAISState::Count),
+                                         static_cast<Eigen::Index>(PAISState::Count));
+    }
+    static std::string name()
+    {
+        return "PAISTransitionMatrix";
+    }
+};
+
+/**
  * @brief Parameters that describe the reliability of a test.
  */
 struct TestParameters {
@@ -706,7 +772,8 @@ using ParametersBase =
                  AerosolTransmissionRates, LockdownDate, QuarantineDuration, QuarantineEffectiveness, SocialEventRate,
                  BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum,
                  GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork,
-                 InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor, TestData>;
+                 InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor, PAISProbability,
+                 PAISProbabilitySeverityFactor, PAISProtectionAtSecondInfection, PAISTransitionMatrix, TestData>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.

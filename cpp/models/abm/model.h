@@ -20,6 +20,7 @@
 #ifndef MIO_ABM_MODEL_H
 #define MIO_ABM_MODEL_H
 
+#include "abm/sex.h"
 #include "abm/infection_state.h"
 #include "abm/model_functions.h"
 #include "abm/location_type.h"
@@ -203,9 +204,10 @@ public:
      * @brief Add a Person to the Model.
      * @param[in] id The LocationID of the initial Location of the Person.
      * @param[in] age AgeGroup of the person.
+     * @param[in] sex Sex of the person.
      * @return Id of the newly created Person.
      */
-    PersonId add_person(const LocationId id, AgeGroup age);
+    PersonId add_person(const LocationId id, AgeGroup age, Sex sex = Sex::Male);
 
     /**
      * @brief Adds a copy of a given Person to the Model.

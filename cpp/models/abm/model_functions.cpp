@@ -100,10 +100,10 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
                 random_transition(personal_rng, VirusVariant::Count, dt,
                                   local_indiv_expected_trans); // use VirusVariant::Count for no virus submission
             if (virus != VirusVariant::Count) {
-                person.add_new_infection(Infection(personal_rng, virus, age_receiver, global_parameters, t + dt / 2,
-                                                   mio::abm::InfectionState::Exposed,
-                                                   person.get_latest_protection(t + dt / 2),
-                                                   false)); // Starting time in second order approximation
+                person.add_new_infection(
+                    Infection(personal_rng, virus, age_receiver, global_parameters, t + dt / 2,
+                              mio::abm::InfectionState::Exposed, person.get_latest_protection(t + dt / 2), false),
+                    personal_rng, t + dt / 2, global_parameters); // Starting time in second order approximation
             }
         }
     }
