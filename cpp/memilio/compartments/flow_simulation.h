@@ -49,6 +49,7 @@ public:
     FlowSimulation(Model const& model, FP t0 = 0., FP dt = 0.1)
         : Base(model, std::make_unique<DefaultIntegratorCore<FP>>(), t0, dt)
         , m_pop(model.get_initial_values().size())
+        , m_flow_delta(Base::get_flows().get_num_elements())
     {
     }
 
@@ -75,8 +76,8 @@ public:
                 //   To incorporate external changes to the last values of pop_result (e.g. by applying mobility), we only
                 //   calculate the change in population starting from the last available time point in m_result, instead
                 //   of starting at t0. To do that, the following difference of flows is used.
-                model.get_derivatives(flows - Base::get_flows().get_value(pop_result.get_num_time_points() - 1),
-                                      m_pop); // note: overwrites values in pop
+                m_flow_delta = flows - Base::get_flows().get_value(pop_result.get_num_time_points() - 1);
+                model.get_derivatives(m_flow_delta, m_pop); // note: overwrites values in pop
                 //   add the "initial" value of the ODEs (using last available time point in pop_result)
                 //     If no changes were made to the last value in m_result outside of FlowSimulation, the following
                 //     line computes the same as `model.get_derivatives(flows, x); x += model.get_initial_values();`.
@@ -92,6 +93,7 @@ public:
 
 private:
     Eigen::VectorX<FP> m_pop; ///< pre-allocated temporary, used during computation of flow derivatives
+    Eigen::VectorX<FP> m_flow_delta; ///< Pre-allocated temporary for flow changes used during integration.
 };
 
 /**

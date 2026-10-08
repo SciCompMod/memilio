@@ -20,4 +20,8 @@
 
 """
 Functions to plot and visualize map data and simulation trajectories.
+
+The module ``plotTimeSeries`` provides a standard plot for ``TimeSeries``
+objects, ``plotMap`` plots regional data on maps and ``createGIF`` animates
+map plots over time.
 """

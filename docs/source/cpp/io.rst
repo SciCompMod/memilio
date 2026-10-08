@@ -280,8 +280,8 @@ should not be constructed in the function it is called in when data is needed la
 
 To access data from a specific ``Logger``, one can use ``std::get<x>`` where x is the position of the ``Logger`` in the template
 argument list of the ``History`` object. Refer to `this example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/history.cpp>`__ for a simple
-implementation of a history object and `this full ABM example <https://github.com/SciCompMod/memilio/blob/main/cpp/simulations/abm.cpp>`__ for a more advanced use case
-of the History object with several History objects in use.
+implementation of a history object and `this ABM example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/abm_history_object.cpp>`__ for
+a use case in the ABM, where a History object with two custom Loggers is passed to the simulation.
 
 As mentioned, if multiple ``Writer``\s have to be used simultaneously, a separate History object is needed for each Writer.
 For a use case of this, refer to `the ABM Simulation advance function <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/simulation.h>`__

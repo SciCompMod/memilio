@@ -259,6 +259,15 @@ pythonic interface.
 
 Now you can use the usual data handling options and make use of the easy visualization tools that are part of Python.
 Some plotting functions specific to MEmilio and created as part of the project are combined in the :doc:`MEmilio Plot Package <m-plot>`.
+For a quick look at the result, it provides a standard plot for ``TimeSeries`` objects:
+
+.. code-block:: python
+
+   from memilio.plot.plotTimeSeries import plot_time_series
+
+   ax = plot_time_series(
+       result, labels=oseir.InfectionState.values(), groups=num_groups)
+   ax.figure.savefig('result.pdf')
 
 Additional resources
 ---------------------
