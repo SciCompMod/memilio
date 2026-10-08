@@ -37,8 +37,10 @@ ScalarType total_exposure_by_contacts(const ContactExposureRates& rates, const C
                                       size_t age_receiver_group_size, const LocalInfectionParameters& params)
 {
     assert(age_receiver < rates.size<AgeGroup>());
+    assert(params.get<ContactRates>().get_baseline().rows() == params.get<ContactRates>().get_baseline().cols());
+    assert(params.get<ContactRates>().get_baseline().rows() == static_cast<Eigen::Index>(rates.size<AgeGroup>().get()));
     ScalarType total_exposure = 0;
-    for (AgeGroup age_transmitter(0); age_transmitter < rates.size<AgeGroup>(); ++age_transmitter) {
+    for (auto age_transmitter : rates.size<AgeGroup>()) {
         if (age_receiver == age_transmitter &&
             age_receiver_group_size > 1) // adjust for the person not meeting themself
         {
@@ -150,7 +152,7 @@ void normalize_exposure_contribution(ContactExposureRates& local_contact_exposur
     assert(local_population_by_age.size<CellIndex>() == local_contact_exposure.size<CellIndex>());
     assert(local_contact_exposure.size<VirusVariant>() == VirusVariant::Count);
 
-    for (auto index : make_index_range(local_contact_exposure.size())) {
+    for (const auto index : make_index_range(local_contact_exposure.size())) {
         auto age_index = reduce_index<Index<CellIndex, AgeGroup>>(index);
         if (local_population_by_age[age_index] > 0) {
             // this instruction is not and does not need to be atomic

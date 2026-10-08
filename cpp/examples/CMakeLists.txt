@@ -116,6 +116,10 @@ add_executable(abm_minimal_example abm_minimal.cpp)
 target_link_libraries(abm_minimal_example PRIVATE memilio abm)
 target_compile_options(abm_minimal_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(abm_strong abm_strong.cpp)
+target_link_libraries(abm_strong PRIVATE memilio abm)
+target_compile_options(abm_strong PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 if(MEMILIO_HAS_HDF5)
     add_executable(abm_parameter_study_example abm_parameter_study.cpp)
     target_link_libraries(abm_parameter_study_example PRIVATE memilio abm)

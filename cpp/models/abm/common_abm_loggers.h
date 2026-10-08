@@ -153,7 +153,7 @@ struct LogDataForMobility : mio::LogAlways {
     static Type log(const mio::abm::Simulation<>& sim)
     {
         Type mobility_data{};
-        for (Person p : sim.get_model().get_persons()) {
+        for (const Person& p : sim.get_model().get_persons()) {
             mobility_data.push_back(
                 std::make_tuple(p.get_id(), p.get_location(), sim.get_time(), p.get_last_transport_mode(),
                                 guess_activity_type(p.get_location_type()), p.get_infection_state(sim.get_time())));
@@ -166,7 +166,8 @@ struct LogDataForMobility : mio::LogAlways {
 * @brief Logger to log the TimeSeries of the number of Person%s in an #InfectionState.
 */
 struct LogInfectionState : mio::LogAlways {
-    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorX<ScalarType>>;
+    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
+
     /** 
      * @brief Log the TimeSeries of the number of Person%s in an #InfectionState.
      * @param[in] sim The simulation of the abm.
@@ -174,15 +175,15 @@ struct LogInfectionState : mio::LogAlways {
      */
     static Type log(const mio::abm::Simulation<>& sim)
     {
+        Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(mio::abm::InfectionState::Count));
+        auto curr_time      = sim.get_time();
 
-        Eigen::VectorX<ScalarType> sum =
-            Eigen::VectorX<ScalarType>::Zero(Eigen::Index(mio::abm::InfectionState::Count));
-        auto curr_time = sim.get_time();
-        PRAGMA_OMP(for)
-        for (auto& location : sim.get_model().get_locations()) {
+        // Otherwise log accordingly
+        for (auto&& person : sim.get_model().get_persons()) {
             for (uint32_t inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
-                sum[inf_state] += sim.get_model().get_subpopulation(location.get_id(), curr_time,
-                                                                    mio::abm::InfectionState(inf_state));
+                if (person.get_infection_state(curr_time) == mio::abm::InfectionState(inf_state)) {
+                    sum[inf_state] += 1;
+                }
             }
         }
         return std::make_pair(curr_time, sum);
