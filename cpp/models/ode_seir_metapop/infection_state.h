@@ -20,7 +20,7 @@
 #ifndef SEIRMETAPOP_INFECTIONSTATE_H
 #define SEIRMETAPOP_INFECTIONSTATE_H
 
-#include "models/ode_seir/infection_state.h"
+#include "ode_seir/infection_state.h"
 
 namespace mio
 {

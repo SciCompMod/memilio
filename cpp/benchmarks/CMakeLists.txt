@@ -1,15 +1,17 @@
 set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable benchmark testing" FORCE)
-
-# set(BENCHMARK_ENABLE_EXCEPTIONS OFF CACHE BOOL "Disable benchmark exceptions" FORCE)
 set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "Don't install benchmark" FORCE)
 set(BENCHMARK_DOWNLOAD_DEPENDENCIES OFF CACHE BOOL "Don't download dependencies" FORCE)
 set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "Disable Google Test in benchmark" FORCE)
+# warnings in the benchmark library itself (e.g. -Wthread-safety-analysis with recent Clang) must not break our build
+set(BENCHMARK_ENABLE_WERROR OFF CACHE BOOL "Don't treat warnings in benchmark as errors" FORCE)
 
 message(STATUS "Downloading GoogleBenchmark library")
-include(FetchContent)
 FetchContent_Declare(benchmark
     GIT_REPOSITORY https://github.com/google/benchmark.git
-    GIT_TAG v1.6.1)
+    GIT_TAG v1.6.1
+    GIT_SHALLOW TRUE
+    SYSTEM
+    EXCLUDE_FROM_ALL)
 FetchContent_MakeAvailable(benchmark)
 
 set_target_properties(benchmark PROPERTIES FOLDER "Extern")
