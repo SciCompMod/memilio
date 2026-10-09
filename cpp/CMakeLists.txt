@@ -23,7 +23,14 @@ option(MEMILIO_USE_BUNDLED_BOOST "Download and use Boost instead of an installed
 option(MEMILIO_USE_BUNDLED_JSONCPP "Download and use JsonCpp instead of an installed version." ON)
 option(MEMILIO_SANITIZE_ADDRESS "Enable address sanitizer." OFF)
 option(MEMILIO_SANITIZE_UNDEFINED "Enable undefined behavior sanitizer." OFF)
-option(MEMILIO_BUILD_SHARED_LIBS "Build memilio as a shared library. If OFF, static libraries are built." ON)
+# shared libraries are not supported with MSVC, as the code has no symbol export declarations
+if(MSVC)
+    set(MEMILIO_BUILD_SHARED_LIBS_DEFAULT OFF)
+else()
+    set(MEMILIO_BUILD_SHARED_LIBS_DEFAULT ON)
+endif()
+option(MEMILIO_BUILD_SHARED_LIBS "Build memilio as a shared library. If OFF, static libraries are built. Default is OFF with MSVC."
+    ${MEMILIO_BUILD_SHARED_LIBS_DEFAULT})
 option(MEMILIO_ENABLE_MPI "Build memilio with MPI." OFF)
 option(MEMILIO_ENABLE_OPENMP "Enable Multithreading with OpenMP." OFF)
 option(MEMILIO_ENABLE_HDF5 "Build memilio with HDF5 IO support." ON)
@@ -65,9 +72,7 @@ endif()
 
 set(BUILD_SHARED_LIBS ${MEMILIO_BUILD_SHARED_LIBS})
 if(BUILD_SHARED_LIBS AND MSVC)
-    # Current workaround for windows to not build shared libs as we need to plugin export variables
-    # TODO: add exports for windows files
-    message(WARNING "Building shared libs is not supported on windows. Building static libs instead.")
+    message(WARNING "MEMILIO_BUILD_SHARED_LIBS=ON is not supported with MSVC. Building static libs instead.")
     set(BUILD_SHARED_LIBS OFF)
 endif()
 
