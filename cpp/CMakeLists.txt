@@ -250,6 +250,7 @@ if(MEMILIO_ENABLE_INSTALL)
         FILES
         "${CMAKE_CURRENT_BINARY_DIR}/memilio-config-version.cmake"
         "${CMAKE_CURRENT_BINARY_DIR}/memilio-config.cmake"
+        "${CMAKE_CURRENT_LIST_DIR}/cmake/FindLikwid.cmake"
         DESTINATION
         ${CMAKE_INSTALL_LIBDIR}/cmake/memilio
     )

@@ -23,6 +23,10 @@ endif()
 if(@MEMILIO_ENABLE_OPENMP@)
     find_dependency(OpenMP COMPONENTS CXX)
 endif()
+if(@MEMILIO_ENABLE_LIKWID_MARKER@)
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
+    find_dependency(Likwid)
+endif()
 
 include("${CMAKE_CURRENT_LIST_DIR}/memilio-targets.cmake")
 

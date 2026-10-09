@@ -161,6 +161,6 @@ if(MEMILIO_ENABLE_OPENMP)
 endif()
 
 if(MEMILIO_ENABLE_LIKWID_MARKER)
-    target_link_libraries(memilio PUBLIC likwid)
+    target_link_libraries(memilio PUBLIC likwid::likwid)
     target_compile_definitions(memilio PUBLIC LIKWID_PERFMON)
 endif()

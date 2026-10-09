@@ -205,6 +205,10 @@ if(MEMILIO_ENABLE_OPENMP)
     message(STATUS "Enabled OpenMP ${OpenMP_CXX_VERSION}")
 endif()
 
+if(MEMILIO_ENABLE_LIKWID_MARKER)
+    find_package(Likwid REQUIRED)
+endif()
+
 # Random123 library for random number generators
 message(STATUS "Downloading Random123 library")
 

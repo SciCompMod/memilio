@@ -8,7 +8,7 @@ set(BENCHMARK_ENABLE_WERROR OFF CACHE BOOL "Don't treat warnings in benchmark as
 message(STATUS "Downloading GoogleBenchmark library")
 FetchContent_Declare(benchmark
     GIT_REPOSITORY https://github.com/google/benchmark.git
-    GIT_TAG v1.6.1
+    GIT_TAG v1.9.5
     GIT_SHALLOW TRUE
     SYSTEM
     EXCLUDE_FROM_ALL)
