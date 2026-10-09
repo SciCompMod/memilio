@@ -1,4 +1,4 @@
-add_library(abm
+memilio_add_model(abm
     location.cpp
     location.h
     location_id.h
@@ -36,9 +36,3 @@ add_library(abm
     mask.cpp
     common_abm_loggers.h
 )
-target_link_libraries(abm PUBLIC memilio)
-target_include_directories(abm PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-)
-target_compile_options(abm PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
