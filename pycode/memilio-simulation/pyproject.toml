@@ -47,7 +47,7 @@ requires = [
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
-cmake.version = ">=3.13"
+cmake.version = ">=3.28"
 cmake.args = ["-DMEMILIO_BUILD_SHARED_LIBS:BOOL=ON"]
 wheel.packages = ["memilio"]
 wheel.install-dir = "memilio/simulation"

@@ -41,7 +41,7 @@ Team = "https://memilio.readthedocs.io/en/latest/team.html"
 memilio-modelgenerator = "memilio.modelgenerator.cli:main"
 
 [tool.scikit-build]
-cmake.version = ">=3.13"
+cmake.version = ">=3.28"
 wheel.packages = ["memilio"]
 build-dir = "../build/memilio-generation"
 

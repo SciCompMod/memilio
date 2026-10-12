@@ -11,7 +11,7 @@ copyright = '2020-2026 MEmilio'
 author = ''
 
 release = ''
-version = '1.3.0'
+version = '2.4.1'
 
 
 read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'

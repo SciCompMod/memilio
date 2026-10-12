@@ -125,23 +125,27 @@ add_library(memilio
     utils/back_inserter_second_element.h
 )
 
-target_include_directories(memilio PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> # includes configured by cmake
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+add_library(memilio::memilio ALIAS memilio)
+
+# headers are included as "memilio/...", configured headers are found in the binary dir; AD has its own target
+memilio_target_headers(memilio
+    BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/.." "${CMAKE_CURRENT_BINARY_DIR}"
+    EXCLUDE "/memilio/ad/include/"
+    FILES "${CMAKE_CURRENT_BINARY_DIR}/memilio/config_internal.h"
 )
 
 target_link_libraries(memilio PUBLIC spdlog::spdlog Eigen3::Eigen Boost::boost Boost::disable_autolinking Random123 AD::AD)
-target_compile_options(memilio
-    PRIVATE
-    ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS}
-    PUBLIC
-    $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
-)
+# parameter_distributions.h uses the ABM's random number generator, which is part of the abm model ("abm/...")
+# TODO: remove this dependency of the core library on a model
+target_include_directories(memilio PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/models>)
+
+# C++20 is required to use memilio, also for projects that link against it
+target_compile_features(memilio PUBLIC cxx_std_20)
+memilio_target_warnings(memilio)
+target_compile_options(memilio PUBLIC $<$<CXX_COMPILER_ID:MSVC>:/bigobj>)
 
 if(MEMILIO_HAS_HDF5)
-    target_link_libraries(memilio PUBLIC ${HDF5_C_LIBRARIES})
-    target_include_directories(memilio PUBLIC ${HDF5_INCLUDE_DIRS})
+    target_link_libraries(memilio PUBLIC HDF5::HDF5)
 endif()
 
 if(MEMILIO_HAS_JSONCPP)
@@ -157,6 +161,6 @@ if(MEMILIO_ENABLE_OPENMP)
 endif()
 
 if(MEMILIO_ENABLE_LIKWID_MARKER)
-    target_link_libraries(memilio PUBLIC likwid)
-    target_compile_definitions(memilio PUBLIC "-DLIKWID_PERFMON")
+    target_link_libraries(memilio PUBLIC likwid::likwid)
+    target_compile_definitions(memilio PUBLIC LIKWID_PERFMON)
 endif()
