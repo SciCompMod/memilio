@@ -76,7 +76,7 @@ mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list
                 mio::UniformIntDistribution<int>::get_instance()(prng, 1, int(mio::abm::InfectionState::Count) - 1));
             auto infection = mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                  model.parameters, mio::abm::TimePoint(0), state);
-            person.add_new_infection(std::move(infection));
+            person.add_new_infection(std::move(infection), prng, mio::abm::TimePoint(0), model.parameters);
         }
 
         //equal chance of (moderate) mask refusal and (moderate) mask eagerness

@@ -135,7 +135,8 @@ mio::abm::Model make_model(const mio::RandomNumberGenerator& rng)
         auto person_rng = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
             person.add_new_infection(mio::abm::Infection(person_rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
-                                                         model.parameters, start_date, infection_state));
+                                                         model.parameters, start_date, infection_state),
+                                     person_rng, start_date, model.parameters);
         }
     }
 

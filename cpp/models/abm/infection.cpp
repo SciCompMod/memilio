@@ -144,6 +144,26 @@ InfectionState Infection::get_infection_state(TimePoint t) const
     return std::prev(it)->second;
 }
 
+std::pair<TimePoint, InfectionState> Infection::get_highest_infection_state() const
+{
+    if (m_infection_course.back().second == InfectionState::Dead) {
+        return m_infection_course.back();
+    }
+    else {
+        return m_infection_course[m_infection_course.size() - 2];
+    }
+}
+
+TimePoint Infection::get_infection_state_start_date(InfectionState state) const
+{
+    for (const auto& [time_point, inf_state] : m_infection_course) {
+        if (inf_state == state) {
+            return time_point;
+        }
+    }
+    return TimePoint(-1); // invalid TimePoint
+}
+
 void Infection::set_detected()
 {
     m_detected = true;

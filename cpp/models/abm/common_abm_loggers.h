@@ -178,11 +178,34 @@ struct LogInfectionState : mio::LogAlways {
         Eigen::VectorX<ScalarType> sum =
             Eigen::VectorX<ScalarType>::Zero(Eigen::Index(mio::abm::InfectionState::Count));
         auto curr_time = sim.get_time();
-        PRAGMA_OMP(for)
         for (auto& location : sim.get_model().get_locations()) {
             for (uint32_t inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
                 sum[inf_state] += sim.get_model().get_subpopulation(location.get_id(), curr_time,
                                                                     mio::abm::InfectionState(inf_state));
+            }
+        }
+        return std::make_pair(curr_time, sum);
+    }
+};
+
+/**
+ * @brief Looger to log the TimeSeries of the number of Person%s that have an active PAIS.
+ */
+struct LogPAIS : mio::LogAlways {
+    using Type = std::pair<mio::abm::TimePoint, ScalarType>;
+    /** 
+     * @brief Log the TimeSeries of the number of Person%s that have an active PAIS.
+     * @param[in] sim The simulation of the abm.
+     * @return A pair of the TimePoint and the TimeSeries of the number of Person%s that have an active PAIS.
+     */
+    static Type log(const mio::abm::Simulation<>& sim)
+    {
+        ScalarType sum = 0;
+        auto curr_time = sim.get_time();
+        for (auto& person : sim.get_model().get_persons()) {
+            auto person_id = person.get_id();
+            if (sim.get_model().get_person(person_id).has_active_pais(curr_time)) {
+                sum++;
             }
         }
         return std::make_pair(curr_time, sum);
