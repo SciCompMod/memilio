@@ -29,6 +29,8 @@ void bind_parameter_distribution(pybind11::module_& m, std::string const& name);
 
 void bind_parameter_distribution_normal(pybind11::module_& m, std::string const& name);
 
+void bind_parameter_distribution_lognormal(pybind11::module_& m, std::string const& name);
+
 void bind_parameter_distribution_uniform(pybind11::module_& m, std::string const& name);
 
 } // namespace pymio
