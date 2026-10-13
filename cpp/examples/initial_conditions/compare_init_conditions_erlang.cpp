@@ -58,6 +58,7 @@ ScalarType S0               = total_population - I0 - R0;
 
 bool kahan                = false;
 bool more_precise_s_deriv = false;
+bool forward_fd           = true;
 } // namespace params
 
 mio::IOResult<mio::TimeSeries<ScalarType>> simulate_lct(ScalarType ode_exponent, ScalarType t0_ode, ScalarType tmax,
@@ -256,7 +257,7 @@ simulate_ide(ScalarType ide_exponent, size_t gregory_order, size_t finite_differ
 
     // Carry out simulation.
     mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt);
-    sim.advance(tmax, kahan, more_precise_s_deriv);
+    sim.advance(tmax, kahan, more_precise_s_deriv, forward_fd);
     mio::TimeSeries<ScalarType> compartments = sim.get_result();
     mio::TimeSeries<ScalarType> flows        = sim.get_flows();
 
@@ -298,11 +299,11 @@ int main()
     using namespace params;
 
     ScalarType t0_ode = 0.;
-    ScalarType t0_ide = 50.;
+    ScalarType t0_ide = 0.;
 
     ScalarType t_init_memoryless = t0_ide;
-    ScalarType t_init_long_init  = t0_ide - 40.;
-    ScalarType t_init_short_init = t0_ide - 15.;
+    ScalarType t_init_long_init  = t0_ide;
+    ScalarType t_init_short_init = t0_ide;
 
     ScalarType tmax = 130.;
 
@@ -311,7 +312,7 @@ int main()
 
     ScalarType dt_exponent = 2.; // Used for both ODE and IDE simulations
 
-    std::string save_dir = fmt::format("../../simulation_results/2026-09-15/"
+    std::string save_dir = fmt::format("../../simulation_results/2026-10-09/"
                                        "compare_different_inits_erlang_numsubcomps={}_contfreq={}_kahan={}_buffer={}/"
                                        "nonconst_contacts_tinitgroundtruth={}_tinitshort={}_t0ide={}_tmax={}/",
                                        num_subcomps_infected, cont_freq, kahan, more_precise_s_deriv, t0_ode,

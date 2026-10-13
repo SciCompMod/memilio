@@ -52,7 +52,7 @@ ScalarType total_population = S0 + I0 + R0;
 
 bool kahan                = false;
 bool more_precise_s_deriv = false;
-bool forward_fd           = false;
+bool forward_fd           = true;
 } // namespace params
 
 mio::UncertainContactMatrix<ScalarType> scale_contact_matrix(ScalarType damping, ScalarType damping_time)
@@ -277,14 +277,14 @@ int main()
     for (size_t finite_difference_order : fd_orders) {
 
         // size_t fd_order_contacts = finite_difference_order;
-        size_t fd_order_contacts = 1000;
+        size_t fd_order_contacts = 1000; // corresponds to analytical derivative of contact rate
 
-        std::string save_dir =
-            fmt::format("./simulation_results/2026-09-15/"
-                        "phi_deriv_analytical_smoothstepc{}_fd_order={}_smootherwindow={}_t0ode={}_kahan={}_buffer={}/"
-                        "nonconst_contacts_t0ide={}_tmax={}_dampingtime={}_damping={}/",
-                        smoothstep_order, finite_difference_order, smoother_window, t0_ode, kahan, more_precise_s_deriv,
-                        t0_ide, tmax, damping_time, damping);
+        std::string save_dir = fmt::format(
+            "./simulation_results/2026-10-09/"
+            "phi_deriv_analytical_smoothstepc{}_fd_order={}_smootherwindow={}_t0ode={}_kahan={}_buffer={}_forwardfd={}/"
+            "nonconst_contacts_t0ide={}_tmax={}_dampingtime={}_damping={}/",
+            smoothstep_order, finite_difference_order, smoother_window, t0_ode, kahan, more_precise_s_deriv, forward_fd,
+            t0_ide, tmax, damping_time, damping);
 
         // Make folder if not existent yet.
         std::filesystem::path dir(save_dir);
