@@ -942,13 +942,43 @@ void ModelMessinaExtendedDetailedInit::compute_S_deriv(ScalarType div_dt, size_t
 
 void ModelMessinaExtendedDetailedInit::compute_S_deriv_forward(ScalarType div_dt, size_t time_point_index)
 {
-    flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
-        -(-25 * populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] +
-          48 * populations[time_point_index + 1][(Eigen::Index)InfectionState::Susceptible] -
-          36 * populations[time_point_index + 2][(Eigen::Index)InfectionState::Susceptible] +
-          16 * populations[time_point_index + 3][(Eigen::Index)InfectionState::Susceptible] -
-          3 * populations[time_point_index + 4][(Eigen::Index)InfectionState::Susceptible]) *
-        (div_dt / 12.);
+    // Linear forward finite difference scheme, flow from S to I is then given by -S'.
+    if (m_finite_difference_order == 1) {
+        flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+            -(-1 * populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] +
+              1 * populations[time_point_index + 1][(Eigen::Index)InfectionState::Susceptible]) *
+            div_dt;
+    }
+
+    // Compute S' with forward finite difference scheme of second order, flow from S to I is then given by -S'.
+    if (m_finite_difference_order == 2) {
+        flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+            -(-3 * populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] +
+              4 * populations[time_point_index + 1][(Eigen::Index)InfectionState::Susceptible] -
+              1 * populations[time_point_index + 2][(Eigen::Index)InfectionState::Susceptible]) *
+            (div_dt / 2.);
+    }
+
+    // Compute S' with forward finite difference scheme of third order, flow from S to I is then given by -S'.
+    if (m_finite_difference_order == 3) {
+        flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+            -(-11 * populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] +
+              18 * populations[time_point_index + 1][(Eigen::Index)InfectionState::Susceptible] -
+              9 * populations[time_point_index + 2][(Eigen::Index)InfectionState::Susceptible] +
+              2 * populations[time_point_index + 3][(Eigen::Index)InfectionState::Susceptible]) *
+            (div_dt / 6.);
+    }
+
+    // Compute S' with forward finite difference scheme of fourth order, flow from S to I is then given by -S'.
+    if (m_finite_difference_order == 4) {
+        flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+            -(-25 * populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] +
+              48 * populations[time_point_index + 1][(Eigen::Index)InfectionState::Susceptible] -
+              36 * populations[time_point_index + 2][(Eigen::Index)InfectionState::Susceptible] +
+              16 * populations[time_point_index + 3][(Eigen::Index)InfectionState::Susceptible] -
+              3 * populations[time_point_index + 4][(Eigen::Index)InfectionState::Susceptible]) *
+            (div_dt / 12.);
+    }
 }
 
 void ModelMessinaExtendedDetailedInit::compute_S_deriv(ScalarType div_dt)

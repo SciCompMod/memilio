@@ -56,6 +56,13 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool kahan,
 
     ScalarType t_pop = m_model->populations.get_last_time();
 
+    // Function for printing time.
+    ScalarType t0_ide  = t_pop;
+    auto is_print_time = [t0_ide, tmax](ScalarType t) {
+        return floating_point_equal(std::remainder(10 * (t - t0_ide), tmax - t0_ide), 0., 1e-7);
+    };
+    std::cout << "Time pop: " << t0_ide << std::endl;
+
     while (m_model->populations.get_last_time() < tmax - 1e-10) {
 
         ScalarType increment  = m_dt - m_summation_error_pop;
@@ -68,7 +75,7 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool kahan,
         m_model->populations.add_time_point(t_pop, Vec::Constant((size_t)InfectionState::Count, 0.));
 
         // Print time.
-        if (floating_point_equal(std::remainder(10 * m_model->populations.get_last_time(), tmax), 0., 1e-7)) {
+        if (is_print_time(m_model->populations.get_last_time())) {
             std::cout << "Time pop: " << m_model->populations.get_last_time() << std::endl;
         }
 
@@ -103,7 +110,7 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool kahan,
 
             if (S_deriv_forward) {
 
-                if (i <= 4) {
+                if (i < m_model->get_finite_difference_order()) {
                     m_model->compute_S_deriv_forward(m_div_dt, i);
                 }
                 else {
@@ -150,6 +157,7 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool kahan,
 
     // Compute S' as well as I and R.
     ScalarType t_flows = m_model->flows.get_last_time();
+    std::cout << "Time flows: " << t_flows << std::endl;
     while (m_model->flows.get_last_time() < tmax - 1e-10) {
 
         ScalarType increment    = m_dt - m_summation_error_flows;
@@ -160,14 +168,15 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool kahan,
 
         m_model->flows.add_time_point(t_flows, Vec::Constant((size_t)InfectionTransition::Count, 0.));
 
-        if (floating_point_equal(std::remainder(10 * m_model->flows.get_last_time(), tmax), 0., 1e-7)) {
+        if (is_print_time(m_model->flows.get_last_time())) {
             std::cout << "Time flows: " << m_model->flows.get_last_time() << std::endl;
         }
 
-        // Compute S'. If S_deriv_forward, use the forward FD scheme for the first indices 0,...,4 also if they are
-        // not part of the initial time points (e.g. if t_init = t0), since the backward scheme has reduced order there.
+        // Compute S'. If S_deriv_forward, use the forward FD scheme for the first indices 0,...,fd_order-1 also if
+        // they are not part of the initial time points (e.g. if t_init = t0), since the backward scheme has reduced
+        // order there.
         size_t flows_index = m_model->flows.get_num_time_points() - 1;
-        if (S_deriv_forward && flows_index <= 4) {
+        if (S_deriv_forward && flows_index < m_model->get_finite_difference_order()) {
             m_model->compute_S_deriv_forward(m_div_dt, flows_index);
         }
         else {
