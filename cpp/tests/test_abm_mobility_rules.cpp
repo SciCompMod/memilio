@@ -495,8 +495,9 @@ TEST_F(TestMobilityRules, hospital)
     EXPECT_EQ(mio::abm::go_to_hospital(rng_inf, p_inf, t, dt, mio::abm::Parameters(num_age_groups)),
               mio::abm::LocationType::Hospital);
 
+    // The infection has to start at t, otherwise it may already have progressed to InfectedSevere by then.
     auto p_car =
-        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms);
+        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms, t);
     auto rng_car = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_car);
     // Ensure person has infection symptoms still stay at home
     EXPECT_EQ(mio::abm::go_to_hospital(rng_car, p_car, t, dt, mio::abm::Parameters(num_age_groups)),
