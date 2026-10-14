@@ -34,8 +34,9 @@ enum class LocationType : std::uint32_t
 {
     Home = 0,
     School,
-    Work,
-    SocialEvent, // TODO: differentiate different kinds
+    Office,
+    Work, // other workplaces than offices, e.g. factories
+    Recreation, // TODO: differentiate different kinds
     BasicsShop, // groceries and other necessities
     Hospital,
     ICU,
