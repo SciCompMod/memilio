@@ -180,7 +180,8 @@ TEST(TestSimulation, logInfectionPerLocationTypePerAgeGroup)
     auto model    = mio::abm::Model(num_age_groups);
     auto home     = model.add_location(mio::abm::LocationType::Home);
     auto work     = model.add_location(mio::abm::LocationType::Work);
-    const auto t0 = mio::abm::TimePoint(0);
+    // the Simulation does not have to start at 0
+    const auto t0 = mio::abm::TimePoint(0) + mio::abm::days(10);
     // the Persons only move when we tell them to
     model.use_mobility_rules(false);
 
@@ -214,12 +215,19 @@ TEST(TestSimulation, logInfectionPerLocationTypePerAgeGroup)
     sim.advance(t0 + mio::abm::hours(1));
     sim.get_model().change_location(moves_home, home);
     history.log(sim);
-    // a further time step without new Infections
+    // a further time step without new Infections, but a Person that is added to the Model already Exposed. It has no
+    // previous log, so it is not counted as a new Infection, but tracked from now on.
     sim.advance(t0 + mio::abm::hours(2));
+    auto late_arrival = add_test_person(sim.get_model(), home, age_group_15_to_34, mio::abm::InfectionState::Exposed,
+                                        t0 + mio::abm::hours(2));
+    sim.get_model().assign_location(late_arrival, home);
+    sim.get_model().assign_location(late_arrival, work);
+    history.log(sim);
+    sim.advance(t0 + mio::abm::hours(3));
     history.log(sim);
 
     const auto& detailed = std::get<0>(history.get_log());
-    ASSERT_EQ(detailed.get_num_time_points(), 3);
+    ASSERT_EQ(detailed.get_num_time_points(), 4);
     EXPECT_EQ(detailed.get_num_elements(), Eigen::Index((size_t)mio::abm::LocationType::Count * num_age_groups));
     const auto idx = [](mio::AgeGroup age, mio::abm::LocationType type) {
         return Eigen::Index((size_t)mio::abm::LocationType::Count * (size_t)age.get() + (size_t)type);
@@ -232,6 +240,7 @@ TEST(TestSimulation, logInfectionPerLocationTypePerAgeGroup)
     EXPECT_EQ(detailed.get_value(1)[idx(age_group_35_to_59, mio::abm::LocationType::Home)], 1.0);
     EXPECT_EQ(detailed.get_value(1)[idx(age_group_60_to_79, mio::abm::LocationType::Work)], 1.0);
     EXPECT_EQ(detailed.get_value(2).sum(), 0.0);
+    EXPECT_EQ(detailed.get_value(3).sum(), 0.0);
 }
 
 TEST(TestSimulation, logInfectionStatePerAgeGroup)

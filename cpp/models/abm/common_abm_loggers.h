@@ -224,18 +224,20 @@ struct LogInfectionStatePerAgeGroup : mio::LogAlways {
 
 /**
 * @brief Logger to log the TimeSeries of new #Infection%s per LocationType and AgeGroup.
-* Unlike the other loggers, this one keeps a state: the time and the LocationType of each Person at its previous log.
-* Hence, it has to log after every time step, which is the case when used in a History passed to Simulation::advance.
+* Unlike the other loggers, this one keeps a state: the #InfectionState and the LocationType of each Person at its
+* previous log. Hence, it has to log after every time step, which is the case when used in a History passed to
+* Simulation::advance. As History stores its own Logger instances, use a new History for every Simulation.
 */
 struct LogInfectionPerLocationTypePerAgeGroup : mio::LogAlways {
     using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
     /**
      * @brief Log the TimeSeries of new #Infection%s per LocationType and AgeGroup.
-     * A Person is counted if it became #InfectionState::Exposed since the previous log. A Person is infected during the
-     * interaction at the beginning of a time step and may move to another Location afterwards. Hence, it is attributed
-     * to the LocationType it was at during the previous log, not to its current one.
-     * At the first log there is no previous log to compare against, so no Person is counted. This avoids miscounting
-     * the initially infected Person%s of the Model as new #Infection%s.
+     * A Person is counted if it was not #InfectionState::Exposed at the previous log, but is now. A Person is infected
+     * during the interaction at the beginning of a time step and may move to another Location afterwards. Hence, it is
+     * attributed to the LocationType it was at during the previous log, not to its current one.
+     * A Person without a previous log is not counted, but only remembered for the next log. This is the case for all
+     * Person%s at the first log, which avoids miscounting the initially infected Person%s of the Model as new
+     * #Infection%s, and for Person%s that were added to the Model since the previous log.
      * @param[in] sim The simulation of the abm.
      * @return A pair of the TimePoint and a vector counting the newly exposed Person%s per AgeGroup and LocationType,
      * indexed by `age_group * LocationType::Count + location_type`.
@@ -244,32 +246,38 @@ struct LogInfectionPerLocationTypePerAgeGroup : mio::LogAlways {
     {
         Eigen::VectorXd sum = Eigen::VectorXd::Zero(
             Eigen::Index((size_t)mio::abm::LocationType::Count * sim.get_model().parameters.get_num_groups()));
-        const auto curr_time     = sim.get_time();
-        const auto persons       = sim.get_model().get_persons();
-        const size_t num_persons = persons.size();
-        // Only Persons that were already present at the previous log can be compared against it.
-        const size_t num_previous = m_prev_location_types.size();
-        m_prev_location_types.resize(num_persons);
+        const auto curr_time = sim.get_time();
+        const auto persons   = sim.get_model().get_persons();
+        // Entries beyond the previous number of Persons are new and have no previous log.
+        const size_t num_previous = m_previous.size();
+        m_previous.resize(persons.size());
 
         size_t i = 0;
         for (const Person& p : persons) {
-            if (i < num_previous && (p.get_infection_state(m_prev_time) != mio::abm::InfectionState::Exposed) &&
-                (p.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed)) {
+            const auto curr_state = p.get_infection_state(curr_time);
+            // The entry only belongs to this Person if the Persons were not reordered since the previous log.
+            const bool has_previous_log = i < num_previous && m_previous[i].id == p.get_id();
+            if (has_previous_log && m_previous[i].infection_state != mio::abm::InfectionState::Exposed &&
+                curr_state == mio::abm::InfectionState::Exposed) {
                 auto index = (((size_t)(mio::abm::LocationType::Count)) * ((uint32_t)p.get_age().get())) +
-                             ((uint32_t)m_prev_location_types[i]);
+                             ((uint32_t)m_previous[i].location_type);
                 sum[index] += 1;
             }
             // Remember where the Person is now, which is where the interaction of the next time step happens.
-            m_prev_location_types[i] = p.get_location_type();
+            m_previous[i] = {p.get_id(), p.get_location_type(), curr_state};
             ++i;
         }
-        m_prev_time = curr_time;
         return std::make_pair(curr_time, sum);
     }
 
 private:
-    mio::abm::TimePoint m_prev_time{0}; ///< Time of the previous log.
-    std::vector<mio::abm::LocationType> m_prev_location_types; ///< LocationType of each Person at the previous log.
+    /// @brief State of a Person at the previous log.
+    struct PreviousLog {
+        PersonId id;
+        mio::abm::LocationType location_type;
+        mio::abm::InfectionState infection_state;
+    };
+    std::vector<PreviousLog> m_previous; ///< State of each Person at the previous log, in the order of the Persons.
 };
 
 /**
