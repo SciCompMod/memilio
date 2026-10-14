@@ -110,8 +110,8 @@ def run_ode_secir_simulation(vars):
     total_infections = populations[0] - \
         float(result.get_last_value()[int(State.Susceptible)])
 
-    return [total_infections]
-    # return [deaths]
+    # return [total_infections]
+    return [deaths]
 
 
 def main():
@@ -155,8 +155,8 @@ def main():
         len(variable_list), 1, run_ode_secir_simulation
     )
     Y = model(X)
-    Y.setDescription(["Total infections"])
-    # Y.setDescription(["Deaths"])
+    # Y.setDescription(["Total infections"])
+    Y.setDescription(["Deaths"])
 
     sobol = ot.RankSobolSensitivityAlgorithm(X, Y)
     sobol.setBootstrapSize(200)
@@ -184,12 +184,13 @@ def main():
     view = otv.View(graph, figure_kw={"figsize": (11, 5)})
 
     ax = view.getAxes()[0]
-    ax.set_title("Total infections after 30 days", fontsize=24)
-    # ax.set_title("Deaths after 30 days", fontsize=24)
-    ax.tick_params(axis="x", labelsize=12)
-    ax.tick_params(axis="y", labelsize=12)
-    ax.set_ylabel("Index value", fontsize=16)
-    ax.set_xlabel("Input")
+    # ax.set_title("Total infections after 30 days", fontsize=24)
+    ax.set_title("Deaths after 30 days", fontsize=24)
+    ax.legend(fontsize=20)
+    ax.tick_params(axis="x", labelsize=20)
+    ax.tick_params(axis="y", labelsize=20)
+    ax.set_ylabel("Index value", fontsize=20)
+    ax.set_xlabel("Input", fontsize=20)
 
     # Remove parameter names displayed inside the plot
     for txt in ax.texts:
