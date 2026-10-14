@@ -51,6 +51,15 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffp-model=strict") # to avoid FP differences in CI
 endif()
 
+# support for Emscripten/WASM
+set(patch_random123_wasm)
+if(EMSCRIPTEN)
+    message(NOTICE "Detected Emscripten toolchain")
+    set(patch_random123_wasm git apply ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/random123_wasm.patch)
+    set(CMAKE_TOOLCHAIN_FILE $ENV{EMSDK_HOME}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake)
+    set(CMAKE_EXECUTABLE_SUFFIX ".html")
+endif()
+
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -167,6 +176,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RELEASE")
     elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
             "-Wno-stringop-overread;"
+            "-Wno-c2y-extensions;" # use c2y extensions, as they have been supported for a long time
         )
     endif()
 endif()
