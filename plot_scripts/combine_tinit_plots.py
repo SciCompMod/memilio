@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 # tinit value of the "detailed" ODE-based initialization used as reference;
 # \widetilde{T} = tinit - T is the init window length shown in the label of
 # each tinit subfolder.
-T = 100
+T = 50
 
 FILENAME = "convergence_all_compartments_max_rel.png"
 
@@ -156,25 +156,25 @@ def main():
     # Vertical space between rows. Negative values make the plots overlap.
     hspace = -0.05
 
-    # Directory containing the tinit=<value> subfolders.
-    base_dir = "plots/2026-09-15/doubled_dtode=1e-6_t0ode=0_timeinf=4_contfreq=0.365_kahan=false_buffer=false/detailed_init_exponential_t0ide=100_tmax=300_finite_diff=4"
-    # tinit values to combine.
-    tinit_values = [60, 80]
-    # Path the combined figure is saved to. Set to None to default to base_dir/combined_<filename>.
-    output_path = None
+    # # Directory containing the tinit=<value> subfolders.
+    # base_dir = "plots/2026-09-24/forward_ta_dtode=1e-6_t0ode=0_timeinf=2_contfreq=0.73_kahan=false_buffer=false_forwardfd=true/detailed_init_exponential_t0ide=50_tmax=150_finite_diff=4"
+    # # tinit values to combine.
+    # tinit_values = [40, 50]
+    # # Path the combined figure is saved to. Set to None to default to base_dir/combined_<filename>.
+    # output_path = None
 
-    combine_tinit_plots(base_dir, tinit_values,
-                        output_path=output_path, filename=filename, hspace=hspace)
+    # combine_tinit_plots(base_dir, tinit_values,
+    #                     output_path=output_path, filename=filename, hspace=hspace)
 
-    # # Directory containing the FD order subfolders.
-    # fd_base_dir = "plots/2026-09-15/fd_orders_dtode=1e-6_t0ode=0_timeinf=2_contfreq=0.73_kahan=false_buffer=false"
-    # # FD orders to combine.
-    # fd_orders = [1, 2, 3]
-    # # Template mapping each FD order to its subfolder, relative to fd_base_dir.
-    # subfolder_template = "detailed_init_exponential_t0ide=50_tmax=150_finite_diff={fd_order}/tinit=10"
+    # Directory containing the FD order subfolders.
+    fd_base_dir = "plots/2026-10-11/dtode=1e-6_t0ode=0_timeinf=2_contfreq=0.73_kahan=false_buffer=false_forwardfd=true"
+    # FD orders to combine.
+    fd_orders = [1, 2, 3]
+    # Template mapping each FD order to its subfolder, relative to fd_base_dir.
+    subfolder_template = "detailed_init_exponential_t0ide=50_tmax=150_finite_diff={fd_order}/tinit=10"
 
-    # combine_fd_order_plots(fd_base_dir, fd_orders, filename=filename, hspace=hspace,
-    #                        subfolder_template=subfolder_template)
+    combine_fd_order_plots(fd_base_dir, fd_orders, filename=filename, hspace=hspace,
+                           subfolder_template=subfolder_template)
 
 
 if __name__ == "__main__":

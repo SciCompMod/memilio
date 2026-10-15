@@ -249,7 +249,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarTy
             mio::TimeSeries<ScalarType> compartments = sim.get_result();
             mio::TimeSeries<ScalarType> flows        = sim.get_flows();
 
-            // auto result = compartments.export_csv(fmt::format("{}/ide_result.csv", save_dir));
+            auto result = compartments.export_csv(fmt::format("{}/ide_result.csv", save_dir));
 
             auto save_result_status_ide =
                 mio::save_result({compartments}, {0}, num_agegroups,
@@ -283,9 +283,9 @@ int main()
     std::vector<ScalarType> time_infected_values = {2.};
 
     ScalarType t0_ode                    = 0.;
-    ScalarType t0_ide                    = 50.;
-    std::vector<ScalarType> init_windows = {0., 10.};
-    std::vector<ScalarType> tmax_values  = {t0_ide + 100.};
+    ScalarType t0_ide                    = 48.;
+    std::vector<ScalarType> init_windows = {0.};
+    std::vector<ScalarType> tmax_values  = {t0_ide + 2.};
 
     bool kahan                = false;
     bool more_precise_s_deriv = false;
@@ -293,8 +293,8 @@ int main()
 
     std::vector<size_t> finite_difference_orders = {4};
 
-    std::vector<ScalarType> ide_exponents = {3.};
-    std::vector<size_t> gregory_orders    = {1, 2, 3};
+    std::vector<ScalarType> ide_exponents = {6.};
+    std::vector<size_t> gregory_orders    = {3};
 
     std::vector<std::vector<ScalarType>> timeinf_tmax_values;
 
@@ -316,8 +316,8 @@ int main()
             std::cout << "FD order: " << finite_difference_order << std::endl;
 
             std::string save_dir =
-                fmt::format("./simulation_results/2026-09-24/"
-                            "forward_ta_dtode=1e-{}_t0ode={}_timeinf={}_contfreq={}_kahan={}_buffer={}_forwardfd={}/"
+                fmt::format("./simulation_results/2026-10-13/"
+                            "Init_values_dtode=1e-{}_t0ode={}_timeinf={}_contfreq={}_kahan={}_buffer={}_forwardfd={}/"
                             "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
                             ode_exponent, t0_ode, time_infected, cont_freq, kahan, more_precise_s_deriv, forward_fd,
                             t0_ide, tmax, finite_difference_order);

@@ -19,12 +19,13 @@
 #############################################################################
 import h5py
 import os
+import re
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 
 blue = "#0072B2"
-red = "#9F1C0B99"
+red = "#9F1C0B"
 # red ="#B51C08"
 green = "#009E73"
 # green = "#34993F"
@@ -65,6 +66,36 @@ def get_t0_from_dir_name(dir_name):
     return t0
 
 
+# Name of the t0 entry in the directory name for each model type.
+T0_DIR_KEYS = {"simple": "t0memoryless",
+               "detailed_short": "t0short", "detailed": "t0long"}
+
+
+def get_t0s_from_dir_name(dir_name):
+    """
+    Returns a dict with the IDE start time t0 for every model type in FILE_KEYS.
+
+    If the directory name contains separate start times (t0memoryless, t0short, t0long), these are used. Otherwise,
+    the same t0 is used for all model types.
+    """
+    t0s = {}
+    for key, dir_key in T0_DIR_KEYS.items():
+        match = re.search(dir_key + r"=([0-9.eE+-]+?)(?:_|/|$)", dir_name)
+        if match is None:
+            t0 = get_t0_from_dir_name(dir_name)
+            return {k: t0 for k in FILE_KEYS}
+        t0s[key] = float(match.group(1))
+    return t0s
+
+
+def get_time_shift(t0s):
+    """
+    Returns the shift applied to the time axis. The time axis is shifted such that t0 of the memoryless
+    initialization is at 0.
+    """
+    return t0s["simple"]
+
+
 def load_h5_total(filepath):
     """Load the single dataset's 'Total' array and 'Time' array from an h5 file."""
     with h5py.File(str(filepath) + ".h5", "r") as h5file:
@@ -88,14 +119,11 @@ def _style_axis(ax, title):
     ax.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
 
 
-def _add_shared_legend(fig, used_keys, include_t0=True):
-
-    styles = [STYLE[k] for k in used_keys]
-    handles = [plt.Line2D([0], [0], **style)
-               for style in styles]
-    if include_t0:
-        handles.append(plt.Line2D(
-            [0], [0], color=T0_COLOR, alpha=0.5, label=T0_LABEL))
+def _add_shared_legend(fig, used_keys, labels=None):
+    """Adds a legend for used_keys. Entries in labels (dict key -> label) replace the default labels from STYLE."""
+    labels = labels or {}
+    handles = [plt.Line2D([0], [0], **{**STYLE[k], "label": labels.get(k, STYLE[k]["label"])})
+               for k in used_keys]
 
     fig.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.5, -0.08),
                ncol=len(handles), fancybox=False, shadow=False, frameon=False)
@@ -131,19 +159,27 @@ def plot_compartments(files, fileending, save_dir="", zoom=False):
     all_dates = []
     all_totals = []
 
-    t0 = get_t0_from_dir_name(files[0])
+    t0s = get_t0s_from_dir_name(files[0])
+    shift = get_time_shift(t0s)
+    legend_labels = {}
 
-    groundtruth_diff = 0
+    groundtruth_dates = None
+    groundtruth_total = None
 
     for key, filepath in zip(FILE_KEYS_GROUNDTRUTH, files):
         dates, total = load_h5_total(filepath)
-        dates = dates - t0
+        dates = dates - shift
+        if key == "groundtruth":
+            groundtruth_dates = dates
+            groundtruth_total = total
         all_dates.append(dates)
         all_totals.append(total)
         # if key == "groundtruth":
         #     # groundtruth_total = total
         #     continue
         plotted_keys.append(key)
+        if key != "groundtruth":
+            legend_labels[key] = rf"$\widetilde{{T}}={t0s[key] - shift:g}$"
         style = STYLE[key]
         for i in range(num_plots):
             _style_axis(axs[i], compartment_names[i])
@@ -153,27 +189,30 @@ def plot_compartments(files, fileending, save_dir="", zoom=False):
                 plot_max[i] = np.max(total[:, i])
             axs[i].plot(dates, total[:, i], **style)
 
-            if zoom and i == 0:
+            if zoom and i == 0 and key != "groundtruth":
+                # Compare decrease of Susceptibles in [t0, t0 + 7.5] with the ground truth.
+                t_start = t0s[key] - shift
+                t_end = t_start + 7.5
+
+                def susceptible_diff(d, tot):
+                    start_index = np.where(np.isclose(d, t_start))[0][0]
+                    end_index = np.where(np.isclose(d, t_end))[0][0]
+                    return tot[start_index, i] - tot[end_index, i]
+
+                diff = susceptible_diff(dates, total)
+                groundtruth_diff = susceptible_diff(
+                    groundtruth_dates, groundtruth_total)
                 print(key)
-                t0_index = np.where(np.isclose(dates, 0))[0][0]
-                print("Num Susceptibles at 0:", total[t0_index, i])
-                t_7_5_index = np.where(np.isclose(dates, 7.5))[0][0]
-                print("Num Susceptibles at 7.5:", total[t_7_5_index, i])
-                diff = total[t0_index, i] - total[t_7_5_index, i]
-                print("Diff:", diff)
-                if key == "groundtruth":
-                    groundtruth_diff = diff
+                print(f"Diff of Susceptibles in [{t_start}, {t_end}]:", diff)
+                print("Ground truth diff:", groundtruth_diff)
                 print("Relative diff compared to ground truth:",
                       diff/groundtruth_diff)
                 print()
 
-    for i in range(num_plots):
-        axs[i].vlines(0, plot_min[i], plot_max[i],
-                      color=T0_COLOR, alpha=0.5)
-
     if zoom:
-        zoom_min = 0. - 7.5
-        zoom_max = 0. + 7.5
+        # Center zoom around t0 of the memoryless initialization.
+        zoom_min = t0s["simple"] - shift - 7.5
+        zoom_max = t0s["simple"] - shift + 7.5
         for i in range(num_plots):
             axs[i].set_xlim(zoom_min, zoom_max)
 
@@ -191,7 +230,7 @@ def plot_compartments(files, fileending, save_dir="", zoom=False):
             axs[i].set_ylim(zoom_plot_min - y_padding,
                             zoom_plot_max + y_padding)
 
-    _add_shared_legend(fig, plotted_keys)
+    _add_shared_legend(fig, plotted_keys, labels=legend_labels)
 
     fig.supxlabel("Time [days]", y=0.04)
     fig.supylabel("Number of individuals", y=0.54)
@@ -262,42 +301,42 @@ def plot_flow_S_to_I(files, fileending, save_dir=""):
 
 def plot_infectionage_distribution(files, fileending, save_dir=""):
     """
-    Plots the infected-per-infection-age distribution, comparing
-    groundtruth/detailed/simple.
+    Plots the infected-per-infection-age distribution, comparing detailed/detailed_short/simple.
 
-    @param[in] files List of three files [groundtruth, detailed, simple].
+    The distributions of all models are saved at the start time of the memoryless initialization, see
+    compare_init_conditions_*.cpp.
+
+    @param[in] files List of three files [detailed, detailed_short, simple].
     @param[in] fileending Suffix for the saved plot filename.
     @param[in] save_dir Directory to save the plot in; not saved if empty.
     """
     fig, ax = plt.subplots(1, 1, figsize=(
         1.5*PANEL_WIDTH, PANEL_HEIGHT), num="Compare files")
 
+    t0s = get_t0s_from_dir_name(files[0])
+    shift = get_time_shift(t0s)
+    legend_labels = {}
     plotted_keys = []
 
-    _style_axis(ax, r"Infected per infection age at $t_0$")
+    _style_axis(ax, r"Infected per infection age at $t=0$")
 
     for key, filepath in zip(FILE_KEYS, files):
         dates, total = load_h5_total(filepath)
-        if key == "groundtruth":
-            continue
         plotted_keys.append(key)
+        legend_labels[key] = rf"$\widetilde{{T}}={t0s[key] - shift:g}$"
         style = STYLE_SCATTER[key]
-        ax.scatter(dates, total, color=style["color"],
-                   linestyle=style["linestyle"], marker="o",
+        ax.scatter(dates, total, color=style["color"], marker="o",
                    s=style["s"],
                    linewidths=0,
-                   edgecolors="none")
+                   edgecolors="none",
+                   zorder=2)
 
-    handles = [plt.Line2D([0], [0], color=STYLE[k]["color"],
-                          linestyle="-", linewidth=LINEWIDTH,
-                          label=STYLE[k]["label"])
-               for k in plotted_keys]
+    ax.xaxis.set_major_locator(MultipleLocator(10))
 
-    fig.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.5, -0.08),
-               ncol=len(handles), fancybox=False, shadow=False, frameon=False)
+    _add_shared_legend(fig, plotted_keys, labels=legend_labels)
 
     fig.supxlabel("Infection age [days]",  y=0.04)
-    fig.supylabel("Number of individuals")
+    fig.supylabel("Number of individuals", y=0.54)
     plt.tight_layout()
 
     _save(fig, save_dir, f"infected_per_infection_age_{fileending}.png")
@@ -338,24 +377,25 @@ def plot_init_conditions(files_flows, files_infage_dist, fileending, save_dir=""
     _style_axis(axs[1], r"Infected per infection age at $t_0$")
 
     plotted_keys = []
-    t0 = get_t0_from_dir_name(files_flows[0])
-    tinit_detailed = None
+    t0s = get_t0s_from_dir_name(files_flows[0])
+    shift = get_time_shift(t0s)
+    tinit = None
 
-    # Plot the flow data.
+    # Plot the flow data up to the respective t0.
     for key, filepath in zip(FILE_KEYS, files_flows):
         dates_flow, total_flow = load_h5_total(filepath)
-        dates_flow = dates_flow-t0
+        dates_flow = dates_flow - shift
 
-        if key == "detailed":
-            tinit_detailed = dates_flow[0]
+        if tinit is None or dates_flow[0] < tinit:
+            tinit = dates_flow[0]
 
         style = STYLE_SCATTER[key]
         plotted_keys.append(key)
 
-        t0_indices = np.where(np.isclose(dates_flow, 0.))[0]
+        t0_indices = np.where(np.isclose(dates_flow, t0s[key] - shift))[0]
         if len(t0_indices) == 0:
             raise ValueError(
-                f"Could not find t0={t0} in flow file '{filepath}'."
+                f"Could not find t0={t0s[key]} in flow file '{filepath}'."
             )
 
         t0_index = t0_indices[0]
@@ -387,8 +427,8 @@ def plot_init_conditions(files_flows, files_infage_dist, fileending, save_dir=""
             zorder=2,
         )
 
-    if tinit_detailed is not None:
-        axs[0].set_xlim(tinit_detailed - 2, 0. + 2)
+    if tinit is not None:
+        axs[0].set_xlim(tinit - 2, max(t0s.values()) - shift + 2)
 
     axs[0].set_xlabel("Time [days]")
     axs[1].set_xlabel("Infection age [days]")
@@ -428,8 +468,8 @@ if __name__ == "__main__":
 
     root_dir = os.path.join(os.path.dirname(__file__), "../simulation_results")
 
-    # main_dir = "2026-09-15/compare_different_inits_erlang_numsubcomps=6_contfreq=0.4_kahan=false_buffer=false"
-    main_dir = "2026-09-15/compare_different_inits_exp_kahan=false_buffer=false"
+    main_dir = "2026-10-14/I0=1000_compare_different_inits_erlang_numsubcomps=6_contfreq=0.4_kahan=false_buffer=false_forwatdfd=true"
+    # main_dir = "2026-10-14/I0=1000_compare_different_inits_exp_contfreq=0.73_kahan=false_buffer=false_forwatdfd=true"
 
     relevant_dir = os.path.join(root_dir, main_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
@@ -478,27 +518,10 @@ if __name__ == "__main__":
         #      os.path.join(result_dir, f"simple_flows_{base}")],
         #     fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir)
 
-        # plot_infectionage_distribution(
-        #     [os.path.join(
-        #         result_dir, f"detailed_infectionagedistribution_{base}"),
-        #         os.path.join(
-        #             result_dir, f"detailed_short_infectionagedistribution_{base}"),
-        #         os.path.join(result_dir, f"simple_infectionagedistribution_{base}")],
-        #     fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir)
-
-        plot_init_conditions(
-            [
-                os.path.join(
-                    result_dir, f"detailed_flows_{base}_gregoryorder={gregory_order}"),
-                os.path.join(
-                    result_dir, f"detailed_short_flows_{base}_gregoryorder={gregory_order}"),
-                os.path.join(result_dir, f"simple_flows_{base}_gregoryorder={gregory_order}")],
-            [
-                os.path.join(
-                    result_dir, f"detailed_infectionagedistribution_{base}_gregoryorder={gregory_order}"),
-                os.path.join(
-                    result_dir, f"detailed_short_infectionagedistribution_{base}_gregoryorder={gregory_order}"),
-                os.path.join(result_dir, f"simple_infectionagedistribution_{base}_gregoryorder={gregory_order}")],
-            fileending=f"dt=1e-{ide_exponent}",
-            save_dir=plot_dir,
-        )
+        plot_infectionage_distribution(
+            [os.path.join(
+                result_dir, f"detailed_infectionagedistribution_{base}_gregoryorder={gregory_order}"),
+             os.path.join(
+                result_dir, f"detailed_short_infectionagedistribution_{base}_gregoryorder={gregory_order}"),
+             os.path.join(result_dir, f"simple_infectionagedistribution_{base}_gregoryorder={gregory_order}")],
+            fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir)

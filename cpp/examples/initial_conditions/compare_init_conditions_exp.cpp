@@ -158,7 +158,7 @@ simulate_ide(ScalarType ide_exponent, size_t gregory_order, size_t finite_differ
 
             // Initialize time points before t0 based on groundtruth.
             // Get index of t0 in groundtruth.
-            size_t t0_index = size_t((t0 - result_groundtruth.get_time(0)) / dt);
+            size_t t0_index = (size_t)std::round((t0 - result_groundtruth.get_time(0)) / dt);
             std::cout << "t0 index: " << t0_index << std::endl;
 
             Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
@@ -181,20 +181,23 @@ simulate_ide(ScalarType ide_exponent, size_t gregory_order, size_t finite_differ
                                                 (size_t)mio::isir::InfectionState::Infected,
                                                 (size_t)mio::isir::InfectionState::Recovered};
 
+            // Get index of t_init in groundtruth.
+            size_t t_init_index = (size_t)std::round((t_init - result_groundtruth.get_time(0)) / dt);
+
             // Add values to init_populations.
             for (size_t compartment : compartments) {
-                vec_init[compartment] = result_groundtruth.get_value(t_init / dt)[compartment];
+                vec_init[compartment] = result_groundtruth.get_value(t_init_index)[compartment];
             }
             std::cout << "groundtruth num tps: " << result_groundtruth.get_num_time_points() << std::endl;
-            std::cout << t_init / dt << std::endl;
-            std::cout << "t_init: " << result_groundtruth.get_time(t_init / dt) << std::endl;
+            std::cout << t_init_index << std::endl;
+            std::cout << "t_init: " << result_groundtruth.get_time(t_init_index) << std::endl;
 
             init_populations.add_time_point(t_init, vec_init);
 
             while (init_populations.get_last_time() < t0 - 1e-10) {
                 for (size_t compartment : compartments) {
                     vec_init[compartment] =
-                        result_groundtruth.get_value(t_init / dt + init_populations.get_num_time_points())[compartment];
+                        result_groundtruth.get_value(t_init_index + init_populations.get_num_time_points())[compartment];
                 }
                 init_populations.add_time_point(init_populations.get_last_time() + dt, vec_init);
             }
@@ -254,7 +257,8 @@ simulate_ide(ScalarType ide_exponent, size_t gregory_order, size_t finite_differ
         std::cout << "write time: " << write_inf_per_infage_time << std::endl;
         if (write_inf_per_infage_time > 0) {
 
-            size_t write_inf_per_infage_index = (write_inf_per_infage_time - compartments.get_time(0)) / dt;
+            size_t write_inf_per_infage_index =
+                (size_t)std::round((write_inf_per_infage_time - compartments.get_time(0)) / dt);
             std::cout << "write index: " << write_inf_per_infage_index << std::endl;
             std::cout << "eval time: " << compartments.get_time(write_inf_per_infage_index) << std::endl;
             std::cout << std::endl;
@@ -275,14 +279,11 @@ int main()
 {
     using namespace params;
 
-    // ScalarType time_infected = 2.;
-
     ScalarType t0_ode = 0.;
-    ScalarType t0_ide = 10.;
 
-    ScalarType t_init_memoryless = t0_ide;
-    ScalarType t_init_long_init  = t0_ide;
-    ScalarType t_init_short_init = t0_ide;
+    ScalarType t0_ide_memoryless = 50.;
+    ScalarType t0_ide_short_init = 35.;
+    ScalarType t0_ide_long_init  = 0.;
 
     ScalarType tmax = 150.;
 
@@ -292,9 +293,11 @@ int main()
     ScalarType dt_exponent = 2.; // Used for both ODE and IDE simulations
 
     std::string save_dir =
-        fmt::format("../../simulation_results/2026-10-09/compare_different_inits_exp_kahan={}_buffer={}/"
-                    "nonconst_contacts_tinitgroundtruth={}_tinitdetailed={}_t0ide={}_tmax={}/",
-                    kahan, more_precise_s_deriv, t0_ode, t_init_long_init, t0_ide, tmax);
+        fmt::format("../../simulation_results/2026-10-14/"
+                    "I0={}_compare_different_inits_exp_contfreq={}_kahan={}_buffer={}_forwatdfd={}/"
+                    "nonconst_contacts_t0memoryless={}_t0short={}_t0long={}_tmax={}/",
+                    I0, cont_freq, kahan, more_precise_s_deriv, forward_fd, t0_ide_memoryless, t0_ide_short_init,
+                    t0_ide_long_init, tmax);
 
     // Make folder if not existent yet.
     std::filesystem::path dir(save_dir);
@@ -305,18 +308,20 @@ int main()
     // ODE
     mio::IOResult<mio::TimeSeries<ScalarType>> result_groundtruth = simulate_ode(dt_exponent, t0_ode, tmax, save_dir);
 
+    // The infection age distribution is written at t0_ide_memoryless for all models to compare them at the same time.
+
     // Long init
     mio::IOResult<mio::TimeSeries<ScalarType>> result_ide_detailed =
-        simulate_ide(dt_exponent, gregory_order, finite_difference_order, t_init_long_init, t0_ide, tmax, save_dir,
-                     "detailed", result_groundtruth.value(), t0_ide);
+        simulate_ide(dt_exponent, gregory_order, finite_difference_order, t0_ide_long_init, t0_ide_long_init, tmax,
+                     save_dir, "detailed", result_groundtruth.value(), t0_ide_memoryless);
 
     // Short init
     mio::IOResult<mio::TimeSeries<ScalarType>> result_ide_detailed_short =
-        simulate_ide(dt_exponent, gregory_order, finite_difference_order, t_init_short_init, t0_ide, tmax, save_dir,
-                     "detailed_short", result_groundtruth.value(), t0_ide);
+        simulate_ide(dt_exponent, gregory_order, finite_difference_order, t0_ide_short_init, t0_ide_short_init, tmax,
+                     save_dir, "detailed_short", result_groundtruth.value(), t0_ide_memoryless);
 
     // Memoryless
     mio::IOResult<mio::TimeSeries<ScalarType>> result_ide_simple =
-        simulate_ide(dt_exponent, gregory_order, finite_difference_order, t_init_memoryless, t0_ide, tmax, save_dir,
-                     "simple", result_groundtruth.value(), t0_ide);
+        simulate_ide(dt_exponent, gregory_order, finite_difference_order, t0_ide_memoryless, t0_ide_memoryless, tmax,
+                     save_dir, "simple", result_groundtruth.value(), t0_ide_memoryless);
 }
