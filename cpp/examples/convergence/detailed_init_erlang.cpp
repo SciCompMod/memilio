@@ -169,7 +169,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarTy
                                  std::string save_dir = "", bool kahan = true,
                                  mio::TimeSeries<ScalarType> compartments_groundtruth =
                                      mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
-                                 bool more_precise_s_deriv = false, bool forward_fd = false)
+                                 bool forward_fd = false)
 {
     using namespace params;
     using Vec = mio::TimeSeries<ScalarType>::Vector;
@@ -182,8 +182,6 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarTy
 
         mio::TimeSeries<ScalarType> init_populations((size_t)mio::isir::InfectionState::Count);
         mio::TimeSeries<ScalarType> init_flows_ts((size_t)mio::isir::InfectionTransition::Count);
-
-        ScalarType cutoff_window = 0;
 
         if (compartments_groundtruth.get_num_time_points() == 0) {
             std::cout << "No groundtruth was given.\n";
@@ -205,19 +203,11 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarTy
 
             ScalarType t_init = t0_ide - t_init_window;
             ScalarType t0_ode = compartments_groundtruth.get_time(0);
-            cutoff_window     = t_init - t0_ode;
 
-            int start_index       = 0;
-            ScalarType start_time = 0;
-            if (more_precise_s_deriv) {
-                start_time = t0_ode;
-            }
-            else {
-                start_time = t_init;
-            }
+            ScalarType start_time = t_init;
             // compartments_groundtruth is indexed from its own start time t0_ode, not from absolute time 0, so the
             // index into it has to be computed relative to t0_ode.
-            start_index = std::round((start_time - t0_ode) * div_dt_groundtruth);
+            int start_index = std::round((start_time - t0_ode) * div_dt_groundtruth);
 
             // Add values to init_populations.
             for (size_t compartment : compartments) {
@@ -264,7 +254,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarTy
         // Carry out simulation.
         mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide, div_dt_ide);
 
-        sim.advance(tmax, kahan, more_precise_s_deriv, forward_fd, cutoff_window);
+        sim.advance(tmax, kahan, forward_fd);
 
         if (!save_dir.empty()) {
             // Save compartments.
@@ -314,9 +304,8 @@ int main()
 
     ScalarType cont_freq = 0.4;
 
-    bool kahan                = false;
-    bool more_precise_s_deriv = false;
-    bool forward_fd           = true;
+    bool kahan      = false;
+    bool forward_fd = true;
 
     std::vector<size_t> finite_difference_orders = {4};
 
@@ -342,11 +331,10 @@ int main()
 
             std::string save_dir = fmt::format(
                 "./simulation_results/2026-09-29/"
-                "lct_newinit_I0={}_dtode=1e-{}_t0ode={}_timeinf={}_numsubcomps={}_contfreq={}_kahan={}_buffer={}_"
-                "forwardfd={}/"
+                "lct_newinit_I0={}_dtode=1e-{}_t0ode={}_timeinf={}_numsubcomps={}_contfreq={}_kahan={}_forwardfd={}/"
                 "detailed_init_erlang_t0ide={}_tmax={}_finite_diff={}/",
-                I0, ode_exponent, t0_ode, time_infected, num_subcomps_infected, cont_freq, kahan, more_precise_s_deriv,
-                forward_fd, t0_ide, tmax, finite_difference_order);
+                I0, ode_exponent, t0_ode, time_infected, num_subcomps_infected, cont_freq, kahan, forward_fd, t0_ide,
+                tmax, finite_difference_order);
 
             // Make folder if not existent yet.
             std::filesystem::path dir(save_dir);
@@ -377,7 +365,7 @@ int main()
                     mio::IOResult<void> result_ide =
                         simulate_ide(ide_exponents, ode_exponent, gregory_order, finite_difference_order, init_window,
                                      t0_ide, tmax, time_infected, cont_freq, save_dir_ide, kahan, compartments_lct,
-                                     more_precise_s_deriv, forward_fd);
+                                     forward_fd);
                 }
             }
         }

@@ -54,9 +54,8 @@ ScalarType I0               = 1000.;
 ScalarType R0               = 0.;
 ScalarType S0               = total_population - I0 - R0;
 
-bool kahan                = false;
-bool more_precise_s_deriv = false;
-bool forward_fd           = true;
+bool kahan      = false;
+bool forward_fd = true;
 } // namespace params
 
 mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent, ScalarType t0_ode, ScalarType tmax,
@@ -237,7 +236,7 @@ simulate_ide(ScalarType ide_exponent, size_t gregory_order, size_t finite_differ
 
     // Carry out simulation.
     mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt);
-    sim.advance(tmax, kahan, more_precise_s_deriv, forward_fd);
+    sim.advance(tmax, kahan, forward_fd);
     mio::TimeSeries<ScalarType> compartments = sim.get_result();
     mio::TimeSeries<ScalarType> flows        = sim.get_flows();
 
@@ -294,10 +293,9 @@ int main()
 
     std::string save_dir =
         fmt::format("../../simulation_results/2026-10-14/"
-                    "I0={}_compare_different_inits_exp_contfreq={}_kahan={}_buffer={}_forwatdfd={}/"
+                    "I0={}_compare_different_inits_exp_contfreq={}_kahan={}_forwatdfd={}/"
                     "nonconst_contacts_t0memoryless={}_t0short={}_t0long={}_tmax={}/",
-                    I0, cont_freq, kahan, more_precise_s_deriv, forward_fd, t0_ide_memoryless, t0_ide_short_init,
-                    t0_ide_long_init, tmax);
+                    I0, cont_freq, kahan, forward_fd, t0_ide_memoryless, t0_ide_short_init, t0_ide_long_init, tmax);
 
     // Make folder if not existent yet.
     std::filesystem::path dir(save_dir);

@@ -192,7 +192,7 @@ def compute_l2_norm(timeseries, timestep):
     return norm
 
 
-def compute_errors_l2(groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init, cutoff_window, error_type):
+def compute_errors_l2(groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init, error_type):
     """ Computes relative L2 norm of the difference between time series from ODE and time series
     from IDE for all compartments/flows.
 
@@ -216,7 +216,7 @@ def compute_errors_l2(groundtruth, results, groundtruth_save_exponent, timesteps
             num_timepoints = len(results[i])
 
             groundtruth_sim_interval = groundtruth[0][int(
-                pow(10, groundtruth_save_exponent)*(t0_ide+cutoff_window))::int(scale_timesteps)][:, compartment]
+                pow(10, groundtruth_save_exponent)*t0_ide)::int(scale_timesteps)][:, compartment]
 
             results_sim_interval = results[i][int(
                 (t0_ide-t_init)/timestep)::][:, compartment]
@@ -252,7 +252,7 @@ def compute_max_norm(timeseries):
     return norm
 
 
-def compute_errors_max(groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init, cutoff_window, error_type):
+def compute_errors_max(groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init, error_type):
     """ Computes relative maximum norm of the difference between time series from ODE and time series
     from IDE for all compartments.
     """
@@ -274,7 +274,7 @@ def compute_errors_max(groundtruth, results, groundtruth_save_exponent, timestep
             # print("scale timesteps: ", scale_timesteps)
 
             groundtruth_sim_interval = groundtruth[0][int(
-                pow(10, groundtruth_save_exponent)*(t0_ide+cutoff_window))::int(scale_timesteps)][:, compartment]
+                pow(10, groundtruth_save_exponent)*t0_ide)::int(scale_timesteps)][:, compartment]
 
             results_sim_interval = results[i][int(
                 (t0_ide-t_init)/timestep)::][:, compartment]
@@ -305,7 +305,7 @@ def compute_errors_max(groundtruth, results, groundtruth_save_exponent, timestep
     return np.array(errors)
 
 
-def plot_difference_per_timestep(groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init, cutoff_window, gregory_order,  save_dir="", damping_time=float(-1)):
+def plot_difference_per_timestep(groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init, gregory_order,  save_dir="", damping_time=float(-1)):
     num_errors = 3
 
     # Compute error.
@@ -325,7 +325,7 @@ def plot_difference_per_timestep(groundtruth, results, groundtruth_save_exponent
             scale_timesteps = timestep/pow(10, -groundtruth_save_exponent)
 
             difference = groundtruth[0][int(
-                pow(10, groundtruth_save_exponent)*(t0_ide+cutoff_window))::int(scale_timesteps)][:, compartment]-results[i][int((t0_ide-t_init)/timestep)::][:, compartment]
+                pow(10, groundtruth_save_exponent)*t0_ide)::int(scale_timesteps)][:, compartment]-results[i][int((t0_ide-t_init)/timestep)::][:, compartment]
 
             indices = np.linspace(
                 t0_ide, t0_ide+(len(difference)-1)*timestep, len(difference))
@@ -696,9 +696,7 @@ def main():
     groundtruth_save_exponent = 3
     only_S = False
 
-    cutoff_window = 0
-
-    main_dir = f"2026-09-11/S_deriv_forward_small_example_dtode=1e-6_t0ode=0_timeinf=2_contfreq=0.73_kahan=false_buffer=false"
+    main_dir = f"2026-10-13/init_ide_dtode=1e-6_t0ode=0_timeinf=2_contfreq=0.73_kahan=false_forwardfd=true"
 
     ##############################################
 
@@ -708,9 +706,6 @@ def main():
     # print(relevant_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
     # sub_dirs = [sub_dirs[-1]]
-
-    total_pop_reference = 0
-    total_pop_all_fd_orders = []
 
     gregory_orders_simulation = [1, 2, 3]
 
@@ -768,25 +763,25 @@ def main():
 
                 # Compute errors of IDE results compared to groundtruth.
                 errors_l2_abs = compute_errors_l2(
-                    groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init, cutoff_window, error_type="abs")
+                    groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init, error_type="abs")
                 errors_all_gregory_orders_l2_abs.append(errors_l2_abs)
 
                 errors_max_abs = compute_errors_max(
-                    groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init, cutoff_window, error_type="abs")
+                    groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init, error_type="abs")
                 errors_all_gregory_orders_max_abs.append(errors_max_abs)
 
                 errors_max_abs_rel = compute_errors_max(
-                    groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init, cutoff_window, error_type="rel")
+                    groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init, error_type="rel")
                 errors_all_gregory_orders_max_rel.append(errors_max_abs_rel)
 
                 errors_max_abs_weighted = compute_errors_max(
-                    groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init, cutoff_window, error_type="weighted")
+                    groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init, error_type="weighted")
                 errors_all_gregory_orders_max_weighted.append(
                     errors_max_abs_weighted)
 
                 damping_time = get_dampingtime_ide_from_dir_name(dir_name)
                 plot_difference_per_timestep(
-                    groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init, cutoff_window, gregory_order_simulation, plot_dir, damping_time=damping_time)
+                    groundtruth, results, groundtruth_save_exponent, timesteps_ide, t0_ide, t_init, gregory_order_simulation, plot_dir, damping_time=damping_time)
 
                 print()
                 # print(f"Gregory order {gregory_order_simulation}")

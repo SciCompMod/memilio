@@ -36,8 +36,7 @@ namespace isir
 
 using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool kahan, bool more_precise_s_deriv,
-                                                    bool S_deriv_forward, ScalarType cutoff_window,
+void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool kahan, bool S_deriv_forward,
                                                     size_t fd_order_contacts, ScalarType damping_time,
                                                     ScalarType smoother_window, size_t smoothstep_order)
 {
@@ -139,18 +138,6 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool kahan,
             t_flows_init                 = t_temp;
         }
 
-        if (more_precise_s_deriv) {
-            // Only the extra buffer at the front was needed to get a more accurate finite difference approximation
-            // of S' close to t_init. Drop it now from both flows and populations so that the two time series stay
-            // aligned index-by-index (compute_S_deriv() and compute_I_and_R() rely on this alignment when deriving
-            // their time_point_index from the number of time points already present in flows).
-            size_t num_buffer_points = std::round(cutoff_window / m_dt);
-            for (size_t i = 0; i < num_buffer_points; i++) {
-                m_model->flows.remove_time_point(0);
-                m_model->populations.remove_time_point(0);
-            }
-            t0_index -= num_buffer_points;
-        }
         std::cout << "flows first tp: " << m_model->flows.get_time(0) << std::endl;
         std::cout << "flows last tp: " << m_model->flows.get_last_time() << std::endl;
     }

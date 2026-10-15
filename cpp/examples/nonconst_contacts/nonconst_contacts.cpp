@@ -50,9 +50,8 @@ ScalarType I0               = 1000.;
 ScalarType R0               = 0.;
 ScalarType total_population = S0 + I0 + R0;
 
-bool kahan                = false;
-bool more_precise_s_deriv = false;
-bool forward_fd           = true;
+bool kahan      = false;
+bool forward_fd = true;
 } // namespace params
 
 mio::UncertainContactMatrix<ScalarType> scale_contact_matrix(ScalarType damping, ScalarType damping_time)
@@ -227,8 +226,7 @@ mio::IOResult<void> simulate_ide(ScalarType ide_exponent, ScalarType ode_exponen
 
     // Carry out simulation.
     mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide, div_dt_ide);
-    sim.advance(tmax, kahan, more_precise_s_deriv, forward_fd, 10., fd_order_contacts, damping_time, smoother_window,
-                smoothstep_order);
+    sim.advance(tmax, kahan, forward_fd, fd_order_contacts, damping_time, smoother_window, smoothstep_order);
 
     if (!save_dir.empty()) {
         // Save compartments.
@@ -281,10 +279,10 @@ int main()
 
         std::string save_dir = fmt::format(
             "./simulation_results/2026-10-09/"
-            "phi_deriv_analytical_smoothstepc{}_fd_order={}_smootherwindow={}_t0ode={}_kahan={}_buffer={}_forwardfd={}/"
+            "phi_deriv_analytical_smoothstepc{}_fd_order={}_smootherwindow={}_t0ode={}_kahan={}_forwardfd={}/"
             "nonconst_contacts_t0ide={}_tmax={}_dampingtime={}_damping={}/",
-            smoothstep_order, finite_difference_order, smoother_window, t0_ode, kahan, more_precise_s_deriv, forward_fd,
-            t0_ide, tmax, damping_time, damping);
+            smoothstep_order, finite_difference_order, smoother_window, t0_ode, kahan, forward_fd, t0_ide, tmax,
+            damping_time, damping);
 
         // Make folder if not existent yet.
         std::filesystem::path dir(save_dir);

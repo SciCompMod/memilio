@@ -139,8 +139,10 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
 
         // Carry out simulation.
         mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt);
+        bool kahan               = false;
+        bool forward_fd          = false;
         size_t fd_order_contacts = 1;
-        sim.advance(tmax, fd_order_contacts);
+        sim.advance(tmax, kahan, forward_fd, fd_order_contacts);
 
         // If no groundtruth is gibven as input, we set the here computed results as groundtruth.
         if (result_groundtruth.get_num_time_points() == 0) {

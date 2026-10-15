@@ -183,7 +183,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 
         // Carry out simulation.
         mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide);
-        sim.advance(tmax, use_complement);
+        sim.advance(tmax);
 
         if (!save_dir.empty()) {
             // Save compartments.
