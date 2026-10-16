@@ -76,20 +76,35 @@ colors = {"Blue": "#155489",
           "Light grey": "#F1F1F1"}
 
 
-def plot_results(results, validation_data, name, synthetic=False):
+def plot_results(results, validation_data, synthetic=False):
     synthetic = "_synthetic" if synthetic else ""
-    for key in summary_vars:
+    fig, ax = plt.subplots(1, len(summary_vars), figsize=(12, 6))
+    if len(summary_vars) == 1:
+        ax = [ax]
+    for i, key in enumerate(summary_vars):
+        qs_80 = np.quantile(results[key], q=[0.1, 0.9], axis=1)
+        qs_90 = np.quantile(results[key], q=[0.05, 0.95], axis=1)
+        qs_95 = np.quantile(results[key], q=[0.025, 0.975], axis=1)
+
         num_days = results[key].shape[0]
         plt.figure(figsize=(6, 4))
-        plt.plot(np.arange(num_days), np.median(
-            results[key], axis=1), color=colors["Blue"])
-        plt.plot(np.arange(num_days),
-                 validation_data[key][0], color=colors["Red"])
-        plt.title(key)
-        plt.xlabel("time [days]")
-        plt.ylabel("number of people")
-        plt.savefig(f"{name}/{key}{synthetic}.png", dpi=dpi)
-        plt.close()
+        ax[i].plot(np.arange(num_days), np.median(
+            results[key], axis=1), color=colors["Blue"], label='Simulated median')
+        ax[i].fill_between(np.arange(num_days), qs_80[0], qs_80[1], alpha=0.5,
+                color=colors["Blue"], label="80% CI")
+        ax[i].fill_between(np.arange(num_days), qs_90[0], qs_90[1], alpha=0.3,
+                color=colors["Blue"], label="90% CI")
+        ax[i].fill_between(np.arange(num_days), qs_95[0], qs_95[1], alpha=0.1,
+                color=colors["Blue"], label="95% CI")
+        ax[i].plot(np.arange(num_days),
+                 validation_data[key][0], color=colors["Red"], label='True data')
+        ax[i].set_title(key)
+    ax[1].set_xlabel("time [days]")
+    ax[0].set_ylabel("number of people")
+    ax[0].legend(loc="upper left")
+    fig.tight_layout()
+    fig.savefig(f"{name}/predictions{synthetic}.png", dpi=dpi)
+    plt.close()
 
 
 def run_abm(viral_shedding_rate, dark_figure):
@@ -104,8 +119,9 @@ def run_abm(viral_shedding_rate, dark_figure):
     start_date = DATE_TIME
     num_days_sim = 30
 
-    result = halle_abm.run_once(person_file, contact_dir, history_file, history_lookback_days, allow_missing_history, [
-                                viral_shedding_rate, dark_figure], start_date, num_days_sim)
+    samples = [viral_shedding_rate, dark_figure]
+
+    result = halle_abm.run_once(person_file, contact_dir, history_file, history_lookback_days, allow_missing_history, samples, start_date, num_days_sim)
     result = np.vstack([np.asarray(result[0]), np.asarray(result[1]).T])
     return {'deaths': result[1],
             'severe': result[2],
@@ -129,7 +145,7 @@ def create_train_data(filename, number_samples=1000):
     simulator = bf.simulators.make_simulator(
         [prior, run_abm]
     )
-    trainings_data = simulator.sample(number_samples)
+    trainings_data = simulator.sample_parallel(number_samples)
     with open(filename, 'wb') as f:
         pickle.dump(trainings_data, f, pickle.HIGHEST_PROTOCOL)
 
@@ -226,15 +242,22 @@ def run_training(num_training_files=20):
         trainings_data)["inference_variables"].shape)
 
     history = workflow.fit_offline(
-        data=trainings_data, epochs=3, batch_size=64, validation_data=validation_data
+        data=trainings_data, epochs=200, batch_size=64, validation_data=validation_data
     )
 
     workflow.approximator.save(
         filepath=os.path.join(f"{name}/model_{name}.keras")
     )
 
+    plots = workflow.plot_default_diagnostics(
+        test_data=validation_data, calibration_ecdf_kwargs={'difference': True, 'stacked': True}
+    )
+    plots['losses'].savefig(f'{name}/losses_{name}.png')
+    plots['recovery'].savefig(f'{name}/recovery_{name}.png')
+    plots['calibration_ecdf'].savefig(f'{name}/calibration_ecdf_{name}.png')
 
-def run_inference(name, num_samples=1000, on_synthetic_data=False):
+
+def run_inference(num_samples=1000, on_synthetic_data=False):
     val_path = f"{name}/validation_data_{name}.pickle"
     synthetic = "_synthetic" if on_synthetic_data else ""
 
@@ -271,7 +294,7 @@ def run_inference(name, num_samples=1000, on_synthetic_data=False):
         with open(f'{name}/results_{name}{synthetic}.pickle', 'wb') as f:
             pickle.dump(results, f, pickle.HIGHEST_PROTOCOL)
 
-    plot_results(results, validation_dict, name, synthetic=on_synthetic_data)
+    plot_results(results, validation_dict, synthetic=on_synthetic_data)
 
 
 if __name__ == "__main__":
@@ -285,4 +308,4 @@ if __name__ == "__main__":
     create_train_data(
         filename=f'{name}/trainings_data1_{name}.pickle', number_samples=1000)
     run_training(num_training_files=1)
-    run_inference(name=name, num_samples=100, on_synthetic_data=True)
+    run_inference(num_samples=100, on_synthetic_data=True)
