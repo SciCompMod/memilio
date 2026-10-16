@@ -81,11 +81,10 @@ def plot_results(results, validation_data, name, synthetic=False):
     for key in summary_vars:
         num_days = results[key].shape[0]
         plt.figure(figsize=(6, 4))
-        print(validation_data[key])
         plt.plot(np.arange(num_days), np.median(
             results[key], axis=1), color=colors["Blue"])
         plt.plot(np.arange(num_days),
-                 validation_data[key], color=colors["Red"])
+                 validation_data[key][0], color=colors["Red"])
         plt.title(key)
         plt.xlabel("time [days]")
         plt.ylabel("number of people")
@@ -242,7 +241,7 @@ def run_inference(name, num_samples=1000, on_synthetic_data=False):
     validation_data = reshape_results(load_pickle(val_path))
     if on_synthetic_data:
         validation_dict = {
-            key: validation_data[key][0, ...] for key in summary_vars}
+            key: validation_data[key][0, np.newaxis, ...] for key in summary_vars}
         real_data = np.concatenate([validation_data[key][0]
                                    for key in summary_vars], axis=-1)
 
