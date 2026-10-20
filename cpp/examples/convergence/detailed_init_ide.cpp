@@ -34,6 +34,7 @@
 #include "memilio/io/result_io.h"
 #include <Eigen/src/Core/util/Meta.h>
 #include <boost/numeric/odeint/stepper/runge_kutta4.hpp>
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -209,95 +210,266 @@ mio::IOResult<std::vector<mio::TimeSeries<ScalarType>>> simulate_ode(ScalarType 
     return mio::success(results);
 }
 
-mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order,
-                                 size_t finite_difference_order, ScalarType t_init_window, ScalarType t0_ide,
-                                 ScalarType tmax, ScalarType TimeInfected, ScalarType cont_freq,
-                                 std::string save_dir = "", bool kahan = true,
-                                 mio::TimeSeries<ScalarType> compartments_groundtruth =
-                                     mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
-                                 bool more_precise_s_deriv = false, bool forward_fd = false)
+/**
+ * @brief Get the initial values at t0 from the given TimeSeries, e.g. from the compartments of the ODE solution.
+ *
+ * Using the ODE solution at t0 ensures that the IDE solution can be compared with the ODE solution at the same time
+ * points also if the IDE simulation starts later than the ODE simulation.
+ *
+ * @param[in] values TimeSeries with equidistant time points that contains t0.
+ * @param[in] t0 Start time of the IDE simulation.
+ * @return TimeSeries with one time point t0 containing the initial values.
+ */
+mio::IOResult<mio::TimeSeries<ScalarType>> get_init_values_at_t0(const mio::TimeSeries<ScalarType>& values,
+                                                                 ScalarType t0)
+{
+    BOOST_OUTCOME_TRY(auto&& index, get_index_of_time(values, t0));
+
+    mio::TimeSeries<ScalarType> init_populations(values.get_num_elements());
+    init_populations.add_time_point(t0, values.get_value(index));
+    return mio::success(init_populations);
+}
+
+/**
+ * @brief Get the initial values for the IDE model from the given TimeSeries.
+ *
+ * The values are taken from the given TimeSeries at the time points t_init, t_init + dt, ..., t0 with t_init = t0 -
+ * t_init_window, i.e. with the step size of the IDE model. This requires that dt is a multiple of the step size of the
+ * given TimeSeries. This can be used for both compartments and flows.
+ *
+ * @param[in] values TimeSeries with the values that are used for the initialization.
+ * @param[in] t_init_window Length of the time window before t0 for which initial values are given.
+ * @param[in] t0 Start time of the IDE simulation.
+ * @param[in] dt Step size of the IDE simulation.
+ * @param[in] div_dt Inverse of dt.
+ * @return TimeSeries with the initial values for the IDE model.
+ */
+mio::IOResult<mio::TimeSeries<ScalarType>> get_init_values(const mio::TimeSeries<ScalarType>& values,
+                                                           ScalarType t_init_window, ScalarType t0, ScalarType dt,
+                                                           ScalarType div_dt)
+{
+    mio::TimeSeries<ScalarType> init_values(values.get_num_elements());
+
+    if (values.get_num_time_points() == 0) {
+        std::cout << "No initial values were given.\n";
+        return mio::success(init_values);
+    }
+
+    ScalarType t_init = t0 - t_init_window;
+
+    // Number of IDE time steps from t_init to t0.
+    size_t num_steps = (size_t)std::round(t_init_window * div_dt);
+    for (size_t step = 0; step <= num_steps; step++) {
+        // Compute time directly from step to avoid accumulating rounding errors.
+        ScalarType time = t_init + step * dt;
+        BOOST_OUTCOME_TRY(auto&& index, get_index_of_time(values, time));
+        init_values.add_time_point(time, values.get_value(index));
+    }
+
+    return mio::success(init_values);
+}
+
+/**
+ * @brief Set up an IDE model with the given initial values and simulate it until tmax with step size dt.
+ *
+ * If init_flows is empty, the flows (i.e. -S') on the initial time window are computed by the simulation from
+ * init_populations with finite differences. Otherwise, the given flows are used and have to be given at the same time
+ * points as init_populations.
+ *
+ * @return Vector containing the compartments and the flows of the simulation result.
+ */
+std::vector<mio::TimeSeries<ScalarType>>
+run_ide(mio::TimeSeries<ScalarType>&& init_populations, mio::TimeSeries<ScalarType>&& init_flows, ScalarType dt,
+        ScalarType div_dt, size_t gregory_order, size_t finite_difference_order, ScalarType tmax,
+        ScalarType TimeInfected, ScalarType cont_freq, bool kahan, bool forward_fd)
 {
     using namespace params;
-    using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    for (ScalarType ide_exponent : ide_exponents) {
+    // Initialize model.
+    mio::isir::ModelMessinaExtendedDetailedInit model(std::move(init_populations), total_population, gregory_order,
+                                                      finite_difference_order, std::move(init_flows));
+
+    mio::ExponentialSurvivalFunction exp(1. / TimeInfected);
+
+    mio::StateAgeFunctionWrapper dist(exp);
+    std::vector<mio::StateAgeFunctionWrapper<ScalarType>> vec_dist((size_t)mio::isir::InfectionTransition::Count, dist);
+    model.parameters.get<mio::isir::TransitionDistributions>() = vec_dist;
+
+    mio::ConstantFunction transmissiononcontact(TransmissionProbabilityOnContact);
+    mio::StateAgeFunctionWrapper transmissiononcontact_wrapper(transmissiononcontact);
+    model.parameters.get<mio::isir::TransmissionProbabilityOnContact>() = transmissiononcontact_wrapper;
+
+    mio::ConstantFunction riskofinfection(RiskOfInfectionFromSymptomatic);
+    mio::StateAgeFunctionWrapper riskofinfection_wrapper(riskofinfection);
+    model.parameters.get<mio::isir::RiskOfInfectionFromSymptomatic>() = riskofinfection_wrapper;
+
+    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup<ScalarType>(1, 1);
+    contact_matrix[0]                      = mio::ContactMatrix<ScalarType>(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    // mio::UncertainContactMatrix<ScalarType> contact_matrix = scale_contact_matrix(scaling_factor_contacts);
+    model.parameters.get<mio::isir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+
+    // std::cout << "support max: " << model.compute_calctime(dt, 1e-7) << std::endl;
+
+    // Carry out simulation.
+    mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt, div_dt);
+
+    sim.advance(tmax, kahan, forward_fd);
+
+    return {sim.get_result(), sim.get_flows()};
+}
+
+/**
+ * @brief Simulate the IDE model from t0_ide until t_switch with the (smaller) step size dt_fine = 10^(-fine_exponent)
+ * and save the resulting compartments and flows in CSV files.
+ *
+ * The simulation does not use an initial time window, i.e. it is only initialized with the values init_values_t0 at
+ * t0_ide. The CSV files cover the time points t0_ide, ..., t_switch with step size dt_fine. The flows are given by
+ * -S', where S' is computed with finite differences with step size dt_fine. The files can be read in with
+ * read_timeseries_from_csv() to initialize a subsequent IDE simulation that starts at t_switch.
+ *
+ * @param[in] init_values_t0 TimeSeries with one time point t0_ide containing the initial values.
+ * @param[in] csv_file Path to the CSV file for the compartments.
+ * @param[in] csv_file_flows Path to the CSV file for the flows.
+ */
+mio::IOResult<void> simulate_ide_until_switch(ScalarType fine_exponent, ScalarType t_switch, size_t gregory_order,
+                                              size_t finite_difference_order,
+                                              const mio::TimeSeries<ScalarType>& init_values_t0,
+                                              ScalarType TimeInfected, ScalarType cont_freq,
+                                              const std::string& csv_file, const std::string& csv_file_flows,
+                                              bool kahan, bool forward_fd)
+{
+    ScalarType dt_fine     = pow(10, -fine_exponent);
+    ScalarType div_dt_fine = pow(10, fine_exponent);
+    std::cout << "Simulation until t_switch=" << t_switch << " with dt_fine=" << dt_fine << std::endl;
+
+    // Only use the values at t0_ide as initial values, i.e. no initial time window.
+    std::vector<mio::TimeSeries<ScalarType>> result =
+        run_ide(mio::TimeSeries<ScalarType>(init_values_t0),
+                mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionTransition::Count), dt_fine, div_dt_fine,
+                gregory_order, finite_difference_order, t_switch, TimeInfected, cont_freq, kahan, forward_fd);
+
+    // Use a high precision so that the subsequent simulation is not affected by rounding of the saved values.
+    BOOST_OUTCOME_TRY(result[0].export_csv(csv_file, {}, ',', 16));
+    BOOST_OUTCOME_TRY(result[1].export_csv(csv_file_flows, {}, ',', 16));
+
+    return mio::success();
+}
+
+/**
+ * @brief Simulate the IDE model with the target step sizes dt = 10^(-ide_exponent) for all ide_exponents.
+ *
+ * For each target step size dt, the simulation is split into two parts. First, the IDE model is simulated on
+ * [t0_ide, t_switch] with the smaller step size dt_fine = dt * 10^(-fine_exponent_offset), where
+ * t_switch = t0_ide + num_steps_until_switch * dt and fine_exponent_offset is the entry of fine_exponent_offsets that
+ * corresponds to ide_exponent. This simulation does not use an initial time window, i.e. it is only initialized with
+ * the values of ode_compartments at t0_ide. The resulting compartments and flows are saved in CSV files. Afterwards,
+ * the CSV files are read in and used to initialize the IDE model that is then simulated on [t_switch, tmax] with the
+ * target step size dt. The initial time window of this simulation is the whole time interval [t0_ide, t_switch] of
+ * the first simulation. If use_fine_flows, the flows (i.e. -S') computed with step
+ * size dt_fine are used on the initial time window of the second simulation. Otherwise, they are computed from the
+ * compartments with step size dt. Both parts use the same numerical scheme.
+ * If num_steps_until_switch is zero, there is no simulation with step size dt_fine. Then, the IDE model is directly
+ * simulated on [t0_ide, tmax] with step size dt and is only initialized with the values of ode_compartments at t0_ide.
+ *
+ * @param[in] ode_compartments Compartments of the ODE solution. The IDE model is initialized with its values at t0_ide
+ *  so that the IDE solution can be compared with the ODE solution at the same time points.
+ */
+mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, std::vector<ScalarType> fine_exponent_offsets,
+                                 size_t gregory_order, size_t finite_difference_order,
+                                 const mio::TimeSeries<ScalarType>& ode_compartments, ScalarType t0_ide,
+                                 ScalarType tmax, ScalarType TimeInfected, ScalarType cont_freq,
+                                 size_t num_steps_until_switch, bool use_fine_flows, std::string save_dir = "",
+                                 bool kahan = true, bool forward_fd = false)
+{
+    using namespace params;
+
+    if (fine_exponent_offsets.size() != ide_exponents.size()) {
+        return mio::failure(mio::StatusCode::InvalidValue,
+                            "fine_exponent_offsets has to contain one entry for each entry of ide_exponents.");
+    }
+
+    BOOST_OUTCOME_TRY(auto&& init_values_t0, get_init_values_at_t0(ode_compartments, t0_ide));
+
+    for (size_t i = 0; i < ide_exponents.size(); i++) {
+        ScalarType ide_exponent         = ide_exponents[i];
+        ScalarType fine_exponent_offset = fine_exponent_offsets[i];
+
+        // dt has to be a multiple of dt_fine so that the values at the time points of the coarse grid are contained in
+        // the result of the simulation with dt_fine.
+        if (fine_exponent_offset < 0. || std::fabs(fine_exponent_offset - std::round(fine_exponent_offset)) > 1e-12) {
+            return mio::failure(mio::StatusCode::InvalidValue,
+                                "fine_exponent_offset has to be a non-negative integer, but is " +
+                                    std::to_string(fine_exponent_offset) + ".");
+        }
 
         ScalarType dt_ide     = pow(10, -ide_exponent);
         ScalarType div_dt_ide = pow(10, ide_exponent);
         std::cout << "Simulation with dt=" << dt_ide << std::endl;
 
-        mio::TimeSeries<ScalarType> init_populations((size_t)mio::isir::InfectionState::Count);
-        mio::TimeSeries<ScalarType> init_flows_ts((size_t)mio::isir::InfectionTransition::Count);
+        // Define the smaller step size and t_switch depending on the target step size dt_ide.
+        ScalarType fine_exponent = ide_exponent + fine_exponent_offset;
+        ScalarType t_switch      = t0_ide + num_steps_until_switch * dt_ide;
 
-        ScalarType cutoff_window = 0;
-
-        if (compartments_groundtruth.get_num_time_points() == 0) {
-            std::cout << "No groundtruth was given.\n";
+        // If the forward finite difference scheme is used, S' at the first finite_difference_order time points is
+        // computed with values of S at later time points. Thus, the first simulation needs at least
+        // 2 * finite_difference_order - 1 time steps.
+        size_t num_fine_steps = num_steps_until_switch * (size_t)std::round(std::pow(10, fine_exponent_offset));
+        if (num_steps_until_switch > 0 && forward_fd && num_fine_steps < 2 * finite_difference_order - 1) {
+            return mio::failure(mio::StatusCode::InvalidValue,
+                                fmt::format("The simulation until t_switch has only {} time steps, but at least {} "
+                                            "are needed for the forward finite difference scheme.",
+                                            num_fine_steps, 2 * finite_difference_order - 1));
         }
-        else {
-            std::cout << "Initializing with given groundtruth for compartments.\n";
 
-            // Initialize time points before t0_ide based on groundtruth. The values are taken from the groundtruth at
-            // the time points t_init, t_init + dt_ide, ..., t0_ide, i.e. with the step size of the IDE model. This
-            // requires that dt_ide is a multiple of the step size of the groundtruth.
-            Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
+        // Values that are used to initialize the simulation with the target step size dt_ide. Without simulation with
+        // step size dt_fine, only the values of the ODE solution at t0_ide are used. If flows_init is empty, the flows
+        // on the initial time window are computed in the simulation.
+        mio::TimeSeries<ScalarType> init_populations = init_values_t0;
+        mio::TimeSeries<ScalarType> flows_init((size_t)mio::isir::InfectionTransition::Count);
 
-            ScalarType t_init = t0_ide - t_init_window;
-            ScalarType t0_ode = compartments_groundtruth.get_time(0);
-            cutoff_window     = t_init - t0_ode;
+        if (num_steps_until_switch > 0) {
+            // Simulate until t_switch with the smaller step size and save the result as CSV files.
+            std::string csv_dir  = save_dir.empty() ? "./" : save_dir;
+            std::string csv_file = fmt::format(
+                "{}/ide_result_until_tswitch_dt=1e-{:.0f}_dtfine=1e-{:.0f}_tswitch={:.10g}_gregoryorder={}.csv",
+                csv_dir, ide_exponent, fine_exponent, t_switch, gregory_order);
+            std::string csv_file_flows = fmt::format(
+                "{}/ide_result_until_tswitch_dt=1e-{:.0f}_dtfine=1e-{:.0f}_tswitch={:.10g}_gregoryorder={}_flows.csv",
+                csv_dir, ide_exponent, fine_exponent, t_switch, gregory_order);
+            BOOST_OUTCOME_TRY(simulate_ide_until_switch(fine_exponent, t_switch, gregory_order, finite_difference_order,
+                                                        init_values_t0, TimeInfected, cont_freq, csv_file,
+                                                        csv_file_flows, kahan, forward_fd));
 
-            ScalarType start_time = more_precise_s_deriv ? t0_ode : t_init;
+            // Read in the values obtained with the smaller step size and use the whole time interval
+            // [t0_ide, t_switch] of the first simulation as initial time window.
+            ScalarType init_window = num_steps_until_switch * dt_ide;
+            BOOST_OUTCOME_TRY(auto&& compartments_until_switch,
+                              read_timeseries_from_csv(csv_file, (size_t)mio::isir::InfectionState::Count));
+            BOOST_OUTCOME_TRY(auto&& init_populations_coarse,
+                              get_init_values(compartments_until_switch, init_window, t_switch, dt_ide, div_dt_ide));
+            init_populations = init_populations_coarse;
 
-            // Number of IDE time steps from start_time to t0_ide.
-            size_t num_steps = (size_t)std::round((t0_ide - start_time) * div_dt_ide);
-            for (size_t step = 0; step <= num_steps; step++) {
-                // Compute time directly from step to avoid accumulating rounding errors.
-                ScalarType time = start_time + step * dt_ide;
-                BOOST_OUTCOME_TRY(auto&& index, get_index_of_time(compartments_groundtruth, time));
-                vec_init = compartments_groundtruth.get_value(index);
-                init_populations.add_time_point(time, vec_init);
+            if (use_fine_flows) {
+                BOOST_OUTCOME_TRY(
+                    auto&& flows_until_switch,
+                    read_timeseries_from_csv(csv_file_flows, (size_t)mio::isir::InfectionTransition::Count));
+                BOOST_OUTCOME_TRY(auto&& flows_init_coarse,
+                                  get_init_values(flows_until_switch, init_window, t_switch, dt_ide, div_dt_ide));
+                flows_init = flows_init_coarse;
             }
         }
 
-        // Initialize model.
-        mio::isir::ModelMessinaExtendedDetailedInit model(std::move(init_populations), total_population, gregory_order,
-                                                          finite_difference_order, std::move(init_flows_ts));
-
-        mio::ExponentialSurvivalFunction exp(1. / TimeInfected);
-
-        mio::StateAgeFunctionWrapper dist(exp);
-        std::vector<mio::StateAgeFunctionWrapper<ScalarType>> vec_dist((size_t)mio::isir::InfectionTransition::Count,
-                                                                       dist);
-        model.parameters.get<mio::isir::TransitionDistributions>() = vec_dist;
-
-        mio::ConstantFunction transmissiononcontact(TransmissionProbabilityOnContact);
-        mio::StateAgeFunctionWrapper transmissiononcontact_wrapper(transmissiononcontact);
-        model.parameters.get<mio::isir::TransmissionProbabilityOnContact>() = transmissiononcontact_wrapper;
-
-        mio::ConstantFunction riskofinfection(RiskOfInfectionFromSymptomatic);
-        mio::StateAgeFunctionWrapper riskofinfection_wrapper(riskofinfection);
-        model.parameters.get<mio::isir::RiskOfInfectionFromSymptomatic>() = riskofinfection_wrapper;
-
-        mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup<ScalarType>(1, 1);
-        contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixXd::Constant(1, 1, cont_freq));
-        // mio::UncertainContactMatrix<ScalarType> contact_matrix = scale_contact_matrix(scaling_factor_contacts);
-        model.parameters.get<mio::isir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
-
-        // std::cout << "support max: " << model.compute_calctime(dt_ide, 1e-7) << std::endl;
-
-        // Carry out simulation.
-        mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide, div_dt_ide);
-
-        sim.advance(tmax, kahan, more_precise_s_deriv, forward_fd, cutoff_window);
-
-        // sim.advance_S_deriv_analytical(tmax);
+        // Simulate until tmax with the target step size.
+        std::vector<mio::TimeSeries<ScalarType>> result =
+            run_ide(std::move(init_populations), std::move(flows_init), dt_ide, div_dt_ide, gregory_order,
+                    finite_difference_order, tmax, TimeInfected, cont_freq, kahan, forward_fd);
 
         if (!save_dir.empty()) {
             // Save compartments.
-            mio::TimeSeries<ScalarType> compartments = sim.get_result();
-            mio::TimeSeries<ScalarType> flows        = sim.get_flows();
+            mio::TimeSeries<ScalarType> compartments = result[0];
+            mio::TimeSeries<ScalarType> flows        = result[1];
 
-            auto result = compartments.export_csv(fmt::format("{}/ide_result.csv", save_dir), {}, ',', 12);
+            auto csv_result = compartments.export_csv(fmt::format("{}/ide_result.csv", save_dir), {}, ',', 12);
 
             auto save_result_status_ide =
                 mio::save_result({compartments}, {0}, num_agegroups,
@@ -328,29 +500,44 @@ int main()
     // Compute groundtruth with ODE model.
     ScalarType ode_exponent = 6.;
 
-    // CSV file with the values that are used to initialize the IDE model. The IDE model is initialized with the values
-    // at the time points t_init, t_init + dt_ide, ..., t0_ide. Therefore, the CSV file has to cover this time range and
-    // dt_ide has to be a multiple of the step size used in the CSV file.
-    std::string init_values_file =
-        "./simulation_results/2026-10-12/"
-        "Init_values_dtode=1e-6_t0ode=0_timeinf=2_contfreq=0.73_kahan=false_buffer=false_forwardfd=true/"
-        "detailed_init_exponential_t0ide=48_tmax=50_finite_diff=4/tinit=48/ide_result.csv";
-
     std::vector<ScalarType> time_infected_values = {2.};
 
-    ScalarType t0_ode                    = 0.;
-    ScalarType t0_ide                    = 50.;
-    std::vector<ScalarType> init_windows = {2.};
-    std::vector<ScalarType> tmax_values  = {t0_ide + 100.};
+    // The ODE model is initialized at t0_ode with the values from params. The IDE model is initialized at t0_ide with
+    // the values of the ODE solution at t0_ide, so that both solutions can be compared at the same time points. Thus,
+    // t0_ide has to be in [t0_ode, tmax] and has to be a time point of the saved ODE solution, i.e. a multiple of
+    // 10^(-saving_exponent) after t0_ode.
+    ScalarType t0_ode                   = 0.;
+    ScalarType t0_ide                   = 50.;
+    std::vector<ScalarType> tmax_values = {t0_ide + 100.};
 
-    bool kahan                = false;
-    bool more_precise_s_deriv = false;
-    bool forward_fd           = true;
+    bool kahan      = false;
+    bool forward_fd = true;
 
     std::vector<size_t> finite_difference_orders = {4};
 
-    std::vector<ScalarType> ide_exponents = {3.};
-    std::vector<size_t> gregory_orders    = {1, 2, 3};
+    std::vector<size_t> gregory_orders = {1, 2, 3};
+
+    // Before t_switch, the IDE model is simulated with the smaller step size dt_fine = dt * 10^(-fine_exponent_offset)
+    // where dt is the target step size. The entries of fine_exponent_offsets correspond to the entries of
+    // ide_exponents. The switching time is given by t_switch = t0_ide + num_steps_until_switch * dt with
+    // num_steps_until_switch = max(gregory_order - 1, 2 * finite_difference_order - 1). Thus, there are at least
+    // 2 * finite_difference_order - 1 time steps until t_switch which are needed for the forward finite difference
+    // scheme, also if fine_exponent_offset = 0, i.e. dt_fine = dt. The simulation until t_switch does not use an
+    // initial time window but is only initialized with the values of the ODE solution at t0_ide. Its result is saved
+    // as CSV file and read in to initialize the simulation with step size dt, i.e. [t0_ide, t_switch] is the initial
+    // time window of the simulation with step size dt. With fine_exponent_offset = 0, this yields the same result as a
+    // simulation that directly uses the step size dt.
+    // If use_fine_flows, the flows (i.e. -S') computed with step size dt_fine are also used on the initial time window
+    // of the simulation with step size dt. Otherwise, they are computed from the compartments with step size dt.
+    std::vector<ScalarType> ide_exponents         = {0., 1., 2., 3.};
+    std::vector<ScalarType> fine_exponent_offsets = {0., 0., 0., 0.};
+    bool use_fine_flows                           = true;
+
+    // String with the entries of fine_exponent_offsets for the folder name, e.g. "1-1-2".
+    std::string fine_exponent_offsets_string = "";
+    for (size_t i = 0; i < fine_exponent_offsets.size(); i++) {
+        fine_exponent_offsets_string += (i > 0 ? "-" : "") + fmt::format("{}", fine_exponent_offsets[i]);
+    }
 
     std::vector<std::vector<ScalarType>> timeinf_tmax_values;
 
@@ -372,11 +559,11 @@ int main()
             std::cout << "FD order: " << finite_difference_order << std::endl;
 
             std::string save_dir =
-                fmt::format("./simulation_results/2026-10-13/"
-                            "init_ide_dtode=1e-{}_t0ode={}_timeinf={}_contfreq={}_kahan={}_buffer={}_forwardfd={}/"
-                            "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
-                            ode_exponent, t0_ode, time_infected, cont_freq, kahan, more_precise_s_deriv, forward_fd,
-                            t0_ide, tmax, finite_difference_order);
+                fmt::format("./simulation_results/2026-10-16/"
+                            "dtode=1e-{}_t0ode={}_timeinf={}_contfreq={}_kahan={}_forwardfd={}/"
+                            "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}_fineoffsets={}_fineflows={}/",
+                            ode_exponent, t0_ode, time_infected, cont_freq, kahan, forward_fd, t0_ide, tmax,
+                            finite_difference_order, fine_exponent_offsets_string, use_fine_flows);
 
             // Make folder if not existent yet.
             std::filesystem::path dir(save_dir);
@@ -387,34 +574,26 @@ int main()
             auto result_ode =
                 simulate_ode(ode_exponent, t0_ode, tmax, time_infected, cont_freq, save_dir, saving_exponent).value();
 
-            auto compartments_init_result =
-                read_timeseries_from_csv(init_values_file, (size_t)mio::isir::InfectionState::Count);
-            if (!compartments_init_result) {
-                std::cout << compartments_init_result.error().formatted_message() << std::endl;
-                return -1;
-            }
-            auto compartments_init = compartments_init_result.value();
+            // The results of the simulation with step size dt start at t0_ide, hence we use t_init = t0_ide for the
+            // folder name.
+            std::string save_dir_ide = fmt::format("{}/tinit={}/", save_dir, t0_ide);
+            // Make folder if not existent yet.
+            std::filesystem::path dir_ide(save_dir_ide);
+            std::filesystem::create_directories(dir_ide);
 
-            for (ScalarType init_window : init_windows) {
-                ScalarType t_init = t0_ide - init_window;
-                std::cout << "t_init = " << t_init << std::endl;
-
-                std::string save_dir_ide = fmt::format("{}/tinit={}/", save_dir, t_init);
-                // Make folder if not existent yet.
-                std::filesystem::path dir_ide(save_dir_ide);
-                std::filesystem::create_directories(dir_ide);
-
-                // Do IDE simulations.
-                for (size_t gregory_order : gregory_orders) {
-                    std::cout << std::endl;
-                    std::cout << "Gregory order: " << gregory_order << std::endl;
-                    mio::IOResult<void> result_ide = simulate_ide(
-                        ide_exponents, gregory_order, finite_difference_order, init_window, t0_ide, tmax, time_infected,
-                        cont_freq, save_dir_ide, kahan, compartments_init, more_precise_s_deriv, forward_fd);
-                    if (!result_ide) {
-                        std::cout << result_ide.error().formatted_message() << std::endl;
-                        return -1;
-                    }
+            // Do IDE simulations.
+            for (size_t gregory_order : gregory_orders) {
+                std::cout << std::endl;
+                std::cout << "Gregory order: " << gregory_order << std::endl;
+                // Number of time steps with step size dt that are simulated with the smaller step size dt_fine.
+                size_t num_steps_until_switch = std::max(gregory_order - 1, 2 * finite_difference_order - 1);
+                mio::IOResult<void> result_ide =
+                    simulate_ide(ide_exponents, fine_exponent_offsets, gregory_order, finite_difference_order,
+                                 result_ode[0], t0_ide, tmax, time_infected, cont_freq, num_steps_until_switch,
+                                 use_fine_flows, save_dir_ide, kahan, forward_fd);
+                if (!result_ide) {
+                    std::cout << result_ide.error().formatted_message() << std::endl;
+                    return -1;
                 }
             }
         }
