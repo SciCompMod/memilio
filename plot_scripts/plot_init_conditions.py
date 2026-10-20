@@ -45,8 +45,11 @@ STYLE_SCATTER = {
     "groundtruth":    {"label": "Ground truth",    "color": "#0072B2", "linestyle": "-",  "linewidth": 5., "alpha": 0.3, "s": 12},
     "detailed":       {"label": "Long initialization",  "color": green, "linestyle": "-", "linewidth": 2., "alpha": 1., "s": 28},
     "detailed_short": {"label": "Short initialization", "color": yellow, "linestyle": "-", "linewidth": 2., "alpha": 1., "s": 12},
-    "simple":         {"label": "Memoryless",         "color": red, "linestyle": "-",  "linewidth": 2., "alpha": 1., "s": 35},
+    "simple":         {"label": "Memoryless",         "color": red, "linestyle": "-",  "linewidth": 2., "alpha": 1., "s": 10},
 }
+# Marker sizes in the infection age distribution plots per evaluation time t_eval (on the shifted time axis).
+# Entries replace the default sizes from STYLE_SCATTER.
+INFAGE_MARKER_SIZES = {0.: {"simple": 35}, 10.: {"simple": 10}}
 # order matches input file lists
 FILE_KEYS = ["detailed", "detailed_short", "simple"]
 FILE_KEYS_GROUNDTRUTH = ["groundtruth", "detailed", "detailed_short", "simple"]
@@ -189,30 +192,30 @@ def plot_compartments(files, fileending, save_dir="", zoom=False):
                 plot_max[i] = np.max(total[:, i])
             axs[i].plot(dates, total[:, i], **style)
 
-            if zoom and i == 0 and key != "groundtruth":
-                # Compare decrease of Susceptibles in [t0, t0 + 7.5] with the ground truth.
-                t_start = t0s[key] - shift
-                t_end = t_start + 7.5
+            if zoom and i == 1 and key != "groundtruth":
+                # Compare Infected at t = 10 with the ground truth.
+                t_eval = 10.
 
-                def susceptible_diff(d, tot):
-                    start_index = np.where(np.isclose(d, t_start))[0][0]
-                    end_index = np.where(np.isclose(d, t_end))[0][0]
-                    return tot[start_index, i] - tot[end_index, i]
+                def infected_at(d, tot):
+                    index = np.where(np.isclose(d, t_eval))[0][0]
+                    return tot[index, i]
 
-                diff = susceptible_diff(dates, total)
-                groundtruth_diff = susceptible_diff(
+                infected = infected_at(dates, total)
+                groundtruth_infected = infected_at(
                     groundtruth_dates, groundtruth_total)
                 print(key)
-                print(f"Diff of Susceptibles in [{t_start}, {t_end}]:", diff)
-                print("Ground truth diff:", groundtruth_diff)
-                print("Relative diff compared to ground truth:",
-                      diff/groundtruth_diff)
+                print(f"Infected at t={t_eval}:", infected)
+                print("Ground truth:", groundtruth_infected)
+                print("Difference to ground truth:",
+                      infected - groundtruth_infected)
+                print("Relative infected compared to ground truth:",
+                      infected/groundtruth_infected)
                 print()
 
     if zoom:
         # Center zoom around t0 of the memoryless initialization.
-        zoom_min = t0s["simple"] - shift - 7.5
-        zoom_max = t0s["simple"] - shift + 7.5
+        zoom_min = t0s["simple"] - shift - 20
+        zoom_max = t0s["simple"] - shift + 10
         for i in range(num_plots):
             axs[i].set_xlim(zoom_min, zoom_max)
 
@@ -299,26 +302,19 @@ def plot_flow_S_to_I(files, fileending, save_dir=""):
     _save(fig, save_dir, f"compare_flow_{fileending}.png")
 
 
-def plot_infectionage_distribution(files, fileending, save_dir=""):
+def _scatter_infectionage_distribution(ax, files, t_eval):
     """
-    Plots the infected-per-infection-age distribution, comparing detailed/detailed_short/simple.
+    Scatters the infected-per-infection-age distributions of files [detailed, detailed_short, simple] into ax.
 
-    The distributions of all models are saved at the start time of the memoryless initialization, see
-    compare_init_conditions_*.cpp.
-
-    @param[in] files List of three files [detailed, detailed_short, simple].
-    @param[in] fileending Suffix for the saved plot filename.
-    @param[in] save_dir Directory to save the plot in; not saved if empty.
+    @return Plotted keys and the corresponding legend labels.
     """
-    fig, ax = plt.subplots(1, 1, figsize=(
-        1.5*PANEL_WIDTH, PANEL_HEIGHT), num="Compare files")
-
     t0s = get_t0s_from_dir_name(files[0])
     shift = get_time_shift(t0s)
+    marker_sizes = INFAGE_MARKER_SIZES.get(t_eval, {})
     legend_labels = {}
     plotted_keys = []
 
-    _style_axis(ax, r"Infected per infection age at $t=0$")
+    _style_axis(ax, rf"Infected per infection age at $t={t_eval:g}$")
 
     for key, filepath in zip(FILE_KEYS, files):
         dates, total = load_h5_total(filepath)
@@ -326,12 +322,61 @@ def plot_infectionage_distribution(files, fileending, save_dir=""):
         legend_labels[key] = rf"$\widetilde{{T}}={t0s[key] - shift:g}$"
         style = STYLE_SCATTER[key]
         ax.scatter(dates, total, color=style["color"], marker="o",
-                   s=style["s"],
+                   s=marker_sizes.get(key, style["s"]),
                    linewidths=0,
                    edgecolors="none",
                    zorder=2)
 
     ax.xaxis.set_major_locator(MultipleLocator(10))
+
+    return plotted_keys, legend_labels
+
+
+def plot_infectionage_distribution(files, fileending, save_dir="", t_eval=0.):
+    """
+    Plots the infected-per-infection-age distribution, comparing detailed/detailed_short/simple.
+
+    The distributions of all models are saved at the same time point, by default at the start time of the memoryless
+    initialization, see compare_init_conditions_*.cpp.
+
+    @param[in] files List of three files [detailed, detailed_short, simple].
+    @param[in] fileending Suffix for the saved plot filename.
+    @param[in] save_dir Directory to save the plot in; not saved if empty.
+    @param[in] t_eval Time (on the shifted time axis) at which the distributions were saved; used for the title.
+    """
+    fig, ax = plt.subplots(1, 1, figsize=(
+        1.5*PANEL_WIDTH, PANEL_HEIGHT), num="Compare files")
+
+    plotted_keys, legend_labels = _scatter_infectionage_distribution(
+        ax, files, t_eval)
+
+    _add_shared_legend(fig, plotted_keys, labels=legend_labels)
+
+    fig.supxlabel("Infection age [days]",  y=0.04)
+    fig.supylabel("Number of individuals", y=0.54)
+    plt.tight_layout()
+
+    _save(fig, save_dir, f"infected_per_infection_age_{fileending}.png")
+
+
+def plot_infectionage_distributions_combined(files_per_t_eval, t_evals, fileending, save_dir=""):
+    """
+    Plots the infected-per-infection-age distributions at several time points next to each other with a shared legend.
+
+    @param[in] files_per_t_eval List with one list of files [detailed, detailed_short, simple] per entry of t_evals.
+    @param[in] t_evals Times (on the shifted time axis) at which the distributions were saved.
+    @param[in] fileending Suffix for the saved plot filename.
+    @param[in] save_dir Directory to save the plot in; not saved if empty.
+    """
+    num_plots = len(t_evals)
+    fig, axs = plt.subplots(1, num_plots, figsize=(
+        1.5*PANEL_WIDTH*num_plots, PANEL_HEIGHT), num="Compare files")
+
+    # All panels use the same models, so the legend of the last panel is shared.
+    plotted_keys, legend_labels = [], {}
+    for ax, files, t_eval in zip(axs, files_per_t_eval, t_evals):
+        plotted_keys, legend_labels = _scatter_infectionage_distribution(
+            ax, files, t_eval)
 
     _add_shared_legend(fig, plotted_keys, labels=legend_labels)
 
@@ -468,8 +513,8 @@ if __name__ == "__main__":
 
     root_dir = os.path.join(os.path.dirname(__file__), "../simulation_results")
 
-    main_dir = "2026-10-14/I0=1000_compare_different_inits_erlang_numsubcomps=6_contfreq=0.4_kahan=false_buffer=false_forwatdfd=true"
-    # main_dir = "2026-10-14/I0=1000_compare_different_inits_exp_contfreq=0.73_kahan=false_buffer=false_forwatdfd=true"
+    main_dir = "2026-10-16/new2_compare_different_inits_erlang_numsubcomps=6_contfreq=0.4_kahan=false_forwardfd=true"
+    # main_dir = "2026-10-16/new2_compare_different_inits_exp_contfreq=0.73_kahan=false_forwardfd=true"
 
     relevant_dir = os.path.join(root_dir, main_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
@@ -494,23 +539,23 @@ if __name__ == "__main__":
 
         base = f"dt=1e-{ide_exponent}"
 
-        plot_compartments(
-            [os.path.join(result_dir, f"groundtruth_{base}"),
-             os.path.join(
-                 result_dir, f"detailed_{base}_gregoryorder={gregory_order}"),
-             os.path.join(
-                 result_dir, f"detailed_short_{base}_gregoryorder={gregory_order}"),
-             os.path.join(result_dir, f"simple_{base}_gregoryorder={gregory_order}")],
-            fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir)
+        # plot_compartments(
+        #     [os.path.join(result_dir, f"groundtruth_{base}"),
+        #      os.path.join(
+        #          result_dir, f"detailed_{base}_gregoryorder={gregory_order}"),
+        #      os.path.join(
+        #          result_dir, f"detailed_short_{base}_gregoryorder={gregory_order}"),
+        #      os.path.join(result_dir, f"simple_{base}_gregoryorder={gregory_order}")],
+        #     fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir)
 
-        plot_compartments(
-            [os.path.join(result_dir, f"groundtruth_{base}"),
-             os.path.join(
-                result_dir, f"detailed_{base}_gregoryorder={gregory_order}"),
-             os.path.join(
-                result_dir, f"detailed_short_{base}_gregoryorder={gregory_order}"),
-             os.path.join(result_dir, f"simple_{base}_gregoryorder={gregory_order}")],
-            fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir, zoom=True)
+        # plot_compartments(
+        #     [os.path.join(result_dir, f"groundtruth_{base}"),
+        #      os.path.join(
+        #         result_dir, f"detailed_{base}_gregoryorder={gregory_order}"),
+        #      os.path.join(
+        #         result_dir, f"detailed_short_{base}_gregoryorder={gregory_order}"),
+        #      os.path.join(result_dir, f"simple_{base}_gregoryorder={gregory_order}")],
+        #     fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir, zoom=True)
 
         # plot_flow_S_to_I(
         #     [os.path.join(result_dir, f"detailed_flows_{base}"),
@@ -518,10 +563,22 @@ if __name__ == "__main__":
         #      os.path.join(result_dir, f"simple_flows_{base}")],
         #     fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir)
 
+        infage_files_t0 = [os.path.join(result_dir, f"{key}_infectionagedistribution_{base}_gregoryorder={gregory_order}")
+                           for key in FILE_KEYS]
         plot_infectionage_distribution(
-            [os.path.join(
-                result_dir, f"detailed_infectionagedistribution_{base}_gregoryorder={gregory_order}"),
-             os.path.join(
-                result_dir, f"detailed_short_infectionagedistribution_{base}_gregoryorder={gregory_order}"),
-             os.path.join(result_dir, f"simple_infectionagedistribution_{base}_gregoryorder={gregory_order}")],
-            fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir)
+            infage_files_t0, fileending=f"dt=1e-{ide_exponent}", save_dir=plot_dir)
+
+        # Infection age distribution at t=10 (shifted time axis), only available if it was written by the simulation.
+        t_eval_infage = 10.
+        t_write_infage = get_time_shift(
+            get_t0s_from_dir_name(result_dir)) + t_eval_infage
+        infage_files = [os.path.join(result_dir, f"{key}_infectionagedistribution_t={t_write_infage:g}_{base}_gregoryorder={gregory_order}")
+                        for key in FILE_KEYS]
+        if all(os.path.isfile(f + ".h5") for f in infage_files):
+            plot_infectionage_distribution(
+                infage_files, fileending=f"t={t_eval_infage:g}_dt=1e-{ide_exponent}", save_dir=plot_dir,
+                t_eval=t_eval_infage)
+
+            plot_infectionage_distributions_combined(
+                [infage_files_t0, infage_files], [0., t_eval_infage],
+                fileending=f"t=0_t={t_eval_infage:g}_dt=1e-{ide_exponent}", save_dir=plot_dir)

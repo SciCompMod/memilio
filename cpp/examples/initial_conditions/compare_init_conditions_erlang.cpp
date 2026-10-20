@@ -144,7 +144,7 @@ simulate_ide(ScalarType ide_exponent, size_t gregory_order, size_t finite_differ
              ScalarType t0, ScalarType tmax, std::string save_dir = "", std::string model_type = "",
              mio::TimeSeries<ScalarType> result_groundtruth =
                  mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
-             size_t write_inf_per_infage_time = 0)
+             size_t write_inf_per_infage_time = 0, std::vector<ScalarType> additional_inf_per_infage_times = {})
 {
     using namespace params;
     using Vec = mio::TimeSeries<ScalarType>::Vector;
@@ -219,8 +219,8 @@ simulate_ide(ScalarType ide_exponent, size_t gregory_order, size_t finite_differ
 
             while (init_populations.get_last_time() < t0 - 1e-10) {
                 for (size_t compartment : compartments) {
-                    vec_init[compartment] =
-                        result_groundtruth.get_value(t_init_index + init_populations.get_num_time_points())[compartment];
+                    vec_init[compartment] = result_groundtruth.get_value(
+                        t_init_index + init_populations.get_num_time_points())[compartment];
                 }
                 init_populations.add_time_point(init_populations.get_last_time() + dt, vec_init);
             }
@@ -277,21 +277,31 @@ simulate_ide(ScalarType ide_exponent, size_t gregory_order, size_t finite_differ
                              save_dir + model_type + "_flows_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
                                  +"_gregoryorder=" + fmt::format("{}", gregory_order) + ".h5");
 
-        std::cout << "write time: " << write_inf_per_infage_time << std::endl;
-        if (write_inf_per_infage_time > 0) {
-
-            size_t write_inf_per_infage_index =
-                (size_t)std::round((write_inf_per_infage_time - compartments.get_time(0)) / dt);
+        // Writes the infected per infection age at time write_time to a file with the given suffix.
+        auto save_infected_per_infection_age = [&](ScalarType write_time, std::string suffix) {
+            size_t write_inf_per_infage_index = (size_t)std::round((write_time - compartments.get_time(0)) / dt);
             std::cout << "write index: " << write_inf_per_infage_index << std::endl;
             std::cout << "eval time: " << compartments.get_time(write_inf_per_infage_index) << std::endl;
             std::cout << std::endl;
             mio::TimeSeries<ScalarType> infected_per_infection_age =
                 sim.write_infected_per_infection_age(write_inf_per_infage_index);
 
-            auto save_result_status_ide_inf = mio::save_result(
-                {infected_per_infection_age}, {0}, num_agegroups,
-                save_dir + model_type + "_infectionagedistribution_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
-                    +"_gregoryorder=" + fmt::format("{}", gregory_order) + ".h5");
+            return mio::save_result({infected_per_infection_age}, {0}, num_agegroups,
+                                    save_dir + model_type + "_infectionagedistribution" + suffix + "_dt=1e-" +
+                                        fmt::format("{:.0f}", ide_exponent) +
+                                        +"_gregoryorder=" + fmt::format("{}", gregory_order) + ".h5");
+        };
+
+        std::cout << "write time: " << write_inf_per_infage_time << std::endl;
+        if (write_inf_per_infage_time > 0) {
+            auto save_result_status_ide_inf = save_infected_per_infection_age(write_inf_per_infage_time, "");
+        }
+
+        // Additional time points; the time is added to the file name to distinguish them.
+        for (ScalarType write_time : additional_inf_per_infage_times) {
+            std::cout << "additional write time: " << write_time << std::endl;
+            auto save_result_status_ide_inf =
+                save_infected_per_infection_age(write_time, "_t=" + fmt::format("{:g}", write_time));
         }
     }
 
@@ -316,10 +326,10 @@ int main()
     ScalarType dt_exponent = 2.; // Used for both ODE and IDE simulations
 
     std::string save_dir =
-        fmt::format("../../simulation_results/2026-10-14/"
-                    "I0={}_compare_different_inits_erlang_numsubcomps={}_contfreq={}_kahan={}_forwatdfd={}/"
+        fmt::format("../../simulation_results/2026-10-16/"
+                    "new2_compare_different_inits_erlang_numsubcomps={}_contfreq={}_kahan={}_forwardfd={}/"
                     "nonconst_contacts_t0memoryless={}_t0short={}_t0long={}_tmax={}/",
-                    I0, num_subcomps_infected, cont_freq, kahan, forward_fd, t0_ide_memoryless, t0_ide_short_init,
+                    num_subcomps_infected, cont_freq, kahan, forward_fd, t0_ide_memoryless, t0_ide_short_init,
                     t0_ide_long_init, tmax);
 
     // Make folder if not existent yet.
@@ -331,19 +341,21 @@ int main()
     mio::IOResult<mio::TimeSeries<ScalarType>> result_groundtruth = simulate_lct(dt_exponent, t0_ode, tmax, save_dir);
 
     // The infection age distribution is written at t0_ide_memoryless for all models to compare them at the same time.
+    // Additionally, it is written 10 days after t0_ide_memoryless.
+    std::vector<ScalarType> additional_inf_per_infage_times = {t0_ide_memoryless + 10.};
 
     // Long init
-    mio::IOResult<mio::TimeSeries<ScalarType>> result_ide_detailed =
-        simulate_ide(dt_exponent, gregory_order, finite_difference_order, t0_ide_long_init, t0_ide_long_init, tmax,
-                     save_dir, "detailed", result_groundtruth.value(), t0_ide_memoryless);
+    mio::IOResult<mio::TimeSeries<ScalarType>> result_ide_detailed = simulate_ide(
+        dt_exponent, gregory_order, finite_difference_order, t0_ide_long_init, t0_ide_long_init, tmax, save_dir,
+        "detailed", result_groundtruth.value(), t0_ide_memoryless, additional_inf_per_infage_times);
 
     // Short init
-    mio::IOResult<mio::TimeSeries<ScalarType>> result_ide_detailed_short =
-        simulate_ide(dt_exponent, gregory_order, finite_difference_order, t0_ide_short_init, t0_ide_short_init, tmax,
-                     save_dir, "detailed_short", result_groundtruth.value(), t0_ide_memoryless);
+    mio::IOResult<mio::TimeSeries<ScalarType>> result_ide_detailed_short = simulate_ide(
+        dt_exponent, gregory_order, finite_difference_order, t0_ide_short_init, t0_ide_short_init, tmax, save_dir,
+        "detailed_short", result_groundtruth.value(), t0_ide_memoryless, additional_inf_per_infage_times);
 
     // Memoryless
-    mio::IOResult<mio::TimeSeries<ScalarType>> result_ide_simple =
-        simulate_ide(dt_exponent, gregory_order, finite_difference_order, t0_ide_memoryless, t0_ide_memoryless, tmax,
-                     save_dir, "simple", result_groundtruth.value(), t0_ide_memoryless);
+    mio::IOResult<mio::TimeSeries<ScalarType>> result_ide_simple = simulate_ide(
+        dt_exponent, gregory_order, finite_difference_order, t0_ide_memoryless, t0_ide_memoryless, tmax, save_dir,
+        "simple", result_groundtruth.value(), t0_ide_memoryless, additional_inf_per_infage_times);
 }
