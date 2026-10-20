@@ -1069,11 +1069,15 @@ void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, bool kahan
 
 void ModelMessinaExtendedDetailedInit::write_infected_per_infection_age(ScalarType dt, size_t time_point_index)
 {
+    // Reset so that results of previous calls (e.g. for another time point) are not appended to.
+    infected_per_infection_age = TimeSeries<ScalarType>(infected_per_infection_age.get_num_elements());
 
     for (size_t i = 0; i <= time_point_index; i++) {
 
-        ScalarType entry = m_transitiondistribution_vector[i] *
-                           flows[time_point_index - i][(Eigen::Index)InfectionTransition::SusceptibleToInfected];
+        ScalarType entry =
+            m_transitiondistribution_vector[time_point_index] * populations[0][(Eigen::Index)InfectionState::Infected] +
+            m_transitiondistribution_vector[i] *
+                flows[time_point_index - i][(Eigen::Index)InfectionTransition::SusceptibleToInfected];
 
         ScalarType infection_age = i * dt;
         unused(entry);
