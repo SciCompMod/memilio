@@ -2,54 +2,72 @@ cff-version: "1.2.0"
 message: "If you use this software, please cite it using the metadata below."
 title: "MEmilio v2.2.0 - A high performance Modular EpideMIcs simuLatIOn software"
 version: "2.2.0"
-date-released: "2025-11"
+date-released: "2025-11-17"
 authors:
   - given-names: "Julia"
     family-names: "Bicker"
+    orcid: "https://orcid.org/0000-0001-9382-4209"
   - given-names: "David"
     family-names: "Kerkmann"
+    orcid: "https://orcid.org/0009-0007-9109-096X"
   - given-names: "Sascha Alexander"
     family-names: "Korf"
+    orcid: "https://orcid.org/0000-0002-1431-3046"
   - given-names: "Lena"
     family-names: "Plötzke"
+    orcid: "https://orcid.org/0000-0003-0440-1429"
   - given-names: "René"
     family-names: "Schmieding"
+    orcid: "https://orcid.org/0000-0002-2769-0270"
   - given-names: "Anna Clara"
     family-names: "Wendler"
+    orcid: "https://orcid.org/0000-0002-1816-8907"
   - given-names: "Henrik"
     family-names: "Zunker"
+    orcid: "https://orcid.org/0000-0002-9825-365X"
   - given-names: "Khoa"
     family-names: "Nguyen"
+    orcid: "https://orcid.org/0000-0002-3123-602X"
   - given-names: "Daniel"
     family-names: "Abele"
   - given-names: "Carlotta"
     family-names: "Gerstein"
+    orcid: "https://orcid.org/0009-0004-4410-0502"
   - given-names: "Patrick"
     family-names: "Lenz"
+    orcid: "https://orcid.org/0009-0000-1535-0626"
   - given-names: "Maximilian Franz"
     family-names: "Betz"
+    orcid: "https://orcid.org/0009-0001-9181-9999"
   - given-names: "Agatha"
     family-names: "Schmidt"
+    orcid: "https://orcid.org/0009-0006-5766-8804"
   - given-names: "Ralf"
     family-names: "Hannemann-Tamas"
   - given-names: "Kilian"
     family-names: "Volmer"
+    orcid: "https://orcid.org/0009-0008-9861-0216"
   - given-names: "Nils"
     family-names: "Waßmuth"
   - given-names: "Hannah"
     family-names: "Tritzschak"
+    orcid: "https://orcid.org/0009-0003-8543-662X"
   - given-names: "Daniel"
     family-names: "Richter"
   - given-names: "Manuel"
     family-names: "Heger"
   - given-names: "Achim"
     family-names: "Basermann"
+    orcid: "https://orcid.org/0000-0003-3637-3231"
   - given-names: "Michael"
     family-names: "Meyer-Hermann"
+    orcid: "https://orcid.org/0000-0002-4300-2474"
   - given-names: "Jan"
     family-names: "Hasenauer"
+    orcid: "https://orcid.org/0000-0002-4935-3312"
   - given-names: "Martin Joachim"
     family-names: "Kühn"
+    orcid: "https://orcid.org/0000-0002-0906-6984"
 keywords:
   - Scientific computing
   - mathematical modeling
@@ -61,3 +79,117 @@ keywords:
   - mobility
 url: "https://elib.dlr.de/219141/"
 abstract: "MEmilio implements various models for infectious disease dynamics, from simple compartmental (ODE) models through Integro-Differential equation-based (IDE) models (sometimes also denoted 'age of infection models') to agent- or individual-based models (ABMs). Its modular design allows the combination of different models with different mobility patterns. Through efficient implementation and parallelization, MEmilio brings cutting edge and compute intensive epidemiological models to a large scale, enabling a precise and high-resolution spatiotemporal infectious disease dynamics."
+preferred-citation:
+  type: article
+  title: "MEmilio: a high performance Modular EpideMIcs simuLatIOn software for multi-scale and comparative simulations of infectious disease dynamics"
+  journal: "Scientific Reports"
+  year: 2026
+  month: 8
+  volume: 16
+  issue: 1
+  start: 26950
+  doi: "10.1038/s41598-026-66481-6"
+  url: "https://www.nature.com/articles/s41598-026-66481-6"
+  issn: "2045-2322"
+  publisher:
+    name: "Nature Publishing Group"
+  date-published: "2026-08-27"
+  license: CC-BY-4.0
+  authors:
+    - family-names: Bicker
+      given-names: Julia
+      orcid: "https://orcid.org/0000-0001-9382-4209"
+    - family-names: Gerstein
+      given-names: Carlotta
+      orcid: "https://orcid.org/0009-0004-4410-0502"
+    - family-names: Kerkmann
+      given-names: David
+      orcid: "https://orcid.org/0009-0007-9109-096X"
+    - family-names: Korf
+      given-names: Sascha
+      orcid: "https://orcid.org/0000-0002-1431-3046"
+    - family-names: Schmieding
+      given-names: René
+      orcid: "https://orcid.org/0000-0002-2769-0270"
+    - family-names: Wendler
+      given-names: Anna
+      orcid: "https://orcid.org/0000-0002-1816-8907"
+    - family-names: Zunker
+      given-names: Henrik
+      orcid: "https://orcid.org/0000-0002-9825-365X"
+    - family-names: Abele
+      given-names: Daniel
+    - family-names: Betz
+      given-names: Maximilian
+      orcid: "https://orcid.org/0009-0001-9181-9999"
+    - family-names: Nguyen
+      given-names: Khoa
+      orcid: "https://orcid.org/0000-0002-3123-602X"
+    - family-names: Plötzke
+      given-names: Lena
+      orcid: "https://orcid.org/0000-0003-0440-1429"
+    - family-names: Volmer
+      given-names: Kilian
+      orcid: "https://orcid.org/0009-0008-9861-0216"
+    - family-names: Schmidt
+      given-names: Agatha
+      orcid: "https://orcid.org/0009-0006-5766-8804"
+    - family-names: Waßmuth
+      given-names: Nils
+    - family-names: Lenz
+      given-names: Patrick
+      orcid: "https://orcid.org/0009-0000-1535-0626"
+    - family-names: Richter
+      given-names: Daniel
+    - family-names: Tritzschak
+      given-names: Hannah
+      orcid: "https://orcid.org/0009-0003-8543-662X"
+    - family-names: Hannemann-Tamas
+      given-names: Ralf
+    - family-names: Litz
+      given-names: Julian
+    - family-names: Johannssen
+      given-names: Paul
+      orcid: "https://orcid.org/0009-0006-7869-7647"
+    - family-names: Borges
+      given-names: Marielena
+    - family-names: Jungklaus
+      given-names: Annika
+    - family-names: Heger
+      given-names: Manuel
+    - family-names: Lange
+      given-names: Annalena
+    - family-names: Kluth
+      given-names: Elisabeth
+    - family-names: Rack
+      given-names: Kathrin
+      orcid: "https://orcid.org/0000-0002-5794-5705"
+    - family-names: Wieland
+      given-names: Vincent
+      orcid: "https://orcid.org/0009-0003-9592-8871"
+    - family-names: Arruda
+      given-names: Jonas
+      orcid: "https://orcid.org/0009-0008-9644-5771"
+    - family-names: Binder
+      given-names: Sebastian C.
+      orcid: "https://orcid.org/0000-0003-1169-1786"
+    - family-names: Klitz
+      given-names: Margrit
+      orcid: "https://orcid.org/0000-0003-3657-4180"
+    - family-names: Siggel
+      given-names: Martin
+    - family-names: Dahmen
+      given-names: Manuel
+      orcid: "https://orcid.org/0000-0003-2757-5253"
+    - family-names: Basermann
+      given-names: Achim
+      orcid: "https://orcid.org/0000-0003-3637-3231"
+    - family-names: Meyer-Hermann
+      given-names: Michael
+      orcid: "https://orcid.org/0000-0002-4300-2474"
+    - family-names: Hasenauer
+      given-names: Jan
+      orcid: "https://orcid.org/0000-0002-4935-3312"
+    - family-names: Kühn
+      given-names: Martin J.
+      orcid: "https://orcid.org/0000-0002-0906-6984"
