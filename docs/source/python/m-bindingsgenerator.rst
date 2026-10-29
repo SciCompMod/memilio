@@ -94,7 +94,7 @@ Development
 
 When implementing new model features you can follow these steps:
 
-* Add necessary configurations to `config.json.txt <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-generation/memilio/tools/config.json.txt/>`_ and add corresponding attributes to the ``ScannerConfig``.
+* Add necessary configurations to `config.json.txt <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-generation/generation/tools/config.json.txt/>`_ and add corresponding attributes to the ``ScannerConfig``.
 * For the features you want to implement, find the nodes in the abstract syntax tree (AST) (use method Scanner.output_ast_file(); see the example in tools/).
 * Add the extraction of those features. Therefore, you need to change the "check\_..."-methods corresponding to the ``CursorKind`` of your nodes in the ``Scanner``. If there is no corresponding "check\_..."-method you need to write a new one and add it to the switch-method (``scanner.switch_node_kind()``).
 * Extend the ``IntermediateRepresentation`` for the new model features.
