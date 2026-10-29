@@ -51,30 +51,6 @@ struct mobility_data {
     mio::abm::InfectionState infection_state;
 };
 
-constexpr mio::abm::ActivityType guess_activity_type(mio::abm::LocationType current_location)
-{
-    switch (current_location) {
-    case mio::abm::LocationType::Home:
-        return mio::abm::ActivityType::Home;
-    case mio::abm::LocationType::Work:
-        return mio::abm::ActivityType::Work;
-    case mio::abm::LocationType::School:
-        return mio::abm::ActivityType::School;
-    case mio::abm::LocationType::Recreation:
-        return mio::abm::ActivityType::Recreation;
-    case mio::abm::LocationType::BasicsShop:
-        return mio::abm::ActivityType::BasicsShop;
-    case mio::abm::LocationType::ICU:
-        return mio::abm::ActivityType::ICU;
-    case mio::abm::LocationType::Hospital:
-        return mio::abm::ActivityType::Hospital;
-    case mio::abm::LocationType::Cemetery:
-        return mio::abm::ActivityType::Cemetery;
-    default:
-        return mio::abm::ActivityType::Home;
-    }
-}
-
 /**
  * @brief Logger to log the LocationInformation of the simulation.
  */
@@ -156,7 +132,7 @@ struct LogDataForMobility : mio::LogAlways {
         for (Person p : sim.get_model().get_persons()) {
             mobility_data.push_back(
                 std::make_tuple(p.get_id(), p.get_location(), sim.get_time(), p.get_last_transport_mode(),
-                                guess_activity_type(p.get_location_type()), p.get_infection_state(sim.get_time())));
+                                p.get_activity_type(), p.get_infection_state(sim.get_time())));
         }
         return mobility_data;
     }
