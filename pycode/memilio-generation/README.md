@@ -35,7 +35,7 @@ pip install .
 
 ## Usage
 
-The package provides an example script and README on how to use it in `memilio/tools`. The example uses the ode_seir model from the [C++ Library](../../cpp/models/ode_seir/README.md).
+The package provides an [example script](./memilio/generation/example_oseir.py) and [README](./memilio/generation/README.md). The example uses the ode_seir model from the [C++ Library](../../cpp/models/ode_seir/README.md).
 
 You can print the AST of your model into a file (Usefull for development/debugging).
 
