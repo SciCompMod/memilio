@@ -8,6 +8,7 @@ The following gives an overview on (peer-reviewed) publications extending or usi
 Recently submitted publications
 --------------------------------------
 
+- |Bindings|
 
 Peer-reviewed publications
 --------------------------
