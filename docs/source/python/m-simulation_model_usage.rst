@@ -11,6 +11,19 @@ library to make it easy to understand and comparable, while introducing
 changes to create a more pythonic interface. We will follow the example of an
 ODE SEIR model.
 
+Available models
+----------------
+
+The package provides the following modules:
+
+- `memilio.simulation`: core simulation framework and utilities, corresponds to the framework in `cpp/memilio`.
+- `memilio.simulation.osir`: ODE SIR model and simulation with demographic resolution, corresponds to the model in `cpp/models/ode_sir`.
+- `memilio.simulation.oseir`: ODE SEIR model and simulation with demographic resolution, corresponds to the model in `cpp/models/ode_seir`.
+- `memilio.simulation.osecir`: ODE SECIHURD model and simulation with demographic and geographic resolution, corresponds to the model in `cpp/models/ode_secir`.
+- `memilio.simulation.osecirvvs`: Extended ODE SECIHURD model to include vaccinations and multi-layered immunity, among other enhancements, with the ability to integrate new disease variants. Simulation includes demographic and geographic resolution, corresponds to the model in `cpp/models/ode_secirvvs`.
+- `memilio.simulation.abm`: Agent based model and simulation, corresponds to the model in `cpp/models/abm`.
+
+
 Define infectious disease model
 --------------------------------
 
@@ -246,12 +259,18 @@ pythonic interface.
 
 Now you can use the usual data handling options and make use of the easy visualization tools that are part of Python.
 Some plotting functions specific to MEmilio and created as part of the project are combined in the :doc:`MEmilio Plot Package <m-plot>`.
+For a quick look at the result, it provides a standard plot for ``TimeSeries`` objects:
+
+.. code-block:: python
+
+   from memilio.plot.plotTimeSeries import plot_time_series
+
+   ax = plot_time_series(
+       result, labels=oseir.InfectionState.values(), groups=num_groups)
+   ax.figure.savefig('result.pdf')
 
 Additional resources
 ---------------------
 
 Further examples are provided at `examples/simulation <https://github.com/SciCompMod/memilio/blob/main/pycode/examples/simulation/>`_. 
 They include the usage of a ``FlowModel``, introducing a graph model for regional differences or parameter studies for simulating under uncertainty.
-
-
-

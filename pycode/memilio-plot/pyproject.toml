@@ -16,7 +16,8 @@ maintainers = [
 dependencies = [
   "setuptools>=68",
   "pandas>=1.2.2",
-  "matplotlib",
+  # layout engines (constrained layout of figures) were added in 3.6
+  "matplotlib>=3.6",
   # smaller numpy versions cause a security issue, 1.25 does not work together with pyfakefs
   "numpy>=1.22,!=1.25.*",
   "openpyxl",

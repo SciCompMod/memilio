@@ -319,7 +319,7 @@ Daniel Abele is a research software engineer at the Institute of Software Techno
 
 
 Lena Plötzke
-^^^^^^^^^^^
+^^^^^^^^^^^^
 
 .. image:: _static/team/max_mustermann.jpg
    :alt: NAME

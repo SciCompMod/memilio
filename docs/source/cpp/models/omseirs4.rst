@@ -1,5 +1,5 @@
 ODE-based MSEIRS4 model (ODE)
-===================
+=============================
 
 The ODE-MSEIRS4 module models a pathogen with partial and waning immunity across multiple infection episodes,
 including a maternal immunity class. It is suited for pathogens with repeat infections and seasonality.

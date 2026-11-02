@@ -18,7 +18,9 @@ Introduction
 ------------
 
 This package provides modules and scripts to plot epidemiological or simulation data as returned
-by other packages of the MEmilio software.
+by other packages of the MEmilio software. The module ``plotTimeSeries`` provides a standard plot
+for ``TimeSeries`` objects (e.g., simulation results of the ``memilio-simulation`` package), ``plotMap``
+visualizes regional data on maps and ``createGIF`` animates map plots over time.
 
 Installation
 ------------
@@ -47,15 +49,14 @@ Dependencies
 Required python packages:
 
 - pandas>=1.2.2
-- matplotlib
-- numpy>=1.22,<1.25
+- matplotlib>=3.6
+- numpy>=1.22,!=1.25.*
 - openpyxl
 - xlrd
 - requests
 - pyxlsb
 - wget
 - folium
-- matplotlib
 - mapclassify
 - geopandas
 - h5py
