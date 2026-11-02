@@ -56,24 +56,20 @@ def needs_template(bindings: binding_type_info, intermed_repr: IntermediateRepre
     :param intermed_repr: Dataclass holding the model features.
     :return: True if a template wrapper should be generated, False otherwise.
     """
-    # Extract the globally defined scalar type
     scalartype = ScalarType(intermed_repr)
 
     template_args = set(bindings.template_args)
 
-    # If there are no template parameters, it is not a template class, so no template wrapper is needed
     if not bindings.template_args:
         return False
 
-    template_used = False
+    template_used = True
 
-    # If a base class depends on a template parameter → template is required
     for base in ensure_list(bindings.base_classes):
         if any(arg in base for arg in template_args):
             template_used = True
             break
 
-    # If any method uses template parameters → template is required
     if not template_used:
         for method in bindings.methods:
             arg_types = ensure_list(method.arg_types)
@@ -86,11 +82,7 @@ def needs_template(bindings: binding_type_info, intermed_repr: IntermediateRepre
     if not template_used:
         return False
 
-    # If a concrete scalar type exists, templates are already resolved, so no template wrapper is needed
-    if scalartype is not None:
-        return False
-
-    return False
+    return True
 
 
 def template_class_wrapper(intermed_repr: IntermediateRepresentation, bindings: binding_type_info) -> str:
@@ -102,23 +94,30 @@ def template_class_wrapper(intermed_repr: IntermediateRepresentation, bindings: 
     """
 
     template_class_block = ""
-    template_args = bindings.template_args
-    template_string = ", ".join(
-        f"typename {arg}" for arg in template_args)
     class_name = bindings.name
-    if template_string:
-        full_template = f"class {class_name}, {template_string}"
+    template_args = bindings.template_args
+
+    if template_args:
+        tmp_params = ", ".join(f"typename {arg}" for arg in template_args)
+        tmp_decl = f"template <{tmp_params}>\n"
     else:
-        full_template = f"class {class_name}"
+        tmp_decl = ""
 
-    template_class_block += (
+    signature = (
+        f"\tvoid bind_{class_name}(py::module& m, const std::string& name)\n"
+        f"\t{{\n"
+    )
 
-        f'template <{full_template}>\n\t'
-        f'void bind_{class_name}(py::module& m, const std::string& name)\n\t'
-        f'{{\n\t')
-    template_class_block += f'\t' + bind_classes(intermed_repr, bindings)
-    template_class_block += (
-        '\t}\n')
+    body = bind_classes(intermed_repr, bindings)
+    indented_body = "\n".join(
+        f"{line}" for line in body.splitlines())
+
+    template_class_block = (
+        f"{tmp_decl}"
+        f"{signature}"
+        f"\t\t{indented_body}"
+        f"}}\n"
+    )
 
     return template_class_block
 

@@ -48,43 +48,14 @@ Each entry specifies a class or function to be created, including its name,
 type, and associated metadata.
 For class entries, the "methods" field lists the member functions that
 should be generated as part of the binding.
-"""
-
-general_bindings_dict = [
-    {
-        "type": "class",
-        "name": "Parameters",
-        "cursorkind": "CLASS_TEMPLATE",
-        "methods": [
-            "check_constraints",
-            "apply_constraints",
-            "get_start_commuter_detection",
-            "get_end_commuter_detection",
-            "get_commuter_nondetection"
-        ]
-    },
-
-    {
-        "type": "class",
-        "name": "ModelBase",
-        "cursorkind": "CLASS_TEMPLATE",
-        "methods": []
-    },
-    {
-        "type": "function",
-        "name": "draw_sample",
-        "cursorkind": "FUNCTION_TEMPLATE",
-    },
-    {
-        "type": "function",
-        "name": "simulate_flows",
-        "cursorkind": "FUNCTION_TEMPLATE"
-    },
+Example: 
     {
         "type": "function",
         "name": "simulate",
         "cursorkind": "FUNCTION_TEMPLATE"
     }
+"""
 
+general_bindings_dict = [
 
 ]
