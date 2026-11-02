@@ -42,10 +42,11 @@ PYBIND11_MODULE(_simulation_${python_module_name}, m)
     ${model_init}
 
     ${simulation}
+    
     ${draw_sample}
-    ------Generalized_Functions----------
+    ------Generated from dictionary----------
     ${handle_all_bindings}
-    -------------------------------------
+    -----------------------------------------
     m.def("interpolate_simulation_result",
         static_cast<mio::TimeSeries<${ScalarType}> (*)(const mio::TimeSeries<${ScalarType}>&, const ${ScalarType})>(
             &mio::interpolate_simulation_result),
