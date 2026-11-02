@@ -82,6 +82,7 @@ public:
                 dydt[Ei] += y[Si] * pop[Ij] * coeffStoE;
             }
 
+            dydt[Ei] -= (1.0 / params.get<TimeExposed<ScalarType>>()[i]) * y[Ei];
             dydt[Ii] += (1.0 / params.get<TimeExposed<ScalarType>>()[i]) * y[Ei];
             dydt[Ii] -= (1.0 / params.get<TimeInfected<ScalarType>>()[i]) * y[Ii];
             dydt[Ri] = (1.0 / params.get<TimeInfected<ScalarType>>()[i]) * y[Ii];

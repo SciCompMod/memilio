@@ -52,7 +52,46 @@ void bind_uncertain_value(py::module_& m, std::string const& name)
                 return self.get_distribution().get();
             },
             py::return_value_policy::reference_internal)
-        .def("draw_sample", &mio::UncertainValue<double>::draw_sample);
+        .def("draw_sample", &mio::UncertainValue<double>::draw_sample)
+        // operators:
+        // use lambdas for inplace operations, as in C++ they return the underlying type. adding inplace operators
+        // returning UncertainValue instead would cause ambiguities, as UncertainValue is implicitly castable to double
+        .def(py::self + double())
+        .def(double() + py::self)
+        .def(
+            "__iadd__",
+            [](mio::UncertainValue<double>& a, double b) -> auto& {
+                a += b;
+                return a;
+            },
+            py::is_operator())
+        .def(py::self - double())
+        .def(double() - py::self)
+        .def(
+            "__isub__",
+            [](mio::UncertainValue<double>& a, double b) -> auto& {
+                a -= b;
+                return a;
+            },
+            py::is_operator())
+        .def(py::self * double())
+        .def(double() * py::self)
+        .def(
+            "__imul__",
+            [](mio::UncertainValue<double>& a, double b) -> auto& {
+                a *= b;
+                return a;
+            },
+            py::is_operator())
+        .def(py::self / double())
+        .def(double() / py::self)
+        .def(
+            "__itruediv__",
+            [](mio::UncertainValue<double>& a, double b) -> auto& {
+                a /= b;
+                return a;
+            },
+            py::is_operator());
 }
 
 } // namespace pymio

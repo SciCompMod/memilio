@@ -101,12 +101,13 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
  * If the person already is at the destination, neither mode nor cells are set.
  * @param[in, out] person The person to change location.
  * @param[in] destination The destination to change location to.
+ * @param[in] activity The ActivityType the person does at the destination.
  * @param[in] mode The transport mode the person uses to change location.
  * @param[in] cells The cells within the destination the person should be in.
  * @return Returns false if the person already is at the given destination, true otherwise.
  */
-bool change_location(Person& person, const Location& destination, const TransportMode mode = TransportMode::Unknown,
-                     const std::vector<uint32_t>& cells = {0});
+bool change_location(Person& person, const Location& destination, ActivityType activity,
+                     const TransportMode mode = TransportMode::Unknown, const std::vector<uint32_t>& cells = {0});
 
 /**
  * @brief Adjust ContactRates of location by MaximumContacts.
