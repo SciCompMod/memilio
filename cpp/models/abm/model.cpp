@@ -87,13 +87,15 @@ PersonId Model::add_person(Person&& person)
 
 void Model::evolve(TimePoint t, TimeSpan dt)
 {
-    init_julia(0, nullptr);
 
+#ifdef MEMILIO_USE_JULIA_LIB
+    init_julia(0, nullptr);
     std::cout << "Test\n";
     printint(39);
     std::cout << "mean = " << mean_of_two(2, 7) << "\n";
-
     shutdown_julia(0);
+#endif
+
     begin_step(t, dt);
     log_info("ABM Model interaction.");
     interaction(t, dt);

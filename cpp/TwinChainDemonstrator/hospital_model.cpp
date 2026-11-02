@@ -32,9 +32,9 @@ int main()
 {
     auto model = mio::abm::Model(1);
     auto home = model.add_location(mio::abm::LocationType::Home);
-    auto pid = model.add_person(home, mio::AgeGroup(0));
+    auto pid = model.add_person(home, mio::AgeGroup(0), mio::abm::ActivityType::Home);
     auto& person = model.get_person(pid);
-    person.set_assigned_location(mio::abm::LocationType::Home, home, model.get_id());
+    person.set_assigned_location(mio::abm::ActivityType::Home, home, model.get_id());
     auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(model));
     mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
         Eigen::Index(mio::abm::InfectionState::Count)};

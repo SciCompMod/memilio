@@ -30,6 +30,7 @@
 #cmakedefine MEMILIO_ENABLE_MPI
 #cmakedefine MEMILIO_ENABLE_OPENMP
 #cmakedefine MEMILIO_ENABLE_PROFILING
+#cmakedefine MEMILIO_USE_JULIA_LIB
 
 namespace mio::details
 {

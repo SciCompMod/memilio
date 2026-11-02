@@ -116,13 +116,13 @@ int main()
     auto work = model.add_location(mio::abm::LocationType::Work);
     for (size_t i = 0; i < n_persons; ++i) {
         if (i < n_persons / 2) {
-            auto person = model.add_person(home, age_group_go_to_work);
-            model.get_person(person).set_assigned_location(mio::abm::LocationType::Work, work, model.get_id());
-            model.get_person(person).set_assigned_location(mio::abm::LocationType::Home, home, model.get_id());
+            auto person = model.add_person(home, age_group_go_to_work, mio::abm::ActivityType::Home);
+            model.get_person(person).set_assigned_location(mio::abm::ActivityType::Work, work, model.get_id());
+            model.get_person(person).set_assigned_location(mio::abm::ActivityType::Home, home, model.get_id());
         }
         else {
-            auto person = model.add_person(home, age_group_other);
-            model.get_person(person).set_assigned_location(mio::abm::LocationType::Home, home, model.get_id());
+            auto person = model.add_person(home, age_group_other, mio::abm::ActivityType::Home);
+            model.get_person(person).set_assigned_location(mio::abm::ActivityType::Home, home, model.get_id());
         }
     }
 
