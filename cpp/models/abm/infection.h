@@ -172,6 +172,11 @@ public:
             .add("detected", m_detected);
     }
 
+    const std::vector<std::pair<TimePoint, InfectionState>>& get_infection_course() const
+    {
+        return m_infection_course;
+    }
+
 private:
     friend DefaultFactory<Infection>;
     Infection() = default;

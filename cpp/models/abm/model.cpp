@@ -33,6 +33,11 @@
 #include <cassert>
 #include <cstdint>
 
+extern "C" {
+#include "TwinChainDemonstrator/julia_lib/include/julia_init.h"
+}
+#include "TwinChainDemonstrator/julia/JuliaTestPkg.h"
+
 namespace mio
 {
 namespace abm
@@ -81,6 +86,13 @@ PersonId Model::add_person(Person&& person)
 
 void Model::evolve(TimePoint t, TimeSpan dt)
 {
+    init_julia(0, nullptr);
+
+    std::cout << "Test\n";
+    printint(39);
+    std::cout << "mean = " << mean_of_two(2, 7) << "\n";
+
+    shutdown_julia(0);
     begin_step(t, dt);
     log_info("ABM Model interaction.");
     interaction(t, dt);

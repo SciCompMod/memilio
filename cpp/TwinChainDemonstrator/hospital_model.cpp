@@ -19,6 +19,9 @@
 */
 
 #include <iostream>
+#include "abm/model.h"
+#include "abm/simulation.h"
+#include "abm/common_abm_loggers.h"
 
 extern "C" {
 #include "julia_init.h"
@@ -27,12 +30,22 @@ extern "C" {
 
 int main()
 {
-    init_julia(0, nullptr);
+    auto model = mio::abm::Model(1);
+    auto home = model.add_location(mio::abm::LocationType::Home);
+    auto pid = model.add_person(home, mio::AgeGroup(0));
+    auto& person = model.get_person(pid);
+    person.set_assigned_location(mio::abm::LocationType::Home, home, model.get_id());
+    auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(model));
+    mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
+        Eigen::Index(mio::abm::InfectionState::Count)};
+    sim.advance(mio::abm::TimePoint(1), historyTimeSeries);
 
-    std::cout << "Test\n";
-    printint(39);
-    std::cout << "mean = " << mean_of_two(3, 7) << "\n";
+    // init_julia(0, nullptr);
 
-    shutdown_julia(0);
+    // std::cout << "Test\n";
+    // printint(39);
+    // std::cout << "mean = " << mean_of_two(2, 7) << "\n";
+
+    // shutdown_julia(0);
     return 0;
 }

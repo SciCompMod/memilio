@@ -9,3 +9,7 @@ target_compile_options(hospital_model PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING
 set_target_properties(hospital_model PROPERTIES
     BUILD_RPATH   "${JULIA_BUNDLE}/lib;${JULIA_BUNDLE}/lib/julia"
     INSTALL_RPATH "${JULIA_BUNDLE}/lib;${JULIA_BUNDLE}/lib/julia")
+
+add_executable(care_home_demonstrator care_home_demonstrator.cpp)
+target_link_libraries(care_home_demonstrator PRIVATE memilio abm)
+target_compile_options(care_home_demonstrator PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
