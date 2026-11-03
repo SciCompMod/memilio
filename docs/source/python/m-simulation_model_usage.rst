@@ -117,6 +117,12 @@ where each entry represents the contact frequency between two age groups.
         (num_groups, num_groups))
 
 Then, dampings can be added as a relative factor to (partially) reduce the contacts defined by the ``ContactPatterns`` beginning at a time step ``t=30``. 
+Besides the coefficients and the start time, every damping has a ``level`` and a ``type``. They decide how dampings that are active at the same time are combined:
+
+- **Same level, different type:** the reductions are added (e.g., measures that act on separate parts of the contacts).
+- **Different levels:** the reductions are combined multiplicatively, :math:`1 - (1-a)(1-b)` (e.g., measures that act 
+   on top of an already existing measure).
+- **Same level and type:** the newer damping replaces the older one from its start time on (e.g., to tighten or relax a measure).
 
 .. code-block:: python
 

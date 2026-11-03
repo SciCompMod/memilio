@@ -70,3 +70,6 @@
 .. |Traveler_estimation_DOI| replace:: DOI:10.1016/j.matcom.2026.08.029
 .. _Traveler_estimation_DOI: https://doi.org/10.1016/j.matcom.2026.08.029
 
+.. |Bindings| replace:: Betz M, Richter D, Abele D, Schmieding R, Zunker H, Kühn M J (2026). *Manual binding and semi-automated interface generation for efficient simulation backends with user-friendly frontends: A demonstration for epidemic use cases*. Arxiv. |Bindings_DOI|_
+.. |Bindings_DOI| replace:: DOI:10.48550/arXiv.2610.40343
+.. _Bindings_DOI: https://doi.org/10.48550/arXiv.2610.40343

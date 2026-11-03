@@ -8,15 +8,16 @@ The following gives an overview on (peer-reviewed) publications extending or usi
 Recently submitted publications
 --------------------------------------
 
-- |MEmilio_citation|
-
-- |Traveler_estimation|
-
+- |Bindings|
 
 Peer-reviewed publications
 --------------------------
 
 **2026**
+
+- |MEmilio_citation|
+
+- |Traveler_estimation|
 
 - |Coupled_Epidemiological_and_Wastewater|
 
