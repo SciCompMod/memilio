@@ -54,35 +54,6 @@ struct MobilityData {
 };
 
 /**
- * @brief Deduce the ActivityType an agent is most likely pursuing from the LocationType it is at.
- * @param[in] current_location The type of the Location the agent is currently at.
- * @return The ActivityType associated with the given LocationType, or ActivityType::UnknownActivity if there is none.
- */
-constexpr mio::abm::ActivityType guess_activity_type(mio::abm::LocationType current_location)
-{
-    switch (current_location) {
-    case mio::abm::LocationType::Home:
-        return mio::abm::ActivityType::Home;
-    case mio::abm::LocationType::Work:
-        return mio::abm::ActivityType::Workplace;
-    case mio::abm::LocationType::School:
-        return mio::abm::ActivityType::Education;
-    case mio::abm::LocationType::SocialEvent:
-        return mio::abm::ActivityType::Leisure;
-    case mio::abm::LocationType::BasicsShop:
-        return mio::abm::ActivityType::Shopping;
-    case mio::abm::LocationType::ICU:
-        return mio::abm::ActivityType::OtherActivity;
-    case mio::abm::LocationType::Hospital:
-        return mio::abm::ActivityType::OtherActivity;
-    case mio::abm::LocationType::Cemetery:
-        return mio::abm::ActivityType::OtherActivity;
-    default:
-        return mio::abm::ActivityType::UnknownActivity;
-    }
-}
-
-/**
  * @brief Logger to log the LocationInformation of the simulation.
  */
 struct LogLocationInformation : mio::LogOnce {
@@ -133,7 +104,7 @@ struct LogPersonInformation : mio::LogOnce {
         person_information.reserve(sim.get_model().get_persons().size());
         for (auto& person : sim.get_model().get_persons()) {
             person_information.push_back(std::make_tuple(
-                person.get_id(), sim.get_model().find_location(mio::abm::LocationType::Home, person.get_id()),
+                person.get_id(), sim.get_model().find_locations(mio::abm::ActivityType::Home, person.get_id())[0],
                 person.get_age()));
         }
         return person_information;
@@ -163,7 +134,7 @@ struct LogDataForMobility : mio::LogAlways {
         for (const Person& p : sim.get_model().get_persons()) {
             mobility_data.push_back(
                 std::make_tuple(p.get_id(), p.get_location(), sim.get_time(), p.get_last_transport_mode(),
-                                guess_activity_type(p.get_location_type()), p.get_infection_state(sim.get_time())));
+                                p.get_activity_type(), p.get_infection_state(sim.get_time())));
         }
         return mobility_data;
     }
