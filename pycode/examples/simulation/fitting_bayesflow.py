@@ -114,14 +114,13 @@ def run_abm(viral_shedding_rate, dark_figure):
     person_file = 'data/Germany/Halle/halle_population_data.csv'
     contact_dir = 'data/Germany/contacts'
     history_file = 'data/Germany/Halle/260304_infections_vaccines_halle.csv'
-    history_lookback_days = 0
-    allow_missing_history = True
     start_date = DATE_TIME
     num_days_sim = 30
 
     samples = [viral_shedding_rate, dark_figure]
 
-    result = halle_abm.run_once(person_file, contact_dir, history_file, history_lookback_days, allow_missing_history, samples, start_date, num_days_sim)
+    result = halle_abm.run_once(
+        person_file, contact_dir, history_file, samples, start_date, num_days_sim)
     result = np.vstack([np.asarray(result[0]), np.asarray(result[1]).T])
     return {'deaths': result[1],
             'severe': result[2],

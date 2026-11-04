@@ -26,6 +26,7 @@
 #include "memilio/utils/date.h"
 #include "memilio/utils/random_number_generator.h"
 
+#include <array>
 #include <string>
 #include <vector>
 
@@ -37,132 +38,45 @@ namespace halle
 /// @brief Number of age groups used throughout this simulation.
 constexpr size_t num_age_groups = 6;
 
-/// @brief County id of Halle (Saale), Stadt. The surrounding Saalekreis is 15088.
+/// @brief County id of Halle (Saale), Stadt.
 constexpr int halle_county_id = 15002;
 
-/**
- * @brief One parameter estimated by the fit, together with the bounds of its uniform prior.
- *
- * The bounds of the acute-infection parameters are taken from the grid search of the ABM paper
- * (cpp/simulations/paper_abm_bs_testing.cpp on branch abm_paper_test_bs).
- */
-struct FitParameter {
-    std::string name; ///< Identifier, also used as column name in the design matrix written for the fit.
-    double lower; ///< Lower bound of the uniform prior.
-    double upper; ///< Upper bound of the uniform prior.
-};
+/// @brief Number of output channels: cumulative deaths, InfectedSevere, InfectedCritical.
+constexpr size_t num_channels = 3;
 
-/**
- * @brief Where the infection and vaccination history before t0 comes from.
- */
-enum class HistorySource
-{
-    /// Reported cases per age group, scaled by the fitted dark figure, plus reported vaccinations.
-    ReportedCases,
-    /// Individual histories of a cohort of Halle residents, replayed on the agents of the model.
-    Cohort,
-};
-
-/**
- * @brief The parameters estimated by the fit, in the order used by every parameter vector.
- *
- * This table is the single place where the fitted parameters are defined: adding or removing an entry
- * changes the dimension of the fit without any other code change. No intervention is modelled at present,
- * so neither a contact reduction nor a testing frequency appears here.
- */
-const std::vector<FitParameter>& fit_parameters();
-
-/**
- * @brief The channels of the summary statistic that the fit compares against real data.
- * @return Channel names, in the order used by every observable vector.
- */
-const std::vector<std::string>& observable_channels();
-
-/**
- * @brief Draw a parameter vector from the (uniform) prior.
- * @param[in,out] rng Random number generator.
- * @return A parameter vector with one entry per entry of fit_parameters().
- */
-std::vector<double> sample_prior(RandomNumberGenerator& rng);
-
-/**
- * @brief Check whether a parameter vector lies inside the prior support.
- * @param[in] theta A parameter vector with one entry per entry of fit_parameters().
- */
-bool is_in_prior_support(const std::vector<double>& theta);
-
-/**
- * @brief Everything needed to build the Halle model that is not being fitted.
- *
- * Every file path is required unless stated otherwise. A path that cannot be read is a hard error and
- * never a silent fallback: a run against missing data would otherwise look successful while producing
- * all-zero output.
- */
-struct ModelSetup {
-    std::string person_file{}; ///< CSV with columns age,home_id,school_id,work_id,shopping_id,event_id.
-    std::string cases_file{}; ///< CSV with columns date,age_group,new_cases (reported), for the infection history.
-    std::string vaccinations_file{}; ///< CSV with columns date,age_group,new_doses, for the vaccination history.
-    /**
-     * @brief CSV with one row per cohort member, holding their individual infection and vaccination dates.
-     *
-     * Columns age_group, ih_infection_1_date to ih_infection_4_date and ih_vaccine_1_date to
-     * ih_vaccine_3_date, with dates as YYYY-MM-DD or NA. If given, the history is taken from this file
-     * instead of cases_file and vaccinations_file, which must then be empty.
-     */
-    std::string history_file{};
-    std::string contact_dir{}; ///< Directory with the German baseline contact matrices.
-    /**
-     * @brief Length of the window before t0 from which the reported cases history is seeded.
-     *
-     * 90 days by default. Longer windows overcount immunity, because a Person is seeded at most once here
-     * while the reported cases they are drawn from include reinfections: over a full year around the
-     * Omicron wave, reported cases times a dark figure of 4 exceed the population of Halle, which seeds
-     * every agent as recovered and leaves no susceptible for the epidemic to run in. 90 days also matches
-     * the window over which SeverityProtectionFactor is defined. Not used by the cohort history, which
-     * replays the full history of every cohort member up to t0.
-     */
-    int history_lookback_days = 90;
-    /**
-     * @brief Allow building a model without infection and vaccination history.
-     *
-     * Only intended for smoke tests. A fit must not use this: without the histories, the population has no
-     * immunity and no pre-existing PAIS at t0, which silently changes the epidemic that is being fitted.
-     */
-    bool allow_missing_history = false;
-
-    /// @brief The history source selected by the files that are set.
-    HistorySource history_source() const
-    {
-        return history_file.empty() ? HistorySource::ReportedCases : HistorySource::Cohort;
-    }
+/// @brief One simulation result: the daily value of every output channel.
+struct Observable {
+    std::vector<double> days{}; ///< Day offset from the start of the simulation.
+    std::vector<std::array<double, num_channels>> values{}; ///< {deaths since t0, severe, critical} per day.
 };
 
 /**
  * @brief Build the Halle ABM.
  *
- * Builds the population and its locations from the Halle population file, then seeds the infection and
- * vaccination histories so that immunity and pre-existing PAIS are in their correct state at @p t0. The
- * histories come either from the reported cases or from the cohort file, see ModelSetup::history_source().
+ * Builds the population and its locations from the Halle population file, sets the contact rates and the
+ * fixed infection and PAIS parameters, and replays the individual histories of the cohort file onto the
+ * agents, so that immunity and pre-existing PAIS are in their correct state at @p t0.
  *
- * The non-fitted inputs are passed one by one rather than as a ModelSetup so that the function can be
- * bound to Python directly; see the members of ModelSetup for their meaning.
- *
- * @param[in] person_file See ModelSetup::person_file.
- * @param[in] contact_dir See ModelSetup::contact_dir.
- * @param[in] history_file See ModelSetup::history_file. Empty to use cases_file and vaccinations_file.
- * @param[in] history_lookback_days See ModelSetup::history_lookback_days.
- * @param[in] allow_missing_history See ModelSetup::allow_missing_history.
- * @param[in] theta The fitted parameters, see fit_parameters().
- * @param[in] start_date Calendar date that @p t0 corresponds to, used to align the input data.
+ * @param[in] person_file CSV with columns age,home_id,school_id,event_id,shopping_id,work_id.
+ * @param[in] contact_dir Directory with the German baseline contact matrices.
+ * @param[in] history_file CSV with columns age_group, ih_infection_1_date to ih_infection_4_date and
+ *                         ih_vaccine_1_date to ih_vaccine_3_date (YYYY-MM-DD or NA).
+ * @param[in] theta Fitted parameters. theta[0] is the viral shedding rate; further entries are ignored.
+ * @param[in] start_date Calendar date that @p t0 corresponds to.
  * @param[in] t0 Start of the simulation.
- * @param[in] tmax End of the simulation. Currently unused; kept because a testing scheme would need it as
- *                 its validity period once testing is reinstated.
- * @param[in] rng Random number generator used for the whole model, so a run is reproducible from its seed.
- * @return The model, or an error if an input file could not be read.
+ * @param[in] rng Random number generator used for the whole model.
  */
-IOResult<abm::Model> make_model(std::string person_file, std::string contact_dir, std::string history_file, int history_lookback_days,
-                                bool allow_missing_history, const std::vector<double>& theta, Date start_date,
-                                abm::TimePoint t0, abm::TimePoint tmax, const RandomNumberGenerator& rng);
+IOResult<abm::Model> make_model(const std::string& person_file, const std::string& contact_dir,
+                                const std::string& history_file, const std::vector<double>& theta, Date start_date,
+                                abm::TimePoint t0, const RandomNumberGenerator& rng);
+
+/**
+ * @brief Build the model and run it once for @p num_days days.
+ * @return The daily output channels, with deaths rebased onto the start of the simulation.
+ */
+IOResult<Observable> run_once(const std::string& person_file, const std::string& contact_dir,
+                              const std::string& history_file, const std::vector<double>& theta, Date start_date,
+                              int num_days);
 
 } // namespace halle
 } // namespace mio

@@ -22,14 +22,14 @@
 #include "abm/infection.h"
 #include "abm/location_type.h"
 #include "abm/personal_rng.h"
+#include "abm/simulation.h"
 #include "memilio/io/mobility_io.h"
-#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
 
 #include <algorithm>
 #include <fstream>
+#include <cmath>
 #include <map>
-#include <numeric>
 #include <sstream>
 
 namespace mio
@@ -309,193 +309,6 @@ void add_infrastructure(abm::Model& model)
     for (auto& person : model.get_persons()) {
         model.assign_location(person.get_id(), hospital);
         model.assign_location(person.get_id(), icu);
-    }
-}
-
-/// @brief A daily time series per age group, read from a CSV with columns date, age_group and a value column.
-struct DailySeries {
-    Date first_date{2020, 1, 1}; ///< Date of index 0 of every per-age series.
-    std::vector<std::vector<double>> values{}; ///< Indexed [age group][day offset from first_date].
-};
-
-/**
- * @brief Read a CSV with the columns date, age_group and @p value_column into a daily series per age group.
- *
- * The age_group column holds the index of one of the six age groups used here. Missing days are zero.
- */
-IOResult<DailySeries> read_daily_series(const std::string& filename, const std::string& value_column)
-{
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        return failure(StatusCode::FileNotFound, "Could not open data file " + filename);
-    }
-    std::string line;
-    if (!std::getline(file, line)) {
-        return failure(StatusCode::InvalidFileFormat, "Data file " + filename + " is empty.");
-    }
-    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-
-    std::map<std::string, size_t> column;
-    const auto header = split_csv_line(line);
-    for (size_t i = 0; i < header.size(); ++i) {
-        column[header[i]] = i;
-    }
-    for (const auto& required : {std::string("date"), std::string("age_group"), value_column}) {
-        if (column.count(required) == 0) {
-            return failure(StatusCode::InvalidFileFormat,
-                           "Data file " + filename + " has no column \"" + required + "\".");
-        }
-    }
-
-    // Collect the rows first, since the file is not required to be sorted by date.
-    std::vector<std::tuple<Date, size_t, double>> entries;
-    Date min_date{9999, 12, 31}, max_date{1, 1, 1};
-    while (std::getline(file, line)) {
-        line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-        if (line.empty()) {
-            continue;
-        }
-        const auto values = split_csv_line(line);
-        BOOST_OUTCOME_TRY(auto&& date, parse_date(values[column["date"]]));
-        const auto age = static_cast<size_t>(std::stoi(values[column["age_group"]]));
-        if (age >= num_age_groups) {
-            return failure(StatusCode::InvalidValue,
-                           "Data file " + filename + " has age_group " + std::to_string(age) + " outside 0-5.");
-        }
-        entries.emplace_back(date, age, std::stod(values[column[value_column]]));
-        if (get_offset_in_days(date, min_date) < 0) {
-            min_date = date;
-        }
-        if (get_offset_in_days(date, max_date) > 0) {
-            max_date = date;
-        }
-    }
-    if (entries.empty()) {
-        return failure(StatusCode::InvalidFileFormat, "Data file " + filename + " contains no rows.");
-    }
-
-    DailySeries series;
-    series.first_date   = min_date;
-    const auto num_days = static_cast<size_t>(get_offset_in_days(max_date, min_date)) + 1;
-    series.values.assign(num_age_groups, std::vector<double>(num_days, 0.0));
-    for (const auto& [date, age, value] : entries) {
-        series.values[age][static_cast<size_t>(get_offset_in_days(date, min_date))] += value;
-    }
-    return success(series);
-}
-
-/**
- * @brief Draw @p count distinct indices from [0, @p size) without replacement.
- *
- * Uses a partial Fisher-Yates shuffle, so the cost is proportional to @p count rather than to @p size.
- */
-std::vector<size_t> sample_without_replacement(RandomNumberGenerator& rng, size_t size, size_t count)
-{
-    count = std::min(count, size);
-    std::map<size_t, size_t> swapped; // Sparse representation of the shuffled prefix.
-    std::vector<size_t> result(count);
-    auto& uniform_int = UniformIntDistribution<size_t>::get_instance();
-    for (size_t i = 0; i < count; ++i) {
-        const size_t j = uniform_int(rng, i, size - 1);
-        auto value_at  = [&swapped](size_t k) {
-            const auto it = swapped.find(k);
-            return it == swapped.end() ? k : it->second;
-        };
-        result[i]  = value_at(j);
-        swapped[j] = value_at(i);
-    }
-    return result;
-}
-
-/**
- * @brief Seed the infection and vaccination history of the population.
- *
- * For every age group, the number of Person%s that were infected in the lookback window before @p t0 is the
- * number of reported cases scaled by the fitted dark figure; the date of each infection is drawn from the
- * shape of the reported curve. Vaccinations are seeded the same way but are never scaled, since the fit must
- * not change the vaccination history.
- *
- * Seeding infections with their real dates is what puts the population into the correct immunity state at
- * @p t0, and it is also what initialises PAIS: Person::add_new_infection triggers PAIS::init_or_refresh, so
- * every seeded infection that recovered before @p t0 can carry a PAIS into the simulation.
- */
-void seed_history(abm::Model& model, const DailySeries* cases, const DailySeries* vaccinations, abm::TimePoint t0,
-                  Date start_date, double dark_figure, int lookback_days, RandomNumberGenerator& rng)
-{
-    // Group the persons by age group once, so both histories can sample from the same lists.
-    std::vector<std::vector<abm::PersonId>> persons_by_age(num_age_groups);
-    for (auto& person : model.get_persons()) {
-        persons_by_age[person.get_age().get()].push_back(person.get_id());
-    }
-
-    // Draw `count` day offsets in [-lookback_days, 0), distributed like the given daily curve.
-    auto sample_days = [&](const DailySeries& series, size_t age, size_t count) {
-        std::vector<double> weights(static_cast<size_t>(lookback_days), 0.0);
-        for (int d = 0; d < lookback_days; ++d) {
-            const auto date   = offset_date_by_days(start_date, -lookback_days + d);
-            const auto offset = get_offset_in_days(date, series.first_date);
-            if (offset >= 0 && static_cast<size_t>(offset) < series.values[age].size()) {
-                weights[static_cast<size_t>(d)] = std::max(0.0, series.values[age][static_cast<size_t>(offset)]);
-            }
-        }
-        std::vector<int> days(count);
-        if (std::accumulate(weights.begin(), weights.end(), 0.0) <= 0.0) {
-            return days; // No data in the window, so nothing can be seeded for this age group.
-        }
-        auto& discrete = DiscreteDistribution<size_t>::get_instance();
-        for (size_t i = 0; i < count; ++i) {
-            days[i] = -lookback_days + static_cast<int>(discrete(rng, weights));
-        }
-        return days;
-    };
-
-    auto seed = [&](const DailySeries& series, double scale, bool is_infection) {
-        for (size_t age = 0; age < num_age_groups; ++age) {
-            double total = 0.0;
-            for (int d = 0; d < lookback_days; ++d) {
-                const auto date   = offset_date_by_days(start_date, -lookback_days + d);
-                const auto offset = get_offset_in_days(date, series.first_date);
-                if (offset >= 0 && static_cast<size_t>(offset) < series.values[age].size()) {
-                    total += std::max(0.0, series.values[age][static_cast<size_t>(offset)]);
-                }
-            }
-            const size_t requested = static_cast<size_t>(total * scale);
-            const size_t count     = std::min(requested, persons_by_age[age].size());
-            if (requested > persons_by_age[age].size()) {
-                // Loudly, because a clamp here silently removes every susceptible of this age group and
-                // the epidemic then cannot run at all. Shorten history_lookback_days if this appears.
-                log_warning("Seeding {} in age group {} saturated: {} requested for {} persons. The whole age "
-                            "group is seeded and no susceptible is left.",
-                            is_infection ? "infections" : "vaccinations", age, requested, persons_by_age[age].size());
-            }
-            if (count == 0) {
-                continue;
-            }
-            const auto chosen = sample_without_replacement(rng, persons_by_age[age].size(), count);
-            const auto days   = sample_days(series, age, count);
-            for (size_t i = 0; i < count; ++i) {
-                const auto pid  = persons_by_age[age][chosen[i]];
-                const auto date = t0 + abm::days(days[i]);
-                auto& person    = model.get_person(pid);
-                auto prng       = abm::PersonalRandomNumberGenerator(model.get_rng(), person);
-                if (is_infection) {
-                    person.add_new_infection(
-                        abm::Infection(prng, abm::VirusVariant::Wildtype, person.get_age(), model.parameters, date),
-                        prng, date, model.parameters);
-                }
-                else {
-                    person.add_new_vaccination(abm::ProtectionType::GenericVaccine, date);
-                }
-            }
-            log_info("Seeded {} {} in age group {}.", count, is_infection ? "infections" : "vaccinations", age);
-        }
-    };
-
-    if (cases != nullptr) {
-        seed(*cases, dark_figure, true);
-    }
-    if (vaccinations != nullptr) {
-        seed(*vaccinations, 1.0, false);
     }
 }
 
@@ -870,74 +683,12 @@ void set_pais_parameters(abm::Parameters& params)
 
 } // namespace
 
-const std::vector<FitParameter>& fit_parameters()
+IOResult<abm::Model> make_model(const std::string& person_file, const std::string& contact_dir,
+                                const std::string& history_file, const std::vector<double>& theta, Date start_date,
+                                abm::TimePoint t0, const RandomNumberGenerator& rng)
 {
-    // Bounds taken from the grid search of the ABM paper. No contact reduction is fitted, since testing
-    // is the only measure in this setup. The PAIS parameters are not fitted either: they act only on the
-    // PAIS output channels, so without PAIS data the likelihood would be flat in all of them.
-    static const std::vector<FitParameter> parameters{
-        {"viral_shedding_rate", 0.1, 20.0},
-        {"dark_figure", 2.5, 10.0},
-    };
-    return parameters;
-}
-
-const std::vector<std::string>& observable_channels()
-{
-    // Only deaths are compared against real data. The PAIS channels are recorded as a forward projection,
-    // to be able to inspect them for a parameter vector drawn from the posterior.
-    static const std::vector<std::string> channels{"deaths", "pais_medium", "pais_severe"};
-    return channels;
-}
-
-std::vector<double> sample_prior(RandomNumberGenerator& rng)
-{
-    const auto& priors = fit_parameters();
-    std::vector<double> theta(priors.size());
-    auto& uniform = UniformDistribution<double>::get_instance();
-    for (size_t i = 0; i < priors.size(); ++i) {
-        theta[i] = uniform(rng, priors[i].lower, priors[i].upper);
-    }
-    return theta;
-}
-
-bool is_in_prior_support(const std::vector<double>& theta)
-{
-    const auto& priors = fit_parameters();
-    if (theta.size() != priors.size()) {
-        return false;
-    }
-    for (size_t i = 0; i < priors.size(); ++i) {
-        if (theta[i] < priors[i].lower || theta[i] > priors[i].upper) {
-            return false;
-        }
-    }
-    return true;
-}
-
-IOResult<abm::Model> make_model(std::string person_file, std::string contact_dir, std::string history_file, int history_lookback_days,
-                                bool allow_missing_history, const std::vector<double>& theta, Date start_date,
-                                abm::TimePoint t0, abm::TimePoint tmax, const RandomNumberGenerator& rng)
-{
-    ModelSetup setup;
-    setup.person_file           = std::move(person_file);
-    setup.contact_dir           = std::move(contact_dir);
-    setup.history_file          = std::move(history_file);
-    setup.history_lookback_days = history_lookback_days;
-    setup.allow_missing_history = allow_missing_history;
-
-    const auto source = setup.history_source();
-    if (!is_in_prior_support(theta)) {
-        return failure(StatusCode::InvalidValue, "Parameter vector is outside the prior support.");
-    }
-    if (setup.person_file.empty()) {
-        return failure(StatusCode::InvalidValue, "No population file given.");
-    }
-    const bool has_history = source == HistorySource::Cohort;
-    if (!has_history && !setup.allow_missing_history) {
-        return failure(StatusCode::InvalidValue,
-                       "No infection and vaccination history given. Pass a cohort history file, or both a cases and "
-                       "a vaccinations file, or set allow_missing_history for a smoke test.");
+    if (theta.empty()) {
+        return failure(StatusCode::InvalidValue, "Parameter vector is empty, expected at least viral_shedding_rate.");
     }
 
     auto model      = abm::Model(num_age_groups, halle_county_id);
@@ -951,27 +702,86 @@ IOResult<abm::Model> make_model(std::string person_file, std::string contact_dir
 
     set_fixed_infection_parameters(model.parameters);
     set_pais_parameters(model.parameters);
-    // viral_shedding_rate is the only fitted parameter acting on the model parameters directly;
-    // dark_figure, if fitted, is applied when seeding the reported cases history.
     model.parameters.get<abm::InfectionRateFromViralShed>()[abm::VirusVariant::Wildtype] = theta[0];
 
-    BOOST_OUTCOME_TRY(auto&& rows, read_population_file(setup.person_file));
+    BOOST_OUTCOME_TRY(auto&& rows, read_population_file(person_file));
     add_persons_and_locations(model, rows);
     add_infrastructure(model);
-    BOOST_OUTCOME_TRY(set_contact_rates(model, setup.contact_dir));
-    // No testing and no other intervention is applied for now. tmax is kept in the signature because it
-    // is what a testing scheme would need as its validity period once testing is reinstated.
+    BOOST_OUTCOME_TRY(set_contact_rates(model, contact_dir));
 
-    BOOST_OUTCOME_TRY(auto&& cohort, read_cohort_file(setup.history_file, start_date));
+    BOOST_OUTCOME_TRY(auto&& cohort, read_cohort_file(history_file, start_date));
     seed_cohort_history(model, cohort, t0, start_date);
-    if(!has_history) {
-        log_warning("Building the model without infection and vaccination history. The population has no immunity "
-                    "and no pre-existing PAIS at the start of the simulation.");
-    }
 
     log_info("Halle model built with {} persons and {} locations.", model.get_persons().size(),
              model.get_locations().size());
     return success(std::move(model));
+}
+
+namespace
+{
+
+/// @brief Logs cumulative deaths and the number of Person%s currently InfectedSevere and InfectedCritical.
+struct LogChannels : LogAlways {
+    using Type = std::pair<abm::TimePoint, std::array<double, num_channels>>;
+
+    static Type log(const abm::Simulation<>& sim)
+    {
+        std::array<double, num_channels> values{0.0, 0.0, 0.0};
+        const auto t = sim.get_time();
+        for (auto& person : sim.get_model().get_persons()) {
+            switch (person.get_infection_state(t)) {
+            case abm::InfectionState::Dead:
+                values[0] += 1.0;
+                break;
+            case abm::InfectionState::InfectedSevere:
+                values[1] += 1.0;
+                break;
+            case abm::InfectionState::InfectedCritical:
+                values[2] += 1.0;
+                break;
+            default:
+                break;
+            }
+        }
+        return {t, values};
+    }
+};
+
+} // namespace
+
+IOResult<Observable> run_once(const std::string& person_file, const std::string& contact_dir,
+                              const std::string& history_file, const std::vector<double>& theta, Date start_date,
+                              int num_days)
+{
+    const auto t0   = abm::TimePoint(0);
+    const auto tmax = t0 + abm::days(num_days);
+
+    auto rng = RandomNumberGenerator();
+    BOOST_OUTCOME_TRY(auto&& model, make_model(person_file, contact_dir, history_file, theta, start_date, t0, rng));
+    auto sim = abm::Simulation(t0, std::move(model));
+
+    History<DataWriterToMemory, LogChannels> history;
+    sim.advance(tmax, history);
+
+    // The simulation logs at every internal step, but only the last entry of each day is kept.
+    Observable observable;
+    const auto& log = std::get<0>(history.get_log());
+    for (size_t i = 0; i < log.size(); ++i) {
+        const double day = log[i].first.days();
+        if (i + 1 == log.size() || static_cast<int>(log[i + 1].first.days()) > static_cast<int>(day)) {
+            observable.days.push_back(std::floor(day));
+            observable.values.push_back(log[i].second);
+        }
+    }
+
+    // Rebase deaths onto the start of the simulation, since the seeded history already contains deaths.
+    if (!observable.values.empty()) {
+        const double deaths_at_t0 = observable.values.front()[0];
+        for (auto& value : observable.values) {
+            value[0] -= deaths_at_t0;
+        }
+    }
+    return success(observable);
 }
 
 } // namespace halle

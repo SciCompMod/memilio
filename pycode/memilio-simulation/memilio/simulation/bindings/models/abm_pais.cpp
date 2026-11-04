@@ -21,7 +21,7 @@
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
 
-#include "abm_halle_pais.cpp"
+#include "halle_model.h"
 
 namespace py = pybind11;
 
@@ -29,22 +29,20 @@ namespace py = pybind11;
 PYBIND11_MODULE(_simulation_halle_abm, m)
 {
     m.def(
-    "run_once",
-    [](std::string person_file, std::string contact_dir, std::string history_file,
-        int history_lookback_days, bool allow_missing_history, const std::vector<double>& theta,
-        mio::Date start_date, int num_days) {
-        auto result = run_once(person_file, contact_dir, history_file, history_lookback_days,
-                                allow_missing_history, theta, start_date, num_days);
-        if (!result) {
-            throw std::runtime_error(result.error().formatted_message());
-        }
-        const auto& observable = result.value();
-        return py::make_tuple(observable.days, observable.values);
-    },
-    "Run the ABM once. Returns (days, values) with one [deaths, pais_medium, pais_severe] entry per day.",
-    py::arg("person_file"), py::arg("contact_dir"), py::arg("history_file"),
-    py::arg("history_lookback_days"), py::arg("allow_missing_history"), py::arg("theta"),
-    py::arg("start_date"), py::arg("num_days"));
+        "run_once",
+        [](const std::string& person_file, const std::string& contact_dir, const std::string& history_file,
+           const std::vector<double>& theta, mio::Date start_date, int num_days) {
+            auto result = mio::halle::run_once(person_file, contact_dir, history_file, theta, start_date, num_days);
+            if (!result) {
+                throw std::runtime_error(result.error().formatted_message());
+            }
+            const auto& observable = result.value();
+            return py::make_tuple(observable.days, observable.values);
+        },
+        "Run the Halle ABM once. Returns (days, values) with one [deaths since start, severe, critical] entry per "
+        "day.",
+        py::arg("person_file"), py::arg("contact_dir"), py::arg("history_file"), py::arg("theta"),
+        py::arg("start_date"), py::arg("num_days"));
 
     m.attr("__version__") = "dev";
 }
