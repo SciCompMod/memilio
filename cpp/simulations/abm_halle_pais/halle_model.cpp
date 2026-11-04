@@ -371,8 +371,7 @@ IOResult<Cohort> read_cohort_file(const std::string& filename, Date start_date)
     }
     const std::vector<std::string> infection_columns{"ih_infection_1_date", "ih_infection_2_date",
                                                      "ih_infection_3_date", "ih_infection_4_date"};
-    const std::vector<std::string> vaccination_columns{"ih_vaccine_1_date", "ih_vaccine_2_date",
-                                                       "ih_vaccine_3_date"};
+    const std::vector<std::string> vaccination_columns{"ih_vaccine_1_date", "ih_vaccine_2_date", "ih_vaccine_3_date"};
     std::vector<std::string> required{"age_group"};
     required.insert(required.end(), infection_columns.begin(), infection_columns.end());
     required.insert(required.end(), vaccination_columns.begin(), vaccination_columns.end());
@@ -395,8 +394,7 @@ IOResult<Cohort> read_cohort_file(const std::string& filename, Date start_date)
             auto date = parse_date(value);
             if (!date) {
                 return failure(StatusCode::InvalidValue, "Cohort history file " + filename + " has invalid date \"" +
-                                                             value + "\" in line " + std::to_string(line_number) +
-                                                             ".");
+                                                             value + "\" in line " + std::to_string(line_number) + ".");
             }
             if (get_offset_in_days(date.value(), start_date) < 0) {
                 dates.push_back(date.value());
@@ -428,8 +426,7 @@ IOResult<Cohort> read_cohort_file(const std::string& filename, Date start_date)
         const auto bin       = std::find(cohort_age_bins.begin(), cohort_age_bins.end(), bin_name);
         if (bin == cohort_age_bins.end()) {
             return failure(StatusCode::InvalidValue, "Cohort history file " + filename + " has unknown age group \"" +
-                                                         bin_name + "\" in line " + std::to_string(line_number) +
-                                                         ".");
+                                                         bin_name + "\" in line " + std::to_string(line_number) + ".");
         }
         CohortMember member;
         BOOST_OUTCOME_TRY(auto&& infections, read_dates(values, infection_columns, line_number));
@@ -543,9 +540,8 @@ void seed_cohort_history(abm::Model& model, const Cohort& cohort, abm::TimePoint
                                       abm::InfectionState::Exposed, person.get_latest_protection(t), false);
             };
             auto infection = draw();
-            for (int i = 0; i < max_redraws && infection.get_highest_infection_state().second ==
-                                                    abm::InfectionState::Dead;
-                 ++i) {
+            for (int i = 0;
+                 i < max_redraws && infection.get_highest_infection_state().second == abm::InfectionState::Dead; ++i) {
                 infection = draw();
                 ++num_redrawn;
             }
@@ -589,7 +585,7 @@ void set_fixed_infection_parameters(abm::Parameters& params)
     // https://doi.org/10.1016/j.ebiom.2023.104734 for the severity protection and 10.1016/j.vaccine.2023.03.069
     // for the (negligible) protection against infection itself.
     params.get<abm::SeverityProtectionFactor>() =
-        TimeSeriesFunctor<ScalarType>{TimeSeriesFunctorType::LinearInterpolation, {{0, 0.8}, {150, 0.8}}};
+        TimeSeriesFunctor<ScalarType>{TimeSeriesFunctorType::LinearInterpolation, {{0, 0.0}, {150, 0.0}}};
     params.get<abm::InfectionProtectionFactor>() =
         TimeSeriesFunctor<ScalarType>{TimeSeriesFunctorType::LinearInterpolation, {{0, 0.0}, {150, 0.0}}};
     params.get<abm::HighViralLoadProtectionFactor>() =
@@ -598,9 +594,11 @@ void set_fixed_infection_parameters(abm::Parameters& params)
     // Transmission is modelled through contacts only, as in the ABM paper.
     params.get<abm::AerosolTransmissionRates>() = 0.0;
 
-    params.get<abm::TestData>()[abm::TestType::PCR]     = {0.9, 0.995, abm::hours(24), abm::TestType::PCR};
-    params.get<abm::TestData>()[abm::TestType::Antigen] = {0.9, 0.9999, abm::minutes(15), abm::TestType::Antigen};
-    params.get<abm::TestData>()[abm::TestType::Generic] = {0.7, 0.95, abm::minutes(30), abm::TestType::Generic};
+    // params.get<abm::TestData>()[abm::TestType::PCR]     = {0.9, 0.995, abm::hours(24), abm::TestType::PCR};
+    // params.get<abm::TestData>()[abm::TestType::Antigen] = {0.9, 0.9999, abm::minutes(15), abm::TestType::Antigen};
+    params.get<abm::TestData>()[abm::TestType::Generic] = {0.71, 0.996, abm::minutes(30), abm::TestType::Generic};
+
+    params.get<abm::QuarantineEffectiveness>() = 0.5;
 
     // Age dependent transition probabilities, indexed by the six age groups.
     const std::array<double, num_age_groups> symptoms_per_no_symptoms{0.50, 0.55, 0.60, 0.70, 0.83, 0.90};
