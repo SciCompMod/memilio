@@ -319,27 +319,43 @@ run_ide(mio::TimeSeries<ScalarType>&& init_populations, mio::TimeSeries<ScalarTy
 }
 
 /**
- * @brief Simulate the IDE model from t0_ide until t_switch with the (smaller) step size dt_fine = 10^(-fine_exponent)
- * and save the resulting compartments and flows in CSV files.
+ * @brief Compute the number of fine time steps per coarse time step, i.e. the ratio dt / dt_fine, for the simulation
+ * until t_switch.
+ *
+ * The fine step size is given by dt_fine = dt / ceil(dt^(-fine_step_power * (gregory_order - 1))) with the target
+ * step size dt = 10^(-ide_exponent). Thus, dt is a multiple of dt_fine. With fine_step_power = 0 or gregory_order = 1,
+ * we have dt_fine = dt.
+ * The power of dt is computed as 10^(ide_exponent * fine_step_power * (gregory_order - 1)) and a small tolerance is
+ * subtracted before rounding up so that integer values are not rounded up to the next integer due to rounding errors.
+ */
+size_t compute_num_fine_steps_per_step(ScalarType ide_exponent, size_t gregory_order, ScalarType fine_step_power)
+{
+    ScalarType ratio = std::pow(10., ide_exponent * fine_step_power * ((ScalarType)gregory_order - 1.));
+    return std::max((size_t)1, (size_t)std::ceil(ratio - 1e-8));
+}
+
+/**
+ * @brief Simulate the IDE model from t0_ide until t_switch with the (smaller) step size dt_fine and save the resulting
+ * compartments and flows in CSV files.
  *
  * The simulation does not use an initial time window, i.e. it is only initialized with the values init_values_t0 at
  * t0_ide. The CSV files cover the time points t0_ide, ..., t_switch with step size dt_fine. The flows are given by
  * -S', where S' is computed with finite differences with step size dt_fine. The files can be read in with
  * read_timeseries_from_csv() to initialize a subsequent IDE simulation that starts at t_switch.
  *
+ * @param[in] dt_fine Step size of the simulation until t_switch.
+ * @param[in] div_dt_fine Inverse of dt_fine.
  * @param[in] init_values_t0 TimeSeries with one time point t0_ide containing the initial values.
  * @param[in] csv_file Path to the CSV file for the compartments.
  * @param[in] csv_file_flows Path to the CSV file for the flows.
  */
-mio::IOResult<void> simulate_ide_until_switch(ScalarType fine_exponent, ScalarType t_switch, size_t gregory_order,
-                                              size_t finite_difference_order,
+mio::IOResult<void> simulate_ide_until_switch(ScalarType dt_fine, ScalarType div_dt_fine, ScalarType t_switch,
+                                              size_t gregory_order, size_t finite_difference_order,
                                               const mio::TimeSeries<ScalarType>& init_values_t0,
                                               ScalarType TimeInfected, ScalarType cont_freq,
                                               const std::string& csv_file, const std::string& csv_file_flows,
                                               bool kahan, bool forward_fd)
 {
-    ScalarType dt_fine     = pow(10, -fine_exponent);
-    ScalarType div_dt_fine = pow(10, fine_exponent);
     std::cout << "Simulation until t_switch=" << t_switch << " with dt_fine=" << dt_fine << std::endl;
 
     // Only use the values at t0_ide as initial values, i.e. no initial time window.
@@ -359,9 +375,9 @@ mio::IOResult<void> simulate_ide_until_switch(ScalarType fine_exponent, ScalarTy
  * @brief Simulate the IDE model with the target step sizes dt = 10^(-ide_exponent) for all ide_exponents.
  *
  * For each target step size dt, the simulation is split into two parts. First, the IDE model is simulated on
- * [t0_ide, t_switch] with the smaller step size dt_fine = dt * 10^(-fine_exponent_offset), where
- * t_switch = t0_ide + num_steps_until_switch * dt and fine_exponent_offset is the entry of fine_exponent_offsets that
- * corresponds to ide_exponent. This simulation does not use an initial time window, i.e. it is only initialized with
+ * [t0_ide, t_switch] with the smaller step size dt_fine = dt / ceil(dt^(-fine_step_power * (gregory_order - 1))),
+ * where t_switch = t0_ide + num_steps_until_switch * dt, see compute_num_fine_steps_per_step().
+ * This simulation does not use an initial time window, i.e. it is only initialized with
  * the values of ode_compartments at t0_ide. The resulting compartments and flows are saved in CSV files. Afterwards,
  * the CSV files are read in and used to initialize the IDE model that is then simulated on [t_switch, tmax] with the
  * target step size dt. The initial time window of this simulation is the whole time interval [t0_ide, t_switch] of
@@ -374,7 +390,7 @@ mio::IOResult<void> simulate_ide_until_switch(ScalarType fine_exponent, ScalarTy
  * @param[in] ode_compartments Compartments of the ODE solution. The IDE model is initialized with its values at t0_ide
  *  so that the IDE solution can be compared with the ODE solution at the same time points.
  */
-mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, std::vector<ScalarType> fine_exponent_offsets,
+mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, ScalarType fine_step_power,
                                  size_t gregory_order, size_t finite_difference_order,
                                  const mio::TimeSeries<ScalarType>& ode_compartments, ScalarType t0_ide,
                                  ScalarType tmax, ScalarType TimeInfected, ScalarType cont_freq,
@@ -383,37 +399,32 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, std::vec
 {
     using namespace params;
 
-    if (fine_exponent_offsets.size() != ide_exponents.size()) {
+    if (fine_step_power < 0.) {
         return mio::failure(mio::StatusCode::InvalidValue,
-                            "fine_exponent_offsets has to contain one entry for each entry of ide_exponents.");
+                            "fine_step_power has to be non-negative, but is " + std::to_string(fine_step_power) + ".");
     }
 
     BOOST_OUTCOME_TRY(auto&& init_values_t0, get_init_values_at_t0(ode_compartments, t0_ide));
 
     for (size_t i = 0; i < ide_exponents.size(); i++) {
-        ScalarType ide_exponent         = ide_exponents[i];
-        ScalarType fine_exponent_offset = fine_exponent_offsets[i];
-
-        // dt has to be a multiple of dt_fine so that the values at the time points of the coarse grid are contained in
-        // the result of the simulation with dt_fine.
-        if (fine_exponent_offset < 0. || std::fabs(fine_exponent_offset - std::round(fine_exponent_offset)) > 1e-12) {
-            return mio::failure(mio::StatusCode::InvalidValue,
-                                "fine_exponent_offset has to be a non-negative integer, but is " +
-                                    std::to_string(fine_exponent_offset) + ".");
-        }
+        ScalarType ide_exponent = ide_exponents[i];
 
         ScalarType dt_ide     = pow(10, -ide_exponent);
         ScalarType div_dt_ide = pow(10, ide_exponent);
         std::cout << "Simulation with dt=" << dt_ide << std::endl;
 
-        // Define the smaller step size and t_switch depending on the target step size dt_ide.
-        ScalarType fine_exponent = ide_exponent + fine_exponent_offset;
-        ScalarType t_switch      = t0_ide + num_steps_until_switch * dt_ide;
+        // Define the smaller step size and t_switch depending on the target step size dt_ide and the Gregory order.
+        // dt_ide is a multiple of dt_fine so that the values at the time points of the coarse grid are contained in
+        // the result of the simulation with dt_fine.
+        size_t num_fine_steps_per_step = compute_num_fine_steps_per_step(ide_exponent, gregory_order, fine_step_power);
+        ScalarType dt_fine             = dt_ide / num_fine_steps_per_step;
+        ScalarType div_dt_fine         = div_dt_ide * num_fine_steps_per_step;
+        ScalarType t_switch            = t0_ide + num_steps_until_switch * dt_ide;
 
         // If the forward finite difference scheme is used, S' at the first finite_difference_order time points is
         // computed with values of S at later time points. Thus, the first simulation needs at least
         // 2 * finite_difference_order - 1 time steps.
-        size_t num_fine_steps = num_steps_until_switch * (size_t)std::round(std::pow(10, fine_exponent_offset));
+        size_t num_fine_steps = num_steps_until_switch * num_fine_steps_per_step;
         if (num_steps_until_switch > 0 && forward_fd && num_fine_steps < 2 * finite_difference_order - 1) {
             return mio::failure(mio::StatusCode::InvalidValue,
                                 fmt::format("The simulation until t_switch has only {} time steps, but at least {} "
@@ -431,14 +442,14 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, std::vec
             // Simulate until t_switch with the smaller step size and save the result as CSV files.
             std::string csv_dir  = save_dir.empty() ? "./" : save_dir;
             std::string csv_file = fmt::format(
-                "{}/ide_result_until_tswitch_dt=1e-{:.0f}_dtfine=1e-{:.0f}_tswitch={:.10g}_gregoryorder={}.csv",
-                csv_dir, ide_exponent, fine_exponent, t_switch, gregory_order);
+                "{}/ide_result_until_tswitch_dt=1e-{:.0f}_dtfine={:.10g}_tswitch={:.10g}_gregoryorder={}.csv", csv_dir,
+                ide_exponent, dt_fine, t_switch, gregory_order);
             std::string csv_file_flows = fmt::format(
-                "{}/ide_result_until_tswitch_dt=1e-{:.0f}_dtfine=1e-{:.0f}_tswitch={:.10g}_gregoryorder={}_flows.csv",
-                csv_dir, ide_exponent, fine_exponent, t_switch, gregory_order);
-            BOOST_OUTCOME_TRY(simulate_ide_until_switch(fine_exponent, t_switch, gregory_order, finite_difference_order,
-                                                        init_values_t0, TimeInfected, cont_freq, csv_file,
-                                                        csv_file_flows, kahan, forward_fd));
+                "{}/ide_result_until_tswitch_dt=1e-{:.0f}_dtfine={:.10g}_tswitch={:.10g}_gregoryorder={}_flows.csv",
+                csv_dir, ide_exponent, dt_fine, t_switch, gregory_order);
+            BOOST_OUTCOME_TRY(simulate_ide_until_switch(dt_fine, div_dt_fine, t_switch, gregory_order,
+                                                        finite_difference_order, init_values_t0, TimeInfected,
+                                                        cont_freq, csv_file, csv_file_flows, kahan, forward_fd));
 
             // Read in the values obtained with the smaller step size and use the whole time interval
             // [t0_ide, t_switch] of the first simulation as initial time window.
@@ -515,29 +526,24 @@ int main()
 
     std::vector<size_t> finite_difference_orders = {4};
 
-    std::vector<size_t> gregory_orders = {1, 2, 3};
+    std::vector<size_t> gregory_orders = {3};
 
-    // Before t_switch, the IDE model is simulated with the smaller step size dt_fine = dt * 10^(-fine_exponent_offset)
-    // where dt is the target step size. The entries of fine_exponent_offsets correspond to the entries of
-    // ide_exponents. The switching time is given by t_switch = t0_ide + num_steps_until_switch * dt with
+    // Before t_switch, the IDE model is simulated with the smaller step size
+    // dt_fine = dt / ceil(dt^(-fine_step_power * (gregory_order - 1))) where dt is the target step size. Thus, dt_fine
+    // depends on both dt and the Gregory order, e.g. for fine_step_power = 0.5 and gregory_order = 3, dt_fine = dt^2.
+    // The switching time is given by t_switch = t0_ide + num_steps_until_switch * dt with
     // num_steps_until_switch = max(gregory_order - 1, 2 * finite_difference_order - 1). Thus, there are at least
     // 2 * finite_difference_order - 1 time steps until t_switch which are needed for the forward finite difference
-    // scheme, also if fine_exponent_offset = 0, i.e. dt_fine = dt. The simulation until t_switch does not use an
+    // scheme, also if dt_fine = dt (e.g. for gregory_order = 1). The simulation until t_switch does not use an
     // initial time window but is only initialized with the values of the ODE solution at t0_ide. Its result is saved
     // as CSV file and read in to initialize the simulation with step size dt, i.e. [t0_ide, t_switch] is the initial
-    // time window of the simulation with step size dt. With fine_exponent_offset = 0, this yields the same result as a
-    // simulation that directly uses the step size dt.
+    // time window of the simulation with step size dt. With fine_step_power = 0, i.e. dt_fine = dt, this yields the
+    // same result as a simulation that directly uses the step size dt.
     // If use_fine_flows, the flows (i.e. -S') computed with step size dt_fine are also used on the initial time window
     // of the simulation with step size dt. Otherwise, they are computed from the compartments with step size dt.
-    std::vector<ScalarType> ide_exponents         = {0., 1., 2., 3.};
-    std::vector<ScalarType> fine_exponent_offsets = {0., 0., 0., 0.};
-    bool use_fine_flows                           = true;
-
-    // String with the entries of fine_exponent_offsets for the folder name, e.g. "1-1-2".
-    std::string fine_exponent_offsets_string = "";
-    for (size_t i = 0; i < fine_exponent_offsets.size(); i++) {
-        fine_exponent_offsets_string += (i > 0 ? "-" : "") + fmt::format("{}", fine_exponent_offsets[i]);
-    }
+    std::vector<ScalarType> ide_exponents = {0., 1., 2., 3.};
+    ScalarType fine_step_power            = 0.5;
+    bool use_fine_flows                   = true;
 
     std::vector<std::vector<ScalarType>> timeinf_tmax_values;
 
@@ -559,11 +565,11 @@ int main()
             std::cout << "FD order: " << finite_difference_order << std::endl;
 
             std::string save_dir =
-                fmt::format("./simulation_results/2026-10-16/"
+                fmt::format("./simulation_results/2026-11-04/"
                             "dtode=1e-{}_t0ode={}_timeinf={}_contfreq={}_kahan={}_forwardfd={}/"
-                            "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}_fineoffsets={}_fineflows={}/",
+                            "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}_finesteppower={}_fineflows={}/",
                             ode_exponent, t0_ode, time_infected, cont_freq, kahan, forward_fd, t0_ide, tmax,
-                            finite_difference_order, fine_exponent_offsets_string, use_fine_flows);
+                            finite_difference_order, fine_step_power, use_fine_flows);
 
             // Make folder if not existent yet.
             std::filesystem::path dir(save_dir);
@@ -586,11 +592,10 @@ int main()
                 std::cout << std::endl;
                 std::cout << "Gregory order: " << gregory_order << std::endl;
                 // Number of time steps with step size dt that are simulated with the smaller step size dt_fine.
-                size_t num_steps_until_switch = std::max(gregory_order - 1, 2 * finite_difference_order - 1);
-                mio::IOResult<void> result_ide =
-                    simulate_ide(ide_exponents, fine_exponent_offsets, gregory_order, finite_difference_order,
-                                 result_ode[0], t0_ide, tmax, time_infected, cont_freq, num_steps_until_switch,
-                                 use_fine_flows, save_dir_ide, kahan, forward_fd);
+                size_t num_steps_until_switch  = std::max(gregory_order - 1, 2 * finite_difference_order - 1);
+                mio::IOResult<void> result_ide = simulate_ide(
+                    ide_exponents, fine_step_power, gregory_order, finite_difference_order, result_ode[0], t0_ide, tmax,
+                    time_infected, cont_freq, num_steps_until_switch, use_fine_flows, save_dir_ide, kahan, forward_fd);
                 if (!result_ide) {
                     std::cout << result_ide.error().formatted_message() << std::endl;
                     return -1;
