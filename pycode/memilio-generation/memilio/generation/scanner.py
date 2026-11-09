@@ -50,11 +50,9 @@ class Scanner:
         self.config = conf
         utility.try_set_libclang_path(
             self.config.libclang_library_path)
-        source_file = self.config.source_file
-        from_folder = os.path.basename(os.path.dirname(source_file))
-        self.python_module_name = "o" + from_folder.split("_")[1]
-        self.namespace = default_dict["mio"] + \
-            "::" + self.python_module_name + "::"
+        self.python_module_name = None
+        self.source_file = None
+        self.namespace = None
         self.handled_bindings = set()
 
     def extract_results(self: Self, root_cursor: Cursor) -> IntermediateRepresentation:
@@ -413,8 +411,10 @@ class Scanner:
 
         :param intermed_repr: Dataclass used for saving the extracted model features.
         """
-        source_file = self.config.source_file
-        model_folder = os.path.dirname(source_file)
+        if self.source_file is None:
+            raise ValueError("source_file is not set.")
+
+        model_folder = os.path.dirname(self.source_file)
         parameter_space_file = os.path.join(
             model_folder, default_dict["parameterspacefile"])
 
@@ -432,14 +432,29 @@ class Scanner:
         """
         if node.kind == CursorKind.NAMESPACE:
             namespace = (namespace + node.spelling + "::")
+        if node.kind == CursorKind.TRANSLATION_UNIT:
+            self.source_file = node.translation_unit.spelling
+            self.set_python_module_name_and_namespace()
 
-        if namespace.startswith(self.namespace):
+        if node.kind == CursorKind.NAMESPACE:
+            namespace = (namespace + node.spelling + "::")
+
+        if namespace.startswith(namespace):
             self.search_binding_target(
                 binding_list, node, intermed_repr, namespace)
             self.switch_node_kind(node.kind)(node, intermed_repr)
 
         for n in node.get_children():
             self.find_node(n, intermed_repr, binding_list, namespace)
+
+    def set_python_module_name_and_namespace(self: Self) -> None:
+        """ Set the python module name and namespace based on the source file path."""
+        if self.source_file is None:
+            raise ValueError("source_file is not set.")
+
+        from_folder = os.path.basename(os.path.dirname(self.source_file))
+        self.python_module_name = "o" + from_folder.split("_")[1]
+        self.namespace = default_dict["mio"] + "::" + self.python_module_name
 
     def switch_node_kind(self: Self, kind: CursorKind) -> Callable[[Any,
                                                                    IntermediateRepresentation],
@@ -690,6 +705,7 @@ class Scanner:
             "namespace", self.namespace)
         intermed_repr.set_attribute(
             "python_module_name", self.python_module_name)
-        intermed_repr.set_attribute("target_folder", self.config.target_folder)
+        intermed_repr.set_attribute(
+            "target_folder", "")
         intermed_repr.set_attribute(
             "python_generation_module_path", self.config.python_generation_module_path)

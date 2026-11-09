@@ -55,15 +55,13 @@ def run_memilio_generation(print_ast=False):
 
     file_path = os.path.dirname(os.path.abspath(__file__))
 
-    conf.source_file = os.path.abspath(os.path.join(
-        file_path, "..", "..", "..", "..", "cpp", "models", "ode_seir", "model.cpp"))
-    conf.target_folder = file_path
-
-    scanner = Scanner(conf)
     asts = ASTHandler(conf)
+    asts.add_source_file(os.path.abspath(os.path.join(
+        file_path, "..", "..", "..", "..", "cpp", "models", "ode_seir", "model.cpp")))
     asts.handle_ast_creation()
     ast = asts.get_ast_by_id(0)
     aviz = Visualization()
+    scanner = Scanner(conf)
 
     intermed_repr = scanner.extract_results(ast.root_cursor)
 
@@ -72,9 +70,10 @@ def run_memilio_generation(print_ast=False):
     generator.generate_files(intermed_repr)
 
     if (print_ast):
-        # aviz.output_ast_formatted(asts.get_ast_by_id(0), ast.get_node_by_index(0))
-        # aviz.output_ast_terminal(asts.get_ast_by_id(0), ast.get_node_by_index(3))
-        # aviz.output_ast_png(ast.get_node_by_index(754637), 7)
+        aviz.output_ast_formatted(
+            ast, ast.get_node_by_index(0))
+        # aviz.output_ast_terminal(ast, ast.get_node_by_index(3))
+        # aviz.output_ast_png(ast.get_node_by_index(0), 3)
 
 
 if __name__ == "__main__":

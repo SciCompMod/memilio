@@ -38,18 +38,19 @@ class AST:
     assign unique IDs to AST nodes, and retrieve nodes or their IDs.
     """
 
-    def __init__(self: Self, conf: "ScannerConfig") -> None:
+    def __init__(self: Self, conf: "ScannerConfig", source_file: str) -> None:
         """ Basic constructor of the AST class.
 
-        :param conf: ScannerConfig dataclass with the configurations.
         """
 
         self.config = conf
+        self.source_file = source_file
         self.cursor_id = -1
         self.id_to_val = dict()
         self.val_to_id = dict()
         self.cursor = None
-        self.translation_unit = TranslationUnit
+        self.tempfile_path = None
+        self.translation_unit = None
 
     def create_ast_for_pickle(self):
         """ Create the abstract syntax tree and run external processes outside the pickling context.
@@ -86,7 +87,7 @@ class AST:
 
         dirname = self.config.skbuild_path_to_database
         compdb = CompilationDatabase.fromDirectory(dirname)
-        commands = compdb.getCompileCommands(self.config.source_file)
+        commands = compdb.getCompileCommands(self.source_file)
         for command in commands:
             for argument in command.arguments:
                 if argument not in unwanted_arguments:
@@ -101,7 +102,7 @@ class AST:
         :returns: List of command-line arguments for Clang.
         """
         clang_cmd = [
-            "clang", self.config.source_file,
+            "clang", self.source_file,
             "-std=c++20", '-emit-ast', '-o', '-']
         clang_cmd.extend(file_args)
         return clang_cmd
@@ -127,11 +128,11 @@ class AST:
         :param clang_cmd_result: Result of the Clang command execution.
         :returns: Path to the temporary AST file.
         """
-        ast_file = tempfile.NamedTemporaryFile(delete=False)
-        ast_file.write(clang_cmd_result.stdout)
-        ast_file.flush()
-        ast_file.close()
-        return ast_file.name
+
+        with tempfile.NamedTemporaryFile(delete=False) as ast_file:
+            ast_file.write(clang_cmd_result.stdout)
+            ast_file.flush()
+            self.tempfile_path = ast_file.name
 
     def _assing_ast_with_ids(self, cursor: Cursor) -> None:
         """ Traverse the AST and assign a unique ID to each node.
@@ -190,3 +191,14 @@ class AST:
         if index < 0 or index >= len(self.id_to_val):
             raise IndexError(f"Index {index} is out of bounds.")
         return self.id_to_val[index]
+
+    def process_ast_file(self):
+        """ Process AST file and create the translation_unit.
+
+        :returns: A tuple containing the TranslationUnit object and the AST object.
+        """
+        idx = Index.create()
+        tu = idx.read(self.tempfile_path)
+        self._assing_ast_with_ids(tu.cursor)
+        self.set_translation_unit(tu)
+        os.remove(self.tempfile_path)

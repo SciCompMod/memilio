@@ -42,105 +42,57 @@ class ASTHandler:
         self.conf = conf
         self.ast_list = []
         self.source_files = []
-        self.source_files.append(self.conf.source_file)
 
     def handle_ast_creation(self: T) -> None:
         """ Handle the creation of the ASTs. Single or Parallel.
         """
         if len(self.source_files) == 1:
-            self.single_creation(self.conf)
+            self.single_creation()
         else:
-            self.parallel_creation(self.conf)
+            self.parallel_creation()
 
     def add_source_file(self: T, source_file_str: str) -> None:
-        """ Add source file to list. No need for the full filepath. 
-        Just filename with ending.
+        """ Add source file to list.
 
         :param source_file_str: String that represents another file.
         """
-        source_file = self.conf.source_file
-        model_folder = os.path.dirname(source_file)
-        added_file = os.path.join(
-            model_folder, source_file_str)
+        if (os.path.isfile(source_file_str)):
+            self.source_files.append(source_file_str)
+            logging.info(f"Adding source file: {source_file_str}")
 
-        if (os.path.isfile(added_file)):
-            self.source_files.append(added_file)
-            logging.info(f"Adding source file: {added_file}")
-
-    @staticmethod
-    def process_ast_file(ast_path: str, ast: AST) -> tuple[TranslationUnit, AST]:
-        """ Process AST file and create the translation_unit.
-
-        :param ast_path: Represents the path to the generated AST file created by the clang process.
-        :param ast: AST instance.
-        :returns: A tuple containing the TranslationUnit object and the AST object.
-        """
-        idx = Index.create()
-        tu = idx.read(ast_path)
-        ast._assing_ast_with_ids(tu.cursor)
-        ast.set_translation_unit(tu)
-        os.remove(ast_path)
-        return tu, ast
-
-    def parallel_creation(self: T, conf: ScannerConfig) -> None:
+    def parallel_creation(self: T) -> None:
         """ Create ASTs for all source files using multiprocessing.
 
         This method distributes the AST creation process across multiple CPU cores. 
         Each source file is processed independently using the `create_ast` function, 
         and the resulting ASTs are stored in `self.ast_list`.
-
-        :param conf: ScannerConfig dataclass with the configurations.
         """
         with multiprocessing.Pool() as pool:
             try:
 
                 results = pool.starmap(
-                    create_ast, [(conf, source_file) for source_file in self.source_files])
+                    create_ast, [(self.conf, source_file) for source_file in self.source_files])
 
-                for ast_path, ast in results:
+                for ast in results:
                     try:
-                        process_ast = self.process_ast_file(
-                            ast_path, ast)
-
-                        self.add_ast_to_list(process_ast[1])
+                        ast.process_ast_file()
+                        self.ast_list.append(ast)
 
                     except Exception as e:
                         logging.info(
-                            f"Error processing AST file {ast_path}: {e}")
+                            f"Error processing AST file {ast.source_file}: {e}")
             except Exception as e:
                 logging.info(f"Error in parallel AST creation: {e}")
 
-    def single_creation(self: T, conf: ScannerConfig) -> TranslationUnit:
+    def single_creation(self: T) -> None:
         """ Create AST for a single source file.
 
         :param conf: ScannerConfig dataclass with the configurations.
         :returns: TranslationUnit object.
         """
-        ast_path, ast = create_ast(conf, self.source_files[0])
-        translation_unit = self.process_ast_file(ast_path, ast)
-        self.add_ast_to_list(ast)
-        return translation_unit
-
-    def add_ast_to_list(self: T, ast: AST) -> None:
-        """ Add AST to list.
-
-        :param ast: AST instance.
-        """
+        ast = create_ast(self.conf, self.source_files[0])
+        ast.process_ast_file()
         self.ast_list.append(ast)
-
-    def remove_ast_from_list(self: T, ast: AST) -> None:
-        """ Remove AST from list.
-
-        :param ast: AST instance.
-        """
-        self.ast_list.remove(ast)
-
-    def get_ast_list(self: T) -> str:
-        """ Get list of ASTs.
-
-        :returns: List of AST objects.
-        """
-        return f"Hier ist die Liste aller erstellten ASTs:{self.ast_list}"
 
     def get_ast_by_id(self: T, id: int) -> AST:
         """ Get AST by id.
@@ -151,15 +103,14 @@ class ASTHandler:
         return self.ast_list[id]
 
 
-def create_ast(conf_template: ScannerConfig, src: str) -> tuple[str, AST]:
+def create_ast(conf_template: ScannerConfig, src: str) -> AST:
     """ Create AST for a file.
 
     :param conf_template: Base ScannerConfig object to be copied and modified.
     :param src: Sourcefile path
-    :returns: A tuple containing the path to the temporary AST file and the AST object.
+    :returns: The AST object.
     """
-    conf = copy.deepcopy(conf_template)
-    conf.source_file = src
-    ast = AST(conf)
-    ast_path = ast.create_ast_for_pickle()
-    return ast_path, ast
+    ast = AST(conf_template, src)
+    ast.create_ast_for_pickle()
+
+    return ast
