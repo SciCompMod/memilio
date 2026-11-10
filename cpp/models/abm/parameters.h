@@ -597,6 +597,23 @@ struct QuarantineDuration {
 };
 
 /**
+ * @brief Delay from the onset of symptoms until a symptomatic Person isolates at home for QuarantineDuration.
+ * Negative values, the default, disable isolation after symptom onset; a positive test then remains the only
+ * reason for quarantine.
+ */
+struct SymptomaticIsolationDelay {
+    using Type = TimeSpan;
+    static auto get_default(AgeGroup /*size*/)
+    {
+        return TimeSpan(-1);
+    }
+    static std::string name()
+    {
+        return "SymptomaticIsolationDelay";
+    }
+};
+
+/**
  * @brief Effectiveness of quarantine. 0.0 meaning no effect (percentage reduction of viral shed emission), 1.0 meaning full effect.
  */
 struct QuarantineEffectiveness {
@@ -671,6 +688,51 @@ struct SocialEventRate {
     static std::string name()
     {
         return "SocialEventRate";
+    }
+};
+
+/**
+ * @brief Time a Person stays at a BasicsShop before going home.
+ */
+struct BasicShoppingDuration {
+    using Type = TimeSpan;
+    static auto get_default(AgeGroup /*size*/)
+    {
+        return hours(1);
+    }
+    static std::string name()
+    {
+        return "BasicShoppingDuration";
+    }
+};
+
+/**
+ * @brief Minimum time a Person stays at a SocialEvent. Daytime events last until 20:00 at least.
+ */
+struct SocialEventDuration {
+    using Type = TimeSpan;
+    static auto get_default(AgeGroup /*size*/)
+    {
+        return hours(2);
+    }
+    static std::string name()
+    {
+        return "SocialEventDuration";
+    }
+};
+
+/**
+ * @brief Earliest time of day, from midnight, that a Person can go to a SocialEvent on a weekday.
+ */
+struct SocialEventWeekdayStart {
+    using Type = TimeSpan;
+    static auto get_default(AgeGroup /*size*/)
+    {
+        return hours(19);
+    }
+    static std::string name()
+    {
+        return "SocialEventWeekdayStart";
     }
 };
 
@@ -771,8 +833,10 @@ using ParametersBase =
                  TimeInfectedCriticalToRecovered, SymptomsPerInfectedNoSymptoms, SeverePerInfectedSymptoms,
                  CriticalPerInfectedSevere, DeathsPerInfectedSevere, DeathsPerInfectedCritical, ViralLoadDistributions,
                  ViralShedParameters, ViralShedFactor, InfectionRateFromViralShed, MaskProtection,
-                 AerosolTransmissionRates, LockdownDate, QuarantineDuration, QuarantineEffectiveness, SocialEventRate,
-                 BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum,
+                 AerosolTransmissionRates, LockdownDate, QuarantineDuration, SymptomaticIsolationDelay,
+                 QuarantineEffectiveness, SocialEventRate, BasicShoppingDuration, SocialEventDuration,
+                 SocialEventWeekdayStart, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
+                 GotoWorkTimeMaximum,
                  GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork,
                  InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor, PAISProbability,
                  PAISProbabilitySeverityFactor, PAISProtectionAtSecondInfection, PAISTransitionMatrix, TestData>;
@@ -1042,6 +1106,17 @@ public:
                           (size_t)i, this->get<GotoSchoolTimeMinimum>()[i].seconds());
                 return true;
             }
+        }
+
+        if (this->get<BasicShoppingDuration>() <= TimeSpan(0) || this->get<SocialEventDuration>() <= TimeSpan(0)) {
+            log_error("Constraint check: Parameters BasicShoppingDuration and SocialEventDuration must be positive.");
+            return true;
+        }
+
+        if (this->get<SocialEventWeekdayStart>() < TimeSpan(0) || this->get<SocialEventWeekdayStart>() >= hours(22)) {
+            log_error("Constraint check: Parameter SocialEventWeekdayStart must be between 0 and 22 hours, since "
+                      "no events are started from 22:00 on.");
+            return true;
         }
 
         for (auto&& v : enum_members<VirusVariant>()) {

@@ -50,6 +50,13 @@ The population and cohort files are not in git (`*.csv` is ignored); locally the
 - Contact rates are the German baseline matrices times per-location factors from
   `set_local_parameters_ger()` on the `abmXpanvadere` branch. No `MaximumContacts`, no aerosol
   transmission.
+- Movement as on `abmXpanvadere`: work starts between 6:00 and 8:00, school at 8:00, no shopping for
+  ages 0-4, shopping takes 2 hours, weekday events start from 20:00 and last at least 5 hours, and
+  symptomatic agents isolate at home 2 days after symptom onset. These use the ABM parameters
+  `BasicShoppingDuration`, `SocialEventDuration`, `SocialEventWeekdayStart` and
+  `SymptomaticIsolationDelay`, whose defaults keep the previous behaviour for other models. Unlike on
+  `abmXpanvadere`, an event stay that runs past midnight ends after its minimum duration instead of
+  lasting until 20:00 the next day.
 - Testing as in `paper_abm_bs_testing.cpp` (branch `abm_paper_test_bs`): on entering a school, workplace,
   shop or social event, symptomatic agents are tested with `testing_probability_symptomatic`, all others
   with that probability divided by `ratio_symptomatic_to_asymptomatic`. Generic test (sensitivity 0.71,

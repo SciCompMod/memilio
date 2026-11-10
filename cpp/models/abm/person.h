@@ -307,13 +307,27 @@ public:
     /**
      * @brief Answers the question if a Person is currently in quarantine.
      * If a Person is in quarantine this Person cannot change to Location%s other than Home or the Hospital.
+     * A Person is in quarantine for QuarantineDuration after a positive test and, if SymptomaticIsolationDelay is
+     * not negative, from that delay after the onset of symptoms of their latest infection.
      * @param[in] t The TimePoint of interest. Usually the current time of the Simulation.
      * @param[in] params Parameter that includes the length of a quarantine.
      * @return True if the Person is in quarantine.
      */
     bool is_in_quarantine(TimePoint t, const Parameters& params) const
     {
-        return t < m_home_isolation_start + params.get<mio::abm::QuarantineDuration>();
+        const auto duration = params.get<mio::abm::QuarantineDuration>();
+        if (t < m_home_isolation_start + duration) {
+            return true;
+        }
+        const auto delay = params.get<mio::abm::SymptomaticIsolationDelay>();
+        if (delay < TimeSpan(0) || m_infections.empty()) {
+            return false;
+        }
+        const auto onset = m_infections.back().get_infection_state_start_date(InfectionState::InfectedSymptoms);
+        if (onset == TimePoint(-1)) { // no symptoms in this infection
+            return false;
+        }
+        return onset + delay <= t && t < onset + delay + duration;
     }
 
     /**

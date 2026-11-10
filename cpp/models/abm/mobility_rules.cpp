@@ -94,7 +94,7 @@ LocationType go_to_shop(PersonalRandomNumberGenerator& rng, const Person& person
     }
 
     //return home
-    if (current_loc == LocationType::BasicsShop && person.get_time_at_location() >= hours(1)) {
+    if (current_loc == LocationType::BasicsShop && person.get_time_at_location() >= params.get<BasicShoppingDuration>()) {
         return LocationType::Home;
     }
 
@@ -107,7 +107,8 @@ LocationType go_to_event(PersonalRandomNumberGenerator& rng, const Person& perso
     auto current_loc = person.get_location_type();
     //leave
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
-        ((t.day_of_week() <= 4 && t.hour_of_day() >= 19 && t.hour_of_day() < 22) ||
+        ((t.day_of_week() <= 4 && t.time_since_midnight() >= params.get<SocialEventWeekdayStart>() &&
+          t.hour_of_day() < 22) ||
          (t.day_of_week() >= 5 && t.hour_of_day() >= 10 && t.hour_of_day() < 22)) &&
         !person.is_in_quarantine(t, params)) {
         return random_transition(
@@ -116,9 +117,10 @@ LocationType go_to_event(PersonalRandomNumberGenerator& rng, const Person& perso
                                              SimulationTime<ScalarType>(t.days()))[(size_t)person.get_age()]}});
     }
 
-    //return home
-    if (current_loc == LocationType::SocialEvent && t.hour_of_day() >= 20 &&
-        person.get_time_at_location() >= hours(2)) {
+    // return home after the minimum stay, from 20:00 on; a stay that runs past midnight ends then, instead of lasting
+    // until 20:00 on the next day
+    if (current_loc == LocationType::SocialEvent && (t.hour_of_day() >= 20 || t.hour_of_day() < 10) &&
+        person.get_time_at_location() >= params.get<SocialEventDuration>()) {
         return LocationType::Home;
     }
 

@@ -207,7 +207,10 @@ void add_persons_and_locations(abm::Model& model, const std::vector<PersonRow>& 
         const auto pid  = model.add_person(home, row.age, sex);
         model.assign_location(pid, home);
         model.assign_location(pid, get_or_add(events, row.event_id, abm::LocationType::SocialEvent));
-        model.assign_location(pid, get_or_add(shops, row.shopping_id, abm::LocationType::BasicsShop));
+        // As in the city builder of abmXpanvadere, children aged 0-4 do not go shopping.
+        if (row.age != AgeGroup(0)) {
+            model.assign_location(pid, get_or_add(shops, row.shopping_id, abm::LocationType::BasicsShop));
+        }
         if (model.parameters.get<abm::AgeGroupGotoSchool>()[row.age]) {
             model.assign_location(pid, get_or_add(schools, row.school_id, abm::LocationType::School));
         }
@@ -799,11 +802,25 @@ IOResult<abm::Model> make_model(const std::string& person_file, const std::strin
     auto model      = abm::Model(num_age_groups, halle_county_id);
     model.get_rng() = rng;
 
-    // Age group 1 (5-14) goes to school, age groups 2 and 3 (15-34 and 35-59) go to work.
+    // Age group 1 (5-14) goes to school, age groups 2 and 3 (15-34 and 35-59) go to work. abmXpanvadere also lets
+    // 15-34 go to school, but only those its city builder assigns to a school as staff; here every row of the
+    // population file carries a school id, so that would send all of them to school.
     model.parameters.get<abm::AgeGroupGotoSchool>()              = false;
     model.parameters.get<abm::AgeGroupGotoSchool>()[AgeGroup(1)] = true;
     model.parameters.get<abm::AgeGroupGotoWork>()                = false;
     model.parameters.get<abm::AgeGroupGotoWork>().set_multiple({AgeGroup(2), AgeGroup(3)}, true);
+
+    // Movement as on the abmXpanvadere branch (its parameters.h defaults and mobility rules): work starts
+    // between 6:00 and 8:00, school at 8:00, shopping takes two hours, weekday events start from 20:00 and last
+    // at least five hours, and symptomatic persons isolate at home two days after symptom onset.
+    model.parameters.get<abm::GotoWorkTimeMinimum>()     = abm::hours(6);
+    model.parameters.get<abm::GotoWorkTimeMaximum>()     = abm::hours(8);
+    model.parameters.get<abm::GotoSchoolTimeMinimum>()   = abm::hours(8);
+    model.parameters.get<abm::GotoSchoolTimeMaximum>()   = abm::hours(8);
+    model.parameters.get<abm::BasicShoppingDuration>()   = abm::hours(2);
+    model.parameters.get<abm::SocialEventDuration>()     = abm::hours(5);
+    model.parameters.get<abm::SocialEventWeekdayStart>() = abm::hours(20);
+    model.parameters.get<abm::SymptomaticIsolationDelay>() = abm::days(2);
 
     set_fixed_infection_parameters(model.parameters);
     set_pais_parameters(model.parameters);
