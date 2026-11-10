@@ -19,4 +19,4 @@ find_library(LIBCLANG_PATH clang HINTS "${COMPILER_BIN_DIR}/../lib")
 
 # config.json is read by the generation scripts from the package directory, so it has to be generated in the source tree.
 # It contains local paths and is ignored by git.
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/memilio/tools/config.json.txt ${CMAKE_CURRENT_SOURCE_DIR}/memilio/tools/config.json)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/memilio/generation/config.json.txt ${CMAKE_CURRENT_SOURCE_DIR}/memilio/generation/config.json)

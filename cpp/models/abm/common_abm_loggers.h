@@ -30,6 +30,8 @@
 #include "abm/mobility_data.h"
 #include "memilio/utils/mioomp.h"
 
+#include <vector>
+
 namespace mio
 {
 namespace abm
@@ -37,10 +39,10 @@ namespace abm
 
 /**
  * @brief Struct to save specific mobility data of an agent.
- * The data consists of:
- * 
+ * The data consists of the agent's id, the Location%s it moved between, the times it left and arrived,
+ * the TransportMode and ActivityType of the trip, and the agent's InfectionState.
  */
-struct mobility_data {
+struct MobilityData {
     uint32_t agent_id;
     uint32_t from_id;
     uint32_t to_id;
@@ -50,30 +52,6 @@ struct mobility_data {
     mio::abm::ActivityType activity_type;
     mio::abm::InfectionState infection_state;
 };
-
-constexpr mio::abm::ActivityType guess_activity_type(mio::abm::LocationType current_location)
-{
-    switch (current_location) {
-    case mio::abm::LocationType::Home:
-        return mio::abm::ActivityType::Home;
-    case mio::abm::LocationType::Work:
-        return mio::abm::ActivityType::Workplace;
-    case mio::abm::LocationType::School:
-        return mio::abm::ActivityType::Education;
-    case mio::abm::LocationType::SocialEvent:
-        return mio::abm::ActivityType::Leisure;
-    case mio::abm::LocationType::BasicsShop:
-        return mio::abm::ActivityType::Shopping;
-    case mio::abm::LocationType::ICU:
-        return mio::abm::ActivityType::OtherActivity;
-    case mio::abm::LocationType::Hospital:
-        return mio::abm::ActivityType::OtherActivity;
-    case mio::abm::LocationType::Cemetery:
-        return mio::abm::ActivityType::OtherActivity;
-    default:
-        return mio::abm::ActivityType::UnknownActivity;
-    }
-}
 
 /**
  * @brief Logger to log the LocationInformation of the simulation.
@@ -126,7 +104,7 @@ struct LogPersonInformation : mio::LogOnce {
         person_information.reserve(sim.get_model().get_persons().size());
         for (auto& person : sim.get_model().get_persons()) {
             person_information.push_back(std::make_tuple(
-                person.get_id(), sim.get_model().find_location(mio::abm::LocationType::Home, person.get_id()),
+                person.get_id(), sim.get_model().find_locations(mio::abm::ActivityType::Home, person.get_id())[0],
                 person.get_age()));
         }
         return person_information;
@@ -153,10 +131,10 @@ struct LogDataForMobility : mio::LogAlways {
     static Type log(const mio::abm::Simulation<>& sim)
     {
         Type mobility_data{};
-        for (Person p : sim.get_model().get_persons()) {
+        for (const Person& p : sim.get_model().get_persons()) {
             mobility_data.push_back(
                 std::make_tuple(p.get_id(), p.get_location(), sim.get_time(), p.get_last_transport_mode(),
-                                guess_activity_type(p.get_location_type()), p.get_infection_state(sim.get_time())));
+                                p.get_activity_type(), p.get_infection_state(sim.get_time())));
         }
         return mobility_data;
     }
@@ -174,19 +152,103 @@ struct LogInfectionState : mio::LogAlways {
      */
     static Type log(const mio::abm::Simulation<>& sim)
     {
-
         Eigen::VectorX<ScalarType> sum =
             Eigen::VectorX<ScalarType>::Zero(Eigen::Index(mio::abm::InfectionState::Count));
-        auto curr_time = sim.get_time();
-        PRAGMA_OMP(for)
-        for (auto& location : sim.get_model().get_locations()) {
-            for (uint32_t inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
-                sum[inf_state] += sim.get_model().get_subpopulation(location.get_id(), curr_time,
-                                                                    mio::abm::InfectionState(inf_state));
+        const auto curr_time = sim.get_time();
+        const auto& model    = sim.get_model();
+        for (const Person& p : model.get_persons()) {
+            if (p.get_location_model_id() == model.get_id()) {
+                sum[(Eigen::Index)p.get_infection_state(curr_time)] += 1;
             }
         }
         return std::make_pair(curr_time, sum);
     }
+};
+
+/**
+* @brief Logger to log the TimeSeries of the number of Person%s in an #InfectionState per AgeGroup.
+* This is a finer grained variant of LogInfectionState. It is not used by ResultSimulation, but provided here so that
+* a Simulation can be given an age resolved History where that resolution is needed.
+*/
+struct LogInfectionStatePerAgeGroup : mio::LogAlways {
+    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
+    /**
+     * @brief Log the TimeSeries of the number of Person%s in an #InfectionState per AgeGroup.
+     * @param[in] sim The simulation of the abm.
+     * @return A pair of the TimePoint and a vector counting the Person%s per AgeGroup and #InfectionState,
+     * indexed by `age_group * InfectionState::Count + infection_state`.
+     */
+    static Type log(const mio::abm::Simulation<>& sim)
+    {
+        Eigen::VectorXd sum = Eigen::VectorXd::Zero(
+            Eigen::Index((size_t)mio::abm::InfectionState::Count * sim.get_model().parameters.get_num_groups()));
+        const auto curr_time = sim.get_time();
+
+        for (const Person& p : sim.get_model().get_persons()) {
+            auto index = (((size_t)(mio::abm::InfectionState::Count)) * ((uint32_t)p.get_age().get())) +
+                         ((uint32_t)p.get_infection_state(curr_time));
+            sum[index] += 1;
+        }
+        return std::make_pair(curr_time, sum);
+    }
+};
+
+/**
+* @brief Logger to log the TimeSeries of new #Infection%s per LocationType and AgeGroup.
+* Unlike the other loggers, this one keeps a state: the #InfectionState and the LocationType of each Person at its
+* previous log. Hence, it has to log after every time step, which is the case when used in a History passed to
+* Simulation::advance. As History stores its own Logger instances, use a new History for every Simulation.
+*/
+struct LogInfectionPerLocationTypePerAgeGroup : mio::LogAlways {
+    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
+    /**
+     * @brief Log the TimeSeries of new #Infection%s per LocationType and AgeGroup.
+     * A Person is counted if it was not #InfectionState::Exposed at the previous log, but is now. A Person is infected
+     * during the interaction at the beginning of a time step and may move to another Location afterwards. Hence, it is
+     * attributed to the LocationType it was at during the previous log, not to its current one.
+     * A Person without a previous log is not counted, but only remembered for the next log. This is the case for all
+     * Person%s at the first log, which avoids miscounting the initially infected Person%s of the Model as new
+     * #Infection%s, and for Person%s that were added to the Model since the previous log.
+     * @param[in] sim The simulation of the abm.
+     * @return A pair of the TimePoint and a vector counting the newly exposed Person%s per AgeGroup and LocationType,
+     * indexed by `age_group * LocationType::Count + location_type`.
+     */
+    Type log(const mio::abm::Simulation<>& sim)
+    {
+        Eigen::VectorXd sum = Eigen::VectorXd::Zero(
+            Eigen::Index((size_t)mio::abm::LocationType::Count * sim.get_model().parameters.get_num_groups()));
+        const auto curr_time = sim.get_time();
+        const auto persons   = sim.get_model().get_persons();
+        // Entries beyond the previous number of Persons are new and have no previous log.
+        const size_t num_previous = m_previous.size();
+        m_previous.resize(persons.size());
+
+        size_t i = 0;
+        for (const Person& p : persons) {
+            const auto curr_state = p.get_infection_state(curr_time);
+            // The entry only belongs to this Person if the Persons were not reordered since the previous log.
+            const bool has_previous_log = i < num_previous && m_previous[i].id == p.get_id();
+            if (has_previous_log && m_previous[i].infection_state != mio::abm::InfectionState::Exposed &&
+                curr_state == mio::abm::InfectionState::Exposed) {
+                auto index = (((size_t)(mio::abm::LocationType::Count)) * ((uint32_t)p.get_age().get())) +
+                             ((uint32_t)m_previous[i].location_type);
+                sum[index] += 1;
+            }
+            // Remember where the Person is now, which is where the interaction of the next time step happens.
+            m_previous[i] = {p.get_id(), p.get_location_type(), curr_state};
+            ++i;
+        }
+        return std::make_pair(curr_time, sum);
+    }
+
+private:
+    /// @brief State of a Person at the previous log.
+    struct PreviousLog {
+        PersonId id;
+        mio::abm::LocationType location_type;
+        mio::abm::InfectionState infection_state;
+    };
+    std::vector<PreviousLog> m_previous; ///< State of each Person at the previous log, in the order of the Persons.
 };
 
 /**

@@ -49,5 +49,5 @@ build-dir = "../build/memilio-generation"
 include-package-data = true
 
 [tool.setuptools.package-data]
-"memilio.generation" = ["tools/*.json", "tools/*.txt", "tools/README.md"]
+"memilio.generation" = ["generation/*.json", "generation/*.txt", "generation/README.md"]
 "memilio.modelgenerator" = ["templates/*.jinja2"]
