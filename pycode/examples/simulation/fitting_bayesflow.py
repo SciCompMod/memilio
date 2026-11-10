@@ -30,12 +30,15 @@ os.environ["KERAS_BACKEND"] = "tensorflow"
 
 name = "fitting_abm"
 
-inference_params = ['viral_shedding_rate', 'dark_figure']
-summary_vars = ['deaths', 'severe', 'critical']
+inference_params = ['viral_shedding_rate', 'dark_figure',
+                    'testing_probability_symptomatic', 'ratio_symptomatic_to_asymptomatic']
+summary_vars = ['deaths', 'admissions', 'icu', 'reported']
 
 bounds = {
     'viral_shedding_rate': (1.4, 2.0),
-    'dark_figure': (2.5, 5.5)
+    'dark_figure': (2.5, 5.5),
+    'testing_probability_symptomatic': (0.01, 0.045),
+    'ratio_symptomatic_to_asymptomatic': (2.0, 15.0)
 }
 DATE_TIME = mio.Date(2022, 7, 1)
 
@@ -107,7 +110,7 @@ def plot_results(results, validation_data, synthetic=False):
     plt.close()
 
 
-def run_abm(viral_shedding_rate, dark_figure):
+def run_abm(viral_shedding_rate, dark_figure, testing_probability_symptomatic, ratio_symptomatic_to_asymptomatic):
     mio.set_log_level(mio.LogLevel.Warning)
     file_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -117,20 +120,24 @@ def run_abm(viral_shedding_rate, dark_figure):
     start_date = DATE_TIME
     num_days_sim = 30
 
-    samples = [viral_shedding_rate, dark_figure]
+    samples = [viral_shedding_rate, dark_figure,
+               testing_probability_symptomatic, ratio_symptomatic_to_asymptomatic]
 
     result = halle_abm.run_once(
         person_file, contact_dir, history_file, samples, start_date, num_days_sim)
     result = np.vstack([np.asarray(result[0]), np.asarray(result[1]).T])
     return {'deaths': result[1],
-            'severe': result[2],
-            'critical': result[3]}
+            'admissions': result[2],
+            'icu': result[3],
+            'reported': result[4]}
 
 
 def prior():
     return {
         'viral_shedding_rate': np.random.uniform(*bounds['viral_shedding_rate']),
-        'dark_figure': np.random.uniform(*bounds['dark_figure'])
+        'dark_figure': np.random.uniform(*bounds['dark_figure']),
+        'testing_probability_symptomatic': np.random.uniform(*bounds['testing_probability_symptomatic']),
+        'ratio_symptomatic_to_asymptomatic': np.random.uniform(*bounds['ratio_symptomatic_to_asymptomatic'])
     }
 
 
@@ -191,8 +198,10 @@ def get_workflow():
         .convert_dtype("float64", "float32")
         .constrain("viral_shedding_rate", lower=bounds["viral_shedding_rate"][0], upper=bounds["viral_shedding_rate"][1])
         .constrain("dark_figure", lower=bounds["dark_figure"][0], upper=bounds["dark_figure"][1])
+        .constrain("testing_probability_symptomatic", lower=bounds["testing_probability_symptomatic"][0], upper=bounds["testing_probability_symptomatic"][1])
+        .constrain("ratio_symptomatic_to_asymptomatic", lower=bounds["ratio_symptomatic_to_asymptomatic"][0], upper=bounds["ratio_symptomatic_to_asymptomatic"][1])
         .concatenate(
-            ["viral_shedding_rate", "dark_figure"],
+            inference_params,
             into="inference_variables",
             axis=-1
         )
@@ -285,7 +294,9 @@ def run_inference(num_samples=1000, on_synthetic_data=False):
         for i in range(num_samples):  # we only have one dataset for inference here
             result = run_abm(
                 viral_shedding_rate=samples['viral_shedding_rate'][0, i][0],
-                dark_figure=samples['dark_figure'][0, i][0]
+                dark_figure=samples['dark_figure'][0, i][0],
+                testing_probability_symptomatic=samples['testing_probability_symptomatic'][0, i][0],
+                ratio_symptomatic_to_asymptomatic=samples['ratio_symptomatic_to_asymptomatic'][0, i][0]
             )
             results.append(reshape_results(result))
         results = combine_results(results)

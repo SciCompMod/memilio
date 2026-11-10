@@ -6,16 +6,30 @@ the simulator of a BayesFlow fit.
 
 ```python
 days, values = halle_abm.run_once(person_file, contact_dir, history_file, theta, start_date, num_days)
-# values[day] = [deaths since start_date, InfectedSevere, InfectedCritical]
+# values[day] = [deaths since start_date, new admissions, ICU occupancy, new positive tests]
 ```
 
-`theta[0]` is `InfectionRateFromViralShed` (the viral shedding rate). Any further entries are ignored.
+`theta` holds, in the order of `halle_abm.parameter_names()`: `viral_shedding_rate`
+(`InfectionRateFromViralShed`), `dark_figure` (>= 1), `testing_probability_symptomatic` and
+`ratio_symptomatic_to_asymptomatic` (>= 1). The values are for the model population (286,022 agents, which
+include persons outside Halle); the fit scales them by the population of Halle over the number of agents.
+
+Fitting workflow (from the repository root):
+
+1. Download the RKI/DIVI data with memilio-epidata (see the docstring of `prepare_observed_data.py`).
+2. `python3 cpp/simulations/abm_halle_pais/prepare_observed_data.py` writes
+   `data/Germany/halle/halle_observed.csv` and `halle_observed_meta.json` for 2022-07-01 + 90 days.
+3. `python3 pycode/examples/simulation/fitting_bayesflow.py`.
+
+`analyze_population.py` plots the population file to check its plausibility.
 
 ## Files
 
 | File | Content |
 | --- | --- |
 | `halle_model.h` / `halle_model.cpp` | `make_model` (builds the model) and `run_once` (builds, simulates, logs the daily outputs) |
+| `prepare_observed_data.py` | Real deaths, admissions, ICU and reported cases for Halle in the model's channels |
+| `analyze_population.py` | Summary and plots of the population file |
 | `pycode/.../bindings/models/abm_pais.cpp` | pybind11 module `_simulation_halle_abm`, compiles `halle_model.cpp` directly |
 
 ## Input data
@@ -35,14 +49,24 @@ The population and cohort files are not in git (`*.csv` is ignored); locally the
 - Every agent is assigned a Hospital and an ICU so that severe and critical cases are moved there.
 - Contact rates are the German baseline matrices times per-location factors from
   `set_local_parameters_ger()` on the `abmXpanvadere` branch. No `MaximumContacts`, no aerosol
-  transmission, no testing and no other intervention.
+  transmission.
+- Testing as in `paper_abm_bs_testing.cpp` (branch `abm_paper_test_bs`): on entering a school, workplace,
+  shop or social event, symptomatic agents are tested with `testing_probability_symptomatic`, all others
+  with that probability divided by `ratio_symptomatic_to_asymptomatic`. Generic test (sensitivity 0.71,
+  specificity 0.996), results valid for 3 days; a positive test denies entry and starts quarantine.
 - Fixed infection parameters (transition times, age-dependent severity) and PAIS parameters follow
   `cpp/examples/abm_aims_halle.cpp`, except for the PAIS transition rates (see below).
 - The infection and vaccination history before the start date is replayed from the cohort: every agent
-  gets the full history of one cohort member of its age, in date order, with fatal courses redrawn and
-  PAIS advanced daily up to `t0`. The cohort has no one under 18, so age groups 0-4 and 5-14 start fully
-  susceptible.
-- Deaths are rebased onto the start date, since the seeded history already contains deaths.
+  gets the full history of one cohort member of its age, in date order, with courses fatal before `t0`
+  redrawn and PAIS advanced daily up to `t0`. Drawing a member per agent is what scales the 5,000-person
+  cohort up to the population. The cohort has no one under 18, so age groups 0-4 and 5-14 start fully
+  susceptible (to be discussed).
+- The initial dark figure scales the cohort infections of the 30 days before `t0`: agents whose donor has
+  no recent infection get an additional one with the probability that makes the recent share of the age
+  bin `dark_figure` times the cohort's, dated like the recent cohort infections. Older history is unscaled.
+- Outputs per day: deaths since `t0` and ICU (InfectedCritical) occupancy at the end of the day, new
+  InfectedSevere (admissions) and new positive tests during the day.
+- `DeathsPerInfectedSevere` is not set, so its default of 0.1 applies on top of the deaths through ICU.
 
 ## Open points
 

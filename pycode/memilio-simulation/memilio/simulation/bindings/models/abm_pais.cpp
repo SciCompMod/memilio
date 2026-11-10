@@ -39,10 +39,13 @@ PYBIND11_MODULE(_simulation_halle_abm, m)
             const auto& observable = result.value();
             return py::make_tuple(observable.days, observable.values);
         },
-        "Run the Halle ABM once. Returns (days, values) with one [deaths since start, severe, critical] entry per "
-        "day.",
+        "Run the Halle ABM once. theta holds the parameters named by parameter_names(). Returns (days, values) "
+        "with one [deaths since start, new admissions, ICU occupancy, new positive tests] entry per day, for the "
+        "model population.",
         py::arg("person_file"), py::arg("contact_dir"), py::arg("history_file"), py::arg("theta"),
         py::arg("start_date"), py::arg("num_days"));
+
+    m.def("parameter_names", &mio::halle::parameter_names, "Names of the entries of theta, in order.");
 
     m.attr("__version__") = "dev";
 }

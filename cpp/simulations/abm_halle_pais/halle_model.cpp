@@ -312,6 +312,14 @@ void add_infrastructure(abm::Model& model)
     }
 }
 
+/**
+ * @brief Length of the window before t0 whose cohort infections are scaled by the initial dark figure.
+ *
+ * Long enough that every infection still active at t0 started inside it: the longest courses, through severe
+ * and critical, last about four weeks.
+ */
+constexpr int dark_figure_window_days = 30;
+
 /// @brief The age bins of the cohort file, in the order used by Cohort::members.
 const std::array<std::string, 7> cohort_age_bins{"18-20", "20-29", "30-39", "40-49", "50-59", "60-69", "70+"};
 
@@ -452,22 +460,58 @@ IOResult<Cohort> read_cohort_file(const std::string& filename, Date start_date)
  *   all infections before all vaccinations would treat every historical infection as unvaccinated.
  * - Each infection is drawn with the protection of the Person's latest infection or vaccination before it,
  *   as during the simulation, so prior immunity reduces its severity.
- * - Infection courses ending in death are redrawn. The cohort consists of persons who survived all of their
- *   recorded infections, and the population file is the population after them, so a death here would remove
- *   a Person twice.
+ * - Infection courses ending in death before @p t0 are redrawn. The population file is the population at
+ *   about @p t0, so a death before it would remove a Person twice. Courses that end in death after @p t0 are
+ *   kept, since those deaths fall into the simulated window that is compared against the reported deaths.
  * - An infection that starts while the previous one has not ended is skipped, since the model keeps only one
  *   active infection per Person.
  * - PAIS::update_severity only runs during the simulation, so a PAIS acquired in the history would otherwise
  *   stay in its initial state until @p t0. It is advanced in daily steps from its onset up to every later
  *   infection, which may refresh it, and then up to @p t0.
+ *
+ * The cohort infections are taken to be the known ones. The initial dark figure scales the infections of the
+ * last dark_figure_window_days before @p t0, which are the ones still active at @p t0, but not the older
+ * history: scaling the whole history would make more than every Person immune, as over half of the cohort has
+ * at least one recorded infection. A Person whose donor has no recent infection is given an additional one with
+ * probability q = (dark_figure - 1) * p / (1 - p), where p is the share of the donor's age bin with a recent
+ * infection, so that a share dark_figure * p of the bin has one. Its date is drawn from the recent infection
+ * dates of that bin, which keeps the shape of the recent epidemic curve.
  */
-void seed_cohort_history(abm::Model& model, const Cohort& cohort, abm::TimePoint t0, Date start_date)
+void seed_cohort_history(abm::Model& model, const Cohort& cohort, abm::TimePoint t0, Date start_date,
+                         double dark_figure)
 {
     constexpr int max_redraws = 100;
     const auto& params        = model.parameters;
     auto to_time_point        = [&](const Date& date) {
         return t0 + abm::days(get_offset_in_days(date, start_date));
     };
+    auto is_recent = [&](const Date& date) {
+        return get_offset_in_days(date, start_date) >= -dark_figure_window_days;
+    };
+
+    // Per age bin: the pooled recent infection dates and the share of members with a recent infection.
+    std::array<std::vector<Date>, cohort_age_bins.size()> recent_dates{};
+    std::array<double, cohort_age_bins.size()> additional_infection_probability{};
+    for (size_t bin = 0; bin < cohort_age_bins.size(); ++bin) {
+        size_t num_recent = 0;
+        for (const auto& member : cohort.members[bin]) {
+            bool has_recent = false;
+            for (const auto& date : member.infections) {
+                if (is_recent(date)) {
+                    recent_dates[bin].push_back(date);
+                    has_recent = true;
+                }
+            }
+            num_recent += has_recent ? 1 : 0;
+        }
+        if (num_recent == 0 || num_recent == cohort.members[bin].size()) {
+            continue;
+        }
+        const double p = static_cast<double>(num_recent) / static_cast<double>(cohort.members[bin].size());
+        additional_infection_probability[bin] = std::clamp((dark_figure - 1.0) * p / (1.0 - p), 0.0, 1.0);
+    }
+    auto& uniform              = UniformDistribution<double>::get_instance();
+    size_t num_dark_infections = 0;
 
     // Advance the PAIS of a Person from `from` to `to` in daily steps. Persons without a PAIS by `to` are
     // skipped, which is most of them.
@@ -502,7 +546,8 @@ void seed_cohort_history(abm::Model& model, const Cohort& cohort, abm::TimePoint
         }
         // The Person's own generator, so the drawn history does not depend on the order Persons are visited.
         auto prng          = abm::PersonalRandomNumberGenerator(model.get_rng(), person);
-        const auto& donors = cohort.members[bins[discrete(prng, weights)]];
+        const auto bin     = bins[discrete(prng, weights)];
+        const auto& donors = cohort.members[bin];
         const auto& member = donors[uniform_int(prng, size_t(0), donors.size() - 1)];
 
         // Merge both histories into one chronological list. On the same day, the infection comes first,
@@ -510,6 +555,14 @@ void seed_cohort_history(abm::Model& model, const Cohort& cohort, abm::TimePoint
         std::vector<std::pair<abm::TimePoint, bool>> events; // (time, is_infection)
         for (const auto& date : member.infections) {
             events.emplace_back(to_time_point(date), true);
+        }
+        // Unreported recent infection, see the initial dark figure above.
+        const bool donor_has_recent = std::any_of(member.infections.begin(), member.infections.end(), is_recent);
+        if (!donor_has_recent && additional_infection_probability[bin] > 0.0 &&
+            uniform(prng, 0.0, 1.0) < additional_infection_probability[bin]) {
+            const auto& dates = recent_dates[bin];
+            events.emplace_back(to_time_point(dates[uniform_int(prng, size_t(0), dates.size() - 1)]), true);
+            ++num_dark_infections;
         }
         for (const auto& date : member.vaccinations) {
             events.emplace_back(to_time_point(date), false);
@@ -540,8 +593,7 @@ void seed_cohort_history(abm::Model& model, const Cohort& cohort, abm::TimePoint
                                       abm::InfectionState::Exposed, person.get_latest_protection(t), false);
             };
             auto infection = draw();
-            for (int i = 0;
-                 i < max_redraws && infection.get_highest_infection_state().second == abm::InfectionState::Dead; ++i) {
+            for (int i = 0; i < max_redraws && infection.get_infection_state(t0) == abm::InfectionState::Dead; ++i) {
                 infection = draw();
                 ++num_redrawn;
             }
@@ -561,9 +613,11 @@ void seed_cohort_history(abm::Model& model, const Cohort& cohort, abm::TimePoint
                         age, num_unseeded[age]);
         }
     }
-    log_info("Seeded {} infections and {} vaccinations from the cohort; skipped {} infections overlapping an "
-             "earlier one and redrew {} fatal courses. {} persons have an active PAIS at t0.",
-             num_infections, num_vaccinations, num_overlapping, num_redrawn, num_pais);
+    log_info("Seeded {} infections ({} of them unreported, dark figure {}) and {} vaccinations from the cohort; "
+             "skipped {} infections overlapping an earlier one and redrew {} courses fatal before t0. {} persons "
+             "have an active PAIS at t0.",
+             num_infections, num_dark_infections, dark_figure, num_vaccinations, num_overlapping, num_redrawn,
+             num_pais);
 }
 
 /// @brief Set the infection parameters that are not fitted. Values follow the Halle setup of abm_aims_halle.cpp.
@@ -679,14 +733,67 @@ void set_pais_parameters(abm::Parameters& params)
     params.get<abm::PAISTransitionMatrix>() = rates;
 }
 
+/**
+ * @brief Add the testing strategy that produces the reported infections.
+ *
+ * Follows paper_abm_bs_testing.cpp on the abm_paper_test_bs branch: on entering a school, workplace, shop or
+ * social event, a Person with symptoms (InfectedSymptoms, InfectedSevere, InfectedCritical) is tested with
+ * probability @p testing_probability_symptomatic, every other Person with that probability divided by
+ * @p ratio_symptomatic_to_asymptomatic. A test result stays valid for three days, during which the Person is
+ * not tested again. A positive result denies entry and, for compliant Persons, starts the quarantine.
+ *
+ * A single period without changes covers the whole simulation: free citizen tests ended on 2022-06-30, so
+ * no change in the testing regime falls into the fitted window that starts in July 2022.
+ */
+void add_testing_strategy(abm::Model& model, double testing_probability_symptomatic,
+                          double ratio_symptomatic_to_asymptomatic, abm::TimePoint t0, abm::TimePoint tmax)
+{
+    const auto test_parameters = model.parameters.get<abm::TestData>()[abm::TestType::Generic];
+    const auto validity_period = abm::days(3);
+    const auto symptomatic     = abm::TestingCriteria(
+        {}, {abm::InfectionState::InfectedSymptoms, abm::InfectionState::InfectedSevere,
+                 abm::InfectionState::InfectedCritical});
+    const auto asymptomatic = abm::TestingCriteria(
+        {}, {abm::InfectionState::Susceptible, abm::InfectionState::Exposed, abm::InfectionState::InfectedNoSymptoms,
+             abm::InfectionState::Recovered});
+    const std::vector<abm::LocationType> tested_at{abm::LocationType::School, abm::LocationType::Work,
+                                                   abm::LocationType::BasicsShop, abm::LocationType::SocialEvent};
+
+    auto& strategy = model.get_testing_strategy();
+    strategy.add_scheme(tested_at, abm::TestingScheme(symptomatic, validity_period, t0, tmax, test_parameters,
+                                                      testing_probability_symptomatic));
+    strategy.add_scheme(tested_at,
+                        abm::TestingScheme(asymptomatic, validity_period, t0, tmax, test_parameters,
+                                           testing_probability_symptomatic / ratio_symptomatic_to_asymptomatic));
+}
+
 } // namespace
+
+const std::vector<std::string>& parameter_names()
+{
+    static const std::vector<std::string> names{"viral_shedding_rate", "dark_figure",
+                                                "testing_probability_symptomatic",
+                                                "ratio_symptomatic_to_asymptomatic"};
+    return names;
+}
 
 IOResult<abm::Model> make_model(const std::string& person_file, const std::string& contact_dir,
                                 const std::string& history_file, const std::vector<double>& theta, Date start_date,
-                                abm::TimePoint t0, const RandomNumberGenerator& rng)
+                                abm::TimePoint t0, abm::TimePoint tmax, const RandomNumberGenerator& rng)
 {
-    if (theta.empty()) {
-        return failure(StatusCode::InvalidValue, "Parameter vector is empty, expected at least viral_shedding_rate.");
+    if (theta.size() != parameter_names().size()) {
+        return failure(StatusCode::InvalidValue, "Parameter vector has " + std::to_string(theta.size()) +
+                                                     " entries, expected " +
+                                                     std::to_string(parameter_names().size()) + ".");
+    }
+    const double viral_shedding_rate  = theta[0];
+    const double dark_figure          = theta[1];
+    const double testing_probability  = theta[2];
+    const double ratio_sympt_to_asympt = theta[3];
+    if (dark_figure < 1.0 || testing_probability < 0.0 || testing_probability > 1.0 || ratio_sympt_to_asympt < 1.0) {
+        return failure(StatusCode::InvalidValue,
+                       "Expected dark_figure >= 1, testing_probability_symptomatic in [0, 1] and "
+                       "ratio_symptomatic_to_asymptomatic >= 1.");
     }
 
     auto model      = abm::Model(num_age_groups, halle_county_id);
@@ -700,15 +807,16 @@ IOResult<abm::Model> make_model(const std::string& person_file, const std::strin
 
     set_fixed_infection_parameters(model.parameters);
     set_pais_parameters(model.parameters);
-    model.parameters.get<abm::InfectionRateFromViralShed>()[abm::VirusVariant::Wildtype] = theta[0];
+    model.parameters.get<abm::InfectionRateFromViralShed>()[abm::VirusVariant::Wildtype] = viral_shedding_rate;
 
     BOOST_OUTCOME_TRY(auto&& rows, read_population_file(person_file));
     add_persons_and_locations(model, rows);
     add_infrastructure(model);
     BOOST_OUTCOME_TRY(set_contact_rates(model, contact_dir));
+    add_testing_strategy(model, testing_probability, ratio_sympt_to_asympt, t0, tmax);
 
     BOOST_OUTCOME_TRY(auto&& cohort, read_cohort_file(history_file, start_date));
-    seed_cohort_history(model, cohort, t0, start_date);
+    seed_cohort_history(model, cohort, t0, start_date, dark_figure);
 
     log_info("Halle model built with {} persons and {} locations.", model.get_persons().size(),
              model.get_locations().size());
@@ -718,27 +826,39 @@ IOResult<abm::Model> make_model(const std::string& person_file, const std::strin
 namespace
 {
 
-/// @brief Logs cumulative deaths and the number of Person%s currently InfectedSevere and InfectedCritical.
+/// @brief Length of a simulation step. abm::Simulation always steps by one hour; LogChannels relies on it.
+const abm::TimeSpan step = abm::hours(1);
+
+/**
+ * @brief Logs the output channels after every step.
+ *
+ * Deaths and InfectedCritical are counted at the time of the log; new InfectedSevere and new positive tests are
+ * counted over the step that just ended. Testing happens during mobility at the start of a step, so a test
+ * performed in that step carries the time of its start, one step before the log.
+ */
 struct LogChannels : LogAlways {
     using Type = std::pair<abm::TimePoint, std::array<double, num_channels>>;
 
     static Type log(const abm::Simulation<>& sim)
     {
-        std::array<double, num_channels> values{0.0, 0.0, 0.0};
-        const auto t = sim.get_time();
+        std::array<double, num_channels> values{};
+        const auto t          = sim.get_time();
+        const auto step_start = t - step;
         for (auto& person : sim.get_model().get_persons()) {
-            switch (person.get_infection_state(t)) {
-            case abm::InfectionState::Dead:
-                values[0] += 1.0;
-                break;
-            case abm::InfectionState::InfectedSevere:
-                values[1] += 1.0;
-                break;
-            case abm::InfectionState::InfectedCritical:
-                values[2] += 1.0;
-                break;
-            default:
-                break;
+            const auto state = person.get_infection_state(t);
+            if (state == abm::InfectionState::Dead) {
+                values[channel_deaths] += 1.0;
+            }
+            else if (state == abm::InfectionState::InfectedCritical) {
+                values[channel_icu] += 1.0;
+            }
+            else if (state == abm::InfectionState::InfectedSevere &&
+                     person.get_infection_state(step_start) != abm::InfectionState::InfectedSevere) {
+                values[channel_admissions] += 1.0;
+            }
+            const auto test = person.get_test_result(abm::TestType::Generic);
+            if (test.result && test.time_of_testing >= step_start && test.time_of_testing < t) {
+                values[channel_reported] += 1.0;
             }
         }
         return {t, values};
@@ -755,29 +875,40 @@ IOResult<Observable> run_once(const std::string& person_file, const std::string&
     const auto tmax = t0 + abm::days(num_days);
 
     auto rng = RandomNumberGenerator();
-    BOOST_OUTCOME_TRY(auto&& model, make_model(person_file, contact_dir, history_file, theta, start_date, t0, rng));
+    BOOST_OUTCOME_TRY(auto&& model,
+                      make_model(person_file, contact_dir, history_file, theta, start_date, t0, tmax, rng));
     auto sim = abm::Simulation(t0, std::move(model));
 
     History<DataWriterToMemory, LogChannels> history;
     sim.advance(tmax, history);
 
-    // The simulation logs at every internal step, but only the last entry of each day is kept.
+    // Aggregate the steps into days. Day d covers [t0 + d days, t0 + (d + 1) days). The flows are summed over
+    // the steps of the day, the states are taken at its end. The first log entry is the state at t0 and only
+    // provides the deaths that the output is rebased onto.
     Observable observable;
+    observable.days.resize(static_cast<size_t>(num_days));
+    observable.values.assign(static_cast<size_t>(num_days), std::array<double, num_channels>{});
     const auto& log = std::get<0>(history.get_log());
-    for (size_t i = 0; i < log.size(); ++i) {
-        const double day = log[i].first.days();
-        if (i + 1 == log.size() || static_cast<int>(log[i + 1].first.days()) > static_cast<int>(day)) {
-            observable.days.push_back(std::floor(day));
-            observable.values.push_back(log[i].second);
-        }
+    if (log.empty()) {
+        return failure(StatusCode::UnknownError, "The simulation produced no output.");
     }
-
-    // Rebase deaths onto the start of the simulation, since the seeded history already contains deaths.
-    if (!observable.values.empty()) {
-        const double deaths_at_t0 = observable.values.front()[0];
-        for (auto& value : observable.values) {
-            value[0] -= deaths_at_t0;
+    const double deaths_at_t0 = log.front().second[channel_deaths];
+    constexpr int seconds_per_day = 24 * 60 * 60;
+    for (size_t i = 1; i < log.size(); ++i) {
+        const auto& [t, values] = log[i];
+        const int day           = ((t - t0).seconds() - step.seconds()) / seconds_per_day;
+        if (day < 0 || day >= num_days) {
+            continue;
         }
+        auto& out = observable.values[static_cast<size_t>(day)];
+        out[channel_admissions] += values[channel_admissions];
+        out[channel_reported] += values[channel_reported];
+        // The last step of the day overwrites the states of the earlier ones.
+        out[channel_deaths] = values[channel_deaths] - deaths_at_t0;
+        out[channel_icu]    = values[channel_icu];
+    }
+    for (int day = 0; day < num_days; ++day) {
+        observable.days[static_cast<size_t>(day)] = day;
     }
     return success(observable);
 }
