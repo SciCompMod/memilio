@@ -24,8 +24,8 @@
 
 #include "memilio/compartments/flow_model.h"
 #include "memilio/epidemiology/populations.h"
-#include "models/ode_seir_metapop/parameters.h"
-#include "models/ode_seir_metapop/infection_state.h"
+#include "ode_seir_metapop/parameters.h"
+#include "ode_seir_metapop/infection_state.h"
 #include "memilio/geography/regions.h"
 #include "memilio/utils/time_series.h"
 

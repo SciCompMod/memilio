@@ -294,7 +294,7 @@ The benchmark executable has a number of command line arguments that customize e
 
 Two important options for consistency and stability:
 
-- ``--benchmark_min_time=<T>``: Iterate each benchmark so that the total runtime is at least ``T`` seconds.  
+- ``--benchmark_min_time=<T>s``: Iterate each benchmark so that the total runtime is at least ``T`` seconds, e.g. ``--benchmark_min_time=0.5s``.  
   Default is 1 second, which may not be enough.  
   Try 60 seconds for better stability (you may need to experiment).
 

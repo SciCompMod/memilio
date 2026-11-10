@@ -23,7 +23,7 @@
 #include "memilio/utils/logging.h"
 #include "memilio/utils/visitor.h"
 #include "memilio/utils/random_number_generator.h"
-#include "models/abm/personal_rng.h"
+#include "abm/personal_rng.h"
 #include "memilio/io/io.h"
 
 #include <limits>

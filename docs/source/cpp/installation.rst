@@ -2,8 +2,10 @@ Build instructions
 ==================
 
 The MEmilio core library (MEmilio C++) is written in C++ and uses `CMake <https://cmake.org/>`__ as build system. For
-building MEmilio C++, you need a C++20 compiler, CMake and a build tool (like GNU Make or Ninja) installed on your
-device. Follow the steps from :doc:`../download_and_setup` to set up the required tools and the project.
+building MEmilio C++, you need a C++20 compiler, CMake (version 3.28 or newer) and a build tool (like GNU Make or Ninja) installed on your
+device. Follow the steps from :doc:`../download_and_setup` to set up the required tools and the project. If the CMake
+version of your system is too old (e.g. Ubuntu 22.04 ships CMake 3.22, Debian 12 ships CMake 3.25), you can install a recent version with
+``pip install cmake``.
 
 The following guide will make use of the command line, but you can use graphical build tools from an IDE as well.
 
@@ -121,9 +123,11 @@ Additional options can be specified by appending one or more ``-D<OPTION>=<VALUE
     * - Option
       - Description
     * - ``MEMILIO_BUILD_TESTS``
-      - Build unit tests in the test directory, ON or OFF, default ON.
+      - Build unit tests in the test directory, ON or OFF, default ON (OFF if MEmilio is included in another project).
     * - ``MEMILIO_BUILD_EXAMPLES``
-      - Build the example applications in the examples directory, ON or OFF, default ON.
+      - Build the example applications in the examples directory, ON or OFF, default ON (OFF if MEmilio is included in another project).
+    * - ``MEMILIO_ENABLE_INSTALL``
+      - Add the install rules and the CMake package configuration, ON or OFF, default ON (OFF if MEmilio is included in another project).
     * - ``MEMILIO_BUILD_MODELS``
       - Build the separate model libraries in the models directory, ON or OFF, default ON.
     * - ``MEMILIO_USE_BUNDLED_SPDLOG/_BOOST/_EIGEN/_JSONCPP``:
@@ -143,7 +147,7 @@ Additional options can be specified by appending one or more ``-D<OPTION>=<VALUE
     * - ``MEMILIO_ENABLE_WARNINGS``
       - Enable compilation warnings (beyond those enabled in the compiler by default). ON or OFF, default ON.
     * - ``MEMILIO_ENABLE_WARNINGS_AS_ERRORS``
-      - Compilation warnings are treated as compilation errors. ON or OFF, default ON.
+      - Compilation warnings are treated as compilation errors. ON or OFF, default ON. To ignore this option for a single configuration, run CMake with ``--compile-no-warning-as-error``.
     * - ``MEMILIO_ENABLE_PROFILING``
       - Compile with runtime profiling support. ON or OFF, default OFF. See `here <https://github.com/SciCompMod/memilio/blob/main/cpp/benchmarks/profiling.md>`__ for information.
     * - ``MEMILIO_ENABLE_LIKWID_MARKER``
@@ -236,16 +240,12 @@ MEmilio can be integrated as a subdirectory of your project with FetchContent:
     SOURCE_SUBDIR cpp
   )
 
-  # Set some options for the build.
-  set(MEMILIO_BUILD_TESTS OFF)
-  set(MEMILIO_BUILD_EXAMPLES OFF)
-
-  # Include MEmilio directly
+  # Include MEmilio directly. Tests, examples and installation are disabled by default in this case.
   FetchContent_MakeAvailable(memilio)
 
 Set the ``GIT_TAG`` to a branch, release, or commit hash. The "main" branch will always work, but we strongly recommend
 using a release version, preferably as a hash. 
-Then, add the main framework as a dependency with the command ``target_link_libraries(<your target> PRIVATE memilio)``. You may also want to add one or more models as a dependency, like ``ode_secir``, ``ide_seir``, and ``abm``.
+Then, add the main framework as a dependency with the command ``target_link_libraries(<your target> PRIVATE memilio::memilio)``. You may also want to add one or more models as a dependency, like ``memilio::ode_secir``, ``memilio::ide_seir``, and ``memilio::abm``. The names without the ``memilio::`` prefix work as well.
 This will set all required include directories and libraries, even transitive ones.
 
 Alternatively, if you installed the project (see the next section), there is a `memilio-config.cmake` file included with
@@ -253,16 +253,11 @@ your installation. This config file will tell CMake which libraries and director
 config using the command ``find_package(memilio)`` in your own `CMakeLists.txt`. On Linux, the file should be found
 automatically if you installed it in the normal GNU directories. Otherwise, or if you are working on Windows, you have
 to specify the ``memilio_DIR`` variable when running CMake to point it to the `memilio-config.cmake` file.
-Then you can add dependencies as above, but with the added prefix of ``memilio::``. For example, to add the main
-framework, use ``target_link_libraries(<your target> PRIVATE memilio::memilio)``.
+Then you can add dependencies as above, e.g. ``target_link_libraries(<your target> PRIVATE memilio::ode_secir)``. The
+installed targets require C++20 and add the necessary compile flags automatically.
 
 Installation
 ~~~~~~~~~~~~
-
-.. warning::
-    
-    Installing currently is not tested and may not work as expected or at all. If you want to
-    integrate the project into yours, use the `FetchContent` way.
 
 After having built MEmilio C++ as described above, you can install it to the location given in the
 `CMAKE_INSTALL_PREFIX` variable by running
@@ -271,12 +266,14 @@ After having built MEmilio C++ as described above, you can install it to the loc
 
     cmake --install cpp/build
 
-This will install the libraries, headers, and executables that were built, i.e. where ``MEMILIO_BUILD_<PART>=ON``.
+This will install the core library and all model libraries with their headers, as well as the CMake package
+configuration. The installation is relocatable. If the bundled versions of Eigen, Boost and Random123 are used, their
+headers are installed to ``include/memilio/thirdparty``; note that the Boost headers alone take about 170 MB. Bundled
+spdlog and JsonCpp are installed next to MEmilio.
 
 Known issues
 ------------
 
-- Installing currently is not tested and may not work as expected or at all. If you want to integrate the project into yours, use the `FetchContent` way.
 - On Windows, automatic detection of HDF5 installations does not work reliably. If you get HDF5 related errors during the build, you may have to supply the HDF5_DIR variable during CMake configuration, see above.
 
 Further questions

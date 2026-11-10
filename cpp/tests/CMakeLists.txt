@@ -1,4 +1,3 @@
-enable_testing()
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 set(GOOGLE_TEST_INDIVIDUAL ON)
@@ -115,8 +114,8 @@ endif()
 
 add_executable(memilio-test ${TESTSOURCES})
 target_include_directories(memilio-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(memilio-test PRIVATE memilio ode_secir ode_seir ode_seirdb ode_secirvvs ode_secirts ode_seair ide_seir ide_secir lct_secir glct_secir abm gtest_main AD::AD graph_abm d_abm smm)
-target_compile_options(memilio-test PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+target_link_libraries(memilio-test PRIVATE memilio ode_secir ode_seir ode_seirdb ode_secirvvs ode_secirts ode_seair ide_seir ide_secir lct_secir glct_secir abm graph_abm d_abm smm)
+memilio_target_warnings(memilio-test)
 
 # make unit tests find the test data files
 file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/data" MEMILIO_TEST_DATA_DIR)

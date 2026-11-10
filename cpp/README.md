@@ -15,7 +15,7 @@ Directory structure:
 
 ## Requirements
 
-MEmilio C++ uses CMake as a build configuration system (https://cmake.org/)
+MEmilio C++ uses CMake as a build configuration system (https://cmake.org/), version 3.28 or newer is required. If your system's CMake is too old, you can install a recent version with `pip install cmake`.
 
 MEmilio C++ is regularly tested with the following compilers (list will be extended over time):
 - GCC, versions 11 and 13
@@ -49,8 +49,9 @@ cmake ..
 ```
 
 Options can be specified with `cmake .. -D<OPTION>=<VALUE>` or by editing the `build/CMakeCache.txt` file after running cmake. The following options are known to the library:
-- `MEMILIO_BUILD_TESTS`: build unit tests in the test directory, ON or OFF, default ON.
-- `MEMILIO_BUILD_EXAMPLES`: build the example applications in the examples directory, ON or OFF, default ON.
+- `MEMILIO_BUILD_TESTS`: build unit tests in the test directory, ON or OFF, default ON (OFF if MEmilio is included in another project).
+- `MEMILIO_BUILD_EXAMPLES`: build the example applications in the examples directory, ON or OFF, default ON (OFF if MEmilio is included in another project).
+- `MEMILIO_ENABLE_INSTALL`: add the install rules and the CMake package configuration, ON or OFF, default ON (OFF if MEmilio is included in another project).
 - `MEMILIO_BUILD_MODELS`: build the separate model libraries in the models directory, ON or OFF, default ON.
 - `MEMILIO_USE_BUNDLED_SPDLOG/_BOOST/_EIGEN/_JSONCPP`: use the corresponding dependency bundled with this project, ON or OFF, default ON.
 - `MEMILIO_BUILD_BENCHMARKS`: build the benchmarks for this project, ON or OFF, default OFF.
