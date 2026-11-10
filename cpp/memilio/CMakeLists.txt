@@ -127,10 +127,12 @@ add_library(memilio
 
 add_library(memilio::memilio ALIAS memilio)
 
-# headers are included as "memilio/...", configured headers are found in the binary dir; AD has its own target
-memilio_target_headers(memilio
-    BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/.." "${CMAKE_CURRENT_BINARY_DIR}"
-    EXCLUDE "/memilio/ad/include/"
+# headers are included as "memilio/...", AD has its own target
+memilio_target_headers(memilio BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/.." EXCLUDE "/memilio/ad/include/")
+# headers configured by CMake need their own file set, as base directories of one file set must not be nested, and the
+# binary directory may be inside the source directory
+target_sources(memilio PUBLIC FILE_SET generated_headers TYPE HEADERS
+    BASE_DIRS "${CMAKE_CURRENT_BINARY_DIR}"
     FILES "${CMAKE_CURRENT_BINARY_DIR}/memilio/config_internal.h"
 )
 

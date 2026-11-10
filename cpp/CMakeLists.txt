@@ -234,6 +234,7 @@ if(MEMILIO_ENABLE_INSTALL)
     install(TARGETS memilio AD ${MEMILIO_MODEL_TARGETS} ${MEMILIO_BUNDLED_TARGETS}
         EXPORT memilio-targets
         FILE_SET HEADERS
+        FILE_SET generated_headers
     )
     install(EXPORT memilio-targets
         NAMESPACE memilio::

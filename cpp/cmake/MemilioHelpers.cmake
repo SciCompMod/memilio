@@ -11,9 +11,9 @@ endfunction()
 # The file set provides the include directories (BASE_DIRS) for building and installing, and installs the headers.
 # Headers are collected by globbing, so that every header is installed, even if it is not listed in the sources.
 #
-# memilio_target_headers(<target> BASE_DIRS <dirs>... [EXCLUDE <regex>] [FILES <additional headers>...])
+# memilio_target_headers(<target> BASE_DIRS <dirs>... [EXCLUDE <regex>])
 function(memilio_target_headers target)
-    cmake_parse_arguments(PARSE_ARGV 1 ARG "" "EXCLUDE" "BASE_DIRS;FILES")
+    cmake_parse_arguments(PARSE_ARGV 1 ARG "" "EXCLUDE" "BASE_DIRS")
     file(GLOB_RECURSE headers CONFIGURE_DEPENDS
         "${CMAKE_CURRENT_SOURCE_DIR}/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/*.ipp")
     if(ARG_EXCLUDE)
@@ -25,7 +25,7 @@ function(memilio_target_headers target)
     else()
         set(scope PUBLIC)
     endif()
-    target_sources(${target} ${scope} FILE_SET HEADERS BASE_DIRS ${ARG_BASE_DIRS} FILES ${headers} ${ARG_FILES})
+    target_sources(${target} ${scope} FILE_SET HEADERS BASE_DIRS ${ARG_BASE_DIRS} FILES ${headers})
 endfunction()
 
 # Adds a model library, e.g. `memilio_add_model(ode_seir model.h model.cpp ...)`.
