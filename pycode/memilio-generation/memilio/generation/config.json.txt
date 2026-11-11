@@ -1,7 +1,7 @@
 [  
     {
         "python_generation_module_path": "${memilio-python_SOURCE_DIR}/../memilio-generation",
-        "skbuild_path_to_database": "${memilio-python_BINARY_DIR}",
+        "path_to_database": "${memilio-python_BINARY_DIR}",
         "libclang_library_path": "${LIBCLANG_PATH}"   
     }
 

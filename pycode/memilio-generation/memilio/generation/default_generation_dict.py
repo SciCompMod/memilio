@@ -32,6 +32,7 @@ default_dict = {
     "simulation": "Simulation",
     "flowmodel": "FlowModel",
     "compartmentalmodel": "CompartmentaModel",
+    "parameterset": "ParametersBase",
     "modelfile": "model.h",
     "infectionstatefile": "infection_state.h",
     "parameterspacefile": "parameter_space.h",

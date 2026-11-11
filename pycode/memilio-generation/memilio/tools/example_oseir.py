@@ -21,32 +21,18 @@
 Example for the ode seir model.
 """
 import argparse
-import sys
 import time
-import matplotlib.pyplot as plt
-import statistics
-import json
 import os
-from clang import cindex
-from clang.cindex import CursorKind
 
-import importlib.resources as importlib_resources
-
-from memilio.generation import Generator, Scanner, ScannerConfig, AST, ASTHandler
-from memilio.generation.graph_visualization import Visualization
-
+from memilio.generation import Generator, Scanner, get_config, ASTHandler, Visualization
 
 def run_memilio_generation(print_ast=False):
     """
 
     :param print_ast:  (Default value = False)
-
     """
-    # Define ScannerConfig and initialize Scanner
-    pkg = importlib_resources.files("memilio.generation")
-    with importlib_resources.as_file(pkg.joinpath('../generation/config.json')) as path:
-        with open(path) as file:
-            conf = ScannerConfig.schema().loads(file.read(), many=True)[0]
+    # Get ScannerConfig and initialize Scanner
+    conf = get_config()
 
     file_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -54,8 +40,7 @@ def run_memilio_generation(print_ast=False):
     asts.add_source_file(os.path.abspath(os.path.join(
         file_path, "..", "..", "..", "..", "cpp", "models", "ode_seir", "model.cpp")))
     asts.handle_ast_creation()
-    ast = asts.get_ast_by_id(0)
-    aviz = Visualization()
+    ast = asts.get_ast(0)
     scanner = Scanner(conf)
 
     intermed_repr = scanner.extract_results(ast.root_cursor)
@@ -65,10 +50,10 @@ def run_memilio_generation(print_ast=False):
     generator.generate_files(intermed_repr)
 
     if (print_ast):
-        aviz.output_ast_formatted(
+        Visualization.output_ast_formatted(
             ast, ast.get_node_by_index(0))
-        # aviz.output_ast_terminal(ast, ast.get_node_by_index(3))
-        # aviz.output_ast_png(ast.get_node_by_index(0), 3)
+        # Visualization.output_ast_terminal(ast, ast.get_node_by_index(3))
+        # Visualization.output_ast_png(ast.get_node_by_index(0), 3)
 
 
 if __name__ == "__main__":

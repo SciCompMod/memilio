@@ -21,12 +21,9 @@
 :strong:`scanner_config.py`
 Dataclass to import the configurations from the config.json.
 """
-import os
-from dataclasses import dataclass, field
-
+from dataclasses import dataclass
 from dataclasses_json import dataclass_json
-from typing_extensions import Self
-
+import importlib.resources as importlib_resources
 
 @dataclass_json
 @dataclass
@@ -34,33 +31,21 @@ class ScannerConfig:
     """Provide configurations from JSON-file in Python as dataclass.
 
     Attributes (and config.json parameters):
-        source_file: Path to the main file of the model, e.g., model.cpp
-
-        path_database: Path to the folder of the compile_commands.json
-        namespace: C++ namespace of the model class
-        python_module_name: Individual name for binded python module
         python_generation_module_path: Path to the ``pyproject.toml`` of the generation module
-        skbuild_path_to_database: Path to compile_commands.json
-        target_folder: Target folder for generated files
-        optional: List with optional arguments
-            libclang_library_path: Path to the local libclang library. If the string is empty, the program tries to retrieve the path from a terminal command.
-
-            simulation_class: Name of simulation class, if not used set as empty string
-            age_group: Boolean defining if model uses age groups
-            parameterset_wrapper": Boolean defining if model uses wrapper for parameterset.
-
-
+        path_to_database: Path to compile_commands.json
+        libclang_library_path: Path to the local libclang library. If the string is empty, the program tries to retrieve the path from a terminal command.
     """
 
     python_generation_module_path: str
-    skbuild_path_to_database: str
+    path_to_database: str
     libclang_library_path: str
 
-    def __post_init__(self: Self) -> None:
-        """
-        Additional data for the generation, that is not set in the config.json. 
-        Typically these should not be changed by the user. __post_init__() is automatically called after the Constructor.
-        """
-        # Predefined Variables
-        self.model_class = "Model"
-        self.parameterset = "ParametersBase"
+def get_config():
+    pkg = importlib_resources.files("memilio.generation")
+    with importlib_resources.as_file(
+            pkg.joinpath("generation/config.json")) as path:
+        with open(path) as file:
+            conf = ScannerConfig.schema().loads(file.read(), many=True)[0]
+    return conf
+
+config = get_config()

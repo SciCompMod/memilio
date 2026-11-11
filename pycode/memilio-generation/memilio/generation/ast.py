@@ -22,14 +22,10 @@ import subprocess
 import tempfile
 import logging
 import os
-from clang.cindex import Cursor, TranslationUnit, Index, CompilationDatabase
-from typing import TYPE_CHECKING
-from memilio.generation import utility
+from typing import TYPE_CHECKING, Optional
 from typing_extensions import Self
 
-
-if TYPE_CHECKING:
-    from memilio.generation import ScannerConfig
+from clang.cindex import Cursor, TranslationUnit, Index, CompilationDatabase
 
 
 class AST:
@@ -38,33 +34,38 @@ class AST:
     assign unique IDs to AST nodes, and retrieve nodes or their IDs.
     """
 
-    def __init__(self: Self, conf: "ScannerConfig", source_file: str) -> None:
+    def __init__(self: Self, source_file: str) -> None:
         """ Basic constructor of the AST class.
-
         """
 
-        self.config = conf
         self.source_file = source_file
         self.cursor_id = -1
         self.id_to_val = dict()
         self.val_to_id = dict()
-        self.cursor = None
-        self.tempfile_path = None
-        self.translation_unit = None
+        self.tempfile_path: Optional[str] = None
+        self.translation_unit: Optional[TranslationUnit] = None
 
-    def create_ast_for_pickle(self):
+    def process_ast_file(self):
+        """ Process AST file and create the translation_unit.
+        """
+        # ToDo: error handling for tempfile_path
+        idx = Index.create()
+        self.translation_unit = idx.read(self.tempfile_path)
+        os.remove(self.tempfile_path)
+        self.tempfile_path = None
+        self._assing_ast_with_ids(self.translation_unit.cursor)
+
+    def create_ast_for_pickle(self, path_to_database: str):
         """ Create the abstract syntax tree and run external processes outside the pickling context.
         This method sets up the necessary arguments, invokes Clang to generate the AST,
-        and stores the resulting AST in a temporary file, returning the file path.
-
-        :returns: Path to the generated AST file.
+        and stores the resulting AST in a temporary file.
         """
 
         self.cursor_id = -1
         self.id_to_val.clear()
         self.val_to_id.clear()
 
-        file_args = self.get_file_args()
+        file_args = self.get_file_args(path_to_database)
 
         clang_cmd = self.prepare_clang_command(file_args)
 
@@ -73,9 +74,8 @@ class AST:
         ast_file_path = self.create_temp_ast_file(clang_cmd_result)
 
         logging.info(f"AST file created at: {ast_file_path}")
-        return ast_file_path
 
-    def get_file_args(self):
+    def get_file_args(self, path_to_database: str):
         """ Extract arguments from the compilation database, excluding unwanted ones.
 
         :returns: List of relevant file arguments.
@@ -85,7 +85,8 @@ class AST:
         ]
         file_args = []
 
-        dirname = self.config.skbuild_path_to_database
+        # ToDo: Add error handling if compile comands dont exist or the path_to_database is wrong
+        dirname = path_to_database
         compdb = CompilationDatabase.fromDirectory(dirname)
         commands = compdb.getCompileCommands(self.source_file)
         for command in commands:
@@ -134,10 +135,8 @@ class AST:
             ast_file.flush()
             self.tempfile_path = ast_file.name
 
-    def _assing_ast_with_ids(self, cursor: Cursor) -> None:
+    def _assing_ast_with_ids(self, cursor) -> None:
         """ Traverse the AST and assign a unique ID to each node.
-
-        :param cursor: The current node of the AST.
         """
         self.cursor_id += 1
         id = self.cursor_id
@@ -158,13 +157,6 @@ class AST:
     def root_cursor(self):
         """ Returns the root cursor of the AST."""
         return self.translation_unit.cursor
-
-    def set_translation_unit(self: Self, tu: TranslationUnit) -> None:
-        """ Set the translation unit for the AST.
-
-        :param tu: The translation unit to set.
-        """
-        self.translation_unit = tu
 
     def get_node_id(self, cursor: Cursor) -> int:
         """ Returns the id of the current node.
@@ -191,14 +183,3 @@ class AST:
         if index < 0 or index >= len(self.id_to_val):
             raise IndexError(f"Index {index} is out of bounds.")
         return self.id_to_val[index]
-
-    def process_ast_file(self):
-        """ Process AST file and create the translation_unit.
-
-        :returns: A tuple containing the TranslationUnit object and the AST object.
-        """
-        idx = Index.create()
-        tu = idx.read(self.tempfile_path)
-        self._assing_ast_with_ids(tu.cursor)
-        self.set_translation_unit(tu)
-        os.remove(self.tempfile_path)

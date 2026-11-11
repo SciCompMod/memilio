@@ -24,63 +24,311 @@ Analyze the model and extract the needed information. Information get passed to 
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Any, Callable, Union
+from typing import Any, Callable, Union
 
-from clang.cindex import *
+from clang.cindex import Cursor, CursorKind, Config, Type
 from typing_extensions import Self
 
-from memilio.generation import IntermediateRepresentation, utility
+from memilio.generation.scanner_config import ScannerConfig
+from memilio.generation.intermediate_representation import IntermediateRepresentation
 from memilio.generation.info_types import binding_type_info, method_type_info
 from memilio.generation.default_generation_dict import default_dict, general_bindings_dict
 
+class StrategyModelSpecific:
+    def __init__(self: Self) -> None:
+        self.model_source_file = None
 
-if TYPE_CHECKING:
-    from memilio.generation import ScannerConfig
+    def scan_node(self: Self, node: Cursor, intermed_repr: IntermediateRepresentation, namespace: str, scanner: Scanner) -> None:
+        self.switch_node_kind(node.kind)(node, intermed_repr.found_model_specific_bindings)
 
+    def finalize(self: Self, intermed_repr: IntermediateRepresentation, scanner: Scanner) -> None:
+        """ Finalize the IntermediateRepresenation as last step of the Scanner.
+        Write needed information from config into intermed_repr,
+        delet unnecesary enums and check for missing model features.
 
-class Scanner:
-    """ Analyze the model and extract the needed information."""
-
-    def __init__(self: Self, conf: ScannerConfig) -> None:
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+        :param scanner: The Scanner object calling this strategy.
         """
-        Basic Constructor of Scanner class.
 
-        :param conf: ScannerConfig dataclass with the configurations.
+        found_model_specific_bindings = intermed_repr.found_model_specific_bindings
+        population_groups = []
+        for value in found_model_specific_bindings.model_base[0:]:
+            if default_dict["flowmodel"] in value[0].strip():
+                start = value[0].find("Populations<")
+                end = value[0].find(">", start)
+
+                if start != -1 and end != -1:
+                    populations_part = value[0][start + 11:end]
+                    population_groups = [
+                        part.strip(" <>").split("::")[-1]
+                        for part in populations_part.split(",")
+                    ]
+
+        found_model_specific_bindings.population_groups = population_groups
+
+        new_enum = {}
+        for key in found_model_specific_bindings.enum_populations:
+
+            if key in population_groups:
+
+                new_enum[key] = found_model_specific_bindings.enum_populations[key]
+
+                found_model_specific_bindings.enum_populations = new_enum
+
+        # ToDO: Make this extraction directly with node information, not thorough file checking
+        if self.model_source_file is None:
+            raise ValueError("model_source_file is not set.")
+        
+        abs_model_folder = os.path.dirname(self.model_source_file)
+        parameter_space_file = os.path.join(
+            abs_model_folder, default_dict["parameterspacefile"])
+        
+        model_folder = os.path.basename(abs_model_folder)
+        python_module_name = "o" + model_folder.split("_")[1]
+        cpp_module_namespace = default_dict["mio"] + "::" + python_module_name
+
+        found_model_specific_bindings.has_draw_sample = os.path.isfile(parameter_space_file)
+        found_model_specific_bindings.namespace = cpp_module_namespace
+        found_model_specific_bindings.python_module_name = python_module_name
+        found_model_specific_bindings.python_generation_module_path = scanner.config.python_generation_module_path
+
+        # ToDo: Check if they need to be saved generally or only in model specific
+        intermed_repr.set_attribute(
+            "python_module_name", python_module_name)
+        intermed_repr.set_attribute(
+            "python_generation_module_path", scanner.config.python_generation_module_path)
+
+    def switch_node_kind(self: Self, kind: CursorKind) -> Callable[[Any,
+                                                                   IntermediateRepresentation],
+                                                                   None]:
+        """ Dictionary to map CursorKind to methods. Works like a switch.
+
+        :param Underlying: kind of the current node.
+        :param kind: CursorKind:
+        :returns: Appropriate method for the given kind.
+
         """
-        self.config = conf
-        utility.try_set_libclang_path(
-            self.config.libclang_library_path)
-        self.python_module_name = None
-        self.source_file = None
-        self.namespace = None
+        switch = {
+            CursorKind.ENUM_DECL: self.check_enum,
+            CursorKind.ENUM_CONSTANT_DECL: self.check_enum_const,
+            CursorKind.CLASS_DECL: self.check_class,
+            CursorKind.CLASS_TEMPLATE: self.check_class,
+            CursorKind.CXX_BASE_SPECIFIER: self.check_base_specifier,
+            CursorKind.CONSTRUCTOR: self.check_constructor,
+            CursorKind.STRUCT_DECL: self.check_struct,
+            CursorKind.TYPE_ALIAS_DECL: self.check_type_alias,
+            CursorKind.TYPE_ALIAS_TEMPLATE_DECL: self.check_type_alias
+
+        }
+        return switch.get(kind, lambda *args: None)
+
+    def check_enum(
+        self: Self, node: Cursor,
+            intermed_repr: IntermediateRepresentation) -> None:
+        """ Inspect the nodes of kind ENUM_DECL and write needed information into intermed_repr.
+        Information: Name of Enum
+
+        :param node: Current node represented as a Cursor object.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+        """
+        if node.spelling.strip() != default_dict["emptystring"]:
+            intermed_repr.enum_populations[node.spelling] = []
+
+    def check_enum_const(
+        self: Self, node: Cursor,
+            intermed_repr: IntermediateRepresentation) -> None:
+        """ Inspect the nodes of kind ENUM_CONSTANT_DECL and write needed information into intermed_repr.
+        Information: Keys of an Enum
+
+        :param node: Current node represented as a Cursor object.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+        """
+
+        if node.semantic_parent.spelling in intermed_repr.enum_populations.keys():
+            key = node.semantic_parent.spelling
+            intermed_repr.enum_populations[key].append(node.spelling)
+
+    def check_class(
+        self: Self, node: Cursor,
+            intermed_repr: IntermediateRepresentation) -> None:
+        """ Inspect the nodes of kind CLASS_DECL and write information
+        (model_class, model_base, simulation_class, parameterset_wrapper) into intermed_repr.
+
+        :param node: Current node represented as a Cursor object.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+
+        """
+        if node.spelling == default_dict["model"]:
+            intermed_repr.model_class = node.spelling
+            self.model_source_file = os.path.abspath(node.location.file.name)
+            self.check_model_base(node, intermed_repr)
+            self.check_model_includes(node, intermed_repr)
+            self.check_age_group(node, intermed_repr)
+
+        elif (node.spelling == default_dict["simulation"]):
+            intermed_repr.simulation = True
+
+        elif (intermed_repr.has_age_group and default_dict["parameterset"] + "<FP>" in [base.spelling for base in node.get_children()]):
+            intermed_repr.parameterset_wrapper = node.spelling
+
+    def check_model_base(
+        self: Self, node: Cursor,
+            intermed_repr: IntermediateRepresentation) -> None:
+        """ Helper function to retreive the model base.
+
+        :param node: Current node represented as a Cursor object.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+
+        """
+
+        for base in node.get_children():
+
+            if base.kind != CursorKind.CXX_BASE_SPECIFIER:
+                continue
+
+            base_name = base.spelling
+            base_type = base.type
+
+            if default_dict["flowmodel"] in base_name:
+                intermed_repr.is_flowmodel = True
+
+            if default_dict["compartmentalmodel"] in base_name and default_dict["mio"] in node.semantic_parent.spelling:
+                intermed_repr.is_compartmentalmodel = True
+
+            intermed_repr.model_base.append(
+                get_base_class_string(base_type))
+
+            self.check_model_base(base.referenced, intermed_repr)
+
+    def check_base_specifier(
+        self: Self, node: Cursor,
+            intermed_repr: IntermediateRepresentation) -> None:
+        """ Not used yet.
+        Inspect nodes which represent base specifier.
+        For now this is handled by the parent node, which represents the class.
+
+        :param node: Current node represented as a Cursor object.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+
+        """
+        pass
+
+    def check_model_includes(
+        self: Self, node: Cursor,
+            intermed_repr: IntermediateRepresentation) -> None:
+        """ Helper function to retrieve the model specific includes needed for pybind.
+
+        :param node: Current node represented as a Cursor object.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+        """
+        filepath = node.location.file.name
+        filepaths = filepath.split("../")
+
+        model_has_analyze_results = False
+
+        intermed_repr.include_list.append(filepaths[1])
+
+        intermed_repr.include_list.append(
+            filepaths[1].replace(default_dict["modelfile"], default_dict["emptystring"]) + default_dict["infectionstatefile"])
+
+        for file in os.listdir(filepaths[0]):
+            if file == default_dict["parameterspacefile"]:
+                intermed_repr.include_list.append(filepaths[1].replace(
+                    default_dict["modelfile"], default_dict["emptystring"]) +
+                    default_dict["parameterspacefile"])
+            elif file == default_dict["analyzeresultfile"]:
+                model_has_analyze_results = True
+
+        if model_has_analyze_results:
+            intermed_repr.include_list.append(
+                filepaths[1].replace(default_dict["modelfile"], default_dict["emptystring"]) + default_dict["analyzeresultfile"])
+        else:
+            intermed_repr.include_list.append("memilio/data/analyze_result.h")
+
+    def check_age_group(
+        self: Self, node: Cursor,
+            intermed_repr: IntermediateRepresentation) -> None:
+        """ Inspect the nodes of kind CLASS_DECL with the name defined in
+        config.age_group and write needed information into intermed_repr.
+        Information: age_group
+
+        :param node: Current node represented as a Cursor object.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+        """
+        for base in node.get_children():
+            if base.kind != CursorKind.CXX_BASE_SPECIFIER:
+                continue
+            for base_template_arg in base.get_children():
+                if (base_template_arg.kind == CursorKind.TYPE_REF and default_dict["agegroup"] in base_template_arg.spelling):
+                    intermed_repr.has_age_group = True
+                    for child in base_template_arg.get_definition().get_children():
+                        if child.kind == CursorKind.CXX_BASE_SPECIFIER:
+                            intermed_repr.age_group["base"] = child.get_definition(
+                            ).type.spelling
+                        elif child.kind == CursorKind.CONSTRUCTOR:
+                            intermed_repr.age_group["init"] = [
+                                arg.spelling
+                                for arg in child.type.argument_types()]
+
+    def check_constructor(
+        self: Self, node: Cursor,
+            intermed_repr: IntermediateRepresentation) -> None:
+        """ Inspect the nodes of kind CONSTRUCTOR and write needed information into intermed_repr.
+        Information: intermed_repr.init
+
+        :param node: Current node represented as a Cursor object.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+        """
+        if intermed_repr.model_class == default_dict["model"]:
+            if node.spelling.startswith(default_dict["model"]) and ('<' in node.spelling and '>' in node.spelling):
+                init = {"type": [], "name": []}
+                for arg in node.get_arguments():
+                    tokens = []
+                    for token in arg.get_tokens():
+                        tokens.append(token.spelling)
+                    init["type"].append(" ".join(tokens[:-1]))
+                    init["name"].append(tokens[-1])
+                intermed_repr.model_init.append(init)
+
+    def check_type_alias(
+        self: Self, node: Cursor,
+            intermed_repr: IntermediateRepresentation) -> None:
+        """ Inspect the nodes of kind TYPE_ALIAS_DECL and write needed information into intermed_repr.
+        Information: intermed_repr.parameterset
+
+        :param node: Current node represented as a Cursor object.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+        """
+        if node.spelling == default_dict["parameterset"]:
+            intermed_repr.parameterset = node.spelling
+
+    def check_struct(
+        self: Self, node: Cursor,
+            intermed_repr: IntermediateRepresentation) -> None:
+        """Not used yet.
+
+        :param node: Current node represented as a Cursor object.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+        """
+        pass
+
+class StrategyGenericCpp:
+    def __init__(self) -> None:
         self.handled_bindings = set()
 
-    def extract_results(self: Self, root_cursor: Cursor) -> IntermediateRepresentation:
-        """ Extract the information of the abstract syntax tree and save them in the dataclass intermed_repr.
-        Call find_node to visit all nodes of abstract syntax tree and finalize to finish the extraction.
+    def scan_node(self: Self, node: Cursor, intermed_repr: IntermediateRepresentation, namespace: str, scanner: Scanner) -> None:
+        self.search_binding_target(general_bindings_dict, node, intermed_repr, namespace)
 
-        :param root_cursor: Represents the root node of the abstract syntax tree as a Cursor object from libclang.
-        :returns: Information extracted from the model saved as an IntermediateRepresentation.
-        """
-        if self.config.model_class != default_dict["model"]:
-            raise AssertionError("set a model name")
+    def finalize(self: Self, intermed_repr: IntermediateRepresentation, scanner: Scanner) -> None:
+        """ Finalize the IntermediateRepresenation as last step of the Scanner.
+        Write needed information from config into intermed_repr,
+        delet unnecesary enums and check for missing model features.
 
-        intermed_repr = IntermediateRepresentation()
-
-        self.find_node(root_cursor, intermed_repr, general_bindings_dict)
-        self.validate_binding_entry(
-            general_bindings_dict, intermed_repr.found_bindings)
-        self.finalize(intermed_repr)
-        self.check_parameter_space(intermed_repr)
-        return intermed_repr
-
-    def validate_binding_entry(self: Self, expected_binding_list: list[dict], found_binding_list: list[binding_type_info]) -> None:
-        """ Validate the found bindings and raise an print output if a binding is not in the list.
-
-        :param expected_binding_list: List of found bindings to be validated.
-        :param found_binding_list: List of expected bindings that should be found in the model.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+        :param scanner: The Scanner object calling this strategy.
         """
         missing: list[str] = []
+        expected_binding_list = general_bindings_dict
 
         for expected in expected_binding_list:
             expected_name = expected.get("name", "")
@@ -89,7 +337,7 @@ class Scanner:
 
             found_binding: binding_type_info | None = None
 
-            for binding in found_binding_list:
+            for binding in intermed_repr.found_bindings:
                 if (
                     binding.type == expected_type
                     and binding.name == expected_name
@@ -117,8 +365,8 @@ class Scanner:
             error_message = "Model does not fully satisfy required interfaces:\n" + \
                 "\n".join(missing)
             print(error_message +
-                  "\nContinuing execution with available model features...")
-
+                    "\nContinuing execution with available model features...")
+    
     def search_binding_target(self: Self, binding_list: list[dict], node: Cursor,
                               intermed_repr: IntermediateRepresentation, namespace: str) -> list:
         """ Search for a binding target in the current node.
@@ -406,23 +654,39 @@ class Scanner:
 
         return False, ""
 
-    def check_parameter_space(self: Self, intermed_repr: IntermediateRepresentation) -> None:
-        """Checks for parameter_space.cpp in the model folder and set has_draw_sample
+class Scanner:
+    """ Analyze the model and extract the needed information."""
 
-        :param intermed_repr: Dataclass used for saving the extracted model features.
+    def __init__(self: Self, conf: ScannerConfig) -> None:
         """
-        if self.source_file is None:
-            raise ValueError("source_file is not set.")
+        Basic Constructor of Scanner class.
 
-        model_folder = os.path.dirname(self.source_file)
-        parameter_space_file = os.path.join(
-            model_folder, default_dict["parameterspacefile"])
+        :param conf: ScannerConfig dataclass with the configurations.
+        """
+        self.config = conf
+        try_set_libclang_path(
+            self.config.libclang_library_path)
+        self.python_module_name = None
+        self.cpp_module_namespace = None
 
-        if (os.path.isfile(parameter_space_file)):
-            intermed_repr.has_draw_sample = True
+    def extract_results(self: Self, root_cursor: Cursor, strategies = None) -> IntermediateRepresentation:
+        """ Extract the information of the abstract syntax tree and save them in the dataclass intermed_repr.
+        Call find_node to visit all nodes of abstract syntax tree and finalize to finish the extraction.
 
-    def find_node(self: Self, node: Cursor,
-                  intermed_repr: IntermediateRepresentation, binding_list: list[dict], namespace: str = "") -> None:
+        :param root_cursor: Represents the root node of the abstract syntax tree as a Cursor object from libclang.
+        :returns: Information extracted from the model saved as an IntermediateRepresentation.
+        """
+        intermed_repr = IntermediateRepresentation()
+        # ToDo: This is temporary to make it possible to call this without any strategy
+        if strategies is None:
+            strategies = [StrategyModelSpecific(), StrategyGenericCpp()]
+
+        self.find_node(root_cursor, intermed_repr, strategies)
+        for strategy in strategies:
+            strategy.finalize(intermed_repr, self)
+        return intermed_repr
+
+    def find_node(self: Self, node: Cursor, intermed_repr: IntermediateRepresentation, strategies, namespace: str = "") -> None:
         """ Recursively walk over every node of an abstract syntax tree. Save the namespace the node is in.
         Call check_node_kind for extracting information from the nodes.
 
@@ -432,280 +696,68 @@ class Scanner:
         """
         if node.kind == CursorKind.NAMESPACE:
             namespace = (namespace + node.spelling + "::")
-        if node.kind == CursorKind.TRANSLATION_UNIT:
-            self.source_file = node.translation_unit.spelling
-            self.set_python_module_name_and_namespace()
 
         if node.kind == CursorKind.NAMESPACE:
             namespace = (namespace + node.spelling + "::")
 
         if namespace.startswith(namespace):
-            self.search_binding_target(
-                binding_list, node, intermed_repr, namespace)
-            self.switch_node_kind(node.kind)(node, intermed_repr)
+            for strategy in strategies:
+                strategy.scan_node(node, intermed_repr, namespace, self)
 
         for n in node.get_children():
-            self.find_node(n, intermed_repr, binding_list, namespace)
+            self.find_node(n, intermed_repr, strategies, namespace)
 
-    def set_python_module_name_and_namespace(self: Self) -> None:
-        """ Set the python module name and namespace based on the source file path."""
-        if self.source_file is None:
-            raise ValueError("source_file is not set.")
+def get_base_class(base_type: Type) -> list[Any]:
+    """Retrieve the base class.
+    Example for base_type: CompartmentalModel.
 
-        from_folder = os.path.basename(os.path.dirname(self.source_file))
-        self.python_module_name = "o" + from_folder.split("_")[1]
-        self.namespace = default_dict["mio"] + "::" + self.python_module_name
+    :param base_type: Type: 
+    """
+    result = [base_type.replace('> >', '>>')]
+    for i in range(base_type.get_num_template_arguments()):
+        result.append(get_base_class(base_type.get_template_argument_type(i)))
+    return result
 
-    def switch_node_kind(self: Self, kind: CursorKind) -> Callable[[Any,
-                                                                   IntermediateRepresentation],
-                                                                   None]:
-        """ Dictionary to map CursorKind to methods. Works like a switch.
 
-        :param Underlying: kind of the current node.
-        :param kind: CursorKind:
-        :returns: Appropriate method for the given kind.
+def get_base_class_string(base_type: Type) -> list[Any]:
+    """Retrieve the spelling of the base class.
+    Example for base_type.spelling: CompartmentalModel<mio::Populations<mio::AgeGroup, mio::InfectionState>, Parameters>.
 
-        """
-        switch = {
-            CursorKind.ENUM_DECL: self.check_enum,
-            CursorKind.ENUM_CONSTANT_DECL: self.check_enum_const,
-            CursorKind.CLASS_DECL: self.check_class,
-            CursorKind.CLASS_TEMPLATE: self.check_class,
-            CursorKind.CXX_BASE_SPECIFIER: self.check_base_specifier,
-            CursorKind.CONSTRUCTOR: self.check_constructor,
-            CursorKind.STRUCT_DECL: self.check_struct,
-            CursorKind.TYPE_ALIAS_DECL: self.check_type_alias,
-            CursorKind.TYPE_ALIAS_TEMPLATE_DECL: self.check_type_alias
+    :param base_type: of the current node.
+    """
+    # FlowModel arguements are not shown in list
 
-        }
-        return switch.get(kind, lambda *args: None)
+    # fixes an issue in the generation of the abstract syntax tree
+    # depending on the compiler version a whitespace is added between '>>'
+    result = [base_type.spelling.replace('> >', '>>')]
+    for i in range(base_type.get_num_template_arguments()):
+        result.append(get_base_class_string(
+            base_type.get_template_argument_type(i)))
+    return result
 
-    def check_enum(
-        self: Self, node: Cursor,
-            intermed_repr: IntermediateRepresentation) -> None:
-        """ Inspect the nodes of kind ENUM_DECL and write needed information into intermed_repr.
-        Information: Name of Enum
+def try_set_libclang_path(path: str) -> None:
+    """Try to set the file path for the libclang library.
+    If its already set, the returned Exception gets caught and discarded.
+    If the given path string is empty or None, the path is determined with a call on the terminal.
 
-        :param node: Current node represented as a Cursor object.
-        :param intermed_repr: Dataclass used for saving the extracted model features.
-        """
-        if node.spelling.strip() != default_dict["emptystring"]:
-            intermed_repr.enum_populations[node.spelling] = []
-
-    def check_enum_const(
-        self: Self, node: Cursor,
-            intermed_repr: IntermediateRepresentation) -> None:
-        """ Inspect the nodes of kind ENUM_CONSTANT_DECL and write needed information into intermed_repr.
-        Information: Keys of an Enum
-
-        :param node: Current node represented as a Cursor object.
-        :param intermed_repr: Dataclass used for saving the extracted model features.
-        """
-
-        if node.semantic_parent.spelling in intermed_repr.enum_populations.keys():
-            key = node.semantic_parent.spelling
-            intermed_repr.enum_populations[key].append(node.spelling)
-
-    def check_class(
-        self: Self, node: Cursor,
-            intermed_repr: IntermediateRepresentation) -> None:
-        """ Inspect the nodes of kind CLASS_DECL and write information
-        (model_class, model_base, simulation_class, parameterset_wrapper) into intermed_repr.
-
-        :param node: Current node represented as a Cursor object.
-        :param intermed_repr: Dataclass used for saving the extracted model features.
-
-        """
-        if node.spelling == self.config.model_class:
-            intermed_repr.model_class = node.spelling
-            self.check_model_base(node, intermed_repr)
-            self.check_model_includes(node, intermed_repr)
-            self.check_age_group(node, intermed_repr)
-
-        elif (node.spelling == default_dict["simulation"]):
-            intermed_repr.simulation = True
-
-        elif (intermed_repr.has_age_group and self.config.parameterset + "<FP>" in [base.spelling for base in node.get_children()]):
-            intermed_repr.parameterset_wrapper = node.spelling
-
-    def check_model_base(
-        self: Self, node: Cursor,
-            intermed_repr: IntermediateRepresentation) -> None:
-        """ Helper function to retreive the model base.
-
-        :param node: Current node represented as a Cursor object.
-        :param intermed_repr: Dataclass used for saving the extracted model features.
-
-        """
-
-        for base in node.get_children():
-
-            if base.kind != CursorKind.CXX_BASE_SPECIFIER:
-                continue
-
-            base_name = base.spelling
-            base_type = base.type
-
-            if default_dict["flowmodel"] in base_name:
-                intermed_repr.is_flowmodel = True
-
-            if default_dict["compartmentalmodel"] in base_name and default_dict["mio"] in node.semantic_parent.spelling:
-                intermed_repr.is_compartmentalmodel = True
-
-            intermed_repr.model_base.append(
-                utility.get_base_class_string(base_type))
-
-            self.check_model_base(base.referenced, intermed_repr)
-
-    def check_base_specifier(
-        self: Self, node: Cursor,
-            intermed_repr: IntermediateRepresentation) -> None:
-        """ Not used yet.
-        Inspect nodes which represent base specifier.
-        For now this is handled by the parent node, which represents the class.
-
-        :param node: Current node represented as a Cursor object.
-        :param intermed_repr: Dataclass used for saving the extracted model features.
-
-        """
-        pass
-
-    def check_model_includes(
-        self: Self, node: Cursor,
-            intermed_repr: IntermediateRepresentation) -> None:
-        """ Helper function to retrieve the model specific includes needed for pybind.
-
-        :param node: Current node represented as a Cursor object.
-        :param intermed_repr: Dataclass used for saving the extracted model features.
-        """
-        filepath = node.location.file.name
-        filepaths = filepath.split("../")
-
-        model_has_analyze_results = False
-
-        intermed_repr.include_list.append(filepaths[1])
-
-        intermed_repr.include_list.append(
-            filepaths[1].replace(default_dict["modelfile"], default_dict["emptystring"]) + default_dict["infectionstatefile"])
-
-        for file in os.listdir(filepaths[0]):
-            if file == default_dict["parameterspacefile"]:
-                intermed_repr.include_list.append(filepaths[1].replace(
-                    default_dict["modelfile"], default_dict["emptystring"]) +
-                    default_dict["parameterspacefile"])
-            elif file == default_dict["analyzeresultfile"]:
-                model_has_analyze_results = True
-
-        if model_has_analyze_results:
-            intermed_repr.include_list.append(
-                filepaths[1].replace(default_dict["modelfile"], default_dict["emptystring"]) + default_dict["analyzeresultfile"])
-        else:
-            intermed_repr.include_list.append("memilio/data/analyze_result.h")
-
-    def check_age_group(
-        self: Self, node: Cursor,
-            intermed_repr: IntermediateRepresentation) -> None:
-        """ Inspect the nodes of kind CLASS_DECL with the name defined in
-        config.age_group and write needed information into intermed_repr.
-        Information: age_group
-
-        :param node: Current node represented as a Cursor object.
-        :param intermed_repr: Dataclass used for saving the extracted model features.
-        """
-        for base in node.get_children():
-            if base.kind != CursorKind.CXX_BASE_SPECIFIER:
-                continue
-            for base_template_arg in base.get_children():
-                if (base_template_arg.kind == CursorKind.TYPE_REF and default_dict["agegroup"] in base_template_arg.spelling):
-                    intermed_repr.has_age_group = True
-                    for child in base_template_arg.get_definition().get_children():
-                        if child.kind == CursorKind.CXX_BASE_SPECIFIER:
-                            intermed_repr.age_group["base"] = child.get_definition(
-                            ).type.spelling
-                        elif child.kind == CursorKind.CONSTRUCTOR:
-                            intermed_repr.age_group["init"] = [
-                                arg.spelling
-                                for arg in child.type.argument_types()]
-
-    def check_constructor(
-        self: Self, node: Cursor,
-            intermed_repr: IntermediateRepresentation) -> None:
-        """ Inspect the nodes of kind CONSTRUCTOR and write needed information into intermed_repr.
-        Information: intermed_repr.init
-
-        :param node: Current node represented as a Cursor object.
-        :param intermed_repr: Dataclass used for saving the extracted model features.
-        """
-        if intermed_repr.model_class == default_dict["model"]:
-            if node.spelling.startswith(default_dict["model"]) and ('<' in node.spelling and '>' in node.spelling):
-                init = {"type": [], "name": []}
-                for arg in node.get_arguments():
-                    tokens = []
-                    for token in arg.get_tokens():
-                        tokens.append(token.spelling)
-                    init["type"].append(" ".join(tokens[:-1]))
-                    init["name"].append(tokens[-1])
-                intermed_repr.model_init.append(init)
-
-    def check_type_alias(
-        self: Self, node: Cursor,
-            intermed_repr: IntermediateRepresentation) -> None:
-        """ Inspect the nodes of kind TYPE_ALIAS_DECL and write needed information into intermed_repr.
-        Information: intermed_repr.parameterset
-
-        :param node: Current node represented as a Cursor object.
-        :param intermed_repr: Dataclass used for saving the extracted model features.
-        """
-        if node.spelling == self.config.parameterset:
-            intermed_repr.parameterset = node.spelling
-
-    def check_struct(
-        self: Self, node: Cursor,
-            intermed_repr: IntermediateRepresentation) -> None:
-        """Not used yet.
-
-        :param node: Current node represented as a Cursor object.
-        :param intermed_repr: Dataclass used for saving the extracted model features.
-        """
-        pass
-
-    def finalize(self: Self, intermed_repr: IntermediateRepresentation) -> None:
-        """ Finalize the IntermediateRepresenation as last step of the Scanner.
-        Write needed information from config into intermed_repr,
-        delet unnecesary enums and check for missing model features.
-
-        :param intermed_repr: Dataclass used for saving the extracted model features.
-        """
-
-        population_groups = []
-        for value in intermed_repr.model_base[0:]:
-            if default_dict["flowmodel"] in value[0].strip():
-                start = value[0].find("Populations<")
-                end = value[0].find(">", start)
-
-                if start != -1 and end != -1:
-                    populations_part = value[0][start + 11:end]
-                    population_groups = [
-                        part.strip(" <>").split("::")[-1]
-                        for part in populations_part.split(",")
-                    ]
-
-        intermed_repr.population_groups = population_groups
-
-        new_enum = {}
-        for key in intermed_repr.enum_populations:
-
-            if key in population_groups:
-
-                new_enum[key] = intermed_repr.enum_populations[key]
-
-                intermed_repr.enum_populations = new_enum
-
-        intermed_repr.set_attribute(
-            "namespace", self.namespace)
-        intermed_repr.set_attribute(
-            "python_module_name", self.python_module_name)
-        intermed_repr.set_attribute(
-            "target_folder", "")
-        intermed_repr.set_attribute(
-            "python_generation_module_path", self.config.python_generation_module_path)
+    :param path: Path to the library files of libclang. Can be an empty string.
+    """
+    # Check if path was set in config. If not, try to get it with cmd.
+    if (not path or path == 'LIBCLANG_PATH-NOTFOUND'):
+        clang_cmd = ["clang", '-print-file-name=']
+        clang_cmd_result = subprocess.check_output(clang_cmd)
+        path, dirname = os.path.split(clang_cmd_result)
+        while ("llvm" not in str(dirname)):
+            path, dirname = os.path.split(path)
+            if str(path) == '':
+                print("Error: define libclang path in config.json")
+                raise (Exception)
+        path = os.path.join(path.decode(), dirname.decode(),
+                            "lib", "libclang.so")
+    try:
+        Config.set_library_file(path)
+    except Exception as e:
+        # Catch given exception from libclang. If the exact string output in libclang changes,
+        # this needs to be adapted as well.
+        if str(e) != "library file must be set before using any other functionalities in libclang.":
+            raise (e)

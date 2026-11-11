@@ -18,23 +18,19 @@
 # limitations under the License.
 ##############################################################################
 
-
-from typing import TypeVar
-from memilio.generation import ScannerConfig, AST
-from clang.cindex import TranslationUnit, Index
 import os
 import logging
-import copy
 import multiprocessing
+from typing_extensions import Self
 
-T = TypeVar("T", bound="ASTHandler")
+from memilio.generation import ScannerConfig, AST
 
 
 class ASTHandler:
     """ ASTHandler class for creating ASTs.
     """
 
-    def __init__(self: T, conf: ScannerConfig) -> None:
+    def __init__(self: Self, conf: ScannerConfig) -> None:
         """ Basic constructor of the ASTHandler class
 
         :param conf: ScannerConfig dataclass with the configurations.
@@ -43,7 +39,7 @@ class ASTHandler:
         self.ast_list = []
         self.source_files = []
 
-    def handle_ast_creation(self: T) -> None:
+    def handle_ast_creation(self: Self) -> None:
         """ Handle the creation of the ASTs. Single or Parallel.
         """
         if len(self.source_files) == 1:
@@ -51,7 +47,7 @@ class ASTHandler:
         else:
             self.parallel_creation()
 
-    def add_source_file(self: T, source_file_str: str) -> None:
+    def add_source_file(self: Self, source_file_str: str) -> None:
         """ Add source file to list.
 
         :param source_file_str: String that represents another file.
@@ -60,7 +56,7 @@ class ASTHandler:
             self.source_files.append(source_file_str)
             logging.info(f"Adding source file: {source_file_str}")
 
-    def parallel_creation(self: T) -> None:
+    def parallel_creation(self: Self) -> None:
         """ Create ASTs for all source files using multiprocessing.
 
         This method distributes the AST creation process across multiple CPU cores. 
@@ -71,7 +67,7 @@ class ASTHandler:
             try:
 
                 results = pool.starmap(
-                    create_ast, [(self.conf, source_file) for source_file in self.source_files])
+                    create_ast, [(self.conf.path_to_database, source_file) for source_file in self.source_files])
 
                 for ast in results:
                     try:
@@ -84,33 +80,30 @@ class ASTHandler:
             except Exception as e:
                 logging.info(f"Error in parallel AST creation: {e}")
 
-    def single_creation(self: T) -> None:
+    def single_creation(self: Self) -> None:
         """ Create AST for a single source file.
-
-        :param conf: ScannerConfig dataclass with the configurations.
-        :returns: TranslationUnit object.
         """
-        ast = create_ast(self.conf, self.source_files[0])
+        ast = create_ast(self.conf.path_to_database, self.source_files[0])
         ast.process_ast_file()
         self.ast_list.append(ast)
 
-    def get_ast_by_id(self: T, id: int) -> AST:
-        """ Get AST by id.
+    def get_ast(self: Self, idx: int) -> AST:
+        """ Get AST out of ast_list.
 
-        :param id: ID of the AST.
+        :param id: idx of the AST.
         :returns: AST object.
         """
-        return self.ast_list[id]
+        return self.ast_list[idx]
 
 
-def create_ast(conf_template: ScannerConfig, src: str) -> AST:
+def create_ast(path_to_database: str, source_file: str) -> AST:
     """ Create AST for a file.
 
-    :param conf_template: Base ScannerConfig object to be copied and modified.
-    :param src: Sourcefile path
+    :param path_to_database: Path to compile commands
+    :param source_file: Sourcefile path
     :returns: The AST object.
     """
-    ast = AST(conf_template, src)
-    ast.create_ast_for_pickle()
+    ast = AST(source_file)
+    ast.create_ast_for_pickle(path_to_database)
 
     return ast

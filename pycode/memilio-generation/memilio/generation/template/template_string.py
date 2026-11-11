@@ -27,7 +27,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from memilio.generation import IntermediateRepresentation
+    from memilio.generation.intermediate_representation import IntermediateRepresentation
     from memilio.generation.info_types import binding_type_info, method_type_info
 
 
@@ -184,7 +184,7 @@ def bind_functions(intermed_repr: IntermediateRepresentation, bindings: binding_
     scalartype = ScalarType(intermed_repr)
     prefix = set_prefix(bindings)
 
-    if is_overloaded_function(bindings, intermed_repr.found_bindings):
+    if is_overloaded_function(bindings, intermed_repr):
 
         result += overloaded_function_bindings(
             name, namespace, scalartype, arg_types, py_args, bindings, prefix)
@@ -294,15 +294,15 @@ def direct_binding(name: str, namespace: str, scalartype: str, py_args: str, pre
         )
 
 
-def is_overloaded_function(binding: binding_type_info, found_bindings: list[binding_type_info]) -> bool:
+def is_overloaded_function(binding: binding_type_info, intermed_repr: IntermediateRepresentation) -> bool:
     """ Check if a function binding is overloaded.
 
     :param binding: A dataclass entry representing a function or method node from the AST.
-    :param found_bindings: List of all found bindings.
+    :param intermed_repr: Dataclass holding the model features.
     :return: True if the function is overloaded, False otherwise."""
 
     count = sum(
-        1 for b in found_bindings
+        1 for b in intermed_repr.found_bindings
         if b.name == binding.name and b.namespace == binding.namespace
     )
     return count > 1
@@ -365,6 +365,9 @@ def ScalarType(intermed_repr: IntermediateRepresentation) -> str:
     scalartypestr = intermed_repr.scalartype
     return scalartypestr
 
+####################################################################################################################
+# Model specifc generation
+####################################################################################################################
 
 def includes(intermed_repr: IntermediateRepresentation) -> str:
     """ Fills in the Includes for the binding

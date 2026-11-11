@@ -26,7 +26,7 @@ from typing import Any, Dict, Union
 
 from typing_extensions import Self
 from memilio.generation import Generator
-from memilio.generation.info_types import binding_type_info
+from memilio.generation.info_types import binding_type_info, model_specific_generation_info
 
 
 @dataclass
@@ -47,7 +47,6 @@ class IntermediateRepresentation:
     has_draw_sample: bool = False
     scalartype: str = "double"
     python_generation_module_path: str = ""
-    target_folder: str = ""
     enum_populations: dict = field(default_factory=dict)
     model_init: list = field(default_factory=list)
     model_base: list = field(default_factory=list)
@@ -55,6 +54,8 @@ class IntermediateRepresentation:
     population_groups: list = field(default_factory=list)
     include_list: list = field(default_factory=list)
     age_group: dict = field(default_factory=dict)
+
+    found_model_specific_bindings: model_specific_generation_info = model_specific_generation_info()
     found_bindings: list[binding_type_info] = field(
         default_factory=list)
 
@@ -65,17 +66,6 @@ class IntermediateRepresentation:
         :param value: Value the attribute is set to. Needs to be of right type. 
         """
         self.__setattr__(attribute_name, value)
-
-    def check_model_base(self: Self) -> None:
-        """
-        Check if the model_base is set. If not, set it to the model_class.
-        """
-        if len(self.model_base) > 0:
-            self.model_base_templates = ", ".join(
-                entry[0] for entry in self.model_base if len(entry) > 0
-            )
-        else:
-            raise IndexError("model_base is empty. No base classes found.")
 
     def check_complete_data(self: Self, optional: dict
                             [str, Union[str, bool]]) -> None:

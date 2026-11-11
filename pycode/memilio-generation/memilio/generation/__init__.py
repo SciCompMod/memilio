@@ -20,11 +20,9 @@
 """
 Main folder of the automatic code generation.
 """
-from . import utility
 from .generator import Generator
-from .intermediate_representation import IntermediateRepresentation
 from .scanner import Scanner
-from .scanner_config import ScannerConfig
-from .ast import AST
-from .default_generation_dict import default_dict
+from .scanner_config import ScannerConfig, get_config
+from .default_generation_dict import default_dict, general_bindings_dict
 from .ast_handler import ASTHandler
+from .graph_visualization import Visualization

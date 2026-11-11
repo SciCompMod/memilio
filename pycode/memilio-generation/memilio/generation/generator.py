@@ -32,7 +32,7 @@ from typing_extensions import Self
 from memilio.generation.template import template_string as StringTemplates
 
 if TYPE_CHECKING:
-    from memilio.generation import IntermediateRepresentation
+    from memilio.generation.intermediate_representation import IntermediateRepresentation
 
 
 class Generator:
@@ -52,10 +52,6 @@ class Generator:
         :param intermed_repr: Dataclass holding the model features.
 
         """
-
-        self.substitutions_py = {
-            "python_module_name": intermed_repr.python_module_name
-        }
 
         if len(intermed_repr.model_base) > 0:
             model_base_templates = ", ".join(
@@ -89,12 +85,13 @@ class Generator:
         }
 
     def generate_files(
-            self: Self, intermed_repr: IntermediateRepresentation) -> None:
+            self: Self, intermed_repr: IntermediateRepresentation, target_folder: str = "") -> None:
         """ Generate the python bindings to the C++ code.
         Template files for python and cpp from the template folder are used 
         and the identifiers substituted with the corresponding substitutions.
 
         :param intermed_repr: Dataclass holding the model features.
+        :param target_folder: Output folder for generated files.
         """
         with open(os.path.join(intermed_repr.python_generation_module_path,
                                "memilio/generation/template/template_py.txt")) as t:
@@ -108,7 +105,7 @@ class Generator:
 
         py_filename = intermed_repr.python_module_name + ".py"
         cpp_filename = intermed_repr.python_module_name + ".cpp"
-        with open(os.path.join(intermed_repr.target_folder, py_filename), "w") as output:
+        with open(os.path.join(target_folder, py_filename), "w") as output:
             output.write(output_py)
-        with open(os.path.join(intermed_repr.target_folder, cpp_filename), "w") as output:
+        with open(os.path.join(target_folder, cpp_filename), "w") as output:
             output.write(output_cpp)

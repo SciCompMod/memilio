@@ -63,10 +63,10 @@ You can print the AST in the example script with the `aviz` instance of the Visu
 
 
 Example:<br>
-`aviz.output_ast_formatted(asts.get_ast_by_id(0), ast.get_node_by_index(1))`  displays the second node of the first AST and its children in a file called ast_formatted.txt.<br>
+`aviz.output_ast_formatted(asts.get_ast(0), ast.get_node_by_index(1))`  displays the second node of the first AST and its children in a file called ast_formatted.txt.<br>
 The root node `.get_node_by_index(0)` displays the whole AST.
 
-`aviz.output_ast_terminal(asts.get_ast_by_id(0), ast.get_node_by_index(1))` displays the second node of the AST and its children in terminal.
+`aviz.output_ast_terminal(asts.get_ast(0), ast.get_node_by_index(1))` displays the second node of the AST and its children in terminal.
 
 The first argument of the statements specifies the selected AST. The second argument specifies the node and its children that you want to display.
 
