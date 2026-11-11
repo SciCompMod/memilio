@@ -19,6 +19,7 @@
 */
 
 #include "abm/model_functions.h"
+#include "abm/activity_type.h"
 #include "abm/location.h"
 #include "abm/person.h"
 #include "abm/random_events.h"
@@ -43,12 +44,12 @@ ScalarType total_exposure_by_contacts(const ContactExposureRates& rates, const C
             age_receiver_group_size > 1) // adjust for the person not meeting themself
         {
             total_exposure += rates[{cell_index, virus, age_transmitter}] *
-                              params.get<ContactRates>()[{age_receiver, age_transmitter}] * age_receiver_group_size /
-                              (age_receiver_group_size - 1);
+                              params.get<ContactRates>().get_baseline()(age_receiver.get(), age_transmitter.get()) *
+                              age_receiver_group_size / (age_receiver_group_size - 1);
         }
         else {
             total_exposure += rates[{cell_index, virus, age_transmitter}] *
-                              params.get<ContactRates>()[{age_receiver, age_transmitter}];
+                              params.get<ContactRates>().get_baseline()(age_receiver.get(), age_transmitter.get());
         }
     }
     return total_exposure;
@@ -159,7 +160,7 @@ void normalize_exposure_contribution(ContactExposureRates& local_contact_exposur
     }
 }
 
-bool change_location(Person& person, const Location& destination, const TransportMode mode,
+bool change_location(Person& person, const Location& destination, ActivityType activity, const TransportMode mode,
                      const std::vector<uint32_t>& cells)
 {
     assert(std::all_of(cells.begin(), cells.end(), [&](const auto& cell) {
@@ -167,7 +168,7 @@ bool change_location(Person& person, const Location& destination, const Transpor
     })); // make sure cell indices are valid
 
     if (person.get_location() != destination.get_id()) {
-        person.set_location(destination.get_type(), destination.get_id(), destination.get_model_id());
+        person.set_location(activity, destination.get_type(), destination.get_id(), destination.get_model_id());
         person.get_cells() = cells;
         person.set_last_transport_mode(mode);
 
@@ -189,12 +190,15 @@ void adjust_contact_rates(Location& location, size_t num_agegroups)
         ScalarType total_contacts = 0.;
         // slizing would be preferred but is problematic since both Tags of ContactRates are AgeGroup
         for (auto contact_to = AgeGroup(0); contact_to < AgeGroup(num_agegroups); contact_to++) {
-            total_contacts += location.get_infection_parameters().get<ContactRates>()[{contact_from, contact_to}];
+            total_contacts += location.get_infection_parameters().get<ContactRates>().get_baseline()(contact_from.get(),
+                                                                                                     contact_to.get());
         }
         if (total_contacts > location.get_infection_parameters().get<MaximumContacts>()) {
             for (auto contact_to = AgeGroup(0); contact_to < AgeGroup(num_agegroups); contact_to++) {
-                location.get_infection_parameters().get<ContactRates>()[{contact_from, contact_to}] =
-                    location.get_infection_parameters().get<ContactRates>()[{contact_from, contact_to}] *
+                location.get_infection_parameters().get<ContactRates>().get_baseline()(contact_from.get(),
+                                                                                       contact_to.get()) =
+                    location.get_infection_parameters().get<ContactRates>().get_baseline()(contact_from.get(),
+                                                                                           contact_to.get()) *
                     location.get_infection_parameters().get<MaximumContacts>() / total_contacts;
             }
         }

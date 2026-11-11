@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.13)
+set(MEMILIO_CMAKE_MINIMUM_VERSION "3.18.0")
+cmake_minimum_required(VERSION ${MEMILIO_CMAKE_MINIMUM_VERSION})
 
 project(memilio VERSION 1.0.0)
 
@@ -27,12 +28,27 @@ option(MEMILIO_ENABLE_IPOPT "Enable numerical optimization with Ipopt, requires 
 option(MEMILIO_ENABLE_PROFILING "Enable runtime performance profiling of memilio." OFF)
 option(MEMILIO_ENABLE_LIKWID_MARKER "Enable performance measuring with likwid markers." OFF)
 
-mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
+cmake_path(CONVERT "${PROJECT_SOURCE_DIR}/.." TO_CMAKE_PATH_LIST PROJECT_ROOT_NORMALIZED NORMALIZE)
+set(MEMILIO_BASE_DIR "${PROJECT_ROOT_NORMALIZED}" CACHE PATH
+    "Path to the MEmilio project root, used for file I/O. Accessed via mio::base_dir().")
+set(MEMILIO_DATA_DIR "${PROJECT_ROOT_NORMALIZED}/data" CACHE PATH
+    "Path to the MEmilio data directory. Accessed via mio::data_dir().")
+
+mark_as_advanced(
+    MEMILIO_USE_BUNDLED_SPDLOG
+    MEMILIO_SANITIZE_ADDRESS
+    MEMILIO_SANITIZE_UNDEFINED
+    MEMILIO_BUILD_SHARED_LIBS
+    MEMILIO_BUILD_STATIC_LIBS
+    MEMILIO_BASE_DIR
+    MEMILIO_DATA_DIR
+    )
 
 # try to treat AppleClang as Clang, but warn about missing support
 if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
-    message(WARNING "The compiler ID \"AppleClang\" is not supported, trying to compile with \"Clang\" options.")
+    message(WARNING "The compiler ID \"AppleClang\" has only limited support. Continuing with \"Clang\" options.")
     set(CMAKE_CXX_COMPILER_ID "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffp-model=strict") # to avoid FP differences in CI
 endif()
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
@@ -74,9 +90,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_INSTALL_RPATH "${CMAKE_BINARY_DIR}/lib" "${CMAKE_BINARY_DIR}/bin")
-
-# sets MEMILIO_BASE_DIR to the directory containing cpp (i.e., the root of the git repo)
-cmake_path(CONVERT "${PROJECT_SOURCE_DIR}/.." TO_CMAKE_PATH_LIST MEMILIO_BASE_DIR NORMALIZE)
 
 # code coverage analysis
 # Note: this only works under linux and with make
@@ -143,7 +156,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         "-Wno-unknown-warning-option;-Wno-deprecated;-Wno-gnu-zero-variadic-macro-arguments;")
 endif()
 
-# woyrkarounds for compiler bugs or overzealous optimization/analysis
+# workarounds for compiler bugs or overzealous optimization/analysis
 if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RELEASE")
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
@@ -190,6 +203,7 @@ if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/ode_seirdb)
     add_subdirectory(models/ode_seair)
     add_subdirectory(models/ode_sir)
+    add_subdirectory(models/ode_seir_metapop)
     add_subdirectory(models/sde_sir)
     add_subdirectory(models/sde_sirs)
     add_subdirectory(models/sde_seirvv)

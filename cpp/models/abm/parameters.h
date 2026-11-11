@@ -727,11 +727,11 @@ struct MaximumContacts {
  * contact rates
 */
 struct ContactRates {
-    using Type = CustomIndexArray<ScalarType, AgeGroup, AgeGroup>;
+    using Type = ContactMatrix<ScalarType>;
     static Type get_default(AgeGroup size)
     {
-        return Type({size, size},
-                    1.0); // amount of contacts from AgeGroup a to AgeGroup b per day
+        return Type(
+            static_cast<Eigen::Index>((size_t)size)); // amount of contacts from AgeGroup a to AgeGroup b per day
     }
     static std::string name()
     {

@@ -17,28 +17,26 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-
 #ifndef MIO_ABM_GRAPH_ABMODEL_H
 #define MIO_ABM_GRAPH_ABMODEL_H
 
+#include "abm/activity_type.h"
 #include "abm/location_type.h"
 #include "abm/model.h"
 #include "abm/person_id.h"
 #include "abm/time.h"
 #include "abm/location_id.h"
-#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
-#include "memilio/utils/mioomp.h"
 #include "abm/mobility_rules.h"
 #include "abm/mobility_rules.h"
-#include <cstddef>
 #include <cstdint>
-#include <list>
 #include <vector>
 
 namespace mio
 {
-using namespace abm;
+namespace abm
+{
+
 class GraphABModel : public abm::Model
 {
     using Base = Model;
@@ -48,7 +46,7 @@ public:
                  std::vector<Base::MobilityRuleType> mobility_rules =
                      std::vector<Base::MobilityRuleType>{&get_buried, &return_home_when_recovered, &go_to_hospital,
                                                          &go_to_icu, &go_to_school, &go_to_work, &go_to_shop,
-                                                         &go_to_event, &go_to_quarantine})
+                                                         &go_to_recreation, &go_to_quarantine})
         : Base(num_agegroups, id)
     {
         Base::m_mobility_rules = mobility_rules;
@@ -94,13 +92,14 @@ private:
         for (uint32_t person_index = 0; person_index < num_persons; ++person_index) {
             if (Base::m_activeness_statuses[person_index]) {
                 Person& person    = Base::m_persons[person_index];
-                auto personal_rng = PersonalRandomNumberGenerator(person);
+                auto personal_rng = PersonalRandomNumberGenerator(Base::get_rng(), person);
 
                 auto try_mobility_rule = [&](auto rule) -> bool {
                     //run mobility rule and check if change of location can actually happen
                     auto target_type = rule(personal_rng, person, t, dt, parameters);
-                    if (person.get_assigned_location_model_id(target_type) == Base::m_id) {
-                        const Location& target_location = Base::get_location(Base::find_location(target_type, person));
+                    auto target      = person.get_assigned_location(target_type, personal_rng);
+                    if (target.second == Base::m_id) {
+                        const Location& target_location   = Base::get_location(target.first);
                         const LocationId current_location = person.get_location();
                         // the Person cannot move if they do not wear mask as required at targeted location
                         if (target_location.is_mask_required() &&
@@ -127,13 +126,12 @@ private:
                         else {
                             person.set_mask(MaskType::None, t);
                         }
-                        Base::change_location(person, target_location.get_id());
+                        Base::change_location(person, target_location.get_id(), target_type);
                         return true;
                     }
                     else { //person moves to other world
                         Base::m_activeness_statuses[person_index] = false;
-                        person.set_location(target_type, abm::LocationId::invalid_id(),
-                                            std::numeric_limits<int>::max());
+                        person.set_location(target_type, abm::LocationType::Invalid, target.first, target.second);
                         m_person_buffer.push_back(person_index);
                         m_are_exposure_caches_valid       = false;
                         m_is_local_population_cache_valid = false;
@@ -160,7 +158,7 @@ private:
             auto& trip        = Base::m_trip_list.get_next_trip();
             auto& person      = get_person(trip.person_id);
             auto person_index = Base::get_person_index(trip.person_id);
-            auto personal_rng = PersonalRandomNumberGenerator(person);
+            auto personal_rng = PersonalRandomNumberGenerator(Base::get_rng(), person);
             // skip the trip if the person is in quarantine or is dead
             if (person.is_in_quarantine(t, parameters) || person.get_infection_state(t) == InfectionState::Dead) {
                 continue;
@@ -176,7 +174,7 @@ private:
                     continue;
                 }
                 // all requirements are met, move to target location
-                change_location(person, target_location.get_id(), trip.trip_mode);
+                change_location(person, target_location.get_id(), trip.activity, trip.trip_mode);
                 // update worn mask to target location's requirements
                 if (target_location.is_mask_required()) {
                     // if the current MaskProtection level is lower than required, the Person changes mask
@@ -191,7 +189,8 @@ private:
             }
             else { //person moves to other world
                 Base::m_activeness_statuses[person_index] = false;
-                person.set_location(abm::LocationType::Invalid, trip.destination, std::numeric_limits<int>::max());
+                person.set_location(trip.activity, abm::LocationType::Invalid, trip.destination,
+                                    trip.destination_model_id);
                 m_person_buffer.push_back(person_index);
                 m_are_exposure_caches_valid       = false;
                 m_is_local_population_cache_valid = false;
@@ -204,6 +203,8 @@ private:
 
     std::vector<size_t> m_person_buffer; ///< List with indices of persons that are subject to move to another node.
 };
+
+} // namespace abm
 } // namespace mio
 
 #endif //MIO_ABM_GRAPH_ABMODEL_H

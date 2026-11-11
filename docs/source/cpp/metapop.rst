@@ -8,3 +8,4 @@ MEmilio implements metapopulation models through a generalization of aggregated 
 
    graph_metapop
    smm
+   ode_metapop

@@ -214,7 +214,7 @@ TEST(TestSMMSimulation, advance)
         .WillOnce(Return(0.0031)) //spatial transition event 1->0, corresponds to global time 0.31
         .WillRepeatedly(testing::Return(1.0));
 
-    auto sim = mio::smm::Simulation(model, 0.0, 0.1);
+    auto sim = mio::smm::Simulation(model, 0.0, 0.05);
     sim.advance(30.);
     //Check whether first value in result time series corresponds to initial values
     EXPECT_EQ(sim.get_result().get_value(0)[static_cast<size_t>(InfectionState::S)], 1);
@@ -222,19 +222,19 @@ TEST(TestSMMSimulation, advance)
     EXPECT_EQ(sim.get_result().get_value(
                   0)[static_cast<size_t>(InfectionState::Count) + static_cast<size_t>(InfectionState::R)],
               1);
-    //no event happens in first two time steps i.e. the first saved result is after t=0.2
-    EXPECT_GE(sim.get_result().get_time(1), 0.2);
+    //first event happens at 0.2005 which means there are no events in the first four time steps
+    EXPECT_GE(sim.get_result().get_time(4), 0.2);
     //adoption from I to R is first event
-    EXPECT_EQ(sim.get_result().get_value(1)[static_cast<size_t>(InfectionState::S)], 1);
-    EXPECT_EQ(sim.get_result().get_value(1)[static_cast<size_t>(InfectionState::I)], 0);
-    EXPECT_EQ(sim.get_result().get_value(1)[static_cast<size_t>(InfectionState::R)], 1);
+    EXPECT_EQ(sim.get_result().get_value(5)[static_cast<size_t>(InfectionState::S)], 1);
+    EXPECT_EQ(sim.get_result().get_value(5)[static_cast<size_t>(InfectionState::I)], 0);
+    EXPECT_EQ(sim.get_result().get_value(5)[static_cast<size_t>(InfectionState::R)], 1);
     EXPECT_EQ(sim.get_result().get_value(
                   1)[static_cast<size_t>(InfectionState::Count) + static_cast<size_t>(InfectionState::R)],
               1);
     //spatial transition is second event
-    EXPECT_EQ(sim.get_result().get_value(2)[static_cast<size_t>(InfectionState::S)], 1);
-    EXPECT_EQ(sim.get_result().get_value(2)[static_cast<size_t>(InfectionState::I)], 0);
-    EXPECT_EQ(sim.get_result().get_value(2)[static_cast<size_t>(InfectionState::R)], 2);
+    EXPECT_EQ(sim.get_result().get_value(7)[static_cast<size_t>(InfectionState::S)], 1);
+    EXPECT_EQ(sim.get_result().get_value(7)[static_cast<size_t>(InfectionState::I)], 0);
+    EXPECT_EQ(sim.get_result().get_value(7)[static_cast<size_t>(InfectionState::R)], 2);
 }
 
 TEST(TestSMMSimulation, stopsAtTmax)
@@ -262,9 +262,9 @@ TEST(TestSMMSimulation, stopsAtTmax)
 
     //As populations are not set they have value 0 i.e. no events will happen
     //Simulate for 30 days
-    auto sim = mio::smm::Simulation(model, 0.0, 0.1);
+    auto sim = mio::smm::Simulation(model, 0.0, 30.);
     sim.advance(30.);
-    //As model populations are all zero only t0 and tmax should be logged
+    //As dt=30 only t0 and tmax should be logged
     EXPECT_EQ(sim.get_result().get_num_time_points(), 2);
     EXPECT_EQ(sim.get_result().get_last_time(), 30.);
 }

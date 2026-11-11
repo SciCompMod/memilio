@@ -68,13 +68,13 @@ if __name__ == '__main__':
 
             try:
                 population = pd.read_json(
-                    'data/pydata/Germany/county_current_population.json')
+                    'data/Germany/pydata/county_current_population.json')
             # pandas>1.5 raise FileNotFoundError instead of ValueError
             except (ValueError, FileNotFoundError):
                 print("Population data was not found. Download it from the internet.")
                 population = gpd.get_population_data(
                     read_data=False, file_format=file_format,
-                    out_folder='data/pydata/Germany/', no_raw=True,
+                    out_folder='data/Germany/pydata/', no_raw=True,
                     merge_eisenach=True)
 
             # For fitting of different age groups we need format ">X".

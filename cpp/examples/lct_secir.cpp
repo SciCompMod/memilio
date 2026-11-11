@@ -71,6 +71,7 @@ int main()
     model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[0] = 0.09;
     model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[0]      = 0.2;
     model.parameters.get<mio::lsecir::CriticalPerSevere<ScalarType>>()[0]              = 0.25;
+    model.parameters.get<mio::lsecir::DeathsPerSevere<ScalarType>>()[0]                = 0.1;
     model.parameters.get<mio::lsecir::DeathsPerCritical<ScalarType>>()[0]              = 0.3;
 
     if (use_initializer_flows) {

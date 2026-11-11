@@ -163,7 +163,7 @@ The following steps detail how to configure and execute a graph simulation:
 
     .. code-block:: cpp
 
-        mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::osecir::Model<double>>>, mio::MobilityEdgeStochastic> graph;
+        mio::Graph<mio::SimulationNode<mio::Simulation<ScalarType, mio::osecir::Model<ScalarType>>>, mio::MobilityEdgeStochastic> graph;
         graph.add_node(1001, model_group1, t0);
         graph.add_node(1002, model_group2, t0);
 
@@ -185,7 +185,7 @@ The following steps detail how to configure and execute a graph simulation:
 
     .. code-block:: cpp
 
-        mio::GraphBuilder<mio::SimulationNode<mio::Simulation<double, mio::osecir::Model<double>>>, mio::MobilityEdgeStochastic> builder;
+        mio::GraphBuilder<mio::SimulationNode<mio::Simulation<ScalarType, mio::osecir::Model<ScalarType>>>, mio::MobilityEdgeStochastic> builder;
         builder.add_node(1001, model_group1, t0);
         builder.add_node(1002, model_group2, t0);
         builder.add_edge(0, 1, std::move(transition_rates));

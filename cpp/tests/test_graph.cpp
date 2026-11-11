@@ -17,35 +17,31 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "matchers.h"
+#include "memilio/epidemiology/age_group.h"
+#include "memilio/io/io.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/mobility/graph_builder.h"
-#include "memilio/epidemiology/age_group.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/date.h"
-#include "memilio/epidemiology/damping.h"
-#include "models/ode_secir/parameters_io.h"
-#include "models/ode_secir/parameters.h"
 #include "models/ode_secir/infection_state.h"
 #include "models/ode_secir/model.h"
+#include "models/ode_secir/parameters_io.h"
+#include "models/ode_secir/parameters.h"
+#include "models/ode_secirvvs/model.h"
 #include "models/ode_secirvvs/parameters_io.h"
 #include "models/ode_secirvvs/parameter_space.h"
-#include "memilio/mobility/metapopulation_mobility_instant.h"
-#include "models/ode_secirvvs/model.h"
-#include "memilio/io/io.h"
-#include "matchers.h"
 #include "temp_file_register.h"
 #include "memilio/utils/stl_util.h"
 #include "utils.h"
+
 #include "gmock/gmock-matchers.h"
 #include "gmock/gmock.h"
-#include <cstddef>
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
-#include <sys/types.h>
+#include "gtest/gtest.h"
+
 #include <type_traits>
 #include <string>
-
-namespace fs = boost::filesystem;
 
 enum class MockContactLocation
 {
@@ -171,7 +167,7 @@ TEST(TestGraph, set_nodes_secir)
     const auto& read_function_nodes = mock_read_function<mio::osecir::Model<double>>;
     const auto& node_id_function    = mock_node_function;
 
-    const fs::path& dir = " ";
+    const std::filesystem::path& dir = " ";
 
     auto result =
         mio::set_nodes<double, mio::osecir::TestAndTraceCapacity<double>, mio::osecir::ContactPatterns<double>,
@@ -197,7 +193,7 @@ TEST(TestGraph, set_nodes_secirvvs)
     const auto& read_function_nodes = mock_read_function<mio::osecirvvs::Model<double>>;
     const auto& node_id_function    = mock_node_function;
 
-    const fs::path& dir = " ";
+    const std::filesystem::path& dir = " ";
 
     auto result =
         mio::set_nodes<double, mio::osecirvvs::TestAndTraceCapacity<double>, mio::osecirvvs::ContactPatterns<double>,
@@ -222,7 +218,7 @@ TEST(TestGraph, set_edges)
     mio::osecir::Model<double> model(6);
     model.populations[{mio::AgeGroup(3), mio::osecir::InfectionState::Exposed}] = 1;
     mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>> params_graph;
-    const fs::path& dir      = " ";
+    const std::filesystem::path& dir = " ";
     auto mobile_compartments = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
                                 mio::osecir::InfectionState::InfectedNoSymptoms,
                                 mio::osecir::InfectionState::InfectedSymptoms, mio::osecir::InfectionState::Recovered};

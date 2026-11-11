@@ -67,7 +67,7 @@ int main()
     // Compute S1 as residual to match N
     double assigned = 5000.0 + (300.0 + 150.0 + 80.0 + 70.0) + (200.0 + 100.0 + 50.0 + 50.0) +
                       (40000.0 + 30000.0 + 20000.0 + 10000.0) + (100000.0 + 50000.0 + 50000.0);
-    double S1 = N - assigned;
+    double S1       = N - assigned;
     if (S1 < 0)
         S1 = 0;
     model.populations[{mio::Index<mio::omseirs4::InfectionState>(mio::omseirs4::InfectionState::S1)}] = S1;
@@ -80,15 +80,8 @@ int main()
     double dt   = 1.0; // daily output
     auto result = mio::simulate(t0, tmax, dt, model);
 
-    // print header
-    std::cout << "t M S1 S2 S3 S4 E1 E2 E3 E4 I1 I2 I3 I4 R1 R2 R3 R4\n";
-    for (size_t i = 0; i < (size_t)result.get_num_time_points(); ++i) {
-        std::cout << result.get_time(i);
-        const auto& y = result.get_value(i);
-        for (size_t k = 0; k < (size_t)mio::omseirs4::InfectionState::Count; ++k) {
-            std::cout << ' ' << y[(Eigen::Index)k];
-        }
-        std::cout << '\n';
-    }
+    // print results
+    result.print_table(
+        {"M", "S1", "S2", "S3", "S4", "E1", "E2", "E3", "E4", "I1", "I2", "I3", "I4", "R1", "R2", "R3", "R4"}, 10, 2);
     return 0;
 }

@@ -237,6 +237,22 @@ struct CriticalPerSevere {
 };
 
 /**
+ * @brief The percentage of dead patients per hospitalized patients for each group in the SECIR model.
+ */
+template <typename FP>
+struct DeathsPerSevere {
+    using Type = Eigen::VectorX<UncertainValue<FP>>;
+    static Type get_default(size_t size)
+    {
+        return Type::Constant(size, 1, 0.);
+    }
+    static std::string name()
+    {
+        return "DeathsPerSevere";
+    }
+};
+
+/**
  * @brief The percentage of dead patients per ICU patients for each group in the SECIR model.
  */
 template <typename FP>
@@ -295,7 +311,7 @@ using ParametersBase =
                  TimeInfectedCritical<FP>, TransmissionProbabilityOnContact<FP>, ContactPatterns<FP>,
                  RelativeTransmissionNoSymptoms<FP>, RiskOfInfectionFromSymptomatic<FP>,
                  RecoveredPerInfectedNoSymptoms<FP>, SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>,
-                 DeathsPerCritical<FP>, StartDay<FP>, Seasonality<FP>>;
+                 DeathsPerSevere<FP>, DeathsPerCritical<FP>, StartDay<FP>, Seasonality<FP>>;
 
 /**
  * @brief Parameters of an LCT-SECIR model.
@@ -389,6 +405,18 @@ public:
             if (this->template get<CriticalPerSevere<FP>>()[i] < 0.0 ||
                 this->template get<CriticalPerSevere<FP>>()[i] > 1.0) {
                 log_error("Constraint check: Parameter CriticalPerSevere smaller {} or larger {}", 0, 1);
+                return true;
+            }
+
+            if (this->template get<DeathsPerSevere<FP>>()[i] < 0.0 ||
+                this->template get<DeathsPerSevere<FP>>()[i] > 1.0) {
+                log_error("Constraint check: Parameter DeathsPerSevere smaller {} or larger {}", 0, 1);
+                return true;
+            }
+
+            if (this->template get<CriticalPerSevere<FP>>()[i] + this->template get<DeathsPerSevere<FP>>()[i] > 1.0) {
+                log_error("Constraint check: CriticalPerSevere + DeathsPerSevere exceed 1.0 for age group {}.",
+                          static_cast<size_t>(i));
                 return true;
             }
 

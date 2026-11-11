@@ -23,8 +23,8 @@
 #include "abm/infection.h"
 #include "abm/infection_state.h"
 #include "abm/location_id.h"
-#include "abm/location.h"
 #include "abm/location_type.h"
+#include "abm/activity_type.h"
 #include "abm/parameters.h"
 #include "abm/person_id.h"
 #include "abm/personal_rng.h"
@@ -58,8 +58,9 @@ public:
      * @param[in] person_index Index of the Person.
      * 
      */
-    explicit Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location_id,
-                    int location_model_id, AgeGroup age, PersonId person_id = PersonId::invalid_ID());
+    explicit Person(mio::RandomNumberGenerator& rng, LocationType location_type, ActivityType activity_type,
+                    LocationId location_id, int location_model_id, AgeGroup age,
+                    PersonId person_id = PersonId::invalid_ID());
 
     explicit Person(const Person& other, PersonId person_id);
 
@@ -129,11 +130,27 @@ public:
      */
     LocationId get_location() const;
 
+    /**
+     * @brief Get the LocationType of the current Location of the Person.
+     * @return LocationType of the current Location of the Person.
+     */
     LocationType get_location_type() const
     {
         return m_location_type;
     }
 
+    /**
+     * @brief Get the ActivityType the Person does at its current Location.
+     * @return ActivityType of the current Location of the Person.
+     */
+    ActivityType get_activity_type() const
+    {
+        return m_activity_type;
+    }
+
+    /**
+     * @brief Get the model id of the current Location of the Person. Only used for Graph ABM.
+     */
     int get_location_model_id() const
     {
         return m_location_model_id;
@@ -141,11 +158,12 @@ public:
 
     /**
      * @brief Change the location of the person.
-     * @param[in] type The LocationType of the new Location.
+     * @param[in] activity_type The ActivityType the Person does at the new Location.
+     * @param[in] location_type The LocationType of the new Location.
      * @param[in] id The LocationId of the new Location.
      * @param[in] model_id The model id of the new Location.
      */
-    void set_location(LocationType type, LocationId id, int model_id);
+    void set_location(ActivityType activity_type, LocationType location_type, LocationId id, int model_id);
 
     /**
      * @brief Get the time the Person has been at its current Location.
@@ -171,44 +189,36 @@ public:
      * Important: Setting incorrect values will cause issues during simulation. It is preferable to use
      *            Model::assign_location with a valid LocationId, obtained e.g. through Model::add_location.
      *
-     * The assigned Location is saved by the index of its LocationId. Assume that a Person has at most one assigned
-     * Location of a certain #LocationType.
-     * @param[in] type The LocationType of the Location.
+     * The assigned Location is saved by the index of its LocationId.
+     * @param[in] activity_type The ActivityType the Person does at the Location.
      * @param[in] id The LocationId of the Location.
      * @param[in] model_id The model id of the Location.
      */
-    void set_assigned_location(LocationType type, LocationId id, int model_id);
+    void set_assigned_location(ActivityType activity_type, LocationId id, int model_id);
 
     /**
-     * @brief Returns the index of an assigned Location of the Person.
-     * Assume that a Person has at most one assigned Location of a certain #LocationType.
-     * @param[in] type #LocationType of the assigned Location.
-     * @return The index in the LocationId of the assigned Location.
+     * @brief Returns the index of an assigned Location of the Person. The index is uniformly sampled from the LocationIds of the assigned ActivityType.
+     * @param[in] activity_type #ActivityType of the assigned Location.
+     * @param[in] rng RandomNumberGenerator for sampling the index of the assigned LocationId.
+     * @return The index in the LocationId and the model id of the assigned Location.
      */
-    LocationId get_assigned_location(LocationType type) const;
+    std::pair<LocationId, int> get_assigned_location(ActivityType activity_type,
+                                                     PersonalRandomNumberGenerator& rng) const;
 
     /**
      * @brief Get the assigned Location%s of the Person.
      * @return A vector with the indices of the assigned Location%s of the Person.
      */
-    const std::vector<LocationId>& get_assigned_locations() const
+    const std::vector<std::vector<LocationId>>& get_assigned_locations() const
     {
         return m_assigned_locations;
     }
 
     /**
-     * @brief Returns the model id of an assigned location of the Person.
-     * Assume that a Person has at most one assigned Location of a certain #LocationType.
-     * @param[in] type #LocationType of the assigned Location.
-     * @return The model id of the assigned Location.
-     */
-    int get_assigned_location_model_id(LocationType type) const;
-
-    /**
      * @brief Get the assigned locations' model ids of the Person.
      * @return A vector with the model ids of the assigned locations of the Person
      */
-    const std::vector<int>& get_assigned_location_model_ids() const
+    const std::vector<std::vector<int>>& get_assigned_location_model_ids() const
     {
         return m_assigned_location_model_ids;
     }
@@ -399,24 +409,6 @@ public:
     }
 
     /**
-     * @brief Get this Person's index that is used for the RandomNumberGenerator.
-     * @see mio::abm::PersonalRandomNumberGenerator.
-     */
-    uint32_t get_rng_index()
-    {
-        return m_rng_index;
-    }
-
-    /**
-     * @brief Get this Person's key that is used for the RandomNumberGenerator.
-     * @see mio::abm::PersonalRandomNumberGenerator.
-     */
-    mio::Key<uint64_t> get_rng_key()
-    {
-        return m_rng_key;
-    }
-
-    /**
      * @brief Get the latest #ProtectionType and its initial TimePoint of the Person.
      * @param[in] t TimePoint to check.
      */
@@ -428,6 +420,7 @@ public:
         return Members("Person")
             .add("location", m_location)
             .add("location_type", m_location_type)
+            .add("activity_type", m_activity_type)
             .add("assigned_locations", m_assigned_locations)
             .add("vaccinations", m_vaccinations)
             .add("infections", m_infections)
@@ -444,8 +437,7 @@ public:
             .add("last_transport_mode", m_last_transport_mode)
             .add("rng_counter", m_rng_counter)
             .add("test_results", m_test_results)
-            .add("id", m_person_id)
-            .add("rng_index", m_rng_index);
+            .add("id", m_person_id);
     }
 
     /**
@@ -466,9 +458,11 @@ public:
 
 private:
     LocationId m_location; ///< Current Location of the Person.
-    LocationType m_location_type; ///< Type of the current Location.
+    LocationType m_location_type; ///< LocationType of the current Location.
+    ActivityType m_activity_type; ///< ActivityType the Person does at the current Location.
     int m_location_model_id; ///< Model id of the current Location. Only used for Graph ABM.
-    std::vector<LocationId> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the
+    std::vector<std::vector<LocationId>>
+        m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the
     Person always visits the same Home or School etc. */
     std::vector<ProtectionEvent> m_vaccinations; ///< Vector with all vaccinations the Person has received.
     std::vector<Infection> m_infections; ///< Vector with all Infection%s the Person had.
@@ -487,11 +481,9 @@ private:
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
     CustomIndexArray<TestResult, TestType> m_test_results; ///< CustomIndexArray for TestResults.
-    std::vector<int>
+    std::vector<std::vector<int>>
         m_assigned_location_model_ids; ///< Vector with model ids of the assigned locations. Only used in graph abm.
     PersonId m_person_id; ///< Unique identifier of a person.
-    mio::Key<uint64_t> m_rng_key; ///< Key for PersonalRandomNumberGenerator
-    uint32_t m_rng_index; ///< Index for PersonalRandomNumberGenerator.
     Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator.
 };
 
@@ -502,8 +494,8 @@ template <>
 struct DefaultFactory<abm::Person> {
     static abm::Person create()
     {
-        return abm::Person(thread_local_rng(), abm::LocationType::Count, abm::LocationId(), 0, AgeGroup(0),
-                           abm::PersonId());
+        return abm::Person(thread_local_rng(), abm::LocationType::Count, abm::ActivityType::Count, abm::LocationId(), 0,
+                           AgeGroup(0), abm::PersonId());
     }
 };
 

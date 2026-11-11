@@ -19,13 +19,13 @@
 */
 #include "benchmarks/simulation.h"
 #include "memilio/compartments/flow_simulation.h"
+#include "memilio/compartments/simulation.h"
+#include "memilio/io/directories.h"
 #include "ode_seir/model.h"
+
 #include <string>
 
-const std::string config_path = "../../benchmarks/simulation.config";
-
-#include "memilio/compartments/simulation.h"
-#include "models/ode_seir/model.h"
+const std::string config_path = (mio::base_dir() / "cpp/benchmarks/simulation.config").string();
 
 namespace mio
 {
@@ -82,6 +82,7 @@ public:
                 dydt[Ei] += y[Si] * pop[Ij] * coeffStoE;
             }
 
+            dydt[Ei] -= (1.0 / params.get<TimeExposed<ScalarType>>()[i]) * y[Ei];
             dydt[Ii] += (1.0 / params.get<TimeExposed<ScalarType>>()[i]) * y[Ei];
             dydt[Ii] -= (1.0 / params.get<TimeInfected<ScalarType>>()[i]) * y[Ii];
             dydt[Ri] = (1.0 / params.get<TimeInfected<ScalarType>>()[i]) * y[Ii];

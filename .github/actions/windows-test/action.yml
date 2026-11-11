@@ -12,7 +12,7 @@ runs:
   using: "composite"
   steps:
     - name: Download built test directory
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: build-cpp-windows-${{ inputs.artifact-pattern }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}
         path: cpp/build-win/bin
@@ -22,7 +22,7 @@ runs:
         cd cpp/build-win/bin
         .\memilio-test.exe --gtest_output="xml:report.xml"
     - name: Upload report
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: test-cpp-win-report-${{ inputs.artifact-pattern }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}
         path: |

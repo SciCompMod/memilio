@@ -42,7 +42,7 @@ struct Region : public mio::Index<Region> {
 };
 
 /**
- * Id of a state.
+ * @brief Typesafe id of a German state.
  * For Germany the Ids are:
  * 1 = Schleswig-Holstein
  * 2 = Hamburg
@@ -60,16 +60,37 @@ struct Region : public mio::Index<Region> {
  * 14 = Sachsen
  * 15 = Sachsen-Anhalt
  * 16 = Thüringen
+ * The underlying int value can be obtained via the get() member function:
+ * @code
+ *   StateId s(3);
+ *   int v = s.get();
+ * @endcode
+ * @see TypeSafe
  */
 DECL_TYPESAFE(int, StateId);
 
 /**
- * Id of a county.
+ * @brief Typesafe id of a county.
  * Format ssxxx where ss is the id of the state that the county is in (first s may be 0) and xxx are other digits.
  * Ids are generally not consecutive, even within one state.
+ * The underlying int value can be obtained via the get() member function:
+ * @code
+ *   CountyId c(5315);
+ *   int v = c.get();
+ * @endcode
+ * @see TypeSafe
  */
 DECL_TYPESAFE(int, CountyId);
 
+/**
+ * @brief Typesafe id of a district.
+ * The underlying int value can be obtained via the get() member function:
+ * @code
+ *   DistrictId d(9162);
+ *   int v = d.get();
+ * @endcode
+ * @see TypeSafe
+ */
 DECL_TYPESAFE(int, DistrictId);
 
 /**

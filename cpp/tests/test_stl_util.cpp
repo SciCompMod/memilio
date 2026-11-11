@@ -19,8 +19,10 @@
 */
 #include "memilio/utils/stl_util.h"
 #include "memilio/utils/compiler_diagnostics.h"
+#include <filesystem>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <string>
 
 TEST(TestRange, index_operator)
 {
@@ -154,21 +156,27 @@ TEST(TestPathJoin, joinOne)
     EXPECT_EQ(mio::path_join("."), ".");
 }
 
+// replace windows path separators by generic ones
+std::string generic(const std::string& dir)
+{
+    return std::filesystem::path(dir).generic_string();
+}
+
 TEST(TestPathJoin, joinTwoMixedClasses)
 {
-    EXPECT_EQ(mio::path_join(".", "dir"), "./dir");
-    EXPECT_EQ(mio::path_join("./", std::string("dir")), "./dir");
-    EXPECT_EQ(mio::path_join(std::string("/"), "dir"), "/dir");
-    EXPECT_EQ(mio::path_join(std::string("."), std::string("dir")), "./dir");
+    EXPECT_EQ(generic(mio::path_join(".", "dir")), "./dir");
+    EXPECT_EQ(generic(mio::path_join("./", std::string("dir"))), "./dir");
+    EXPECT_EQ(generic(mio::path_join(std::string("/"), "dir")), "/dir");
+    EXPECT_EQ(generic(mio::path_join(std::string("."), std::string("dir"))), "./dir");
 }
 
 TEST(TestPathJoin, ignoreEmpty)
 {
-    EXPECT_EQ(mio::path_join(""), "");
-    EXPECT_EQ(mio::path_join("", "dir"), "dir");
-    EXPECT_EQ(mio::path_join("", "", "dir"), "dir");
-    EXPECT_EQ(mio::path_join(".", "", "", "dir"), "./dir");
-    EXPECT_EQ(mio::path_join("./", "", "", "dir"), "./dir");
+    EXPECT_EQ(generic(mio::path_join("")), "");
+    EXPECT_EQ(generic(mio::path_join("", "dir")), "dir");
+    EXPECT_EQ(generic(mio::path_join("", "", "dir")), "dir");
+    EXPECT_EQ(generic(mio::path_join(".", "", "", "dir")), "./dir");
+    EXPECT_EQ(generic(mio::path_join("./", "", "", "dir")), "./dir");
 }
 
 namespace

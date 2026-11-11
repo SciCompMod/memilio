@@ -32,11 +32,6 @@
 #include <iostream>
 #include <concepts>
 
-#include "boost/filesystem.hpp"
-
-//is used to provide some paths as function arguments
-namespace fs = boost::filesystem;
-
 namespace mio
 {
 
@@ -329,9 +324,9 @@ private:
  */
 template <typename FP, class TestAndTrace, class ContactPattern, class Model, class MobilityParams, class Parameters,
           class ReadFunction, class NodeIdFunction>
-IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
-                         const std::string& population_data_path, bool is_node_for_county,
-                         Graph<Model, MobilityParams>& params_graph, ReadFunction&& read_func,
+IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_date,
+                         const std::filesystem::path& data_dir, const std::string& population_data_path,
+                         bool is_node_for_county, Graph<Model, MobilityParams>& params_graph, ReadFunction&& read_func,
                          NodeIdFunction&& node_func, const std::vector<FP>& scaling_factor_inf, FP scaling_factor_icu,
                          FP tnt_capacity_factor, int num_days = 0, bool export_time_series = false,
                          bool rki_age_groups = true)
@@ -402,7 +397,7 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
  */
 template <typename FP, class ContactLocation, class Model, class MobilityParams, class MobilityCoefficientGroup,
           class InfectionState, class ReadFunction>
-IOResult<void> set_edges(const fs::path& mobility_data_file, Graph<Model, MobilityParams>& params_graph,
+IOResult<void> set_edges(const std::filesystem::path& mobility_data_file, Graph<Model, MobilityParams>& params_graph,
                          std::initializer_list<InfectionState>& mobile_compartments, size_t contact_locations_size,
                          ReadFunction&& read_func, std::vector<FP> commuting_weights,
                          std::vector<std::vector<size_t>> indices_of_saved_edges = {})

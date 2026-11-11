@@ -24,6 +24,7 @@
 #include "utils/custom_index_array.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/epidemiology/populations.h"
+#include "geography/regions.h"
 
 #include "pybind11/pybind11.h"
 

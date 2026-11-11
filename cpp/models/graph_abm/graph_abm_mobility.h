@@ -24,19 +24,12 @@
 #include "abm/simulation.h"
 #include "abm/time.h"
 #include "abm/location_type.h"
-#include "abm/parameters.h"
-#include "abm/person.h"
-#include "abm/person_id.h"
-#include "abm/model_functions.h"
 #include "graph_abm/graph_abmodel.h"
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/graph.h"
-#include "memilio/utils/compiler_diagnostics.h"
+
 #include <algorithm>
-#include <cstddef>
-#include <iostream>
 #include <utility>
-#include <vector>
 
 namespace mio
 {
@@ -48,7 +41,7 @@ class ABMSimulationNode
 {
 
 public:
-    using Sim = abm::Simulation<GraphABModel>;
+    using Sim = abm::Simulation<abm::GraphABModel>;
 
     template <class... Args, typename = std::enable_if_t<std::is_constructible<Sim, Args...>::value, void>>
     ABMSimulationNode(std::tuple<History...>&& history, Args&&... args)
@@ -123,17 +116,16 @@ public:
         std::sort(persons_to_change.begin(), persons_to_change.end());
         //iterate over all persons that change from node_from
         for (int i = int(persons_to_change.size()) - 1; i >= 0; --i) {
-            auto& person     = model_from.get_persons()[persons_to_change[i]];
-            auto target_type = person.get_location_type();
-            if (target_type == abm::LocationType::Invalid) {
-                target_type = model_to.get_location(person.get_location()).get_type();
-            }
+            auto& person = model_from.get_persons()[persons_to_change[i]];
             //check if Person uses this edge
-            if (person.get_assigned_location_model_id(target_type) == model_to.get_id()) {
-
-                auto target_id = person.get_assigned_location(target_type);
+            if (person.get_location_model_id() == model_to.get_id()) {
+                auto target_id   = person.get_location();
+                auto target_type = person.get_location_type();
+                if (target_type == abm::LocationType::Invalid) {
+                    target_type = model_to.get_location(target_id).get_type();
+                }
                 //set correct location for person
-                person.set_location(target_type, target_id, model_to.get_id());
+                person.set_location(person.get_activity_type(), target_type, target_id, model_to.get_id());
                 //add person to model_to
                 model_to.add_person(std::move(person));
                 //remove person from model_from

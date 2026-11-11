@@ -32,7 +32,7 @@ The following example shows how to run a temporal-hybrid simulation of the diffu
 .. code-block:: cpp
 
     using ABM = mio::dabm::Model<SingleWell<mio::osecir::InfectionState>>;
-    using ODE = mio::osecir::Model<double>;
+    using ODE = mio::osecir::Model<ScalarType>;
 
 First, both models have to be initialized. Please see the documentation of the corresponding models for information about their parameters and how to initialize them. In the following example code block, we initialize a ODE-SECIR model with one age group and a diffusive ABM. We assume that the parameters of the diffusive ABM were created and initialized before and the parameters of the ODE-SECIR model are set such that they match the ABM parameters.
 
@@ -50,19 +50,19 @@ After initializing the models, the corresponding simulations have to be created 
 .. code-block:: cpp
 
     //Set t0 and internal dt for each model
-    double t0 = 0;
-    double dt = 0.1;
+    ScalarType t0 = 0;
+    ScalarType dt = 0.1;
 
     //Create simulations
     auto sim_abm = mio::dabm::Simulation(abm, t0, dt);
     auto sim_ode = mio::Simulation(ode, t0, dt);
 
     const auto result_fct_abm = [](const mio::dabm::Simulation<SingleWell<mio::osecir::InfectionState>>& sim,
-                                   double /*t*/) {
+                                   ScalarType /*t*/) {
         return sim.get_result();
     };
 
-    const auto result_fct_ode = [](const mio::Simulation<double, ODE>& sim, double /*t*/) {
+    const auto result_fct_ode = [](const mio::Simulation<ScalarType, ODE>& sim, ScalarType /*t*/) {
         return sim.get_result();
     };
 
@@ -71,9 +71,9 @@ Initializing the temporal-hybrid simulation with a given step size `dt_switch` w
 .. code-block:: cpp
 
     //Create hybrid simulation
-    double dt_switch = 0.2;
-    mio::hybrid::TemporalHybridSimulation<decltype(sim_abm), decltype(sim_ode), mio::TimeSeries<double>,
-                                          mio::TimeSeries<double>>
+    ScalarType dt_switch = 0.2;
+    mio::hybrid::TemporalHybridSimulation<decltype(sim_abm), decltype(sim_ode), mio::TimeSeries<ScalarType>,
+                                          mio::TimeSeries<ScalarType>>
         hybrid_sim(sim_abm, sim_ode, result_fct_abm, result_fct_ode, true, t0, dt_switch);
 
 Before advancing the simulation until `tmax`, a switching condition has to be defined. In the example below, the temporal-hybrid model should switch from ABM to ODE if the number of infected individuals is bigger than 20 and it should switch back if the number is below 20.
@@ -81,7 +81,7 @@ Before advancing the simulation until `tmax`, a switching condition has to be de
 .. code-block:: cpp
 
         //Define switching condition
-    const auto condition = [](const mio::TimeSeries<double>& result_abm, const mio::TimeSeries<double>& result_ode,
+    const auto condition = [](const mio::TimeSeries<ScalarType>& result_abm, const mio::TimeSeries<ScalarType>& result_ode,
                               bool abm_used) {
         if (abm_used) {
             auto& last_value = result_abm.get_last_value().eval();
@@ -109,10 +109,10 @@ Before advancing the simulation until `tmax`, a switching condition has to be de
     };
 
     //Simulate for 30 days
-    double tmax = 30.;
+    ScalarType tmax = 30.;
     hybrid_sim.advance(tmax, condition);
 
-The result ``mio::TimeSeries`` objects of the two models used (which are returned by the above defined result functions) can be accessed and printed via
+The result ``TimeSeries`` objects of the two models used (which are returned by the above defined result functions) can be accessed and printed via
 
 .. code-block:: cpp
 
@@ -123,7 +123,7 @@ The result ``mio::TimeSeries`` objects of the two models used (which are returne
     ts_abm.print_table({"S", "E", "Ins", "Isy", "Isev", "Icri", "R", "D"});
     ts_ode.print_table({"S", "E", "Ins", "Ins_confirmed", "Isy", "Isy_confirmed", "Isev", "Icri", "R", "D"});
 
-Additionally, the individual results of the models can be merged to one joint ``mio::TimeSeries``:
+Additionally, the individual results of the models can be merged to one joint ``TimeSeries``:
 
 .. code-block:: cpp
 

@@ -22,8 +22,10 @@
 #include "abm/simulation.h"
 #include "abm/model.h"
 #include "abm/location_type.h"
+#include "memilio/io/io.h"
 #include "memilio/utils/abstract_parameter_distribution.h"
 #include "memilio/io/history.h"
+#include "memilio/io/directories.h"
 #include "memilio/utils/parameter_distributions.h"
 
 #include <fstream>
@@ -43,7 +45,8 @@ void write_log_to_file(const T& history)
     auto loc_id      = std::get<1>(logg);
     auto time_points = std::get<0>(logg);
     std::string input;
-    std::ofstream myfile("test_output.txt");
+    std::ofstream myfile(mio::create_directories_or_exit(mio::example_results_dir("abm_history_object")) /
+                         "test_output.txt");
     myfile << "Locations as numbers:\n";
     for (auto&& id : loc_id[0]) {
         myfile << convert_loc_id_to_string(id) << "\n";
@@ -110,7 +113,7 @@ int main()
 
     // Add one social event with 5 maximum contacts.
     // Maximum contacs limit the number of people that a person can infect while being at this location.
-    auto event = model.add_location(mio::abm::LocationType::SocialEvent);
+    auto event = model.add_location(mio::abm::LocationType::Recreation);
     model.get_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
     // Add hospital and ICU with 5 maximum contacs.
     auto hospital = model.add_location(mio::abm::LocationType::Hospital);
@@ -143,7 +146,7 @@ int main()
     // The infection states are chosen randomly.
     auto persons = model.get_persons();
     for (auto& person : persons) {
-        auto rng = mio::abm::PersonalRandomNumberGenerator(person);
+        auto rng = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
         mio::abm::InfectionState infection_state =
             (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
         if (infection_state != mio::abm::InfectionState::Susceptible)
@@ -155,17 +158,17 @@ int main()
     for (auto& person : model.get_persons()) {
         const auto pid = person.get_id();
         //assign shop and event
-        model.assign_location(pid, event);
-        model.assign_location(pid, shop);
+        model.assign_location(pid, event, mio::abm::ActivityType::Recreation);
+        model.assign_location(pid, shop, mio::abm::ActivityType::BasicsShop);
         //assign hospital and ICU
-        model.assign_location(pid, hospital);
-        model.assign_location(pid, icu);
+        model.assign_location(pid, hospital, mio::abm::ActivityType::Hospital);
+        model.assign_location(pid, icu, mio::abm::ActivityType::ICU);
         //assign work/school to people depending on their age
         if (person.get_age() == age_group_5_to_14) {
-            model.assign_location(pid, school);
+            model.assign_location(pid, school, mio::abm::ActivityType::School);
         }
         if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
-            model.assign_location(pid, work);
+            model.assign_location(pid, work, mio::abm::ActivityType::Work);
         }
     }
 

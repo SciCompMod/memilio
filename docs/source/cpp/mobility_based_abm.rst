@@ -1,7 +1,7 @@
 .. include:: ../literature.rst
 
-Agent-based model
-=================
+Agent-based model (with activities and mobility)
+================================================
 
 This module models and simulates the epidemic using an agent-based model (*ABM*) approach. Unlike the compartmental models that use a system of ODEs, this model simulates
 the spread of an epidemic in a population with discrete persons (the agents) moving throughout locations in the
@@ -123,13 +123,13 @@ level of the susceptible person.
 Mobility phase
 ~~~~~~~~~~~~~~
 
-During the mobility phase, each person may change their location.
+During the mobility phase, each person may change their location. A person can move between its assigned locations according to different activity types that can but not have to match the location type. For instance, a location of ``LocationType::School`` can be assigned to students with ``ActivityType::School`` but also to teachers using ``ActivityType::Work``.
 
-The available location types defined in `location_type.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/location_type.h>`_ are:
+The available location and activity types defined in `location_type.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/location_type.h>`_ and `activity_type.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/activity_type.h>`_ , respectively, are:
 
    * **Home**: Home location of a person
-   * **School**: School location for children
-   * **Work**: Workplace for adults
+   * **School**: School location
+   * **Work**: Workplace
    * **SocialEvent**: Locations for social gatherings (e.g., parties, events)
    * **BasicsShop**: Basic shop for essential goods (e.g., grocery store)
    * **Hospital**: Hospital for severely infected persons
@@ -164,7 +164,7 @@ The optional mobility rules consist of:
    * Going to a social event in the evening or on weekends
    * Going to a shop randomly during the day (except Sunday)
 
-Another way of mobility is using trips. A trip consists of the ID of the person that performs this trip, a time point when this trip is performed, and the destination.
+Another way of mobility is using trips. A trip consists of the ID of the person that performs this trip, a time point when this trip is performed, the destination and the activity type at the destination.
 At the beginning of the simulation, a list with all trips is initialized and followed during the simulation. The agents do the same trips every day. As before, agents that are
 in quarantine or in the hospital cannot change their location. Trips can be used even for locations that are not the assigned locations for the respective person.
 
@@ -204,9 +204,8 @@ We can also set the contact rates for specific age groups at a location:
 
 .. code-block:: cpp
 
-   model.get_location(work)
-       .get_infection_parameters()
-       .get<mio::abm::ContactRates>()[{age_group_15_to_34, age_group_15_to_34}] = 10.0;
+   model.get_location(work).get_infection_parameters().get<mio::abm::ContactRates>().get_baseline()(
+        age_group_15_to_34.get(), age_group_15_to_34.get()) = 10.0;
 
 For a full list of parameters, see `here <https://memilio.readthedocs.io/en/latest/api/file__home_docs_checkouts_readthedocs.org_user_builds_memilio_checkouts_latest_cpp_models_abm_parameters.h.html>`_.
 
@@ -223,7 +222,7 @@ People are added with an age. Then we have to assign them, so the model knows th
 
 .. code-block:: cpp
 
-   auto person = model.add_person(home, age_group_0_to_4);
+   auto person = model.add_person(home, age_group_0_to_4, mio::abm::ActivityType::Home);
    person.set_assigned_location(home);
 
 Note that adding the person to the model in one location does not mean that this location is in the list of assigned locations the person can visit afterwards.
@@ -300,7 +299,7 @@ For infections to happen during the simulation, we have to initialize people wit
 .. code-block:: cpp
 
    // Assign infection state to each person randomly with specific distribution
-   std::vector<double> infection_distribution{0.5, 0.3, 0.05, 0.05, 0.05, 0.05, 0.0, 0.0};
+   std::vector<ScalarType> infection_distribution{0.5, 0.3, 0.05, 0.05, 0.05, 0.05, 0.0, 0.0};
    for (auto& person : model.get_persons()) {
        mio::abm::InfectionState infection_state = mio::abm::InfectionState(
            mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(), infection_distribution));
@@ -327,7 +326,7 @@ Here, we run the simulation:
    sim.advance(tmax);
 
 Alternatively, if we want to track things in the simulation, we need to set up a
-`history <https://github.com/SciCompMod/memilio/blob/main/cpp/memilio/io/README.md#the-history-object>`_, for example, to track all the Infection states of each simulation step into a Timeseries.
+`history <https://github.com/SciCompMod/memilio/blob/main/cpp/memilio/io/README.md#the-history-object>`_, for example, to track all the Infection states of each simulation step into a ``TimeSeries``.
 
 .. code-block:: cpp
 
@@ -345,7 +344,7 @@ Finally, for example, we can print the data to a text file:
 
 .. code-block:: cpp
 
-   std::ofstream outfile("abm_minimal.txt");
-   std::get<0>(log).print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
-   std::cout << "Results written to abm_minimal.txt" << std::endl;
-
+   auto outpath = mio::create_directories_or_exit(mio::example_results_dir("abm_minimal")) / "history.txt";
+   std::ofstream outfile(outpath);
+   std::get<0>(log).print_table(outfile, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4);
+   std::cout << "Results written to " << outpath << std::endl;

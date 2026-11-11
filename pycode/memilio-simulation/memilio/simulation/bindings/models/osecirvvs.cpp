@@ -145,14 +145,6 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
             [](mio::osecirvvs::Parameters<double>& self, double v) {
                 self.get_end_commuter_detection() = v;
             })
-        .def_property(
-            "end_dynamic_npis",
-            [](const mio::osecirvvs::Parameters<double>& self) {
-                return self.get_end_dynamic_npis();
-            },
-            [](mio::osecirvvs::Parameters<double>& self, double v) {
-                self.get_end_dynamic_npis() = v;
-            })
         .def("check_constraints", &mio::osecirvvs::Parameters<double>::check_constraints)
         .def("apply_constraints", &mio::osecirvvs::Parameters<double>::apply_constraints);
 
@@ -239,9 +231,9 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
                                 mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
             auto weights     = std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.};
             auto result      = mio::set_edges<double, // FP,
-                                              ContactLocation, mio::osecirvvs::Model<double>,
-                                              mio::MobilityParameters<double>, mio::MobilityCoefficientGroup<double>,
-                                              mio::osecirvvs::InfectionState, decltype(mio::read_mobility_plain)>(
+                                         ContactLocation, mio::osecirvvs::Model<double>,
+                                         mio::MobilityParameters<double>, mio::MobilityCoefficientGroup<double>,
+                                         mio::osecirvvs::InfectionState, decltype(mio::read_mobility_plain)>(
                 mobility_data_file, params_graph, mobile_comp, contact_locations_size, mio::read_mobility_plain,
                 weights);
             return pymio::check_and_throw(result);

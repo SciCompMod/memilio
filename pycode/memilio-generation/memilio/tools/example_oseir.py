@@ -30,12 +30,7 @@ import os
 from clang import cindex
 from clang.cindex import CursorKind
 
-if sys.version_info >= (3, 9):
-    # For python 3.9 and newer
-    import importlib.resources as importlib_resources
-else:
-    # For older python versions
-    import importlib_resources
+import importlib.resources as importlib_resources
 
 from memilio.generation import Generator, Scanner, ScannerConfig, AST, ASTHandler
 from memilio.generation.graph_visualization import Visualization
@@ -49,7 +44,7 @@ def run_memilio_generation(print_ast=False):
     """
     # Define ScannerConfig and initialize Scanner
     pkg = importlib_resources.files("memilio.generation")
-    with importlib_resources.as_file(pkg.joinpath('../tools/config.json')) as path:
+    with importlib_resources.as_file(pkg.joinpath('../generation/config.json')) as path:
         with open(path) as file:
             conf = ScannerConfig.schema().loads(file.read(), many=True)[0]
 

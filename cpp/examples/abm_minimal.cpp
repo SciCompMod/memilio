@@ -21,7 +21,9 @@
 #include "abm/lockdown_rules.h"
 #include "abm/model.h"
 #include "abm/common_abm_loggers.h"
+#include "memilio/io/directories.h"
 
+#include <cstddef>
 #include <fstream>
 
 int main()
@@ -79,7 +81,7 @@ int main()
 
     // Add one social event with 5 maximum contacts.
     // Maximum contacs limit the number of people that a person can infect while being at this location.
-    auto event = model.add_location(mio::abm::LocationType::SocialEvent);
+    auto event = model.add_location(mio::abm::LocationType::Recreation);
     model.get_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
     // Add hospital and ICU with 5 maximum contacs.
     auto hospital = model.add_location(mio::abm::LocationType::Hospital);
@@ -99,9 +101,8 @@ int main()
     // Increase aerosol transmission for all locations
     model.parameters.get<mio::abm::AerosolTransmissionRates>() = 10.0;
     // Increase contact rate for all people between 15 and 34 (i.e. people meet more often in the same location)
-    model.get_location(work)
-        .get_infection_parameters()
-        .get<mio::abm::ContactRates>()[{age_group_15_to_34, age_group_15_to_34}] = 10.0;
+    model.get_location(work).get_infection_parameters().get<mio::abm::ContactRates>().get_baseline()(
+        age_group_15_to_34.get(), age_group_15_to_34.get()) = 10.0;
 
     // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 10.
     auto validity_period       = mio::abm::days(1);
@@ -121,28 +122,46 @@ int main()
     for (auto& person : model.get_persons()) {
         mio::abm::InfectionState infection_state = mio::abm::InfectionState(
             mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(), infection_distribution));
-        auto rng = mio::abm::PersonalRandomNumberGenerator(person);
+        auto rng = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          model.parameters, start_date, infection_state));
         }
     }
 
+    size_t num_teachers     = 0;
+    size_t num_hosp_doctors = 0;
+    size_t num_icu_doctors  = 0;
+
     // Assign locations to the people
     for (auto& person : model.get_persons()) {
         const auto id = person.get_id();
         //assign shop and event
-        model.assign_location(id, event);
-        model.assign_location(id, shop);
+        model.assign_location(id, event, mio::abm::ActivityType::Recreation);
+        model.assign_location(id, shop, mio::abm::ActivityType::BasicsShop);
         //assign hospital and ICU
-        model.assign_location(id, hospital);
-        model.assign_location(id, icu);
+        model.assign_location(id, hospital, mio::abm::ActivityType::Hospital);
+        model.assign_location(id, icu, mio::abm::ActivityType::ICU);
         //assign work/school to people depending on their age
         if (person.get_age() == age_group_5_to_14) {
-            model.assign_location(id, school);
+            model.assign_location(id, school, mio::abm::ActivityType::School);
         }
         if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
-            model.assign_location(id, work);
+            if (num_teachers < 3) {
+                model.assign_location(id, school, mio::abm::ActivityType::Work);
+                num_teachers++;
+            }
+            else if (num_hosp_doctors < 1) {
+                model.assign_location(id, hospital, mio::abm::ActivityType::Work);
+                num_hosp_doctors++;
+            }
+            else if (num_icu_doctors < 1) {
+                model.assign_location(id, icu, mio::abm::ActivityType::Work);
+                num_icu_doctors++;
+            }
+            else {
+                model.assign_location(id, work, mio::abm::ActivityType::Work);
+            }
         }
     }
 
@@ -162,14 +181,12 @@ int main()
     // Run the simulation until tmax with the history object.
     sim.advance(tmax, historyTimeSeries);
 
-    // The results are written into the file "abm_minimal.txt" as a table with 9 columns.
-    // The first column is Time. The other columns correspond to the number of people with a certain infection state at this Time:
-    // Time = Time in days, S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
-    // I_Crit = InfectedCritical, R = Recovered, D = Dead
-    std::ofstream outfile("abm_minimal.txt");
+    // Write results to a file. Also print the filepath to make it easier to find
+    auto outpath = mio::create_directories_or_exit(mio::example_results_dir("abm_minimal")) / "history.txt";
+    std::ofstream outfile(outpath);
     std::get<0>(historyTimeSeries.get_log())
         .print_table(outfile, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4);
-    std::cout << "Results written to abm_minimal.txt" << std::endl;
+    std::cout << "Results written to " << outpath << std::endl;
 
     return 0;
 }

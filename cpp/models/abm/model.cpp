@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "abm/model.h"
+#include "abm/activity_type.h"
 #include "abm/location_id.h"
 #include "abm/location_type.h"
 #include "abm/intervention_type.h"
@@ -52,10 +53,10 @@ LocationId Model::add_location(LocationType type, uint32_t num_cells)
     return id;
 }
 
-PersonId Model::add_person(const LocationId id, AgeGroup age)
+PersonId Model::add_person(const LocationId id, AgeGroup age, ActivityType activity_type)
 {
     PersonId person_id = (static_cast<int64_t>(m_id)) << 32 | static_cast<uint32_t>(m_persons.size());
-    return add_person(Person(m_rng, get_location(id).get_type(), id, m_id, age, person_id));
+    return add_person(Person(m_rng, get_location(id).get_type(), activity_type, id, m_id, age, person_id));
 }
 
 PersonId Model::add_person(Person&& person)
@@ -65,7 +66,7 @@ PersonId Model::add_person(Person&& person)
            "Added Person's location is not in Model.");
     assert(person.get_id() != PersonId::invalid_ID() && "Added Person's unique id must be valid.");
     assert(person.get_age() < (AgeGroup)parameters.get_num_groups() && "Added Person's AgeGroup is too large.");
-    person.set_assigned_location(LocationType::Cemetery, m_cemetery_id, m_id);
+    person.set_assigned_location(ActivityType::Cemetery, m_cemetery_id, m_id);
     m_persons.emplace_back(person);
     m_activeness_statuses.push_back(true);
     auto& new_person = m_persons.back();
@@ -108,13 +109,14 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
     for (uint32_t person_index = 0; person_index < num_persons; ++person_index) {
         if (m_activeness_statuses[person_index]) {
             Person& person    = m_persons[person_index];
-            auto personal_rng = PersonalRandomNumberGenerator(person);
+            auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
 
             auto try_mobility_rule = [&](auto rule) -> bool {
                 // run mobility rule and check if change of location can actually happen
                 auto target_type = rule(personal_rng, person, t, dt, parameters);
-                if (person.get_assigned_location_model_id(target_type) == m_id) {
-                    const Location& target_location   = get_location(find_location(target_type, person));
+                auto target      = person.get_assigned_location(target_type, personal_rng);
+                if (target.second == m_id) {
+                    const Location& target_location   = get_location(target.first);
                     const LocationId current_location = person.get_location();
 
                     // the Person cannot move if they do not wear mask as required at targeted location
@@ -127,11 +129,10 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
                         get_number_persons(target_location.get_id()) >= target_location.get_capacity().persons) {
                         return false;
                     }
-                    // The person cannot move if he has a positive test result, except he want to go to a hospital, ICU or home.
+                    // The person cannot move if he has a positive test result, except he want to go to a hospital, ICU (as a patient) or home.
                     if (!m_testing_strategy.run_and_check(personal_rng, person, target_location, t) &&
-                        target_location.get_type() != LocationType::Hospital &&
-                        target_location.get_type() != LocationType::ICU &&
-                        target_location.get_type() != LocationType::Home) {
+                        target_type != ActivityType::Hospital && target_type != ActivityType::ICU &&
+                        target_type != ActivityType::Home) {
                         return false;
                     }
 
@@ -147,7 +148,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
                         person.set_mask(MaskType::None, t);
                     }
                     // all requirements are met, move to target location
-                    change_location(person, target_location.get_id());
+                    change_location(person, target_location.get_id(), target_type);
                     return true;
                 }
                 return false;
@@ -163,8 +164,8 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
                     (has_locations({LocationType::School, LocationType::Home}) && try_mobility_rule(&go_to_school)) ||
                     (has_locations({LocationType::Work, LocationType::Home}) && try_mobility_rule(&go_to_work)) ||
                     (has_locations({LocationType::BasicsShop, LocationType::Home}) && try_mobility_rule(&go_to_shop)) ||
-                    (has_locations({LocationType::SocialEvent, LocationType::Home}) &&
-                     try_mobility_rule(&go_to_event)) ||
+                    (has_locations({LocationType::Recreation, LocationType::Home}) &&
+                     try_mobility_rule(&go_to_recreation)) ||
                     (has_locations({LocationType::Home}) && try_mobility_rule(&go_to_quarantine));
             }
             else {
@@ -186,7 +187,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
          m_trip_list.increase_index()) {
         auto& trip        = m_trip_list.get_next_trip();
         auto& person      = get_person(trip.person_id);
-        auto personal_rng = PersonalRandomNumberGenerator(person);
+        auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
         // skip the trip if the person is in quarantine or is dead
         if (person.is_in_quarantine(t, parameters) || person.get_infection_state(t) == InfectionState::Dead) {
             continue;
@@ -203,7 +204,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
             continue;
         }
         // all requirements are met, move to target location
-        change_location(person, target_location.get_id(), trip.trip_mode);
+        change_location(person, target_location.get_id(), trip.activity, trip.trip_mode);
         // update worn mask to target location's requirements
         if (target_location.is_mask_required()) {
             // if the current MaskProtection level is lower than required, the Person changes mask
@@ -373,25 +374,25 @@ auto Model::get_activeness_statuses() -> Range<ActivenessIterator>
     return {m_activeness_statuses};
 }
 
-LocationId Model::find_location(LocationType type, const PersonId person) const
+std::vector<LocationId> Model::find_locations(ActivityType type, const PersonId person) const
 {
-    return find_location(type, get_person(person));
+    return find_locations(type, get_person(person));
 }
 
 size_t Model::get_subpopulation_combined(TimePoint t, InfectionState s) const
 {
-    return std::accumulate(m_locations.begin(), m_locations.end(), (size_t)0,
-                           [t, s, this](size_t running_sum, const Location& loc) {
-                               return running_sum + get_subpopulation(loc.get_id(), t, s);
-                           });
+    // a single pass over all Persons, instead of calling get_subpopulation for every Location
+    return std::count_if(m_persons.begin(), m_persons.end(), [&](auto&& p) {
+        return p.get_location_model_id() == m_id && p.get_infection_state(t) == s;
+    });
 }
 
 size_t Model::get_subpopulation_combined_per_location_type(TimePoint t, InfectionState s, LocationType type) const
 {
-    return std::accumulate(
-        m_locations.begin(), m_locations.end(), (size_t)0, [t, s, type, this](size_t running_sum, const Location& loc) {
-            return loc.get_type() == type ? running_sum + get_subpopulation(loc.get_id(), t, s) : running_sum;
-        });
+    // a single pass over all Persons, instead of calling get_subpopulation for every Location
+    return std::count_if(m_persons.begin(), m_persons.end(), [&](auto&& p) {
+        return p.get_location_model_id() == m_id && p.get_location_type() == type && p.get_infection_state(t) == s;
+    });
 }
 
 TripList& Model::get_trip_list()

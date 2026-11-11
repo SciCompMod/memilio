@@ -20,6 +20,7 @@
 #ifndef MIO_ABM_MODEL_H
 #define MIO_ABM_MODEL_H
 
+#include "abm/activity_type.h"
 #include "abm/infection_state.h"
 #include "abm/model_functions.h"
 #include "abm/location_type.h"
@@ -38,6 +39,7 @@
 #include "memilio/utils/stl_util.h"
 
 #include <bitset>
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
@@ -57,9 +59,9 @@ public:
     using ConstLocationIterator   = std::vector<Location>::const_iterator;
     using PersonIterator          = std::vector<Person>::iterator;
     using ConstPersonIterator     = std::vector<Person>::const_iterator;
-    using ActivenessIterator      = std::vector<bool>::iterator;
-    using ConstActivenessIterator = std::vector<bool>::const_iterator;
-    using MobilityRuleType        = LocationType (*)(PersonalRandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
+    using ActivenessIterator      = std::vector<char>::iterator;
+    using ConstActivenessIterator = std::vector<char>::const_iterator;
+    using MobilityRuleType        = ActivityType (*)(PersonalRandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
                                               const Parameters&);
 
     using Compartments = mio::abm::InfectionState;
@@ -203,9 +205,10 @@ public:
      * @brief Add a Person to the Model.
      * @param[in] id The LocationID of the initial Location of the Person.
      * @param[in] age AgeGroup of the person.
+     * @param[in] activity_type The ActivityType the Person does at its initial Location.
      * @return Id of the newly created Person.
      */
-    PersonId add_person(const LocationId id, AgeGroup age);
+    PersonId add_person(const LocationId id, AgeGroup age, ActivityType activity_type);
 
     /**
      * @brief Adds a copy of a given Person to the Model.
@@ -234,6 +237,7 @@ public:
 
     /**
      * @brief Get a range of all Person%s activeness statuses in the Model.
+     * Valid activeness status values are either `true` or `false`.
      * @return A range of all Person%s activeness statuses.
      * @{
      */
@@ -242,12 +246,12 @@ public:
     /** @} */
 
     /**
-     * @brief Find an assigned Location of a Person.
-     * @param[in] type The #LocationType that specifies the assigned Location.
+     * @brief Find an all assigned Locations of a Person for a certain ActivityType.
+     * @param[in] type The ActivityType that specifies the assigned Locations.
      * @param[in] person Id of the Person.
-     * @return ID of the Location of LocationType type assigend to person.
+     * @return IDs of the Locations of ActivityType type assigend to person.
      */
-    LocationId find_location(LocationType type, const PersonId person) const;
+    std::vector<LocationId> find_locations(ActivityType type, const PersonId person) const;
 
     /**
      * @brief Assign a Location to a Person.
@@ -255,10 +259,11 @@ public:
      * Assigning another Location of an already assigned LocationType will replace the prior assignment.  
      * @param[in] person The Id of the person this location will be assigned to.
      * @param[in] location The LocationId of the Location.
+     * @param[in] activity The ActivityType the person does at the Location.
      */
-    void assign_location(PersonId person, LocationId location)
+    void assign_location(PersonId person, LocationId location, ActivityType activity)
     {
-        assign_location(get_person(person), location);
+        assign_location(get_person(person), location, activity);
     }
 
     /**
@@ -333,11 +338,39 @@ public:
     * Get the RandomNumberGenerator used by this Model for random events.
     * Persons use their own generators with the same key as the global one. 
     * @return The random number generator.
+    * @{
     */
     RandomNumberGenerator& get_rng()
     {
         return m_rng;
     }
+    const RandomNumberGenerator& get_rng() const
+    {
+        return m_rng;
+    }
+    /** @} */
+
+    /**
+     * @brief Sets the RNG counters of the model and all persons to 0 (or to the optional counter argument).
+     * @param[in] seeds Optional argument used to overwrite the current seed.
+     * @param[in] counter Optional argument used as base value for each RNG counter.
+     * Note: Both the model's and each person's RNG uses a 64 bit counter. Since the persons reserve half of the
+     * counter for their ID, we only allow specifying the first 32 bits here, even for the model.
+     * @{
+     */
+    void reset_rng(Counter<uint32_t> counter = {})
+    {
+        m_rng.set_counter(Counter<uint64_t>(static_cast<uint64_t>(counter.get())));
+        for (Person& person : get_persons()) {
+            person.get_rng_counter() = counter;
+        }
+    }
+    void reset_rng(const std::vector<uint32_t>& seeds, Counter<uint32_t> counter = {})
+    {
+        m_rng.seed(seeds);
+        reset_rng(counter);
+    }
+    /** @} */
 
     /**
      * Get the model id. Is only relevant for graph abm or hybrid model.
@@ -365,6 +398,8 @@ public:
 
     /**
      * @brief Get the number of Person%s of a particular #InfectionState for all Cell%s.
+     * Note that this iterates over all Person%s of the Model. To count the Person%s of many Location%s or
+     * #InfectionState%s, do not call this in a loop, but count them in a single pass over get_persons() instead.
      * @param[in] location A LocationId from the Model.
      * @param[in] t TimePoint of querry.
      * @param[in] state #InfectionState of interest.
@@ -417,10 +452,10 @@ public:
      * @param[in] mode The transport mode the person uses to change the Location.
      * @param[in] cells The cells within the destination the person should be in.
      */
-    inline void change_location(PersonId person, LocationId destination, TransportMode mode = TransportMode::Unknown,
-                                const std::vector<uint32_t>& cells = {0})
+    inline void change_location(PersonId person, LocationId destination, ActivityType activity,
+                                TransportMode mode = TransportMode::Unknown, const std::vector<uint32_t>& cells = {0})
     {
-        change_location(get_person(person), destination, mode, cells);
+        change_location(get_person(person), destination, activity, mode, cells);
     }
 
     /**
@@ -453,10 +488,11 @@ public:
      * Assigning another Location of an already assigned LocationType will replace the prior assignment.  
      * @param[in] person reference to the Person the location will be assigned to.
      * @param[in] location The LocationId of the Location.
+     * @param[in] activity The ActivityType the person does at the Location.
      */
-    void assign_location(Person& person, LocationId location)
+    void assign_location(Person& person, LocationId location, ActivityType activity)
     {
-        person.set_assigned_location(get_location(location).get_type(), location, m_id);
+        person.set_assigned_location(activity, location, m_id);
     }
 
     Location& get_location(LocationId id)
@@ -542,12 +578,13 @@ protected:
      * @param[in] mode The transport mode the person uses to change the Location.
      * @param[in] cells The cells within the destination the person should be in.
      */
-    inline void change_location(Person& person, LocationId destination, TransportMode mode = TransportMode::Unknown,
-                                const std::vector<uint32_t>& cells = {0})
+    inline void change_location(Person& person, LocationId destination, ActivityType activity,
+                                TransportMode mode = TransportMode::Unknown, const std::vector<uint32_t>& cells = {0})
     {
-        LocationId origin               = get_location(person).get_id();
-        auto old_cells                  = person.get_cells();
-        const bool has_changed_location = mio::abm::change_location(person, get_location(destination), mode, cells);
+        LocationId origin = get_location(person).get_id();
+        auto old_cells    = person.get_cells();
+        const bool has_changed_location =
+            mio::abm::change_location(person, get_location(destination), activity, mode, cells);
         // if the person has changed location, invalidate exposure caches but keep population caches valid
         if (has_changed_location) {
             m_are_exposure_caches_valid = false;
@@ -583,16 +620,16 @@ protected:
     }
 
     /**
-     * @brief Find an assigned Location of a Person.
-     * @param[in] type The #LocationType that specifies the assigned Location.
+     * @brief Find an assigned Locations of a Person.
+     * @param[in] type The ActivityType that specifies the assigned Locations.
      * @param[in] person Reference to Person.
-     * @return ID of the Location of LocationType type assigend to person.
+     * @return IDs of the Locations of ActivityType type assigend to person.
      */
-    LocationId find_location(LocationType type, const Person& person) const
+    std::vector<LocationId> find_locations(ActivityType type, const Person& person) const
     {
-        auto location_id = person.get_assigned_location(type);
-        assert(location_id != LocationId::invalid_id() && "The person has no assigned location of that type.");
-        return location_id;
+        auto location_ids = person.get_assigned_locations()[static_cast<size_t>(type)];
+        assert(!location_ids.empty() && "The person has no assigned location of that type.");
+        return location_ids;
     }
 
     /**
@@ -609,7 +646,7 @@ protected:
             compute_exposure_caches(t, dt);
             m_are_exposure_caches_valid = true;
         }
-        auto personal_rng = PersonalRandomNumberGenerator(person);
+        auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
         auto location     = person.get_location();
         mio::abm::interact(personal_rng, person, get_location(location),
                            m_local_population_by_age_cache[location.get()], m_air_exposure_rates_cache[location.get()],
@@ -657,8 +694,10 @@ protected:
     int m_id; ///< Model id. Is only used for abm graph model or hybrid model.
     std::vector<Person> m_persons; ///< Vector of every Person.
     std::vector<Location> m_locations; ///< Vector of every Location.
-    std::vector<bool>
-        m_activeness_statuses; ///< Vector with activeness status for every person. Is only used for abm graph model or hybrid model.
+    std::vector<char> m_activeness_statuses; /**< Vector with activeness status for every person.
+        * Is only used for abm graph model or hybrid model.
+        * Used as boolean. Uses char instead of bool due to portability issues with the specialized std::vector<bool>.
+        */
     std::bitset<size_t(LocationType::Count)>
         m_has_locations; ///< Flags for each LocationType, set if a Location of that type exists.
     TestingStrategy m_testing_strategy; ///< List of TestingScheme%s that are checked for testing.

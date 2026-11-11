@@ -1,10 +1,11 @@
 Build instructions
 ==================
 
-The MEmilio core library (MEmilio C++) is written in C++ and uses `CMake <https://cmake.org/>`_ as build system. Before
-installing MEmilio C++, make sure a C++20 compiler, CMake and a build tool (like GNU Make or Ninja) is installed on your
-device. The following guide will make use of the command line, but you can use graphical build tools from an IDE as
-well.
+The MEmilio core library (MEmilio C++) is written in C++ and uses `CMake <https://cmake.org/>`__ as build system. For
+building MEmilio C++, you need a C++20 compiler, CMake and a build tool (like GNU Make or Ninja) installed on your
+device. Follow the steps from :doc:`../download_and_setup` to set up the required tools and the project.
+
+The following guide will make use of the command line, but you can use graphical build tools from an IDE as well.
 
 Quick start
 -----------
@@ -28,14 +29,16 @@ This will run several tests and should write out ``[  PASSED  ]`` in the end.
 
 Requirements
 ------------
+
 MEmilio C++ is regularly tested with the following compilers (list will be extended over time):
 
 - GCC, versions 11 and 13
 - Clang, version 14 and 17
-- MSVC, version 19.43 (Visual Studio 2022)
+- AppleClang, version 21
+- MSVC, versions 19.44+ (Visual Studio 2022) and 19.51+ (Visual Studio 2026)
 
-MEmilio C++ is regularly tested on GitHub runners using Ubuntu 22.04 and 24.04 and Windows Server 2022 and 2025. It is
-expected to run on any comparable Linux or Windows system. It is currently not tested on macOS.
+MEmilio C++ is regularly tested on GitHub runners using Ubuntu 22.04 and 24.04, MacOS 26 and Windows Server 2022
+and 2025. It is expected to run on any comparable Linux, MacOS or Windows system.
 
 The following table lists the dependencies that are used. Most of them are required, but some are optional. The library
 can be used without them but with slightly reduced features. CMake will warn about them during configuration. Most of
@@ -52,7 +55,7 @@ instead. Version compatibility needs to be ensured by the user, the version we c
       - Bundled               
       - Notes
     * - spdlog  
-      - 1.15.0   
+      - 1.17.0   
       - Yes      
       - Yes (git repo)        
       - https://github.com/gabime/spdlog
@@ -87,46 +90,27 @@ instead. Version compatibility needs to be ensured by the user, the version we c
       - No 
       - https://sbml.org/software/libsbml/ (For SBML integration only)
 
-See the `thirdparty directory <https://github.com/SciCompMod/memilio/blob/main/cpp/thirdparty/README.md>`_ for more details.
+See the `thirdparty directory <https://github.com/SciCompMod/memilio/blob/main/cpp/thirdparty/README.md>`__ for more details.
 
 Step-by-step instructions
 -------------------------
 
-Download
-~~~~~~~~
-
-Start by downloading the newest version (or a specific release) of MEmilio from our
-`github repository <https://github.com/SciCompMod/memilio>`_ to a directory of your choice, or clone it directly using
-git by first opening a terminal in that directory and then running
-
-.. code:: bash
-
-    git clone https://github.com/SciCompMod/memilio
-
-.. dropdown:: :fa:`gears` Note for developers
-
-    If you need to push changes to the main repo, register an ssh key with GitHub and clone from 
-    *git@github.com:SciCompMod/memilio.git* instead. You can also change to the ssh address later using
-
-    .. code:: bash
-
-        git remote set-url origin git@github.com:SciCompMod/memilio.git
-
-This will create a new directory called "memilio". Change into this directory.
-
-.. code:: bash
-
-    cd memilio
+In case you have not installed the required tools, or downloaded the MEmilio repository, first follow the steps from the
+:doc:`../download_and_setup` section. From here on, we assume that you have a terminal open and have navigated into the MEmilio
+repository.
 
 Configuration
 ~~~~~~~~~~~~~
 
 Before we can *build* anything, we need to *configure* the project first. If you want to use its default options,
-simply run
+simply run cmake in MEmilio's root directory.
 
 .. code:: bash
 
     cmake -S cpp -B cpp/build
+
+The first time you run this it may take some time to complete, as this downloads all bundled dependencies, if not
+disabled by the options below. Depending on your internet connection, this may take a couple minutes.
 
 Additional options can be specified by appending one or more ``-D<OPTION>=<VALUE>``, or by editing the file
 ``cpp/build/CMakeCache.txt`` after a successful configuration. The following options are known to the library:
@@ -142,8 +126,6 @@ Additional options can be specified by appending one or more ``-D<OPTION>=<VALUE
       - Build the example applications in the examples directory, ON or OFF, default ON.
     * - ``MEMILIO_BUILD_MODELS``
       - Build the separate model libraries in the models directory, ON or OFF, default ON.
-    * - ``MEMILIO_BUILD_SIMULATIONS``
-      - Build the simulation applications in the simulations directory, ON or OFF, default ON.
     * - ``MEMILIO_USE_BUNDLED_SPDLOG/_BOOST/_EIGEN/_JSONCPP``:
       - Use the corresponding dependency bundled with this project, ON or OFF, default ON.
     * - ``MEMILIO_BUILD_BENCHMARKS``
@@ -163,7 +145,7 @@ Additional options can be specified by appending one or more ``-D<OPTION>=<VALUE
     * - ``MEMILIO_ENABLE_WARNINGS_AS_ERRORS``
       - Compilation warnings are treated as compilation errors. ON or OFF, default ON.
     * - ``MEMILIO_ENABLE_PROFILING``
-      - Compile with runtime profiling support. ON or OFF, default OFF. See `here <https://github.com/SciCompMod/memilio/blob/main/cpp/benchmarks/profiling.md>`_ for information.
+      - Compile with runtime profiling support. ON or OFF, default OFF. See `here <https://github.com/SciCompMod/memilio/blob/main/cpp/benchmarks/profiling.md>`__ for information.
     * - ``MEMILIO_ENABLE_LIKWID_MARKER``
       - Compile MEmilio with likwid markers. ON or OFF, default OFF.
 
@@ -191,46 +173,96 @@ Other important options you may need:
     
         cmake -S cpp -B cpp/build -DMEMILIO_BUILD_TESTS=OFF -DMEMILIO_BUILD_BENCHMARKS=ON
 
-Building
-~~~~~~~~
+Building and running
+~~~~~~~~~~~~~~~~~~~~
 
 Finally, you can *build* the project by running
 
 .. code:: bash
 
-    cmake --build cpp/build -j <N>
+    cmake --build cpp/build -j 4
 
-Here, ``<N>`` must be set to the number of jobs used for building MEmilio C++, e.g. the number of available CPU threads
-on your system minus two. The argument ``-j <N>`` is optional, but will significantly speed up the compilation.
+Here, ``-j 4`` is the number of jobs used for building MEmilio C++. Optimally, instead of using "4", you should set it
+to the number of available CPU threads on your system, minus two. But "4" should work well on all modern systems.
+The argument ``-j 4`` *is* optional, but will significantly speed up the compilation.
 
-Once the build command has finished successfully, you can find the compiled binaries in the directory
+Once the build command has finished successfully, you can find the compiled executables in the directory
 ``cpp/build/bin/``.
 
-You can check that everything is working as intended by running the test suite (if you did not disable it during
+You can check that everything is working as intended by running the test suite (if you did not disable the tests during
 configuration):
 
 .. code:: bash
 
     ./cpp/build/bin/memilio-test
 
-Also try out the example binaries (ending in ``_example``)!
+Also try out the example binaries (ending in ``_example``)! These contain model simulations and usage examples for
+several parts of the library. They can be run via 
+
+.. code-block:: console
+
+   ./cpp/build/bin/<example_name>
+
+This will work for all examples in the ``cpp/examples`` folder of our
+`github repository <https://github.com/SciCompMod/memilio/tree/main/cpp/examples>`__
+that do not depend on user-provided external libraries (like HDF5).
+Additional explanations for our models are can be found in the :doc:`model usage section <model_usage>`.
+
+If you want to only build a specific example, to save some compilation time, you can specify it with the ``--target``
+flag:
+
+.. code-block:: console
+
+   cmake --build cpp/build --target <example_name>
+
+If you experience errors, feel free to contact martin.kuehn@dlr.de or open a
+`discussion on GitHub <https://github.com/SciCompMod/memilio/discussions>`__!
 
 Integration into other projects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Using CMake, integration is simple. 
+Using CMake, integration is simple.
 
-If you installed the project, there is a `memilio-config.cmake` file included with your installation. This config file will tell CMake which libraries and directories have to be included. Look up the config using the command ``find_package(memilio)`` in your own `CMakeLists.txt`. On Linux, the file should be found automatically if you installed it in the normal GNU directories. Otherwise, or if you are working on Windows, you have to specify the ``memilio_DIR`` variable when running CMake to point it to the `memilio-config.cmake` file. Add the main framework as a dependency with the command ``target_link_libraries(<your target> PRIVATE memilio::memilio)``. Other targets that are exported are ``memilio::secir``, ``memilio::seir``, and ``memilio::abm``. This will set all required include directories and libraries, even transitive ones.
+MEmilio can be integrated as a subdirectory of your project with FetchContent:
 
-Alternatively, MEmilio can be integrated as a subdirectory of your project with ``add_subdirectory(memilio/cpp)``, then you can use the same ``target_link_libraries`` command as above.
+.. code:: cmake
+
+  include(FetchContent)
+  
+  FetchContent_Declare(
+    memilio
+    GIT_REPOSITORY https://github.com/SciCompMod/memilio.git
+    GIT_TAG <branch, release or commit hash>
+    SOURCE_SUBDIR cpp
+  )
+
+  # Set some options for the build.
+  set(MEMILIO_BUILD_TESTS OFF)
+  set(MEMILIO_BUILD_EXAMPLES OFF)
+
+  # Include MEmilio directly
+  FetchContent_MakeAvailable(memilio)
+
+Set the ``GIT_TAG`` to a branch, release, or commit hash. The "main" branch will always work, but we strongly recommend
+using a release version, preferably as a hash. 
+Then, add the main framework as a dependency with the command ``target_link_libraries(<your target> PRIVATE memilio)``. You may also want to add one or more models as a dependency, like ``ode_secir``, ``ide_seir``, and ``abm``.
+This will set all required include directories and libraries, even transitive ones.
+
+Alternatively, if you installed the project (see the next section), there is a `memilio-config.cmake` file included with
+your installation. This config file will tell CMake which libraries and directories have to be included. Look up the
+config using the command ``find_package(memilio)`` in your own `CMakeLists.txt`. On Linux, the file should be found
+automatically if you installed it in the normal GNU directories. Otherwise, or if you are working on Windows, you have
+to specify the ``memilio_DIR`` variable when running CMake to point it to the `memilio-config.cmake` file.
+Then you can add dependencies as above, but with the added prefix of ``memilio::``. For example, to add the main
+framework, use ``target_link_libraries(<your target> PRIVATE memilio::memilio)``.
 
 Installation
 ~~~~~~~~~~~~
 
 .. warning::
     
-    Installing currently is not tested and probably does not work as expected or at all. If you want to
-    integrate the project into yours, use the `add_subdirectory` way.
+    Installing currently is not tested and may not work as expected or at all. If you want to
+    integrate the project into yours, use the `FetchContent` way.
 
 After having built MEmilio C++ as described above, you can install it to the location given in the
 `CMAKE_INSTALL_PREFIX` variable by running
@@ -244,5 +276,12 @@ This will install the libraries, headers, and executables that were built, i.e. 
 Known issues
 ------------
 
-- Installing currently is not tested and probably does not work as expected or at all. If you want to integrate the project into yours, use the `add_subdirectory` way.
+- Installing currently is not tested and may not work as expected or at all. If you want to integrate the project into yours, use the `FetchContent` way.
 - On Windows, automatic detection of HDF5 installations does not work reliably. If you get HDF5 related errors during the build, you may have to supply the HDF5_DIR variable during CMake configuration, see above.
+
+Further questions
+-----------------
+
+If you have any further questions, please take a look at our :doc:`../faq` and feel free to contact us via
+`e-mail <mailto:Martin.Kuehn@DLR.de>`__ or open an issue or discussion on
+`GitHub <https://github.com/SciCompMod/memilio/discussions>`__.

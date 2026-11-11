@@ -56,13 +56,13 @@ struct PickleType<T, std::enable_if_t<is_small_integral<T>::value>> : std::true_
 };
 
 //signed big ints
-template <>
-struct PickleType<int64_t> : std::true_type {
+template <class T>
+struct PickleType<T, std::enable_if_t<is_64bit_integral<T>::value && std::is_signed_v<T>>> : std::true_type {
 };
 
 //unsigned big ints
-template <>
-struct PickleType<uint64_t> : std::true_type {
+template <class T>
+struct PickleType<T, std::enable_if_t<is_64bit_integral<T>::value && std::is_unsigned_v<T>>> : std::true_type {
 };
 
 //double

@@ -265,6 +265,31 @@ struct TransitionMatrixInfectedSevereToInfectedCritical {
 
 /**
  * @brief Transition matrix of the phase-type distribution describing the stay time in the InfectedSevere
+ *      compartment before dying.
+ */
+template <typename FP>
+struct TransitionMatrixInfectedSevereToDead {
+    using Type = Eigen::MatrixX<FP>;
+    /**
+     * @brief Default parameters can be used to get an Erlang distributed stay time in InfectedSevere compartment
+     *   before dying.
+     * @param[in] dimension Number of rows/columns of the transition matrix.
+     * @param[in] time Average time spent in InfectedSevere before dying in day unit.
+     */
+    static Type get_default(size_t dimension, FP time = 1.)
+    {
+        Eigen::MatrixX<FP> def = Eigen::VectorX<FP>::Constant(dimension, -(FP)dimension / time).asDiagonal();
+        def.diagonal(1).setConstant((FP)dimension / time);
+        return def;
+    }
+    static std::string name()
+    {
+        return "TransitionMatrixInfectedSevereToDead";
+    }
+};
+
+/**
+ * @brief Transition matrix of the phase-type distribution describing the stay time in the InfectedSevere
  *      compartment before recovery.
  */
 template <typename FP>
@@ -461,10 +486,11 @@ using ParametersBase =
                  TransitionMatrixInfectedNoSymptomsToRecovered<FP>, StartingProbabilitiesInfectedSymptoms<FP>,
                  TransitionMatrixInfectedSymptomsToInfectedSevere<FP>, TransitionMatrixInfectedSymptomsToRecovered<FP>,
                  StartingProbabilitiesInfectedSevere<FP>, TransitionMatrixInfectedSevereToInfectedCritical<FP>,
-                 TransitionMatrixInfectedSevereToRecovered<FP>, StartingProbabilitiesInfectedCritical<FP>,
-                 TransitionMatrixInfectedCriticalToDead<FP>, TransitionMatrixInfectedCriticalToRecovered<FP>,
-                 TransmissionProbabilityOnContact<FP>, ContactPatterns<FP>, RelativeTransmissionNoSymptoms<FP>,
-                 RiskOfInfectionFromSymptomatic<FP>, StartDay<FP>, Seasonality<FP>>;
+                 TransitionMatrixInfectedSevereToDead<FP>, TransitionMatrixInfectedSevereToRecovered<FP>,
+                 StartingProbabilitiesInfectedCritical<FP>, TransitionMatrixInfectedCriticalToDead<FP>,
+                 TransitionMatrixInfectedCriticalToRecovered<FP>, TransmissionProbabilityOnContact<FP>,
+                 ContactPatterns<FP>, RelativeTransmissionNoSymptoms<FP>, RiskOfInfectionFromSymptomatic<FP>,
+                 StartDay<FP>, Seasonality<FP>>;
 
 /// @brief Parameters of an GLCT-SECIR model.
 template <typename FP>
@@ -523,6 +549,8 @@ public:
              this->template get<TransitionMatrixInfectedSymptomsToRecovered<FP>>().rows()) ||
             (this->template get<TransitionMatrixInfectedSevereToInfectedCritical<FP>>().cols() !=
              this->template get<TransitionMatrixInfectedSevereToInfectedCritical<FP>>().rows()) ||
+            (this->template get<TransitionMatrixInfectedSevereToDead<FP>>().cols() !=
+             this->template get<TransitionMatrixInfectedSevereToDead<FP>>().rows()) ||
             (this->template get<TransitionMatrixInfectedSevereToRecovered<FP>>().cols() !=
              this->template get<TransitionMatrixInfectedSevereToRecovered<FP>>().rows()) ||
             (this->template get<TransitionMatrixInfectedCriticalToDead<FP>>().cols() !=
@@ -559,6 +587,7 @@ public:
 
         if (this->template get<StartingProbabilitiesInfectedSevere<FP>>().rows() !=
             this->template get<TransitionMatrixInfectedSevereToInfectedCritical<FP>>().rows() +
+                this->template get<TransitionMatrixInfectedSevereToDead<FP>>().rows() +
                 this->template get<TransitionMatrixInfectedSevereToRecovered<FP>>().rows()) {
             log_error("Constraint check: Dimensions of StartingProbabilitiesInfectedSevere and "
                       "TransitionMatrices of InfectedSevere compartment are not matching.");
@@ -651,6 +680,14 @@ public:
             log_warning(
                 "Constraint check: The entries of TransitionMatrixInfectedSevereToInfectedCritical lead to a negative "
                 "flow InfectedSevereToInfectedCritical.");
+            return true;
+        }
+        if (((this->template get<TransitionMatrixInfectedSevereToDead<FP>>() *
+              Eigen::VectorX<FP>::Ones(this->template get<TransitionMatrixInfectedSevereToDead<FP>>().rows()))
+                 .array() > 1e-10)
+                .any()) {
+            log_warning("Constraint check: The entries of TransitionMatrixInfectedSevereToDead lead to a negative "
+                        "flow InfectedSevereToDead.");
             return true;
         }
         if (((this->template get<TransitionMatrixInfectedSevereToRecovered<FP>>() *

@@ -20,6 +20,7 @@
 
 #include "memilio/compartments/parameter_studies.h"
 #include "memilio/config.h"
+#include "memilio/io/directories.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/io/result_io.h"
 #include "memilio/io/mobility_io.h"
@@ -314,18 +315,15 @@ int main()
             ensemble_edges.emplace_back(std::move(std::get<2>(run)));
         }
         // create directory for results.
-        boost::filesystem::path results_dir("test_results");
-        bool created = boost::filesystem::create_directories(results_dir);
-        if (created) {
-            mio::log_info("Directory '{}' was created.", results_dir.string());
-        }
+        const auto result_dir =
+            mio::create_directories_or_exit(mio::example_results_dir("ode_secir_parameter_study_graph")).string();
 
         auto county_ids          = std::vector<int>{1001, 1002, 1003};
-        auto save_results_status = save_results(ensemble_results, ensemble_params, county_ids, results_dir, false);
+        auto save_results_status = save_results(ensemble_results, ensemble_params, county_ids, result_dir, false);
         auto pairs_edges         = std::vector<std::pair<int, int>>{};
         for (auto& edge : params_graph.edges()) {
             pairs_edges.push_back({county_ids[edge.start_node_idx], county_ids[edge.end_node_idx]});
         }
-        auto save_edges_status = save_edges(ensemble_edges, pairs_edges, "test_results", false, true);
+        auto save_edges_status = save_edges(ensemble_edges, pairs_edges, result_dir, false, true);
     }
 }

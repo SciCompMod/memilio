@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "abm/person.h"
+#include "abm/activity_type.h"
 #include "abm/location_type.h"
 #include "abm/mask_type.h"
 #include "abm/parameters.h"
@@ -25,6 +26,7 @@
 #include "abm/location.h"
 #include "abm/person_id.h"
 #include "memilio/utils/random_number_generator.h"
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
@@ -33,12 +35,13 @@ namespace mio
 namespace abm
 {
 
-Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location_id,
-               int location_model_id, AgeGroup age, PersonId person_id)
+Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, ActivityType activity_type,
+               LocationId location_id, int location_model_id, AgeGroup age, PersonId person_id)
     : m_location(location_id)
     , m_location_type(location_type)
+    , m_activity_type(activity_type)
     , m_location_model_id(location_model_id)
-    , m_assigned_locations((uint32_t)LocationType::Count, LocationId::invalid_id())
+    , m_assigned_locations((uint32_t)ActivityType::Count)
     , m_home_isolation_start(TimePoint(-(std::numeric_limits<int>::max() / 2)))
     , m_age(age)
     , m_time_at_location(0)
@@ -49,8 +52,6 @@ Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, Loca
     , m_test_results({TestType::Count}, TestResult())
     , m_assigned_location_model_ids((int)LocationType::Count)
     , m_person_id(person_id)
-    , m_rng_key(rng.get_key())
-    , m_rng_index(static_cast<uint32_t>(person_id.get()))
 {
     m_random_workgroup        = UniformDistribution<ScalarType>::get_instance()(rng);
     m_random_schoolgroup      = UniformDistribution<ScalarType>::get_instance()(rng);
@@ -62,7 +63,6 @@ Person::Person(const Person& other, PersonId person_id)
     : Person(other)
 {
     m_person_id = person_id;
-    m_rng_index = static_cast<uint32_t>(person_id.get());
 }
 
 bool Person::is_infected(TimePoint t) const
@@ -98,10 +98,11 @@ LocationId Person::get_location() const
     return m_location;
 }
 
-void Person::set_location(LocationType type, LocationId id, int model_id)
+void Person::set_location(ActivityType activity_type, LocationType location_type, LocationId id, int model_id)
 {
     m_location          = id;
-    m_location_type     = type;
+    m_location_type     = location_type;
+    m_activity_type     = activity_type;
     m_location_model_id = model_id;
     m_time_at_location  = TimeSpan(0);
 }
@@ -116,20 +117,19 @@ Infection& Person::get_infection()
     return m_infections.back();
 }
 
-void Person::set_assigned_location(LocationType type, LocationId id, int model_id = 0)
+void Person::set_assigned_location(ActivityType activity_type, LocationId id, int model_id = 0)
 {
-    m_assigned_locations[static_cast<uint32_t>(type)]          = id;
-    m_assigned_location_model_ids[static_cast<uint32_t>(type)] = model_id;
+    m_assigned_locations[static_cast<uint32_t>(activity_type)].push_back(id);
+    m_assigned_location_model_ids[static_cast<uint32_t>(activity_type)].push_back(model_id);
 }
 
-LocationId Person::get_assigned_location(LocationType type) const
+std::pair<LocationId, int> Person::get_assigned_location(ActivityType activity_type,
+                                                         PersonalRandomNumberGenerator& rng) const
 {
-    return m_assigned_locations[static_cast<uint32_t>(type)];
-}
-
-int Person::get_assigned_location_model_id(LocationType type) const
-{
-    return m_assigned_location_model_ids[static_cast<uint32_t>(type)];
+    size_t index = UniformIntDistribution<size_t>::get_instance()(
+        rng, size_t(0), m_assigned_locations[static_cast<uint32_t>(activity_type)].size() - 1);
+    return {m_assigned_locations[static_cast<uint32_t>(activity_type)][index],
+            m_assigned_location_model_ids[static_cast<uint32_t>(activity_type)][index]};
 }
 
 bool Person::goes_to_work(TimePoint t, const Parameters& params) const
