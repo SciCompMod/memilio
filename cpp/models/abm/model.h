@@ -61,7 +61,7 @@ public:
     using ActivenessIterator      = std::vector<char>::iterator;
     using ConstActivenessIterator = std::vector<char>::const_iterator;
     using MobilityRuleType        = LocationType (*)(PersonalRandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
-                                              const Parameters&);
+                                                     const Parameters&);
 
     using Compartments = mio::abm::InfectionState;
     /**
@@ -207,7 +207,7 @@ public:
      * @param[in] sex Sex of the person.
      * @return Id of the newly created Person.
      */
-    PersonId add_person(const LocationId id, AgeGroup age, Sex sex = Sex::Male);
+    PersonId add_person(const LocationId id, AgeGroup age, Sex sex = Sex::Unisex);
 
     /**
      * @brief Adds a copy of a given Person to the Model.
@@ -544,12 +544,20 @@ protected:
      * @param[in] dt The length of the time step of the Simulation.
      */
     void interaction(TimePoint t, TimeSpan dt);
+
     /**
      * @brief Person%s change location in the Model according to rules.
      * @param[in] t The current TimePoint.
      * @param[in] dt The length of the time step of the Simulation.
      */
     void perform_mobility(TimePoint t, TimeSpan dt);
+
+    /**
+     * @brief Update the PAIS severity of all Person%s in the Model.
+     * @param[in] t The current TimePoint.
+     * @param[in] dt The length of the time step of the Simulation.
+     */
+    void update_pais_severity(TimePoint t, TimeSpan dt);
 
     /// @brief Shape the cache and store how many Person%s are at any Location. Use from single thread!
     void build_compute_local_population_cache() const;

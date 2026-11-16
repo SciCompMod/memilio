@@ -101,6 +101,12 @@ void Person::add_new_infection(Infection&& inf, PersonalRandomNumberGenerator& r
     m_infections.push_back(std::move(inf));
 }
 
+void Person::update_pais_severity(const Parameters& params, PersonalRandomNumberGenerator& rng, TimePoint t,
+                                  TimeSpan dt)
+{
+    m_pais.update_severity(params, rng, t, dt);
+}
+
 LocationId Person::get_location() const
 {
     return m_location;

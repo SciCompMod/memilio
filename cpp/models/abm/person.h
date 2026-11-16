@@ -60,7 +60,7 @@ public:
      * 
      */
     explicit Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location_id,
-                    int location_model_id, AgeGroup age, Sex sex = Sex::Male,
+                    int location_model_id, AgeGroup age, Sex sex = Sex::Unisex,
                     PersonId person_id = PersonId::invalid_ID());
 
     explicit Person(const Person& other, PersonId person_id);
@@ -141,6 +141,15 @@ public:
      * @param[in] params The Parameters of the Simulation.
      */
     void add_new_infection(Infection&& inf, PersonalRandomNumberGenerator& rng, TimePoint t, const Parameters& params);
+
+    /**
+     * @brief Update the PAIS severity of the Person.
+     * @param[in] params The Parameters of the Simulation.
+     * @param[in] rng PersonalRandomNumberGenerator.
+     * @param[in] t TimePoint of querry. Usually the current time of the Simulation.
+     * @param[in] dt TimeSpan of the time step of the Simulation.
+     */
+    void update_pais_severity(const Parameters& params, PersonalRandomNumberGenerator& rng, TimePoint t, TimeSpan dt);
 
     /**
      * @brief Get the AgeGroup of this Person.
@@ -529,7 +538,7 @@ struct DefaultFactory<abm::Person> {
     static abm::Person create()
     {
         return abm::Person(thread_local_rng(), abm::LocationType::Count, abm::LocationId(), 0, AgeGroup(0),
-                           abm::Sex::Male, abm::PersonId());
+                           abm::Sex::Unisex, abm::PersonId());
     }
 };
 

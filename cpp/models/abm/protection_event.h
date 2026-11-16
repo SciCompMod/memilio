@@ -34,7 +34,7 @@ namespace abm
  * @brief #Vaccination classes
  * can be used as 0-based index
  */
-enum class VaccinationClass : std::uint32_t
+enum class VaccinationCount : std::uint32_t
 {
     Zero,
     OneOrTwo,
@@ -43,19 +43,19 @@ enum class VaccinationClass : std::uint32_t
 };
 
 /**
- * @brief Determine VaccinationClass based on the number of vaccinations.
+ * @brief Determine VaccinationCount based on the number of vaccinations.
  * @param num_vaccinations Number of vaccinations received.
  */
-inline VaccinationClass get_vaccination_class(size_t num_vaccinations)
+inline VaccinationCount get_vaccination_class(size_t num_vaccinations)
 {
     if (num_vaccinations == 0) {
-        return VaccinationClass::Zero;
+        return VaccinationCount::Zero;
     }
     else if (num_vaccinations <= 2) {
-        return VaccinationClass::OneOrTwo;
+        return VaccinationCount::OneOrTwo;
     }
     else {
-        return VaccinationClass::ThreeOrMore;
+        return VaccinationCount::ThreeOrMore;
     }
 }
 

@@ -150,7 +150,8 @@ std::pair<TimePoint, InfectionState> Infection::get_highest_infection_state() co
         return m_infection_course.back();
     }
     else {
-        return m_infection_course[m_infection_course.size() - 2];
+        return m_infection_course[m_infection_course.size() -
+                                  2]; // The second to last state is the highest state before recovery or death.
     }
 }
 

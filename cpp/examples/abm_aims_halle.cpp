@@ -155,68 +155,68 @@ void set_parameters(mio::abm::Parameters& params)
     // Set PAIS parameters
     // PAISProbability is 0.0 by default. Set only values that are different from 0.0 here.
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34,
-                                             mio::abm::Sex::Female, mio::abm::VaccinationClass::Zero}] = 0.108;
+                                             mio::abm::Sex::Female, mio::abm::VaccinationCount::Zero}] = 0.108;
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34, mio::abm::Sex::Male,
-                                             mio::abm::VaccinationClass::Zero}]                        = 0.051;
+                                             mio::abm::VaccinationCount::Zero}]                        = 0.051;
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59,
-                                             mio::abm::Sex::Female, mio::abm::VaccinationClass::Zero}] = 0.136;
+                                             mio::abm::Sex::Female, mio::abm::VaccinationCount::Zero}] = 0.136;
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59, mio::abm::Sex::Male,
-                                             mio::abm::VaccinationClass::Zero}]                        = 0.105;
+                                             mio::abm::VaccinationCount::Zero}]                        = 0.105;
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79,
-                                             mio::abm::Sex::Female, mio::abm::VaccinationClass::Zero}] = 0.188;
+                                             mio::abm::Sex::Female, mio::abm::VaccinationCount::Zero}] = 0.188;
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79, mio::abm::Sex::Male,
-                                             mio::abm::VaccinationClass::Zero}]                        = 0.108;
+                                             mio::abm::VaccinationCount::Zero}]                        = 0.108;
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus, mio::abm::Sex::Female,
-                                             mio::abm::VaccinationClass::Zero}]                        = 0.192;
+                                             mio::abm::VaccinationCount::Zero}]                        = 0.192;
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus, mio::abm::Sex::Male,
-                                             mio::abm::VaccinationClass::Zero}]                        = 0.175;
+                                             mio::abm::VaccinationCount::Zero}]                        = 0.175;
 
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34,
-                                             mio::abm::Sex::Female, mio::abm::VaccinationClass::OneOrTwo}] = 0.167;
+                                             mio::abm::Sex::Female, mio::abm::VaccinationCount::OneOrTwo}] = 0.167;
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34, mio::abm::Sex::Male,
-                                             mio::abm::VaccinationClass::OneOrTwo}]                        = 0.098;
+                                             mio::abm::VaccinationCount::OneOrTwo}]                        = 0.098;
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59,
-                                             mio::abm::Sex::Female, mio::abm::VaccinationClass::OneOrTwo}] = 0.189;
+                                             mio::abm::Sex::Female, mio::abm::VaccinationCount::OneOrTwo}] = 0.189;
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59, mio::abm::Sex::Male,
-                                             mio::abm::VaccinationClass::OneOrTwo}]                        = 0.133;
+                                             mio::abm::VaccinationCount::OneOrTwo}]                        = 0.133;
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79,
-                                             mio::abm::Sex::Female, mio::abm::VaccinationClass::OneOrTwo}] = 0.166;
+                                             mio::abm::Sex::Female, mio::abm::VaccinationCount::OneOrTwo}] = 0.166;
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79, mio::abm::Sex::Male,
-                                             mio::abm::VaccinationClass::OneOrTwo}]                        = 0.109;
+                                             mio::abm::VaccinationCount::OneOrTwo}]                        = 0.109;
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus, mio::abm::Sex::Female,
-                                             mio::abm::VaccinationClass::OneOrTwo}]                        = 0.137;
+                                             mio::abm::VaccinationCount::OneOrTwo}]                        = 0.137;
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus, mio::abm::Sex::Male,
-                                             mio::abm::VaccinationClass::OneOrTwo}]                        = 0.078;
+                                             mio::abm::VaccinationCount::OneOrTwo}]                        = 0.078;
 
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34,
-                                             mio::abm::Sex::Female, mio::abm::VaccinationClass::ThreeOrMore}] = 0.156;
+                                             mio::abm::Sex::Female, mio::abm::VaccinationCount::ThreeOrMore}] = 0.156;
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34, mio::abm::Sex::Male,
-                                             mio::abm::VaccinationClass::ThreeOrMore}]                        = 0.107;
+                                             mio::abm::VaccinationCount::ThreeOrMore}]                        = 0.107;
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59,
-                                             mio::abm::Sex::Female, mio::abm::VaccinationClass::ThreeOrMore}] = 0.193;
+                                             mio::abm::Sex::Female, mio::abm::VaccinationCount::ThreeOrMore}] = 0.193;
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59, mio::abm::Sex::Male,
-                                             mio::abm::VaccinationClass::ThreeOrMore}]                        = 0.122;
+                                             mio::abm::VaccinationCount::ThreeOrMore}]                        = 0.122;
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79,
-                                             mio::abm::Sex::Female, mio::abm::VaccinationClass::ThreeOrMore}] = 0.163;
+                                             mio::abm::Sex::Female, mio::abm::VaccinationCount::ThreeOrMore}] = 0.163;
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79, mio::abm::Sex::Male,
-                                             mio::abm::VaccinationClass::ThreeOrMore}]                        = 0.106;
+                                             mio::abm::VaccinationCount::ThreeOrMore}]                        = 0.106;
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus, mio::abm::Sex::Female,
-                                             mio::abm::VaccinationClass::ThreeOrMore}]                        = 0.154;
+                                             mio::abm::VaccinationCount::ThreeOrMore}]                        = 0.154;
     params.get<mio::abm::PAISProbability>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus, mio::abm::Sex::Male,
-                                             mio::abm::VaccinationClass::ThreeOrMore}]                        = 0.101;
+                                             mio::abm::VaccinationCount::ThreeOrMore}]                        = 0.101;
 
     params.get<mio::abm::PAISProbabilitySeverityFactor>()[{mio::abm::VirusVariant::Wildtype,
-                                                           mio::abm::VaccinationClass::Zero}]          = 0.267;
+                                                           mio::abm::VaccinationCount::Zero}]          = 0.267;
     params.get<mio::abm::PAISProbabilitySeverityFactor>()[{mio::abm::VirusVariant::Wildtype,
-                                                           mio::abm::VaccinationClass::OneOrTwo}]      = 0.247;
+                                                           mio::abm::VaccinationCount::OneOrTwo}]      = 0.247;
     params.get<mio::abm::PAISProbabilitySeverityFactor>()[{mio::abm::VirusVariant::Wildtype,
-                                                           mio::abm::VaccinationClass::ThreeOrMore}]   = 0.217;
+                                                           mio::abm::VaccinationCount::ThreeOrMore}]   = 0.217;
     params.get<mio::abm::PAISProtectionAtSecondInfection>()[{mio::abm::VirusVariant::Wildtype,
-                                                             mio::abm::VaccinationClass::Zero}]        = 0.038;
+                                                             mio::abm::VaccinationCount::Zero}]        = 0.038;
     params.get<mio::abm::PAISProtectionAtSecondInfection>()[{mio::abm::VirusVariant::Wildtype,
-                                                             mio::abm::VaccinationClass::OneOrTwo}]    = 0.116;
+                                                             mio::abm::VaccinationCount::OneOrTwo}]    = 0.116;
     params.get<mio::abm::PAISProtectionAtSecondInfection>()[{mio::abm::VirusVariant::Wildtype,
-                                                             mio::abm::VaccinationClass::ThreeOrMore}] = 0.118;
+                                                             mio::abm::VaccinationCount::ThreeOrMore}] = 0.118;
 
     Eigen::MatrixXd pais_transition_matrix = Eigen::MatrixXd::Zero(
         static_cast<Eigen::Index>(mio::abm::PAISState::Count), static_cast<Eigen::Index>(mio::abm::PAISState::Count));
@@ -873,28 +873,6 @@ struct LogRecovered : mio::LogAlways {
 };
 
 /**
- * @brief Logger to log the number of persons for each age group that had PAIS.
- */
-struct LogActivePAIS : mio::LogAlways {
-    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
-
-    static Type log(const mio::abm::Simulation<>& sim)
-    {
-        Type active_pais{};
-        Eigen::VectorXd age_group_counts =
-            Eigen::VectorXd::Zero(Eigen::Index(sim.get_model().parameters.get_num_groups()));
-        for (auto& person : sim.get_model().get_persons()) {
-            if (person.has_active_pais(sim.get_time())) {
-                age_group_counts[person.get_age().get()] += 1;
-            }
-        }
-        active_pais.first  = sim.get_time();
-        active_pais.second = age_group_counts;
-        return active_pais;
-    }
-};
-
-/**
  * @brief Logger to log the recovered persons for each age group that were detected.
  */
 struct LogRecoveredDetected : mio::LogAlways {
@@ -936,7 +914,7 @@ struct LogVaccinationCounts : mio::LogAlways {
         Type vaccination_counts{};
         Eigen::VectorXd age_group_counts = Eigen::VectorXd::Zero(
             Eigen::Index(sim.get_model().parameters.get_num_groups() *
-                         static_cast<size_t>(mio::abm::VaccinationClass::Count))); // 3 values per age group
+                         static_cast<size_t>(mio::abm::VaccinationCount::Count))); // 3 values per age group
 
         for (auto& person : sim.get_model().get_persons()) {
             auto age_group = person.get_age().get();

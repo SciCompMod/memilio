@@ -191,7 +191,7 @@ struct LogInfectionState : mio::LogAlways {
 /**
  * @brief Looger to log the TimeSeries of the number of Person%s that have an active PAIS.
  */
-struct LogPAIS : mio::LogAlways {
+struct LogActiveAmountOfPAIS : mio::LogAlways {
     using Type = std::pair<mio::abm::TimePoint, ScalarType>;
     /** 
      * @brief Log the TimeSeries of the number of Person%s that have an active PAIS.
@@ -209,6 +209,26 @@ struct LogPAIS : mio::LogAlways {
             }
         }
         return std::make_pair(curr_time, sum);
+    }
+};
+
+/**
+ * @brief Logger to log the TimeSeries of the number of Person%s for each age group that had PAIS.
+ */
+struct LogActivePAIS : mio::LogAlways {
+    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
+
+    static Type log(const mio::abm::Simulation<>& sim)
+    {
+        Eigen::VectorXd age_group_counts =
+            Eigen::VectorXd::Zero(Eigen::Index(sim.get_model().parameters.get_num_groups()));
+        auto curr_time = sim.get_time();
+        for (auto& person : sim.get_model().get_persons()) {
+            if (person.has_active_pais(curr_time)) {
+                age_group_counts[person.get_age().get()] += 1;
+            }
+        }
+        return std::make_pair(curr_time, age_group_counts);
     }
 };
 

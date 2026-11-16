@@ -466,10 +466,10 @@ struct HighViralLoadProtectionFactor {
  * The role of previous infections and the strength of the acute infection are considered separately.
  */
 struct PAISProbability {
-    using Type = CustomIndexArray<ScalarType, VirusVariant, AgeGroup, Sex, VaccinationClass>;
+    using Type = CustomIndexArray<ScalarType, VirusVariant, AgeGroup, Sex, VaccinationCount>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size, Sex::Count, VaccinationClass::Count}, 0.0);
+        return Type({VirusVariant::Count, size, Sex::Count, VaccinationCount::Count}, 0.0);
     }
     static std::string name()
     {
@@ -481,10 +481,10 @@ struct PAISProbability {
  * @brief Multiplicative factor to determine the probability of developing post-acute infection symptoms (PAIS) based on the severity of the acute infection.
  */
 struct PAISProbabilitySeverityFactor {
-    using Type = CustomIndexArray<ScalarType, VirusVariant, VaccinationClass>;
+    using Type = CustomIndexArray<ScalarType, VirusVariant, VaccinationCount>;
     static Type get_default(AgeGroup /*size*/)
     {
-        return Type({VirusVariant::Count, VaccinationClass::Count}, 1.0);
+        return Type({VirusVariant::Count, VaccinationCount::Count}, 1.0);
     }
     static std::string name()
     {
@@ -496,10 +496,10 @@ struct PAISProbabilitySeverityFactor {
  * @brief Multiplicative factor to determine the probability of developing post-acute infection symptoms (PAIS) if the Person has not had PAIS after the first infection.
  */
 struct PAISProtectionAtSecondInfection {
-    using Type = CustomIndexArray<ScalarType, VirusVariant, VaccinationClass>;
+    using Type = CustomIndexArray<ScalarType, VirusVariant, VaccinationCount>;
     static Type get_default(AgeGroup /*size*/)
     {
-        return Type({VirusVariant::Count, VaccinationClass::Count}, 1.0);
+        return Type({VirusVariant::Count, VaccinationCount::Count}, 1.0);
     }
     static std::string name()
     {

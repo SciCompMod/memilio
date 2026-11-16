@@ -86,6 +86,8 @@ void Model::evolve(TimePoint t, TimeSpan dt)
     interaction(t, dt);
     log_info("ABM Model mobility.");
     perform_mobility(t, dt);
+    log_info("ABM Model PAIS severity update.");
+    update_pais_severity(t, dt);
 }
 
 void Model::interaction(TimePoint t, TimeSpan dt)
@@ -218,6 +220,20 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
     }
     if (((t).days() < std::floor((t + dt).days()))) {
         m_trip_list.reset_index();
+    }
+}
+
+void Model::update_pais_severity(TimePoint t, TimeSpan dt)
+{
+    const uint32_t num_persons = static_cast<uint32_t>(m_persons.size());
+    PRAGMA_OMP(parallel for)
+    for (uint32_t person_index = 0; person_index < num_persons; ++person_index) {
+        if (m_activeness_statuses[person_index]) {
+            assert(m_persons[person_index].get_location_model_id() == m_id &&
+                   "Person is not in this model but still active.");
+            m_persons[person_index].update_pais_severity(
+                parameters, PersonalRandomNumberGenerator(m_rng, m_persons[person_index]), t, dt);
+        }
     }
 }
 

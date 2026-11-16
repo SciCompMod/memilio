@@ -29,7 +29,7 @@ namespace abm
 
 void PAIS::update_severity(const Parameters& params, PersonalRandomNumberGenerator& rng, TimePoint t, TimeSpan dt)
 {
-    if (severity.empty() || t > severity.back().first) {
+    if (severity.empty() || t <= severity.back().first) {
         return; // only update if the last update was before t
     }
     std::pair<PAISState, ScalarType> transmission_probs[static_cast<uint32_t>(PAISState::Count)];
