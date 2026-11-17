@@ -36,7 +36,7 @@ namespace abm
 {
 
 Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, ActivityType activity_type,
-               LocationId location_id, int location_model_id, AgeGroup age, PersonId person_id)
+               LocationId location_id, int location_model_id, AgeGroup age, Sex sex, PersonId person_id)
     : m_location(location_id)
     , m_location_type(location_type)
     , m_activity_type(activity_type)
@@ -44,6 +44,7 @@ Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, Acti
     , m_assigned_locations((uint32_t)ActivityType::Count)
     , m_home_isolation_start(TimePoint(-(std::numeric_limits<int>::max() / 2)))
     , m_age(age)
+    , m_sex(sex)
     , m_time_at_location(0)
     , m_mask(Mask(MaskType::None, TimePoint(-(std::numeric_limits<int>::max() / 2))))
     , m_compliance((uint32_t)InterventionType::Count, 1.)
@@ -78,6 +79,14 @@ bool Person::is_infected(TimePoint t) const
     return true;
 }
 
+bool Person::has_active_pais(TimePoint t) const
+{
+    if (m_pais.get_severity(t) == PAISState::Healthy || m_pais.get_severity(t) == PAISState::Count) {
+        return false;
+    }
+    return true;
+}
+
 InfectionState Person::get_infection_state(TimePoint t) const
 {
     if (m_infections.empty()) {
@@ -88,9 +97,17 @@ InfectionState Person::get_infection_state(TimePoint t) const
     }
 }
 
-void Person::add_new_infection(Infection&& inf)
+void Person::add_new_infection(Infection&& inf, PersonalRandomNumberGenerator& rng, TimePoint t,
+                               const Parameters& params)
 {
+    m_pais.init_or_refresh(params, *this, rng, inf, t); // initialize or refresh PAIS status based on the new infection
     m_infections.push_back(std::move(inf));
+}
+
+void Person::update_pais_severity(const Parameters& params, PersonalRandomNumberGenerator& rng, TimePoint t,
+                                  TimeSpan dt)
+{
+    m_pais.update_severity(params, rng, t, dt);
 }
 
 LocationId Person::get_location() const

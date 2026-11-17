@@ -307,7 +307,7 @@ For infections to happen during the simulation, we have to initialize people wit
        if (infection_state != mio::abm::InfectionState::Susceptible) {
            person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, 
                                                        person.get_age(),
-                                                       model.parameters, start_date, infection_state));
+                                                       model.parameters, start_date, infection_state), rng, start_date, model.parameters);
        }
    }
 
