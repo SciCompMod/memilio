@@ -7,7 +7,7 @@ The package as well as links to the sources can be found in the `pycode/memilio-
 Installation
 ------------
 
-See :doc:`python_packages/Installation` for a detailed installation guide.  
+See :ref:`python-package-installation` for a detailed installation guide.
 
 Dependencies
 ------------
@@ -114,5 +114,5 @@ Troubleshooting
 ---------------
 
 - HDF5 errors during installation (mostly on Windows): one of the dependencies of the epidata package requires HDF5 to 
-be installed on the system. If HDF5 is not discovered properly, this `stack overflow thread <https://stackoverflow.com/a/67765023/1151582>`_ 
-may help resolve the issue.
+  be installed on the system. If HDF5 is not discovered properly, this `stack overflow thread <https://stackoverflow.com/a/67765023/1151582>`__
+  may help resolve the issue.

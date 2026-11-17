@@ -35,7 +35,7 @@ enum class Sex : std::uint32_t
 {
     Male,
     Female,
-    Unisex,
+    Diverse,
     Count // last!!
 };
 

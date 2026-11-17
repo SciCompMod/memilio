@@ -34,6 +34,7 @@ If you use MEmilio, please :doc:`cite our work<citation>`.
       :caption: About
 
       getting_started
+      download_and_setup
       citation
       references
       faq

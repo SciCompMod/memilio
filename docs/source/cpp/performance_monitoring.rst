@@ -163,6 +163,7 @@ be known at compile time. This also means that adding a lot of timers will impac
 though a couple hundred timers should only take around an additional second.
 
 .. _Classes and their responsibilities:
+
 Classes and their responsibilities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -181,16 +182,16 @@ specific component, view its API documentation.
   which thread the timer is used in, which could differ from the thread it is created by.
 
 - **Printer**:
-  A pure virtual class defining a print method to evaluate and output timing results via a list of ``TimerRegistration``s.
+  A pure virtual class defining a print method to evaluate and output timing results via a list of ``TimerRegistration``\s.
   Implemented by ``TablePrinter`` and ``ListPrinter``.
 
 - **TimerRegistrar**:
-  Keeps track of timers via a list of ``TimerRegistration``s, and holds a ``Printer`` that can be used to display all
+  Keeps track of timers via a list of ``TimerRegistration``\s, and holds a ``Printer`` that can be used to display all
   registered timers after the end of main. Timers can be registered by passing a ``TimerRegistration`` to its add_timer
   method. Uses a singleton pattern to provide global access to the same object, that is, the only way to obtain a
   ``TimerRegistrar`` object is by using its get_instance method, which returns a reference to a static object. Importantly,
   this class does not manage or own timer objects, and there is intentionally no methods that retrieve or delete
-  ``TimerRegistration``s.
+  ``TimerRegistration``\s.
 
 - **NamedTimer**:
   Inherits from ``BasicTimer``, with the main purpose of managing the lifetime, access, and registration of a timer.

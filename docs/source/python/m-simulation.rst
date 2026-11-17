@@ -5,6 +5,26 @@ MEmilio Simulation is a Python interface to the MEmilio C++ library. Using pytho
 
 The package is contained inside the folder `pycode/memilio-simulation <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-simulation>`_.
 
+Usage
+-----
+
+For understanding the package you can follow the introductions on model usage and creation of the :doc:`C++ library <../cpp/overview>`.
+Additionally, multiple `examples <https://github.com/SciCompMod/memilio/blob/main/pycode/examples/simulation>`__ for the 
+different features are provided. Lastly, this documentation provides tutorials on applications for the MEmilio Python interface,
+coupling it with other libraries, showing the advantages of in language simulation models.
+
+**How to**:
+:doc:`Usage of Python bindings <m-simulation_model_usage>` |
+:doc:`Expanding Python bindings <m-simulation_expanding_bindings>` |
+:doc:`Common patterns <m-simulation_common_patterns>`
+
+.. toctree::
+    :maxdepth: 1
+    :hidden:
+    
+    Model Usage <m-simulation_model_usage>
+    Model Creation <m-simulation_expanding_bindings>
+    Common Patterns <m-simulation_common_patterns>
 
 Installation
 ------------
@@ -16,9 +36,9 @@ tools are required:
 * A **C++20 compiler**
 * **CMake** >= 3.18
 * **Ninja** build tool
-* All :doc:`C++ library dependencies <../getting_started>`
+* All :doc:`C++ library dependencies <../cpp/installation>`
 
-See :doc:`python_packages/Installation` for a detailed installation guide.  
+See :ref:`python-package-installation` for a detailed installation guide.
 
 
 Dependencies
@@ -32,7 +52,7 @@ Required Python packages (installed automatically):
 For a successful build, the development libraries for Python need to be installed, i.e. python3.x-dev. 
 Additionally, as this package builds upon the MEmilio C++ library, 
 all dependencies of the main library need to be met. Read more about
-the C++ dependencies at :doc:`cpp  <../getting_started>`. 
+the C++ dependencies :doc:`here<../cpp/installation>`.
 
 Main directory structure
 ------------------------
@@ -53,7 +73,7 @@ The main directory structure in the ``pycode/memilio-simulation`` directory incl
             - **models/**: Defines submodules for model specific bindings
             - **utils/**: General helper functions
 
-    - **simulation_test/**: Unit tests for framework and models
+- **tests/**: Unit tests for framework and models
 
 - **tools/**: Additional scripts for memilio-simulation
 
@@ -64,27 +84,6 @@ The package ``memilio.simulation`` and its submodules aim to mirror the namespac
 The main module contains general code for modeling infectious diseases, while each submodule contains a specific model.
 The overall package structure reflects the directory layout of the Python files, starting from the `memilio-simulation <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-simulation>`_ folder.
 These Python files may include native Python extensions, while the binded C++ code is imported as binary modules into these.
-
-Usage
------
-
-For understanding the package you can follow the introductions on model usage and creation of the :doc:`C++ library <../cpp/overview>`.
-Additionally, multiple `examples <https://github.com/SciCompMod/memilio/blob/main/pycode/examples/simulation>`_ for the 
-different features are provided. Lastly, this documentation provides tutorials on applications for the MEmilio Python interface,
-coupling it with other libraries, showing the advantages of in language simulation models.
-
-**How to**:
-:doc:`Usage of Python bindings <m-simulation_model_usage>` |
-:doc:`Expanding Python bindings <m-simulation_expanding_bindings>` |
-:doc:`Common patterns <m-simulation_common_patterns>`
-
-.. toctree::
-    :maxdepth: 1
-    :hidden:
-    
-    Model Usage <m-simulation_model_usage>
-    Model Creation <m-simulation_expanding_bindings>
-    Common Patterns <m-simulation_common_patterns>
 
 Stubs
 -----
@@ -97,9 +96,9 @@ and provide them as a separate stubs-only package.
 
 
 For installing stubs you first need to install our package `memilio.simulation` 
-(not in editable mode -e) and the external dependency mypy for your Python interpreter.
-Then run `generate_stubs.py` to generate the stubs-only package and 
-install it as memilio-stubs, e.g. from the package folder
+(not in editable mode -e) and the external dependency **mypy** for your Python interpreter.
+Then run `tools/generate_stubs.py` to generate the stubs-only package and 
+install it as memilio-stubs, e.g. from the package folder run
 
 .. code-block:: console
 

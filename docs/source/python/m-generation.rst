@@ -19,11 +19,13 @@ Installation
 .. code-block:: console
 
     # Model Generator only (no libclang required)
-    pip install -e pycode/memilio-generation
+    python -m pip install -e pycode/memilio-generation
 
     # Model Generator + Bindings Generator (installs libclang)
-    pip install -e "pycode/memilio-generation[bindings]"
+    python -m pip install -e "pycode/memilio-generation[bindings]"
 
 The Model Generator only requires ``jinja2``, ``pyyaml``, and (on Python < 3.11) ``tomli``.
 The Bindings Generator additionally needs ``libclang==18.1.1`` and the
 ``python3.x-dev`` system libraries (see :doc:`m-bindingsgenerator` for details).
+
+For the general installation guide, see :ref:`python-package-installation`.

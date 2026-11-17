@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/activity_type.h"
 #include "abm/person.h"
 #include "abm_helpers.h"
 #include "random_number_test.h"
@@ -79,13 +80,16 @@ TEST_F(TestMasks, maskProtection)
     auto t = mio::abm::TimePoint(0);
     mio::abm::Location infection_location(mio::abm::LocationType::School, 0, num_age_groups);
     // Two susceptible persons, one with a mask, one without
-    auto susc_person1 = mio::abm::Person(this->get_rng(), infection_location.get_type(), infection_location.get_id(),
-                                         infection_location.get_model_id(), age_group_15_to_34);
-    auto susc_person2 = mio::abm::Person(this->get_rng(), infection_location.get_type(), infection_location.get_id(),
-                                         infection_location.get_model_id(), age_group_15_to_34);
+    auto susc_person1 =
+        mio::abm::Person(this->get_rng(), infection_location.get_type(), mio::abm::ActivityType::School,
+                         infection_location.get_id(), infection_location.get_model_id(), age_group_15_to_34);
+    auto susc_person2 =
+        mio::abm::Person(this->get_rng(), infection_location.get_type(), mio::abm::ActivityType::School,
+                         infection_location.get_id(), infection_location.get_model_id(), age_group_15_to_34);
     // Infected person interacting with susceptible persons
-    auto infected1 = make_test_person(this->get_rng(), infection_location, age_group_15_to_34,
-                                      mio::abm::InfectionState::InfectedSymptoms, t, params); // infected 7 days prior
+    auto infected1 =
+        make_test_person(this->get_rng(), infection_location, mio::abm::ActivityType::School, age_group_15_to_34,
+                         mio::abm::InfectionState::InfectedSymptoms, t, params); // infected 7 days prior
 
     // Cache precomputed results for 1-day intervals
     auto dt = mio::abm::days(1);

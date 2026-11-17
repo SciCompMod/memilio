@@ -1,44 +1,58 @@
 name: PyPI
 
-on:  
-  release:  
-    types:  
+on:
+  release:
+    types:
       - published
+  ### Uncomment the "push:" together with the "repository-url:" field of action pypa/gh-action-pypi-publish
+  ### to make a release to TestPyPI. Building this is rather expensive so do not merge this uncommented!
+  #push:
+  ### @Reviewer: MAKE SURE THE LINE ABOVE IS COMMENTED OUT BEFORE MERGE! ###
 
 jobs:
 
   build_wheels:
-    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-2025-vs2026, macos-26]
+    runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v6
+      - name: "Checkout"
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - uses: pypa/cibuildwheel@v3.4.1
+      - name: "Build Wheels"
+        uses: pypa/cibuildwheel@v3.4.1
+        with:
+          package-dir: pycode/memilio-simulation
 
-      - uses: actions/upload-artifact@v7
+      - name: "Upload Artifacts"
+        uses: actions/upload-artifact@v7
         with:
           name: cibw-wheels-${{ matrix.os }}
-          path: ./wheelhouse/*.whl
+          path: wheelhouse/*.whl
 
-  build_sdist: 
+  build_sdist:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v6
+    - name: "Checkout"
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
 
-    - run: pipx run build --sdist
+    - name: "Build Source Distribution"
+      run:  |
+        cd pycode/memilio-simulation
+        pipx run build --sdist
 
-    - uses: actions/upload-artifact@v7
+    - name: "Upload Artifacts"
+      uses: actions/upload-artifact@v7
       with:
         name: cibw-sdist
-        path: dist/*.tar.gz
+        path: pycode/memilio-simulation/dist/*.tar.gz
 
   upload_pypi:
     needs: [build_wheels, build_sdist]
@@ -46,7 +60,7 @@ jobs:
     environment: pypi
     permissions:
       id-token: write
-      
+
     steps:
       - uses: actions/download-artifact@v7
         with:
@@ -58,5 +72,5 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           skip-existing: true
-          # To test uploads to TestPyPI, uncomment the following:
-          # repository-url: https://test.pypi.org/legacy/
+          ### To test uploads to TestPyPI in a PR, uncomment the following, as well as the "push:" line at the top:
+          #repository-url: https://test.pypi.org/legacy/

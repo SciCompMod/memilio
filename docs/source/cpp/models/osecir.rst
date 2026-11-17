@@ -169,8 +169,6 @@ For age-resolved models, you need to set the initial conditions for each age gro
             {i, mio::osecir::InfectionState::Susceptible}, fact * nb_total_t0);
     }
 
-
-.. _Nonpharmaceutical Interventions:
 Nonpharmaceutical Interventions
 -------------------------------
 
@@ -395,4 +393,3 @@ Different examples can be found at:
 
 
 The code documentation for the model can be found at :CPP-API:`mio::osecir` .
-

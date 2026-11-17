@@ -17,7 +17,7 @@ For more details, we refer to:
 Installation
 ------------
 
-See :doc:`python_packages/Installation` for a detailed installation guide.  
+See :ref:`python-package-installation` for a detailed installation guide.
 
 Dependencies
 ------------
@@ -187,7 +187,8 @@ The GNN surrogate models are based on the research presented in:
 
 |Graph_Neural_Network_Surrogates|
 
-The implementation leverages the mechanistic ODE-SECIR model (see :doc:`ODE-SECIR documentation <cpp/models/osecir>`) as the underlying expert model, using Python bindings to the C++ backend for efficient simulation during data generation.
+The implementation leverages the mechanistic ODE-SECIR model (see :doc:`ODE-SECIR documentation <../cpp/models/osecir>`)
+as the underlying expert model, using Python bindings to the C++ backend for efficient simulation during data generation.
 
 Module Structure
 ~~~~~~~~~~~~~~~~
@@ -203,7 +204,9 @@ The GNN module is located in `pycode/memilio-surrogatemodel/memilio/surrogatemod
 Data Generation
 ~~~~~~~~~~~~~~~
 
-The data generation process in ``data_generation.py`` creates graph-structured training data through mechanistic simulations. Use ``generate_data`` to run multiple simulations and persist a pickle with inputs, labels, damping info, and contact matrices:
+The data generation process in ``data_generation.py`` creates graph-structured training data through mechanistic
+simulations. Use ``generate_data`` to run multiple simulations and persist a pickle with inputs, labels, damping info,
+and contact matrices:
 
 .. code-block:: python
 

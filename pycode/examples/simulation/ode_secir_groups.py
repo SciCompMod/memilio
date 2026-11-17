@@ -17,33 +17,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
+
+# This example requires memilio.simulation and memilio.plot to be installed!
+
 import argparse
 import os
-from datetime import date, datetime
+from datetime import date
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 
-from memilio.simulation import AgeGroup, ContactMatrix, Damping, UncertainContactMatrix
-from memilio.simulation.osecir import Index_InfectionState
+from memilio.plot.plotTimeSeries import plot_time_series
+from memilio.simulation import AgeGroup, Damping
 from memilio.simulation.osecir import InfectionState as State
-from memilio.simulation.osecir import (Model, Simulation,
-                                       interpolate_simulation_result, simulate)
+from memilio.simulation.osecir import (Model, interpolate_simulation_result,
+                                       simulate)
 
 
 def run_ode_secir_groups_simulation(show_plot=True):
     """Runs the c++ ODE SECIHURD model using mulitple age groups
     and plots the results
 
-    :param show_plot:  (Default value = True)
+    :param show_plot: Whether to show the figures interactively.
+        (Default value = True)
 
     """
 
-    # Define Comartment names
-    compartments = [
-        'Susceptible', 'Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms',
-        'InfectedSevere', 'InfectedCritical', 'Recovered', 'Dead']
     # Define age Groups
     groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
     # Define population of age groups
@@ -55,11 +54,10 @@ def run_ode_secir_groups_simulation(show_plot=True):
     start_year = 2019
     dt = 0.1
     num_groups = len(groups)
-    num_compartments = len(compartments)
 
     # set contact frequency matrix
     data_dir = os.path.join(os.path.dirname(
-        __file__), "..", "..", "..", "data")
+        __file__), "..", "..", "..", "data", "Germany")
     baseline_contact_matrix0 = os.path.join(
         data_dir, "contacts/baseline_home.txt")
     baseline_contact_matrix1 = os.path.join(
@@ -133,79 +131,38 @@ def run_ode_secir_groups_simulation(show_plot=True):
     # interpolate results
     result = interpolate_simulation_result(result)
 
-    # print(result.get_last_value())
-    num_time_points = result.get_num_time_points()
-    result_array = result.as_ndarray()
-    t = result_array[0, :]
-    group_data = np.transpose(result_array[1:, :])
+    start_date = date(start_year, start_month, start_day)
 
-    # sum over all groups
-    data = np.zeros((num_time_points, num_compartments))
-    for i in range(num_groups):
-        data += group_data[:, i * num_compartments: (i + 1) * num_compartments]
+    # Plot results summed over all age groups, one line per compartment. The
+    # compartment names are taken from the InfectionState enum of the model.
+    ax = plot_time_series(
+        result, labels=State.values(), groups=groups, start_date=start_date,
+        title='ODE SECIR simulation results (entire population)')
+    ax.figure.savefig('osecir_by_compartments.pdf')
 
-    # Plot Results
-    datelist = np.array(
-        pd.date_range(
-            datetime(start_year, start_month, start_day),
-            periods=days, freq='D').strftime('%m-%d').tolist())
-
-    tick_range = (np.arange(int(days / 10) + 1) * 10)
-    tick_range[-1] -= 1
-    fig, ax = plt.subplots()
-    ax.plot(t, data[:, 0], label='#Susceptible')
-    ax.plot(t, data[:, 1], label='#Exposed')
-    ax.plot(t, data[:, 2], label='#InfectedNoSymptoms')
-    ax.plot(t, data[:, 3], label='#InfectedSymptoms')
-    ax.plot(t, data[:, 4], label='#Hospitalzed')
-    ax.plot(t, data[:, 5], label='#InfectedCritical')
-    ax.plot(t, data[:, 6], label='#Recovered')
-    ax.plot(t, data[:, 7], label='#Dead')
-    ax.set_title("ODE SECIR simulation results (entire population)")
-    ax.set_xticks(tick_range)
-    ax.set_xticklabels(datelist[tick_range], rotation=45)
-    ax.legend()
-    fig.tight_layout
-    fig.savefig('osecir_by_compartments.pdf')
-
-    # plot dynamics in each comparment by age group
-    fig, ax = plt.subplots(4, 2, figsize=(12, 15))
-
-    for i, title in zip(range(num_compartments), compartments):
-
-        for j, group in enumerate(groups):
-            ax[int(np.floor(i / 2)), int(i % 2)].plot(t,
-                                                      group_data[:, j*num_compartments+i], label=group)
-
-        ax[int(np.floor(i / 2)), int(i % 2)].set_title(title, fontsize=10)
-        ax[int(np.floor(i / 2)), int(i % 2)].legend()
-
-        ax[int(np.floor(i / 2)), int(i % 2)].set_xticks(tick_range)
-        ax[int(np.floor(i / 2)), int(i % 2)
-           ].set_xticklabels(datelist[tick_range], rotation=45)
-    plt.subplots_adjust(hspace=0.5, bottom=0.1, top=0.9)
+    # One panel per compartment with one line per age group.
+    fig, axes = plt.subplots(5, 2, figsize=(16, 18), layout='constrained')
+    for state, ax in zip(State.values(), axes.flat):
+        plot_time_series(
+            result, labels=State.values(), groups=groups, sum_groups=False,
+            select=state, start_date=start_date, ax=ax, title=state.name)
     fig.suptitle(
         'ODE SECIR simulation results by age group in each compartment')
     fig.savefig('osecir_age_groups_in_compartments.pdf')
 
-    fig, ax = plt.subplots(4, 2, figsize=(12, 15))
-    for i, title in zip(range(num_compartments), compartments):
-        ax[int(np.floor(i / 2)), int(i % 2)].plot(t, data[:, i])
-        ax[int(np.floor(i / 2)), int(i % 2)].set_title(title, fontsize=10)
-
-        ax[int(np.floor(i / 2)), int(i % 2)].set_xticks(tick_range)
-        ax[int(np.floor(i / 2)), int(i % 2)
-           ].set_xticklabels(datelist[tick_range], rotation=45)
-    plt.subplots_adjust(hspace=0.5, bottom=0.1, top=0.9)
+    # One panel per compartment, summed over all age groups.
+    fig, axes = plt.subplots(5, 2, figsize=(16, 18), layout='constrained')
+    for state, ax in zip(State.values(), axes.flat):
+        plot_time_series(
+            result, labels=State.values(), groups=groups, select=state,
+            start_date=start_date, ax=ax, title=state.name)
     fig.suptitle(
         'ODE SECIR simulation results by compartment (entire population)')
     fig.savefig('osecir_all_parts.pdf')
 
     if show_plot:
         plt.show()
-        plt.close()
-
-    # return data
+    plt.close('all')
 
 
 if __name__ == "__main__":

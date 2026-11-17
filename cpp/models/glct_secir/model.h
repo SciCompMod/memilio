@@ -268,15 +268,24 @@ public:
             params.template get<TransitionMatrixInfectedSevereToInfectedCritical<FP>>().transpose() *
             y.segment(LctState::template get_first_index<InfectionState::InfectedSevere>(),
                       dimensionInfectedSevereToInfectedCritical);
+        // Flow from InfectedSevere To Dead.
+        size_t dimensionInfectedSevereToDead = params.template get<TransitionMatrixInfectedSevereToDead<FP>>().rows();
+        dydt.segment(LctState::template get_first_index<InfectionState::InfectedSevere>() +
+                         dimensionInfectedSevereToInfectedCritical,
+                     dimensionInfectedSevereToDead) +=
+            params.template get<TransitionMatrixInfectedSevereToDead<FP>>().transpose() *
+            y.segment(LctState::template get_first_index<InfectionState::InfectedSevere>() +
+                          dimensionInfectedSevereToInfectedCritical,
+                      dimensionInfectedSevereToDead);
         // Flow from InfectedSevere To Recovered.
         size_t dimensionInfectedSevereToRecovered =
             params.template get<TransitionMatrixInfectedSevereToRecovered<FP>>().rows();
         dydt.segment(LctState::template get_first_index<InfectionState::InfectedSevere>() +
-                         dimensionInfectedSevereToInfectedCritical,
+                         dimensionInfectedSevereToInfectedCritical + dimensionInfectedSevereToDead,
                      dimensionInfectedSevereToRecovered) +=
             params.template get<TransitionMatrixInfectedSevereToRecovered<FP>>().transpose() *
             y.segment(LctState::template get_first_index<InfectionState::InfectedSevere>() +
-                          dimensionInfectedSevereToInfectedCritical,
+                          dimensionInfectedSevereToInfectedCritical + dimensionInfectedSevereToDead,
                       dimensionInfectedSevereToRecovered);
         // Add flow directly to Recovered compartment.
         dydt[LctState::template get_first_index<InfectionState::Recovered>()] +=
@@ -284,7 +293,7 @@ public:
               Eigen::VectorX<FP>::Ones(dimensionInfectedSevereToRecovered))
                  .transpose() *
             y.segment(LctState::template get_first_index<InfectionState::InfectedSevere>() +
-                          dimensionInfectedSevereToInfectedCritical,
+                          dimensionInfectedSevereToInfectedCritical + dimensionInfectedSevereToDead,
                       dimensionInfectedSevereToRecovered);
 
         // --- InfectedCritical. ---
@@ -325,7 +334,14 @@ public:
                       dimensionInfectedCriticalToRecovered);
 
         // --- Dead. ---
-        dydt[LctState::template get_first_index<InfectionState::Dead>()] =
+        dydt[LctState::template get_first_index<InfectionState::Dead>()] +=
+            -(params.template get<TransitionMatrixInfectedSevereToDead<FP>>() *
+              Eigen::VectorX<FP>::Ones(dimensionInfectedSevereToDead))
+                 .transpose() *
+            y.segment(LctState::template get_first_index<InfectionState::InfectedSevere>() +
+                          dimensionInfectedSevereToInfectedCritical,
+                      dimensionInfectedSevereToDead);
+        dydt[LctState::template get_first_index<InfectionState::Dead>()] +=
             -(params.template get<TransitionMatrixInfectedCriticalToDead<FP>>() *
               Eigen::VectorX<FP>::Ones(dimensionInfectedCriticalToDead))
                  .transpose() *
