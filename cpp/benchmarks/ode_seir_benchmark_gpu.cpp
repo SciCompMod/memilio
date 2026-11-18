@@ -22,6 +22,7 @@
 #include "ode_seir_benchmark_stage_aligned.h"
 #include "ode_seir_runtime_explicit.h"
 #include "ode_seir_roofline_cuda.h"
+#include "ode_seir_world_application.h"
 
 #include <cuda_runtime_api.h>
 
@@ -586,6 +587,30 @@ void apply_cuda_shapes(benchmark::internal::Benchmark* benchmark)
     benchmark->Args({stage_aligned_strong_scaling_patches, stage_aligned_strong_scaling_patches - 1, 6});
 }
 
+int run_world()
+{
+    try {
+        const auto inputs = mio::world_application::load_inputs();
+        const auto time   = mio::world_application::schedule();
+        // One simulated day per graph launch, such that the residents can be stored after each day.
+        RuntimeGpuRunner runner(inputs, scenario::Schedule{1, time.half_day_steps});
+        runner.reset(inputs.initial);
+        mio::world_application::simulate(
+            inputs, "explicit", time,
+            [&runner] {
+                runner.run();
+            },
+            [&runner] {
+                return runner.download();
+            });
+        return 0;
+    }
+    catch (const std::exception& error) {
+        std::cerr << "World application failed: " << error.what() << '\n';
+        return 1;
+    }
+}
+
 } // namespace mio::benchmark_mio
 
 BENCHMARK(mio::benchmark_mio::benchmark_stage_aligned_cuda)
@@ -596,6 +621,9 @@ BENCHMARK(mio::benchmark_mio::benchmark_stage_aligned_cuda)
 
 int main(int argc, char** argv)
 {
+    if (mio::world_application::enabled()) {
+        return mio::benchmark_mio::run_world();
+    }
     const bool runtime = mio::runtime_scenario::enabled();
     if (runtime)
         mio::runtime_scenario::register_shapes("runtime/explicit/cuda", mio::benchmark_mio::runtime_cuda);

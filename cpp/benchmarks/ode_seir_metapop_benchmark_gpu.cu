@@ -22,6 +22,7 @@
 #include "ode_seir_metapop_benchmark.h"
 #include "ode_seir_runtime_scenario.h"
 #include "ode_seir_roofline_cuda.h"
+#include "ode_seir_world_application.h"
 
 #include <cublas_v2.h>
 #include <cuda_runtime.h>
@@ -544,6 +545,52 @@ void validate_runtime_gpu()
     }
     std::cout << "Runtime implicit daily CUDA graph N_G=" << G << ": passed\n";
 }
+template <int G>
+void run_world(const scenario::Inputs& inputs)
+{
+    const auto time = mio::world_application::schedule();
+    ImplicitProblem problem(inputs.p, G);
+    scenario::configure_implicit(problem, inputs);
+    GpuRunner<G> runner(problem, time.dt(), 2 * time.half_day_steps);
+    runner.reset(problem.initial_state);
+    mio::world_application::simulate(
+        inputs, "implicit", time,
+        [&runner] {
+            runner.run(1);
+        },
+        [&inputs, &runner] {
+            return scenario::implicit_residents(inputs, runner.download());
+        });
+}
+
+int run_world()
+{
+    try {
+        const auto inputs = mio::world_application::load_inputs();
+        switch (inputs.g) {
+        case 1:
+            run_world<1>(inputs);
+            break;
+        case 3:
+            run_world<3>(inputs);
+            break;
+        case 6:
+            run_world<6>(inputs);
+            break;
+        case 8:
+            run_world<8>(inputs);
+            break;
+        default:
+            throw std::runtime_error("Unsupported number of age groups.");
+        }
+        return 0;
+    }
+    catch (const std::exception& error) {
+        std::cerr << "World application failed: " << error.what() << '\n';
+        return 1;
+    }
+}
+
 } // namespace mio::benchmark_mio
 
 BENCHMARK(mio::benchmark_mio::benchmark_serial)
@@ -560,6 +607,9 @@ BENCHMARK(mio::benchmark_mio::benchmark_cuda)
 
 int main(int argc, char** argv)
 {
+    if (mio::world_application::enabled()) {
+        return mio::benchmark_mio::run_world();
+    }
     const bool runtime = mio::runtime_scenario::enabled();
     if (runtime)
         mio::runtime_scenario::register_shapes("runtime/implicit/cuda", mio::benchmark_mio::runtime_cuda);
