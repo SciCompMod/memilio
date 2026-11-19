@@ -35,14 +35,18 @@ All values are daily and unsmoothed; the fit compares 7-day sums of the flows.
 A JSON file with the populations needed to scale the model output is written
 next to the CSV.
 
-Input files are the outputs of the memilio-epidata console scripts, run with
--o data/pydata (they write into its Germany/ subfolder):
-    getcasedata --rep-date            -> cases_all_county_repdate.json
+Input files are the outputs of the memilio-epidata console scripts. With their
+default output folder (data/ of the repository) they write into data/Germany/pydata,
+the default --data-dir:
     getcasedata                       -> cases_all_county.json
+    getcasedata --rep-date -r         -> cases_all_county_repdate.json (-r reuses the
+                                         download of the previous call)
     getdividata                       -> county_divi.json
-    gethospitalizationdata            -> hospit_state.json
+    gethospitalizationdata            -> hospit_state_all_dates.json
     getpopuldata                      -> county_current_population.json
-The *_ma1 variants of the case files are accepted as well.
+With -o <dir> they write into <dir>/Germany/pydata instead. The *_ma1 variants of
+the case files are accepted as well. The case files are cumulative and have no row
+on days without a new case in the county, so missing days take the last value.
 """
 import argparse
 import csv
@@ -85,9 +89,19 @@ def at(values, date, source):
     return values[date]
 
 
+def cumulative_at(values, date, source):
+    """Value of a cumulative series on date, carrying the last entry forward over missing days."""
+    if not min(values) <= date <= max(values):
+        raise SystemExit(f'{source} covers {min(values)} to {max(values)}, not {date}. '
+                         'Download more recent data.')
+    while date not in values:
+        date -= datetime.timedelta(days=1)
+    return values[date]
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split('\n')[0])
-    parser.add_argument('--data-dir', default='data/pydata/Germany',
+    parser.add_argument('--data-dir', default='data/Germany/pydata',
                         help='Directory holding the memilio-epidata output.')
     parser.add_argument('--start-date', default='2022-07-01')
     parser.add_argument('--num-days', type=int, default=90)
@@ -105,20 +119,21 @@ def main():
 
     name, records = load(args.data_dir, 'cases_all_county_repdate.json', 'cases_all_county_repdate_ma1.json')
     confirmed = series(records, 'Date', 'Confirmed', 'ID_County', HALLE_COUNTY_ID, name)
-    reported = [at(confirmed, d, name) - at(confirmed, d - datetime.timedelta(days=1), name) for d in dates]
+    reported = [cumulative_at(confirmed, d, name) - cumulative_at(confirmed, d - datetime.timedelta(days=1), name)
+                for d in dates]
 
     name, records = load(args.data_dir, 'cases_all_county.json', 'cases_all_county_ma1.json')
     deaths_by_refdate = series(records, 'Date', 'Deaths', 'ID_County', HALLE_COUNTY_ID, name)
     delay = datetime.timedelta(days=DEATH_DELAY_DAYS)
-    deaths_at_start = at(deaths_by_refdate, start - delay - datetime.timedelta(days=1), name)
-    deaths = [at(deaths_by_refdate, d - delay, name) - deaths_at_start for d in dates]
+    deaths_at_start = cumulative_at(deaths_by_refdate, start - delay - datetime.timedelta(days=1), name)
+    deaths = [cumulative_at(deaths_by_refdate, d - delay, name) - deaths_at_start for d in dates]
 
     name, records = load(args.data_dir, 'county_divi.json')
     icu_by_date = series(records, 'Date', 'ICU', 'ID_County', HALLE_COUNTY_ID, name)
     icu = [at(icu_by_date, d, name) for d in dates]
 
-    name, records = load(args.data_dir, 'hospit_state.json')
-    state_admissions = series(records, 'Date', 'Hospitalized', 'ID_State', SACHSEN_ANHALT_STATE_ID, name)
+    name, records = load(args.data_dir, 'hospit_state_all_dates.json')
+    state_admissions = series(records, 'Date', 'hospitalized', 'ID_State', SACHSEN_ANHALT_STATE_ID, name)
     share = halle_population / state_population
     admissions = [share * at(state_admissions, d, name) for d in dates]
 
