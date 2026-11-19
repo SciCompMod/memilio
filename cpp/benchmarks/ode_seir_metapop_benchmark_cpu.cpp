@@ -21,6 +21,7 @@
 #include "benchmark/benchmark.h"
 #include "ode_seir_metapop_benchmark.h"
 #include "ode_seir_runtime_scenario.h"
+#include "ode_seir_world_application.h"
 
 #include <algorithm>
 #include <array>
@@ -393,6 +394,63 @@ void validate_runtime()
     std::cout << "Runtime implicit full-state reference N_G=" << G << ": passed\n";
 }
 
+template <int G>
+void run_world(const scenario::Inputs& inputs, int threads)
+{
+    const auto time = mio::world_application::schedule();
+    const int steps = 2 * time.half_day_steps;
+    ImplicitProblem problem(inputs.p, G);
+    scenario::configure_implicit(problem, inputs);
+    mio::world_application::simulate(
+        inputs, mio::world_application::cpu_model("implicit", threads), time,
+        [&problem, &time, steps, threads] {
+#ifdef _OPENMP
+            if (threads > 0) {
+                advance_openmp<G>(problem, threads, time.dt(), steps);
+                return;
+            }
+#endif
+            advance_cpu<G>(problem, time.dt(), steps);
+        },
+        [&inputs, &problem] {
+            return scenario::implicit_residents(inputs, problem.state);
+        });
+}
+
+int run_world()
+{
+    try {
+        const auto inputs = mio::world_application::load_inputs();
+        const int threads = mio::world_application::threads();
+#ifndef _OPENMP
+        if (threads > 0) {
+            throw std::invalid_argument("WORLD_THREADS requires OpenMP support.");
+        }
+#endif
+        switch (inputs.g) {
+        case 1:
+            run_world<1>(inputs, threads);
+            break;
+        case 3:
+            run_world<3>(inputs, threads);
+            break;
+        case 6:
+            run_world<6>(inputs, threads);
+            break;
+        case 8:
+            run_world<8>(inputs, threads);
+            break;
+        default:
+            throw std::runtime_error("Unsupported number of age groups.");
+        }
+        return 0;
+    }
+    catch (const std::exception& error) {
+        std::cerr << "World application failed: " << error.what() << '\n';
+        return 1;
+    }
+}
+
 } // namespace mio::benchmark_mio
 
 BENCHMARK(mio::benchmark_mio::benchmark_serial)
@@ -414,6 +472,9 @@ int main(int argc, char** argv)
 #ifdef _OPENMP
     omp_set_dynamic(0);
 #endif
+    if (mio::world_application::enabled()) {
+        return mio::benchmark_mio::run_world();
+    }
     const bool runtime    = mio::runtime_scenario::enabled();
     bool needs_validation = true;
     for (int i = 1; i < argc; ++i) {

@@ -54,6 +54,19 @@ inline runtime_scenario::Schedule schedule()
             runtime_scenario::positive_environment("RUNTIME_HALF_DAY_STEPS", 32, 1024)};
 }
 
+// OpenMP threads of the CPU programs given by WORLD_THREADS. Without WORLD_THREADS,
+// the CPU programs use their serial implementations.
+inline int threads()
+{
+    const char* value = std::getenv("WORLD_THREADS");
+    return value != nullptr && *value != '\0' ? runtime_scenario::positive_environment("WORLD_THREADS", 1, 4096) : 0;
+}
+
+inline std::string cpu_model(const std::string& model, int threads)
+{
+    return model + (threads > 0 ? "_openmp" + std::to_string(threads) : "_serial");
+}
+
 inline std::string output_directory()
 {
     const char* directory = std::getenv("WORLD_OUTPUT_DIR");

@@ -21,6 +21,7 @@
 #include "benchmark/benchmark.h"
 #include "ode_seir_benchmark_stage_aligned.h"
 #include "ode_seir_runtime_explicit.h"
+#include "ode_seir_world_application.h"
 
 #include <algorithm>
 #include <array>
@@ -336,6 +337,52 @@ void runtime_phase_openmp(benchmark::State& state)
     }
 }
 
+template <int G>
+void run_world(const scenario::Inputs& inputs, int threads)
+{
+    const auto time = mio::world_application::schedule();
+    // One simulated day per call, such that the residents can be stored after each day.
+    const scenario::Schedule day{1, time.half_day_steps};
+    scenario::ExplicitProblem problem(inputs, threads);
+    mio::world_application::simulate(
+        inputs, mio::world_application::cpu_model("explicit", threads), time,
+        [&problem, day, threads] {
+            scenario::advance_explicit<G>(problem, day, threads);
+        },
+        [&problem] {
+            return problem.core.totals;
+        });
+}
+
+int run_world()
+{
+    try {
+        const auto inputs = mio::world_application::load_inputs();
+        const int threads = mio::world_application::threads();
+        switch (inputs.g) {
+        case 1:
+            run_world<1>(inputs, threads);
+            break;
+        case 3:
+            run_world<3>(inputs, threads);
+            break;
+        case 6:
+            run_world<6>(inputs, threads);
+            break;
+        case 8:
+            run_world<8>(inputs, threads);
+            break;
+        default:
+            throw std::runtime_error("Unsupported number of age groups.");
+        }
+        return 0;
+    }
+    catch (const std::exception& error) {
+        std::cerr << "World application failed: " << error.what() << '\n';
+        return 1;
+    }
+}
+
 } // namespace mio::benchmark_mio
 
 BENCHMARK(mio::benchmark_mio::benchmark_stage_aligned_serial)
@@ -357,6 +404,9 @@ int main(int argc, char** argv)
 #ifdef _OPENMP
     omp_set_dynamic(0);
 #endif
+    if (mio::world_application::enabled()) {
+        return mio::benchmark_mio::run_world();
+    }
 #ifdef LIKWID_PERFMON
     LIKWID_MARKER_INIT;
     LIKWID_MARKER_THREADINIT;
