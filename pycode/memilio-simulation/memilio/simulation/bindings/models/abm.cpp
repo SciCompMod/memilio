@@ -246,7 +246,8 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def("advance",
              static_cast<void (mio::abm::Simulation<>::*)(mio::abm::TimePoint)>(&mio::abm::Simulation<>::advance),
              py::arg("tmax"))
-        .def_property_readonly("model", py::overload_cast<>(&mio::abm::Simulation<>::get_model));
+        .def_property_readonly("model", py::overload_cast<>(&mio::abm::Simulation<>::get_model))
+        .def_property_readonly("time", &mio::abm::Simulation<>::get_time);
 
     m.attr("__version__") = "dev";
 }
