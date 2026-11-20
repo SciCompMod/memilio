@@ -31,7 +31,7 @@ build-backend = "setuptools.build_meta"
 name = "memilio-stubs"
 version = "0.1"
 description = "Stubs for the memilio.simulation package."
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = []
 
 [tool.setuptools.packages.find]
