@@ -24,6 +24,11 @@
 #include "abm/location_type.h"
 #include "abm/parameters.h"
 
+extern "C" {
+#include "TwinChainDemonstrator/julia_lib/include/julia_init.h"
+}
+#include "TwinChainDemonstrator/julia/JuliaTestPkg.h"
+
 namespace mio
 {
 namespace abm
@@ -175,6 +180,25 @@ ActivityType get_buried(PersonalRandomNumberGenerator& /*rng*/, const Person& pe
         return ActivityType::Cemetery;
     }
     return current_loc;
+}
+
+ActivityType return_from_hospital(PersonalRandomNumberGenerator& /*rng*/, const Person& person, TimePoint t,
+                                  TimeSpan /*dt*/, const Parameters& /*params*/)
+{
+
+#ifdef MEMILIO_USE_JULIA_LIB
+    if (!(person.get_location_type() == LocationType::Hospital || person.get_location_type() == LocationType::ICU)) {
+        return person.get_activity_type();
+    }
+    if (t.hour_of_day() >= 18) {
+        std::cout << "struct_test = " << struct_test({int(person.get_id().get()), 2.0}) << "\n";
+        return ActivityType::Home;
+    }
+    else {
+        return person.get_activity_type();
+    }
+#endif
+    return person.get_activity_type();
 }
 
 } // namespace abm

@@ -88,14 +88,6 @@ PersonId Model::add_person(Person&& person)
 void Model::evolve(TimePoint t, TimeSpan dt)
 {
 
-#ifdef MEMILIO_USE_JULIA_LIB
-    init_julia(0, nullptr);
-    std::cout << "Test\n";
-    printint(39);
-    std::cout << "mean = " << mean_of_two(2, 7) << "\n";
-    shutdown_julia(0);
-#endif
-
     begin_step(t, dt);
     log_info("ABM Model interaction.");
     interaction(t, dt);
@@ -128,7 +120,12 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
             auto try_mobility_rule = [&](auto rule) -> bool {
                 // run mobility rule and check if change of location can actually happen
                 auto target_type = rule(personal_rng, person, t, dt, parameters);
-                auto target      = person.get_assigned_location(target_type, personal_rng);
+#ifdef MEMILIO_USE_JULIA_LIB
+                if (target_type == person.get_activity_type() && person.get_location_type() == LocationType::Hospital) {
+                    return true; // person is in Hospital and stays there
+                }
+#endif
+                auto target = person.get_assigned_location(target_type, personal_rng);
                 if (target.second == m_id) {
                     const Location& target_location   = get_location(target.first);
                     const LocationId current_location = person.get_location();
@@ -171,12 +168,13 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
             // run mobility rules one after the other if the corresponding location type exists
             // shortcutting of bool operators ensures the rules stop after the first rule is applied
             if (m_use_mobility_rules) {
-                (has_locations({LocationType::Cemetery}) && try_mobility_rule(&get_buried)) ||
+                (has_locations({LocationType::Hospital}) && try_mobility_rule(&return_from_hospital)) ||
+                    (has_locations({LocationType::Cemetery}) && try_mobility_rule(&get_buried)) ||
                     (has_locations({LocationType::Home}) && try_mobility_rule(&return_home_when_recovered)) ||
                     (has_locations({LocationType::Hospital}) && try_mobility_rule(&go_to_hospital)) ||
                     (has_locations({LocationType::ICU}) && try_mobility_rule(&go_to_icu)) ||
                     (has_locations({LocationType::School, LocationType::Home}) && try_mobility_rule(&go_to_school)) ||
-                    (has_locations({LocationType::Work, LocationType::Home}) && try_mobility_rule(&go_to_work)) ||
+                    (has_locations({LocationType::Home}) && try_mobility_rule(&go_to_work)) ||
                     (has_locations({LocationType::BasicsShop, LocationType::Home}) && try_mobility_rule(&go_to_shop)) ||
                     (has_locations({LocationType::Recreation, LocationType::Home}) &&
                      try_mobility_rule(&go_to_recreation)) ||

@@ -77,6 +77,12 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
         return cell < location.get_cells().size();
     }));
 
+#ifdef MEMILIO_USE_JULIA_LIB
+    if (person.get_location_type() == LocationType::Hospital) {
+        return; //Interaction is handled in julia function
+    }
+#endif
+
     if (person.get_infection_state(t) == InfectionState::Susceptible) {
         auto& local_parameters = location.get_infection_parameters();
         // TODO: we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells

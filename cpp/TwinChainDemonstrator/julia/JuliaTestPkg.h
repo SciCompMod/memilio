@@ -5,8 +5,15 @@
 extern "C" {
 #endif
 
+struct MyStruct {
+    int a;
+    double b;
+};
+
 void printint(int n);
 float mean_of_two(int x, int y);
+
+int struct_test(MyStruct s);
 
 #ifdef __cplusplus
 }

@@ -31,21 +31,37 @@ extern "C" {
 int main()
 {
     auto model = mio::abm::Model(1);
-    auto home = model.add_location(mio::abm::LocationType::Home);
-    auto pid = model.add_person(home, mio::AgeGroup(0), mio::abm::ActivityType::Home);
-    auto& person = model.get_person(pid);
-    person.set_assigned_location(mio::abm::ActivityType::Home, home, model.get_id());
+    // Set severe to crittical to zero so no one goes to ICU.
+    model.parameters.get<mio::abm::CriticalPerInfectedSevere>() = 0.0;
+    // let all agents go to work and nobody goes to school
+    model.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({mio::AgeGroup(0)}, true);
+    model.parameters.get<mio::abm::AgeGroupGotoSchool>().set_multiple({mio::AgeGroup(0)}, false);
+    auto home1    = model.add_location(mio::abm::LocationType::Home);
+    auto home2    = model.add_location(mio::abm::LocationType::Home);
+    auto hospital = model.add_location(mio::abm::LocationType::Hospital);
+    auto office   = model.add_location(mio::abm::LocationType::Office);
+    // Add 10 persons and assign them to homes
+    for (int i = 0; i < 10; ++i) {
+        // Assign have of the persons to home1 and the other half to home2
+        auto pid     = model.add_person(i < 5 ? home1 : home2, mio::AgeGroup(0), mio::abm::ActivityType::Home);
+        auto& person = model.get_person(pid);
+        person.set_assigned_location(mio::abm::ActivityType::Home, i < 5 ? home1 : home2, model.get_id());
+        // Assign all persons the hospital as their hospital location
+        person.set_assigned_location(mio::abm::ActivityType::Hospital, hospital, model.get_id());
+        // Assign every second person to the office as work place and the others to the hospital as work place
+        person.set_assigned_location(mio::abm::ActivityType::Work, i % 2 == 0 ? office : hospital, model.get_id());
+    }
     auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(model));
     mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
         Eigen::Index(mio::abm::InfectionState::Count)};
-    sim.advance(mio::abm::TimePoint(1), historyTimeSeries);
+#ifdef MEMILIO_USE_JULIA_LIB
+    init_julia(0, nullptr); // once, before the simulation
+#endif
 
-    // init_julia(0, nullptr);
+    sim.advance(mio::abm::TimePoint(0) + mio::abm::days(5), historyTimeSeries);
+#ifdef MEMILIO_USE_JULIA_LIB
+    shutdown_julia(0); // once, after the simulation
+#endif
 
-    // std::cout << "Test\n";
-    // printint(39);
-    // std::cout << "mean = " << mean_of_two(2, 7) << "\n";
-
-    // shutdown_julia(0);
     return 0;
 }

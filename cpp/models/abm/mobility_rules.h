@@ -102,6 +102,12 @@ ActivityType return_home_when_recovered(PersonalRandomNumberGenerator& rng, cons
  */
 ActivityType get_buried(PersonalRandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
                         const Parameters& params);
+
+/**
+ * @brief Person%s return from Hospital if they need to, independent of why they were there.
+ */
+ActivityType return_from_hospital(PersonalRandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
+                        const Parameters& params);
 /**@}*/
 
 } // namespace abm
