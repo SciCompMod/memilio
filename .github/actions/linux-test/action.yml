@@ -29,7 +29,7 @@ runs:
         sudo apt-get -qq update
         sudo apt-get -qq -y install wget gnupg lcov
         if [[ "${{ inputs.optional-deps }}" == "ON" ]]; then
-          sudo apt-get -qq -y install libhdf5-10*
+          sudo apt-get -qq -y install libhdf5-dev
         fi
         sudo apt-get -qq update
     - name: Download built test directory
