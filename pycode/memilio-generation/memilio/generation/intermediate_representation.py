@@ -22,7 +22,7 @@
 Dataclass to represent the needed information of a model. Interface between the scanner and generator.
 """
 from dataclasses import dataclass, field
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
 from typing_extensions import Self
 from memilio.generation import Generator
@@ -78,7 +78,7 @@ class IntermediateRepresentation:
             raise IndexError("model_base is empty. No base classes found.")
 
     def check_complete_data(self: Self, optional: dict
-                            [str, Union[str, bool]]) -> None:
+                            [str, str | bool]) -> None:
         """Check for missing data in the IntermediateRepresentation.
         Called by the Scanner as last step of the data extraction.
 

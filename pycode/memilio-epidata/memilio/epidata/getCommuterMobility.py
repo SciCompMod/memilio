@@ -638,10 +638,6 @@ def main():
 
     arg_dict_commuter = {**arg_dict, "setup_dict": setup_dict}
 
-    get_neighbors_mobility(
-        1001, abs_tol=0, rel_tol=0, tol_comb='or',
-        out_folder=dd.defaultDict['out_folder'])
-
     get_commuter_data(**arg_dict_commuter)
 
 

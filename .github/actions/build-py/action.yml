@@ -23,7 +23,7 @@ runs:
       run: |
         cd pycode/memilio-${{ inputs.package }}/
         # install dependencies and build wheels with specified python versions
-        for python_cmd in /opt/python/cp39-cp39/bin/python /opt/python/cp313-cp313/bin/python
+        for python_cmd in /opt/python/cp310-cp310/bin/python /opt/python/cp313-cp313/bin/python
         do
           $python_cmd -m pip install --upgrade pip setuptools wheel
           $python_cmd -m pip install scikit-build scikit-build-core

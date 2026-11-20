@@ -36,7 +36,7 @@ Before you can install MEmilio, you need to install some common development tool
 
 *   **Python:** Required for the Python packages.
 
-    MEmilio is tested daily with `Python <https://www.python.org/>`__ 3.9 and 3.13.
+    MEmilio is tested daily with `Python <https://www.python.org/>`__ 3.10 and 3.13.
     While other versions may also work, we recommend using the latest release of either of these. 
     
     .. dropdown:: :fa:`gears` Python installation help

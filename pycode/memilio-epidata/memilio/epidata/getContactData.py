@@ -33,7 +33,6 @@ written.
 import io
 import os
 import zipfile
-from typing import Optional
 from collections.abc import Iterable
 
 import numpy as np
@@ -112,7 +111,7 @@ def _download_contact_workbooks():
 
 
 def _load_workbooks_bytes(
-        contact_path: Optional[str]):
+        contact_path: str | None):
     """
     Return one explicit workbook or, by default, all downloaded workbooks.
 
@@ -129,7 +128,7 @@ def _load_workbooks_bytes(
 
 
 def list_available_contact_countries(
-        contact_path: Optional[str] = None):
+        contact_path: str | None = None):
     """
     List all country names available in the contact matrix workbooks.
 
@@ -220,9 +219,9 @@ def _extract_contact_matrix(df: pd.DataFrame, country: str):
 
 def load_contact_matrix(
         country: str,
-        contact_path: Optional[str] = None,
+        contact_path: str | None = None,
         reduce_to_rki_groups: bool = True,
-        population: Optional[Iterable[float]] = None):
+        population: Iterable[float] | None = None):
     """
     Load the all-locations contact matrix for the given country. If
     ``contact_path`` is not provided, the function downloads the

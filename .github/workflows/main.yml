@@ -339,13 +339,14 @@ jobs:
     if: github.event.pull_request.draft == false
     strategy:
       matrix: 
-        version: ["3.9", "3.13"]
+        version: ["3.10", "3.13"]
     needs: build-py-generation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/test-py
         with:
+          version: ${{ matrix.version }} # otherwise all jobs use the default version
           package: generation
 
   test-py-simulation:
@@ -353,12 +354,13 @@ jobs:
     needs: build-py-simulation
     strategy:
       matrix: 
-        version: ["3.9", "3.13"]
+        version: ["3.10", "3.13"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/test-py
         with:
+          version: ${{ matrix.version }} # otherwise all jobs use the default version
           package: simulation
 
   test-py-surrogatemodel:
@@ -366,7 +368,7 @@ jobs:
     needs: [build-py-surrogatemodel, build-py-simulation]
     strategy:
       matrix: 
-        version: ["3.9", "3.13"]
+        version: ["3.10", "3.13"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
