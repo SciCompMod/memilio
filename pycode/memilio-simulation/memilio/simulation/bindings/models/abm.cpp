@@ -84,7 +84,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("Antigen", mio::abm::TestType::Antigen)
         .value("PCR", mio::abm::TestType::PCR);
 
-    pymio::bind_class<mio::abm::TimeSpan, pymio::EnablePickling::Never>(m, "TimeSpan")
+    pymio::bind_class<mio::abm::TimeSpan, pymio::EnablePickling::Required>(m, "TimeSpan")
         .def(py::init<int>(), py::arg("seconds") = 0)
         .def_property_readonly("seconds", &mio::abm::TimeSpan::seconds)
         .def_property_readonly("hours", &mio::abm::TimeSpan::hours)
@@ -109,7 +109,7 @@ PYBIND11_MODULE(_simulation_abm, m)
     m.def("hours", &mio::abm::hours);
     m.def("days", py::overload_cast<int>(&mio::abm::days));
 
-    pymio::bind_class<mio::abm::TimePoint, pymio::EnablePickling::Never>(m, "TimePoint")
+    pymio::bind_class<mio::abm::TimePoint, pymio::EnablePickling::Required>(m, "TimePoint")
         .def(py::init<int>(), py::arg("seconds") = 0)
         .def_property_readonly("seconds", &mio::abm::TimePoint::seconds)
         .def_property_readonly("days", &mio::abm::TimePoint::days)
@@ -129,7 +129,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::self - mio::abm::TimeSpan{})
         .def(py::self -= mio::abm::TimeSpan{});
 
-    pymio::bind_class<mio::abm::TestParameters, pymio::EnablePickling::Never>(m, "TestParameters")
+    pymio::bind_class<mio::abm::TestParameters, pymio::EnablePickling::Required>(m, "TestParameters")
         .def(py::init<double, double, mio::abm::TimeSpan, mio::abm::TestType>())
         .def_readwrite("sensitivity", &mio::abm::TestParameters::sensitivity)
         .def_readwrite("specificity", &mio::abm::TestParameters::specificity)
@@ -140,50 +140,50 @@ PYBIND11_MODULE(_simulation_abm, m)
         m, "_AgeParameterArray");
     pymio::bind_CustomIndexArray<mio::abm::TestParameters, mio::abm::TestType>(m, "_TestData");
     pymio::bind_Index<mio::abm::ProtectionType>(m, "ProtectionTypeIndex");
-    pymio::bind_ParameterSet<mio::abm::ParametersBase, pymio::EnablePickling::Never>(m, "ParametersBase");
-    pymio::bind_class<mio::abm::Parameters, pymio::EnablePickling::Never, mio::abm::ParametersBase>(m, "Parameters")
+    pymio::bind_ParameterSet<mio::abm::ParametersBase, pymio::EnablePickling::Required>(m, "ParametersBase");
+    pymio::bind_class<mio::abm::Parameters, pymio::EnablePickling::Required, mio::abm::ParametersBase>(m, "Parameters")
         .def(py::init<int>())
         .def("check_constraints", &mio::abm::Parameters::check_constraints);
 
-    pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters, pymio::EnablePickling::Never>(
+    pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters, pymio::EnablePickling::Required>(
         m, "LocalInfectionParameters")
         .def(py::init<size_t>());
 
-    pymio::bind_class<mio::abm::LocationId, pymio::EnablePickling::Never>(m, "LocationId")
+    pymio::bind_class<mio::abm::LocationId, pymio::EnablePickling::Required>(m, "LocationId")
         .def(py::init<uint32_t>(), py::arg("id"))
         .def("index", &mio::abm::LocationId::get);
 
-    pymio::bind_class<mio::abm::PersonId, pymio::EnablePickling::Never>(m, "PersonId")
+    pymio::bind_class<mio::abm::PersonId, pymio::EnablePickling::Required>(m, "PersonId")
         .def(py::init<uint64_t>(), py::arg("id"))
         .def("index", &mio::abm::PersonId::get);
 
-    pymio::bind_class<mio::abm::Person, pymio::EnablePickling::Never>(m, "Person")
+    pymio::bind_class<mio::abm::Person, pymio::EnablePickling::Required>(m, "Person")
         .def("set_assigned_location", py::overload_cast<mio::abm::ActivityType, mio::abm::LocationId, int>(
                                           &mio::abm::Person::set_assigned_location))
         .def_property_readonly("location", py::overload_cast<>(&mio::abm::Person::get_location, py::const_))
         .def_property_readonly("age", &mio::abm::Person::get_age)
         .def_property_readonly("is_in_quarantine", &mio::abm::Person::is_in_quarantine);
 
-    pymio::bind_class<mio::abm::TestingCriteria, pymio::EnablePickling::Never>(m, "TestingCriteria")
+    pymio::bind_class<mio::abm::TestingCriteria, pymio::EnablePickling::Required>(m, "TestingCriteria")
         .def(py::init<const std::vector<mio::AgeGroup>&, const std::vector<mio::abm::InfectionState>&>(),
              py::arg("age_groups"), py::arg("infection_states"));
 
-    pymio::bind_class<mio::abm::TestingScheme, pymio::EnablePickling::Never>(m, "TestingScheme")
+    pymio::bind_class<mio::abm::TestingScheme, pymio::EnablePickling::Required>(m, "TestingScheme")
         .def(py::init<const mio::abm::TestingCriteria&, mio::abm::TimeSpan, mio::abm::TimePoint, mio::abm::TimePoint,
                       const mio::abm::TestParameters&, double>(),
              py::arg("testing_criteria"), py::arg("testing_validity_period"), py::arg("start_date"),
              py::arg("end_date"), py::arg("test_parameters"), py::arg("probability"));
 
-    pymio::bind_class<mio::abm::ProtectionEvent, pymio::EnablePickling::Never>(m, "ProtectionEvent")
+    pymio::bind_class<mio::abm::ProtectionEvent, pymio::EnablePickling::Required>(m, "ProtectionEvent")
         .def(py::init<mio::abm::ProtectionType, mio::abm::TimePoint>(), py::arg("type"), py::arg("time"))
         .def_readwrite("type", &mio::abm::ProtectionEvent::type)
         .def_readwrite("time", &mio::abm::ProtectionEvent::time);
 
-    pymio::bind_class<mio::abm::TestingStrategy, pymio::EnablePickling::Never>(m, "TestingStrategy")
+    pymio::bind_class<mio::abm::TestingStrategy, pymio::EnablePickling::Required>(m, "TestingStrategy")
         .def(py::init<const std::vector<mio::abm::TestingStrategy::LocalStrategy>&,
                       const std::vector<mio::abm::TestingStrategy::LocalStrategy>&>());
 
-    pymio::bind_class<mio::abm::Location, pymio::EnablePickling::Never>(m, "Location")
+    pymio::bind_class<mio::abm::Location, pymio::EnablePickling::Required>(m, "Location")
         .def_property_readonly("type", &mio::abm::Location::get_type)
         .def_property_readonly("id", &mio::abm::Location::get_id)
         .def_property("infection_parameters",
@@ -196,7 +196,7 @@ PYBIND11_MODULE(_simulation_abm, m)
     pymio::bind_Range<decltype(std::declval<const mio::abm::Model>().get_locations())>(m, "_ModelLocationsRange");
     pymio::bind_Range<decltype(std::declval<const mio::abm::Model>().get_persons())>(m, "_ModelPersonsRange");
 
-    pymio::bind_class<mio::abm::Trip, pymio::EnablePickling::Never>(m, "Trip")
+    pymio::bind_class<mio::abm::Trip, pymio::EnablePickling::Required>(m, "Trip")
         .def(py::init<mio::abm::PersonId, mio::abm::TimePoint, mio::abm::LocationId, mio::abm::ActivityType>(),
              py::arg("person_id"), py::arg("time"), py::arg("destination"), py::arg("activity"))
         .def_readwrite("person_id", &mio::abm::Trip::person_id)
@@ -204,13 +204,13 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("destination", &mio::abm::Trip::destination)
         .def_readwrite("activity", &mio::abm::Trip::activity);
 
-    pymio::bind_class<mio::abm::TripList, pymio::EnablePickling::Never>(m, "TripList")
+    pymio::bind_class<mio::abm::TripList, pymio::EnablePickling::Required>(m, "TripList")
         .def(py::init<>())
         .def("add_trips", &mio::abm::TripList::add_trips, py::arg("trips") = std::vector<mio::abm::Trip>())
         .def("next_trip", &mio::abm::TripList::get_next_trip)
         .def("num_trips", &mio::abm::TripList::num_trips);
 
-    pymio::bind_class<mio::abm::Model, pymio::EnablePickling::Never>(m, "Model")
+    pymio::bind_class<mio::abm::Model, pymio::EnablePickling::Required>(m, "Model")
         .def(py::init<int32_t>())
         .def("add_location", &mio::abm::Model::add_location, py::arg("location_type"), py::arg("num_cells") = 1)
         .def("add_person",
