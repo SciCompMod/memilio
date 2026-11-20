@@ -22,7 +22,6 @@ import unittest
 
 import numpy as np
 import pickle
-from io import StringIO
 
 import memilio.simulation as mio
 import memilio.simulation.abm as abm
