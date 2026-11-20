@@ -28,6 +28,7 @@
 #include "memilio/math/eigen_util.h"
 
 #include "pybind11/pybind11.h"
+#include <concepts>
 
 namespace pymio
 {
@@ -137,7 +138,17 @@ public:
     template <class... Options>
     auto operator()(pybind11::module& m, std::string const& name, Options&&... options) const
     {
-        return _bind_class(m, name, PicklingTag<F>{}, std::forward<Options>(options)...);
+        auto cls = _bind_class(m, name, PicklingTag<F>{}, std::forward<Options>(options)...);
+        // automatically enable deep copying
+        if constexpr (std::copy_constructible<T>) {
+            cls.def(
+                "__deepcopy__",
+                [](const T& self, pybind11::dict) {
+                    return T(self);
+                },
+                "memo");
+        }
+        return cls;
     }
 };
 
