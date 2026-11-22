@@ -24,11 +24,14 @@ import bayesflow as bf
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import os
 os.environ["KERAS_BACKEND"] = "tensorflow"
 
 
 name = "fitting_abm"
+
+data_dir = "data/Germany/Halle"
 
 inference_params = ['viral_shedding_rate', 'dark_figure',
                     'testing_probability_symptomatic', 'ratio_symptomatic_to_asymptomatic']
@@ -94,13 +97,13 @@ def plot_results(results, validation_data, synthetic=False):
         ax[i].plot(np.arange(num_days), np.median(
             results[key], axis=1), color=colors["Blue"], label='Simulated median')
         ax[i].fill_between(np.arange(num_days), qs_80[0], qs_80[1], alpha=0.5,
-                color=colors["Blue"], label="80% CI")
+                           color=colors["Blue"], label="80% CI")
         ax[i].fill_between(np.arange(num_days), qs_90[0], qs_90[1], alpha=0.3,
-                color=colors["Blue"], label="90% CI")
+                           color=colors["Blue"], label="90% CI")
         ax[i].fill_between(np.arange(num_days), qs_95[0], qs_95[1], alpha=0.1,
-                color=colors["Blue"], label="95% CI")
+                           color=colors["Blue"], label="95% CI")
         ax[i].plot(np.arange(num_days),
-                 validation_data[key][0], color=colors["Red"], label='True data')
+                   validation_data[key][0], color=colors["Red"], label='True data')
         ax[i].set_title(key)
     ax[1].set_xlabel("time [days]")
     ax[0].set_ylabel("number of people")
@@ -114,11 +117,11 @@ def run_abm(viral_shedding_rate, dark_figure, testing_probability_symptomatic, r
     mio.set_log_level(mio.LogLevel.Warning)
     file_path = os.path.dirname(os.path.abspath(__file__))
 
-    person_file = 'data/Germany/Halle/halle_population_data.csv'
-    contact_dir = 'data/Germany/contacts'
-    history_file = 'data/Germany/Halle/260304_infections_vaccines_halle.csv'
+    person_file = f"{data_dir}/halle_population_data.csv"
+    contact_dir = f"{data_dir}/contacts"
+    history_file = f"{data_dir}/260304_infections_vaccines_halle.csv"
     start_date = DATE_TIME
-    num_days_sim = 30
+    num_days_sim = 90
 
     samples = [viral_shedding_rate, dark_figure,
                testing_probability_symptomatic, ratio_symptomatic_to_asymptomatic]
@@ -142,8 +145,10 @@ def prior():
 
 
 def load_real_data():
-
-    return None
+    df = pd.read_csv(f"{data_dir}/halle_observed.csv")
+    data_dict = {key: df[key].to_numpy().reshape(1, -1, 1)
+                 for key in summary_vars}
+    return data_dict
 
 
 def create_train_data(filename, number_samples=1000):
@@ -224,7 +229,7 @@ def get_workflow():
     return workflow
 
 
-def run_training(num_training_files=20):
+def run_training(num_training_files=20, num_epochs=200):
     train_template = name+"/trainings_data{i}_"+name+".pickle"
     val_path = f"{name}/validation_data_{name}.pickle"
 
@@ -250,7 +255,7 @@ def run_training(num_training_files=20):
         trainings_data)["inference_variables"].shape)
 
     history = workflow.fit_offline(
-        data=trainings_data, epochs=200, batch_size=64, validation_data=validation_data
+        data=trainings_data, epochs=num_epochs, batch_size=64, validation_data=validation_data
     )
 
     workflow.approximator.save(
@@ -258,7 +263,8 @@ def run_training(num_training_files=20):
     )
 
     plots = workflow.plot_default_diagnostics(
-        test_data=validation_data, calibration_ecdf_kwargs={'difference': True, 'stacked': True}
+        test_data=validation_data, calibration_ecdf_kwargs={
+            'difference': True, 'stacked': True}
     )
     plots['losses'].savefig(f'{name}/losses_{name}.png')
     plots['recovery'].savefig(f'{name}/recovery_{name}.png')
@@ -271,13 +277,12 @@ def run_inference(num_samples=1000, on_synthetic_data=False):
 
     validation_data = reshape_results(load_pickle(val_path))
     if on_synthetic_data:
-        validation_dict = {
+        real_data_dict = {
             key: validation_data[key][0, np.newaxis, ...] for key in summary_vars}
         real_data = np.concatenate([validation_data[key][0]
                                    for key in summary_vars], axis=-1)
-
     else:
-        real_data = load_real_data()  # to be determined
+        real_data_dict = load_real_data()  # to be determined
 
     workflow = get_workflow()
     workflow.approximator = keras.models.load_model(
@@ -289,7 +294,7 @@ def run_inference(num_samples=1000, on_synthetic_data=False):
         print("loaded results from file")
     else:
         samples = workflow.sample(
-            conditions=validation_dict, num_samples=num_samples)
+            conditions=real_data_dict, num_samples=num_samples)
         results = []
         for i in range(num_samples):  # we only have one dataset for inference here
             result = run_abm(
@@ -304,7 +309,7 @@ def run_inference(num_samples=1000, on_synthetic_data=False):
         with open(f'{name}/results_{name}{synthetic}.pickle', 'wb') as f:
             pickle.dump(results, f, pickle.HIGHEST_PROTOCOL)
 
-    plot_results(results, validation_dict, synthetic=on_synthetic_data)
+    plot_results(results, real_data_dict, synthetic=on_synthetic_data)
 
 
 if __name__ == "__main__":
