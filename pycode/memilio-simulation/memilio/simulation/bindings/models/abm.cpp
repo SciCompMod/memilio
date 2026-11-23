@@ -242,7 +242,12 @@ PYBIND11_MODULE(_simulation_abm, m)
             py::return_value_policy::reference_internal);
 
     pymio::bind_class<mio::abm::Simulation<>, pymio::EnablePickling::Never>(m, "Simulation")
-        .def(py::init<mio::abm::TimePoint, size_t>())
+        .def(py::init<mio::abm::TimePoint, size_t>(), py::arg("t0"), py::arg("num_agegroups"))
+        .def(py::init([](mio::abm::TimePoint t0, mio::abm::Model model) {
+                 // copy model to avoid moving from the python-managed instance
+                 return mio::abm::Simulation<>(t0, std::move(model));
+             }),
+             py::arg("t0"), py::arg("model"))
         .def("advance",
              static_cast<void (mio::abm::Simulation<>::*)(mio::abm::TimePoint)>(&mio::abm::Simulation<>::advance),
              py::arg("tmax"))
