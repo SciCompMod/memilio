@@ -17,17 +17,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
+
+import os
+os.environ["KERAS_BACKEND"] = "tensorflow"
+
 import memilio.simulation.halle_abm as halle_abm
 import memilio.simulation as mio
-import keras
 import bayesflow as bf
+import keras
+from joblib import Parallel, delayed
+
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import os
-os.environ["KERAS_BACKEND"] = "tensorflow"
-
 
 name = "fitting_abm"
 
@@ -175,7 +178,7 @@ def concat_dicts(base: dict, new: dict) -> dict:
     if missing:
         raise KeyError(f"new dict missing keys: {sorted(missing)}")
     for k in base:
-        base[k] = np.concatenate([base[k], new[k]], axis=-1)
+        base[k] = np.concatenate([base[k], new[k]], axis=0)
     return base
 
 
@@ -190,6 +193,10 @@ def reshape_results(results):
     for key in summary_vars:
         results[key] = results[key][..., np.newaxis]
     return results
+
+
+def _run_single_abm(params):
+    return reshape_results(run_abm(**params))
 
 
 def get_workflow():
@@ -258,7 +265,7 @@ def run_training(num_training_files=20, num_epochs=200):
         data=trainings_data, epochs=num_epochs, batch_size=64, validation_data=validation_data
     )
 
-    workflow.approximator.save(
+    workflow.estimator.save(
         filepath=os.path.join(f"{name}/model_{name}.keras")
     )
 
@@ -271,7 +278,7 @@ def run_training(num_training_files=20, num_epochs=200):
     plots['calibration_ecdf'].savefig(f'{name}/calibration_ecdf_{name}.png')
 
 
-def run_inference(num_samples=1000, on_synthetic_data=False):
+def run_inference(num_samples=1000, on_synthetic_data=False, n_jobs=None):
     val_path = f"{name}/validation_data_{name}.pickle"
     synthetic = "_synthetic" if on_synthetic_data else ""
 
@@ -285,9 +292,7 @@ def run_inference(num_samples=1000, on_synthetic_data=False):
         real_data_dict = load_real_data()  # to be determined
 
     workflow = get_workflow()
-    workflow.approximator = keras.models.load_model(
-        filepath=os.path.join(f"{name}/model_{name}.keras")
-    )
+    workflow.load_estimator(path=os.path.join(f"{name}/model_{name}.keras"))
 
     if os.path.exists(f'{name}/results_{name}{synthetic}.pickle'):
         results = load_pickle(f'{name}/results_{name}{synthetic}.pickle')
@@ -295,15 +300,17 @@ def run_inference(num_samples=1000, on_synthetic_data=False):
     else:
         samples = workflow.sample(
             conditions=real_data_dict, num_samples=num_samples)
-        results = []
-        for i in range(num_samples):  # we only have one dataset for inference here
-            result = run_abm(
-                viral_shedding_rate=samples['viral_shedding_rate'][0, i][0],
-                dark_figure=samples['dark_figure'][0, i][0],
-                testing_probability_symptomatic=samples['testing_probability_symptomatic'][0, i][0],
-                ratio_symptomatic_to_asymptomatic=samples['ratio_symptomatic_to_asymptomatic'][0, i][0]
-            )
-            results.append(reshape_results(result))
+
+        param_list = [
+            {k: float(samples[k][0, i][0]) for k in inference_params}
+            for i in range(num_samples)
+        ]
+
+        if n_jobs is None:
+            n_jobs = int(os.environ.get("SLURM_CPUS_PER_TASK", 1))
+
+        results = Parallel(n_jobs=n_jobs, verbose=10)(delayed(_run_single_abm)(params) for params in param_list)
+
         results = combine_results(results)
 
         with open(f'{name}/results_{name}{synthetic}.pickle', 'wb') as f:
