@@ -31,6 +31,9 @@ runs:
         if [[ "${{ inputs.optional-deps }}" == "ON" ]]; then
           sudo apt-get -qq -y install libhdf5-dev
         fi
+        if [[ "${{ inputs.coverage }}" == "ON" ]]; then
+          sudo apt-get -qq -y install gcc-13
+        fi
         sudo apt-get -qq update
     - name: Download built test directory
       uses: actions/download-artifact@v7
