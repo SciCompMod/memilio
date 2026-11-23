@@ -190,8 +190,16 @@ ActivityType return_from_hospital(PersonalRandomNumberGenerator& /*rng*/, const 
     if (!(person.get_location_type() == LocationType::Hospital || person.get_location_type() == LocationType::ICU)) {
         return person.get_activity_type();
     }
-    if (t.hour_of_day() >= 18) {
-        std::cout << "struct_test = " << struct_test({int(person.get_id().get()), 2.0}) << "\n";
+    PersonData p{int(person.get_id().get()), int(person.get_age().get()), uint32_t(person.get_activity_type())};
+    std::vector<InfectionTuple> infection_history;
+    if (person.get_infection_state(t) != InfectionState::Susceptible) {
+        auto& inf = person.get_infection();
+        for (auto& elem : inf.get_infection_course()) {
+            infection_history.push_back(InfectionTuple{elem.first.seconds(), elem.second});
+        }
+    }
+    bool go_home = hospital_model(p, infection_history.data(), infection_history.size(), t.hour_of_day());
+    if (go_home) {
         return ActivityType::Home;
     }
     else {
