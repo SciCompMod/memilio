@@ -18,19 +18,18 @@
 # limitations under the License.
 #############################################################################
 
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import pickle
+from joblib import Parallel, delayed
+import keras
+import bayesflow as bf
+import memilio.simulation as mio
+import memilio.simulation.halle_abm as halle_abm
 import os
 os.environ["KERAS_BACKEND"] = "tensorflow"
 
-import memilio.simulation.halle_abm as halle_abm
-import memilio.simulation as mio
-import bayesflow as bf
-import keras
-from joblib import Parallel, delayed
-
-import pickle
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 
 name = "fitting_abm"
 
@@ -91,14 +90,13 @@ def plot_results(results, validation_data, synthetic=False):
     if len(summary_vars) == 1:
         ax = [ax]
     for i, key in enumerate(summary_vars):
-        qs_80 = np.quantile(results[key], q=[0.1, 0.9], axis=1)
-        qs_90 = np.quantile(results[key], q=[0.05, 0.95], axis=1)
-        qs_95 = np.quantile(results[key], q=[0.025, 0.975], axis=1)
+        qs_80 = np.quantile(results[key], q=[0.1, 0.9], axis=0)
+        qs_90 = np.quantile(results[key], q=[0.05, 0.95], axis=0)
+        qs_95 = np.quantile(results[key], q=[0.025, 0.975], axis=0)
 
-        num_days = results[key].shape[0]
-        plt.figure(figsize=(6, 4))
+        num_days = results[key].shape[1]
         ax[i].plot(np.arange(num_days), np.median(
-            results[key], axis=1), color=colors["Blue"], label='Simulated median')
+            results[key], axis=0), color=colors["Blue"], label='Simulated median')
         ax[i].fill_between(np.arange(num_days), qs_80[0], qs_80[1], alpha=0.5,
                            color=colors["Blue"], label="80% CI")
         ax[i].fill_between(np.arange(num_days), qs_90[0], qs_90[1], alpha=0.3,
@@ -149,9 +147,7 @@ def prior():
 
 def load_real_data():
     df = pd.read_csv(f"{data_dir}/halle_observed.csv")
-    data_dict = {key: df[key].to_numpy().reshape(1, -1, 1)
-                 for key in summary_vars}
-    return data_dict
+    return {key: df[key].to_numpy()[np.newaxis, :] for key in summary_vars}
 
 
 def create_train_data(filename, number_samples=1000):
@@ -182,21 +178,13 @@ def concat_dicts(base: dict, new: dict) -> dict:
     return base
 
 
-def combine_results(dict_list):
-    combined = {}
-    for d in dict_list:
-        combined = concat_dicts(combined, d) if combined else d
-    return combined
-
-
-def reshape_results(results):
-    for key in summary_vars:
-        results[key] = results[key][..., np.newaxis]
-    return results
-
-
 def _run_single_abm(params):
-    return reshape_results(run_abm(**params))
+    return run_abm(**params)          # each key: (T,)
+
+
+def stack_results(result_list):
+    return {k: np.stack([r[k] for r in result_list], axis=0)   # (S, T)
+            for k in summary_vars}
 
 
 def get_workflow():
@@ -212,11 +200,8 @@ def get_workflow():
         .constrain("dark_figure", lower=bounds["dark_figure"][0], upper=bounds["dark_figure"][1])
         .constrain("testing_probability_symptomatic", lower=bounds["testing_probability_symptomatic"][0], upper=bounds["testing_probability_symptomatic"][1])
         .constrain("ratio_symptomatic_to_asymptomatic", lower=bounds["ratio_symptomatic_to_asymptomatic"][0], upper=bounds["ratio_symptomatic_to_asymptomatic"][1])
-        .concatenate(
-            inference_params,
-            into="inference_variables",
-            axis=-1
-        )
+        .concatenate(inference_params, into="inference_variables", axis=-1)
+        .expand_dims(summary_vars, axis=-1)
         .concatenate(summary_vars, into="summary_variables", axis=-1)
     )
 
@@ -245,14 +230,14 @@ def run_training(num_training_files=20, num_epochs=200):
                    for i in range(1, 1+num_training_files)]
     trainings_data = None
     for p in train_files:
-        d = reshape_results(load_pickle(p))
+        d = load_pickle(p)
         if trainings_data is None:
             trainings_data = d
         else:
             trainings_data = concat_dicts(trainings_data, d)
 
     # validation data
-    validation_data = reshape_results(load_pickle(val_path))
+    validation_data = load_pickle(val_path)
 
     # check data
     workflow = get_workflow()
@@ -282,14 +267,12 @@ def run_inference(num_samples=1000, on_synthetic_data=False, n_jobs=None):
     val_path = f"{name}/validation_data_{name}.pickle"
     synthetic = "_synthetic" if on_synthetic_data else ""
 
-    validation_data = reshape_results(load_pickle(val_path))
+    validation_data = load_pickle(val_path)
     if on_synthetic_data:
-        real_data_dict = {
-            key: validation_data[key][0, np.newaxis, ...] for key in summary_vars}
-        real_data = np.concatenate([validation_data[key][0]
-                                   for key in summary_vars], axis=-1)
+        real_data_dict = {key: validation_data[key][0:1]
+                          for key in summary_vars}
     else:
-        real_data_dict = load_real_data()  # to be determined
+        real_data_dict = load_real_data()
 
     workflow = get_workflow()
     workflow.load_estimator(path=os.path.join(f"{name}/model_{name}.keras"))
@@ -309,9 +292,9 @@ def run_inference(num_samples=1000, on_synthetic_data=False, n_jobs=None):
         if n_jobs is None:
             n_jobs = int(os.environ.get("SLURM_CPUS_PER_TASK", 1))
 
-        results = Parallel(n_jobs=n_jobs, verbose=10)(delayed(_run_single_abm)(params) for params in param_list)
-
-        results = combine_results(results)
+        results = Parallel(n_jobs=n_jobs, verbose=10)(
+            delayed(_run_single_abm)(params) for params in param_list)
+        results = stack_results(results)       # (S, T)
 
         with open(f'{name}/results_{name}{synthetic}.pickle', 'wb') as f:
             pickle.dump(results, f, pickle.HIGHEST_PROTOCOL)
