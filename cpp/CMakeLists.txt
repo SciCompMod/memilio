@@ -107,10 +107,11 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
         # In addition to standard flags, disable elision and inlining to prevent e.g. closing brackets being marked as
         # uncovered.
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-elide-constructors -fno-default-inline")
+        # inconsistent: newer lcov (e.g. 2.4) aborts on mismatched line info of gcc for templates
         setup_target_for_coverage_lcov(
             NAME coverage
             EXECUTABLE memilio-test
-            LCOV_ARGS --ignore-errors gcov,mismatch
+            LCOV_ARGS --ignore-errors gcov,mismatch,inconsistent
             EXCLUDE "${CMAKE_SOURCE_DIR}/tests*" "${CMAKE_SOURCE_DIR}/examples*"
             "${CMAKE_SOURCE_DIR}/memilio/ad*" "${CMAKE_BINARY_DIR}/*" "/usr*" "${CMAKE_SOURCE_DIR}/*.F"
         )
