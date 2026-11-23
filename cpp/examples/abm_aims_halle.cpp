@@ -23,6 +23,7 @@
 #include "abm/model.h"
 #include "abm/time.h"
 #include "abm/protection_event.h"
+#include "abm/common_abm_loggers.h"
 
 #include "boost/filesystem.hpp"
 #include "boost/algorithm/string/split.hpp"
@@ -456,7 +457,7 @@ void set_local_parameters(mio::abm::Model& model)
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_work;
             loc.get_infection_parameters().get<mio::abm::ContactRates>().get_baseline() *= 8.0; // 3 hours
             break;
-        case mio::abm::LocationType::SocialEvent:
+        case mio::abm::LocationType::Recreation:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_other;
             loc.get_infection_parameters().get<mio::abm::ContactRates>().get_baseline() *= 1.2;
             loc.get_infection_parameters().get<mio::abm::ContactRates>().get_baseline() *= 8.0; // 3 hours
@@ -619,7 +620,7 @@ void initialize_infections_and_vaccinations(mio::abm::Model& model, const std::s
                                             const mio::abm::TimePoint start_date)
 {
     if (!fs::exists(fs::path(filename))) {
-        mio::log_error("Cannot read in data. File does not exist.");
+        mio::log_error("Cannot read in data from {}: File does not exist.", filename);
     }
     // File pointer
     std::fstream fin;
@@ -683,6 +684,8 @@ void initialize_infections_and_vaccinations(mio::abm::Model& model, const std::s
                                              vaccinations[age_group][random_sample_index]);
         }
     }
+
+    mio::log_info("Initialized infections and vaccinations in the model based on the data file {}.", filename);
 }
 
 /// An ABM setup taken from abm_minimal.cpp.
@@ -746,7 +749,7 @@ mio::abm::Model make_model(const std::string& infections_vaccinations_file, cons
 
     // Add one social event with 5 maximum contacts.
     // Maximum contacts limit the number of people that a person can infect while being at this location.
-    auto event = model.add_location(mio::abm::LocationType::SocialEvent);
+    auto event = model.add_location(mio::abm::LocationType::Recreation);
     model.get_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
     // Add hospital and ICU with 5 maximum contacs.
     auto hospital = model.add_location(mio::abm::LocationType::Hospital);
@@ -827,17 +830,17 @@ mio::abm::Model make_model(const std::string& infections_vaccinations_file, cons
     for (auto& person : model.get_persons()) {
         const auto id = person.get_id();
         //assign shop and event
-        model.assign_location(id, event);
-        model.assign_location(id, shop);
+        model.assign_location(id, event, mio::abm::ActivityType::Recreation);
+        model.assign_location(id, shop, mio::abm::ActivityType::BasicsShop);
         //assign hospital and ICU
-        model.assign_location(id, hospital);
-        model.assign_location(id, icu);
+        model.assign_location(id, hospital, mio::abm::ActivityType::Hospital);
+        model.assign_location(id, icu, mio::abm::ActivityType::ICU);
         //assign work/school to people depending on their age
         if (person.get_age() == age_group_5_to_14) {
-            model.assign_location(id, school);
+            model.assign_location(id, school, mio::abm::ActivityType::School);
         }
         if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
-            model.assign_location(id, work);
+            model.assign_location(id, work, mio::abm::ActivityType::Work);
         }
     }
 
@@ -955,7 +958,7 @@ int main()
         Eigen::Index(sim.get_model().parameters.get_num_groups())};
     mio::History<mio::abm::TimeSeriesWriter, LogVaccinationCounts> historyVaccinations{
         Eigen::Index(sim.get_model().parameters.get_num_groups() * 3)};
-    mio::History<mio::abm::TimeSeriesWriter, LogActivePAIS> historyActivePAIS{
+    mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogActivePAIS> historyActivePAIS{
         Eigen::Index(sim.get_model().parameters.get_num_groups())};
 
     // Run the simulation until tmax with the history object.

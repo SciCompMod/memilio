@@ -23,6 +23,7 @@
 #include "abm/mask_type.h"
 #include "abm/time.h"
 #include "abm/sex.h"
+#include "abm/comorbidity.h"
 #include "abm/infection_state.h"
 #include "abm/virus_variant.h"
 #include "abm/pais_state.h"
@@ -513,11 +514,12 @@ struct PAISProtectionAtSecondInfection {
  * The first index is the from state and the second index is the to state.
  */
 struct PAISTransitionMatrix {
-    using Type = Eigen::MatrixXd;
-    static Type get_default(AgeGroup /*size*/)
+    using Type = CustomIndexArray<Eigen::MatrixXd, AgeGroup, Sex, ComorbidityStatus>;
+    static Type get_default(AgeGroup size)
     {
-        return Eigen::MatrixXd::Identity(static_cast<Eigen::Index>(PAISState::Count),
-                                         static_cast<Eigen::Index>(PAISState::Count));
+        return Type({size, Sex::Count, ComorbidityStatus::Count},
+                    Eigen::MatrixXd::Identity(static_cast<Eigen::Index>(PAISState::Count),
+                                              static_cast<Eigen::Index>(PAISState::Count)));
     }
     static std::string name()
     {

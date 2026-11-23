@@ -384,8 +384,9 @@ TEST_F(TestPerson, getLatestProtection)
  */
 TEST_F(TestPerson, rng)
 {
-    auto p = mio::abm::Person(this->get_rng(), mio::abm::LocationType::Home, mio::abm::ActivityType::Home, 0, 0,
-                              age_group_35_to_59, 13);
+    auto p =
+        mio::abm::Person(this->get_rng(), mio::abm::LocationType::Home, mio::abm::ActivityType::Home, 0, 0,
+                         age_group_35_to_59, mio::abm::Sex::Diverse, mio::abm::ComorbidityStatus::NoComorbidity, 13);
 
     EXPECT_EQ(p.get_rng_counter(), mio::Counter<uint32_t>(0));
 

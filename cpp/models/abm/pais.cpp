@@ -27,7 +27,8 @@ namespace mio
 namespace abm
 {
 
-void PAIS::update_severity(const Parameters& params, PersonalRandomNumberGenerator& rng, TimePoint t, TimeSpan dt)
+void PAIS::update_severity(const Parameters& params, PersonalRandomNumberGenerator& rng, AgeGroup age, Sex sex,
+                           ComorbidityStatus comorbidity, TimePoint t, TimeSpan dt)
 {
     if (severity.empty() || t <= severity.back().first) {
         return; // only update if the last update was before t
@@ -36,8 +37,8 @@ void PAIS::update_severity(const Parameters& params, PersonalRandomNumberGenerat
 
     for (auto&& v : enum_members<PAISState>()) {
         transmission_probs[static_cast<uint32_t>(v)] = {
-            v, params.get<PAISTransitionMatrix>()(static_cast<Eigen::Index>(severity.back().second),
-                                                  static_cast<Eigen::Index>(v))};
+            v, params.get<PAISTransitionMatrix>()[{age, sex, comorbidity}](
+                   static_cast<Eigen::Index>(severity.back().second), static_cast<Eigen::Index>(v))};
     }
     auto severity_new = random_transition(rng, severity.back().second, dt, transmission_probs);
     if (severity_new != severity.back().second) {

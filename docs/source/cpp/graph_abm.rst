@@ -79,8 +79,8 @@ Next, for all models in the graph, locations have to be added. This can be done 
 .. code-block:: cpp
 
     //Add an event and a shop to both models
-    auto event1 = model1.add_location(mio::abm::LocationType::SocialEvent);
-    auto event2 = model2.add_location(mio::abm::LocationType::SocialEvent);
+    auto event1 = model1.add_location(mio::abm::LocationType::Recreation);
+    auto event2 = model2.add_location(mio::abm::LocationType::Recreation);
     auto shop1  = model1.add_location(mio::abm::LocationType::BasicsShop);
     auto shop2  = model2.add_location(mio::abm::LocationType::BasicsShop);
     //Add a school, a hospital and an ICU only to model 1
@@ -107,10 +107,10 @@ Assigning infection states and locations to persons in all models can be done vi
 
     //Assign Event, Shop, Hospital and ICU to all persons, school only to the child and work to the adults
     //Event
-    child1.set_assigned_location(mio::abm::LocationType::SocialEvent, event1, model1.get_id());
-    adult1.set_assigned_location(mio::abm::LocationType::SocialEvent, event1, model1.get_id());
-    adult2.set_assigned_location(mio::abm::LocationType::SocialEvent, event2, model2.get_id());
-    adult3.set_assigned_location(mio::abm::LocationType::SocialEvent, event2, model2.get_id());
+    child1.set_assigned_location(mio::abm::LocationType::Recreation, event1, model1.get_id());
+    adult1.set_assigned_location(mio::abm::LocationType::Recreation, event1, model1.get_id());
+    adult2.set_assigned_location(mio::abm::LocationType::Recreation, event2, model2.get_id());
+    adult3.set_assigned_location(mio::abm::LocationType::Recreation, event2, model2.get_id());
     //Shop
     child1.set_assigned_location(mio::abm::LocationType::BasicsShop, shop1, model1.get_id());
     adult1.set_assigned_location(mio::abm::LocationType::BasicsShop, shop1, model1.get_id());

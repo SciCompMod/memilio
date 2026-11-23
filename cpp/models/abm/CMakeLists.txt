@@ -37,6 +37,7 @@ add_library(abm
     mask.cpp
     common_abm_loggers.h
     sex.h
+    comorbidity.h
     pais.h
     pais.cpp
 )

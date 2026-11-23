@@ -130,7 +130,7 @@ The available location and activity types defined in `location_type.h <https://g
    * **Home**: Home location of a person
    * **School**: School location
    * **Work**: Workplace
-   * **SocialEvent**: Locations for social gatherings (e.g., parties, events)
+   * **Recreation**: Locations for social gatherings (e.g., parties, events)
    * **BasicsShop**: Basic shop for essential goods (e.g., grocery store)
    * **Hospital**: Hospital for severely infected persons
    * **ICU**: Intensive Care Unit for critical patients
@@ -232,7 +232,7 @@ For more complex location configurations, the model allows setting location-spec
 .. code-block:: cpp
 
    // Add one social event with 5 maximum contacts (local)
-   auto event = model.add_location(mio::abm::LocationType::SocialEvent);
+   auto event = model.add_location(mio::abm::LocationType::Recreation);
    model.get_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
    
    // Increase aerosol transmission for all locations (global)

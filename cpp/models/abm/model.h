@@ -207,10 +207,13 @@ public:
      * @param[in] id The LocationID of the initial Location of the Person.
      * @param[in] age AgeGroup of the person.
      * @param[in] sex Sex of the person.
+     * @param[in] comorbidity Comorbidity of the person.
      * @param[in] activity_type The ActivityType the Person does at its initial Location.
      * @return Id of the newly created Person.
      */
-    PersonId add_person(const LocationId id, AgeGroup age, Sex sex = Sex::Diverse, ActivityType activity_type);
+    PersonId add_person(const LocationId id, AgeGroup age, Sex sex = Sex::Diverse,
+                        ComorbidityStatus comorbidity = ComorbidityStatus::NoComorbidity,
+                        ActivityType activity_type    = ActivityType::Home);
 
     /**
      * @brief Adds a copy of a given Person to the Model.

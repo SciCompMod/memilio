@@ -36,7 +36,8 @@ namespace abm
 {
 
 Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, ActivityType activity_type,
-               LocationId location_id, int location_model_id, AgeGroup age, Sex sex, PersonId person_id)
+               LocationId location_id, int location_model_id, AgeGroup age, Sex sex, ComorbidityStatus comorbidity,
+               PersonId person_id)
     : m_location(location_id)
     , m_location_type(location_type)
     , m_activity_type(activity_type)
@@ -45,6 +46,7 @@ Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, Acti
     , m_home_isolation_start(TimePoint(-(std::numeric_limits<int>::max() / 2)))
     , m_age(age)
     , m_sex(sex)
+    , m_comorbidity(comorbidity)
     , m_time_at_location(0)
     , m_mask(Mask(MaskType::None, TimePoint(-(std::numeric_limits<int>::max() / 2))))
     , m_compliance((uint32_t)InterventionType::Count, 1.)
@@ -107,7 +109,7 @@ void Person::add_new_infection(Infection&& inf, PersonalRandomNumberGenerator& r
 void Person::update_pais_severity(const Parameters& params, PersonalRandomNumberGenerator& rng, TimePoint t,
                                   TimeSpan dt)
 {
-    m_pais.update_severity(params, rng, t, dt);
+    m_pais.update_severity(params, rng, m_age, m_sex, m_comorbidity, t, dt);
 }
 
 LocationId Person::get_location() const

@@ -57,12 +57,15 @@ public:
      * @param[in, out] rng RandomNumberGenerator.
      * @param[in, out] location Initial Location of the Person.
      * @param[in] age The AgeGroup of the Person.
+     * @param[in] sex The Sex of the Person.
+     * @param[in] comorbidity The ComorbidityStatus of the Person.
      * @param[in] person_index Index of the Person.
      * 
      */
     explicit Person(mio::RandomNumberGenerator& rng, LocationType location_type, ActivityType activity_type,
                     LocationId location_id, int location_model_id, AgeGroup age, Sex sex = Sex::Diverse,
-                    PersonId person_id = PersonId::invalid_ID());
+                    ComorbidityStatus comorbidity = ComorbidityStatus::NoComorbidity,
+                    PersonId person_id            = PersonId::invalid_ID());
 
     explicit Person(const Person& other, PersonId person_id);
 
@@ -168,6 +171,15 @@ public:
     Sex get_sex() const
     {
         return m_sex;
+    }
+
+    /**
+     * @brief Get if the Person has a comorbidity.
+     * @return True if the Person has a comorbidity.
+     */
+    ComorbidityStatus has_comorbidity() const
+    {
+        return m_comorbidity;
     }
 
     /**
@@ -480,6 +492,7 @@ public:
             .add("home_isolation_start", m_home_isolation_start)
             .add("age_group", m_age)
             .add("sex", m_sex)
+            .add("comorbidity", m_comorbidity)
             .add("time_at_location", m_time_at_location)
             .add("rnd_workgroup", m_random_workgroup)
             .add("rnd_schoolgroup", m_random_schoolgroup)
@@ -524,6 +537,7 @@ private:
     TimePoint m_home_isolation_start; ///< TimePoint when the Person started isolation at home.
     AgeGroup m_age; ///< AgeGroup the Person belongs to.
     Sex m_sex; ///< Sex of the Person.
+    ComorbidityStatus m_comorbidity; ///< Comorbidity status of the Person.
     TimeSpan m_time_at_location; ///< Time the Person has spent at its current Location so far.
     ScalarType
         m_random_workgroup; ///< Value to determine if the Person goes to work or works from home during lockdown.
@@ -551,7 +565,7 @@ struct DefaultFactory<abm::Person> {
     static abm::Person create()
     {
         return abm::Person(thread_local_rng(), abm::LocationType::Count, abm::ActivityType::Count, abm::LocationId(), 0,
-                           AgeGroup(0), abm::Sex::Diverse, abm::PersonId());
+                           AgeGroup(0), abm::Sex::Diverse, abm::ComorbidityStatus::NoComorbidity, abm::PersonId());
     }
 };
 

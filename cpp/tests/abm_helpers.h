@@ -96,7 +96,6 @@ struct ScopedMockDistribution {
  */
 mio::abm::Person make_test_person(mio::RandomNumberGenerator& rng, mio::abm::Location& location,
                                   mio::abm::ActivityType actvty_type, mio::AgeGroup age = age_group_15_to_34,
-                                  mio::abm::Sex sex                        = mio::abm::Sex::Unisex,
                                   mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
                                   mio::abm::TimePoint t                    = mio::abm::TimePoint(0),
                                   mio::abm::Parameters params              = mio::abm::Parameters(num_age_groups),
@@ -108,7 +107,6 @@ mio::abm::Person make_test_person(mio::RandomNumberGenerator& rng, mio::abm::Loc
  */
 mio::abm::PersonId add_test_person(mio::abm::Model& model, mio::abm::LocationId loc_id,
                                    mio::abm::ActivityType actvty_type, mio::AgeGroup age = age_group_15_to_34,
-                                   mio::abm::Sex sex                        = mio::abm::Sex::Unisex,
                                    mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
                                    mio::abm::TimePoint t                    = mio::abm::TimePoint(0));
 

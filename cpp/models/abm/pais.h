@@ -46,10 +46,14 @@ struct PAIS {
      * @brief Update the severity of the PAIS.
      * @param[in] params The Parameters of the Simulation.
      * @param[in] rng Personal RandomNumberGenerator.
+     * @param[in] age AgeGroup of the Person.
+     * @param[in] sex Sex of the Person.
+     * @param[in] comorbidity ComorbidityStatus of the Person.
      * @param[in] t TimePoint of querry. Usually the current time of the Simulation.
      * @param[in] dt The time step size of the Simulation.
      */
-    void update_severity(const Parameters& params, PersonalRandomNumberGenerator& rng, TimePoint t, TimeSpan dt);
+    void update_severity(const Parameters& params, PersonalRandomNumberGenerator& rng, AgeGroup age, Sex sex,
+                         ComorbidityStatus comorbidity, TimePoint t, TimeSpan dt);
 
     /**
      * @brief Initialize or refresh the PAIS status based on a new infection.

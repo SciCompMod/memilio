@@ -19,6 +19,8 @@
 */
 
 #include "abm/household.h"
+#include "abm/sex.h"
+#include "abm/comorbidity.h"
 #include "abm/activity_type.h"
 #include "abm/person_id.h"
 #include "abm/location.h"
@@ -70,7 +72,12 @@ void add_household_to_model(Model& model, const Household& household)
         std::tie(member, count) = memberTouple;
         for (int j = 0; j < count; j++) {
             auto age_group = pick_age_group_from_age_distribution(model.get_rng(), member.get_age_weights());
-            auto person    = model.add_person(home, age_group, ActivityType::Home);
+            // TODO: Remove hardcoded sex and comorbidity values when data is available
+            auto sex = // 50% male, 50% female
+                (model.get_rng()() < 0.5) ? Sex::Male : Sex::Female;
+            auto comorbidity = // 10% have comorbidity
+                (model.get_rng()() < 0.1) ? ComorbidityStatus::Comorbidity : ComorbidityStatus::NoComorbidity;
+            auto person = model.add_person(home, age_group, sex, comorbidity, ActivityType::Home);
             model.assign_location(person, home, ActivityType::Home);
         }
     }

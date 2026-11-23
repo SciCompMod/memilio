@@ -34,10 +34,14 @@ TEST(TestSimulation, advance_random)
     auto model     = mio::abm::Model(num_age_groups);
     auto location1 = model.add_location(mio::abm::LocationType::School);
     auto location2 = model.add_location(mio::abm::LocationType::School);
-    auto p1        = model.add_person(location1, age_group_5_to_14, mio::abm::ActivityType::School);
-    auto p2        = model.add_person(location1, age_group_5_to_14, mio::abm::ActivityType::School);
-    auto p3        = model.add_person(location2, age_group_5_to_14, mio::abm::ActivityType::School);
-    auto p4        = model.add_person(location2, age_group_5_to_14, mio::abm::ActivityType::School);
+    auto p1        = model.add_person(location1, age_group_5_to_14, mio::abm::Sex::Diverse,
+                                      mio::abm::ComorbidityStatus::NoComorbidity, mio::abm::ActivityType::School);
+    auto p2        = model.add_person(location1, age_group_5_to_14, mio::abm::Sex::Diverse,
+                                      mio::abm::ComorbidityStatus::NoComorbidity, mio::abm::ActivityType::School);
+    auto p3        = model.add_person(location2, age_group_5_to_14, mio::abm::Sex::Diverse,
+                                      mio::abm::ComorbidityStatus::NoComorbidity, mio::abm::ActivityType::School);
+    auto p4        = model.add_person(location2, age_group_5_to_14, mio::abm::Sex::Diverse,
+                                      mio::abm::ComorbidityStatus::NoComorbidity, mio::abm::ActivityType::School);
 
     model.assign_location(p1, location1, mio::abm::ActivityType::School);
     model.assign_location(p2, location1, mio::abm::ActivityType::School);
@@ -164,7 +168,8 @@ TEST(TestSimulation, ResultSimulation)
     // run a ResultSimulation on a minimal setup
     auto model    = mio::abm::Model(num_age_groups);
     auto location = model.add_location(mio::abm::LocationType::Home);
-    auto person   = model.add_person(location, age_group_15_to_34, mio::abm::ActivityType::Home);
+    auto person   = model.add_person(location, age_group_15_to_34, mio::abm::Sex::Diverse,
+                                     mio::abm::ComorbidityStatus::NoComorbidity, mio::abm::ActivityType::Home);
 
     model.assign_location(person, location, mio::abm::ActivityType::Home);
 
@@ -180,17 +185,17 @@ TEST(TestSimulation, ResultSimulation)
     for (const auto& tp : sim.get_result()) {
         EXPECT_EQ(tp.sum(), 1.0);
     }
-    EXPECT_EQ(sim.get_result().get_value(0)[(Eigen::Index)mio::abm::InfectionState::Susceptible], 1.0);
-    EXPECT_EQ(sim.get_result().get_value(N - 1)[(Eigen::Index)mio::abm::InfectionState::Susceptible], 1.0);
+    EXPECT_EQ(sim.get_result().get_value(0)[Eigen::Index(mio::abm::InfectionState::Susceptible)], 1.0);
+    EXPECT_EQ(sim.get_result().get_value(N - 1)[Eigen::Index(mio::abm::InfectionState::Susceptible)], 1.0);
 }
 
 TEST(TestSimulation, logInfectionPerLocationTypePerAgeGroup)
 {
     // a Person that becomes Exposed must be counted at the LocationType it was at when it got infected and in its
     // AgeGroup, while a Person that is already Exposed at t0 must not be counted.
-    auto model    = mio::abm::Model(num_age_groups);
-    auto home     = model.add_location(mio::abm::LocationType::Home);
-    auto work     = model.add_location(mio::abm::LocationType::Work);
+    auto model = mio::abm::Model(num_age_groups);
+    auto home  = model.add_location(mio::abm::LocationType::Home);
+    auto work  = model.add_location(mio::abm::LocationType::Work);
     // the Simulation does not have to start at 0
     const auto t0 = mio::abm::TimePoint(0) + mio::abm::days(10);
     // the Persons only move when we tell them to
@@ -214,8 +219,8 @@ TEST(TestSimulation, logInfectionPerLocationTypePerAgeGroup)
         auto& person    = model.get_person(id);
         auto rng_person = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
         person.add_new_infection(mio::abm::Infection(rng_person, mio::abm::VirusVariant::Wildtype, person.get_age(),
-                                                     model.parameters, t_infection,
-                                                     mio::abm::InfectionState::Exposed));
+                                                     model.parameters, t_infection, mio::abm::InfectionState::Exposed),
+                                 rng_person, t_infection, model.parameters);
     }
 
     auto sim = mio::abm::Simulation(t0, std::move(model));
@@ -248,13 +253,13 @@ TEST(TestSimulation, logInfectionPerLocationTypePerAgeGroup)
     };
 
     // the initially Exposed Person is not counted, since there is no previous log at t0
-    EXPECT_EQ(detailed.get_value(0).sum(), 0.0);
+    EXPECT_EQ(Eigen::VectorXd(detailed.get_value(0)).sum(), 0.0);
     // both new Infections are counted exactly once, where they happened, even though one Person has moved on since
-    EXPECT_EQ(detailed.get_value(1).sum(), 2.0);
+    EXPECT_EQ(Eigen::VectorXd(detailed.get_value(1)).sum(), 2.0);
     EXPECT_EQ(detailed.get_value(1)[idx(age_group_35_to_59, mio::abm::LocationType::Home)], 1.0);
     EXPECT_EQ(detailed.get_value(1)[idx(age_group_60_to_79, mio::abm::LocationType::Work)], 1.0);
-    EXPECT_EQ(detailed.get_value(2).sum(), 0.0);
-    EXPECT_EQ(detailed.get_value(3).sum(), 0.0);
+    EXPECT_EQ(Eigen::VectorXd(detailed.get_value(2)).sum(), 0.0);
+    EXPECT_EQ(Eigen::VectorXd(detailed.get_value(3)).sum(), 0.0);
 }
 
 TEST(TestSimulation, logInfectionStatePerAgeGroup)
@@ -267,8 +272,8 @@ TEST(TestSimulation, logInfectionStatePerAgeGroup)
                               mio::abm::InfectionState::Susceptible);
     auto p2 = add_test_person(model, home, mio::abm::ActivityType::Home, age_group_5_to_14,
                               mio::abm::InfectionState::Susceptible);
-    auto p3 = add_test_person(model, home, mio::abm::ActivityType::Home, age_group_60_to_79,
-                              mio::abm::InfectionState::Dead);
+    auto p3 =
+        add_test_person(model, home, mio::abm::ActivityType::Home, age_group_60_to_79, mio::abm::InfectionState::Dead);
     model.assign_location(p1, home, mio::abm::ActivityType::Home);
     model.assign_location(p2, home, mio::abm::ActivityType::Home);
     model.assign_location(p3, home, mio::abm::ActivityType::Home);
