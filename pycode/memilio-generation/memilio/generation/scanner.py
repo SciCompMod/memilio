@@ -755,9 +755,10 @@ def try_set_libclang_path(path: str) -> None:
         path = os.path.join(path.decode(), dirname.decode(),
                             "lib", "libclang.so")
     try:
-        Config.set_library_file(path)
+        if not Config.loaded:
+            Config.set_library_file(path)
+
     except Exception as e:
-        # Catch given exception from libclang. If the exact string output in libclang changes,
-        # this needs to be adapted as well.
+
         if str(e) != "library file must be set before using any other functionalities in libclang.":
             raise (e)

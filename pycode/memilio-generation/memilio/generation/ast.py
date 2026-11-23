@@ -25,7 +25,8 @@ import os
 from typing import TYPE_CHECKING, Optional
 from typing_extensions import Self
 
-from clang.cindex import Cursor, TranslationUnit, Index, CompilationDatabase
+from clang.cindex import Config, Cursor, TranslationUnit, Index, CompilationDatabase
+from memilio.generation.scanner_config import get_config
 
 
 class AST:
@@ -87,6 +88,10 @@ class AST:
 
         # ToDo: Add error handling if compile comands dont exist or the path_to_database is wrong
         dirname = path_to_database
+        libclang_path = get_config().libclang_library_path
+
+        if libclang_path:
+            Config.set_library_file(libclang_path)
         compdb = CompilationDatabase.fromDirectory(dirname)
         commands = compdb.getCompileCommands(self.source_file)
         for command in commands:

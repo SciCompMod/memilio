@@ -49,6 +49,43 @@ def handle_all_bindings(intermed_repr: IntermediateRepresentation) -> str:
     return result.strip()
 
 
+def handle_all_model_specific_bindings(intermed_repr: IntermediateRepresentation) -> dict:
+    """
+    Handle all model-specific bindings and create substitutions.
+    """
+
+    model_info = intermed_repr.found_model_specific_bindings
+
+    if not model_info.model_base:
+        raise ValueError(
+            "model_base is empty. "
+            f"Model class: {model_info.model_class}"
+        )
+
+    substitutions = {
+        "namespace": model_info.namespace,
+        "model_class_name": model_info.model_class,
+        "model_base": model_info.model_base[0],
+        "model_base_templates": model_info.model_base_templates,
+        "python_module_name": model_info.python_module_name,
+        "parameterset": model_info.parameterset,
+
+        "includes": includes(model_info),
+        "pretty_name_function": pretty_name_function(model_info),
+        "population_enums": population_enums(model_info),
+        "model_init": model_init(model_info),
+        "population": population(model_info),
+        "parameterset_indexing": parameterset_indexing(model_info),
+        "parameterset_wrapper": parameterset_wrapper(model_info),
+        "simulation": simulation(model_info),
+        "ScalarType": ScalarType(model_info),
+        "draw_sample": draw_sample(model_info),
+        "simulation_vector_definition": simulation_vector_definition(model_info),
+    }
+
+    return substitutions
+
+
 def needs_template(bindings: binding_type_info, intermed_repr: IntermediateRepresentation) -> bool:
     """ Check if a template wrapper is needed for a class.
 
@@ -368,6 +405,7 @@ def ScalarType(intermed_repr: IntermediateRepresentation) -> str:
 ####################################################################################################################
 # Model specifc generation
 ####################################################################################################################
+
 
 def includes(intermed_repr: IntermediateRepresentation) -> str:
     """ Fills in the Includes for the binding

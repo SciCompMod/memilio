@@ -55,7 +55,8 @@ class IntermediateRepresentation:
     include_list: list = field(default_factory=list)
     age_group: dict = field(default_factory=dict)
 
-    found_model_specific_bindings: model_specific_generation_info = model_specific_generation_info()
+    found_model_specific_bindings: model_specific_generation_info = field(
+        default_factory=model_specific_generation_info)
     found_bindings: list[binding_type_info] = field(
         default_factory=list)
 

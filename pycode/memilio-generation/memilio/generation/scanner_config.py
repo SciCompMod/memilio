@@ -43,7 +43,7 @@ class ScannerConfig:
 def get_config():
     pkg = importlib_resources.files("memilio.generation")
     with importlib_resources.as_file(
-            pkg.joinpath("generation/config.json")) as path:
+            pkg.joinpath("config.json")) as path:
         with open(path) as file:
             conf = ScannerConfig.schema().loads(file.read(), many=True)[0]
     return conf

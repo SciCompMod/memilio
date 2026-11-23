@@ -44,7 +44,7 @@ class Generator:
         self.substitutions_cpp = {}
 
     def create_substitutions(
-            self: Self, intermed_repr: IntermediateRepresentation) -> None:
+            self: Self, intermed_representation: IntermediateRepresentation) -> None:
         """ Create the substitutions needed to generate the bindings.
         Divided into substitutions for the Python- and C++-file. 
         Uses the string template methods from the template folder.
@@ -52,6 +52,7 @@ class Generator:
         :param intermed_repr: Dataclass holding the model features.
 
         """
+        intermed_repr = intermed_representation.found_model_specific_bindings
 
         if len(intermed_repr.model_base) > 0:
             model_base_templates = ", ".join(
@@ -61,24 +62,8 @@ class Generator:
             raise IndexError("model_base is empty. No base classes found.")
 
         self.substitutions_cpp = {
-            "namespace": intermed_repr.namespace,
-            "model_class_name": intermed_repr.model_class,
-            "model_base": intermed_repr.model_base[0],
-            "model_base_templates": model_base_templates,
-            "python_module_name": intermed_repr.python_module_name,
-            "parameterset": intermed_repr.parameterset,
-            "includes": StringTemplates.includes(intermed_repr),
-            "pretty_name_function": StringTemplates.pretty_name_function(intermed_repr),
-            "population_enums": StringTemplates.population_enums(intermed_repr),
-            "model_init": StringTemplates.model_init(intermed_repr),
-            "population": StringTemplates.population(intermed_repr),
-            "parameterset_indexing": StringTemplates.parameterset_indexing(intermed_repr),
-            "parameterset_wrapper": StringTemplates.parameterset_wrapper(intermed_repr),
-            "simulation": StringTemplates.simulation(intermed_repr),
-            "ScalarType": StringTemplates.ScalarType(intermed_repr),
-            "draw_sample": StringTemplates.draw_sample(intermed_repr),
-            "simulation_vector_definition": StringTemplates.simulation_vector_definition(intermed_repr),
-            "handle_all_bindings": StringTemplates.handle_all_bindings(intermed_repr)
+            **StringTemplates.handle_all_model_specific_bindings(intermed_representation),
+            "handle_all_bindings": StringTemplates.handle_all_bindings(intermed_representation)
         }
         self.substitutions_py = {
             "python_module_name": intermed_repr.python_module_name

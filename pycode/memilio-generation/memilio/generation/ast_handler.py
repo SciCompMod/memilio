@@ -23,7 +23,8 @@ import logging
 import multiprocessing
 from typing_extensions import Self
 
-from memilio.generation import ScannerConfig, AST
+from memilio.generation import ScannerConfig
+from memilio.generation.ast import AST
 
 
 class ASTHandler:
