@@ -79,7 +79,6 @@ runs:
     - name: Build
       shell: bash
       run: |
-        # gcc versions are the defaults of the runner images, so they match the default gfortran (Ipopt) and gcov (coverage)
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
             export CC=/usr/bin/gcc-11
