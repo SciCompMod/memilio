@@ -11,7 +11,7 @@ name = "memilio-generation"
 version = "0.1.0"
 description = "Part of MEmilio project, automatic generation of model specific python bindings."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
 authors = [{ name = "MEmilio Team" }]
 maintainers = [
@@ -21,7 +21,6 @@ dependencies = [
   "dataclasses",
   "dataclasses_json",
   "graphviz",
-  "importlib-resources>=1.1.0; python_version < '3.9'",
   "jinja2>=3.0.0",
   "pyyaml>=6.0",
   "tomli>=1.1.0; python_version < '3.11'"

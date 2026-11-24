@@ -17,6 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
+import io
 import os
 import json
 import collections
@@ -28,8 +29,20 @@ from pyfakefs import fake_filesystem_unittest
 
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getCommuterMobility as gcm
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+
+# download each file only once per test run to avoid rate limits
+_download_cache = {}
+_download_file = gd.download_file
 
 
+def _cached_download_file(url, *args, **kwargs):
+    if url not in _download_cache:
+        _download_cache[url] = _download_file(url, *args, **kwargs).getvalue()
+    return io.BytesIO(_download_cache[url])
+
+
+@patch.object(gd, 'download_file', _cached_download_file)
 class TestCommuterMobility(fake_filesystem_unittest.TestCase):
     """ """
 
