@@ -26,7 +26,7 @@
 #include "abm/simulation.h"
 #include "memilio/io/history.h"
 #include "memilio/utils/time_series.h"
-#include "models/abm/location_type.h"
+#include "abm/location_type.h"
 #include "abm/mobility_data.h"
 #include "memilio/utils/mioomp.h"
 
