@@ -115,12 +115,7 @@
 include(CMakeParseArguments)
 
 # Check prereqs
-if(CMAKE_COMPILER_IS_GNUCXX)
-    string(REGEX MATCH "[0-9]+" GCC_VERSION "${CMAKE_CXX_COMPILER_VERSION}")
-    find_program( GCOV_PATH NAMES gcov-${GCC_VERSION} gcov )
-else()
-    find_program( GCOV_PATH gcov )
-endif()
+find_program( GCOV_PATH gcov )
 find_program( LCOV_PATH  NAMES lcov lcov.bat lcov.exe lcov.perl)
 find_program( GENHTML_PATH NAMES genhtml genhtml.perl genhtml.bat )
 find_program( GCOVR_PATH gcovr PATHS ${CMAKE_SOURCE_DIR}/scripts/test)

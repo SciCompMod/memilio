@@ -164,6 +164,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RELEASE")
             "-Wno-restrict;" # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105329
             "-Wno-maybe-uninitialized;" # https://gcc.gnu.org/bugzilla/buglist.cgi?quicksearch=may%20be%20uninitialized
             "-Wno-stringop-overread;"
+            "-Wno-array-bounds;" # false positive in gcc 15 for std::vector::erase in parameter_distributions.h
         )
     elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
