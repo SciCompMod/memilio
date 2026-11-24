@@ -635,7 +635,7 @@ def process_vaccination_data(
 
     try:
         population = pd.read_json(
-            directory + "county_current_population.json")
+            os.path.join(directory, "county_current_population.json"))
     # pandas>1.5 raise FileNotFoundError instead of ValueError
     except (ValueError, FileNotFoundError):
         gd.default_print(
