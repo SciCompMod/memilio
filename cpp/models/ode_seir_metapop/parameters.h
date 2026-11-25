@@ -20,6 +20,7 @@
 #ifndef ODESEIRMETAPOP_PARAMETERS_H
 #define ODESEIRMETAPOP_PARAMETERS_H
 
+#include "memilio/config.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/epidemiology/age_group.h"
@@ -335,7 +336,7 @@ private:
         for (auto j = Region(0); j < Region(m_num_regions); j++) {
             total_population += this->template get<PopulationAfterCommuting<FP>>()[{j, age_group}];
         }
-        return 1e-10 * abs(total_population);
+        return Limits<FP>::zero_tolerance() * abs(total_population);
     }
 
 public:
