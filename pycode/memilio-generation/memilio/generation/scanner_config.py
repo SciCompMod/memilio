@@ -21,6 +21,7 @@
 :strong:`scanner_config.py`
 Dataclass to import the configurations from the config.json.
 """
+import shutil
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
 from importlib.resources import files
@@ -31,15 +32,27 @@ class ScannerConfig:
     """Provide configurations from JSON-file in Python as dataclass.
 
     Attributes (and config.json parameters):
-        python_generation_module_path: Path to the ``pyproject.toml`` of the generation module
-        path_to_database: Path to compile_commands.json
         libclang_library_path: Path to the local libclang library. If the string is empty, the program tries to retrieve the path from a terminal command.
+        clang_executable: Command for clang executable.
     """
-
-    python_generation_module_path: str
-    path_to_database: str
+    
     libclang_library_path: str
+    clang_executable: str
 
+    def __post_init__(self) -> None:
+        # Check libclang_library_path correctly set
+        if self.libclang_library_path.endswith("-NOTFOUND"):
+            # if not found derive the library from clang_executable
+            self.libclang_library_path = ""
+
+        if not self.clang_executable or self.clang_executable.endswith("-NOTFOUND"):
+            raise ValueError(
+                "No clang executable configured. Set MEMILIO_CLANG_VERSION in CMake "
+                "or clang_executable in config.json.")
+        if shutil.which(self.clang_executable) is None:
+            raise FileNotFoundError(
+                f"clang executable not found: {self.clang_executable!r}")
+        
 def get_config():
     text = files("memilio.generation").joinpath("config.json").read_text(encoding="utf-8")
     conf = ScannerConfig.from_json(text)

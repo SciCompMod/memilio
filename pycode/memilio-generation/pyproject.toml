@@ -28,7 +28,7 @@ dependencies = [
 
 [project.optional-dependencies]
 bindings = [
-  "libclang==18.1.1",
+  "libclang-ng==21.1.8.2",
 ]
 dev = []
 

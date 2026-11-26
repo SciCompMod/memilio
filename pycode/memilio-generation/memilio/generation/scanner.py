@@ -26,7 +26,7 @@ from __future__ import annotations
 import os
 from typing import Any, Callable, Union
 
-from clang.cindex import Cursor, CursorKind, Config, Type
+from clang.cindex import Cursor, CursorKind, Type
 from typing_extensions import Self
 
 from memilio.generation.scanner_config import ScannerConfig
@@ -90,13 +90,10 @@ class StrategyModelSpecific:
         found_model_specific_bindings.has_draw_sample = os.path.isfile(parameter_space_file)
         found_model_specific_bindings.namespace = cpp_module_namespace
         found_model_specific_bindings.python_module_name = python_module_name
-        found_model_specific_bindings.python_generation_module_path = scanner.config.python_generation_module_path
 
         # ToDo: Check if they need to be saved generally or only in model specific
         intermed_repr.set_attribute(
             "python_module_name", python_module_name)
-        intermed_repr.set_attribute(
-            "python_generation_module_path", scanner.config.python_generation_module_path)
 
     def switch_node_kind(self: Self, kind: CursorKind) -> Callable[[Any,
                                                                    IntermediateRepresentation],
@@ -657,15 +654,10 @@ class StrategyGenericCpp:
 class Scanner:
     """ Analyze the model and extract the needed information."""
 
-    def __init__(self: Self, conf: ScannerConfig) -> None:
+    def __init__(self: Self) -> None:
         """
         Basic Constructor of Scanner class.
-
-        :param conf: ScannerConfig dataclass with the configurations.
         """
-        self.config = conf
-        try_set_libclang_path(
-            self.config.libclang_library_path)
         self.python_module_name = None
         self.cpp_module_namespace = None
 
@@ -734,31 +726,3 @@ def get_base_class_string(base_type: Type) -> list[Any]:
         result.append(get_base_class_string(
             base_type.get_template_argument_type(i)))
     return result
-
-def try_set_libclang_path(path: str) -> None:
-    """Try to set the file path for the libclang library.
-    If its already set, the returned Exception gets caught and discarded.
-    If the given path string is empty or None, the path is determined with a call on the terminal.
-
-    :param path: Path to the library files of libclang. Can be an empty string.
-    """
-    # Check if path was set in config. If not, try to get it with cmd.
-    if (not path or path == 'LIBCLANG_PATH-NOTFOUND'):
-        clang_cmd = ["clang", '-print-file-name=']
-        clang_cmd_result = subprocess.check_output(clang_cmd)
-        path, dirname = os.path.split(clang_cmd_result)
-        while ("llvm" not in str(dirname)):
-            path, dirname = os.path.split(path)
-            if str(path) == '':
-                print("Error: define libclang path in config.json")
-                raise (Exception)
-        path = os.path.join(path.decode(), dirname.decode(),
-                            "lib", "libclang.so")
-    try:
-        if not Config.loaded:
-            Config.set_library_file(path)
-
-    except Exception as e:
-
-        if str(e) != "library file must be set before using any other functionalities in libclang.":
-            raise (e)

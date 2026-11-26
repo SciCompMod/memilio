@@ -22,12 +22,14 @@ import subprocess
 import tempfile
 import logging
 import os
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 from typing_extensions import Self
+import shutil
+from importlib.resources import as_file, files
+from pathlib import Path
 
-from clang.cindex import Config, Cursor, TranslationUnit, Index, CompilationDatabase
+from clang.cindex import Cursor, TranslationUnit, Index, CompilationDatabase
 from memilio.generation.scanner_config import get_config
-
 
 class AST:
     """ Handles AST creation and ID assignment.
@@ -86,13 +88,7 @@ class AST:
         ]
         file_args = []
 
-        # ToDo: Add error handling if compile comands dont exist or the path_to_database is wrong
-        dirname = path_to_database
-        libclang_path = get_config().libclang_library_path
-
-        if libclang_path:
-            Config.set_library_file(libclang_path)
-        compdb = CompilationDatabase.fromDirectory(dirname)
+        compdb = load_compilation_database(path_to_database)
         commands = compdb.getCompileCommands(self.source_file)
         for command in commands:
             for argument in command.arguments:
@@ -108,8 +104,8 @@ class AST:
         :returns: List of command-line arguments for Clang.
         """
         clang_cmd = [
-            "clang", self.source_file,
-            "-std=c++20", '-emit-ast', '-o', '-']
+            get_config().clang_executable, self.source_file,
+            '-emit-ast', '-o', '-']
         clang_cmd.extend(file_args)
         return clang_cmd
 
@@ -188,3 +184,20 @@ class AST:
         if index < 0 or index >= len(self.id_to_val):
             raise IndexError(f"Index {index} is out of bounds.")
         return self.id_to_val[index]
+
+
+def _load_from_file(path):
+    path = Path(path)
+    if path.name == "compile_commands.json":
+        return CompilationDatabase.fromDirectory(str(path.parent))
+    # libclang needs the exact file name, so copy under that name
+    with tempfile.TemporaryDirectory() as tmp:
+        shutil.copyfile(path, Path(tmp) / "compile_commands.json")
+        return CompilationDatabase.fromDirectory(tmp)
+
+def load_compilation_database(location):
+    if location:
+        path = Path(location)
+        return _load_from_file(path / "compile_commands.json" if path.is_dir() else path)
+    with as_file(files("memilio.generation") / "compile_commands.json") as path:
+        return _load_from_file(path)

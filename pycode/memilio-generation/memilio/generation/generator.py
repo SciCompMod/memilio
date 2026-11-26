@@ -26,6 +26,7 @@ from __future__ import annotations
 import os
 import string
 from typing import TYPE_CHECKING
+from importlib.resources import files
 
 from typing_extensions import Self
 
@@ -78,12 +79,11 @@ class Generator:
         :param intermed_repr: Dataclass holding the model features.
         :param target_folder: Output folder for generated files.
         """
-        with open(os.path.join(intermed_repr.python_generation_module_path,
-                               "memilio/generation/template/template_py.txt")) as t:
-            template_py = string.Template(t.read())
-        with open(os.path.join(intermed_repr.python_generation_module_path,
-                               "memilio/generation/template/template_cpp.txt")) as t:
-            template_cpp = string.Template(t.read())
+        text = (files("memilio.generation") / "template" / "template_py.txt").read_text(encoding="utf-8")
+        template_py = string.Template(text)
+
+        text = (files("memilio.generation") / "template" / "template_cpp.txt").read_text(encoding="utf-8")
+        template_cpp = string.Template(text)
 
         output_py = template_py.safe_substitute(**self.substitutions_py)
         output_cpp = template_cpp.safe_substitute(**self.substitutions_cpp)

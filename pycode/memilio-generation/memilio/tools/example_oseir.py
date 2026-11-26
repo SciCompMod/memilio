@@ -24,24 +24,21 @@ import argparse
 import time
 import os
 
-from memilio.generation import Generator, Scanner, get_config, ASTHandler, Visualization
+from memilio.generation import Generator, Scanner, ASTHandler, Visualization
 
 def run_memilio_generation(print_ast=False):
     """
 
     :param print_ast:  (Default value = False)
     """
-    # Get ScannerConfig and initialize Scanner
-    conf = get_config()
-
     file_path = os.path.dirname(os.path.abspath(__file__))
 
-    asts = ASTHandler(conf)
+    asts = ASTHandler()
     asts.add_source_file(os.path.abspath(os.path.join(
         file_path, "..", "..", "..", "..", "cpp", "models", "ode_seir", "model.cpp")))
     asts.handle_ast_creation()
     ast = asts.get_ast(0)
-    scanner = Scanner(conf)
+    scanner = Scanner()
 
     intermed_repr = scanner.extract_results(ast.root_cursor)
 

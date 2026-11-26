@@ -22,10 +22,9 @@
 Dataclass to represent the needed information of a model. Interface between the scanner and generator.
 """
 from dataclasses import dataclass, field
-from typing import Any, Dict, Union
+from typing import Any, Union
 
 from typing_extensions import Self
-from memilio.generation import Generator
 from memilio.generation.info_types import binding_type_info, model_specific_generation_info
 
 
@@ -46,7 +45,6 @@ class IntermediateRepresentation:
     has_age_group: bool = False
     has_draw_sample: bool = False
     scalartype: str = "double"
-    python_generation_module_path: str = ""
     enum_populations: dict = field(default_factory=dict)
     model_init: list = field(default_factory=list)
     model_base: list = field(default_factory=list)

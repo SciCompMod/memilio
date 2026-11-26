@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.18.0)
 project(memilio-python)
 
 include(GNUInstallDirs) # set to gnu folders. No cache variable so this is not global
@@ -13,7 +13,18 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # add in C++ library
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../cpp ${CMAKE_CURRENT_BINARY_DIR}/cpp EXCLUDE_FROM_ALL)
-FIND_LIBRARY(LIBCLANG_PATH
-    clang HINTS ${CMAKE_CXX_COMPILER}/../../
-)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/memilio/generation/config.json.txt ${CMAKE_CURRENT_SOURCE_DIR}/memilio/generation/config.json)
+set(MEMILIO_CLANG_VERSION 21 CACHE STRING "clang major version used for the AST generation")
+find_program(CLANG_EXECUTABLE
+    NAMES clang-${MEMILIO_CLANG_VERSION} clang
+    HINTS /usr/lib/llvm-${MEMILIO_CLANG_VERSION}/bin)
+find_library(LIBCLANG_PATH
+    NAMES clang-${MEMILIO_CLANG_VERSION} clang
+    HINTS /usr/lib/llvm-${MEMILIO_CLANG_VERSION}/lib)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/memilio/generation/config.json.txt
+               ${CMAKE_CURRENT_BINARY_DIR}/config.json)
+
+install(FILES
+    ${CMAKE_BINARY_DIR}/compile_commands.json
+    ${CMAKE_CURRENT_BINARY_DIR}/config.json
+    DESTINATION memilio/generation)

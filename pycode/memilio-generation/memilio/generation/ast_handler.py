@@ -21,22 +21,24 @@
 import os
 import logging
 import multiprocessing
+import subprocess
 from typing_extensions import Self
 
-from memilio.generation import ScannerConfig
+from memilio.generation.scanner_config import get_config
 from memilio.generation.ast import AST
 
+from clang.cindex import Config
+    
 
 class ASTHandler:
     """ ASTHandler class for creating ASTs.
     """
 
-    def __init__(self: Self, conf: ScannerConfig) -> None:
+    def __init__(self: Self) -> None:
         """ Basic constructor of the ASTHandler class
-
-        :param conf: ScannerConfig dataclass with the configurations.
         """
-        self.conf = conf
+        try_set_libclang_path(
+            get_config().libclang_library_path)
         self.ast_list = []
         self.source_files = []
 
@@ -48,14 +50,16 @@ class ASTHandler:
         else:
             self.parallel_creation()
 
-    def add_source_file(self: Self, source_file_str: str) -> None:
+    def add_source_file(self: Self, path_to_source_file: str, path_to_database: str = "") -> None:
         """ Add source file to list.
 
-        :param source_file_str: String that represents another file.
+        :param path_to_source_file: Absolute path to source file.
+        :param path_to_database: Package resource for the database needed to build the source file.
+                                 Default uses the one shipped with building MEmilio.
         """
-        if (os.path.isfile(source_file_str)):
-            self.source_files.append(source_file_str)
-            logging.info(f"Adding source file: {source_file_str}")
+        if (os.path.isfile(path_to_source_file)):
+            self.source_files.append((path_to_source_file, path_to_database))
+            logging.info(f"Adding source file: {path_to_source_file}")
 
     def parallel_creation(self: Self) -> None:
         """ Create ASTs for all source files using multiprocessing.
@@ -68,7 +72,7 @@ class ASTHandler:
             try:
 
                 results = pool.starmap(
-                    create_ast, [(self.conf.path_to_database, source_file) for source_file in self.source_files])
+                    create_ast, [(database, source_file) for source_file, database in self.source_files])
 
                 for ast in results:
                     try:
@@ -84,7 +88,7 @@ class ASTHandler:
     def single_creation(self: Self) -> None:
         """ Create AST for a single source file.
         """
-        ast = create_ast(self.conf.path_to_database, self.source_files[0])
+        ast = create_ast(self.source_files[0][1], self.source_files[0][0])
         ast.process_ast_file()
         self.ast_list.append(ast)
 
@@ -108,3 +112,31 @@ def create_ast(path_to_database: str, source_file: str) -> AST:
     ast.create_ast_for_pickle(path_to_database)
 
     return ast
+
+def try_set_libclang_path(path: str) -> None:
+    """Try to set the file path for the libclang library.
+    If its already set, the returned Exception gets caught and discarded.
+    If the given path string is empty or None, the path is determined with a call on the terminal.
+
+    :param path: Path to the library files of libclang. Can be an empty string.
+    """
+    # Check if path was set in config. If not, try to get it with cmd.
+    if (not path):
+        clang_cmd = [get_config().clang_executable, '-print-file-name=']
+        clang_cmd_result = subprocess.check_output(clang_cmd)
+        path, dirname = os.path.split(clang_cmd_result)
+        while ("llvm" not in str(dirname)):
+            path, dirname = os.path.split(path)
+            if str(path) == '':
+                print("Error: define libclang path in config.json")
+                raise (Exception)
+        path = os.path.join(path.decode(), dirname.decode(),
+                            "lib", "libclang.so")
+    try:
+        if not Config.loaded:
+            Config.set_library_file(path)
+
+    except Exception as e:
+
+        if str(e) != "library file must be set before using any other functionalities in libclang.":
+            raise (e)
