@@ -74,8 +74,6 @@ void print_help(const char* program_name)
     std::cout << "  --output_dir <path>        Output directory (default: " << Config::DEFAULT_OUTPUT_DIR
               << "/run_<timestamp>)\n";
     std::cout << "  --seed <number>            Seed for reproducibility (default: built in seed)\n";
-    std::cout << "  --no_infection_events      Do not write the per run infection event csv\n";
-    std::cout << "  --write_contacts           Write the pairwise contact hours per run (expensive)\n";
     std::cout << "  --write_person_locations   Write where everybody was every hour (large; needed for\n";
     std::cout << "                             the transmission tree plots)\n";
     std::cout << "  --print_city               Print the derived city infrastructure and exit\n";
@@ -176,12 +174,6 @@ CommandLine parse_command_line(int argc, char* argv[])
             config.custom_seed = static_cast<uint32_t>(
                 parse_number<long long>(arg, argv[++i], 1, std::numeric_limits<uint32_t>::max()));
         }
-        else if (arg == "--no_infection_events") {
-            config.write_infection_events = false;
-        }
-        else if (arg == "--write_contacts") {
-            config.write_contacts = true;
-        }
         else if (arg == "--write_person_locations") {
             config.write_person_locations = true;
         }
@@ -254,15 +246,15 @@ mio::IOResult<void> main_flow(int argc, char* argv[])
     print_config_summary(config);
     const auto start_time = std::chrono::high_resolution_clock::now();
 
-    BOOST_OUTCOME_TRY(auto results, MultiRunSimulator::run_multi_simulation(config, rng));
-    BOOST_OUTCOME_TRY(MultiRunSimulator::save_multi_run_results(results, config.output_base_dir, config));
+    BOOST_OUTCOME_TRY(auto runs, run_simulations(config, rng));
+    BOOST_OUTCOME_TRY(save_results(runs, config));
 
     const auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(
         std::chrono::high_resolution_clock::now() - start_time);
 
     std::cout << "\n=== Simulation Summary ===" << std::endl;
     std::cout << "Total execution time: " << duration.count() << " seconds" << std::endl;
-    std::cout << "Successful runs: " << results.successful_runs << "/" << config.num_runs << std::endl;
+    std::cout << "Successful runs: " << runs.size() << "/" << config.num_runs << std::endl;
     std::cout << "Results saved to: " << config.output_base_dir << std::endl;
     std::cout << "==========================" << std::endl;
 

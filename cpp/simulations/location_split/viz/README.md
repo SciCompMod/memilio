@@ -72,7 +72,7 @@ Common options: `--scenario`, `--baseline`, `--output`, `--dpi`, `--format {png,
 | Script | Needs |
 | --- | --- |
 | `plot_epidemic_curves.py` | `total_infections/` (always written) |
-| `plot_location_breakdown.py`, `plot_location_timeline.py` | `runs/run_*_infection_events.csv` (default on, disabled by `--no_infection_events`) |
+| `plot_location_breakdown.py`, `plot_location_timeline.py` | `runs/run_*_infection_events.csv` (always written) |
 | `plot_household_heatmap.py` | the above plus `runs/run_<i>_persons.csv` |
 | `plot_transmission_tree.py` | the above plus `runs/run_*_person_locations.csv`, so the simulation must be run with `--write_person_locations` |
 

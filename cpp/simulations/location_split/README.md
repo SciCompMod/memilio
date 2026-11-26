@@ -126,8 +126,6 @@ executed one after another with a parallel model each. That is much slower for m
 | `--threads <n>` | runs executed in parallel, default: all cores |
 | `--output_dir <path>` | output directory, default `results/run_<timestamp>` |
 | `--seed <n>` | seed for reproducibility |
-| `--no_infection_events` | do not write the per run infection event csv |
-| `--write_contacts` | write the pairwise contact hours per run; quadratic in the location size |
 | `--write_person_locations` | write where every person was at every hour; needed for the transmission tree plots |
 | `--print_city` | print the derived city infrastructure and exit |
 
@@ -143,10 +141,8 @@ options has the same city.
   scenario.json                        label and school room size of this arm, read by viz/
   city_config.csv                      derived city statistics
   location_id_and_type.csv             location -> type (the same in every run)
-  initial_infection_households.csv     household size of the initially infected, per run
   runs/run_<i>_persons.csv             age group, home, workplace and school (room) of every person in run i
   runs/run_<i>_infection_events.csv    every infection with the location it happened at
-  runs/run_<i>_contact_hours.csv       pairwise contact hours (only with --write_contacts)
   runs/run_<i>_person_locations.csv    location of every person at every hour (only with --write_person_locations)
   infection_state_per_age_group/       h5, hourly, per run and p05/p25/p50/p75/p95, age * InfectionState::Count + state
   infection_per_location_type_per_age_group/  h5, new infections per day, age * LocationType::Count + type
@@ -158,8 +154,7 @@ options has the same city.
 Infection events are detected while the simulation runs, so a run only keeps the state of the
 previous hour (a few bytes per person) and the hourly aggregated time series. A run of 10,000 persons
 over 90 days needs about 30 MB. Parallel runs each need their own memory. `--write_person_locations`
-streams to disk and grows with persons times hours. `--write_contacts` grows with the number of
-distinct contact pairs and should only be used on small populations.
+streams to disk and grows with persons times hours.
 
 ## Model limitations
 
@@ -180,7 +175,6 @@ distinct contact pairs and should only be used on small populations.
 | `include/city_parameters.h`, `src/city_parameters.cpp` | demographics and infrastructure ratios per region |
 | `include/city_builder.h`, `src/city_builder.cpp` | builds the `abm::Model` and assigns people to locations |
 | `include/parameter_setter.h`, `src/parameter_setter.cpp` | infection parameters and contact matrices |
-| `include/custom_loggers.h`, `src/custom_loggers.cpp` | loggers |
 | `include/multi_run_simulator.h`, `src/multi_run_simulator.cpp` | runs the ensemble and writes the results |
 | `include/file_utils.h`, `src/file_utils.cpp` | output directories and timestamps |
 | `main.cpp` | command line |
