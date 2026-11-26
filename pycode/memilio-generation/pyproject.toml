@@ -28,7 +28,7 @@ dependencies = [
 
 [project.optional-dependencies]
 bindings = [
-  "libclang==18.1.1",
+  "libclang-ng==21.1.8.2",
 ]
 dev = []
 
@@ -43,10 +43,3 @@ memilio-modelgenerator = "memilio.modelgenerator.cli:main"
 cmake.version = ">=3.13"
 wheel.packages = ["memilio"]
 build-dir = "../build/memilio-generation"
-
-[tool.setuptools]
-include-package-data = true
-
-[tool.setuptools.package-data]
-"memilio.generation" = ["generation/*.json", "generation/*.txt", "generation/README.md"]
-"memilio.modelgenerator" = ["templates/*.jinja2"]
