@@ -2,7 +2,9 @@
 
 In the ABM, a susceptible in a room with N persons present, i of them infectious, is infected within one
 hour with probability p = 1 - exp(-a i / (N - 1)), a = Lambda * dt (the note's Eq. (9) with N = s + i in its
-homogeneous setting; here N also counts exposed and recovered persons). The expected number of new
+homogeneous setting; here N also counts exposed and recovered persons). The ABM itself divides the shedding
+by the number of persons present per age group of the transmitter and weights it with the school contact
+matrix; school rooms hold 5-14 and some 15-34 year olds, so this formula is an approximation for mixed rooms. The expected number of new
 infections in the room is g = s p. The runs write, per school room and hour, N, s, i and the new infections
 (--write_school_rooms). This script
 
@@ -11,7 +13,8 @@ infections in the room is g = s p. The runs write, per school room and hour, N, 
 3. shows that the new infections per infectious pupil hour depend only on the susceptible share
    s / (N - 1) of the room, for every room size (to first order a * s / (N - 1), Proposition 1 and Sec. 5.3),
 4. follows the susceptible share that infectious pupils see over the days, for fixed and redrawn rooms,
-5. compares the outcomes of fixed and daily redrawn rooms, paired with the no-split arm.
+5. compares the outcomes of fixed and daily redrawn rooms, paired with the no-split arm: counts and peaks as
+   the relative change of the totals over the runs (paired bootstrap interval), times as mean differences.
 
 Writes results/theory_check.csv and results/figures/theory_*.png.
 """
@@ -84,13 +87,24 @@ def fit_a(x, trials, events):
         p = 1 - np.exp(-a * x)
         return np.sum(events * np.log(np.maximum(p, 1e-300)) - (trials - events) * a * x)
 
+    # Coarse grid, then golden section search on the bracket around the grid maximum. The log likelihood is
+    # concave in a, so the bracket contains the maximum.
     grid = np.exp(np.linspace(math.log(1e-4), math.log(10), 400))
-    a = grid[np.argmax([log_likelihood(v) for v in grid])]
-    for _ in range(60):  # golden section refinement around the grid maximum
-        lo, hi = a / 1.05, a * 1.05
-        m1, m2 = lo + (hi - lo) * 0.382, lo + (hi - lo) * 0.618
-        a = (lo + m2) / 2 if log_likelihood(m1) > log_likelihood(m2) else (m1 + hi) / 2
-    return a
+    best = int(np.argmax([log_likelihood(v) for v in grid]))
+    lo, hi = grid[max(best - 1, 0)], grid[min(best + 1, len(grid) - 1)]
+    ratio = (math.sqrt(5) - 1) / 2
+    m1, m2 = hi - ratio * (hi - lo), lo + ratio * (hi - lo)
+    f1, f2 = log_likelihood(m1), log_likelihood(m2)
+    while hi - lo > 1e-9 * hi:
+        if f1 > f2:
+            hi, m2, f2 = m2, m1, f1
+            m1 = hi - ratio * (hi - lo)
+            f1 = log_likelihood(m1)
+        else:
+            lo, m1, f1 = m1, m2, f2
+            m2 = lo + ratio * (hi - lo)
+            f2 = log_likelihood(m2)
+    return (lo + hi) / 2
 
 
 a = fit_a(x, trials, events)
@@ -139,7 +153,7 @@ axes[0].set(xlabel="predicted new infections per room hour", ylabel="observed",
             title="One step: ABM rooms close to g(s, i)")
 axes[1].plot([0, 1], [0, a], color=MUTED, lw=1, ls="--", label=f"a · s/(N−1), a = {a:.3f}")
 axes[1].set(xlabel="susceptible share of the room, s/(N−1)", ylabel="new infections per infectious pupil hour",
-            title="Output per infectious pupil vs susceptible share")
+            title="Per infectious pupil vs susceptible share")
 axes[0].legend(fontsize=11); axes[1].legend(fontsize=11)
 fig.tight_layout(); fig.savefig(os.path.join(FIG, "theory_1_one_step.png")); plt.close(fig)
 
@@ -188,9 +202,23 @@ def peak(t, y):
 
 
 def ci(values):
+    """Mean of paired differences with a normal 95% interval."""
     v = np.asarray(values, float)
     m, se = np.nanmean(v), np.nanstd(v, ddof=1) / math.sqrt(np.sum(~np.isnan(v)))
     return m, m - 1.96 * se, m + 1.96 * se
+
+
+BOOTSTRAP_SEED = 20261126
+
+
+def ratio_ci(arm_values, base_values, draws=5000):
+    """Relative change of the total over all runs, sum(arm) / sum(no split) - 1, in percent, with a 95% paired
+    bootstrap interval over the runs. A mean of per-run ratios would be dominated by runs with a small baseline."""
+    x, y = np.asarray(arm_values, float), np.asarray(base_values, float)
+    estimate = (x.sum() / y.sum() - 1) * 100
+    idx = np.random.default_rng(BOOTSTRAP_SEED).integers(0, len(x), size=(draws, len(x)))
+    boot = (x[idx].sum(1) / y[idx].sum(1) - 1) * 100
+    return estimate, np.percentile(boot, 2.5), np.percentile(boot, 97.5)
 
 
 runs = min(len(glob.glob(os.path.join(STUDY_DIR, arm_name(s, r), "total_infections", "results_run*.h5"))) for s, r in arms())
@@ -210,14 +238,18 @@ for size, redrawn in arms():
         day, school = events_of(arm, run)
         t, y = curve(arm, run)
         b = base[run]
-        school30.append(((school & (day < 30)).sum() / b["school30"] - 1) * 100)
-        all30.append(((day < 30).sum() / b["all30"] - 1) * 100)
+        school30.append((school & (day < 30)).sum())
+        all30.append((day < 30).sum())
         delay.append(day_reaching(t, y, 0.2) - b["d20"])
-        peaks.append((peak(t, y) / b["peak"] - 1) * 100)
+        peaks.append(peak(t, y))
         final.append((y[-1] - b["final"]) / N_PERSONS * 100)
     row = dict(arm=arm, room_size=size, rooms="redrawn" if redrawn else "fixed", runs=runs)
-    for name, values in [("school_infections_day30_pct", school30), ("all_infections_day30_pct", all30),
-                         ("delay_20pct_days", delay), ("peak_change_pct", peaks), ("final_size_diff_pp", final)]:
+    # Counts and peaks: relative change of the totals over the paired runs. Times and final size: mean difference.
+    for name, values, key in [("school_infections_day30_pct", school30, "school30"), ("all_infections_day30_pct", all30, "all30"),
+                              ("peak_change_pct", peaks, "peak")]:
+        row[name], row[name + "_ci_low"], row[name + "_ci_high"] = [
+            round(v, 2) for v in ratio_ci(values, [b[key] for b in base[:runs]])]
+    for name, values in [("delay_20pct_days", delay), ("final_size_diff_pp", final)]:
         row[name], row[name + "_ci_low"], row[name + "_ci_high"] = [round(v, 2) for v in ci(values)]
     row["fitted_a_arm"] = round(a_per_arm[(size, redrawn)], 5)
     row["fitted_a_vs_no_split_pct"] = round((a_per_arm[(size, redrawn)] / a_per_arm[(0, False)] - 1) * 100, 1)
