@@ -13,7 +13,7 @@ def evaluate(w, k):
     out = f'{D}/w{w:.4f}_k{k:.4f}'
     if not os.path.exists(out + '/summary.txt'):
         subprocess.run([B, '--runs', '10', '--days', '90', '--n_persons', '10000', '--initial_infections', '10', '--seed', '42',
-                        '--threads', '1', '--infection_k', f'{k:.4f}',
+                        *(['--threads', os.environ['THREADS']] if os.environ.get('THREADS') else []), '--infection_k', f'{k:.4f}',
                         '--contact_weights', f'home=1.28,school={w:.4f},work=1,social_event=2.0,shop=1', '--output_dir', out],
                        check=True, stdout=subprocess.DEVNULL)
     e = pd.concat(pd.read_csv(f) for f in glob.glob(out + '/runs/*events.csv'))

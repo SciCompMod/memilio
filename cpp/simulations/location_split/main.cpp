@@ -35,6 +35,7 @@
 #include "file_utils.h"
 #include "multi_run_simulator.h"
 
+#include "memilio/config.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/random_number_generator.h"
 
@@ -213,6 +214,13 @@ void print_config_summary(const MultiRunConfig& config)
     std::cout << "Infection parameter K: " << config.infection_parameter_k << std::endl;
     std::cout << "Contact weights: " << contact_weights_to_string(config.city_config.contact_weights) << std::endl;
     std::cout << "Threads: " << (config.num_threads > 0 ? std::to_string(config.num_threads) : std::string("OpenMP default"))
+#if defined(MEMILIO_ENABLE_OPENMP)
+              << " (runs one after another, each model in parallel)"
+#elif defined(_OPENMP)
+              << " (runs in parallel)"
+#else
+              << " (no OpenMP, runs one after another)"
+#endif
               << std::endl;
     std::cout << "Room sizes (0 = no split): school " << config.city_config.school_room_size << ", work "
               << config.city_config.work_room_size << ", social event " << config.city_config.event_room_size

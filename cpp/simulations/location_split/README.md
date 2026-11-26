@@ -92,11 +92,16 @@ done
 
 The simulation needs HDF5. It is not part of the default build. Independent runs are executed in
 parallel with OpenMP if it is found; otherwise (e.g. Apple Clang without `libomp`) one after another.
+With Apple Clang, point CMake to Homebrew's `libomp` (`brew install libomp`):
 
 ```bash
-cmake -S cpp -B build -DMEMILIO_BUILD_SIMULATIONS=ON
+cmake -S cpp -B build -DMEMILIO_BUILD_SIMULATIONS=ON -DOpenMP_ROOT=$(brew --prefix libomp)
 cmake --build build --target location_split_simulation
 ```
+
+Keep `MEMILIO_ENABLE_OPENMP` off (the default). If it is on, the ABM library parallelises every
+model itself, and its `omp single` blocks would bind to the loop over runs, so the runs are then
+executed one after another with a parallel model each. That is much slower for many small runs.
 
 ## Running
 

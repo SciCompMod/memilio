@@ -18,3 +18,4 @@ STUDY_DIR=study_output CALIBRATION_RESULT=calibration_output/fit_result.json \
 Environment variables: `STUDY_DIR` (simulation output, default `study_output`), `STUDY_OUT` (tables and
 figures, default `$STUDY_DIR/results`), `SIM_BINARY` (default `build/bin/location_split_simulation`),
 `CALIBRATION_RESULT` (output of `calibration/fit_contact_weights.py`, for the calibration figure).
+`THREADS` (runs in parallel, default: all cores).

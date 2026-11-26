@@ -20,8 +20,20 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "memilio/config.h"
+
 #ifdef _OPENMP
 #include <omp.h>
+#endif
+
+#ifdef MEMILIO_ENABLE_OPENMP
+// The ABM library parallelises every Model itself. Its cache updates use `omp single`, which binds to
+// the innermost enclosing parallel region, i.e. to the loop over runs below if that were parallel:
+// only one of the runs would update its caches and the others would crash. The runs are therefore
+// executed one after another and each Model uses the threads.
+constexpr bool parallel_runs = false;
+#else
+constexpr bool parallel_runs = true;
 #endif
 
 std::string location_type_to_string(mio::abm::LocationType type)
@@ -342,7 +354,7 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
         mio::failure(mio::StatusCode::UnknownError, "Run was not executed."));
     int finished_runs = 0;
 
-#pragma omp parallel for schedule(dynamic, 1)
+#pragma omp parallel for schedule(dynamic, 1) if (parallel_runs)
     for (int run = 0; run < config.num_runs; ++run) {
         // Every run gets its own stream of the counter based generator so that the runs are
         // independent and reproducible regardless of the order they are executed in.

@@ -8,7 +8,7 @@ run() { # name runs options...
   local name=$1 runs=$2; shift 2
   grep -q "^$name " $D/progress.txt 2>/dev/null && return
   rm -rf $D/$name
-  $B --runs $runs --days 90 --n_persons 10000 --initial_infections 10 --seed 42 --threads 1 "$@" --output_dir $D/$name > $D/$name.log 2>&1
+  $B --runs $runs --days 90 --n_persons 10000 --initial_infections 10 --seed 42 ${THREADS:+--threads $THREADS} "$@" --output_dir $D/$name > $D/$name.log 2>&1
   echo "$name done $(date +%T)" >> $D/progress.txt; cp $D/progress.txt $OUT/progress.txt
   python3 $HERE/analyze.py 2>> $D/analyze.err
 }
