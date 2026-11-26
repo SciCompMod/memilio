@@ -22,6 +22,35 @@ inline size_t age_index(mio::AgeGroup age)
 {
     return (size_t)age.get();
 }
+
+/**
+ * @brief Draw an age group with probability proportional to the number of persons left in it.
+ * Drawing uniformly among the age groups with persons left instead would use up the small age groups
+ * in the households built first, so that the household sizes would differ strongly in their age
+ * composition (e.g. no children in households of four or five).
+ * @param[in] remaining Persons left per age group.
+ * @param[in] first_age Smallest age group that may be drawn.
+ * @return The drawn age group, or -1 if no person of age group first_age or older is left.
+ */
+template <class RNG>
+int draw_age_group(const std::vector<int>& remaining, int first_age, RNG& rng)
+{
+    int total = 0;
+    for (int age = first_age; age < (int)remaining.size(); ++age) {
+        total += std::max(0, remaining[age]);
+    }
+    if (total == 0) {
+        return -1;
+    }
+    int draw = mio::UniformIntDistribution<int>::get_instance()(rng, 0, total - 1);
+    for (int age = first_age; age < (int)remaining.size(); ++age) {
+        draw -= std::max(0, remaining[age]);
+        if (draw < 0) {
+            return age;
+        }
+    }
+    return -1;
+}
 } // namespace
 
 mio::abm::Model CityBuilder::build_model(const CityConfig& config, const mio::RandomNumberGenerator& rng)
@@ -150,19 +179,10 @@ void CityBuilder::create_and_assign_people(mio::abm::Model& model, const CityCon
             bool needs_parent = false;
 
             for (int person = 0; person < hh_size; ++person) {
-                std::vector<int> available_ages;
-                for (int age = 0; age < (int)remaining_ages.size(); ++age) {
-                    if (remaining_ages[age] > 0) {
-                        available_ages.push_back(age);
-                    }
-                }
-                if (available_ages.empty()) {
+                const int selected_age = draw_age_group(remaining_ages, 0, model_rng);
+                if (selected_age < 0) {
                     break;
                 }
-
-                const auto draw = mio::UniformIntDistribution<size_t>::get_instance()(model_rng, size_t(0),
-                                                                                      available_ages.size() - 1);
-                const int selected_age = available_ages[draw];
 
                 household.push_back(static_cast<mio::AgeGroup>(selected_age));
                 remaining_ages[selected_age]--;
@@ -184,17 +204,9 @@ void CityBuilder::create_and_assign_people(mio::abm::Model& model, const CityCon
                         if (current_age == age_group_0_to_4 || current_age == age_group_5_to_14) {
                             remaining_ages[age_index(current_age)]++;
 
-                            std::vector<int> adult_ages;
-                            for (int age = 2; age < (int)remaining_ages.size(); ++age) {
-                                if (remaining_ages[age] > 0) {
-                                    adult_ages.push_back(age);
-                                }
-                            }
-                            if (!adult_ages.empty()) {
-                                const auto adult_draw = mio::UniformIntDistribution<size_t>::get_instance()(
-                                    model_rng, size_t(0), adult_ages.size() - 1);
-                                const int selected_adult = adult_ages[adult_draw];
-                                household[i]             = static_cast<mio::AgeGroup>(selected_adult);
+                            const int selected_adult = draw_age_group(remaining_ages, 2, model_rng);
+                            if (selected_adult >= 0) {
+                                household[i] = static_cast<mio::AgeGroup>(selected_adult);
                                 remaining_ages[selected_adult]--;
                             }
                             else {
