@@ -22,7 +22,7 @@ constexpr int DEFAULT_DAYS               = 90;
 constexpr int DEFAULT_POPULATION         = 1000;
 constexpr int DEFAULT_INITIAL_INFECTIONS = 10;
 constexpr double DEFAULT_INFECTION_K     = 2.11; ///< Calibrated together with the ContactWeights defaults
-                                                 ///< (see parameter_setter.h). 2.4 with all weights 1.
+                                                 ///< (see parameter_setter.h).
 constexpr const char* DEFAULT_OUTPUT_DIR = "results";
 } // namespace Config
 

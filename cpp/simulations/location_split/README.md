@@ -38,8 +38,8 @@ python calibration/fit_contact_weights.py --binary build/bin/location_split_simu
 
 It runs short simulations (20 runs, 10,000 persons, 21 days, measured from day 7), compares the shares
 of infections of persons aged 15+ at Home, SocialEvent and Work with the targets, and adjusts the home
-and social event weights and `k` until the shares match and the epidemic grows as fast as with all
-weights 1 and `k = 2.4`. Work, school and shop keep weight 1 as the reference.
+and social event weights and `k` until the shares match and the epidemic grows as fast as with the
+start weights (by default the current defaults). Work, school and shop keep their weights.
 
 The default targets come from the French ComCor study (Galmiche et al., BMC Public Health 2024): known
 or suspected sources of 584,846 infected adults were household 30.8%, extended family 15.6%, work
@@ -57,7 +57,7 @@ the hardcoded defaults (`ContactWeights` in `parameter_setter.h`, `DEFAULT_INFEC
 Caveats:
 
 * The home weight is poorly determined. Households are close to saturation, so the home share barely
-  responds to it: a home weight 0.97 to 1.28 times the heuristic one gives home shares of 40.7% to 41.3%. The social event weight
+  responds to it: home weights from 16.4 to 21.6 give home shares of 40.7% to 41.3%. The social event weight
   and `k` are well determined.
 * School and shop have no target data. Their weights stay relative to work, so the school share of all
   infections (15% after the fit, 20% before) is an assumption, not a fitted value. Studies whose
@@ -161,8 +161,8 @@ streams to disk and grows with persons times hours.
 * Households are filled by drawing age groups in proportion to the persons left, so the age mix is
   the same in every household size. There is no family structure: households with children are only
   guaranteed one person of age 15+, and about a fifth of them have no adult of age 15-59.
-* The contact rate factors per location type are heuristic; `--contact_weights` fitted to the ComCor
-  infection sites corrects their balance for Home, SocialEvent and Work only.
+* The contact weights are fitted to the ComCor infection sites for Home, SocialEvent and Work only;
+  the school and shop weights are not calibrated.
 * Nobody of age 60+ works (see `calc_num_workplaces_and_worker`), the whole 5-14 age group attends
   school, there is no daycare, and every city has one hospital and one ICU.
 * Every person has one fixed social event location, so social events are fixed groups of about 15.
