@@ -25,9 +25,11 @@ This is the port of `cpp/examples/panvXabmSim` from the `abmXpanvadere` branch o
 
 ## Calibrating the contact weights
 
-The contact rate of each location type is a heuristic factor (see `set_local_parameters`) times a
-weight, set with `--contact_weights home=...,school=...,work=...,social_event=...,shop=...` (default 1
-each). `calibration/fit_contact_weights.py` fits the weights to an observed distribution of infection
+The contact rate of each location type is its contact matrix times 24 h / the hours a person spends
+there on a day it goes there (`HoursPerVisitDay`, measured from the mobility rules: home 19.3, school 8,
+work 10, social event 4, shop 1.2), times a weight, set with
+`--contact_weights home=...,school=...,work=...,social_event=...,shop=...` (defaults: the calibrated values below).
+`calibration/fit_contact_weights.py` fits the weights to an observed distribution of infection
 sites:
 
 ```bash
@@ -49,13 +51,13 @@ the hardcoded defaults (`ContactWeights` in `parameter_setter.h`, `DEFAULT_INFEC
 `defaults.h`):
 
 ```
---infection_k 2.11 --contact_weights home=1.28,school=1,work=1,social_event=2.0,shop=1
+--infection_k 2.11 --contact_weights home=21.616,school=1.6,work=0.625,social_event=4.8,shop=0.1584
 ```
 
 Caveats:
 
 * The home weight is poorly determined. Households are close to saturation, so the home share barely
-  responds to it: weights from 0.97 to 1.28 give home shares of 40.7% to 41.3%. The social event weight
+  responds to it: a home weight 0.97 to 1.28 times the heuristic one gives home shares of 40.7% to 41.3%. The social event weight
   and `k` are well determined.
 * School and shop have no target data. Their weights stay relative to work, so the school share of all
   infections (15% after the fit, 20% before) is an assumption, not a fitted value. Studies whose
@@ -120,7 +122,7 @@ executed one after another with a parallel model each. That is much slower for m
 | `--school_room_size <n>` | split every school into rooms of at most `n` pupils, default 0 (no split) |
 | `--work_room_size <n>` | split every workplace into rooms of at most `n` employees, default 0 |
 | `--event_room_size <n>` | split every social event location into rooms of at most `n` persons, default 0 |
-| `--contact_weights <w>` | relative transmission weight per location type; defaults are the calibrated values `home=1.28,school=1,work=1,social_event=2.0,shop=1` |
+| `--contact_weights <w>` | relative transmission weight per location type; defaults are the calibrated values `home=21.616,school=1.6,work=0.625,social_event=4.8,shop=0.1584` |
 | `--threads <n>` | runs executed in parallel, default: all cores |
 | `--output_dir <path>` | output directory, default `results/run_<timestamp>` |
 | `--seed <n>` | seed for reproducibility |

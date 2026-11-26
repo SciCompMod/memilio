@@ -6,8 +6,8 @@ script adjusts the weights of the fitted location types and the scale of the vir
 
   1. the share of infections per fitted location type, among infections of persons aged 15+ in those
      location types, matches the target shares, and
-  2. the epidemic grows as fast as a reference: by default the current model (all weights 1, the
-     given k), so that rebalancing the settings does not change the overall speed.
+  2. the epidemic grows as fast as a reference: by default the original heuristic model (HEURISTIC
+     weights, the given k), so that rebalancing the settings does not change the overall speed.
 
 Default targets: the French ComCor study (Galmiche et al., BMC Public Health 2024, 584,846 adults,
 October 2020 to August 2022). Known or suspected sources were household members 30.8%, extended family
@@ -47,6 +47,9 @@ import pandas as pd
 LOCATION_TYPE = {"home": "Home", "work": "Work", "social_event": "SocialEvent", "school": "School",
                  "shop": "BasicsShop"}
 ALL_WEIGHTS = ["home", "school", "work", "social_event", "shop"]
+# Original heuristic factors of the panvXabmSim branch, expressed as weights on top of 24 h / hours per
+# visit day (ContactWeights::heuristic() in parameter_setter.h). The fit starts from these.
+HEURISTIC = {"home": 16.8875, "school": 1.6, "work": 0.625, "social_event": 2.4, "shop": 0.1584}
 COMCOR_TARGET = {"home": 30.8, "social_event": 15.6 + 11.0, "work": 15.0}
 ADULT_AGE_GROUPS = [2, 3, 4, 5]  # 15-34, 35-59, 60-79, 80+
 
@@ -110,10 +113,10 @@ def main():
     parser.add_argument("--fit", default="home,social_event",
                         help="Weights to fit; the others stay fixed as the reference.")
     parser.add_argument("--start_weights", type=parse_mapping, default={},
-                        help="Starting weights; missing ones are 1.")
+                        help="Starting weights; missing ones are the heuristic values.")
     parser.add_argument("--k", type=float, default=2.4, help="Starting scale of the viral shed.")
     parser.add_argument("--target_growth", type=float, default=None,
-                        help="Target growth rate per day. Default: that of all weights 1 with --k.")
+                        help="Target growth rate per day. Default: that of the heuristic weights with --k.")
     parser.add_argument("--n_persons", type=int, default=10000)
     parser.add_argument("--runs", type=int, default=20)
     parser.add_argument("--days", type=int, default=21, help="Simulated days; at least --burn_in + 14.")
@@ -138,12 +141,12 @@ def main():
             parser.error(f"Fitted weight '{key}' has no target share.")
     os.makedirs(args.output, exist_ok=True)
 
-    weights = {key: 1.0 for key in ALL_WEIGHTS}
+    weights = dict(HEURISTIC)
     weights.update(args.start_weights)
     k = args.k
 
     if args.target_growth is None:
-        _, args.target_growth, _, _ = simulate(args, {key: 1.0 for key in ALL_WEIGHTS}, args.k,
+        _, args.target_growth, _, _ = simulate(args, dict(HEURISTIC), args.k,
                                                os.path.join(args.output, "reference"))
     print(f"Target shares (adults): {', '.join(f'{key} {value:.3f}' for key, value in args.target.items())}")
     print(f"Target growth rate: {args.target_growth:.4f} per day\n")

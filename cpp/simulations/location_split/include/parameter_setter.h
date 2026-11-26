@@ -24,21 +24,45 @@ void set_parameters(mio::abm::Parameters& params);
  * @param[in] region Region whose contact matrices are used.
  */
 /**
- * @brief Relative transmission weight per location type, multiplied onto the heuristic contact rate
- * factors in set_local_parameters.
+ * @brief Mean hours a Person spends at a location type on a day it goes there, measured from the
+ * mobility rules of the ABM over a whole week (10,000 persons, region Germany). The contact matrices
+ * count contacts per day, while the ABM applies the contact rates only while a Person is at the
+ * Location, so the matrices are scaled with 24 h / these hours.
+ */
+struct HoursPerVisitDay {
+    static constexpr double home         = 19.3;
+    static constexpr double school       = 8.0;
+    static constexpr double work         = 10.0;
+    static constexpr double social_event = 4.0;
+    static constexpr double shop         = 1.2;
+};
+
+/**
+ * @brief Transmission weight per location type: relative infectiousness of one contact hour there.
+ * The contact rate of a location type is matrix * (24 / HoursPerVisitDay) * weight.
  *
- * CALIBRATED DEFAULTS. The defaults below were fitted with calibration/fit_contact_weights.py to the
- * sources of infection of adults in the French ComCor study (Home 42.5%, SocialEvent 36.7%, Work
- * 20.7%), keeping the growth rate of the uncalibrated model (all weights 1, k = 2.4). They belong
- * together with Config::DEFAULT_INFECTION_K = 2.11. School and shop have no target data and keep the
- * weight of work. All weights 1 reproduce the original heuristic factors.
+ * CALIBRATED DEFAULTS. Fitted with calibration/fit_contact_weights.py to the sources of infection of
+ * adults in the French ComCor study (Home 42.5%, SocialEvent 36.7%, Work 20.7%), keeping the growth rate
+ * of the original heuristic model. They belong together with Config::DEFAULT_INFECTION_K = 2.11. School
+ * and shop have no target data and keep their weight relative to work.
+ *
+ * The original heuristic factors of the panvXabmSim branch (assumed hours, "Aufteilung" of the "other"
+ * matrix and an intensity, e.g. home 1.4 * 15) correspond to ContactWeights::heuristic(). The defaults
+ * give exactly the same contact rates as those factors times the fitted weights of the old
+ * parametrization (home 1.28, social event 2.0, others 1).
  */
 struct ContactWeights {
-    double home         = 1.28;
-    double school       = 1.0;
-    double work         = 1.0;
-    double social_event = 2.0;
-    double shop         = 1.0;
+    double home         = 21.616;
+    double school       = 1.6;
+    double work         = 0.625;
+    double social_event = 4.8;
+    double shop         = 0.1584;
+
+    /// The uncalibrated factors of the panvXabmSim branch in this parametrization.
+    static ContactWeights heuristic()
+    {
+        return ContactWeights{16.8875, 1.6, 0.625, 2.4, 0.1584};
+    }
 };
 
 /**

@@ -14,7 +14,7 @@ def evaluate(w, k):
     if not os.path.exists(out + '/summary.txt'):
         subprocess.run([B, '--runs', '10', '--days', '90', '--n_persons', '10000', '--initial_infections', '10', '--seed', '42',
                         *(['--threads', os.environ['THREADS']] if os.environ.get('THREADS') else []), '--infection_k', f'{k:.4f}',
-                        '--contact_weights', f'home=1.28,school={w:.4f},work=1,social_event=2.0,shop=1', '--output_dir', out],
+                        '--contact_weights', f'home=21.616,work=0.625,social_event=4.8,shop=0.1584,school={1.6 * w:.4f}', '--output_dir', out],
                        check=True, stdout=subprocess.DEVNULL)
     e = pd.concat(pd.read_csv(f) for f in glob.glob(out + '/runs/*events.csv'))
     e = e[e.Location_Type != 'Initial']
@@ -41,6 +41,6 @@ for target in [0.15, 0.25]:
         prev = (w, k, s, g)
         w *= odds(target) / odds(s)
         k *= math.exp(np.clip((g0 - g) / k_slope, -0.3, 0.3))
-    result[str(target)] = {'school_weight': w, 'k': k, 'share': s, 'growth': g}
+    result[str(target)] = {'school_weight': 1.6 * w, 'school_weight_relative': w, 'k': k, 'share': s, 'growth': g}
 json.dump({'reference': {'share': s0, 'growth': g0}, 'targets': result}, open(f'{D}/scan_result.json', 'w'), indent=2)
 print('done', file=log, flush=True)

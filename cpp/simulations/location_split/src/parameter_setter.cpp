@@ -293,32 +293,25 @@ void set_local_parameters(mio::abm::Model& model, CityParameters::Region region,
     // Location types that are not listed below fall back to one contact per age group pair and day.
     const Eigen::MatrixXd contacts_default = Eigen::MatrixXd::Constant(n, n, 1.0);
 
-    // The factors below are heuristic weights of the location types, not calibrated values. Each
-    // was meant as 24 h divided by the hours spent at the location times a contact intensity, but the
-    // hours do not match the mobility rules of the ABM, which on a weekday give about 19 h at home,
-    // 8 h at school, 10 h at work, 2 h at a social event and 1 h in a shop. Since the contact rates
-    // only act while a Person is at the Location, the effective daily contacts relative to the
-    // matrices are about 17x at home, 1.6x at school, 0.6x at work, 1.2x at social events and 0.2x
-    // in shops. A larger factor means more infections at that location type. Fitting the factors to
-    // a realistic distribution of infection sites is done with the ContactWeights multiplied onto
-    // these factors, see calibration/fit_contact_weights.py.
+    // Daily contacts are turned into a rate per hour present with 24 h / HoursPerVisitDay; the
+    // ContactWeights give the relative infectiousness of a contact hour per location type.
     for (auto& loc : model.get_locations()) {
         auto& baseline = loc.get_infection_parameters().get<mio::abm::ContactRates>().get_baseline();
         switch (loc.get_type()) {
         case mio::abm::LocationType::Home:
-            baseline = contacts.home * 1.4 * 15.0 * weights.home;
+            baseline = contacts.home * (24.0 / HoursPerVisitDay::home) * weights.home;
             break;
         case mio::abm::LocationType::School:
-            baseline = contacts.school * 4.8 * weights.school;
+            baseline = contacts.school * (24.0 / HoursPerVisitDay::school) * weights.school;
             break;
         case mio::abm::LocationType::Work:
-            baseline = contacts.work * 3.0 * 0.5 * weights.work;
+            baseline = contacts.work * (24.0 / HoursPerVisitDay::work) * weights.work;
             break;
         case mio::abm::LocationType::SocialEvent:
-            baseline = contacts.other * 1.2 * 2.0 * 6.0 * weights.social_event;
+            baseline = contacts.other * (24.0 / HoursPerVisitDay::social_event) * weights.social_event;
             break;
         case mio::abm::LocationType::BasicsShop:
-            baseline = contacts.other * 0.8 * 0.33 * 12.0 * weights.shop;
+            baseline = contacts.other * (24.0 / HoursPerVisitDay::shop) * weights.shop;
             break;
         default:
             baseline = contacts_default;
