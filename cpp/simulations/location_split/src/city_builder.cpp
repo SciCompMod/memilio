@@ -74,8 +74,15 @@ mio::abm::Model CityBuilder::build_model(const CityConfig& config, const mio::Ra
     create_and_assign_people(model, config, infra, households, workplaces, prim_schools, sec_schools, shops, events,
                              hospitals, icus);
 
+    // Each type has its own shuffle stream, so splitting one type does not change the rooms of another.
     if (config.school_room_size > 0) {
-        split_schools_into_rooms(model, config.school_room_size, rng);
+        split_into_rooms(model, mio::abm::LocationType::School, config.school_room_size, rng, 0x5ca1ab1eu);
+    }
+    if (config.work_room_size > 0) {
+        split_into_rooms(model, mio::abm::LocationType::Work, config.work_room_size, rng, 0x0ff1ce00u);
+    }
+    if (config.event_room_size > 0) {
+        split_into_rooms(model, mio::abm::LocationType::SocialEvent, config.event_room_size, rng, 0x0e7e1700u);
     }
 
     // The contact rates have to be set after the Location%s exist.
@@ -85,7 +92,8 @@ mio::abm::Model CityBuilder::build_model(const CityConfig& config, const mio::Ra
     return model;
 }
 
-void CityBuilder::split_schools_into_rooms(mio::abm::Model& model, int room_size, const mio::RandomNumberGenerator& rng)
+void CityBuilder::split_into_rooms(mio::abm::Model& model, mio::abm::LocationType type, int room_size,
+                                   const mio::RandomNumberGenerator& rng, uint32_t stream_key)
 {
     assert(room_size > 0);
 
@@ -93,37 +101,37 @@ void CityBuilder::split_schools_into_rooms(mio::abm::Model& model, int room_size
     // run to run like the Model's generator, but drawing from it leaves the Model's generator untouched.
     auto seeds = rng.get_seeds();
     for (auto& seed : seeds) {
-        seed ^= 0x5ca1ab1eu;
+        seed ^= stream_key;
     }
     mio::RandomNumberGenerator room_rng;
     room_rng.seed(seeds);
     room_rng.set_counter(rng.get_counter());
 
-    // Pupils per school, in the order of the Person%s. std::map keeps the schools in id order.
-    std::map<uint32_t, std::vector<mio::abm::PersonId>> pupils_per_school;
+    // Members per Location, in the order of the Person%s. std::map keeps the Location%s in id order.
+    std::map<uint32_t, std::vector<mio::abm::PersonId>> members_per_location;
     for (const auto& person : model.get_persons()) {
-        const auto school = person.get_assigned_location(mio::abm::LocationType::School);
-        if (school != mio::abm::LocationId::invalid_id()) {
-            pupils_per_school[school.get()].push_back(person.get_id());
+        const auto location = person.get_assigned_location(type);
+        if (location != mio::abm::LocationId::invalid_id()) {
+            members_per_location[location.get()].push_back(person.get_id());
         }
     }
 
-    for (auto& [school_id, pupils] : pupils_per_school) {
-        const size_t num_pupils = pupils.size();
-        const size_t num_rooms  = (num_pupils + size_t(room_size) - 1) / size_t(room_size);
+    for (auto& [location_id, members] : members_per_location) {
+        const size_t num_members = members.size();
+        const size_t num_rooms   = (num_members + size_t(room_size) - 1) / size_t(room_size);
         if (num_rooms <= 1) {
             continue;
         }
 
-        std::shuffle(pupils.begin(), pupils.end(), room_rng);
+        std::shuffle(members.begin(), members.end(), room_rng);
 
-        std::vector<mio::abm::LocationId> rooms{mio::abm::LocationId(school_id)};
+        std::vector<mio::abm::LocationId> rooms{mio::abm::LocationId(location_id)};
         for (size_t r = 1; r < num_rooms; ++r) {
-            rooms.push_back(model.add_location(mio::abm::LocationType::School));
+            rooms.push_back(model.add_location(type));
         }
-        // Consecutive blocks of the shuffled pupils, so that room sizes differ by at most one.
-        for (size_t k = 0; k < num_pupils; ++k) {
-            model.assign_location(pupils[k], rooms[k * num_rooms / num_pupils]);
+        // Consecutive blocks of the shuffled members, so that room sizes differ by at most one.
+        for (size_t k = 0; k < num_members; ++k) {
+            model.assign_location(members[k], rooms[k * num_rooms / num_members]);
         }
     }
 }

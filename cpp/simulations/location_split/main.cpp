@@ -26,7 +26,8 @@
  * a number of randomly drawn infected Person%s. This is the port of cpp/examples/panvXabmSim from the
  * abmXpanvadere branch onto the ABM of main, without the Panvadere coupling: the location that the
  * branch split off and handed to an external microsimulation is not modelled here, the initialization is
- * random. Schools can instead be split into rooms with --school_room_size.
+ * random. Schools, workplaces and social events can be split into rooms with --school_room_size,
+ * --work_room_size and --event_room_size.
  */
 
 #include "city_builder.h"
@@ -66,6 +67,9 @@ void print_help(const char* program_name)
     std::cout << "  --threads <n>              Runs executed in parallel with OpenMP (default: all cores)\n";
     std::cout << "  --school_room_size <n>     Split every school into rooms of at most n pupils with a fixed,\n";
     std::cout << "                             random assignment (default: 0, no split)\n";
+    std::cout << "  --work_room_size <n>       Split every workplace into rooms of at most n employees (default: 0)\n";
+    std::cout << "  --event_room_size <n>      Split every social event location into rooms of at most n persons\n";
+    std::cout << "                             (default: 0)\n";
     std::cout << "  --output_dir <path>        Output directory (default: " << Config::DEFAULT_OUTPUT_DIR
               << "/run_<timestamp>)\n";
     std::cout << "  --seed <number>            Seed for reproducibility (default: built in seed)\n";
@@ -158,6 +162,12 @@ CommandLine parse_command_line(int argc, char* argv[])
         else if (arg == "--school_room_size" && has_value) {
             config.city_config.school_room_size = parse_number<int>(arg, argv[++i], 0, Config::MAX_POPULATION);
         }
+        else if (arg == "--work_room_size" && has_value) {
+            config.city_config.work_room_size = parse_number<int>(arg, argv[++i], 0, Config::MAX_POPULATION);
+        }
+        else if (arg == "--event_room_size" && has_value) {
+            config.city_config.event_room_size = parse_number<int>(arg, argv[++i], 0, Config::MAX_POPULATION);
+        }
         else if (arg == "--output_dir" && has_value) {
             config.output_base_dir = argv[++i];
         }
@@ -204,9 +214,8 @@ void print_config_summary(const MultiRunConfig& config)
     std::cout << "Contact weights: " << contact_weights_to_string(config.city_config.contact_weights) << std::endl;
     std::cout << "Threads: " << (config.num_threads > 0 ? std::to_string(config.num_threads) : std::string("OpenMP default"))
               << std::endl;
-    std::cout << "School room size: "
-              << (config.city_config.school_room_size > 0 ? std::to_string(config.city_config.school_room_size)
-                                                           : std::string("no split"))
+    std::cout << "Room sizes (0 = no split): school " << config.city_config.school_room_size << ", work "
+              << config.city_config.work_room_size << ", social event " << config.city_config.event_room_size
               << std::endl;
     std::cout << "Output directory: " << config.output_base_dir << std::endl;
     std::cout << "==================================" << std::endl;

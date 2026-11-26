@@ -44,7 +44,9 @@ or suspected sources of 584,846 infected adults were household 30.8%, extended f
 colleagues 15.0% and friends 11.0%. Mapped to the ABM (extended family and friends to SocialEvent) and
 renormalized: Home 42.5%, SocialEvent 36.7%, Work 20.7%.
 
-Result with the defaults (seed 42), converged within 2 percentage points per share:
+Result with the defaults (seed 42), converged within 2 percentage points per share. These values are
+the hardcoded defaults (`ContactWeights` in `parameter_setter.h`, `DEFAULT_INFECTION_K` in
+`defaults.h`):
 
 ```
 --infection_k 2.11 --contact_weights home=1.28,school=1,work=1,social_event=2.0,shop=1
@@ -60,7 +62,11 @@ Caveats:
   result depends on school transmission should vary the school weight.
 * ComCor covers adults under the NPIs of 2020-2022 in France; it is a first target, not German data.
 
-## Splitting schools into rooms
+## Splitting locations into rooms
+
+`--school_room_size`, `--work_room_size` and `--event_room_size` split schools, workplaces and social
+event locations in the same way; each type has its own shuffle stream. The description below uses
+schools as the example.
 
 With `--school_room_size n` every school (elementary and secondary alike) is split into
 `ceil(pupils / n)` rooms of near equal size. Each room is a School location of its own, not a cell,
@@ -105,9 +111,11 @@ cmake --build build --target location_split_simulation
 | `--days <n>` | simulated days, default 90 |
 | `--n_persons <n>` | total population, default 1000 |
 | `--initial_infections <n>` | randomly drawn initially infected persons, default 10 |
-| `--infection_k <x>` | scale of the viral shed, default 2.4 (fitted in an earlier study) |
+| `--infection_k <x>` | scale of the viral shed, default 2.11 (calibrated together with the contact weights) |
 | `--school_room_size <n>` | split every school into rooms of at most `n` pupils, default 0 (no split) |
-| `--contact_weights <w>` | relative transmission weight per location type, e.g. `home=1.28,social_event=2.0` |
+| `--work_room_size <n>` | split every workplace into rooms of at most `n` employees, default 0 |
+| `--event_room_size <n>` | split every social event location into rooms of at most `n` persons, default 0 |
+| `--contact_weights <w>` | relative transmission weight per location type; defaults are the calibrated values `home=1.28,school=1,work=1,social_event=2.0,shop=1` |
 | `--threads <n>` | runs executed in parallel, default: all cores |
 | `--output_dir <path>` | output directory, default `results/run_<timestamp>` |
 | `--seed <n>` | seed for reproducibility |

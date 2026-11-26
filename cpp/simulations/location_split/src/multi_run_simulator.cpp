@@ -502,9 +502,8 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
             summary << "Successful runs: " << results.successful_runs << "/" << config.num_runs << "\n";
             summary << "Seed: " << config.custom_seed << "\n";
             summary << "Contact weights: " << contact_weights_to_string(config.city_config.contact_weights) << "\n";
-            summary << "School room size: "
-                    << (config.city_config.school_room_size > 0 ? std::to_string(config.city_config.school_room_size)
-                                                                 : std::string("no split"))
+            summary << "Room sizes (0 = no split): school " << config.city_config.school_room_size << ", work "
+                    << config.city_config.work_room_size << ", social event " << config.city_config.event_room_size
                     << "\n";
         }
     }
@@ -513,10 +512,31 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
     {
         std::ofstream scenario(base_dir + "/scenario.json");
         if (scenario.is_open()) {
-            const int room_size = config.city_config.school_room_size;
-            scenario << "{\"label\": \"" << (room_size > 0 ? "rooms of " + std::to_string(room_size) : "no split")
-                     << "\", \"split_location_type\": \"School\", \"school_room_size\": "
-                     << (room_size > 0 ? std::to_string(room_size) : std::string("null")) << "}\n";
+            const auto& city = config.city_config;
+            // One location type is split per arm; with several, the first one is reported as the axis.
+            const std::vector<std::tuple<std::string, std::string, int>> splits{
+                {"School", "school", city.school_room_size},
+                {"Work", "work", city.work_room_size},
+                {"SocialEvent", "event", city.event_room_size}};
+            std::string label, split_type = "none";
+            int room_size = 0;
+            for (const auto& [type, word, size] : splits) {
+                if (size > 0) {
+                    label += (label.empty() ? "" : ", ") + word + " rooms of " + std::to_string(size);
+                    if (split_type == "none") {
+                        split_type = type;
+                        room_size  = size;
+                    }
+                }
+            }
+            auto json_size = [](int size) {
+                return size > 0 ? std::to_string(size) : std::string("null");
+            };
+            scenario << "{\"label\": \"" << (label.empty() ? std::string("no split") : label)
+                     << "\", \"split_location_type\": \"" << split_type << "\", \"room_size\": " << json_size(room_size)
+                     << ", \"school_room_size\": " << json_size(city.school_room_size)
+                     << ", \"work_room_size\": " << json_size(city.work_room_size)
+                     << ", \"event_room_size\": " << json_size(city.event_room_size) << "}\n";
         }
     }
 
