@@ -28,6 +28,7 @@ struct MultiRunConfig {
     bool write_infection_events  = true; ///< Write one csv of infection events per run.
     bool write_contacts          = false; ///< Write the pairwise contact hours. Quadratic in the location size.
     bool write_person_locations  = false; ///< Write where every Person was at every hour. Large.
+    int num_threads              = 0; ///< Runs executed in parallel with OpenMP. 0 means the OpenMP default.
 };
 
 /// @brief One new Infection, with the Location the Person was at when it happened.
@@ -39,25 +40,35 @@ struct InfectionEvent {
     mio::AgeGroup age;
 };
 
+/// @brief The Location%s a Person is assigned to in one run. Invalid ids mean "none".
+struct PersonAssignment {
+    mio::abm::PersonId person_id;
+    mio::AgeGroup age;
+    mio::abm::LocationId household;
+    mio::abm::LocationId work;
+    mio::abm::LocationId school; ///< The school, or the room of the school if schools are split.
+};
+
 /**
  * @brief Everything one simulation run produces.
+ *
+ * Every run builds its own city, so the assignments below belong to this run only.
  */
 struct SimulationResults {
+    int run = -1; ///< Index of the run. Runs with the same index and seed share the city across arms.
+
     std::vector<mio::TimeSeries<ScalarType>> infection_state_per_age_group;
+    /// New Infection%s per day, per LocationType and AgeGroup.
     std::vector<mio::TimeSeries<ScalarType>> infection_per_location_type_per_age_group;
     std::vector<mio::TimeSeries<ScalarType>> total_infections;
 
-    std::vector<std::tuple<mio::abm::PersonId, mio::abm::LocationId>> household_id;
-    std::vector<std::tuple<mio::abm::PersonId, mio::abm::LocationId>> work_id;
+    std::vector<PersonAssignment> persons;
     std::vector<std::tuple<mio::abm::LocationId, mio::abm::LocationType>> location_id_and_type;
 
     std::vector<InfectionEvent> infection_events;
     std::vector<mio::abm::PersonId> initial_infections;
     /// (person 1, person 2, location, hours spent together). Only filled if requested.
     std::vector<std::tuple<uint32_t, uint32_t, uint32_t, uint32_t>> contact_hours;
-    /// Per time step, the Location of every Person. Only filled if requested. Needed to reconstruct
-    /// who infected whom, because the infector must have shared the Location with the infectee.
-    std::vector<std::vector<std::pair<uint32_t, uint32_t>>> person_locations;
 
     double average_household_size_of_initial_infections           = 0.0;
     double average_persons_above_age_group_0_in_initial_households = 0.0;
@@ -87,9 +98,15 @@ public:
                                                       const MultiRunConfig& config);
 
 private:
+    /**
+     * @brief Simulate one run hour by hour.
+     * Infection events, contact hours and person locations are derived on the fly from the state of
+     * the previous hour, so the memory needed does not grow with the simulated time (apart from the
+     * contact hours, which grow with the number of distinct contacts).
+     */
     static mio::IOResult<SimulationResults> run_single_simulation(mio::abm::Model&& model,
                                                                   const std::vector<mio::abm::PersonId>& initial_infections,
-                                                                  const MultiRunConfig& config);
+                                                                  const MultiRunConfig& config, int run);
 };
 
 /// @brief Human readable name of a LocationType, used in the csv output.

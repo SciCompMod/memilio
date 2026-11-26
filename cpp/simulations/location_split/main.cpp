@@ -60,6 +60,7 @@ void print_help(const char* program_name)
               << Config::DEFAULT_INITIAL_INFECTIONS << ")\n";
     std::cout << "  --infection_k <number>     Scale of the viral shed (default: " << Config::DEFAULT_INFECTION_K
               << ", range: " << Config::MIN_INFECTION_K << "-" << Config::MAX_INFECTION_K << ")\n";
+    std::cout << "  --threads <n>              Runs executed in parallel with OpenMP (default: all cores)\n";
     std::cout << "  --school_room_size <n>     Split every school into rooms of at most n pupils with a fixed,\n";
     std::cout << "                             random assignment (default: 0, no split)\n";
     std::cout << "  --output_dir <path>        Output directory (default: " << Config::DEFAULT_OUTPUT_DIR
@@ -141,6 +142,9 @@ CommandLine parse_command_line(int argc, char* argv[])
             config.infection_parameter_k =
                 parse_number<double>(arg, argv[++i], Config::MIN_INFECTION_K, Config::MAX_INFECTION_K);
         }
+        else if (arg == "--threads" && has_value) {
+            config.num_threads = parse_number<int>(arg, argv[++i], 1, 1024);
+        }
         else if (arg == "--school_room_size" && has_value) {
             config.city_config.school_room_size = parse_number<int>(arg, argv[++i], 0, Config::MAX_POPULATION);
         }
@@ -187,6 +191,8 @@ void print_config_summary(const MultiRunConfig& config)
     std::cout << "Simulation days: " << config.simulation_days << std::endl;
     std::cout << "Initial infections: " << config.num_initial_infections << std::endl;
     std::cout << "Infection parameter K: " << config.infection_parameter_k << std::endl;
+    std::cout << "Threads: " << (config.num_threads > 0 ? std::to_string(config.num_threads) : std::string("OpenMP default"))
+              << std::endl;
     std::cout << "School room size: "
               << (config.city_config.school_room_size > 0 ? std::to_string(config.city_config.school_room_size)
                                                            : std::string("no split"))
@@ -209,6 +215,7 @@ mio::IOResult<void> main_flow(int argc, char* argv[])
 
     auto rng           = mio::RandomNumberGenerator();
     const uint32_t s   = (config.custom_seed != 0) ? config.custom_seed : 12345678u;
+    config.custom_seed = s; // so that the summary shows the seed that was actually used
     rng.seed({s, s + 1, s + 2, s + 3, s + 4, s + 5});
     rng.synchronize();
 

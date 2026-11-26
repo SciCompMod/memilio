@@ -20,6 +20,10 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 std::string location_type_to_string(mio::abm::LocationType type)
 {
     switch (type) {
@@ -134,84 +138,73 @@ std::pair<double, double> initial_household_statistics(const mio::abm::Model& mo
     return {total_size / n, total_above_group_0 / n};
 }
 
-/**
- * @brief Reconstruct the new Infection%s from the per time step log of Person states.
- *
- * A Person is newly infected in time step k if it was Susceptible in step k-1 and is not any more in
- * step k. Because the ABM lets Person%s interact before it moves them, the Infection happened at the
- * Location the Person occupied in step k-1.
- */
-std::vector<InfectionEvent> derive_infection_events(const std::vector<std::vector<PersonState>>& person_states)
-{
-    std::vector<InfectionEvent> events;
-    for (size_t k = 1; k < person_states.size(); ++k) {
-        const auto& prev = person_states[k - 1];
-        const auto& curr = person_states[k];
-        assert(prev.size() == curr.size() && "The population must not change during a run.");
-
-        for (size_t i = 0; i < curr.size(); ++i) {
-            if (prev[i].infection_state == mio::abm::InfectionState::Susceptible &&
-                curr[i].infection_state != mio::abm::InfectionState::Susceptible) {
-                events.push_back(InfectionEvent{static_cast<int>(k), curr[i].person_id, prev[i].location_id,
-                                                prev[i].location_type, curr[i].age});
-            }
-        }
-    }
-    return events;
-}
-
-/// @brief Number of new Infection%s per LocationType and AgeGroup over time, flattened as age * Count + type.
-mio::TimeSeries<ScalarType> infections_per_location_type(const std::vector<InfectionEvent>& events, int num_time_points,
+/// @brief New Infection%s per day, per LocationType and AgeGroup, flattened as age * Count + type.
+mio::TimeSeries<ScalarType> infections_per_location_type(const std::vector<InfectionEvent>& events, int num_days,
                                                          size_t num_groups)
 {
     const auto num_types = (size_t)mio::abm::LocationType::Count;
     const auto dim       = Eigen::Index(num_types * num_groups);
 
     mio::TimeSeries<ScalarType> series(dim);
-    for (int k = 0; k < num_time_points; ++k) {
-        series.add_time_point(k / 24.0, Eigen::VectorX<ScalarType>::Zero(dim));
+    for (int day = 0; day < num_days; ++day) {
+        series.add_time_point(day, Eigen::VectorX<ScalarType>::Zero(dim));
     }
     for (const auto& event : events) {
-        if (event.time_step < num_time_points) {
+        // An event in time step k happened in the hour [k - 1, k).
+        const int day = (event.time_step - 1) / 24;
+        if (day >= 0 && day < num_days) {
             const auto index = num_types * (size_t)event.age.get() + (size_t)event.location_type;
-            series.get_value(event.time_step)[Eigen::Index(index)] += 1;
+            series.get_value(day)[Eigen::Index(index)] += 1;
         }
     }
     return series;
 }
 
-/// @brief Hours that each pair of Person%s spent at the same Location.
-std::vector<std::tuple<uint32_t, uint32_t, uint32_t, uint32_t>>
-calculate_contact_hours(const std::vector<std::vector<PersonState>>& person_states)
+/// @brief Add one hour to every pair of Person%s that are at the same Location.
+void add_contact_hours(const mio::abm::Model& model,
+                       std::map<std::tuple<uint32_t, uint32_t, uint32_t>, uint32_t>& contact_hours)
 {
-    std::map<std::tuple<uint32_t, uint32_t, uint32_t>, uint32_t> contact_hours;
-
-    for (const auto& step : person_states) {
-        std::unordered_map<uint32_t, std::vector<uint32_t>> location_to_persons;
-        for (const auto& state : step) {
-            location_to_persons[state.location_id.get()].push_back(static_cast<uint32_t>(state.person_id.get()));
-        }
-
-        for (const auto& [location_id, persons] : location_to_persons) {
-            for (size_t i = 0; i < persons.size(); ++i) {
-                for (size_t j = i + 1; j < persons.size(); ++j) {
-                    auto p1 = persons[i];
-                    auto p2 = persons[j];
-                    if (p1 > p2) {
-                        std::swap(p1, p2);
-                    }
-                    contact_hours[{p1, p2, location_id}]++;
-                }
+    std::unordered_map<uint32_t, std::vector<uint32_t>> location_to_persons;
+    for (const auto& person : model.get_persons()) {
+        location_to_persons[person.get_location().get()].push_back(static_cast<uint32_t>(person.get_id().get()));
+    }
+    for (const auto& [location_id, persons] : location_to_persons) {
+        for (size_t i = 0; i < persons.size(); ++i) {
+            for (size_t j = i + 1; j < persons.size(); ++j) {
+                const auto p1 = std::min(persons[i], persons[j]);
+                const auto p2 = std::max(persons[i], persons[j]);
+                contact_hours[{p1, p2, location_id}]++;
             }
         }
     }
+}
 
-    std::vector<std::tuple<uint32_t, uint32_t, uint32_t, uint32_t>> result;
-    result.reserve(contact_hours.size());
-    for (const auto& [key, hours] : contact_hours) {
-        result.emplace_back(std::get<0>(key), std::get<1>(key), std::get<2>(key), hours);
+/// @brief Append the Location of every Person at time step @p step to the open csv.
+void write_person_locations(const mio::abm::Model& model, int step, std::ofstream& file)
+{
+    for (const auto& person : model.get_persons()) {
+        file << step << "," << person.get_id().get() << "," << person.get_location().get() << "\n";
     }
-    return result;
+}
+
+/// @brief The Location%s each Person is assigned to.
+std::vector<PersonAssignment> person_assignments(const mio::abm::Model& model)
+{
+    std::vector<PersonAssignment> assignments;
+    assignments.reserve(model.get_persons().size());
+    for (const auto& person : model.get_persons()) {
+        assignments.push_back(PersonAssignment{person.get_id(), person.get_age(),
+                                               person.get_assigned_location(mio::abm::LocationType::Home),
+                                               person.get_assigned_location(mio::abm::LocationType::Work),
+                                               person.get_assigned_location(mio::abm::LocationType::School)});
+    }
+    return assignments;
+}
+
+/// @brief Directory of the per run files.
+std::string runs_directory(const MultiRunConfig& config)
+{
+    return config.output_base_dir + "/runs";
 }
 
 } // namespace
@@ -219,12 +212,14 @@ calculate_contact_hours(const std::vector<std::vector<PersonState>>& person_stat
 mio::IOResult<SimulationResults>
 MultiRunSimulator::run_single_simulation(mio::abm::Model&& model,
                                          const std::vector<mio::abm::PersonId>& initial_infections,
-                                         const MultiRunConfig& config)
+                                         const MultiRunConfig& config, int run)
 {
     SimulationResults results;
+    results.run = run;
 
     const auto t0   = mio::abm::TimePoint(0);
     const auto tmax = t0 + mio::abm::days(config.simulation_days);
+    const auto dt   = mio::abm::hours(1);
 
     assign_infection_state(model, initial_infections, t0);
     std::tie(results.average_household_size_of_initial_infections,
@@ -236,42 +231,88 @@ MultiRunSimulator::run_single_simulation(mio::abm::Model&& model,
         config.infection_parameter_k;
 
     const auto num_groups = (size_t)model.parameters.get_num_groups();
-    auto sim              = mio::abm::Simulation(t0, std::move(model));
+    auto sim              = mio::abm::Simulation(t0, std::move(model)); // steps of one hour
+    auto persons          = sim.get_model().get_persons();
+
+    results.persons = person_assignments(sim.get_model());
+    results.location_id_and_type.reserve(sim.get_model().get_locations().size());
+    for (const auto& location : sim.get_model().get_locations()) {
+        results.location_id_and_type.emplace_back(location.get_id(), location.get_type());
+    }
 
     mio::History<mio::abm::TimeSeriesWriter, LogInfectionStatePerAgeGroup> history_infection_state{
         Eigen::Index((size_t)mio::abm::InfectionState::Count * num_groups)};
     mio::History<mio::abm::TimeSeriesWriter, LogTotalInfections> history_total_infections{Eigen::Index(1)};
-    mio::History<mio::DataWriterToMemory, LogPersonStates> history_person_states;
-    mio::History<mio::DataWriterToMemory, LogHouseholdId, LogWorkId, LogLocationIdAndType> history_topology;
 
-    sim.advance(tmax, history_infection_state, history_total_infections, history_person_states, history_topology);
+    std::map<std::tuple<uint32_t, uint32_t, uint32_t>, uint32_t> contact_hours;
+    std::ofstream location_file;
+    if (config.write_person_locations) {
+        const auto filename = runs_directory(config) + "/run_" + std::to_string(run) + "_person_locations.csv";
+        location_file.open(filename);
+        if (!location_file.is_open()) {
+            return mio::failure(mio::StatusCode::FileNotFound, "Could not open " + filename);
+        }
+        location_file << "Timestep,Person_ID,Location_ID\n";
+    }
+
+    // State of the previous hour. A Person that was Susceptible then and is not any more now was
+    // infected in this hour, at the Location it occupied in the previous hour, because the ABM lets
+    // Person%s interact before it moves them.
+    std::vector<mio::abm::InfectionState> previous_state(persons.size());
+    std::vector<mio::abm::LocationId> previous_location(persons.size());
+    std::vector<mio::abm::LocationType> previous_location_type(persons.size());
+    auto remember_current_hour = [&]() {
+        for (size_t i = 0; i < persons.size(); ++i) {
+            previous_state[i]         = persons[i].get_infection_state(sim.get_time());
+            previous_location[i]      = persons[i].get_location();
+            previous_location_type[i] = persons[i].get_location_type();
+        }
+    };
+
+    int step = 0;
+    history_infection_state.log(sim);
+    history_total_infections.log(sim);
+    if (config.write_contacts) {
+        add_contact_hours(sim.get_model(), contact_hours);
+    }
+    if (config.write_person_locations) {
+        write_person_locations(sim.get_model(), step, location_file);
+    }
+    remember_current_hour();
+
+    while (sim.get_time() < tmax) {
+        sim.advance(sim.get_time() + dt);
+        ++step;
+
+        history_infection_state.log(sim);
+        history_total_infections.log(sim);
+
+        for (size_t i = 0; i < persons.size(); ++i) {
+            if (previous_state[i] == mio::abm::InfectionState::Susceptible &&
+                persons[i].get_infection_state(sim.get_time()) != mio::abm::InfectionState::Susceptible) {
+                results.infection_events.push_back(InfectionEvent{step, persons[i].get_id(), previous_location[i],
+                                                                  previous_location_type[i], persons[i].get_age()});
+            }
+        }
+        if (config.write_contacts) {
+            add_contact_hours(sim.get_model(), contact_hours);
+        }
+        if (config.write_person_locations) {
+            write_person_locations(sim.get_model(), step, location_file);
+        }
+        remember_current_hour();
+    }
 
     results.infection_state_per_age_group =
         std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(history_infection_state.get_log())};
     results.total_infections = std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(history_total_infections.get_log())};
-
-    results.household_id         = std::get<0>(history_topology.get_log()).front();
-    results.work_id              = std::get<1>(history_topology.get_log()).front();
-    results.location_id_and_type = std::get<2>(history_topology.get_log()).front();
-
-    const auto& person_states = std::get<0>(history_person_states.get_log());
-    results.infection_events  = derive_infection_events(person_states);
     results.infection_per_location_type_per_age_group = std::vector<mio::TimeSeries<ScalarType>>{
-        infections_per_location_type(results.infection_events, static_cast<int>(person_states.size()), num_groups)};
+        infections_per_location_type(results.infection_events, config.simulation_days, num_groups)};
 
     if (config.write_contacts) {
-        results.contact_hours = calculate_contact_hours(person_states);
-    }
-
-    if (config.write_person_locations) {
-        results.person_locations.reserve(person_states.size());
-        for (const auto& step : person_states) {
-            std::vector<std::pair<uint32_t, uint32_t>> locations;
-            locations.reserve(step.size());
-            for (const auto& state : step) {
-                locations.emplace_back(static_cast<uint32_t>(state.person_id.get()), state.location_id.get());
-            }
-            results.person_locations.push_back(std::move(locations));
+        results.contact_hours.reserve(contact_hours.size());
+        for (const auto& [key, hours] : contact_hours) {
+            results.contact_hours.emplace_back(std::get<0>(key), std::get<1>(key), std::get<2>(key), hours);
         }
     }
 
@@ -283,18 +324,33 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
 {
     MultiRunResults results;
     results.infection_parameter_k = config.infection_parameter_k;
-    results.all_runs.reserve(static_cast<size_t>(config.num_runs));
 
+    if (config.write_person_locations) {
+        BOOST_OUTCOME_TRY(mio::create_directory(runs_directory(config), /*create_parents=*/true));
+    }
+
+#ifdef _OPENMP
+    if (config.num_threads > 0) {
+        omp_set_num_threads(config.num_threads);
+    }
+#endif
+
+    // Every run writes only its own slot, so the result does not depend on the number of threads or
+    // on the order in which the runs finish.
+    std::vector<mio::IOResult<SimulationResults>> run_results(
+        static_cast<size_t>(config.num_runs),
+        mio::failure(mio::StatusCode::UnknownError, "Run was not executed."));
+    int finished_runs = 0;
+
+#pragma omp parallel for schedule(dynamic, 1)
     for (int run = 0; run < config.num_runs; ++run) {
-        if (run % 10 == 0 || run == config.num_runs - 1) {
-            std::cout << "Run " << run + 1 << "/" << config.num_runs << std::endl;
-        }
-
         // Every run gets its own stream of the counter based generator so that the runs are
         // independent and reproducible regardless of the order they are executed in.
-        rng.set_counter(mio::rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(run), mio::Counter<uint32_t>(0)));
+        auto run_rng = rng;
+        run_rng.set_counter(
+            mio::rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(run), mio::Counter<uint32_t>(0)));
 
-        auto model = CityBuilder::build_model(config.city_config, rng);
+        auto model = CityBuilder::build_model(config.city_config, run_rng);
 
         // The city is built from the Model's generator, so a copy of it taken after the build is a
         // stream that neither the city construction nor the simulation itself uses.
@@ -305,13 +361,25 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
         // Person index still separates the individual streams.
         model.reset_rng(mio::Counter<uint32_t>(static_cast<uint32_t>(run)));
 
-        auto single_result = run_single_simulation(std::move(model), initial_infections, config);
-        if (single_result) {
-            results.all_runs.push_back(std::move(single_result.value()));
+        run_results[static_cast<size_t>(run)] = run_single_simulation(std::move(model), initial_infections, config, run);
+
+#pragma omp critical(location_split_progress)
+        {
+            ++finished_runs;
+            if (finished_runs % 10 == 0 || finished_runs == config.num_runs) {
+                std::cout << "Finished " << finished_runs << "/" << config.num_runs << " runs" << std::endl;
+            }
+        }
+    }
+
+    results.all_runs.reserve(run_results.size());
+    for (size_t run = 0; run < run_results.size(); ++run) {
+        if (run_results[run]) {
+            results.all_runs.push_back(std::move(run_results[run].value()));
             results.successful_runs++;
         }
         else {
-            std::cerr << "Run " << run << " failed: " << single_result.error().message() << std::endl;
+            std::cerr << "Run " << run << " failed: " << run_results[run].error().message() << std::endl;
         }
     }
 
@@ -324,24 +392,28 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
 namespace
 {
 
-/// @brief Write a two column csv of (Person, Location) pairs.
-void save_person_location_csv(const std::vector<std::tuple<mio::abm::PersonId, mio::abm::LocationId>>& entries,
-                              const std::string& filename, const std::string& location_column)
+/// @brief Write the Location%s every Person of one run is assigned to. An empty field means "none".
+void save_person_assignments(const std::vector<PersonAssignment>& persons, const std::string& filename)
 {
     std::ofstream file(filename);
     if (!file.is_open()) {
         std::cerr << "Error: could not open " << filename << " for writing.\n";
         return;
     }
-    file << "Person_ID," << location_column << "\n";
-    for (const auto& [person_id, location_id] : entries) {
-        file << person_id.get() << ",";
-        if (location_id == mio::abm::LocationId::invalid_id()) {
-            file << "\n";
+    auto write_id = [&file](mio::abm::LocationId id) {
+        if (id != mio::abm::LocationId::invalid_id()) {
+            file << id.get();
         }
-        else {
-            file << location_id.get() << "\n";
-        }
+    };
+    file << "Person_ID,Age_Group,Household_ID,Work_ID,School_ID\n";
+    for (const auto& person : persons) {
+        file << person.person_id.get() << "," << person.age.get() << ",";
+        write_id(person.household);
+        file << ",";
+        write_id(person.work);
+        file << ",";
+        write_id(person.school);
+        file << "\n";
     }
 }
 
@@ -387,11 +459,11 @@ void save_contact_hours(const std::vector<std::tuple<uint32_t, uint32_t, uint32_
  * which is not supported for abm::Model.
  */
 mio::IOResult<void> save_ensemble(const std::vector<std::vector<mio::TimeSeries<ScalarType>>>& ensemble,
-                                  int num_groups, const std::string& dir)
+                                  const std::vector<int>& run_indices, int num_groups, const std::string& dir)
 {
-    for (size_t run = 0; run < ensemble.size(); ++run) {
-        BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble[run], {0}, num_groups, dir + "/results_run" + std::to_string(run) + ".h5"));
+    for (size_t i = 0; i < ensemble.size(); ++i) {
+        BOOST_OUTCOME_TRY(mio::save_result(ensemble[i], {0}, num_groups,
+                                           dir + "/results_run" + std::to_string(run_indices[i]) + ".h5"));
     }
 
     for (const auto& [name, p] : {std::pair<const char*, ScalarType>{"p05", 0.05},
@@ -405,23 +477,6 @@ mio::IOResult<void> save_ensemble(const std::vector<std::vector<mio::TimeSeries<
                                            percentile_dir + "/Results.h5"));
     }
     return mio::success();
-}
-
-/// @brief Write where every Person was at every hour of one run.
-void save_person_locations(const std::vector<std::vector<std::pair<uint32_t, uint32_t>>>& person_locations,
-                           const std::string& filename)
-{
-    std::ofstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "Error: could not open " << filename << " for writing.\n";
-        return;
-    }
-    file << "Timestep,Person_ID,Location_ID\n";
-    for (size_t t = 0; t < person_locations.size(); ++t) {
-        for (const auto& [person_id, location_id] : person_locations[t]) {
-            file << t << "," << person_id << "," << location_id << "\n";
-        }
-    }
 }
 
 } // namespace
@@ -469,17 +524,16 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
         std::ofstream file(base_dir + "/initial_infection_households.csv");
         if (file.is_open()) {
             file << "Run,Average_Household_Size,Average_Persons_Above_Age_Group_0\n";
-            for (size_t run = 0; run < results.all_runs.size(); ++run) {
-                file << run << "," << results.all_runs[run].average_household_size_of_initial_infections << ","
-                     << results.all_runs[run].average_persons_above_age_group_0_in_initial_households << "\n";
+            for (const auto& run_result : results.all_runs) {
+                file << run_result.run << "," << run_result.average_household_size_of_initial_infections << ","
+                     << run_result.average_persons_above_age_group_0_in_initial_households << "\n";
             }
         }
     }
 
-    // Topology of the city. Identical for all runs up to the random household composition, so the
-    // first run is written as a reference.
-    save_person_location_csv(first_run.household_id, base_dir + "/household_id.csv", "Household_ID");
-    save_person_location_csv(first_run.work_id, base_dir + "/work_id.csv", "Work_ID");
+    // Locations and their types. Every run builds its own city, but the Location%s are created in the
+    // same order and number in every run, so this list holds for all runs. Which Person is assigned to
+    // which Location differs between runs and is written per run below.
     {
         std::ofstream file(base_dir + "/location_id_and_type.csv");
         if (file.is_open()) {
@@ -492,22 +546,19 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
 
     CityBuilder::save_city_to_file(config.city_config, base_dir + "/city_config.csv");
 
-    // Per run detail.
-    if (config.write_infection_events || config.write_contacts || config.write_person_locations) {
+    // Per run detail. The person locations were already written during the runs.
+    {
         const std::string runs_dir = base_dir + "/runs";
         BOOST_OUTCOME_TRY(mio::create_directory(runs_dir));
-        for (size_t run = 0; run < results.all_runs.size(); ++run) {
-            const auto prefix = runs_dir + "/run_" + std::to_string(run);
+        for (const auto& run_result : results.all_runs) {
+            const auto prefix = runs_dir + "/run_" + std::to_string(run_result.run);
+            save_person_assignments(run_result.persons, prefix + "_persons.csv");
             if (config.write_infection_events) {
-                save_infection_events(results.all_runs[run].infection_events,
-                                      results.all_runs[run].initial_infections, prefix + "_infection_events.csv");
+                save_infection_events(run_result.infection_events, run_result.initial_infections,
+                                      prefix + "_infection_events.csv");
             }
             if (config.write_contacts) {
-                save_contact_hours(results.all_runs[run].contact_hours, prefix + "_contact_hours.csv");
-            }
-            if (config.write_person_locations) {
-                save_person_locations(results.all_runs[run].person_locations,
-                                      prefix + "_person_locations.csv");
+                save_contact_hours(run_result.contact_hours, prefix + "_contact_hours.csv");
             }
         }
     }
@@ -517,17 +568,19 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
     std::vector<std::vector<mio::TimeSeries<ScalarType>>> ensemble_infection_per_location_type;
     std::vector<std::vector<mio::TimeSeries<ScalarType>>> ensemble_total_infections;
 
+    std::vector<int> run_indices;
     for (const auto& run : results.all_runs) {
+        run_indices.push_back(run.run);
         ensemble_infection_state.push_back(run.infection_state_per_age_group);
         ensemble_infection_per_location_type.push_back(run.infection_per_location_type_per_age_group);
         ensemble_total_infections.push_back(run.total_infections);
     }
 
-    BOOST_OUTCOME_TRY(save_ensemble(ensemble_infection_state, static_cast<int>(num_age_groups),
+    BOOST_OUTCOME_TRY(save_ensemble(ensemble_infection_state, run_indices, static_cast<int>(num_age_groups),
                                     base_dir + "/infection_state_per_age_group"));
-    BOOST_OUTCOME_TRY(save_ensemble(ensemble_infection_per_location_type, static_cast<int>(num_age_groups),
+    BOOST_OUTCOME_TRY(save_ensemble(ensemble_infection_per_location_type, run_indices, static_cast<int>(num_age_groups),
                                     base_dir + "/infection_per_location_type_per_age_group"));
-    BOOST_OUTCOME_TRY(save_ensemble(ensemble_total_infections, 1, base_dir + "/total_infections"));
+    BOOST_OUTCOME_TRY(save_ensemble(ensemble_total_infections, run_indices, 1, base_dir + "/total_infections"));
 
     return mio::success();
 }
