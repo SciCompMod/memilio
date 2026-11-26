@@ -38,13 +38,13 @@ struct HoursPerVisitDay {
  *
  * CALIBRATED DEFAULTS. Fitted with calibration/fit_contact_weights.py to the sources of infection of
  * adults in the French ComCor study (Home 42.5%, SocialEvent 36.7%, Work 20.7%). They belong together
- * with Config::DEFAULT_INFECTION_K = 2.11. School and shop have no target data and are not fitted.
+ * with Config::DEFAULT_INFECTION_K = 1.596, which was fixed during the fit. School and shop have no target data and are not fitted.
  */
 struct ContactWeights {
-    double home         = 21.616;
+    double home         = 20.3425;
     double school       = 1.6;
     double work         = 0.625;
-    double social_event = 4.8;
+    double social_event = 6.08233;
     double shop         = 0.1584;
 };
 

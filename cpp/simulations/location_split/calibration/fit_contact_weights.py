@@ -50,8 +50,8 @@ LOCATION_TYPE = {"home": "Home", "work": "Work", "social_event": "SocialEvent", 
 ALL_WEIGHTS = ["home", "school", "work", "social_event", "shop"]
 # Defaults of the simulation (ContactWeights in parameter_setter.h, DEFAULT_INFECTION_K in defaults.h).
 # The fit starts from these.
-DEFAULT_WEIGHTS = {"home": 21.616, "school": 1.6, "work": 0.625, "social_event": 4.8, "shop": 0.1584}
-DEFAULT_K = 2.11
+DEFAULT_WEIGHTS = {"home": 20.3425, "school": 1.6, "work": 0.625, "social_event": 6.08233, "shop": 0.1584}
+DEFAULT_K = 1.596
 COMCOR_TARGET = {"home": 30.8, "social_event": 15.6 + 11.0, "work": 15.0}
 ADULT_AGE_GROUPS = [2, 3, 4, 5]  # 15-34, 35-59, 60-79, 80+
 
@@ -117,6 +117,8 @@ def main():
     parser.add_argument("--start_weights", type=parse_mapping, default={},
                         help="Starting weights; missing ones are the defaults of the simulation.")
     parser.add_argument("--k", type=float, default=DEFAULT_K, help="Starting scale of the viral shed.")
+    parser.add_argument("--fix_k", action="store_true",
+                        help="Keep k at --k and fit only the weights; the growth rate is not matched.")
     parser.add_argument("--target_growth", type=float, default=None,
                         help="Target growth rate per day. Default: that of the start weights with --k.")
     parser.add_argument("--n_persons", type=int, default=10000)
@@ -147,11 +149,11 @@ def main():
     weights.update(args.start_weights)
     k = args.k
 
-    if args.target_growth is None:
+    if args.target_growth is None and not args.fix_k:
         _, args.target_growth, _, _ = simulate(args, dict(weights), args.k,
                                                os.path.join(args.output, "reference"))
     print(f"Target shares (adults): {', '.join(f'{key} {value:.3f}' for key, value in args.target.items())}")
-    print(f"Target growth rate: {args.target_growth:.4f} per day\n")
+    print(f"Target growth rate: {'not matched, k fixed at ' + str(k) if args.fix_k else f'{args.target_growth:.4f} per day'}\n")
 
     # Sensitivities, start with the linear guess.
     elasticity = {key: 1.0 for key in fitted}
@@ -169,7 +171,7 @@ def main():
         print(f"    adult shares {', '.join(f'{key} {shares[key]:.3f}' for key in args.target)} "
               f"(max error {error:.3f}, {n_events} events), growth {growth:.4f}/day")
 
-        if error <= args.share_tolerance and abs(growth - args.target_growth) <= args.growth_tolerance:
+        if error <= args.share_tolerance and (args.fix_k or abs(growth - args.target_growth) <= args.growth_tolerance):
             print("Converged.")
             break
 
@@ -188,8 +190,9 @@ def main():
         for key in fitted:
             log_step = math.log(args.target[key] / shares[key]) / elasticity[key]
             weights[key] *= math.exp(float(np.clip(log_step, -0.5, 0.5)))
-        log_k = (args.target_growth - growth) / growth_per_log_k
-        k *= math.exp(float(np.clip(log_k, -0.3, 0.3)))
+        if not args.fix_k:
+            log_k = (args.target_growth - growth) / growth_per_log_k
+            k *= math.exp(float(np.clip(log_k, -0.3, 0.3)))
     else:
         print("Not converged within --max_iterations; the last evaluated values are written.")
     weights, k = history[-1]["weights"], history[-1]["k"]

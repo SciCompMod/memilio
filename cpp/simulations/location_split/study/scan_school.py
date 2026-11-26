@@ -14,7 +14,7 @@ def evaluate(w, k):
     if not os.path.exists(out + '/summary.txt'):
         subprocess.run([B, '--runs', '10', '--days', '90', '--n_persons', '10000', '--initial_infections', '10', '--seed', '42',
                         *(['--threads', os.environ['THREADS']] if os.environ.get('THREADS') else []), '--infection_k', f'{k:.4f}',
-                        '--contact_weights', f'home=21.616,work=0.625,social_event=4.8,shop=0.1584,school={1.6 * w:.4f}', '--output_dir', out],
+                        '--contact_weights', f'home=20.3425,work=0.625,social_event=6.08233,shop=0.1584,school={1.6 * w:.4f}', '--output_dir', out],
                        check=True, stdout=subprocess.DEVNULL)
     e = pd.concat(pd.read_csv(f) for f in glob.glob(out + '/runs/*events.csv'))
     e = e[e.Location_Type != 'Initial']
@@ -24,12 +24,12 @@ def evaluate(w, k):
     return share, growth
 
 log = open(f'{D}/scan_log.txt', 'a')
-s0, g0 = evaluate(1.0, 2.11)
-print(f'reference w=1 k=2.11: share {s0:.3f} growth {g0:.4f}', file=log, flush=True)
+s0, g0 = evaluate(1.0, 1.596)
+print(f'reference w=1 k=1.596: share {s0:.3f} growth {g0:.4f}', file=log, flush=True)
 result = {}
 for target in [0.15, 0.25]:
     odds = lambda s: s / (1 - s)
-    w, k = odds(target) / odds(s0), 2.11
+    w, k = odds(target) / odds(s0), 1.596
     k_slope, prev = 0.1, None
     for it in range(5):
         s, g = evaluate(w, k)

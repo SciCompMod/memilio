@@ -46,19 +46,26 @@ or suspected sources of 584,846 infected adults were household 30.8%, extended f
 colleagues 15.0% and friends 11.0%. Mapped to the ABM (extended family and friends to SocialEvent) and
 renormalized: Home 42.5%, SocialEvent 36.7%, Work 20.7%.
 
-Result with the defaults (seed 42), converged within 2 percentage points per share. These values are
-the hardcoded defaults (`ContactWeights` in `parameter_setter.h`, `DEFAULT_INFECTION_K` in
-`defaults.h`):
+With `--fix_k`, `k` stays at `--k` and only the weights are fitted; the growth rate is then not
+matched. The defaults were fitted that way with `k = 1.596` (seed 42), converged within 0.5 percentage
+points per share in three iterations; the early growth rate is 0.131 per day (doubling time 5.3 days).
+These values are the hardcoded defaults (`ContactWeights` in `parameter_setter.h`, `DEFAULT_INFECTION_K`
+in `defaults.h`):
 
 ```
---infection_k 2.11 --contact_weights home=21.616,school=1.6,work=0.625,social_event=4.8,shop=0.1584
+python calibration/fit_contact_weights.py --binary build/bin/location_split_simulation --k 1.596 --fix_k
+--infection_k 1.596 --contact_weights home=20.3425,school=1.6,work=0.625,social_event=6.08233,shop=0.1584
 ```
+
+With these defaults, 10,000 persons and 10 initial infections, about 90% of the population is infected
+by day 90 (seed 42, 20 runs). The previous defaults (`k = 2.11`, home 21.616, social event 4.8) gave
+about 92%.
 
 Caveats:
 
 * The home weight is poorly determined. Households are close to saturation, so the home share barely
-  responds to it: home weights from 16.4 to 21.6 give home shares of 40.7% to 41.3%. The social event weight
-  and `k` are well determined.
+  responds to it: home weights from 16.4 to 21.6 give home shares of 40.7% to 41.3% (at `k = 2.11`). The social
+  event weight and `k` are well determined.
 * School and shop have no target data. Their weights stay relative to work, so the school share of all
   infections (15% after the fit, 20% before) is an assumption, not a fitted value. Studies whose
   result depends on school transmission should vary the school weight.
@@ -118,11 +125,11 @@ executed one after another with a parallel model each. That is much slower for m
 | `--days <n>` | simulated days, default 90 |
 | `--n_persons <n>` | total population, default 1000 |
 | `--initial_infections <n>` | randomly drawn initially infected persons, default 10 |
-| `--infection_k <x>` | scale of the viral shed, default 2.11 (calibrated together with the contact weights) |
+| `--infection_k <x>` | scale of the viral shed, default 1.596 (calibrated together with the contact weights) |
 | `--school_room_size <n>` | split every school into rooms of at most `n` pupils, default 0 (no split) |
 | `--work_room_size <n>` | split every workplace into rooms of at most `n` employees, default 0 |
 | `--event_room_size <n>` | split every social event location into rooms of at most `n` persons, default 0 |
-| `--contact_weights <w>` | relative transmission weight per location type; defaults are the calibrated values `home=21.616,school=1.6,work=0.625,social_event=4.8,shop=0.1584` |
+| `--contact_weights <w>` | relative transmission weight per location type; defaults are the calibrated values `home=20.3425,school=1.6,work=0.625,social_event=6.08233,shop=0.1584` |
 | `--threads <n>` | runs executed in parallel, default: all cores |
 | `--output_dir <path>` | output directory, default `results/run_<timestamp>` |
 | `--seed <n>` | seed for reproducibility |
