@@ -97,7 +97,11 @@ struct ContactMatrixSet {
     Eigen::MatrixXd other;
 };
 
-/// @brief Baseline contact matrices for Germany, indexed (receiving age group, transmitting age group).
+/**
+ * @brief Baseline contact matrices for Germany, indexed (receiving age group, transmitting age group).
+ * Daily contacts, taken from the MEmilio data files data/Germany/contacts/baseline_home.txt,
+ * baseline_school_pf_aver.txt, baseline_work.txt and baseline_other.txt.
+ */
 ContactMatrixSet contacts_germany(Eigen::Index n)
 {
     ContactMatrixSet c{Eigen::MatrixXd::Zero(n, n), Eigen::MatrixXd::Zero(n, n),
@@ -135,6 +139,7 @@ ContactMatrixSet contacts_germany(Eigen::Index n)
 }
 
 /// @brief Baseline contact matrices for France, indexed (receiving age group, transmitting age group).
+/// The source of these values is not recorded.
 ContactMatrixSet contacts_france(Eigen::Index n)
 {
     ContactMatrixSet c{Eigen::MatrixXd::Zero(n, n), Eigen::MatrixXd::Zero(n, n),
@@ -172,6 +177,7 @@ ContactMatrixSet contacts_france(Eigen::Index n)
 }
 
 /// @brief Baseline contact matrices for the United States, indexed (receiving age group, transmitting age group).
+/// The source of these values is not recorded.
 ContactMatrixSet contacts_united_states(Eigen::Index n)
 {
     ContactMatrixSet c{Eigen::MatrixXd::Zero(n, n), Eigen::MatrixXd::Zero(n, n),
@@ -233,27 +239,30 @@ void set_local_parameters(mio::abm::Model& model, CityParameters::Region region)
     // Location types that are not listed below fall back to one contact per age group pair and day.
     const Eigen::MatrixXd contacts_default = Eigen::MatrixXd::Constant(n, n, 1.0);
 
+    // The factors below are heuristic weights of the location types, not calibrated values. Each
+    // was meant as 24 h divided by the hours spent at the location times a contact intensity, but the
+    // hours do not match the mobility rules of the ABM, which on a weekday give about 19 h at home,
+    // 8 h at school, 10 h at work, 2 h at a social event and 1 h in a shop. Since the contact rates
+    // only act while a Person is at the Location, the effective daily contacts relative to the
+    // matrices are about 17x at home, 1.6x at school, 0.6x at work, 1.2x at social events and 0.2x
+    // in shops. A larger factor means more infections at that location type. Fitting the factors to
+    // a realistic distribution of infection sites is an open task.
     for (auto& loc : model.get_locations()) {
         auto& baseline = loc.get_infection_parameters().get<mio::abm::ContactRates>().get_baseline();
         switch (loc.get_type()) {
         case mio::abm::LocationType::Home:
-            // 17 hours per day, scaled by the contact intensity at home.
             baseline = contacts.home * 1.4 * 15.0;
             break;
         case mio::abm::LocationType::School:
-            // 5 hours per day.
             baseline = contacts.school * 4.8;
             break;
         case mio::abm::LocationType::Work:
-            // 7 hours per day.
             baseline = contacts.work * 3.0 * 0.5;
             break;
         case mio::abm::LocationType::SocialEvent:
-            // 4 hours per day, scaled by the share of "other" contacts and the contact intensity.
             baseline = contacts.other * 1.2 * 2.0 * 6.0;
             break;
         case mio::abm::LocationType::BasicsShop:
-            // 2 hours per day, scaled by the share of "other" contacts and the contact intensity.
             baseline = contacts.other * 0.8 * 0.33 * 12.0;
             break;
         default:

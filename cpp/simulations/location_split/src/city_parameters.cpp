@@ -214,9 +214,10 @@ std::pair<int, int> calc_num_workplaces_and_worker(int population, const RegionP
     const auto ages = age_vector(population, params);
 
     // NOTE: (4 / 20) is integer division and evaluates to 0, so the 60-79 age group does not
-    // contribute any potential workers. This is kept as it was on the panvXabmSim branch so that
-    // results stay comparable; the shortfall is corrected in CityBuilder, which assigns the
-    // remaining workplaces to the 60+ age groups.
+    // contribute any potential workers. It is kept as on the panvXabmSim branch. CityBuilder assigns
+    // workplaces to the 60+ age groups only if the 15-59 year olds cannot fill them, which does not
+    // happen for the regions defined here: nobody of age 60+ works, and about a fifth of the 15-59 year
+    // olds have no workplace. We expect this to matter little for the transmission dynamics.
     const int n_potential_worker = ages[2] + ages[3] + ((4 / 20) * ages[4]);
     const int n_worker = static_cast<int>(std::round(n_potential_worker * params.ratios.employment_rate));
     const int n_workplaces = static_cast<int>(std::round(n_worker / params.ratios.people_per_workplace));

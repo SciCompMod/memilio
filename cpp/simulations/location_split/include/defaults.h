@@ -18,10 +18,10 @@ constexpr double MAX_INFECTION_K = 100.0;
 
 // Default values.
 constexpr int DEFAULT_RUNS               = 5;
-constexpr int DEFAULT_DAYS               = 7;
+constexpr int DEFAULT_DAYS               = 90;
 constexpr int DEFAULT_POPULATION         = 1000;
 constexpr int DEFAULT_INITIAL_INFECTIONS = 10;
-constexpr double DEFAULT_INFECTION_K     = 22.6;
+constexpr double DEFAULT_INFECTION_K     = 2.4; ///< Fitted in an earlier study; 22.6 infects nearly everybody within weeks.
 constexpr const char* DEFAULT_OUTPUT_DIR = "results";
 } // namespace Config
 
