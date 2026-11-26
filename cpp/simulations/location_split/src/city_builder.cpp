@@ -79,7 +79,7 @@ mio::abm::Model CityBuilder::build_model(const CityConfig& config, const mio::Ra
     }
 
     // The contact rates have to be set after the Location%s exist.
-    set_local_parameters(model, config.region);
+    set_local_parameters(model, config.region, config.contact_weights);
     set_parameters(model.parameters);
 
     return model;

@@ -6,6 +6,7 @@
 #include "abm/model.h"
 #include "abm/parameters.h"
 
+#include <string>
 #include <utility>
 
 /**
@@ -22,6 +23,29 @@ void set_parameters(mio::abm::Parameters& params);
  * @param[in,out] model The Model whose Location%s are parameterized.
  * @param[in] region Region whose contact matrices are used.
  */
-void set_local_parameters(mio::abm::Model& model, CityParameters::Region region);
+/**
+ * @brief Relative transmission weight per location type, multiplied onto the contact rates.
+ * All weights 1 reproduce the original heuristic factors. The weights can be fitted to an observed
+ * distribution of infection sites with calibration/fit_contact_weights.py.
+ */
+struct ContactWeights {
+    double home         = 1.0;
+    double school       = 1.0;
+    double work         = 1.0;
+    double social_event = 1.0;
+    double shop         = 1.0;
+};
+
+/**
+ * @brief Parse "home=1.2,work=0.8,..." into @p weights. Keys not given keep their value.
+ * @return False if a key is unknown or a value is not a non-negative number.
+ */
+bool parse_contact_weights(const std::string& text, ContactWeights& weights);
+
+/// @brief The weights as "home=...,school=...,work=...,social_event=...,shop=...".
+std::string contact_weights_to_string(const ContactWeights& weights);
+
+void set_local_parameters(mio::abm::Model& model, CityParameters::Region region,
+                          const ContactWeights& weights = ContactWeights{});
 
 #endif // LOCATION_SPLIT_PARAMETER_SETTER_H

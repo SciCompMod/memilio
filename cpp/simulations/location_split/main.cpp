@@ -60,6 +60,9 @@ void print_help(const char* program_name)
               << Config::DEFAULT_INITIAL_INFECTIONS << ")\n";
     std::cout << "  --infection_k <number>     Scale of the viral shed (default: " << Config::DEFAULT_INFECTION_K
               << ", range: " << Config::MIN_INFECTION_K << "-" << Config::MAX_INFECTION_K << ")\n";
+    std::cout << "  --contact_weights <w>      Relative transmission weight per location type, e.g.\n";
+    std::cout << "                             home=1.2,work=0.8 (keys: home, school, work, social_event,\n";
+    std::cout << "                             shop; default 1 each), see calibration/fit_contact_weights.py\n";
     std::cout << "  --threads <n>              Runs executed in parallel with OpenMP (default: all cores)\n";
     std::cout << "  --school_room_size <n>     Split every school into rooms of at most n pupils with a fixed,\n";
     std::cout << "                             random assignment (default: 0, no split)\n";
@@ -142,6 +145,13 @@ CommandLine parse_command_line(int argc, char* argv[])
             config.infection_parameter_k =
                 parse_number<double>(arg, argv[++i], Config::MIN_INFECTION_K, Config::MAX_INFECTION_K);
         }
+        else if (arg == "--contact_weights" && has_value) {
+            if (!parse_contact_weights(argv[++i], config.city_config.contact_weights)) {
+                std::cerr << "Error: invalid --contact_weights '" << argv[i]
+                          << "'. Expected e.g. home=1.2,work=0.8 with keys home, school, work, social_event, shop.\n";
+                std::exit(1);
+            }
+        }
         else if (arg == "--threads" && has_value) {
             config.num_threads = parse_number<int>(arg, argv[++i], 1, 1024);
         }
@@ -191,6 +201,7 @@ void print_config_summary(const MultiRunConfig& config)
     std::cout << "Simulation days: " << config.simulation_days << std::endl;
     std::cout << "Initial infections: " << config.num_initial_infections << std::endl;
     std::cout << "Infection parameter K: " << config.infection_parameter_k << std::endl;
+    std::cout << "Contact weights: " << contact_weights_to_string(config.city_config.contact_weights) << std::endl;
     std::cout << "Threads: " << (config.num_threads > 0 ? std::to_string(config.num_threads) : std::string("OpenMP default"))
               << std::endl;
     std::cout << "School room size: "

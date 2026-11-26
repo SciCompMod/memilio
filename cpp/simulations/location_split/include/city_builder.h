@@ -3,6 +3,7 @@
 
 #include "city_parameters.h"
 #include "defaults.h"
+#include "parameter_setter.h"
 
 #include "abm/location_id.h"
 #include "abm/model.h"
@@ -21,6 +22,8 @@ struct CityConfig {
     /// split into ceil(pupils / school_room_size) rooms of near equal size, each a School Location of
     /// its own, and every pupil is assigned to one room at random for the whole simulation.
     int school_room_size = 0;
+    /// Relative transmission weight per location type, see ContactWeights.
+    ContactWeights contact_weights{};
 
     /// @brief Demographic parameters of the configured region.
     CityParameters::RegionParameters region_parameters() const

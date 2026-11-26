@@ -23,6 +23,43 @@ This is the port of `cpp/examples/panvXabmSim` from the `abmXpanvadere` branch o
 * `mio::save_results` is not used, because with percentiles enabled it also serializes the model
   parameters as a graph, which `abm::Model` does not support. The h5 files are written directly.
 
+## Calibrating the contact weights
+
+The contact rate of each location type is a heuristic factor (see `set_local_parameters`) times a
+weight, set with `--contact_weights home=...,school=...,work=...,social_event=...,shop=...` (default 1
+each). `calibration/fit_contact_weights.py` fits the weights to an observed distribution of infection
+sites:
+
+```bash
+python calibration/fit_contact_weights.py --binary build/bin/location_split_simulation --output calibration_output
+```
+
+It runs short simulations (20 runs, 10,000 persons, 21 days, measured from day 7), compares the shares
+of infections of persons aged 15+ at Home, SocialEvent and Work with the targets, and adjusts the home
+and social event weights and `k` until the shares match and the epidemic grows as fast as with all
+weights 1 and `k = 2.4`. Work, school and shop keep weight 1 as the reference.
+
+The default targets come from the French ComCor study (Galmiche et al., BMC Public Health 2024): known
+or suspected sources of 584,846 infected adults were household 30.8%, extended family 15.6%, work
+colleagues 15.0% and friends 11.0%. Mapped to the ABM (extended family and friends to SocialEvent) and
+renormalized: Home 42.5%, SocialEvent 36.7%, Work 20.7%.
+
+Result with the defaults (seed 42), converged within 2 percentage points per share:
+
+```
+--infection_k 2.11 --contact_weights home=1.28,school=1,work=1,social_event=2.0,shop=1
+```
+
+Caveats:
+
+* The home weight is poorly determined. Households are close to saturation, so the home share barely
+  responds to it: weights from 0.97 to 1.28 give home shares of 40.7% to 41.3%. The social event weight
+  and `k` are well determined.
+* School and shop have no target data. Their weights stay relative to work, so the school share of all
+  infections (15% after the fit, 20% before) is an assumption, not a fitted value. Studies whose
+  result depends on school transmission should vary the school weight.
+* ComCor covers adults under the NPIs of 2020-2022 in France; it is a first target, not German data.
+
 ## Splitting schools into rooms
 
 With `--school_room_size n` every school (elementary and secondary alike) is split into
@@ -70,6 +107,7 @@ cmake --build build --target location_split_simulation
 | `--initial_infections <n>` | randomly drawn initially infected persons, default 10 |
 | `--infection_k <x>` | scale of the viral shed, default 2.4 (fitted in an earlier study) |
 | `--school_room_size <n>` | split every school into rooms of at most `n` pupils, default 0 (no split) |
+| `--contact_weights <w>` | relative transmission weight per location type, e.g. `home=1.28,social_event=2.0` |
 | `--threads <n>` | runs executed in parallel, default: all cores |
 | `--output_dir <path>` | output directory, default `results/run_<timestamp>` |
 | `--seed <n>` | seed for reproducibility |
@@ -113,7 +151,8 @@ distinct contact pairs and should only be used on small populations.
 * Households are filled by drawing age groups in proportion to the persons left, so the age mix is
   the same in every household size. There is no family structure: households with children are only
   guaranteed one person of age 15+, and about a fifth of them have no adult of age 15-59.
-* The contact rate factors per location type are heuristic weights, see `set_local_parameters`.
+* The contact rate factors per location type are heuristic; `--contact_weights` fitted to the ComCor
+  infection sites corrects their balance for Home, SocialEvent and Work only.
 * Nobody of age 60+ works (see `calc_num_workplaces_and_worker`), the whole 5-14 age group attends
   school, there is no daycare, and every city has one hospital and one ICU.
 * Every person has one fixed social event location, so social events are fixed groups of about 15.

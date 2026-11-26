@@ -1,4 +1,7 @@
 #include "parameter_setter.h"
+
+#include <sstream>
+#include <stdexcept>
 #include "constants.h"
 
 #include "memilio/utils/parameter_distributions.h"
@@ -229,7 +232,58 @@ ContactMatrixSet contacts_for(CityParameters::Region region, Eigen::Index n)
 
 } // namespace
 
-void set_local_parameters(mio::abm::Model& model, CityParameters::Region region)
+bool parse_contact_weights(const std::string& text, ContactWeights& weights)
+{
+    std::stringstream stream(text);
+    std::string entry;
+    while (std::getline(stream, entry, ',')) {
+        const auto equals = entry.find('=');
+        if (equals == std::string::npos) {
+            return false;
+        }
+        const auto key = entry.substr(0, equals);
+        double value   = 0.0;
+        try {
+            size_t used = 0;
+            value       = std::stod(entry.substr(equals + 1), &used);
+            if (used != entry.size() - equals - 1 || value < 0.0) {
+                return false;
+            }
+        }
+        catch (const std::exception&) {
+            return false;
+        }
+        if (key == "home") {
+            weights.home = value;
+        }
+        else if (key == "school") {
+            weights.school = value;
+        }
+        else if (key == "work") {
+            weights.work = value;
+        }
+        else if (key == "social_event") {
+            weights.social_event = value;
+        }
+        else if (key == "shop") {
+            weights.shop = value;
+        }
+        else {
+            return false;
+        }
+    }
+    return true;
+}
+
+std::string contact_weights_to_string(const ContactWeights& weights)
+{
+    std::ostringstream stream;
+    stream << "home=" << weights.home << ",school=" << weights.school << ",work=" << weights.work
+           << ",social_event=" << weights.social_event << ",shop=" << weights.shop;
+    return stream.str();
+}
+
+void set_local_parameters(mio::abm::Model& model, CityParameters::Region region, const ContactWeights& weights)
 {
     const auto n = static_cast<Eigen::Index>((size_t)model.parameters.get_num_groups());
     assert(n == static_cast<Eigen::Index>(num_age_groups) &&
@@ -246,24 +300,25 @@ void set_local_parameters(mio::abm::Model& model, CityParameters::Region region)
     // only act while a Person is at the Location, the effective daily contacts relative to the
     // matrices are about 17x at home, 1.6x at school, 0.6x at work, 1.2x at social events and 0.2x
     // in shops. A larger factor means more infections at that location type. Fitting the factors to
-    // a realistic distribution of infection sites is an open task.
+    // a realistic distribution of infection sites is done with the ContactWeights multiplied onto
+    // these factors, see calibration/fit_contact_weights.py.
     for (auto& loc : model.get_locations()) {
         auto& baseline = loc.get_infection_parameters().get<mio::abm::ContactRates>().get_baseline();
         switch (loc.get_type()) {
         case mio::abm::LocationType::Home:
-            baseline = contacts.home * 1.4 * 15.0;
+            baseline = contacts.home * 1.4 * 15.0 * weights.home;
             break;
         case mio::abm::LocationType::School:
-            baseline = contacts.school * 4.8;
+            baseline = contacts.school * 4.8 * weights.school;
             break;
         case mio::abm::LocationType::Work:
-            baseline = contacts.work * 3.0 * 0.5;
+            baseline = contacts.work * 3.0 * 0.5 * weights.work;
             break;
         case mio::abm::LocationType::SocialEvent:
-            baseline = contacts.other * 1.2 * 2.0 * 6.0;
+            baseline = contacts.other * 1.2 * 2.0 * 6.0 * weights.social_event;
             break;
         case mio::abm::LocationType::BasicsShop:
-            baseline = contacts.other * 0.8 * 0.33 * 12.0;
+            baseline = contacts.other * 0.8 * 0.33 * 12.0 * weights.shop;
             break;
         default:
             baseline = contacts_default;

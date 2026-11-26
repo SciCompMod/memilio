@@ -501,6 +501,7 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
             summary << "Infection Parameter K: " << results.infection_parameter_k << "\n";
             summary << "Successful runs: " << results.successful_runs << "/" << config.num_runs << "\n";
             summary << "Seed: " << config.custom_seed << "\n";
+            summary << "Contact weights: " << contact_weights_to_string(config.city_config.contact_weights) << "\n";
             summary << "School room size: "
                     << (config.city_config.school_room_size > 0 ? std::to_string(config.city_config.school_room_size)
                                                                  : std::string("no split"))
