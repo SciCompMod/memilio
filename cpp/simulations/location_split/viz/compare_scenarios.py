@@ -32,9 +32,16 @@ import scenario_io as sio
 
 
 def summary_table(scenarios, args) -> pd.DataFrame:
-    """Per arm: outbreak size, timing, and where transmission happened."""
+    """Per arm: infections at the end of the simulation, timing, and where transmission happened.
+
+    "at end" is the value at the last simulated day, not the final size of the epidemic, which may
+    still be growing. The paired columns compare run i of an arm with run i of the baseline. Arms
+    that share the seed have the same city and initial infections in run i, so these differences are
+    much less noisy than differences of medians.
+    """
     baseline = sio.baseline_of(scenarios)
-    _, baseline_final = sio.load_total_infections(baseline, "p50")
+    _, baseline_median = sio.load_total_infections(baseline, "p50")
+    baseline_curves = sio.per_run_curves(baseline)
 
     rows = []
     for scenario in scenarios:
@@ -45,6 +52,9 @@ def summary_table(scenarios, args) -> pd.DataFrame:
         steps_per_day = max(1, int(round(1.0 / (time[1] - time[0]))))
         day_index = np.arange(0, len(median), steps_per_day)
         daily = np.diff(median[day_index])
+        # The weekly rhythm of the mobility (weekend events) produces single day spikes, so the peak
+        # is taken from the centered 7 day mean.
+        daily_7d = pd.Series(daily).rolling(7, center=True, min_periods=1).mean().values
 
         counts = sio.events_per_run_by(scenario, "Location_Type", sio.TRANSMISSION_LOCATIONS)
         location_means = counts.mean()
@@ -56,16 +66,29 @@ def summary_table(scenarios, args) -> pd.DataFrame:
             "baseline": scenario.is_baseline,
             "runs": sio.num_runs(scenario),
             "population": population,
-            "final_size_median": float(median[-1]),
-            "final_size_p25": float(np.percentile(curves[:, -1], 25)),
-            "final_size_p75": float(np.percentile(curves[:, -1], 75)),
-            "attack_rate_pct": 100.0 * float(median[-1]) / population,
-            "vs_baseline_abs": float(median[-1]) - float(baseline_final[-1]),
-            "vs_baseline_pct": (100.0 * (float(median[-1]) - float(baseline_final[-1]))
-                                / max(1.0, float(baseline_final[-1]))),
-            "peak_daily_incidence": float(daily.max()) if len(daily) else float("nan"),
-            "peak_day": float(np.argmax(daily) + 1) if len(daily) else float("nan"),
+            "infected_at_end_median": float(median[-1]),
+            "infected_at_end_p25": float(np.percentile(curves[:, -1], 25)),
+            "infected_at_end_p75": float(np.percentile(curves[:, -1], 75)),
+            "infected_at_end_pct": 100.0 * float(median[-1]) / population,
+            "vs_baseline_median_abs": float(median[-1]) - float(baseline_median[-1]),
+            "vs_baseline_median_pct": (100.0 * (float(median[-1]) - float(baseline_median[-1]))
+                                       / max(1.0, float(baseline_median[-1]))),
+            "peak_daily_incidence_7d": float(daily_7d.max()) if len(daily_7d) else float("nan"),
+            "peak_day_7d": float(np.argmax(daily_7d) + 1) if len(daily_7d) else float("nan"),
         }
+
+        if curves.shape == baseline_curves.shape and len(curves) > 1:
+            difference = curves[:, -1] - baseline_curves[:, -1]
+            standard_error = difference.std(ddof=1) / np.sqrt(len(difference))
+            row.update({
+                "paired_diff_mean": float(difference.mean()),
+                "paired_diff_ci95_low": float(difference.mean() - 1.96 * standard_error),
+                "paired_diff_ci95_high": float(difference.mean() + 1.96 * standard_error),
+                "paired_diff_pct": 100.0 * float(difference.mean()) / max(1.0, float(baseline_curves[:, -1].mean())),
+                "runs_lower": int((difference < 0).sum()),
+                "runs_higher": int((difference > 0).sum()),
+            })
+
         for location in sio.TRANSMISSION_LOCATIONS:
             row[f"share_{location}_pct"] = 100.0 * float(location_means[location]) / location_total
         rows.append(row)
@@ -85,7 +108,7 @@ def main():
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     sio.add_scenario_arguments(parser)
     parser.add_argument("--run", type=int, default=0,
-                        help="Run used for the transmission tree.")
+                        help="Run used for the transmission tree and the household heatmap.")
     parser.add_argument("--days", nargs="+", type=float, default=None,
                         help="Time points for the household heatmap.")
     parser.add_argument("--skip-trees", action="store_true",
@@ -102,8 +125,9 @@ def main():
     path = os.path.join(args.output, "summary_statistics.csv")
     table.to_csv(path, index=False)
     print(f"  wrote {path}\n")
-    columns = ["scenario", "final_size_median", "attack_rate_pct", "vs_baseline_abs",
-               "vs_baseline_pct", "peak_daily_incidence", "peak_day"]
+    columns = [c for c in ["scenario", "infected_at_end_pct", "paired_diff_mean", "paired_diff_ci95_low",
+                           "paired_diff_ci95_high", "paired_diff_pct", "runs_lower", "runs_higher",
+                           "peak_day_7d"] if c in table.columns]
     print(table[columns].to_string(index=False, float_format=lambda v: f"{v:.1f}"))
 
     print("\nEpidemic curves")

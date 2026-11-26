@@ -317,14 +317,25 @@ def load_person_locations(scenario: Scenario, run: int) -> pd.DataFrame:
     return pd.read_csv(path)
 
 
-def load_households(scenario: Scenario) -> pd.DataFrame:
-    """Person -> home. Columns: Person_ID, Household_ID."""
-    return pd.read_csv(scenario.file("household_id.csv"))
+def load_persons(scenario: Scenario, run: int) -> pd.DataFrame:
+    """Assignments of one run. Every run builds its own city, so they hold for this run only.
+
+    Columns: Person_ID, Age_Group, Household_ID, Work_ID, School_ID (empty: none).
+    """
+    path = scenario.file("runs", f"run_{run}_persons.csv")
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Missing {path}. It is written for every run by the simulation.")
+    return pd.read_csv(path)
 
 
-def load_workplaces(scenario: Scenario) -> pd.DataFrame:
-    """Person -> workplace, only the persons that have one."""
-    frame = pd.read_csv(scenario.file("work_id.csv"))
+def load_households(scenario: Scenario, run: int = 0) -> pd.DataFrame:
+    """Person -> home in one run. Columns: Person_ID, Household_ID."""
+    return load_persons(scenario, run)[["Person_ID", "Household_ID"]]
+
+
+def load_workplaces(scenario: Scenario, run: int = 0) -> pd.DataFrame:
+    """Person -> workplace in one run, only the persons that have one."""
+    frame = load_persons(scenario, run)[["Person_ID", "Work_ID"]]
     return frame.dropna(subset=["Work_ID"]).astype({"Work_ID": int})
 
 

@@ -25,7 +25,11 @@ python compare_scenarios.py \
     --output figures
 ```
 
-That writes every figure plus `summary_statistics.csv` and prints a comparison table.
+That writes every figure plus `summary_statistics.csv` and prints a comparison table. The table
+reports infections at the last simulated day (`infected_at_end_*`, not the final epidemic size if
+the epidemic is still growing), the peak of the 7 day mean incidence, and paired differences to the
+baseline: run *i* of an arm minus run *i* of the baseline, with a 95% confidence interval and the
+number of runs below and above the baseline.
 
 ## How an arm learns its split level
 
@@ -57,7 +61,7 @@ smallest split value.
 | `plot_epidemic_curves.py` | cumulative infections with IQR band, daily incidence, difference to baseline | `infection_cumulated_comp.py`, `simple_multi_panel.py`, `multi_seed_comparison.py` |
 | `plot_location_breakdown.py` | composition and absolute infections per location type, difference to baseline; `--pies` for the original pie layout | `location_infection_pie_chart.py` |
 | `plot_location_timeline.py` | location type x time heatmap per arm, `--differences` against baseline, plus a stacked area view | `temporal_infection_heatmap.py`, `time_loc_type.py` |
-| `plot_household_heatmap.py` | infection burden per household over time, arms as rows; `--use-workplaces` | `comparative_temporal_heatmap.py` |
+| `plot_household_heatmap.py` | infection burden per household over time in one run (`--run`), arms as rows; `--use-workplaces` | `comparative_temporal_heatmap.py` |
 | `plot_transmission_tree.py` | transmission chains over time and the generation / reproduction structure | `infection_timeline.py`, `comparative_infection_trees.py`, `contact_network.py` |
 | `scenario_io.py` | shared loading, ordering and colours | — |
 
@@ -69,7 +73,7 @@ Common options: `--scenario`, `--baseline`, `--output`, `--dpi`, `--format {png,
 | --- | --- |
 | `plot_epidemic_curves.py` | `total_infections/` (always written) |
 | `plot_location_breakdown.py`, `plot_location_timeline.py` | `runs/run_*_infection_events.csv` (default on, disabled by `--no_infection_events`) |
-| `plot_household_heatmap.py` | the above plus `household_id.csv` / `work_id.csv` |
+| `plot_household_heatmap.py` | the above plus `runs/run_<i>_persons.csv` |
 | `plot_transmission_tree.py` | the above plus `runs/run_*_person_locations.csv`, so the simulation must be run with `--write_person_locations` |
 
 `compare_scenarios.py --skip-trees` leaves out the part that needs `--write_person_locations`.
@@ -89,8 +93,11 @@ across arms; individual edges are not.
 
 ## Notes
 
-- Arms may have different city realizations. Person and location ids are therefore **not**
-  comparable between arms, which is why every plot aggregates before comparing.
+- Every run builds its own city. Arms that share `--seed` and the city options have the same city
+  in run *i*, so person and location ids of run *i* are comparable between them (split rooms are
+  appended after all other locations). Ids are **not** comparable between different runs, or between
+  arms with different seeds.
+- Because of that, the household heatmap shows a single run instead of averaging over runs.
 - The household heatmap sorts households by size and separates the size blocks with thin lines. The
   branch encoded size as a per-size colour; sorting keeps the same information and frees the colour
   channel for the infection rate.

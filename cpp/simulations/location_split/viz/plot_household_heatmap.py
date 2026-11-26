@@ -3,9 +3,12 @@
 
 Generalizes comparative_temporal_heatmap.py from the panvXabmSim branch, which compared exactly two
 initialization methods. Rows are arms, columns are time points, and every cell of a panel is one
-household coloured by the share of its members that have been infected by that time, averaged over
-the runs. Households are sorted by size and separated by thin lines so that the size structure stays
-visible, which is what the branch encoded with per-size colours.
+household coloured by the share of its members that have been infected by that time. Households are
+sorted by size and separated by thin lines so that the size structure stays visible.
+
+Every run builds its own city, so households cannot be averaged over runs. The plot shows one run
+(--run, default 0). Arms that share the seed have the same city in that run, so the panels of one
+column show the same households.
 
 Usage:
     python plot_household_heatmap.py --scenario 'no split=out/no_split' \
@@ -24,23 +27,23 @@ import pandas as pd
 import scenario_io as sio
 
 
-def _group_membership(scenario, use_workplaces):
-    """@return (person -> group id, group id -> size), for households or workplaces."""
+def _group_membership(scenario, use_workplaces, run):
+    """@return (person -> group id, group id -> size) in one run, for households or workplaces."""
     if use_workplaces:
-        frame = sio.load_workplaces(scenario)
+        frame = sio.load_workplaces(scenario, run)
         column = "Work_ID"
     else:
-        frame = sio.load_households(scenario)
+        frame = sio.load_households(scenario, run)
         column = "Household_ID"
     membership = dict(zip(frame["Person_ID"], frame[column]))
     sizes = frame.groupby(column).size()
     return membership, sizes
 
 
-def _infection_rates(scenario, membership, sizes, day_cutoffs, use_workplaces):
-    """Mean share of infected members per group and cutoff, shaped (cutoffs, groups)."""
+def _infection_rates(scenario, membership, sizes, day_cutoffs, use_workplaces, run):
+    """Share of infected members per group and cutoff in one run, shaped (cutoffs, groups)."""
     events = sio.load_infection_events(scenario)
-    events = events[events["Person_ID"].isin(membership)]
+    events = events[(events["run"] == run) & events["Person_ID"].isin(membership)]
     group_order = list(sizes.index)
     group_index = {group: i for i, group in enumerate(group_order)}
     size_vector = sizes.values.astype(float)
@@ -80,24 +83,20 @@ def _layout(sizes, group_order):
 
 def plot(scenarios, args):
     label_word = "workplace" if args.use_workplaces else "household"
-    baseline = sio.baseline_of(scenarios)
 
     # Padding cells of the last grid row are NaN and must not read as "never infected".
     colormap = matplotlib.colormaps["inferno"].copy()
     colormap.set_bad(alpha=0.0)
 
-    membership, sizes = _group_membership(baseline, args.use_workplaces)
-    order, rows, columns, boundaries = _layout(sizes, list(sizes.index))
-
     figure, axes = plt.subplots(len(scenarios), len(args.days), squeeze=False,
                                 figsize=(2.9 * len(args.days) + 1.6, 2.9 * len(scenarios) + 1.2))
 
     for row, scenario in enumerate(scenarios):
-        # Each arm has its own city realization, so the grouping is read per arm.
-        arm_membership, arm_sizes = _group_membership(scenario, args.use_workplaces)
+        # The grouping is read per arm, in case the arms do not share the seed.
+        arm_membership, arm_sizes = _group_membership(scenario, args.use_workplaces, args.run)
         arm_order, arm_rows, arm_columns, arm_boundaries = _layout(arm_sizes, list(arm_sizes.index))
         rates, _ = _infection_rates(scenario, arm_membership, arm_sizes, args.days,
-                                    args.use_workplaces)
+                                    args.use_workplaces, args.run)
 
         for column, day in enumerate(args.days):
             axis = axes[row][column]
@@ -123,7 +122,7 @@ def plot(scenarios, args):
                     fraction=0.022, pad=0.015)
     figure.suptitle(
         f"Infection burden per {label_word} over time  "
-        f"(mean over runs; {label_word}s sorted by size, blue lines separate the sizes)",
+        f"(run {args.run}; {label_word}s sorted by size, blue lines separate the sizes)",
         fontsize=12)
     return figure
 
@@ -134,6 +133,7 @@ def main():
     sio.add_scenario_arguments(parser)
     parser.add_argument("--days", nargs="+", type=float, default=None,
                         help="Days to show. Default: four evenly spaced points.")
+    parser.add_argument("--run", type=int, default=0, help="Run to show.")
     parser.add_argument("--use-workplaces", action="store_true",
                         help="Group by workplace instead of household.")
     args = parser.parse_args()
