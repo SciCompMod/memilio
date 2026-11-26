@@ -12,3 +12,8 @@ if(OpenMP_CXX_FOUND)
 else()
     message(STATUS "location_split_simulation: OpenMP not found, runs are executed sequentially.")
 endif()
+
+# Minimal experiments in the homogeneous setting of the theory note (one age group, constant shedding).
+add_executable(location_split_theory theory_minimal.cpp)
+target_link_libraries(location_split_theory PRIVATE memilio abm)
+target_compile_options(location_split_theory PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})

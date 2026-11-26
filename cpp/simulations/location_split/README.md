@@ -97,6 +97,28 @@ for n in 0 50 25 10 5; do
 done
 ```
 
+## Minimal theory experiments
+
+`location_split_theory` (`theory_minimal.cpp`) runs the ABM in the homogeneous setting of the note
+"State transitions in the MEmilio-ABM" (Sec. 3.1): one age group, a 1 x 1 contact matrix, identical
+constant shedding, no mobility, and newly infected agents that stay Exposed, so the number of infectious
+agents per room is fixed. The infection coefficient is set so that a = Lambda * dt takes given values.
+It writes three tables, each with the closed form of the note next to the simulated mean:
+
+| File | Experiment |
+| --- | --- |
+| `one_step_single.csv` | one infectious agent and s susceptibles, one step (Eq. (9), Proposition 1) |
+| `one_step_clustering.csv` | x infectious and x susceptibles in one room or in x rooms, one step (Proposition 2) |
+| `contact_time.csv` | schools of 200 with 10 infectious agents: one room, fixed rooms, rooms redrawn every 8 h, 160 h |
+
+With fixed infectious agents, the hazards of a susceptible add up over the steps, so a fixed room gives
+`sum_r s_r (1 - exp(-a i_r T / (N_r - 1)))` after T steps, Eq. (9) with a T instead of a.
+
+```bash
+./build/bin/location_split_theory study_output/theory_minimal 20
+python study/theory_minimal_figures.py study_output/theory_minimal study_output/theory_minimal/figures
+```
+
 ## Building
 
 The simulation needs HDF5. It is not part of the default build. Independent runs are executed in
@@ -188,3 +210,5 @@ streams to disk and grows with persons times hours.
 | `include/multi_run_simulator.h`, `src/multi_run_simulator.cpp` | runs the ensemble and writes the results |
 | `include/file_utils.h`, `src/file_utils.cpp` | output directories and timestamps |
 | `main.cpp` | command line |
+| `theory_minimal.cpp` | minimal experiments in the homogeneous setting of the theory note |
+| `study/theory_minimal_figures.py` | figures of the minimal experiments |
