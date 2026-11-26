@@ -50,9 +50,9 @@ runs:
           if [[ "${{ inputs.version }}" == "min" ]]; then
             sudo apt-get -qq -y install gcc-11
             sudo apt-get -qq -y install g++-11
-          else        
-            sudo apt-get -qq -y install gcc-13
-            sudo apt-get -qq -y install g++-13
+          else
+            sudo apt-get -qq -y install gcc-15
+            sudo apt-get -qq -y install g++-15
           fi
         elif [[ "${{ inputs.compiler }}" == "clang" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
@@ -83,9 +83,9 @@ runs:
           if [[ "${{ inputs.version }}" == "min" ]]; then
             export CC=/usr/bin/gcc-11
             export CXX=/usr/bin/g++-11
-          else        
-            export CC=/usr/bin/gcc-13
-            export CXX=/usr/bin/g++-13
+          else
+            export CC=/usr/bin/gcc-15
+            export CXX=/usr/bin/g++-15
           fi
         elif [[ "${{ inputs.compiler }}" == "clang" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then

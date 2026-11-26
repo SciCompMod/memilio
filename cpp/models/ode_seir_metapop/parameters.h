@@ -20,6 +20,7 @@
 #ifndef ODESEIRMETAPOP_PARAMETERS_H
 #define ODESEIRMETAPOP_PARAMETERS_H
 
+#include "memilio/config.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/epidemiology/age_group.h"
@@ -187,6 +188,7 @@ public:
         bool corrected     = false;
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_agegroups); i++) {
+            const FP tol_population = get_tol_population_after_commuting(i);
             for (auto j = Region(0); j < Region(m_num_regions); j++) {
                 if (this->template get<TimeExposed<FP>>()[{j, i}] < tol_times) {
                     log_warning(
@@ -214,7 +216,7 @@ public:
                     corrected                                                  = true;
                 }
 
-                if (this->template get<PopulationAfterCommuting<FP>>()[{j, i}] <= 0.0) {
+                if (this->template get<PopulationAfterCommuting<FP>>()[{j, i}] <= tol_population) {
                     log_warning(
                         "Constraint check: Parameter PopulationAfterCommuting changed from {} to {}. Please "
                         "note that this only prevents division by zero. Consider to cancel and reset parameters.",
@@ -258,6 +260,7 @@ public:
     {
         const double tol_times = 1e-1;
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_agegroups); i++) {
+            const FP tol_population = get_tol_population_after_commuting(i);
             for (auto j = Region(0); j < Region(m_num_regions); j++) {
                 if (this->template get<TimeExposed<FP>>()[{j, i}] < tol_times) {
                     log_error(
@@ -283,9 +286,9 @@ public:
                     return true;
                 }
 
-                if (this->template get<PopulationAfterCommuting<FP>>()[{j, i}] <= 0.0) {
+                if (this->template get<PopulationAfterCommuting<FP>>()[{j, i}] <= tol_population) {
                     log_error("Constraint check: Parameter PopulationAfterCommuting {} smaller or equal {}",
-                              this->template get<PopulationAfterCommuting<FP>>()[{j, i}], 0.0);
+                              this->template get<PopulationAfterCommuting<FP>>()[{j, i}], tol_population);
                     return true;
                 }
             }
@@ -320,6 +323,20 @@ private:
         , m_num_regions(base.get_num_regions())
         , m_num_agegroups(base.get_num_agegroups())
     {
+    }
+
+    /**
+     * @brief Tolerance up to which PopulationAfterCommuting of an AgeGroup is treated as zero.
+     * @param[in] age_group The AgeGroup.
+     */
+    FP get_tol_population_after_commuting(AgeGroup age_group) const
+    {
+        using std::abs;
+        FP total_population = 0.0;
+        for (auto j = Region(0); j < Region(m_num_regions); j++) {
+            total_population += this->template get<PopulationAfterCommuting<FP>>()[{j, age_group}];
+        }
+        return Limits<FP>::zero_tolerance() * abs(total_population);
     }
 
 public:
