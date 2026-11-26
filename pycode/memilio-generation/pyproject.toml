@@ -21,7 +21,6 @@ dependencies = [
   "dataclasses",
   "dataclasses_json",
   "graphviz",
-  "importlib-resources>=1.1.0; python_version < '3.9'",
   "jinja2>=3.0.0",
   "pyyaml>=6.0",
   "tomli>=1.1.0; python_version < '3.11'"

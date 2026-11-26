@@ -23,7 +23,7 @@ Dataclass to import the configurations from the config.json.
 """
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
-import importlib.resources as importlib_resources
+from importlib.resources import files
 
 @dataclass_json
 @dataclass
@@ -41,11 +41,8 @@ class ScannerConfig:
     libclang_library_path: str
 
 def get_config():
-    pkg = importlib_resources.files("memilio.generation")
-    with importlib_resources.as_file(
-            pkg.joinpath("config.json")) as path:
-        with open(path) as file:
-            conf = ScannerConfig.schema().loads(file.read(), many=True)[0]
+    text = files("memilio.generation").joinpath("config.json").read_text(encoding="utf-8")
+    conf = ScannerConfig.from_json(text)
     return conf
 
 config = get_config()
