@@ -17,6 +17,10 @@
 struct CityConfig {
     int total_population          = Config::DEFAULT_POPULATION;
     CityParameters::Region region = CityParameters::Region::Germany;
+    /// Pupils per school room. 0 keeps every school as a single Location. Otherwise every school is
+    /// split into ceil(pupils / school_room_size) rooms of near equal size, each a School Location of
+    /// its own, and every pupil is assigned to one room at random for the whole simulation.
+    int school_room_size = 0;
 
     /// @brief Demographic parameters of the configured region.
     CityParameters::RegionParameters region_parameters() const
@@ -51,6 +55,14 @@ public:
     static void save_city_to_file(const CityConfig& config, const std::string& filename);
 
 private:
+    /**
+     * @brief Split every School into rooms of at most room_size pupils.
+     * The pupils of a school are shuffled with a stream that is independent of the Model's generator,
+     * so the city and the initial infections drawn after the build are the same as without the split.
+     * The first room reuses the school's Location, the others are new School Location%s.
+     */
+    static void split_schools_into_rooms(mio::abm::Model& model, int room_size,
+                                         const mio::RandomNumberGenerator& rng);
     static std::vector<mio::abm::LocationId> create_locations(mio::abm::Model& model, mio::abm::LocationType type,
                                                               int count);
     static void create_and_assign_people(mio::abm::Model& model, const CityConfig& config,

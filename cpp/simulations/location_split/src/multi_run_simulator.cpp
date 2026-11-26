@@ -446,6 +446,21 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
             summary << "Infection Parameter K: " << results.infection_parameter_k << "\n";
             summary << "Successful runs: " << results.successful_runs << "/" << config.num_runs << "\n";
             summary << "Seed: " << config.custom_seed << "\n";
+            summary << "School room size: "
+                    << (config.city_config.school_room_size > 0 ? std::to_string(config.city_config.school_room_size)
+                                                                 : std::string("no split"))
+                    << "\n";
+        }
+    }
+
+    // Which arm of the location split study this is, read by the comparison plots in viz/.
+    {
+        std::ofstream scenario(base_dir + "/scenario.json");
+        if (scenario.is_open()) {
+            const int room_size = config.city_config.school_room_size;
+            scenario << "{\"label\": \"" << (room_size > 0 ? "rooms of " + std::to_string(room_size) : "no split")
+                     << "\", \"split_location_type\": \"School\", \"school_room_size\": "
+                     << (room_size > 0 ? std::to_string(room_size) : std::string("null")) << "}\n";
         }
     }
 

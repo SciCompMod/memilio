@@ -1,11 +1,11 @@
 # Comparison plots for the location split simulation
 
 Every script here compares an arbitrary number of **arms** of the location split study. An arm is one
-output directory of `location_split_simulation`. Arms are ordinal, they differ in how much of the
-split location is handled outside the ABM:
+output directory of `location_split_simulation`. Arms are ordinal, they differ in how finely the
+schools are split into rooms:
 
 ```
-no split (baseline)  ->  quarter split  ->  half split  ->  full split
+no split (baseline)  ->  rooms of 50  ->  rooms of 25  ->  rooms of 10  ->  rooms of 5
 ```
 
 The plots order the arms along that axis, colour them along a sequential ramp, and draw the baseline
@@ -31,15 +31,15 @@ That writes every figure plus `summary_statistics.csv` and prints a comparison t
 
 In order of precedence:
 
-1. **`scenario.json` in the results directory** — the intended mechanism once the split is
-   implemented:
+1. **`scenario.json` in the results directory**, written by the simulation:
 
    ```json
-   {"label": "half split", "split_fraction": 0.5, "split_location_type": "SocialEvent"}
+   {"label": "rooms of 25", "split_location_type": "School", "school_room_size": 25}
    ```
 
-   `split_fraction` is the share of the location handled outside the ABM: `0.0` is the baseline,
-   `1.0` is a full split.
+   The split axis is then the number of rooms per pupil, `1 / school_room_size`: `0` for the
+   baseline (`"school_room_size": null`), larger for smaller rooms. A `scenario.json` may instead
+   give `split_fraction` directly.
 
 2. **The label** on the command line, or the directory name if no label is given. Understood:
    `no`, `quarter`, `third`, `half`, `three_quarter`, `full`, or a number (`split_0.75`, `75%`).
@@ -47,7 +47,7 @@ In order of precedence:
 3. **The order on the command line**, if neither of the above resolves.
 
 `--baseline 'LABEL'` overrides which arm is the reference; by default it is the arm with the
-smallest split fraction.
+smallest split value.
 
 ## The scripts
 

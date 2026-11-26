@@ -25,8 +25,8 @@
  * The city is generated from the demographic parameters of a region and the epidemic is started from
  * a number of randomly drawn infected Person%s. This is the port of cpp/examples/panvXabmSim from the
  * abmXpanvadere branch onto the ABM of main, without the Panvadere coupling: the location that the
- * branch split off and handed to an external microsimulation is not modelled separately here yet, the
- * initialization is random.
+ * branch split off and handed to an external microsimulation is not modelled here, the initialization is
+ * random. Schools can instead be split into rooms with --school_room_size.
  */
 
 #include "city_builder.h"
@@ -60,6 +60,8 @@ void print_help(const char* program_name)
               << Config::DEFAULT_INITIAL_INFECTIONS << ")\n";
     std::cout << "  --infection_k <number>     Scale of the viral shed (default: " << Config::DEFAULT_INFECTION_K
               << ", range: " << Config::MIN_INFECTION_K << "-" << Config::MAX_INFECTION_K << ")\n";
+    std::cout << "  --school_room_size <n>     Split every school into rooms of at most n pupils with a fixed,\n";
+    std::cout << "                             random assignment (default: 0, no split)\n";
     std::cout << "  --output_dir <path>        Output directory (default: " << Config::DEFAULT_OUTPUT_DIR
               << "/run_<timestamp>)\n";
     std::cout << "  --seed <number>            Seed for reproducibility (default: built in seed)\n";
@@ -139,6 +141,9 @@ CommandLine parse_command_line(int argc, char* argv[])
             config.infection_parameter_k =
                 parse_number<double>(arg, argv[++i], Config::MIN_INFECTION_K, Config::MAX_INFECTION_K);
         }
+        else if (arg == "--school_room_size" && has_value) {
+            config.city_config.school_room_size = parse_number<int>(arg, argv[++i], 0, Config::MAX_POPULATION);
+        }
         else if (arg == "--output_dir" && has_value) {
             config.output_base_dir = argv[++i];
         }
@@ -182,6 +187,10 @@ void print_config_summary(const MultiRunConfig& config)
     std::cout << "Simulation days: " << config.simulation_days << std::endl;
     std::cout << "Initial infections: " << config.num_initial_infections << std::endl;
     std::cout << "Infection parameter K: " << config.infection_parameter_k << std::endl;
+    std::cout << "School room size: "
+              << (config.city_config.school_room_size > 0 ? std::to_string(config.city_config.school_room_size)
+                                                           : std::string("no split"))
+              << std::endl;
     std::cout << "Output directory: " << config.output_base_dir << std::endl;
     std::cout << "==================================" << std::endl;
 }

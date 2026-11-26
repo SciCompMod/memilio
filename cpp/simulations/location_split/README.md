@@ -24,6 +24,28 @@ This is the port of `cpp/examples/panvXabmSim` from the `abmXpanvadere` branch o
 * `mio::save_results` is not used, because with percentiles enabled it also serializes the model
   parameters as a graph, which `abm::Model` does not support. The h5 files are written directly.
 
+## Splitting schools into rooms
+
+With `--school_room_size n` every school (elementary and secondary alike) is split into
+`ceil(pupils / n)` rooms of near equal size. Each room is a School location of its own, not a cell,
+because the mobility rules of the ABM always place persons in cell 0. The pupils of a school are
+shuffled at random and every pupil keeps its room for the whole simulation. Every room gets the same
+school contact rates as an unsplit school, so a pupil has as many contacts per hour as before, only
+with fewer persons.
+
+The shuffle uses a stream with the counter of the run but its own key, so it does not draw from the
+Model's generator. Arms that differ only in `--school_room_size` and share `--seed` therefore have the
+same city, the same initially infected persons and the same person streams in every run; the rooms
+are the only difference. The additional rooms are added after all other locations, so all other
+location ids are the same as well.
+
+```bash
+for n in 0 50 25 10 5; do
+  ./build/bin/location_split_simulation --runs 50 --days 60 --n_persons 10000 --infection_k 1.25 \
+      --seed 42 --school_room_size $n --output_dir results/rooms_$n
+done
+```
+
 ## Building
 
 The simulation needs HDF5. It is not part of the default build:
@@ -47,10 +69,12 @@ cmake --build build --target location_split_simulation
 | `--n_persons <n>` | total population, default 1000 |
 | `--initial_infections <n>` | randomly drawn initially infected persons, default 10 |
 | `--infection_k <x>` | scale of the viral shed, default 22.6 |
+| `--school_room_size <n>` | split every school into rooms of at most `n` pupils, default 0 (no split) |
 | `--output_dir <path>` | output directory, default `results/run_<timestamp>` |
 | `--seed <n>` | seed for reproducibility |
 | `--no_infection_events` | do not write the per run infection event csv |
 | `--write_contacts` | write the pairwise contact hours per run; quadratic in the location size |
+| `--write_person_locations` | write where every person was at every hour; needed for the transmission tree plots |
 | `--print_city` | print the derived city infrastructure and exit |
 
 Two invocations with the same `--seed` and the same options produce identical results.
@@ -60,6 +84,7 @@ Two invocations with the same `--seed` and the same options produce identical re
 ```
 <output_dir>/
   summary.txt                          run configuration
+  scenario.json                        label and school room size of this arm, read by viz/
   city_config.csv                      derived city statistics
   household_id.csv                     person -> home
   work_id.csv                          person -> workplace, empty for non-workers

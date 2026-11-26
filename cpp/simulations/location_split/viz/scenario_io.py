@@ -187,7 +187,13 @@ def parse_scenarios(args: argparse.Namespace) -> List[Scenario]:
 
         config = _read_scenario_json(path)
         label = config.get("label", label)
-        fraction = config.get("split_fraction", split_fraction_from_label(label))
+        if "school_room_size" in config:
+            # Written by the simulation for the school room split. The split axis is then the number
+            # of rooms per pupil, 1 / room size: 0 for the baseline, larger for smaller rooms.
+            room_size = config["school_room_size"]
+            fraction = 1.0 / room_size if room_size else 0.0
+        else:
+            fraction = config.get("split_fraction", split_fraction_from_label(label))
 
         scenarios.append(Scenario(label=label, path=path, split_fraction=fraction,
                                   split_location_type=config.get("split_location_type")))
