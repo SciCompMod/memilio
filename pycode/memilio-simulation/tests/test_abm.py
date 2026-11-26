@@ -21,6 +21,7 @@
 import unittest
 
 import numpy as np
+import pickle
 
 import memilio.simulation as mio
 import memilio.simulation.abm as abm
@@ -116,6 +117,15 @@ class TestAbm(unittest.TestCase):
         t1 = t0 + abm.days(1)
         sim.advance(t1)
 
+    def test_pickle(self):
+        """ verify that pickling the model is possible. does not guarantee correctness of pickling """
+        model = abm.Model(num_age_groups)
+        model.add_location(abm.LocationType.Home)
+
+        data = pickle.dumps(model)
+        pickle_test = pickle.loads(data)
+
+        self.assertEqual(len(pickle_test.locations), 2) # cemetary + new loc
 
 if __name__ == '__main__':
     unittest.main()
