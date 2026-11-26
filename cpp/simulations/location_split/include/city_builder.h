@@ -12,6 +12,9 @@
 #include <string>
 #include <vector>
 
+/// The rooms that one Location was split into, one entry per split Location.
+using RoomGroups = std::vector<std::vector<mio::abm::LocationId>>;
+
 /**
  * @brief Configuration of the synthetic city that the simulation is run on.
  */
@@ -52,8 +55,22 @@ public:
      * @brief Build the Model of a city.
      * @param[in] config Configuration of the city.
      * @param[in] rng Random number generator used for the Model and for drawing the households.
+     * @param[out] school_rooms If not null, the rooms of every split school.
      */
-    static mio::abm::Model build_model(const CityConfig& config, const mio::RandomNumberGenerator& rng);
+    static mio::abm::Model build_model(const CityConfig& config, const mio::RandomNumberGenerator& rng,
+                                       RoomGroups* school_rooms = nullptr);
+
+    /**
+     * @brief Assign the members of every room group to its rooms anew, at random, with the same room sizes.
+     * Only the assignment changes; Person%s at a Location stay there until they move next.
+     */
+    static void redraw_rooms(mio::abm::Model& model, const RoomGroups& groups, mio::RandomNumberGenerator& rng);
+
+    /**
+     * @brief A stream with the counter of @p rng but a different key (the key of @p rng xor @p stream_key).
+     * It is reproducible and differs from run to run like @p rng, but drawing from it leaves @p rng untouched.
+     */
+    static mio::RandomNumberGenerator independent_stream(const mio::RandomNumberGenerator& rng, uint32_t stream_key);
 
     /// @brief Print a human readable summary of the city to stdout.
     static void print_city_summary(const CityConfig& config);
@@ -68,8 +85,9 @@ private:
      * Model's generator (its key is the run's key xor @p stream_key), so the city and the initial
      * infections drawn after the build are the same as without the split. The first room reuses the
      * Location, the others are new Location%s of the same type, appended after all others.
+     * @return The rooms of every Location that was split.
      */
-    static void split_into_rooms(mio::abm::Model& model, mio::abm::LocationType type, int room_size,
+    static RoomGroups split_into_rooms(mio::abm::Model& model, mio::abm::LocationType type, int room_size,
                                  const mio::RandomNumberGenerator& rng, uint32_t stream_key);
     static std::vector<mio::abm::LocationId> create_locations(mio::abm::Model& model, mio::abm::LocationType type,
                                                               int count);

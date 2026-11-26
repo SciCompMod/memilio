@@ -134,6 +134,8 @@ executed one after another with a parallel model each. That is much slower for m
 | `--output_dir <path>` | output directory, default `results/run_<timestamp>` |
 | `--seed <n>` | seed for reproducibility |
 | `--write_person_locations` | write where every person was at every hour; needed for the transmission tree plots |
+| `--redraw_school_rooms` | with `--school_room_size`: assign the pupils of every school to its rooms anew every midnight (same room sizes, own random stream, so day 0 is identical to fixed rooms) |
+| `--write_school_rooms` | write, per school room and hour, the persons N, susceptible s and infectious i present and the new infections, aggregated over rooms with the same day, N, s and i; used by `study/theory_check.py` |
 | `--print_city` | print the derived city infrastructure and exit |
 
 Two invocations with the same `--seed` and the same options produce identical results, independent
@@ -151,6 +153,7 @@ options has the same city.
   runs/run_<i>_persons.csv             age group, home, workplace and school (room) of every person in run i
   runs/run_<i>_infection_events.csv    every infection with the location it happened at
   runs/run_<i>_person_locations.csv    location of every person at every hour (only with --write_person_locations)
+  runs/run_<i>_school_rooms.csv        day, N, s, i, room hours and new infections in school rooms (only with --write_school_rooms)
   infection_state_per_age_group/       h5, hourly, per run and p05/p25/p50/p75/p95, age * InfectionState::Count + state
   infection_per_location_type_per_age_group/  h5, new infections per day, age * LocationType::Count + type
   total_infections/                    h5, cumulative number of non-susceptible persons

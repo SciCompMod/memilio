@@ -76,6 +76,10 @@ void print_help(const char* program_name)
     std::cout << "  --seed <number>            Seed for reproducibility (default: built in seed)\n";
     std::cout << "  --write_person_locations   Write where everybody was every hour (large; needed for\n";
     std::cout << "                             the transmission tree plots)\n";
+    std::cout << "  --redraw_school_rooms      Assign the pupils of every school to its rooms anew every day\n";
+    std::cout << "                             (with --school_room_size)\n";
+    std::cout << "  --write_school_rooms       Write persons, susceptible, infectious and new infections per\n";
+    std::cout << "                             school room and hour (aggregated, for the theory comparison)\n";
     std::cout << "  --print_city               Print the derived city infrastructure and exit\n";
     std::cout << "  --help                     Show this message\n";
     std::cout << "\nExamples:\n";
@@ -177,6 +181,12 @@ CommandLine parse_command_line(int argc, char* argv[])
         else if (arg == "--write_person_locations") {
             config.write_person_locations = true;
         }
+        else if (arg == "--redraw_school_rooms") {
+            config.redraw_school_rooms = true;
+        }
+        else if (arg == "--write_school_rooms") {
+            config.write_school_rooms = true;
+        }
         else if (arg == "--print_city") {
             cli.print_city_only = true;
         }
@@ -216,7 +226,7 @@ void print_config_summary(const MultiRunConfig& config)
               << std::endl;
     std::cout << "Room sizes (0 = no split): school " << config.city_config.school_room_size << ", work "
               << config.city_config.work_room_size << ", social event " << config.city_config.event_room_size
-              << std::endl;
+              << (config.redraw_school_rooms ? ", school rooms redrawn daily" : "") << std::endl;
     std::cout << "Output directory: " << config.output_base_dir << std::endl;
     std::cout << "==================================" << std::endl;
 }

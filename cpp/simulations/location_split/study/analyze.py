@@ -13,9 +13,9 @@ SETTINGS = ['Home', 'School', 'Work', 'SocialEvent', 'BasicsShop']
 
 
 def baseline_of(name):
-    for prefix in ('share10_', 'share15_', 'share25_'):
-        if name.startswith(prefix):
-            return prefix + 'no_split'
+    """School share arms (share<NN>_...) are compared with their own no-split arm, all others with sw1."""
+    if name.startswith('share'):
+        return name.split('_')[0] + '_no_split'
     return 'sw1_no_split'
 
 

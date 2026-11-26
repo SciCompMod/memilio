@@ -60,10 +60,16 @@ axes[0].legend(frameon=False)
 fig.tight_layout(); fig.savefig(f"{OUT}/01_school_split_curves.png"); plt.close(fig)
 
 # 2. Three outcomes vs room size, per school share group.
-groups = [("sw1", "school share 8%"), ("share15", "school share 15%"), ("share25", "school share 25%")]
+def school_share_label(prefix):
+    row = table[table["arm"] == prefix + "_no_split"]
+    return f"school share {row['share_School_pct'].values[0]:.0f}%" if len(row) else prefix
+
+
+share_prefixes = sorted({a.split("_")[0] for a in table["arm"] if a.startswith("share")})
+groups = [(p, school_share_label(p)) for p in ["sw1"] + share_prefixes]
 fig, axes = plt.subplots(1, 3, figsize=(13, 4.2))
 for g, (prefix, name) in enumerate(groups):
-    rows = table[table["arm"].str.startswith(prefix + "_")]
+    rows = table[table["arm"].str.startswith(prefix + "_") & ~table["arm"].str.contains("redrawn")]
     if rows.empty:
         continue
     sizes = []
@@ -71,8 +77,8 @@ for g, (prefix, name) in enumerate(groups):
         sizes.append(0 if r["arm"].endswith("no_split") else int(r["arm"].split("_")[-1]))
     rows = rows.assign(rooms=sizes).sort_values("rooms", key=lambda s: s.replace(0, 10**6), ascending=False)
     position = {0: 0, 50: 1, 25: 2, 10: 3, 5: 4}
-    x = np.array([position[s] for s in rows["rooms"]]) + (g - 1) * 0.08
-    gc = ["#2F6297", "#D4692A", "#8A3B12"][g]
+    x = np.array([position[s] for s in rows["rooms"]]) + (g - (len(groups) - 1) / 2) * 0.08
+    gc = ["#2F6297", "#D4692A", "#8A3B12", "#6C8EBF"][g % 4]
     axes[0].errorbar(x, rows["diff_pp"], yerr=[rows["diff_pp"] - rows["ci95_low"], rows["ci95_high"] - rows["diff_pp"]],
                      marker="o", ms=8, capsize=4, color=gc, label=name)
     axes[1].plot(x, rows["delay_20pct_days"], marker="o", ms=8, color=gc, label=name)
@@ -90,11 +96,14 @@ fig.tight_layout(); fig.savefig(f"{OUT}/02_school_split_effects.png"); plt.close
 settings = ["Home", "SocialEvent", "Work", "School", "BasicsShop"]
 names = {"Home": "home", "SocialEvent": "social events", "Work": "work", "School": "school", "BasicsShop": "shops"}
 setcol = [INK, "#D4692A", "#2F6297", "#6C8EBF", "#B9C0CC"]
+top = share_prefixes[-1] if share_prefixes else None
 order = [a for a in ["sw1_no_split", "sw1_rooms_25", "sw1_rooms_5", "work_rooms_5", "work_rooms_3", "event_rooms_5",
-                     "event_rooms_3", "share25_no_split", "share25_rooms_5"] if has(a)]
+                     "event_rooms_3", f"{top}_no_split", f"{top}_rooms_5"] if has(a)]
 pretty = {"sw1_no_split": "no split", "sw1_rooms_25": "school 25", "sw1_rooms_5": "school 5", "work_rooms_5": "work 5",
-          "work_rooms_3": "work 3", "event_rooms_5": "events 5", "event_rooms_3": "events 3",
-          "share25_no_split": "no split\n(school 25%)", "share25_rooms_5": "school 5\n(school 25%)"}
+          "work_rooms_3": "work 3", "event_rooms_5": "events 5", "event_rooms_3": "events 3"}
+if top:
+    pretty[f"{top}_no_split"] = f"no split\n({school_share_label(top)})"
+    pretty[f"{top}_rooms_5"] = f"school 5\n({school_share_label(top)})"
 fig, ax = plt.subplots(figsize=(12, 4.4))
 bottom = np.zeros(len(order))
 for s, c in zip(settings, setcol):
@@ -111,7 +120,7 @@ fig.tight_layout(); fig.savefig(f"{OUT}/03_infection_settings.png"); plt.close(f
 
 # 4. Workplace and social event splits.
 we = [a for a in ["work_rooms_5", "work_rooms_3", "event_rooms_5", "event_rooms_3", "sw1_rooms_5"] if has(a)]
-if we:
+if any(a.startswith(("work", "event")) for a in we):
     rows = table.set_index("arm").loc[we]
     lab = [pretty[a] for a in we]
     fig, axes = plt.subplots(1, 3, figsize=(13, 4.2))
@@ -124,8 +133,13 @@ if we:
         ax.axhline(0, color="grey", lw=0.8); ax.set(title=title, ylabel=ylabel); ax.tick_params(axis="x", labelsize=9)
     fig.tight_layout(); fig.savefig(f"{OUT}/04_work_event_split.png"); plt.close(fig)
 
-# 5. Calibration.
-calib = json.load(open(os.environ.get("CALIBRATION_RESULT", "calibration_output/fit_result.json")))
+# 5. Calibration, only if a fit result is given.
+calibration_path = os.environ.get("CALIBRATION_RESULT", "calibration_output/fit_result.json")
+if not os.path.exists(calibration_path):
+    print("no calibration result at", calibration_path, "- skipping the calibration figure")
+    print("figures written to", OUT)
+    raise SystemExit(0)
+calib = json.load(open(calibration_path))
 first, last = calib["history"][0]["shares"], calib["history"][-1]["shares"]
 keys = ["home", "social_event", "work"]
 fig, ax = plt.subplots(figsize=(7.5, 4.2))

@@ -53,7 +53,8 @@ int draw_age_group(const std::vector<int>& remaining, int first_age, RNG& rng)
 }
 } // namespace
 
-mio::abm::Model CityBuilder::build_model(const CityConfig& config, const mio::RandomNumberGenerator& rng)
+mio::abm::Model CityBuilder::build_model(const CityConfig& config, const mio::RandomNumberGenerator& rng,
+                                         RoomGroups* school_rooms)
 {
     auto model      = mio::abm::Model(num_age_groups);
     model.get_rng() = rng;
@@ -76,7 +77,10 @@ mio::abm::Model CityBuilder::build_model(const CityConfig& config, const mio::Ra
 
     // Each type has its own shuffle stream, so splitting one type does not change the rooms of another.
     if (config.school_room_size > 0) {
-        split_into_rooms(model, mio::abm::LocationType::School, config.school_room_size, rng, 0x5ca1ab1eu);
+        auto groups = split_into_rooms(model, mio::abm::LocationType::School, config.school_room_size, rng, 0x5ca1ab1eu);
+        if (school_rooms) {
+            *school_rooms = std::move(groups);
+        }
     }
     if (config.work_room_size > 0) {
         split_into_rooms(model, mio::abm::LocationType::Work, config.work_room_size, rng, 0x0ff1ce00u);
@@ -92,20 +96,24 @@ mio::abm::Model CityBuilder::build_model(const CityConfig& config, const mio::Ra
     return model;
 }
 
-void CityBuilder::split_into_rooms(mio::abm::Model& model, mio::abm::LocationType type, int room_size,
-                                   const mio::RandomNumberGenerator& rng, uint32_t stream_key)
+mio::RandomNumberGenerator CityBuilder::independent_stream(const mio::RandomNumberGenerator& rng, uint32_t stream_key)
 {
-    assert(room_size > 0);
-
-    // A stream with the counter of this run but a different key. It is reproducible and differs from
-    // run to run like the Model's generator, but drawing from it leaves the Model's generator untouched.
     auto seeds = rng.get_seeds();
     for (auto& seed : seeds) {
         seed ^= stream_key;
     }
-    mio::RandomNumberGenerator room_rng;
-    room_rng.seed(seeds);
-    room_rng.set_counter(rng.get_counter());
+    mio::RandomNumberGenerator stream;
+    stream.seed(seeds);
+    stream.set_counter(rng.get_counter());
+    return stream;
+}
+
+RoomGroups CityBuilder::split_into_rooms(mio::abm::Model& model, mio::abm::LocationType type, int room_size,
+                                         const mio::RandomNumberGenerator& rng, uint32_t stream_key)
+{
+    assert(room_size > 0);
+    auto room_rng = independent_stream(rng, stream_key);
+    RoomGroups groups;
 
     // Members per Location, in the order of the Person%s. std::map keeps the Location%s in id order.
     std::map<uint32_t, std::vector<mio::abm::PersonId>> members_per_location;
@@ -132,6 +140,40 @@ void CityBuilder::split_into_rooms(mio::abm::Model& model, mio::abm::LocationTyp
         // Consecutive blocks of the shuffled members, so that room sizes differ by at most one.
         for (size_t k = 0; k < num_members; ++k) {
             model.assign_location(members[k], rooms[k * num_rooms / num_members]);
+        }
+        groups.push_back(std::move(rooms));
+    }
+    return groups;
+}
+
+void CityBuilder::redraw_rooms(mio::abm::Model& model, const RoomGroups& groups, mio::RandomNumberGenerator& rng)
+{
+    if (groups.empty()) {
+        return;
+    }
+    const auto type = model.get_location(groups.front().front()).get_type();
+
+    // Group of every room, -1 for Location%s that are not a room of a group.
+    std::vector<int> group_of(model.get_locations().size(), -1);
+    for (size_t g = 0; g < groups.size(); ++g) {
+        for (const auto& room : groups[g]) {
+            group_of[room.get()] = static_cast<int>(g);
+        }
+    }
+
+    // Members per group in the order of the Person%s, shuffled and cut into blocks as in split_into_rooms.
+    std::vector<std::vector<mio::abm::PersonId>> members(groups.size());
+    for (const auto& person : model.get_persons()) {
+        const auto room = person.get_assigned_location(type);
+        if (room != mio::abm::LocationId::invalid_id() && group_of[room.get()] >= 0) {
+            members[(size_t)group_of[room.get()]].push_back(person.get_id());
+        }
+    }
+    for (size_t g = 0; g < groups.size(); ++g) {
+        auto& m = members[g];
+        std::shuffle(m.begin(), m.end(), rng);
+        for (size_t k = 0; k < m.size(); ++k) {
+            model.assign_location(m[k], groups[g][k * groups[g].size() / m.size()]);
         }
     }
 }

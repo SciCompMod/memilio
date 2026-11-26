@@ -9,7 +9,10 @@
 #include "memilio/data/analyze_result.h"
 #include "memilio/io/result_io.h"
 
+#include <array>
 #include <fstream>
+#include <map>
+#include <optional>
 #include <iostream>
 #include <algorithm>
 #include <tuple>
@@ -88,16 +91,32 @@ std::vector<mio::abm::PersonId> draw_initial_infections(const mio::abm::Model& m
     return drawn_ids;
 }
 
-// Loggers. Simulation::advance calls log(sim) once at the start and after every hour.
+// Loggers. Simulation::advance calls log(sim) once at its start and after every hour. The simulation is
+// advanced one day per call, so every logger skips a time it has already logged.
+
+struct OncePerTime {
+    bool is_new(mio::abm::TimePoint t)
+    {
+        if (last && *last == t) {
+            return false;
+        }
+        last = t;
+        return true;
+    }
+    std::optional<mio::abm::TimePoint> last;
+};
 
 /// @brief Persons per InfectionState and AgeGroup, and persons that are not Susceptible any more.
-struct InfectionStateLogger {
+struct InfectionStateLogger : OncePerTime {
     mio::TimeSeries<ScalarType> states{Eigen::Index((size_t)InfectionState::Count * num_age_groups)};
     mio::TimeSeries<ScalarType> total_infections{Eigen::Index(1)};
 
     void log(const mio::abm::Simulation<>& sim)
     {
-        const auto t          = sim.get_time();
+        const auto t = sim.get_time();
+        if (!is_new(t)) {
+            return;
+        }
         const auto num_states = (size_t)InfectionState::Count;
         auto counts           = states.add_time_point(t.days(), Eigen::VectorX<ScalarType>::Zero(states.get_num_elements()));
         auto infected         = total_infections.add_time_point(t.days(), Eigen::VectorX<ScalarType>::Zero(1));
@@ -118,11 +137,14 @@ struct InfectionStateLogger {
  * it occupied in the previous hour, because the ABM lets Person%s interact before it moves them. Only
  * the previous hour is kept, so the memory does not grow with the simulated time.
  */
-struct InfectionEventLogger {
+struct InfectionEventLogger : OncePerTime {
     std::vector<InfectionEvent> events;
 
     void log(const mio::abm::Simulation<>& sim)
     {
+        if (!is_new(sim.get_time())) {
+            return;
+        }
         const auto persons = sim.get_model().get_persons();
         previous.resize(persons.size());
         for (size_t i = 0; i < persons.size(); ++i) {
@@ -146,12 +168,15 @@ private:
     int step = 0;
 };
 
-/// @brief Streams the Location of every Person at every hour to a csv file.
-struct PersonLocationLogger {
+/// @brief Streams the Location of every Person at every hour to a csv file, if the file is open.
+struct PersonLocationLogger : OncePerTime {
     std::ofstream file;
 
     void log(const mio::abm::Simulation<>& sim)
     {
+        if (!file.is_open() || !is_new(sim.get_time())) {
+            return;
+        }
         for (const auto& person : sim.get_model().get_persons()) {
             file << step << "," << person.get_id().get() << "," << person.get_location().get() << "\n";
         }
@@ -159,6 +184,82 @@ struct PersonLocationLogger {
     }
 
 private:
+    int step = 0;
+};
+
+bool is_infectious(InfectionState state)
+{
+    return state == InfectionState::InfectedNoSymptoms || state == InfectionState::InfectedSymptoms ||
+           state == InfectionState::InfectedSevere || state == InfectionState::InfectedCritical;
+}
+
+/**
+ * @brief For every school room and hour: persons present (N), susceptible (s) and infectious (i) present, and
+ * how many of the s were infected in that hour. These are the quantities of the one-step transmission
+ * formula g(s, i) of the theory note. Aggregated over room hours with the same day, N, s and i.
+ */
+struct SchoolRoomLogger : OncePerTime {
+    bool enabled = false;
+    std::map<std::array<int, 4>, std::array<int64_t, 2>> table; ///< (day, N, s, i) -> (room hours, new infections)
+
+    void log(const mio::abm::Simulation<>& sim)
+    {
+        if (!enabled || !is_new(sim.get_time())) {
+            return;
+        }
+        const auto& model  = sim.get_model();
+        const auto persons = model.get_persons();
+        const auto t       = sim.get_time();
+        if (previous.empty()) {
+            previous.resize(persons.size());
+            counts.resize(model.get_locations().size());
+        }
+
+        // The previous hour: new infections among the susceptible that were in a school room, then the room counts.
+        std::vector<int> new_infections(counts.size(), 0);
+        for (size_t p = 0; p < persons.size(); ++p) {
+            if (previous[p].in_school && previous[p].susceptible &&
+                persons[p].get_infection_state(t) != InfectionState::Susceptible) {
+                ++new_infections[previous[p].room.get()];
+            }
+        }
+        if (step > 0) {
+            for (size_t room = 0; room < counts.size(); ++room) {
+                if (counts[room][0] > 0) {
+                    auto& entry = table[{(step - 1) / 24, counts[room][0], counts[room][1], counts[room][2]}];
+                    entry[0] += 1;
+                    entry[1] += new_infections[room];
+                }
+            }
+        }
+
+        // This hour.
+        for (auto& c : counts) {
+            c = {0, 0, 0};
+        }
+        for (size_t p = 0; p < persons.size(); ++p) {
+            const auto& person = persons[p];
+            const auto state   = person.get_infection_state(t);
+            const bool school  = person.get_location_type() == LocationType::School;
+            previous[p]        = {school, state == InfectionState::Susceptible, person.get_location()};
+            if (school) {
+                auto& c = counts[person.get_location().get()];
+                c[0] += 1;
+                c[1] += state == InfectionState::Susceptible;
+                c[2] += is_infectious(state);
+            }
+        }
+        ++step;
+    }
+
+private:
+    struct PreviousHour {
+        bool in_school;
+        bool susceptible;
+        mio::abm::LocationId room;
+    };
+    std::vector<PreviousHour> previous;
+    std::vector<std::array<int, 3>> counts; ///< (N, s, i) per Location in the current hour.
     int step = 0;
 };
 
@@ -182,7 +283,8 @@ mio::TimeSeries<ScalarType> infections_per_day(const std::vector<InfectionEvent>
 
 /// @brief Infect the initial Person%s, then simulate one run in steps of one hour.
 mio::IOResult<RunResult> simulate_run(mio::abm::Model&& model, const std::vector<mio::abm::PersonId>& initial,
-                                      const MultiRunConfig& config, int run)
+                                      const MultiRunConfig& config, int run, const RoomGroups& school_rooms,
+                                      mio::RandomNumberGenerator redraw_rng)
 {
     RunResult result;
     result.run                = run;
@@ -209,21 +311,29 @@ mio::IOResult<RunResult> simulate_run(mio::abm::Model&& model, const std::vector
 
     InfectionStateLogger state_logger;
     InfectionEventLogger event_logger;
-    auto sim        = mio::abm::Simulation(t0, std::move(model)); // steps of one hour
-    const auto tmax = t0 + mio::abm::days(config.simulation_days);
-
+    PersonLocationLogger location_logger;
+    SchoolRoomLogger room_logger;
+    room_logger.enabled = config.write_school_rooms;
     if (config.write_person_locations) {
-        PersonLocationLogger location_logger;
         const auto filename = config.output_base_dir + "/runs/run_" + std::to_string(run) + "_person_locations.csv";
         location_logger.file.open(filename);
         if (!location_logger.file.is_open()) {
             return mio::failure(mio::StatusCode::FileNotFound, "Could not open " + filename);
         }
         location_logger.file << "Timestep,Person_ID,Location_ID\n";
-        sim.advance(tmax, state_logger, event_logger, location_logger);
     }
-    else {
-        sim.advance(tmax, state_logger, event_logger);
+
+    // One day per call, in steps of one hour. Redrawn rooms change at midnight, when the pupils are at home.
+    auto sim = mio::abm::Simulation(t0, std::move(model));
+    for (int day = 0; day < config.simulation_days; ++day) {
+        if (config.redraw_school_rooms && day > 0) {
+            CityBuilder::redraw_rooms(sim.get_model(), school_rooms, redraw_rng);
+        }
+        sim.advance(t0 + mio::abm::days(day + 1), state_logger, event_logger, location_logger, room_logger);
+    }
+
+    for (const auto& [key, value] : room_logger.table) {
+        result.school_rooms.push_back({key[0], key[1], key[2], key[3], value[0], value[1]});
     }
 
     result.infection_states             = std::move(state_logger.states);
@@ -258,7 +368,10 @@ mio::IOResult<std::vector<RunResult>> run_simulations(const MultiRunConfig& conf
         auto run_rng = rng;
         run_rng.set_counter(
             mio::rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(run), mio::Counter<uint32_t>(0)));
-        auto model = CityBuilder::build_model(config.city_config, run_rng);
+        RoomGroups school_rooms;
+        auto model = CityBuilder::build_model(config.city_config, run_rng, &school_rooms);
+        // The redrawing of the school rooms has its own stream, so it leaves all other draws unchanged.
+        auto redraw_rng = CityBuilder::independent_stream(run_rng, 0x0dd5eed0u);
 
         // The city is built from the Model's generator, so a copy of it taken now is a stream that neither
         // the city construction nor the simulation uses.
@@ -269,7 +382,8 @@ mio::IOResult<std::vector<RunResult>> run_simulations(const MultiRunConfig& conf
         // index still separates the individual streams.
         model.reset_rng(mio::Counter<uint32_t>(static_cast<uint32_t>(run)));
 
-        results[static_cast<size_t>(run)] = simulate_run(std::move(model), initial, config, run);
+        results[static_cast<size_t>(run)] =
+            simulate_run(std::move(model), initial, config, run, school_rooms, redraw_rng);
 
 #pragma omp critical(location_split_progress)
         {
@@ -324,7 +438,8 @@ mio::IOResult<void> write_summary(const MultiRunConfig& config, size_t num_runs)
          << "Seed: " << config.custom_seed << "\n"
          << "Contact weights: " << contact_weights_to_string(city.contact_weights) << "\n"
          << "Room sizes (0 = no split): school " << city.school_room_size << ", work " << city.work_room_size
-         << ", social event " << city.event_room_size << "\n";
+         << ", social event " << city.event_room_size << "\n"
+         << "Redraw school rooms daily: " << (config.redraw_school_rooms ? "yes" : "no") << "\n";
     return mio::success();
 }
 
@@ -350,6 +465,9 @@ mio::IOResult<void> write_scenario(const MultiRunConfig& config)
             }
         }
     }
+    if (config.redraw_school_rooms && city.school_room_size > 0) {
+        label += ", redrawn daily";
+    }
     auto json_size = [](int size) {
         return size > 0 ? std::to_string(size) : std::string("null");
     };
@@ -357,7 +475,8 @@ mio::IOResult<void> write_scenario(const MultiRunConfig& config)
          << "\", \"split_location_type\": \"" << split_type << "\", \"room_size\": " << json_size(room_size)
          << ", \"school_room_size\": " << json_size(city.school_room_size)
          << ", \"work_room_size\": " << json_size(city.work_room_size)
-         << ", \"event_room_size\": " << json_size(city.event_room_size) << "}\n";
+         << ", \"event_room_size\": " << json_size(city.event_room_size)
+         << ", \"redraw_school_rooms\": " << (config.redraw_school_rooms ? "true" : "false") << "}\n";
     return mio::success();
 }
 
@@ -394,6 +513,17 @@ mio::IOResult<void> write_infection_events(const RunResult& run, const std::stri
     for (const auto& e : run.infection_events) {
         file << e.time_step << "," << e.person_id.get() << "," << e.location_id.get() << ","
              << location_type_to_string(e.location_type) << "," << (size_t)e.age.get() << "\n";
+    }
+    return mio::success();
+}
+
+mio::IOResult<void> write_school_rooms(const RunResult& run, const std::string& filename)
+{
+    BOOST_OUTCOME_TRY(auto&& file, open_file(filename));
+    file << "Day,Persons,Susceptible,Infectious,Room_Hours,New_Infections\n";
+    for (const auto& r : run.school_rooms) {
+        file << r.day << "," << r.persons << "," << r.susceptible << "," << r.infectious << "," << r.room_hours << ","
+             << r.new_infections << "\n";
     }
     return mio::success();
 }
@@ -443,6 +573,9 @@ mio::IOResult<void> save_results(const std::vector<RunResult>& runs, const Multi
         const auto prefix = dir + "/runs/run_" + std::to_string(run.run);
         BOOST_OUTCOME_TRY(write_persons(run, prefix + "_persons.csv"));
         BOOST_OUTCOME_TRY(write_infection_events(run, prefix + "_infection_events.csv"));
+        if (config.write_school_rooms) {
+            BOOST_OUTCOME_TRY(write_school_rooms(run, prefix + "_school_rooms.csv"));
+        }
     }
 
     const auto groups = static_cast<int>(num_age_groups);
