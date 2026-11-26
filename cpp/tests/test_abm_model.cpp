@@ -228,6 +228,50 @@ TEST_F(TestModel, findLocation)
 }
 
 /**
+ * @brief Test that Persons without an assigned Location for an ActivityType do not crash the mobility rules.
+ */
+TEST_F(TestModel, mobilityWithMissingAssignedLocations)
+{
+    auto t          = mio::abm::TimePoint(0);
+    auto dt         = mio::abm::hours(1);
+    auto model      = mio::abm::Model(num_age_groups);
+    model.get_rng() = this->get_rng();
+
+    auto home_id = model.add_location(mio::abm::LocationType::Home);
+    auto work_id = model.add_location(mio::abm::LocationType::Work);
+    model.add_location(mio::abm::LocationType::School);
+    model.add_location(mio::abm::LocationType::BasicsShop);
+    model.add_location(mio::abm::LocationType::Recreation);
+
+    // Adults with a home but no workplace, school, shop or recreation location.
+    std::vector<mio::abm::PersonId> home_only;
+    for (int i = 0; i < 10; ++i) {
+        auto id = add_test_person(model, home_id, mio::abm::ActivityType::Home, age_group_35_to_59);
+        model.get_person(id).set_assigned_location(mio::abm::ActivityType::Home, home_id, model.get_id());
+        home_only.push_back(id);
+    }
+    // A Person whose current activity (Work) has no assigned Location.
+    auto at_work_id = add_test_person(model, work_id, mio::abm::ActivityType::Work, age_group_35_to_59);
+    model.get_person(at_work_id).set_assigned_location(mio::abm::ActivityType::Home, home_id, model.get_id());
+
+    EXPECT_FALSE(model.get_person(at_work_id).has_assigned_location(mio::abm::ActivityType::Work));
+    EXPECT_TRUE(model.get_person(at_work_id).has_assigned_location(mio::abm::ActivityType::Home));
+
+    // Simulate a full weekday, during which the mobility rules request Work, School, BasicsShop and Recreation.
+    for (int hour = 0; hour < 24; ++hour) {
+        model.evolve(t, dt);
+        t += dt;
+    }
+
+    // Nobody can have been moved to a Location type they are not assigned to.
+    for (auto id : home_only) {
+        EXPECT_EQ(model.get_person(id).get_location(), home_id);
+    }
+    // The Person at work returns home after work, which is assigned.
+    EXPECT_EQ(model.get_person(at_work_id).get_location(), home_id);
+}
+
+/**
  * @brief Test the exposure contribution normalization in the Model class.
  */
 TEST_F(TestModel, exposureContributionNormalization)

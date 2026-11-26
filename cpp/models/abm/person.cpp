@@ -26,6 +26,7 @@
 #include "abm/location.h"
 #include "abm/person_id.h"
 #include "memilio/utils/random_number_generator.h"
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <vector>
@@ -50,7 +51,7 @@ Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, Acti
     , m_cells{0}
     , m_last_transport_mode(TransportMode::Unknown)
     , m_test_results({TestType::Count}, TestResult())
-    , m_assigned_location_model_ids((int)LocationType::Count)
+    , m_assigned_location_model_ids((uint32_t)ActivityType::Count)
     , m_person_id(person_id)
 {
     m_random_workgroup        = UniformDistribution<ScalarType>::get_instance()(rng);
@@ -123,9 +124,15 @@ void Person::set_assigned_location(ActivityType activity_type, LocationId id, in
     m_assigned_location_model_ids[static_cast<uint32_t>(activity_type)].push_back(model_id);
 }
 
+bool Person::has_assigned_location(ActivityType activity_type) const
+{
+    return !m_assigned_locations[static_cast<uint32_t>(activity_type)].empty();
+}
+
 std::pair<LocationId, int> Person::get_assigned_location(ActivityType activity_type,
                                                          PersonalRandomNumberGenerator& rng) const
 {
+    assert(has_assigned_location(activity_type) && "Person has no assigned Location of the given ActivityType.");
     size_t index = UniformIntDistribution<size_t>::get_instance()(
         rng, size_t(0), m_assigned_locations[static_cast<uint32_t>(activity_type)].size() - 1);
     return {m_assigned_locations[static_cast<uint32_t>(activity_type)][index],
