@@ -107,10 +107,11 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
         # In addition to standard flags, disable elision and inlining to prevent e.g. closing brackets being marked as
         # uncovered.
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-elide-constructors -fno-default-inline")
+        # inconsistent: newer lcov (e.g. 2.4) aborts on mismatched line info of gcc for templates
         setup_target_for_coverage_lcov(
             NAME coverage
             EXECUTABLE memilio-test
-            LCOV_ARGS --ignore-errors gcov,mismatch
+            LCOV_ARGS --ignore-errors gcov,mismatch,inconsistent
             EXCLUDE "${CMAKE_SOURCE_DIR}/tests*" "${CMAKE_SOURCE_DIR}/examples*"
             "${CMAKE_SOURCE_DIR}/memilio/ad*" "${CMAKE_BINARY_DIR}/*" "/usr*" "${CMAKE_SOURCE_DIR}/*.F"
         )
@@ -163,6 +164,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RELEASE")
             "-Wno-restrict;" # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105329
             "-Wno-maybe-uninitialized;" # https://gcc.gnu.org/bugzilla/buglist.cgi?quicksearch=may%20be%20uninitialized
             "-Wno-stringop-overread;"
+            "-Wno-array-bounds;" # false positive in gcc 15 for std::vector::erase in parameter_distributions.h
         )
     elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS

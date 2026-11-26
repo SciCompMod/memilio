@@ -43,7 +43,7 @@ def try_set_libclang_path(path: str) -> None:
     """
     # Check if path was set in config. If not, try to get it with cmd.
     if (not path or path == 'LIBCLANG_PATH-NOTFOUND'):
-        clang_cmd = ["clang", '-print-file-name=']
+        clang_cmd = ["clang-18", '-print-file-name=']
         clang_cmd_result = subprocess.check_output(clang_cmd)
         path, dirname = os.path.split(clang_cmd_result)
         while ("llvm" not in str(dirname)):

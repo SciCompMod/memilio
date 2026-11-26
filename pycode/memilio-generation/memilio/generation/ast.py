@@ -25,10 +25,15 @@ from typing_extensions import Self
 import subprocess
 import tempfile
 import logging
-from clang.cindex import Cursor, TranslationUnit, Index, CompilationDatabase
+from clang.cindex import Cursor, TranslationUnit, Index, CompilationDatabase, CursorKind
 from typing import TYPE_CHECKING
 from memilio.generation import utility
 
+# libstdc++ of gcc >= 15 uses the flag_enum attribute, which is unknown to the python bindings of libclang 18
+try:
+    CursorKind.from_id(437)
+except ValueError:
+    CursorKind.FLAG_ENUM = CursorKind(437)
 
 if TYPE_CHECKING:
     from memilio.generation import ScannerConfig
