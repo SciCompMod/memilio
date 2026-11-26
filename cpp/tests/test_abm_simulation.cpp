@@ -261,6 +261,7 @@ TEST(TestSimulation, logInfectionStatePerAgeGroup)
 {
     // LogInfectionStatePerAgeGroup counts every Person by AgeGroup and InfectionState
     auto model = mio::abm::Model(num_age_groups);
+    model.parameters.get<mio::abm::InfectionRateFromViralShed>()[mio::abm::VirusVariant::Wildtype] = 0.0;
     auto home  = model.add_location(mio::abm::LocationType::Home);
 
     auto p1 = add_test_person(model, home, mio::abm::ActivityType::Home, age_group_5_to_14,
