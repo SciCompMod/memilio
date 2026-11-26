@@ -197,7 +197,15 @@ public:
     void set_assigned_location(ActivityType activity_type, LocationId id, int model_id);
 
     /**
+     * @brief Check whether the Person has at least one assigned Location for the given ActivityType.
+     * @param[in] activity_type #ActivityType of interest.
+     * @return True if at least one Location is assigned for activity_type.
+     */
+    bool has_assigned_location(ActivityType activity_type) const;
+
+    /**
      * @brief Returns the index of an assigned Location of the Person. The index is uniformly sampled from the LocationIds of the assigned ActivityType.
+     * The Person must have at least one assigned Location of this type, see has_assigned_location.
      * @param[in] activity_type #ActivityType of the assigned Location.
      * @param[in] rng RandomNumberGenerator for sampling the index of the assigned LocationId.
      * @return The index in the LocationId and the model id of the assigned Location.

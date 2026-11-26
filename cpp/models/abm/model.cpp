@@ -114,7 +114,11 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
             auto try_mobility_rule = [&](auto rule) -> bool {
                 // run mobility rule and check if change of location can actually happen
                 auto target_type = rule(personal_rng, person, t, dt, parameters);
-                auto target      = person.get_assigned_location(target_type, personal_rng);
+                // the Person cannot move if they have no assigned Location for the target activity, e.g. no workplace
+                if (!person.has_assigned_location(target_type)) {
+                    return false;
+                }
+                auto target = person.get_assigned_location(target_type, personal_rng);
                 if (target.second == m_id) {
                     const Location& target_location   = get_location(target.first);
                     const LocationId current_location = person.get_location();
