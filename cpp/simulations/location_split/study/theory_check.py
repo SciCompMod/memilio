@@ -148,8 +148,8 @@ for (size, redrawn), t in tables.items():
     h = h[h.inf_hours > 200]
     axes[1].plot(h.share, h.new / h.inf_hours, "o-", ms=6, color=SIZE_COLORS[size], label=label)
 lim = axes[0].get_xlim()[1]
-axes[0].plot([0, lim], [0, lim], color=MUTED, lw=1, ls="--", label="theory, Eq. (9)")
-axes[0].set(xlabel="predicted new infections per room hour", ylabel="observed",
+axes[0].plot([0, lim], [0, lim], color=MUTED, lw=1, ls="--", label="observed = predicted")
+axes[0].set(xlabel="predicted by Eq. (9), g(s, i), per room hour", ylabel="observed new infections per room hour",
             title="One step: ABM rooms close to g(s, i)")
 axes[1].plot([0, 1], [0, a], color=MUTED, lw=1, ls="--", label=f"a · s/(N−1), a = {a:.3f}")
 axes[1].set(xlabel="susceptible share of the room, s/(N−1)", ylabel="new infections per infectious pupil hour",
