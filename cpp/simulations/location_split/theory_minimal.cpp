@@ -20,7 +20,9 @@
  *     over the steps, so a fixed room of N agents gives sum_r s_r (1 - exp(-a i_r T / (N_r - 1))) after
  *     T steps: Eq. (9) with a replaced by a T.
  *
- * Usage: location_split_theory [output directory] [number of seeds]
+ * Usage: location_split_theory [output directory] [number of seeds] [base seed]
+ * The base seed (default 516327 = 0x7e0e7) is part of every model's RNG key; another value gives
+ * statistically independent replicates of all experiments.
  */
 #include "abm/infection.h"
 #include "abm/location_type.h"
@@ -49,6 +51,7 @@ using mio::abm::PersonId;
 const auto virus     = mio::abm::VirusVariant::Wildtype;
 const auto age       = mio::AgeGroup(0);
 const auto t0        = mio::abm::TimePoint(0);
+uint32_t base_seed   = 0x7e0e7u;
 const auto dt        = mio::abm::hours(1);
 constexpr double dt_days = 1.0 / 24.0;
 
@@ -71,7 +74,7 @@ mio::abm::Model make_model(uint32_t seed)
         mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(1.0));
     params.get<mio::abm::AerosolTransmissionRates>() = 0.0;
     model.use_mobility_rules(false);
-    model.reset_rng(std::vector<uint32_t>{seed, 0x7e0e7u, 2026u, 11u, 26u, 1u});
+    model.reset_rng(std::vector<uint32_t>{seed, base_seed, 2026u, 11u, 26u, 1u});
     return model;
 }
 
@@ -373,6 +376,9 @@ int main(int argc, char** argv)
 {
     const std::string dir = argc > 1 ? argv[1] : "theory_minimal_output";
     const int seeds       = argc > 2 ? std::stoi(argv[2]) : 20;
+    if (argc > 3) {
+        base_seed = static_cast<uint32_t>(std::stoul(argv[3]));
+    }
     mio::set_log_level(mio::LogLevel::warn);
     if (!mio::create_directory(dir)) {
         std::cerr << "Could not create " << dir << "\n";

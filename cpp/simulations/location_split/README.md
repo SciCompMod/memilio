@@ -119,6 +119,9 @@ With fixed infectious agents, the hazards of a susceptible add up over the steps
 python study/theory_minimal_figures.py study_output/theory_minimal study_output/theory_minimal/figures
 ```
 
+An optional third argument sets the base seed of the random generator (default 516327); another
+value gives independent replicates of all three experiments.
+
 ## Building
 
 The simulation needs HDF5. It is not part of the default build. Independent runs are executed in
