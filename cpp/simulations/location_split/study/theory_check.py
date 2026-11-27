@@ -72,7 +72,9 @@ def room_table(arm):
 # ---------------------------------------------------------------------------------------------------------
 # 1. Fit a = Lambda * dt over all room hours with at least one susceptible and one infectious present.
 # ---------------------------------------------------------------------------------------------------------
-tables = {(s, r): room_table(arm_name(s, r))[0] for s, r in arms()}
+_loaded = {(s, r): room_table(arm_name(s, r)) for s, r in arms()}
+tables = {key: v[0] for key, v in _loaded.items()}
+table_runs = {key: v[1] for key, v in _loaded.items()}
 cells = pd.concat(tables.values())
 cells = cells[(cells.Susceptible > 0) & (cells.Infectious > 0) & (cells.Persons > 1)]
 cells = cells.groupby(["Persons", "Susceptible", "Infectious"], as_index=False)[["Room_Hours", "New_Infections"]].sum()
@@ -160,7 +162,10 @@ fig.tight_layout(); fig.savefig(os.path.join(FIG, "theory_1_one_step.png")); plt
 # ---------------------------------------------------------------------------------------------------------
 # 4. Susceptible share seen by infectious pupils, per day (weighted by infectious pupil hours).
 # ---------------------------------------------------------------------------------------------------------
-fig, ax = plt.subplots(figsize=(9, 5))
+# Right: infectious pupils at school, as infectious pupil hours in school rooms per school day and run. School is
+# open 8 h on weekdays, so the weekly sum divided by 5 school days and 8 h is the mean number of infectious
+# pupils present during school hours.
+fig, (ax, ax_inf) = plt.subplots(1, 2, figsize=(14, 5.2))
 seen = {}
 for (size, redrawn), t in tables.items():
     if size not in (0, 5, 10):
@@ -171,10 +176,18 @@ for (size, redrawn), t in tables.items():
     seen[(size, redrawn)] = daily
     smooth = daily.rolling(7, min_periods=1).mean()
     label = "no split" if size == 0 else f"{'redrawn' if redrawn else 'fixed'} rooms of {size}"
-    ax.plot(smooth.index, smooth.values, color=SIZE_COLORS[size], ls="--" if redrawn else "-", label=label)
+    style = dict(color=SIZE_COLORS[size], ls="--" if redrawn else "-", label=label)
+    ax.plot(smooth.index, smooth.values, **style)
+    days = np.arange(0, int(t.Day.max()) + 1)
+    pupil_hours = w.groupby(c.Day).sum().reindex(days, fill_value=0) / table_runs[(size, redrawn)]
+    present = pupil_hours.rolling(7, min_periods=7, center=True).sum() / (5 * 8)
+    ax_inf.plot(present.index, present.values, **style)
 ax.set(xlabel="day", ylabel="susceptible share around infectious pupils",
-       title="Fixed small rooms run out of susceptibles", ylim=(0, 1))
+       title="Susceptibles around infectious pupils", ylim=(0, 1))
 ax.legend(fontsize=11)
+ax_inf.set(xlabel="day", ylabel="infectious pupils at school (mean over school hours)",
+           title="Infectious pupils at school", ylim=(0, None))
+ax_inf.yaxis.label.set_size(12)
 fig.tight_layout(); fig.savefig(os.path.join(FIG, "theory_2_depletion.png")); plt.close(fig)
 
 # ---------------------------------------------------------------------------------------------------------
