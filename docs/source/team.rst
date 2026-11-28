@@ -40,6 +40,7 @@ Martin Kühn studied at University of Cologne, Germany, and Université de Montr
    * |Agent-based_modeling_for|
    * |Hybrid_metapopulation_agent-based|
    * |Novel_travel_time_aware_metapopulation_models|
+   * |Bindings|
 
 
 .. dropdown:: Links
@@ -72,6 +73,7 @@ Henrik Zunker is a PhD student at the Institute of Software Technology at the Ge
    * |Risk-mediated_dynamic_regulation|
    * |Graph_Neural_Network_Surrogates|
    * |Novel_travel_time_aware_metapopulation_models|
+   * |Bindings|
 
 .. dropdown:: Links
    :animate: fade-in-slide-down
@@ -231,6 +233,7 @@ Maximilian Betz completed his Bachelor's degree in Computer Science at the DHBW 
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
+   * |Bindings|
    * |MEmilio_citation|
 
 
@@ -259,6 +262,7 @@ equation-based models.
    * |Hybrid_metapopulation_agent-based|
    * |Integrating_Human_Mobility_Models|
    * |Revisiting_the_Linear_Chain|
+   * |Bindings|
 
 .. dropdown:: Links
    :animate: fade-in-slide-down
@@ -311,6 +315,7 @@ Daniel Abele is a research software engineer at the Institute of Software Techno
 
    * |MEmilio_citation|
    * |Assessment_of_effective_mitigation|
+   * |Bindings|
 
 .. dropdown:: Links
    :animate: fade-in-slide-down

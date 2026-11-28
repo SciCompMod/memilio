@@ -87,6 +87,21 @@ school closures, or social distancing. This is done by adding ``Damping``\s to t
 group-specific reductions are possible through setting particular rows or columns differently. With a constant 
 reduction factor :math:`r`, the reduced contact rate is :math:`(1-r) * c_{i,j}`.
 
+Each ``Damping`` also has a *level* and a *type*, given as ``DampingLevel`` and ``DampingType``. You set them with ``mio::DampingLevel(level)`` and
+``mio::DampingType(type)``, where ``level`` and ``type`` are integers. They control how dampings that are
+active at the same time are combined:
+
+- **Same level, different type:** the dampings are *added*. Use this for measures that act on separate parts of
+  the contacts, e.g., a school closure and an office closure. 
+- **Different levels:** the dampings are combined *multiplicatively*. Use this for measures that act on the same
+  contacts, e.g., a mask mandate on top of closures. The total reduction of two levels with sums :math:`a` and
+  :math:`b` is :math:`1 - (1-a)(1-b)`.
+- **Same level and same type:** the newer damping *replaces* the older one from its start time on. Use this to
+  tighten or relax a measure.
+
+If no level or type is given, both are ``0``. In that case every new damping replaces the previous one.
+
+
 .. dropdown:: :fa:`gears` Expert's settings
 
     In some settings, contact rates cannot be reduced to zero to keep essential sectors of the society running. In this 
