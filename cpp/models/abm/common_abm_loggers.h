@@ -132,9 +132,9 @@ struct LogDataForMobility : mio::LogAlways {
     {
         Type mobility_data{};
         for (const Person& p : sim.get_model().get_persons()) {
-            mobility_data.push_back(
-                std::make_tuple(p.get_id(), p.get_location(), sim.get_time(), p.get_last_transport_mode(),
-                                p.get_activity_type(), p.get_infection_state(sim.get_time())));
+            mobility_data.push_back(std::make_tuple(p.get_id(), p.get_location(), sim.get_time(),
+                                                    p.get_last_transport_mode(), p.get_activity_type(),
+                                                    p.get_infection_state(sim.get_time())));
         }
         return mobility_data;
     }
@@ -249,6 +249,50 @@ private:
         mio::abm::InfectionState infection_state;
     };
     std::vector<PreviousLog> m_previous; ///< State of each Person at the previous log, in the order of the Persons.
+};
+
+/**
+ * @brief Looger to log the TimeSeries of the number of Person%s that have an active PAIS.
+ */
+struct LogActiveAmountOfPAIS : mio::LogAlways {
+    using Type = std::pair<mio::abm::TimePoint, ScalarType>;
+    /** 
+     * @brief Log the TimeSeries of the number of Person%s that have an active PAIS.
+     * @param[in] sim The simulation of the abm.
+     * @return A pair of the TimePoint and the TimeSeries of the number of Person%s that have an active PAIS.
+     */
+    static Type log(const mio::abm::Simulation<>& sim)
+    {
+        ScalarType sum = 0;
+        auto curr_time = sim.get_time();
+        for (auto& person : sim.get_model().get_persons()) {
+            auto person_id = person.get_id();
+            if (sim.get_model().get_person(person_id).has_active_pais(curr_time)) {
+                sum++;
+            }
+        }
+        return std::make_pair(curr_time, sum);
+    }
+};
+
+/**
+ * @brief Logger to log the TimeSeries of the number of Person%s for each age group that had PAIS.
+ */
+struct LogActivePAIS : mio::LogAlways {
+    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
+
+    static Type log(const mio::abm::Simulation<>& sim)
+    {
+        Eigen::VectorXd age_group_counts =
+            Eigen::VectorXd::Zero(Eigen::Index(sim.get_model().parameters.get_num_groups()));
+        auto curr_time = sim.get_time();
+        for (auto& person : sim.get_model().get_persons()) {
+            if (person.has_active_pais(curr_time)) {
+                age_group_counts[person.get_age().get()] += 1;
+            }
+        }
+        return std::make_pair(curr_time, age_group_counts);
+    }
 };
 
 /**

@@ -371,7 +371,8 @@ TEST_F(TestPerson, getLatestProtection)
 
     t = mio::abm::TimePoint(40 * 24 * 60 * 60);
     person.add_new_infection(mio::abm::Infection(prng, static_cast<mio::abm::VirusVariant>(0), age_group_15_to_34,
-                                                 params, t, mio::abm::InfectionState::Exposed));
+                                                 params, t, mio::abm::InfectionState::Exposed),
+                             prng, t, params);
     latest_protection = person.get_latest_protection(t);
     // Verify that the latest protection is a natural infection.
     EXPECT_EQ(latest_protection.type, mio::abm::ProtectionType::NaturalInfection);
@@ -383,8 +384,9 @@ TEST_F(TestPerson, getLatestProtection)
  */
 TEST_F(TestPerson, rng)
 {
-    auto p = mio::abm::Person(this->get_rng(), mio::abm::LocationType::Home, mio::abm::ActivityType::Home, 0, 0,
-                              age_group_35_to_59, 13);
+    auto p =
+        mio::abm::Person(this->get_rng(), mio::abm::LocationType::Home, mio::abm::ActivityType::Home, 0, 0,
+                         age_group_35_to_59, mio::abm::Sex::Diverse, mio::abm::ComorbidityStatus::NoComorbidity, 13);
 
     EXPECT_EQ(p.get_rng_counter(), mio::Counter<uint32_t>(0));
 

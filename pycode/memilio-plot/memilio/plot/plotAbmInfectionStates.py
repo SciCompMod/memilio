@@ -66,7 +66,7 @@ location_type_labels = {
     0: 'Home',
     1: 'School',
     2: 'Work',
-    3: 'SocialEvent',
+    3: 'Recreation',
     4: 'BasicsShop',
     5: 'Hospital',
     6: 'ICU'

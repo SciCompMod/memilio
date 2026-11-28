@@ -30,6 +30,35 @@ namespace mio
 namespace abm
 {
 
+/**
+ * @brief #Vaccination classes
+ * can be used as 0-based index
+ */
+enum class VaccinationCount : std::uint32_t
+{
+    Zero,
+    OneOrTwo,
+    ThreeOrMore,
+    Count //last!!
+};
+
+/**
+ * @brief Determine VaccinationCount based on the number of vaccinations.
+ * @param num_vaccinations Number of vaccinations received.
+ */
+inline VaccinationCount get_vaccination_class(size_t num_vaccinations)
+{
+    if (num_vaccinations == 0) {
+        return VaccinationCount::Zero;
+    }
+    else if (num_vaccinations <= 2) {
+        return VaccinationCount::OneOrTwo;
+    }
+    else {
+        return VaccinationCount::ThreeOrMore;
+    }
+}
+
 /** 
  * @brief #ProtectionType in ABM.
  * can be used as 0-based index

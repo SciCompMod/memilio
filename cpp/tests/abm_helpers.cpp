@@ -29,11 +29,13 @@ mio::abm::Person make_test_person(mio::RandomNumberGenerator& rng, mio::abm::Loc
                                   mio::abm::Parameters params, mio::abm::PersonId id)
 {
     assert(age.get() < params.get_num_groups());
-    mio::abm::Person p(rng, location.get_type(), actvty_type, location.get_id(), location.get_model_id(), age, id);
+    mio::abm::Person p(rng, location.get_type(), actvty_type, location.get_id(), location.get_model_id(), age,
+                       mio::abm::Sex::Diverse, mio::abm::ComorbidityStatus::NoComorbidity, id);
     if (infection_state != mio::abm::InfectionState::Susceptible) {
         auto rng_p = mio::abm::PersonalRandomNumberGenerator(rng, p);
         p.add_new_infection(
-            mio::abm::Infection(rng_p, static_cast<mio::abm::VirusVariant>(0), age, params, t, infection_state));
+            mio::abm::Infection(rng_p, static_cast<mio::abm::VirusVariant>(0), age, params, t, infection_state), rng_p,
+            t, params);
     }
     return p;
 }

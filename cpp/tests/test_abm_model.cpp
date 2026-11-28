@@ -100,8 +100,10 @@ TEST_F(TestModel, addPerson)
     auto model    = mio::abm::Model(num_age_groups);
     auto location = model.add_location(mio::abm::LocationType::School);
 
-    auto id1 = model.add_person(location, age_group_15_to_34, mio::abm::ActivityType::School);
-    auto id2 = model.add_person(location, age_group_35_to_59, mio::abm::ActivityType::Work);
+    auto id1 = model.add_person(location, age_group_15_to_34, mio::abm::Sex::Diverse,
+                                mio::abm::ComorbidityStatus::NoComorbidity, mio::abm::ActivityType::School);
+    auto id2 = model.add_person(location, age_group_35_to_59, mio::abm::Sex::Diverse,
+                                mio::abm::ComorbidityStatus::NoComorbidity, mio::abm::ActivityType::Work);
 
     // Verify the number of persons in the model and their respective age groups.
     EXPECT_EQ(model.get_persons().size(), 2);
@@ -124,8 +126,10 @@ TEST_F(TestModel, getNumberPersons)
     auto location = model.add_location(mio::abm::LocationType::School);
 
     // Add persons to the model.
-    model.add_person(location, age_group_15_to_34, mio::abm::ActivityType::School);
-    model.add_person(location, age_group_35_to_59, mio::abm::ActivityType::Work);
+    model.add_person(location, age_group_15_to_34, mio::abm::Sex::Diverse, mio::abm::ComorbidityStatus::NoComorbidity,
+                     mio::abm::ActivityType::School);
+    model.add_person(location, age_group_35_to_59, mio::abm::Sex::Diverse, mio::abm::ComorbidityStatus::NoComorbidity,
+                     mio::abm::ActivityType::Work);
 
     EXPECT_TRUE(logger.read().empty());
 
@@ -187,8 +191,10 @@ TEST_F(TestModel, getSubpopulationCombined)
     EXPECT_EQ(model.get_subpopulation_combined(t, mio::abm::InfectionState::InfectedNoSymptoms), 3);
 
     // A person currently located in another model (e.g. in a graph ABM) is not counted.
-    auto visitor = add_test_person(model, school1, mio::abm::ActivityType::School, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
-    model.get_person(visitor).set_location( mio::abm::ActivityType::School, mio::abm::LocationType::School, school1, model.get_id() + 1);
+    auto visitor = add_test_person(model, school1, mio::abm::ActivityType::School, age_group_15_to_34,
+                                   mio::abm::InfectionState::InfectedNoSymptoms);
+    model.get_person(visitor).set_location(mio::abm::ActivityType::School, mio::abm::LocationType::School, school1,
+                                           model.get_id() + 1);
     EXPECT_EQ(model.get_subpopulation_combined_per_location_type(t, mio::abm::InfectionState::InfectedNoSymptoms,
                                                                  mio::abm::LocationType::School),
               2);
@@ -406,11 +412,16 @@ TEST_F(TestModel, evolveMobilityTrips)
         .WillRepeatedly(testing::Return(0.8)); // this forces p1 and p3 to recover
 
     // Create persons with various infection states and assign them to multiple locations.
-    auto pid1 = model.add_person(home_id, age_group_15_to_34, mio::abm::ActivityType::Home);
-    auto pid2 = model.add_person(home_id, age_group_15_to_34, mio::abm::ActivityType::Home);
-    auto pid3 = model.add_person(home_id, age_group_15_to_34, mio::abm::ActivityType::Home);
-    auto pid4 = model.add_person(hospital_id, age_group_15_to_34, mio::abm::ActivityType::Hospital);
-    auto pid5 = model.add_person(home_id, age_group_15_to_34, mio::abm::ActivityType::Home);
+    auto pid1 = model.add_person(home_id, age_group_15_to_34, mio::abm::Sex::Diverse,
+                                 mio::abm::ComorbidityStatus::NoComorbidity, mio::abm::ActivityType::Home);
+    auto pid2 = model.add_person(home_id, age_group_15_to_34, mio::abm::Sex::Diverse,
+                                 mio::abm::ComorbidityStatus::NoComorbidity, mio::abm::ActivityType::Home);
+    auto pid3 = model.add_person(home_id, age_group_15_to_34, mio::abm::Sex::Diverse,
+                                 mio::abm::ComorbidityStatus::NoComorbidity, mio::abm::ActivityType::Home);
+    auto pid4 = model.add_person(hospital_id, age_group_15_to_34, mio::abm::Sex::Diverse,
+                                 mio::abm::ComorbidityStatus::NoComorbidity, mio::abm::ActivityType::Hospital);
+    auto pid5 = model.add_person(home_id, age_group_15_to_34, mio::abm::Sex::Diverse,
+                                 mio::abm::ComorbidityStatus::NoComorbidity, mio::abm::ActivityType::Home);
 
     // Assign persons to locations for trips.
     auto& p1 = model.get_person(pid1);
@@ -461,13 +472,16 @@ TEST_F(TestModel, evolveMobilityTrips)
 
     auto rng_p1 = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), p1);
     p1.add_new_infection(mio::abm::Infection(rng_p1, static_cast<mio::abm::VirusVariant>(0), p1.get_age(),
-                                             model.parameters, t, mio::abm::InfectionState::InfectedNoSymptoms));
+                                             model.parameters, t, mio::abm::InfectionState::InfectedNoSymptoms),
+                         rng_p1, t, model.parameters);
     auto rng_p3 = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), p3);
     p3.add_new_infection(mio::abm::Infection(rng_p3, static_cast<mio::abm::VirusVariant>(0), p3.get_age(),
-                                             model.parameters, t, mio::abm::InfectionState::InfectedSevere));
+                                             model.parameters, t, mio::abm::InfectionState::InfectedSevere),
+                         rng_p3, t, model.parameters);
     auto rng_p4 = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), p4);
     p4.add_new_infection(mio::abm::Infection(rng_p4, static_cast<mio::abm::VirusVariant>(0), p4.get_age(),
-                                             model.parameters, t, mio::abm::InfectionState::Recovered));
+                                             model.parameters, t, mio::abm::InfectionState::Recovered),
+                         rng_p4, t, model.parameters);
 
     // For any other uniform distribution calls in model.evolve
     EXPECT_CALL(mock_uniform_dist2.get_mock(), invoke).WillRepeatedly(Return(1.));

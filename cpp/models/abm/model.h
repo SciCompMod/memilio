@@ -21,6 +21,7 @@
 #define MIO_ABM_MODEL_H
 
 #include "abm/activity_type.h"
+#include "abm/sex.h"
 #include "abm/infection_state.h"
 #include "abm/model_functions.h"
 #include "abm/location_type.h"
@@ -62,7 +63,7 @@ public:
     using ActivenessIterator      = std::vector<char>::iterator;
     using ConstActivenessIterator = std::vector<char>::const_iterator;
     using MobilityRuleType        = ActivityType (*)(PersonalRandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
-                                              const Parameters&);
+                                                     const Parameters&);
 
     using Compartments = mio::abm::InfectionState;
     /**
@@ -205,10 +206,14 @@ public:
      * @brief Add a Person to the Model.
      * @param[in] id The LocationID of the initial Location of the Person.
      * @param[in] age AgeGroup of the person.
+     * @param[in] sex Sex of the person.
+     * @param[in] comorbidity Comorbidity of the person.
      * @param[in] activity_type The ActivityType the Person does at its initial Location.
      * @return Id of the newly created Person.
      */
-    PersonId add_person(const LocationId id, AgeGroup age, ActivityType activity_type);
+    PersonId add_person(const LocationId id, AgeGroup age, Sex sex = Sex::Diverse,
+                        ComorbidityStatus comorbidity = ComorbidityStatus::NoComorbidity,
+                        ActivityType activity_type    = ActivityType::Home);
 
     /**
      * @brief Adds a copy of a given Person to the Model.
@@ -549,12 +554,20 @@ protected:
      * @param[in] dt The length of the time step of the Simulation.
      */
     void interaction(TimePoint t, TimeSpan dt);
+
     /**
      * @brief Person%s change location in the Model according to rules.
      * @param[in] t The current TimePoint.
      * @param[in] dt The length of the time step of the Simulation.
      */
     void perform_mobility(TimePoint t, TimeSpan dt);
+
+    /**
+     * @brief Update the PAIS severity of all Person%s in the Model.
+     * @param[in] t The current TimePoint.
+     * @param[in] dt The length of the time step of the Simulation.
+     */
+    void update_pais_severity(TimePoint t, TimeSpan dt);
 
     /// @brief Shape the cache and store how many Person%s are at any Location. Use from single thread!
     void build_compute_local_population_cache() const;

@@ -53,7 +53,8 @@ TEST(TestGraphAbm, test_advance_node)
     auto home_id = model.add_location(mio::abm::LocationType::Home);
     auto& home   = model.get_location(home_id);
     auto work    = mio::abm::Location(mio::abm::LocationType::Work, mio::abm::LocationId(0), size_t(1), 2);
-    auto pid     = model.add_person(home_id, mio::AgeGroup(0), mio::abm::ActivityType::Home);
+    auto pid     = model.add_person(home_id, mio::AgeGroup(0), mio::abm::Sex::Diverse,
+                                    mio::abm::ComorbidityStatus::NoComorbidity, mio::abm::ActivityType::Home);
     auto index   = model.get_person_index(pid);
     auto& p      = model.get_person(pid);
     p.set_assigned_location(mio::abm::ActivityType::Home, home.get_id(), home.get_model_id());
@@ -101,11 +102,16 @@ TEST(TestGraphAbm, test_apply_mobility)
     EXPECT_EQ(work_2.get_model_id(), 2);
     EXPECT_EQ(work_3.get_model_id(), 3);
 
-    auto p1_id = model1.add_person(home_id, mio::AgeGroup(0), mio::abm::ActivityType::Home);
-    auto p2_id = model1.add_person(home_id, mio::AgeGroup(0), mio::abm::ActivityType::Home);
-    auto p3_id = model1.add_person(home_id, mio::AgeGroup(1), mio::abm::ActivityType::Home);
-    auto p4_id = model1.add_person(home_id, mio::AgeGroup(1), mio::abm::ActivityType::Home);
-    auto p5_id = model1.add_person(home_id, mio::AgeGroup(0), mio::abm::ActivityType::Home);
+    auto p1_id = model1.add_person(home_id, mio::AgeGroup(0), mio::abm::Sex::Diverse,
+                                   mio::abm::ComorbidityStatus::NoComorbidity, mio::abm::ActivityType::Home);
+    auto p2_id = model1.add_person(home_id, mio::AgeGroup(0), mio::abm::Sex::Diverse,
+                                   mio::abm::ComorbidityStatus::NoComorbidity, mio::abm::ActivityType::Home);
+    auto p3_id = model1.add_person(home_id, mio::AgeGroup(1), mio::abm::Sex::Diverse,
+                                   mio::abm::ComorbidityStatus::NoComorbidity, mio::abm::ActivityType::Home);
+    auto p4_id = model1.add_person(home_id, mio::AgeGroup(1), mio::abm::Sex::Diverse,
+                                   mio::abm::ComorbidityStatus::NoComorbidity, mio::abm::ActivityType::Home);
+    auto p5_id = model1.add_person(home_id, mio::AgeGroup(0), mio::abm::Sex::Diverse,
+                                   mio::abm::ComorbidityStatus::NoComorbidity, mio::abm::ActivityType::Home);
     auto& p1   = model1.get_person(p1_id);
     auto& p2   = model1.get_person(p2_id);
     auto& p3   = model1.get_person(p3_id);
@@ -202,8 +208,10 @@ TEST(TestGraphABM, mask_compliance)
     //school and work require FFP2 masks
     school.set_required_mask(mio::abm::MaskType::FFP2);
     work.set_required_mask(mio::abm::MaskType::FFP2);
-    auto p_id1 = model.add_person(home_id, mio::AgeGroup(1), mio::abm::ActivityType::Home);
-    auto p_id2 = model.add_person(home_id, mio::AgeGroup(0), mio::abm::ActivityType::Home);
+    auto p_id1 = model.add_person(home_id, mio::AgeGroup(1), mio::abm::Sex::Diverse,
+                                  mio::abm::ComorbidityStatus::NoComorbidity, mio::abm::ActivityType::Home);
+    auto p_id2 = model.add_person(home_id, mio::AgeGroup(0), mio::abm::Sex::Diverse,
+                                  mio::abm::ComorbidityStatus::NoComorbidity, mio::abm::ActivityType::Home);
     auto& p1   = model.get_person(p_id1);
     auto& p2   = model.get_person(p_id2);
     p1.set_assigned_location(mio::abm::ActivityType::Work, work.get_id(), work.get_model_id());
@@ -246,8 +254,10 @@ TEST(TestGraphABM, test_get_person)
         mio::abm::GraphABModel(size_t(2), 0, std::vector<mio::abm::Model::MobilityRuleType>{&mio::abm::go_to_work});
     auto home = model.add_location(mio::abm::LocationType::Home);
     auto work = model.add_location(mio::abm::LocationType::Work);
-    auto pid1 = model.add_person(home, mio::AgeGroup(0), mio::abm::ActivityType::Home);
-    auto pid2 = model.add_person(work, mio::AgeGroup(1), mio::abm::ActivityType::Work);
+    auto pid1 = model.add_person(home, mio::AgeGroup(0), mio::abm::Sex::Diverse,
+                                 mio::abm::ComorbidityStatus::NoComorbidity, mio::abm::ActivityType::Home);
+    auto pid2 = model.add_person(work, mio::AgeGroup(1), mio::abm::Sex::Diverse,
+                                 mio::abm::ComorbidityStatus::NoComorbidity, mio::abm::ActivityType::Work);
 
     auto& p1 = model.get_person(pid1);
     EXPECT_EQ(p1.get_location(), home);

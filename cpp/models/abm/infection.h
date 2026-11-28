@@ -145,6 +145,22 @@ public:
     InfectionState get_infection_state(TimePoint t) const;
 
     /**
+     * @brief Get the highest #InfectionState of the Infection and the TimePoint when that state is reached.
+      * The highest #InfectionState is the state with the most severe symptoms that is reached during the Infection.
+      * For example, if a Person goes through the states InfectedNoSymptoms -> InfectedSymptoms -> Recovered, the highest #InfectionState is InfectedSymptoms.
+      * If a Person goes through the states InfectedNoSymptoms -> InfectedSymptoms -> InfectedSevere -> Recovered, the highest #InfectionState is InfectedSevere.
+      * @return A pair of the highest #InfectionState and the TimePoint when that state is reached.
+     */
+    std::pair<TimePoint, InfectionState> get_highest_infection_state() const;
+
+    /**
+     * @brief Get the start date of a specific #InfectionState.
+     * @param[in] state #InfectionState for which the start date is queried.
+     * @return The start date of the given #InfectionState. If the Person does not reach that state during the Infection, an invalid TimePoint is returned.
+     */
+    TimePoint get_infection_state_start_date(InfectionState state) const;
+
+    /**
      * @brief Set the Infection to detected.
      */
     void set_detected();

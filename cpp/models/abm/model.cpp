@@ -53,10 +53,12 @@ LocationId Model::add_location(LocationType type, uint32_t num_cells)
     return id;
 }
 
-PersonId Model::add_person(const LocationId id, AgeGroup age, ActivityType activity_type)
+PersonId Model::add_person(const LocationId id, AgeGroup age, Sex sex, ComorbidityStatus comorbidity,
+                           ActivityType activity_type)
 {
     PersonId person_id = (static_cast<int64_t>(m_id)) << 32 | static_cast<uint32_t>(m_persons.size());
-    return add_person(Person(m_rng, get_location(id).get_type(), activity_type, id, m_id, age, person_id));
+    return add_person(
+        Person(m_rng, get_location(id).get_type(), activity_type, id, m_id, age, sex, comorbidity, person_id));
 }
 
 PersonId Model::add_person(Person&& person)
@@ -87,6 +89,8 @@ void Model::evolve(TimePoint t, TimeSpan dt)
     interaction(t, dt);
     log_info("ABM Model mobility.");
     perform_mobility(t, dt);
+    log_info("ABM Model PAIS severity update.");
+    update_pais_severity(t, dt);
 }
 
 void Model::interaction(TimePoint t, TimeSpan dt)
@@ -219,6 +223,20 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
     }
     if (((t).days() < std::floor((t + dt).days()))) {
         m_trip_list.reset_index();
+    }
+}
+
+void Model::update_pais_severity(TimePoint t, TimeSpan dt)
+{
+    const uint32_t num_persons = static_cast<uint32_t>(m_persons.size());
+    PRAGMA_OMP(parallel for)
+    for (uint32_t person_index = 0; person_index < num_persons; ++person_index) {
+        auto& person = m_persons[person_index];
+        if (m_activeness_statuses[person_index]) {
+            assert(person.get_location_model_id() == m_id && "Person is not in this model but still active.");
+            auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
+            person.update_pais_severity(parameters, personal_rng, t, dt);
+        }
     }
 }
 
