@@ -217,7 +217,7 @@ private:
  {% else %}
  {% set per_age_group_params = cfg.parameters | selectattr('per_age_group') | list %}
  {% if per_age_group_params %}
-         , m_num_groups(AgeGroup(this->template get<{{ per_age_group_params[0].name }}<FP>>().size()))
+         , m_num_groups(AgeGroup(this->template get<{{ per_age_group_params[0].name }}<FP>>().template size<AgeGroup>().get()))
  {% else %}
          , m_num_groups(AgeGroup(1))
  {% endif %}
